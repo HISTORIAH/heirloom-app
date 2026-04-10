@@ -1,1 +1,223 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent-pink: 313 100% 65%;
+    --accent-lime: 72 100% 50%;
+    --accent-cyan: 189 100% 50%;
+    --accent-orange: 29 100% 50%;
+    --accent-purple: 249 100% 69%;
+    --accent-yellow: 50 100% 50%;
+    --accent-red: 0 100% 61%;
+
+    --accent: 72 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 61%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+
+    --radius: 0.75rem;
+
+    --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
+    --shadow-md: 8px 8px 0px 0px hsl(0 0% 0%);
+    --shadow-lg: 12px 12px 0px 0px hsl(0 0% 0%);
+    --shadow-xl: 16px 16px 0px 0px hsl(0 0% 0%);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 72 100% 50%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 0 0% 0%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent-lime));
+    color: hsl(var(--foreground));
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--secondary));
+    border-left: 4px solid hsl(var(--foreground));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground));
+    border: 2px solid hsl(var(--secondary));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: hsl(var(--foreground));
+    border: 4px solid hsl(var(--background));
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+    transition: transform 0.15s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+  input[type="range"]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: hsl(var(--foreground));
+    border: 4px solid hsl(var(--background));
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+  }
+
+  input:focus-visible,
+  button:focus-visible {
+    outline: 4px solid hsl(var(--foreground));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .neo-shadow-sm { box-shadow: var(--shadow-sm); }
+  .neo-shadow-md { box-shadow: var(--shadow-md); }
+  .neo-shadow-lg { box-shadow: var(--shadow-lg); }
+  .neo-shadow-xl { box-shadow: var(--shadow-xl); }
+  .neo-border { @apply border-4 border-foreground; }
+  .neo-border-thick { @apply border-[6px] border-foreground; }
+  .neo-card {
+    @apply bg-card neo-border rounded-2xl p-8 transition-all duration-150 ease-out;
+    box-shadow: var(--shadow-lg);
+  }
+  .neo-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-xl);
+  }
+  .neo-card-static {
+    @apply bg-card neo-border rounded-2xl p-8;
+    box-shadow: var(--shadow-lg);
+  }
+  .neo-badge {
+    @apply inline-block neo-border rounded-full px-4 py-1 text-sm font-bold uppercase tracking-widest;
+    box-shadow: var(--shadow-sm);
+  }
+  .neo-section-pink { background-color: hsl(var(--accent-pink)); }
+  .neo-section-lime { background-color: hsl(var(--accent-lime)); }
+  .neo-section-cyan { background-color: hsl(var(--accent-cyan)); }
+  .neo-section-orange { background-color: hsl(var(--accent-orange)); }
+  .neo-section-yellow { background-color: hsl(var(--accent-yellow)); }
+  .neo-section-purple { background-color: hsl(var(--accent-purple)); }
+
+  .neo-input {
+    @apply w-full neo-border rounded-lg px-4 py-3 bg-background font-bold text-base transition-all duration-150;
+    box-shadow: var(--shadow-sm);
+  }
+  .neo-input:focus {
+    box-shadow: var(--shadow-md);
+    transform: translate(-2px, -2px);
+    outline: none;
+  }
+
+  .neo-digit {
+    @apply bg-secondary neo-border rounded-xl py-4 px-2 relative overflow-hidden transition-all duration-300;
+    box-shadow: var(--shadow-sm);
+  }
+  .neo-digit::after {
+    content: '';
+    @apply absolute left-0 right-0 h-[2px] bg-foreground/10;
+    top: 50%;
+  }
+
+  .neo-step-dot {
+    @apply w-10 h-10 md:w-12 md:h-12 neo-border rounded-full flex items-center justify-center font-black text-sm md:text-base transition-all duration-300;
+  }
+  .neo-step-dot.active {
+    @apply bg-accent-lime scale-110;
+    box-shadow: var(--shadow-md);
+  }
+  .neo-step-dot.complete { @apply bg-accent-lime; }
+  .neo-step-dot.pending { @apply bg-secondary; }
+
+  .neo-slide-up { animation: slideUp 0.4s ease-out; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .neo-shake { animation: shake 0.4s ease-out; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+    75% { transform: translateX(-4px); }
+  }
+
+  .neo-glow-lime { animation: glowLime 2s ease-in-out infinite; }
+  @keyframes glowLime {
+    0%, 100% { box-shadow: var(--shadow-md); }
+    50% { box-shadow: var(--shadow-lg), 0 0 20px hsl(var(--accent-lime) / 0.3); }
+  }
+}
