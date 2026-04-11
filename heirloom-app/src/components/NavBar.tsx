@@ -3,24 +3,24 @@ import { useState, useRef, useEffect } from "react";
 import { Menu, X, ChevronDown, LayoutDashboard, Gift, LogOut } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
-import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import { TOKEN_A_LABEL, TOKEN_B_LABEL } from "@/config/constants";
+import { SOL_LABEL, USDC_LABEL } from "@/config/constants";
 
 const NavBar = () => {
   const [open, setOpen] = useState(false);
-  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { isConnected, publicKey, disconnectWallet } = useWallet();
+  const { setVisible: setWalletModalVisible } = useWalletModal();
   const navigate = useNavigate();
-  const { tokenA, tokenB, loading: balancesLoading } = useTokenBalances(isConnected ? publicKey : null);
+  const { sol, usdc, loading: balancesLoading } = useTokenBalances(isConnected ? publicKey : null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLaunch = () => {
     if (isConnected) {
       navigate("/create-vault");
     } else {
-      setWalletDialogOpen(true);
+      setWalletModalVisible(true);
     }
   };
 
@@ -78,15 +78,15 @@ const NavBar = () => {
                           Wallet Balances
                         </p>
                         <div className="flex items-center justify-between border-2 border-foreground rounded-lg px-3 py-2 bg-accent-yellow/20">
-                          <span className="text-sm font-bold">{TOKEN_A_LABEL}</span>
+                          <span className="text-sm font-bold">{SOL_LABEL}</span>
                           <span className="text-sm font-black tabular-nums">
-                            {balancesLoading ? "..." : tokenA.toFixed(4)}
+                            {balancesLoading ? "..." : sol.toFixed(4)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between border-2 border-foreground rounded-lg px-3 py-2 bg-accent-cyan/20">
-                          <span className="text-sm font-bold">{TOKEN_B_LABEL}</span>
+                          <span className="text-sm font-bold">{USDC_LABEL}</span>
                           <span className="text-sm font-black tabular-nums">
-                            {balancesLoading ? "..." : tokenB.toFixed(2)}
+                            {balancesLoading ? "..." : usdc.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -134,12 +134,12 @@ const NavBar = () => {
                   </p>
                   <div className="flex gap-3">
                     <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-yellow/20 text-center">
-                      <p className="text-xs font-bold text-muted-foreground">{TOKEN_A_LABEL}</p>
-                      <p className="text-sm font-black">{balancesLoading ? "..." : tokenA.toFixed(4)}</p>
+                      <p className="text-xs font-bold text-muted-foreground">{SOL_LABEL}</p>
+                      <p className="text-sm font-black">{balancesLoading ? "..." : sol.toFixed(4)}</p>
                     </div>
                     <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-cyan/20 text-center">
-                      <p className="text-xs font-bold text-muted-foreground">{TOKEN_B_LABEL}</p>
-                      <p className="text-sm font-black">{balancesLoading ? "..." : tokenB.toFixed(2)}</p>
+                      <p className="text-xs font-bold text-muted-foreground">{USDC_LABEL}</p>
+                      <p className="text-sm font-black">{balancesLoading ? "..." : usdc.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -162,7 +162,6 @@ const NavBar = () => {
         </div>
       </nav>
 
-      <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </>
   );
 };

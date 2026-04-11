@@ -5,8 +5,11 @@ import {
   useWallet as useSolanaWallet,
   useConnection,
 } from "@solana/wallet-adapter-react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { RPC_URL } from "@/config/constants";
+
+import "@solana/wallet-adapter-react-ui/styles.css";
 
 interface WalletState {
   isConnected: boolean;
@@ -52,7 +55,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   return (
     <ConnectionProvider endpoint={RPC_URL}>
       <SolanaWalletProvider wallets={wallets} autoConnect>
-        <WalletContextInner>{children}</WalletContextInner>
+        <WalletModalProvider>
+          <WalletContextInner>{children}</WalletContextInner>
+        </WalletModalProvider>
       </SolanaWalletProvider>
     </ConnectionProvider>
   );
