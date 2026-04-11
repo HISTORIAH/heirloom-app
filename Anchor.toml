@@ -8,9 +8,12 @@ skip-lint = false
 [programs.localnet]
 heirloom_app = "Bayy9jagJooeKL72hpy6NKTSYVNTBLAj4hSwRXBg7wCJ"
 
+[programs.devnet]
+heirloom_app = "Bayy9jagJooeKL72hpy6NKTSYVNTBLAj4hSwRXBg7wCJ"
+
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+cluster = "devnet"
+wallet = "~/.config/solana/heirloomapp.json"
 
 [scripts]
 test = "cargo test"
