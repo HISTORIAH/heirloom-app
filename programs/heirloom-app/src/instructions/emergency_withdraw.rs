@@ -22,21 +22,9 @@ pub struct EmergencyWithdraw<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ ErrorCode::InvalidMint,
-    )]
-    pub token_a_mint: Account<'info, Mint>,
-
-    #[account(
         constraint = token_b_mint.key() == vault.token_b_mint @ ErrorCode::InvalidMint,
     )]
     pub token_b_mint: Account<'info, Mint>,
-
-    #[account(
-        mut,
-        associated_token::mint = token_a_mint,
-        associated_token::authority = vault,
-    )]
-    pub vault_token_a: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -44,14 +32,6 @@ pub struct EmergencyWithdraw<'info> {
         associated_token::authority = vault,
     )]
     pub vault_token_b: Box<Account<'info, TokenAccount>>,
-
-    #[account(
-        init_if_needed,
-        payer = owner,
-        associated_token::mint = token_a_mint,
-        associated_token::authority = owner,
-    )]
-    pub owner_token_a: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,
@@ -68,32 +48,25 @@ pub struct EmergencyWithdraw<'info> {
 
 pub fn handler(ctx: Context<EmergencyWithdraw>) -> Result<()> {
     // --- Phase 1: Read values ---
-    let (token_a_bal, token_b_bal, owner_key, bump) = {
+    let (sol_bal, token_b_bal, owner_key, bump) = {
         let vault = &ctx.accounts.vault;
         require!(!vault.is_distributed, ErrorCode::VaultDistributed);
-        (vault.token_a_balance, vault.token_b_balance, vault.owner, vault.bump)
+        (vault.sol_balance, vault.token_b_balance, vault.owner, vault.bump)
     };
 
-    // --- Phase 2: CPI transfers ---
-    let seeds: &[&[u8]] = &[VAULT_SEED, owner_key.as_ref(), &[bump]];
-    let signer_seeds = &[seeds];
-
-    if token_a_bal > 0 {
-        token::transfer(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.key(),
-                Transfer {
-                    from: ctx.accounts.vault_token_a.to_account_info(),
-                    to: ctx.accounts.owner_token_a.to_account_info(),
-                    authority: ctx.accounts.vault.to_account_info(),
-                },
-                signer_seeds,
-            ),
-            token_a_bal,
-        )?;
+    // --- Phase 2: Transfer native SOL back to owner ---
+    if sol_bal > 0 {
+        let vault_info = ctx.accounts.vault.to_account_info();
+        let owner_info = ctx.accounts.owner.to_account_info();
+        **vault_info.try_borrow_mut_lamports()? -= sol_bal;
+        **owner_info.try_borrow_mut_lamports()? += sol_bal;
     }
 
+    // --- Phase 3: Transfer USDC back to owner ---
     if token_b_bal > 0 {
+        let seeds: &[&[u8]] = &[VAULT_SEED, owner_key.as_ref(), &[bump]];
+        let signer_seeds = &[seeds];
+
         token::transfer(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.key(),
@@ -108,9 +81,9 @@ pub fn handler(ctx: Context<EmergencyWithdraw>) -> Result<()> {
         )?;
     }
 
-    // --- Phase 3: Update vault state ---
+    // --- Phase 4: Update vault state ---
     let vault = &mut ctx.accounts.vault;
-    vault.token_a_balance = 0;
+    vault.sol_balance = 0;
     vault.token_b_balance = 0;
     vault.is_distributed = true;
 

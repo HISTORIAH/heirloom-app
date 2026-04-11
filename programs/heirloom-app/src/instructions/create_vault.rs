@@ -22,16 +22,7 @@ pub struct CreateVault<'info> {
     )]
     pub vault: Account<'info, Vault>,
 
-    pub token_a_mint: Account<'info, Mint>,
     pub token_b_mint: Account<'info, Mint>,
-
-    #[account(
-        init_if_needed,
-        payer = owner,
-        associated_token::mint = token_a_mint,
-        associated_token::authority = vault,
-    )]
-    pub vault_token_a: Account<'info, TokenAccount>,
 
     #[account(
         init_if_needed,
@@ -71,12 +62,11 @@ pub fn handler(
     let clock = Clock::get()?;
 
     vault.owner = ctx.accounts.owner.key();
-    vault.token_a_mint = ctx.accounts.token_a_mint.key();
     vault.token_b_mint = ctx.accounts.token_b_mint.key();
     vault.heartbeat_interval = heartbeat_interval;
     vault.grace_period = grace_period;
     vault.last_heartbeat = clock.unix_timestamp;
-    vault.token_a_balance = 0;
+    vault.sol_balance = 0;
     vault.token_b_balance = 0;
     vault.guardian = guardian;
     vault.guardian_pause_used = false;

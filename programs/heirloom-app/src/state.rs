@@ -12,12 +12,11 @@ pub struct HeirEntry {
 #[derive(InitSpace)]
 pub struct Vault {
     pub owner: Pubkey,
-    pub token_a_mint: Pubkey,
     pub token_b_mint: Pubkey,
     pub heartbeat_interval: i64,
     pub grace_period: i64,
     pub last_heartbeat: i64,
-    pub token_a_balance: u64,
+    pub sol_balance: u64,
     pub token_b_balance: u64,
     pub guardian: Option<Pubkey>,
     pub guardian_pause_used: bool,
