@@ -4,7 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, TOKEN_A_LABEL, TOKEN_B_LABEL, TOKEN_A_DECIMALS, TOKEN_B_DECIMALS } from "@/config/constants";
+import { explorerTxUrl, SOL_LABEL, USDC_LABEL, SOL_DECIMALS, USDC_DECIMALS } from "@/config/constants";
 import {
   Heart, Clock, Users, Shield, Coins, DollarSign, LogOut,
   AlertTriangle, ArrowLeft, Loader2, ExternalLink, Copy, Check,
@@ -166,8 +166,8 @@ const DashboardPage = () => {
     );
   }
 
-  const tokenADisplay = (vault.tokenABalance / Math.pow(10, TOKEN_A_DECIMALS)).toFixed(TOKEN_A_DECIMALS > 6 ? 8 : 4);
-  const tokenBDisplay = (vault.tokenBBalance / Math.pow(10, TOKEN_B_DECIMALS)).toFixed(2);
+  const solDisplay = (vault.solBalance / Math.pow(10, SOL_DECIMALS)).toFixed(SOL_DECIMALS > 6 ? 8 : 4);
+  const usdcDisplay = (vault.usdcBalance / Math.pow(10, USDC_DECIMALS)).toFixed(2);
   const config = statusConfig[computedState] || statusConfig.active;
 
   return (
@@ -239,19 +239,19 @@ const DashboardPage = () => {
           <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-accent-orange neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]"><Coins className="h-6 w-6" strokeWidth={2.5} /></div>
-              <h3 className="font-black">{TOKEN_A_LABEL} Locked</h3>
+              <h3 className="font-black">{SOL_LABEL} Locked</h3>
             </div>
-            <p className="text-3xl md:text-4xl font-black tabular-nums">{tokenADisplay}</p>
-            <p className="text-sm font-bold text-muted-foreground">{vault.tokenABalance.toLocaleString()} raw units</p>
+            <p className="text-3xl md:text-4xl font-black tabular-nums">{solDisplay}</p>
+            <p className="text-sm font-bold text-muted-foreground">{vault.solBalance.toLocaleString()} raw units</p>
           </div>
 
           <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-accent-cyan neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]"><DollarSign className="h-6 w-6" strokeWidth={2.5} /></div>
-              <h3 className="font-black">{TOKEN_B_LABEL} Locked</h3>
+              <h3 className="font-black">{USDC_LABEL} Locked</h3>
             </div>
-            <p className="text-3xl md:text-4xl font-black tabular-nums">${tokenBDisplay}</p>
-            <p className="text-sm font-bold text-muted-foreground">{vault.tokenBBalance.toLocaleString()} raw units</p>
+            <p className="text-3xl md:text-4xl font-black tabular-nums">${usdcDisplay}</p>
+            <p className="text-sm font-bold text-muted-foreground">{vault.usdcBalance.toLocaleString()} raw units</p>
           </div>
 
           <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
@@ -287,8 +287,8 @@ const DashboardPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-black text-2xl">{(h.splitBps / 100).toFixed(0)}%</p>
-                  <p className="text-xs font-bold text-muted-foreground">{((vault.tokenABalance / Math.pow(10, TOKEN_A_DECIMALS)) * h.splitBps / 10000).toFixed(4)} {TOKEN_A_LABEL}</p>
-                  {vault.tokenBBalance > 0 && <p className="text-xs font-bold text-muted-foreground">${((vault.tokenBBalance / Math.pow(10, TOKEN_B_DECIMALS)) * h.splitBps / 10000).toFixed(2)} {TOKEN_B_LABEL}</p>}
+                  <p className="text-xs font-bold text-muted-foreground">{((vault.solBalance / Math.pow(10, SOL_DECIMALS)) * h.splitBps / 10000).toFixed(4)} {SOL_LABEL}</p>
+                  {vault.usdcBalance > 0 && <p className="text-xs font-bold text-muted-foreground">${((vault.usdcBalance / Math.pow(10, USDC_DECIMALS)) * h.splitBps / 10000).toFixed(2)} {USDC_LABEL}</p>}
                   {h.hasClaimed && <span className="neo-badge bg-accent-lime text-xs mt-1 inline-block">Claimed</span>}
                 </div>
               </div>

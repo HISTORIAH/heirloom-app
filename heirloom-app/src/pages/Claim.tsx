@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, TOKEN_A_LABEL, TOKEN_B_LABEL, TOKEN_A_DECIMALS, TOKEN_B_DECIMALS } from "@/config/constants";
+import { explorerTxUrl, SOL_LABEL, USDC_LABEL, SOL_DECIMALS, USDC_DECIMALS } from "@/config/constants";
 import { lookupSingleVault, claimInheritance } from "@/lib/contracts";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
@@ -15,14 +15,13 @@ import {
 interface InheritanceInfo {
   ownerAddress: string;
   vaultState: string;
-  tokenABalance: number;
-  tokenBBalance: number;
+  solBalance: number;
+  usdcBalance: number;
   splitBps: number;
   hasClaimed: boolean;
-  tokenAShare: number;
-  tokenBShare: number;
-  tokenAMint: string;
-  tokenBMint: string;
+  solShare: number;
+  usdcShare: number;
+  usdcMint: string;
 }
 
 const stateColors: Record<string, string> = {
@@ -104,8 +103,7 @@ const ClaimPage = () => {
       const txId = await claimInheritance(
         provider,
         new PublicKey(inh.ownerAddress),
-        new PublicKey(inh.tokenAMint),
-        new PublicKey(inh.tokenBMint)
+        new PublicKey(inh.usdcMint)
       );
       setClaimTxIds((prev) => ({ ...prev, [inh.ownerAddress]: txId }));
       toast({ title: "Claim Submitted!", description: "Your share is being transferred to your wallet." });
@@ -213,18 +211,18 @@ const ClaimPage = () => {
                             <p className="text-3xl md:text-4xl font-black">{(inh.splitBps / 100).toFixed(0)}%</p>
                           </div>
                           <div className="neo-border rounded-xl p-4 bg-secondary">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{TOKEN_A_LABEL}</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{SOL_LABEL}</p>
                             <div className="flex items-center gap-1">
                               <Coins className="h-5 w-5 shrink-0" />
-                              <p className="text-xl md:text-2xl font-black truncate">{(inh.tokenAShare / Math.pow(10, TOKEN_A_DECIMALS)).toFixed(4)}</p>
+                              <p className="text-xl md:text-2xl font-black truncate">{(inh.solShare / Math.pow(10, SOL_DECIMALS)).toFixed(4)}</p>
                             </div>
                           </div>
-                          {inh.tokenBShare > 0 && (
+                          {inh.usdcShare > 0 && (
                             <div className="neo-border rounded-xl p-4 bg-secondary">
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{TOKEN_B_LABEL}</p>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{USDC_LABEL}</p>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-5 w-5 shrink-0" />
-                                <p className="text-xl md:text-2xl font-black">${(inh.tokenBShare / Math.pow(10, TOKEN_B_DECIMALS)).toFixed(2)}</p>
+                                <p className="text-xl md:text-2xl font-black">${(inh.usdcShare / Math.pow(10, USDC_DECIMALS)).toFixed(2)}</p>
                               </div>
                             </div>
                           )}

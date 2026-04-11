@@ -3,28 +3,27 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   RPC_URL,
-  TOKEN_A_MINT,
-  TOKEN_B_MINT,
-  TOKEN_A_DECIMALS,
-  TOKEN_B_DECIMALS,
+  USDC_MINT,
+  SOL_DECIMALS,
+  USDC_DECIMALS,
 } from "@/config/constants";
 
 interface TokenBalances {
-  tokenA: number;
-  tokenB: number;
+  sol: number;
+  usdc: number;
   loading: boolean;
 }
 
 export function useTokenBalances(address: string | null): TokenBalances {
   const [balances, setBalances] = useState<TokenBalances>({
-    tokenA: 0,
-    tokenB: 0,
+    sol: 0,
+    usdc: 0,
     loading: true,
   });
 
   useEffect(() => {
     if (!address) {
-      setBalances({ tokenA: 0, tokenB: 0, loading: false });
+      setBalances({ sol: 0, usdc: 0, loading: false });
       return;
     }
 
@@ -35,33 +34,30 @@ export function useTokenBalances(address: string | null): TokenBalances {
         const connection = new Connection(RPC_URL, "confirmed");
         const owner = new PublicKey(address!);
 
-        const tokenAAta = getAssociatedTokenAddressSync(TOKEN_A_MINT, owner);
-        const tokenBAta = getAssociatedTokenAddressSync(TOKEN_B_MINT, owner);
+        const usdcAta = getAssociatedTokenAddressSync(USDC_MINT, owner);
 
-        const [tokenAInfo, tokenBInfo] = await Promise.allSettled([
-          connection.getTokenAccountBalance(tokenAAta),
-          connection.getTokenAccountBalance(tokenBAta),
+        const [solResult, usdcResult] = await Promise.allSettled([
+          connection.getBalance(owner, "confirmed"),
+          connection.getTokenAccountBalance(usdcAta),
         ]);
 
-        const tokenARaw =
-          tokenAInfo.status === "fulfilled"
-            ? Number(tokenAInfo.value.value.amount)
-            : 0;
-        const tokenBRaw =
-          tokenBInfo.status === "fulfilled"
-            ? Number(tokenBInfo.value.value.amount)
+        const solRaw =
+          solResult.status === "fulfilled" ? solResult.value : 0;
+        const usdcRaw =
+          usdcResult.status === "fulfilled"
+            ? Number(usdcResult.value.value.amount)
             : 0;
 
         if (!cancelled) {
           setBalances({
-            tokenA: tokenARaw / Math.pow(10, TOKEN_A_DECIMALS),
-            tokenB: tokenBRaw / Math.pow(10, TOKEN_B_DECIMALS),
+            sol: solRaw / Math.pow(10, SOL_DECIMALS),
+            usdc: usdcRaw / Math.pow(10, USDC_DECIMALS),
             loading: false,
           });
         }
       } catch {
         if (!cancelled) {
-          setBalances({ tokenA: 0, tokenB: 0, loading: false });
+          setBalances({ sol: 0, usdc: 0, loading: false });
         }
       }
     }

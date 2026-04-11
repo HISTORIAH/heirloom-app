@@ -5,11 +5,12 @@ import { PublicKey } from "@solana/web3.js";
 import {
   fetchVaultAccount,
   createVault as createVaultContract,
-  deposit as depositContract,
+  depositSol as depositSolContract,
+  depositUsdc as depositUsdcContract,
   sendHeartbeat as sendHeartbeatContract,
   emergencyWithdraw as emergencyWithdrawContract,
 } from "@/lib/contracts";
-import { TOKEN_A_MINT, TOKEN_B_MINT } from "@/config/constants";
+import { USDC_MINT } from "@/config/constants";
 
 export interface Heir {
   address: string;
@@ -20,8 +21,8 @@ export interface Heir {
 
 export interface VaultData {
   state: "active" | "grace" | "claimable" | "distributed";
-  tokenABalance: number;
-  tokenBBalance: number;
+  solBalance: number;
+  usdcBalance: number;
   lastHeartbeat: number;
   heartbeatInterval: number;
   gracePeriod: number;
@@ -34,8 +35,7 @@ export interface VaultData {
   isDistributed: boolean;
   createdAt: number;
   heirs: Heir[];
-  tokenAMint: string;
-  tokenBMint: string;
+  usdcMint: string;
 }
 
 interface VaultState {
@@ -51,8 +51,8 @@ interface VaultState {
     heirs: { address: string; label: string; splitBps: number }[],
     guardian?: string
   ) => Promise<string>;
-  depositTokenAOnChain: (amount: number) => Promise<string>;
-  depositTokenBOnChain: (amount: number) => Promise<string>;
+  depositSolOnChain: (amount: number) => Promise<string>;
+  depositUsdcOnChain: (amount: number) => Promise<string>;
   sendHeartbeatOnChain: () => Promise<string>;
   emergencyWithdrawOnChain: () => Promise<string>;
   clearVault: () => void;
@@ -152,8 +152,8 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setVault({
         state,
-        tokenABalance: vaultAccount.tokenABalance.toNumber(),
-        tokenBBalance: vaultAccount.tokenBBalance.toNumber(),
+        solBalance: vaultAccount.solBalance.toNumber(),
+        usdcBalance: vaultAccount.tokenBBalance.toNumber(),
         lastHeartbeat: lastHB,
         heartbeatInterval: interval,
         gracePeriod: grace,
@@ -166,8 +166,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isDistributed: vaultAccount.isDistributed,
         createdAt: vaultAccount.createdAt.toNumber(),
         heirs,
-        tokenAMint: vaultAccount.tokenAMint.toBase58(),
-        tokenBMint: vaultAccount.tokenBMint.toBase58(),
+        usdcMint: vaultAccount.tokenBMint.toBase58(),
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to fetch vault";
@@ -215,8 +214,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         heartbeatInterval,
         gracePeriod,
         heirs.map((h) => ({ address: h.address, splitBps: h.splitBps })),
-        TOKEN_A_MINT,
-        TOKEN_B_MINT,
+        USDC_MINT,
         guardian
       );
       setPendingTxId(txId);
@@ -226,20 +224,20 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [getProvider]
   );
 
-  const depositTokenAOnChain = useCallback(
+  const depositSolOnChain = useCallback(
     async (amount: number): Promise<string> => {
       const provider = getProvider();
-      const txId = await depositContract(provider, TOKEN_A_MINT, amount);
+      const txId = await depositSolContract(provider, amount);
       setPendingTxId(txId);
       return txId;
     },
     [getProvider]
   );
 
-  const depositTokenBOnChain = useCallback(
+  const depositUsdcOnChain = useCallback(
     async (amount: number): Promise<string> => {
       const provider = getProvider();
-      const txId = await depositContract(provider, TOKEN_B_MINT, amount);
+      const txId = await depositUsdcContract(provider, USDC_MINT, amount);
       setPendingTxId(txId);
       return txId;
     },
@@ -255,7 +253,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const emergencyWithdrawOnChain = useCallback(async (): Promise<string> => {
     const provider = getProvider();
-    const txId = await emergencyWithdrawContract(provider, TOKEN_A_MINT, TOKEN_B_MINT);
+    const txId = await emergencyWithdrawContract(provider, USDC_MINT);
     setPendingTxId(txId);
     return txId;
   }, [getProvider]);
@@ -277,8 +275,8 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         pendingCreate,
         fetchVault,
         createVaultOnChain,
-        depositTokenAOnChain,
-        depositTokenBOnChain,
+        depositSolOnChain,
+        depositUsdcOnChain,
         sendHeartbeatOnChain,
         emergencyWithdrawOnChain,
         clearVault,

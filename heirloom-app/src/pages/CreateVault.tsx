@@ -4,7 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type Heir } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, TOKEN_A_LABEL, TOKEN_B_LABEL, TOKEN_A_DECIMALS, TOKEN_B_DECIMALS } from "@/config/constants";
+import { explorerTxUrl, SOL_LABEL, USDC_LABEL, SOL_DECIMALS, USDC_DECIMALS } from "@/config/constants";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,7 +23,7 @@ import {
 
 const STEPS = ["Heartbeat", "Heirs", "Deposit", "Review"];
 
-type SubmitState = "idle" | "creating" | "depositing-a" | "depositing-b" | "complete" | "error";
+type SubmitState = "idle" | "creating" | "depositing-sol" | "depositing-b" | "complete" | "error";
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -59,7 +59,7 @@ const GRACE_PRESETS = [
 
 const CreateVaultPage = () => {
   const { publicKey } = useWallet();
-  const { vault, createVaultOnChain, depositTokenAOnChain, depositTokenBOnChain } = useVault();
+  const { vault, createVaultOnChain, depositSolOnChain, depositUsdcOnChain } = useVault();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -72,8 +72,8 @@ const CreateVaultPage = () => {
     { address: "", label: "Heir 1", splitBps: 10000 },
   ]);
 
-  const [tokenADeposit, setTokenADeposit] = useState(0);
-  const [tokenBDeposit, setTokenBDeposit] = useState(0);
+  const [solDeposit, setSolDeposit] = useState(0);
+  const [usdcDeposit, setUsdcDeposit] = useState(0);
 
   const [guardian, setGuardian] = useState("");
 
@@ -113,17 +113,17 @@ const CreateVaultPage = () => {
         setTxId(createTxId);
       }
 
-      if (tokenADeposit > 0) {
-        setSubmitState("depositing-a");
-        const rawAmount = Math.round(tokenADeposit * Math.pow(10, TOKEN_A_DECIMALS));
-        const depositTxId = await depositTokenAOnChain(rawAmount);
+      if (solDeposit > 0) {
+        setSubmitState("depositing-sol");
+        const rawAmount = Math.round(solDeposit * Math.pow(10, SOL_DECIMALS));
+        const depositTxId = await depositSolOnChain(rawAmount);
         setTxId(depositTxId);
       }
 
-      if (tokenBDeposit > 0) {
+      if (usdcDeposit > 0) {
         setSubmitState("depositing-b");
-        const rawAmount = Math.round(tokenBDeposit * Math.pow(10, TOKEN_B_DECIMALS));
-        const depositTxId = await depositTokenBOnChain(rawAmount);
+        const rawAmount = Math.round(usdcDeposit * Math.pow(10, USDC_DECIMALS));
+        const depositTxId = await depositUsdcOnChain(rawAmount);
         setTxId(depositTxId);
       }
 
@@ -171,16 +171,16 @@ const CreateVaultPage = () => {
               <h2 className="text-3xl font-black mb-3">
                 {submitState === "creating"
                   ? "Creating Vault..."
-                  : submitState === "depositing-a"
-                    ? `Depositing ${TOKEN_A_LABEL}...`
-                    : `Depositing ${TOKEN_B_LABEL}...`}
+                  : submitState === "depositing-sol"
+                    ? `Depositing ${SOL_LABEL}...`
+                    : `Depositing ${USDC_LABEL}...`}
               </h2>
               <p className="text-lg font-medium text-muted-foreground mb-4">
                 Confirm the transaction in your wallet
               </p>
               <div className="flex justify-center gap-2 mb-4">
-                {["creating", "depositing-a", "depositing-b"].map((s, i) => {
-                  const states = ["creating", "depositing-a", "depositing-b"];
+                {["creating", "depositing-sol", "depositing-b"].map((s, i) => {
+                  const states = ["creating", "depositing-sol", "depositing-b"];
                   const currentIdx = states.indexOf(submitState);
                   return (
                     <div
@@ -385,16 +385,16 @@ const CreateVaultPage = () => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="bg-accent-orange neo-border rounded-xl p-3"><Coins className="h-6 w-6" strokeWidth={2.5} /></div>
                     <div>
-                      <h3 className="text-xl font-black">{TOKEN_A_LABEL}</h3>
-                      <p className="text-sm font-bold text-muted-foreground">Amount ({TOKEN_A_DECIMALS} decimals)</p>
+                      <h3 className="text-xl font-black">{SOL_LABEL}</h3>
+                      <p className="text-sm font-bold text-muted-foreground">Amount ({SOL_DECIMALS} decimals)</p>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <input type="number" min={0} step={0.0001} value={tokenADeposit} onChange={(e) => setTokenADeposit(Math.max(0, Number(e.target.value)))} className="neo-input font-black text-3xl text-center focus:bg-accent-orange/20 !py-4" />
+                    <input type="number" min={0} step={0.0001} value={solDeposit} onChange={(e) => setSolDeposit(Math.max(0, Number(e.target.value)))} className="neo-input font-black text-3xl text-center focus:bg-accent-orange/20 !py-4" />
                     <div className="flex gap-2 flex-wrap">
                       {[0, 0.01, 0.1, 0.5, 1].map((amt) => (
-                        <button key={amt} onClick={() => setTokenADeposit(amt)} className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${tokenADeposit === amt ? "bg-accent-orange neo-shadow-sm" : "bg-secondary hover:bg-accent-orange/30"}`}>
-                          {amt === 0 ? "Skip" : `${amt} ${TOKEN_A_LABEL}`}
+                        <button key={amt} onClick={() => setSolDeposit(amt)} className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${solDeposit === amt ? "bg-accent-orange neo-shadow-sm" : "bg-secondary hover:bg-accent-orange/30"}`}>
+                          {amt === 0 ? "Skip" : `${amt} ${SOL_LABEL}`}
                         </button>
                       ))}
                     </div>
@@ -405,15 +405,15 @@ const CreateVaultPage = () => {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="bg-accent-cyan neo-border rounded-xl p-3"><DollarSign className="h-6 w-6" strokeWidth={2.5} /></div>
                     <div>
-                      <h3 className="text-xl font-black">{TOKEN_B_LABEL}</h3>
-                      <p className="text-sm font-bold text-muted-foreground">Amount ({TOKEN_B_DECIMALS} decimals)</p>
+                      <h3 className="text-xl font-black">{USDC_LABEL}</h3>
+                      <p className="text-sm font-bold text-muted-foreground">Amount ({USDC_DECIMALS} decimals)</p>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <input type="number" min={0} step={1} value={tokenBDeposit} onChange={(e) => setTokenBDeposit(Math.max(0, Number(e.target.value)))} className="neo-input font-black text-3xl text-center focus:bg-accent-cyan/20 !py-4" />
+                    <input type="number" min={0} step={1} value={usdcDeposit} onChange={(e) => setUsdcDeposit(Math.max(0, Number(e.target.value)))} className="neo-input font-black text-3xl text-center focus:bg-accent-cyan/20 !py-4" />
                     <div className="flex gap-2 flex-wrap">
                       {[0, 100, 500, 1000, 5000].map((amt) => (
-                        <button key={amt} onClick={() => setTokenBDeposit(amt)} className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${tokenBDeposit === amt ? "bg-accent-cyan neo-shadow-sm" : "bg-secondary hover:bg-accent-cyan/30"}`}>
+                        <button key={amt} onClick={() => setUsdcDeposit(amt)} className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${usdcDeposit === amt ? "bg-accent-cyan neo-shadow-sm" : "bg-secondary hover:bg-accent-cyan/30"}`}>
                           {amt === 0 ? "Skip" : `$${amt}`}
                         </button>
                       ))}
@@ -452,8 +452,8 @@ const CreateVaultPage = () => {
                     <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Deposits</h3>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between"><span className="font-bold">{TOKEN_A_LABEL}</span><span className="font-black text-xl">{tokenADeposit > 0 ? tokenADeposit.toFixed(4) : "None"}</span></div>
-                    <div className="flex justify-between"><span className="font-bold">{TOKEN_B_LABEL}</span><span className="font-black text-xl">{tokenBDeposit > 0 ? `$${tokenBDeposit.toFixed(2)}` : "None"}</span></div>
+                    <div className="flex justify-between"><span className="font-bold">{SOL_LABEL}</span><span className="font-black text-xl">{solDeposit > 0 ? solDeposit.toFixed(4) : "None"}</span></div>
+                    <div className="flex justify-between"><span className="font-bold">{USDC_LABEL}</span><span className="font-black text-xl">{usdcDeposit > 0 ? `$${usdcDeposit.toFixed(2)}` : "None"}</span></div>
                   </div>
                 </div>
               </div>
@@ -478,8 +478,8 @@ const CreateVaultPage = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-black text-2xl">{(h.splitBps / 100).toFixed(0)}%</p>
-                        {tokenADeposit > 0 && <p className="text-xs font-bold text-muted-foreground">{(tokenADeposit * h.splitBps / 10000).toFixed(4)} {TOKEN_A_LABEL}</p>}
-                        {tokenBDeposit > 0 && <p className="text-xs font-bold text-muted-foreground">${(tokenBDeposit * h.splitBps / 10000).toFixed(2)} {TOKEN_B_LABEL}</p>}
+                        {solDeposit > 0 && <p className="text-xs font-bold text-muted-foreground">{(solDeposit * h.splitBps / 10000).toFixed(4)} {SOL_LABEL}</p>}
+                        {usdcDeposit > 0 && <p className="text-xs font-bold text-muted-foreground">${(usdcDeposit * h.splitBps / 10000).toFixed(2)} {USDC_LABEL}</p>}
                       </div>
                     </div>
                   ))}

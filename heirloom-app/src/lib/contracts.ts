@@ -1,11 +1,11 @@
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
-import { Connection, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import { PROGRAM_ID, VAULT_SEED } from "@/config/constants";
+import { PROGRAM_ID, VAULT_SEED, USDC_MINT } from "@/config/constants";
 import idl from "./idl.json";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -30,16 +30,14 @@ export async function createVault(
   heartbeatInterval: number,
   gracePeriod: number,
   heirs: { address: string; splitBps: number }[],
-  tokenAMint: PublicKey,
-  tokenBMint: PublicKey,
+  usdcMint: PublicKey,
   guardian?: string
 ): Promise<string> {
   const program = getProgram(provider);
   const owner = provider.publicKey;
   const [vault] = getVaultPDA(owner);
 
-  const vaultTokenA = getAssociatedTokenAddressSync(tokenAMint, vault, true);
-  const vaultTokenB = getAssociatedTokenAddressSync(tokenBMint, vault, true);
+  const vaultUsdc = getAssociatedTokenAddressSync(usdcMint, vault, true);
 
   const heirInputs = heirs.map((h) => ({
     heir: new PublicKey(h.address),
@@ -60,10 +58,8 @@ export async function createVault(
     .accounts({
       owner,
       vault,
-      tokenAMint,
-      tokenBMint,
-      vaultTokenA,
-      vaultTokenB,
+      tokenBMint: usdcMint,
+      vaultTokenB: vaultUsdc,
       systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -73,7 +69,29 @@ export async function createVault(
   return tx;
 }
 
-export async function deposit(
+export async function depositSol(
+  provider: AnchorProvider,
+  amount: number
+): Promise<string> {
+  const program = getProgram(provider);
+  const owner = provider.publicKey;
+  const [vault] = getVaultPDA(owner);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const methods = program.methods as any;
+  const tx: string = await methods
+    .depositSol(new BN(amount))
+    .accounts({
+      owner,
+      vault,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  return tx;
+}
+
+export async function depositUsdc(
   provider: AnchorProvider,
   mint: PublicKey,
   amount: number
@@ -88,7 +106,7 @@ export async function deposit(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const methods = program.methods as any;
   const tx: string = await methods
-    .deposit(new BN(amount))
+    .depositToken(new BN(amount))
     .accounts({
       owner,
       vault,
@@ -120,17 +138,14 @@ export async function sendHeartbeat(provider: AnchorProvider): Promise<string> {
 export async function claimInheritance(
   provider: AnchorProvider,
   vaultOwner: PublicKey,
-  tokenAMint: PublicKey,
-  tokenBMint: PublicKey
+  usdcMint: PublicKey
 ): Promise<string> {
   const program = getProgram(provider);
   const heir = provider.publicKey;
   const [vault] = getVaultPDA(vaultOwner);
 
-  const vaultTokenA = getAssociatedTokenAddressSync(tokenAMint, vault, true);
-  const vaultTokenB = getAssociatedTokenAddressSync(tokenBMint, vault, true);
-  const heirTokenA = getAssociatedTokenAddressSync(tokenAMint, heir);
-  const heirTokenB = getAssociatedTokenAddressSync(tokenBMint, heir);
+  const vaultUsdc = getAssociatedTokenAddressSync(usdcMint, vault, true);
+  const heirUsdc = getAssociatedTokenAddressSync(usdcMint, heir);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const methods = program.methods as any;
@@ -140,12 +155,9 @@ export async function claimInheritance(
       heir,
       vaultOwner,
       vault,
-      tokenAMint,
-      tokenBMint,
-      vaultTokenA,
-      vaultTokenB,
-      heirTokenA,
-      heirTokenB,
+      tokenBMint: usdcMint,
+      vaultTokenB: vaultUsdc,
+      heirTokenB: heirUsdc,
       systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -157,17 +169,14 @@ export async function claimInheritance(
 
 export async function emergencyWithdraw(
   provider: AnchorProvider,
-  tokenAMint: PublicKey,
-  tokenBMint: PublicKey
+  usdcMint: PublicKey
 ): Promise<string> {
   const program = getProgram(provider);
   const owner = provider.publicKey;
   const [vault] = getVaultPDA(owner);
 
-  const vaultTokenA = getAssociatedTokenAddressSync(tokenAMint, vault, true);
-  const vaultTokenB = getAssociatedTokenAddressSync(tokenBMint, vault, true);
-  const ownerTokenA = getAssociatedTokenAddressSync(tokenAMint, owner);
-  const ownerTokenB = getAssociatedTokenAddressSync(tokenBMint, owner);
+  const vaultUsdc = getAssociatedTokenAddressSync(usdcMint, vault, true);
+  const ownerUsdc = getAssociatedTokenAddressSync(usdcMint, owner);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const methods = program.methods as any;
@@ -176,12 +185,9 @@ export async function emergencyWithdraw(
     .accounts({
       owner,
       vault,
-      tokenAMint,
-      tokenBMint,
-      vaultTokenA,
-      vaultTokenB,
-      ownerTokenA,
-      ownerTokenB,
+      tokenBMint: usdcMint,
+      vaultTokenB: vaultUsdc,
+      ownerTokenB: ownerUsdc,
       systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -239,12 +245,11 @@ export async function updateHeirs(
 
 export interface VaultAccount {
   owner: PublicKey;
-  tokenAMint: PublicKey;
   tokenBMint: PublicKey;
   heartbeatInterval: BN;
   gracePeriod: BN;
   lastHeartbeat: BN;
-  tokenABalance: BN;
+  solBalance: BN;
   tokenBBalance: BN;
   guardian: PublicKey | null;
   guardianPauseUsed: boolean;
@@ -287,14 +292,13 @@ export async function lookupSingleVault(
 ): Promise<{
   ownerAddress: string;
   vaultState: string;
-  tokenABalance: number;
-  tokenBBalance: number;
+  solBalance: number;
+  usdcBalance: number;
   splitBps: number;
   hasClaimed: boolean;
-  tokenAShare: number;
-  tokenBShare: number;
-  tokenAMint: string;
-  tokenBMint: string;
+  solShare: number;
+  usdcShare: number;
+  usdcMint: string;
 } | null> {
   try {
     const ownerPk = new PublicKey(ownerAddress);
@@ -331,21 +335,20 @@ export async function lookupSingleVault(
 
     if (vault.isDistributed && heirEntry.hasClaimed) return null;
 
-    const tokenABal = vault.tokenABalance.toNumber();
-    const tokenBBal = vault.tokenBBalance.toNumber();
+    const solBal = vault.solBalance.toNumber();
+    const usdcBal = vault.tokenBBalance.toNumber();
     const splitBps = heirEntry.splitBps;
 
     return {
       ownerAddress,
       vaultState,
-      tokenABalance: tokenABal,
-      tokenBBalance: tokenBBal,
+      solBalance: solBal,
+      usdcBalance: usdcBal,
       splitBps,
       hasClaimed: heirEntry.hasClaimed,
-      tokenAShare: Math.floor((tokenABal * splitBps) / 10000),
-      tokenBShare: Math.floor((tokenBBal * splitBps) / 10000),
-      tokenAMint: vault.tokenAMint.toBase58(),
-      tokenBMint: vault.tokenBMint.toBase58(),
+      solShare: Math.floor((solBal * splitBps) / 10000),
+      usdcShare: Math.floor((usdcBal * splitBps) / 10000),
+      usdcMint: vault.tokenBMint.toBase58(),
     };
   } catch {
     return null;
