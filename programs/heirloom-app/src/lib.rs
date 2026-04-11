@@ -26,9 +26,14 @@ pub mod heirloom_app {
         instructions::create_vault::handler(ctx, heartbeat_interval, grace_period, heirs_data, guardian)
     }
 
-    /// Deposit SPL tokens (token A or token B) into the vault.
-    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        instructions::deposit::handler(ctx, amount)
+    /// Deposit native SOL into the vault.
+    pub fn deposit_sol(ctx: Context<DepositSol>, amount: u64) -> Result<()> {
+        instructions::deposit_sol::handler(ctx, amount)
+    }
+
+    /// Deposit SPL tokens (USDC) into the vault.
+    pub fn deposit_token(ctx: Context<DepositToken>, amount: u64) -> Result<()> {
+        instructions::deposit_token::handler(ctx, amount)
     }
 
     /// Send heartbeat - proof of life that resets the countdown timer.
