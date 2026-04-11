@@ -12,18 +12,14 @@ export const PROGRAM_ID = new PublicKey(
   import.meta.env.VITE_PROGRAM_ID || "Bayy9jagJooeKL72hpy6NKTSYVNTBLAj4hSwRXBg7wCJ"
 );
 
-export const TOKEN_A_MINT = new PublicKey(
-  import.meta.env.VITE_TOKEN_A_MINT || "So11111111111111111111111111111111111111112"
+export const USDC_MINT = new PublicKey(
+  import.meta.env.VITE_USDC_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 );
 
-export const TOKEN_B_MINT = new PublicKey(
-  import.meta.env.VITE_TOKEN_B_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
-);
-
-export const TOKEN_A_LABEL = import.meta.env.VITE_TOKEN_A_LABEL || "SOL";
-export const TOKEN_A_DECIMALS = Number(import.meta.env.VITE_TOKEN_A_DECIMALS || 9);
-export const TOKEN_B_LABEL = import.meta.env.VITE_TOKEN_B_LABEL || "USDC";
-export const TOKEN_B_DECIMALS = Number(import.meta.env.VITE_TOKEN_B_DECIMALS || 6);
+export const SOL_LABEL = "SOL";
+export const SOL_DECIMALS = 9;
+export const USDC_LABEL = "USDC";
+export const USDC_DECIMALS = 6;
 
 export const BASIS_POINTS = 10000;
 
