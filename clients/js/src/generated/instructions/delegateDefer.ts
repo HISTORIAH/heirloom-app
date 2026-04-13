@@ -40,7 +40,7 @@ import {
 import { findEstatePda } from "../pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
-export const DELEGATE_DEFER_DISCRIMINATOR = new Uint8Array([6]);
+export const DELEGATE_DEFER_DISCRIMINATOR = new Uint8Array([5]);
 
 export function getDelegateDeferDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 1).encode(

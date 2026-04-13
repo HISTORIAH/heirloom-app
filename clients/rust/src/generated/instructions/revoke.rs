@@ -8,7 +8,7 @@
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-pub const REVOKE_DISCRIMINATOR: [u8; 1] = [5];
+pub const REVOKE_DISCRIMINATOR: [u8; 1] = [4];
 
 /// Accounts.
 #[derive(Debug)]
@@ -27,13 +27,13 @@ pub struct Revoke {
           pub vault: solana_address::Address,
           
               
-          pub authority_token_account: solana_address::Address,
+          pub authority_token_account: Option<solana_address::Address>,
           
               
-          pub vault_token_account: solana_address::Address,
+          pub vault_token_account: Option<solana_address::Address>,
           
               
-          pub mint: solana_address::Address,
+          pub mint: Option<solana_address::Address>,
           
               
           pub token_program: solana_address::Address,
@@ -66,19 +66,40 @@ impl Revoke {
             self.vault,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.authority_token_account,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.vault_token_account,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.mint,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+                                                      if let Some(authority_token_account) = self.authority_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                authority_token_account,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(vault_token_account) = self.vault_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                vault_token_account,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(mint) = self.mint {
+              accounts.push(solana_instruction::AccountMeta::new(
+                mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                    accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
             false
           ));
@@ -105,7 +126,7 @@ impl Revoke {
 impl RevokeInstructionData {
   pub fn new() -> Self {
     Self {
-                        discriminator: [5],
+                        discriminator: [4],
                   }
   }
 
@@ -130,9 +151,9 @@ impl Default for RevokeInstructionData {
           ///   1. `[]` heir
                 ///   2. `[writable]` estate
                 ///   3. `[writable]` vault
-                ///   4. `[writable]` authority_token_account
-                ///   5. `[writable]` vault_token_account
-                ///   6. `[writable]` mint
+                      ///   4. `[writable, optional]` authority_token_account
+                      ///   5. `[writable, optional]` vault_token_account
+                      ///   6. `[writable, optional]` mint
                 ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
                 ///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
@@ -173,19 +194,22 @@ impl RevokeBuilder {
                         self.vault = Some(vault);
                     self
     }
-            #[inline(always)]
-    pub fn authority_token_account(&mut self, authority_token_account: solana_address::Address) -> &mut Self {
-                        self.authority_token_account = Some(authority_token_account);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn authority_token_account(&mut self, authority_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.authority_token_account = authority_token_account;
                     self
     }
-            #[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: solana_address::Address) -> &mut Self {
-                        self.vault_token_account = Some(vault_token_account);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn vault_token_account(&mut self, vault_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.vault_token_account = vault_token_account;
                     self
     }
-            #[inline(always)]
-    pub fn mint(&mut self, mint: solana_address::Address) -> &mut Self {
-                        self.mint = Some(mint);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
+                        self.mint = mint;
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -219,9 +243,9 @@ impl RevokeBuilder {
                                         heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
-                                        authority_token_account: self.authority_token_account.expect("authority_token_account is not set"),
-                                        vault_token_account: self.vault_token_account.expect("vault_token_account is not set"),
-                                        mint: self.mint.expect("mint is not set"),
+                                        authority_token_account: self.authority_token_account,
+                                        vault_token_account: self.vault_token_account,
+                                        mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
@@ -246,13 +270,13 @@ impl RevokeBuilder {
               pub vault: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub authority_token_account: &'b solana_account_info::AccountInfo<'a>,
+              pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
-              pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+              pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
-              pub mint: &'b solana_account_info::AccountInfo<'a>,
+              pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -279,13 +303,13 @@ pub struct RevokeCpi<'a, 'b> {
           pub vault: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub authority_token_account: &'b solana_account_info::AccountInfo<'a>,
+          pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
-          pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+          pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
-          pub mint: &'b solana_account_info::AccountInfo<'a>,
+          pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -349,18 +373,39 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
             *self.vault.key,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.authority_token_account.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.vault_token_account.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.mint.key,
-            false
-          ));
+                                          if let Some(authority_token_account) = self.authority_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *authority_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(vault_token_account) = self.vault_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *vault_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(mint) = self.mint {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *mint.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false
@@ -389,9 +434,15 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
-                        account_infos.push(self.authority_token_account.clone());
-                        account_infos.push(self.vault_token_account.clone());
-                        account_infos.push(self.mint.clone());
+                        if let Some(authority_token_account) = self.authority_token_account {
+          account_infos.push(authority_token_account.clone());
+        }
+                        if let Some(vault_token_account) = self.vault_token_account {
+          account_infos.push(vault_token_account.clone());
+        }
+                        if let Some(mint) = self.mint {
+          account_infos.push(mint.clone());
+        }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -412,9 +463,9 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
           ///   1. `[]` heir
                 ///   2. `[writable]` estate
                 ///   3. `[writable]` vault
-                ///   4. `[writable]` authority_token_account
-                ///   5. `[writable]` vault_token_account
-                ///   6. `[writable]` mint
+                      ///   4. `[writable, optional]` authority_token_account
+                      ///   5. `[writable, optional]` vault_token_account
+                      ///   6. `[writable, optional]` mint
           ///   7. `[]` token_program
           ///   8. `[]` system_program
 #[derive(Clone, Debug)]
@@ -459,19 +510,22 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
                         self.instruction.vault = Some(vault);
                     self
     }
-      #[inline(always)]
-    pub fn authority_token_account(&mut self, authority_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.authority_token_account = Some(authority_token_account);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn authority_token_account(&mut self, authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.authority_token_account = authority_token_account;
                     self
     }
-      #[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.vault_token_account = Some(vault_token_account);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn vault_token_account(&mut self, vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.vault_token_account = vault_token_account;
                     self
     }
-      #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.mint = Some(mint);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.mint = mint;
                     self
     }
       #[inline(always)]
@@ -517,11 +571,11 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
                   
           vault: self.instruction.vault.expect("vault is not set"),
                   
-          authority_token_account: self.instruction.authority_token_account.expect("authority_token_account is not set"),
+          authority_token_account: self.instruction.authority_token_account,
                   
-          vault_token_account: self.instruction.vault_token_account.expect("vault_token_account is not set"),
+          vault_token_account: self.instruction.vault_token_account,
                   
-          mint: self.instruction.mint.expect("mint is not set"),
+          mint: self.instruction.mint,
                   
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   

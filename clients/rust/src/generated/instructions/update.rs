@@ -8,11 +8,11 @@
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-pub const HEARTBEAT_DISCRIMINATOR: [u8; 1] = [2];
+pub const UPDATE_DISCRIMINATOR: [u8; 1] = [3];
 
 /// Accounts.
 #[derive(Debug)]
-pub struct Heartbeat {
+pub struct Update {
       
               
           pub authority: solana_address::Address,
@@ -30,7 +30,7 @@ pub struct Heartbeat {
           pub system_program: solana_address::Address,
       }
 
-impl Heartbeat {
+impl Update {
   pub fn instruction(&self) -> solana_instruction::Instruction {
     self.instruction_with_remaining_accounts(&[])
   }
@@ -59,7 +59,7 @@ impl Heartbeat {
             false
           ));
                       accounts.extend_from_slice(remaining_accounts);
-    let data = HeartbeatInstructionData::new().try_to_vec().unwrap();
+    let data = UpdateInstructionData::new().try_to_vec().unwrap();
     
     solana_instruction::Instruction {
       program_id: crate::HEIRLOOM_PROGRAM_ID,
@@ -70,14 +70,14 @@ impl Heartbeat {
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
- pub struct HeartbeatInstructionData {
+ pub struct UpdateInstructionData {
             discriminator: [u8; 1],
       }
 
-impl HeartbeatInstructionData {
+impl UpdateInstructionData {
   pub fn new() -> Self {
     Self {
-                        discriminator: [2],
+                        discriminator: [3],
                   }
   }
 
@@ -86,7 +86,7 @@ impl HeartbeatInstructionData {
   }
   }
 
-impl Default for HeartbeatInstructionData {
+impl Default for UpdateInstructionData {
   fn default() -> Self {
     Self::new()
   }
@@ -94,7 +94,7 @@ impl Default for HeartbeatInstructionData {
 
 
 
-/// Instruction builder for `Heartbeat`.
+/// Instruction builder for `Update`.
 ///
 /// ### Accounts:
 ///
@@ -104,7 +104,7 @@ impl Default for HeartbeatInstructionData {
                 ///   3. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
                 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct HeartbeatBuilder {
+pub struct UpdateBuilder {
             authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
@@ -113,7 +113,7 @@ pub struct HeartbeatBuilder {
                 __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
-impl HeartbeatBuilder {
+impl UpdateBuilder {
   pub fn new() -> Self {
     Self::default()
   }
@@ -158,7 +158,7 @@ impl HeartbeatBuilder {
   }
   #[allow(clippy::clone_on_copy)]
   pub fn instruction(&self) -> solana_instruction::Instruction {
-    let accounts = Heartbeat {
+    let accounts = Update {
                               authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
@@ -170,8 +170,8 @@ impl HeartbeatBuilder {
   }
 }
 
-  /// `heartbeat` CPI accounts.
-  pub struct HeartbeatCpiAccounts<'a, 'b> {
+  /// `update` CPI accounts.
+  pub struct UpdateCpiAccounts<'a, 'b> {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
@@ -189,8 +189,8 @@ impl HeartbeatBuilder {
               pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
-/// `heartbeat` CPI instruction.
-pub struct HeartbeatCpi<'a, 'b> {
+/// `update` CPI instruction.
+pub struct UpdateCpi<'a, 'b> {
   /// The program to invoke.
   pub __program: &'b solana_account_info::AccountInfo<'a>,
       
@@ -210,10 +210,10 @@ pub struct HeartbeatCpi<'a, 'b> {
           pub system_program: &'b solana_account_info::AccountInfo<'a>,
         }
 
-impl<'a, 'b> HeartbeatCpi<'a, 'b> {
+impl<'a, 'b> UpdateCpi<'a, 'b> {
   pub fn new(
     program: &'b solana_account_info::AccountInfo<'a>,
-          accounts: HeartbeatCpiAccounts<'a, 'b>,
+          accounts: UpdateCpiAccounts<'a, 'b>,
           ) -> Self {
     Self {
       __program: program,
@@ -272,7 +272,7 @@ impl<'a, 'b> HeartbeatCpi<'a, 'b> {
           is_writable: remaining_account.2,
       })
     });
-    let data = HeartbeatInstructionData::new().try_to_vec().unwrap();
+    let data = UpdateInstructionData::new().try_to_vec().unwrap();
     
     let instruction = solana_instruction::Instruction {
       program_id: crate::HEIRLOOM_PROGRAM_ID,
@@ -296,7 +296,7 @@ impl<'a, 'b> HeartbeatCpi<'a, 'b> {
   }
 }
 
-/// Instruction builder for `Heartbeat` via CPI.
+/// Instruction builder for `Update` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -306,13 +306,13 @@ impl<'a, 'b> HeartbeatCpi<'a, 'b> {
           ///   3. `[]` clock
           ///   4. `[]` system_program
 #[derive(Clone, Debug)]
-pub struct HeartbeatCpiBuilder<'a, 'b> {
-  instruction: Box<HeartbeatCpiBuilderInstruction<'a, 'b>>,
+pub struct UpdateCpiBuilder<'a, 'b> {
+  instruction: Box<UpdateCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> HeartbeatCpiBuilder<'a, 'b> {
+impl<'a, 'b> UpdateCpiBuilder<'a, 'b> {
   pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
-    let instruction = Box::new(HeartbeatCpiBuilderInstruction {
+    let instruction = Box::new(UpdateCpiBuilderInstruction {
       __program: program,
               authority: None,
               heir: None,
@@ -370,7 +370,7 @@ impl<'a, 'b> HeartbeatCpiBuilder<'a, 'b> {
   #[allow(clippy::clone_on_copy)]
   #[allow(clippy::vec_init_then_push)]
   pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
-        let instruction = HeartbeatCpi {
+        let instruction = UpdateCpi {
         __program: self.instruction.__program,
                   
           authority: self.instruction.authority.expect("authority is not set"),
@@ -388,7 +388,7 @@ impl<'a, 'b> HeartbeatCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct HeartbeatCpiBuilderInstruction<'a, 'b> {
+struct UpdateCpiBuilderInstruction<'a, 'b> {
   __program: &'b solana_account_info::AccountInfo<'a>,
             authority: Option<&'b solana_account_info::AccountInfo<'a>>,
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,

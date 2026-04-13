@@ -21,10 +21,10 @@ pub struct Claim {
           pub authority: solana_address::Address,
           
               
-          pub guardian: solana_address::Address,
+          pub guardian: Option<solana_address::Address>,
           
               
-          pub heir_token_account: solana_address::Address,
+          pub heir_token_account: Option<solana_address::Address>,
           
               
           pub estate: solana_address::Address,
@@ -33,10 +33,10 @@ pub struct Claim {
           pub vault: solana_address::Address,
           
               
-          pub vault_token_account: solana_address::Address,
+          pub vault_token_account: Option<solana_address::Address>,
           
               
-          pub mint: solana_address::Address,
+          pub mint: Option<solana_address::Address>,
           
               
           pub token_program: solana_address::Address,
@@ -67,15 +67,29 @@ impl Claim {
             self.authority,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.guardian,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.heir_token_account,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
+                                                      if let Some(guardian) = self.guardian {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                guardian,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(heir_token_account) = self.heir_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                heir_token_account,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                    accounts.push(solana_instruction::AccountMeta::new(
             self.estate,
             false
           ));
@@ -83,15 +97,29 @@ impl Claim {
             self.vault,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.vault_token_account,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.mint,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+                                                      if let Some(vault_token_account) = self.vault_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                vault_token_account,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(mint) = self.mint {
+              accounts.push(solana_instruction::AccountMeta::new(
+                mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                    accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
             false
           ));
@@ -149,12 +177,12 @@ impl Default for ClaimInstructionData {
 ///
                       ///   0. `[writable, signer]` heir
           ///   1. `[]` authority
-          ///   2. `[]` guardian
-                ///   3. `[writable]` heir_token_account
+                ///   2. `[optional]` guardian
+                      ///   3. `[writable, optional]` heir_token_account
                 ///   4. `[writable]` estate
                 ///   5. `[writable]` vault
-                ///   6. `[writable]` vault_token_account
-                ///   7. `[writable]` mint
+                      ///   6. `[writable, optional]` vault_token_account
+                      ///   7. `[writable, optional]` mint
                 ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
                 ///   9. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
                 ///   10. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
@@ -190,14 +218,16 @@ impl ClaimBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
-    pub fn guardian(&mut self, guardian: solana_address::Address) -> &mut Self {
-                        self.guardian = Some(guardian);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn guardian(&mut self, guardian: Option<solana_address::Address>) -> &mut Self {
+                        self.guardian = guardian;
                     self
     }
-            #[inline(always)]
-    pub fn heir_token_account(&mut self, heir_token_account: solana_address::Address) -> &mut Self {
-                        self.heir_token_account = Some(heir_token_account);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn heir_token_account(&mut self, heir_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.heir_token_account = heir_token_account;
                     self
     }
             #[inline(always)]
@@ -210,14 +240,16 @@ impl ClaimBuilder {
                         self.vault = Some(vault);
                     self
     }
-            #[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: solana_address::Address) -> &mut Self {
-                        self.vault_token_account = Some(vault_token_account);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn vault_token_account(&mut self, vault_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.vault_token_account = vault_token_account;
                     self
     }
-            #[inline(always)]
-    pub fn mint(&mut self, mint: solana_address::Address) -> &mut Self {
-                        self.mint = Some(mint);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
+                        self.mint = mint;
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -261,12 +293,12 @@ impl ClaimBuilder {
     let accounts = Claim {
                               heir: self.heir.expect("heir is not set"),
                                         authority: self.authority.expect("authority is not set"),
-                                        guardian: self.guardian.expect("guardian is not set"),
-                                        heir_token_account: self.heir_token_account.expect("heir_token_account is not set"),
+                                        guardian: self.guardian,
+                                        heir_token_account: self.heir_token_account,
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
-                                        vault_token_account: self.vault_token_account.expect("vault_token_account is not set"),
-                                        mint: self.mint.expect("mint is not set"),
+                                        vault_token_account: self.vault_token_account,
+                                        mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
@@ -287,10 +319,10 @@ impl ClaimBuilder {
               pub authority: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub guardian: &'b solana_account_info::AccountInfo<'a>,
+              pub guardian: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
-              pub heir_token_account: &'b solana_account_info::AccountInfo<'a>,
+              pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub estate: &'b solana_account_info::AccountInfo<'a>,
@@ -299,10 +331,10 @@ impl ClaimBuilder {
               pub vault: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+              pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
-              pub mint: &'b solana_account_info::AccountInfo<'a>,
+              pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -329,10 +361,10 @@ pub struct ClaimCpi<'a, 'b> {
           pub authority: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub guardian: &'b solana_account_info::AccountInfo<'a>,
+          pub guardian: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
-          pub heir_token_account: &'b solana_account_info::AccountInfo<'a>,
+          pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
           pub estate: &'b solana_account_info::AccountInfo<'a>,
@@ -341,10 +373,10 @@ pub struct ClaimCpi<'a, 'b> {
           pub vault: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+          pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
-          pub mint: &'b solana_account_info::AccountInfo<'a>,
+          pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -409,14 +441,28 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
             *self.authority.key,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.guardian.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.heir_token_account.key,
-            false
-          ));
+                                          if let Some(guardian) = self.guardian {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              *guardian.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(heir_token_account) = self.heir_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *heir_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.estate.key,
             false
@@ -425,14 +471,28 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
             *self.vault.key,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.vault_token_account.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.mint.key,
-            false
-          ));
+                                          if let Some(vault_token_account) = self.vault_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *vault_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(mint) = self.mint {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *mint.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false
@@ -467,12 +527,20 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
     account_infos.push(self.__program.clone());
                   account_infos.push(self.heir.clone());
                         account_infos.push(self.authority.clone());
-                        account_infos.push(self.guardian.clone());
-                        account_infos.push(self.heir_token_account.clone());
+                        if let Some(guardian) = self.guardian {
+          account_infos.push(guardian.clone());
+        }
+                        if let Some(heir_token_account) = self.heir_token_account {
+          account_infos.push(heir_token_account.clone());
+        }
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
-                        account_infos.push(self.vault_token_account.clone());
-                        account_infos.push(self.mint.clone());
+                        if let Some(vault_token_account) = self.vault_token_account {
+          account_infos.push(vault_token_account.clone());
+        }
+                        if let Some(mint) = self.mint {
+          account_infos.push(mint.clone());
+        }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.rent.clone());
                         account_infos.push(self.clock.clone());
@@ -493,12 +561,12 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
 ///
                       ///   0. `[writable, signer]` heir
           ///   1. `[]` authority
-          ///   2. `[]` guardian
-                ///   3. `[writable]` heir_token_account
+                ///   2. `[optional]` guardian
+                      ///   3. `[writable, optional]` heir_token_account
                 ///   4. `[writable]` estate
                 ///   5. `[writable]` vault
-                ///   6. `[writable]` vault_token_account
-                ///   7. `[writable]` mint
+                      ///   6. `[writable, optional]` vault_token_account
+                      ///   7. `[writable, optional]` mint
           ///   8. `[]` token_program
           ///   9. `[]` rent
           ///   10. `[]` clock
@@ -538,14 +606,16 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
-    pub fn guardian(&mut self, guardian: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.guardian = Some(guardian);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn guardian(&mut self, guardian: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.guardian = guardian;
                     self
     }
-      #[inline(always)]
-    pub fn heir_token_account(&mut self, heir_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.heir_token_account = Some(heir_token_account);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn heir_token_account(&mut self, heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.heir_token_account = heir_token_account;
                     self
     }
       #[inline(always)]
@@ -558,14 +628,16 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                         self.instruction.vault = Some(vault);
                     self
     }
-      #[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.vault_token_account = Some(vault_token_account);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn vault_token_account(&mut self, vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.vault_token_account = vault_token_account;
                     self
     }
-      #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.mint = Some(mint);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.mint = mint;
                     self
     }
       #[inline(always)]
@@ -617,17 +689,17 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                   
           authority: self.instruction.authority.expect("authority is not set"),
                   
-          guardian: self.instruction.guardian.expect("guardian is not set"),
+          guardian: self.instruction.guardian,
                   
-          heir_token_account: self.instruction.heir_token_account.expect("heir_token_account is not set"),
+          heir_token_account: self.instruction.heir_token_account,
                   
           estate: self.instruction.estate.expect("estate is not set"),
                   
           vault: self.instruction.vault.expect("vault is not set"),
                   
-          vault_token_account: self.instruction.vault_token_account.expect("vault_token_account is not set"),
+          vault_token_account: self.instruction.vault_token_account,
                   
-          mint: self.instruction.mint.expect("mint is not set"),
+          mint: self.instruction.mint,
                   
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   

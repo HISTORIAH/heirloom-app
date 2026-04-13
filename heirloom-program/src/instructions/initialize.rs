@@ -45,8 +45,8 @@ impl Initialize<'_> {
         heartbeat_interval: i64,
         grace_period: i64,
         pause_duration: i64,
-        label: &str,
         amount: u64, // in token amount
+        label: &str,
     ) -> Result<(), ProgramError> {
         // validate everything
         ctx.accounts.validate()?;

@@ -42,29 +42,29 @@ import {
 import {
   getClaimInstructionAsync,
   getDelegateDeferInstructionAsync,
-  getHeartbeatInstructionAsync,
   getInitializeInstructionAsync,
   getRevokeInstructionAsync,
+  getUpdateInstructionAsync,
   parseClaimInstruction,
   parseDelegateDeferInstruction,
-  parseHeartbeatInstruction,
   parseInitializeInstruction,
   parseRevokeInstruction,
+  parseUpdateInstruction,
   type ClaimAsyncInput,
   type DelegateDeferAsyncInput,
-  type HeartbeatAsyncInput,
   type InitializeAsyncInput,
   type ParsedClaimInstruction,
   type ParsedDelegateDeferInstruction,
-  type ParsedHeartbeatInstruction,
   type ParsedInitializeInstruction,
   type ParsedRevokeInstruction,
+  type ParsedUpdateInstruction,
   type RevokeAsyncInput,
+  type UpdateAsyncInput,
 } from "../instructions";
 import { findEstatePda, findVaultPda } from "../pdas";
 
 export const HEIRLOOM_PROGRAM_PROGRAM_ADDRESS =
-  "ErmBxYMvNYkrTuFuWnGv1yjTUyJSnfVUQm8LjUnFtWMa" as Address<"ErmBxYMvNYkrTuFuWnGv1yjTUyJSnfVUQm8LjUnFtWMa">;
+  "BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv" as Address<"BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv">;
 
 export enum HeirloomProgramAccount {
   Estate,
@@ -102,7 +102,7 @@ export function identifyHeirloomProgramAccount(
 export enum HeirloomProgramInstruction {
   Initialize,
   Claim,
-  Heartbeat,
+  Update,
   Revoke,
   DelegateDefer,
 }
@@ -132,16 +132,16 @@ export function identifyHeirloomProgramInstruction(
   if (
     containsBytes(
       data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([2])),
+      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([3])),
       0,
     )
   ) {
-    return HeirloomProgramInstruction.Heartbeat;
+    return HeirloomProgramInstruction.Update;
   }
   if (
     containsBytes(
       data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([5])),
+      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([4])),
       0,
     )
   ) {
@@ -150,7 +150,7 @@ export function identifyHeirloomProgramInstruction(
   if (
     containsBytes(
       data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([6])),
+      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([5])),
       0,
     )
   ) {
@@ -163,7 +163,7 @@ export function identifyHeirloomProgramInstruction(
 }
 
 export type ParsedHeirloomProgramInstruction<
-  TProgram extends string = "ErmBxYMvNYkrTuFuWnGv1yjTUyJSnfVUQm8LjUnFtWMa",
+  TProgram extends string = "BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv",
 > =
   | ({
       instructionType: HeirloomProgramInstruction.Initialize;
@@ -172,8 +172,8 @@ export type ParsedHeirloomProgramInstruction<
       instructionType: HeirloomProgramInstruction.Claim;
     } & ParsedClaimInstruction<TProgram>)
   | ({
-      instructionType: HeirloomProgramInstruction.Heartbeat;
-    } & ParsedHeartbeatInstruction<TProgram>)
+      instructionType: HeirloomProgramInstruction.Update;
+    } & ParsedUpdateInstruction<TProgram>)
   | ({
       instructionType: HeirloomProgramInstruction.Revoke;
     } & ParsedRevokeInstruction<TProgram>)
@@ -200,11 +200,11 @@ export function parseHeirloomProgramInstruction<TProgram extends string>(
         ...parseClaimInstruction(instruction),
       };
     }
-    case HeirloomProgramInstruction.Heartbeat: {
+    case HeirloomProgramInstruction.Update: {
       assertIsInstructionWithAccounts(instruction);
       return {
-        instructionType: HeirloomProgramInstruction.Heartbeat,
-        ...parseHeartbeatInstruction(instruction),
+        instructionType: HeirloomProgramInstruction.Update,
+        ...parseUpdateInstruction(instruction),
       };
     }
     case HeirloomProgramInstruction.Revoke: {
@@ -253,10 +253,9 @@ export type HeirloomProgramPluginInstructions = {
   claim: (
     input: ClaimAsyncInput,
   ) => ReturnType<typeof getClaimInstructionAsync> & SelfPlanAndSendFunctions;
-  heartbeat: (
-    input: HeartbeatAsyncInput,
-  ) => ReturnType<typeof getHeartbeatInstructionAsync> &
-    SelfPlanAndSendFunctions;
+  update: (
+    input: UpdateAsyncInput,
+  ) => ReturnType<typeof getUpdateInstructionAsync> & SelfPlanAndSendFunctions;
   revoke: (
     input: RevokeAsyncInput,
   ) => ReturnType<typeof getRevokeInstructionAsync> & SelfPlanAndSendFunctions;
@@ -297,10 +296,10 @@ export function heirloomProgramProgram() {
               client,
               getClaimInstructionAsync(input),
             ),
-          heartbeat: (input) =>
+          update: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getHeartbeatInstructionAsync(input),
+              getUpdateInstructionAsync(input),
             ),
           revoke: (input) =>
             addSelfPlanAndSendFunctions(

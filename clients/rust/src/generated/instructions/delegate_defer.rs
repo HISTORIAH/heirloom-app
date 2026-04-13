@@ -8,7 +8,7 @@
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-pub const DELEGATE_DEFER_DISCRIMINATOR: [u8; 1] = [6];
+pub const DELEGATE_DEFER_DISCRIMINATOR: [u8; 1] = [5];
 
 /// Accounts.
 #[derive(Debug)]
@@ -84,7 +84,7 @@ impl DelegateDefer {
 impl DelegateDeferInstructionData {
   pub fn new() -> Self {
     Self {
-                        discriminator: [6],
+                        discriminator: [5],
                   }
   }
 

@@ -125,16 +125,16 @@ export type InitializeInstructionData = {
   heartbeatInterval: bigint;
   gracePeriod: bigint;
   pauseDuration: bigint;
-  label: string;
   amount: bigint;
+  label: string;
 };
 
 export type InitializeInstructionDataArgs = {
   heartbeatInterval: number | bigint;
   gracePeriod: number | bigint;
   pauseDuration: number | bigint;
-  label: string;
   amount: number | bigint;
+  label: string;
 };
 
 export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstructionDataArgs> {
@@ -144,8 +144,8 @@ export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstruc
       ["heartbeatInterval", getI64Encoder()],
       ["gracePeriod", getI64Encoder()],
       ["pauseDuration", getI64Encoder()],
-      ["label", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ["amount", getU64Encoder()],
+      ["label", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ]),
     (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
   );
@@ -157,8 +157,8 @@ export function getInitializeInstructionDataDecoder(): Decoder<InitializeInstruc
     ["heartbeatInterval", getI64Decoder()],
     ["gracePeriod", getI64Decoder()],
     ["pauseDuration", getI64Decoder()],
-    ["label", addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ["amount", getU64Decoder()],
+    ["label", addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
   ]);
 }
 
@@ -188,12 +188,12 @@ export type InitializeAsyncInput<
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
-  delegate: Address<TAccountDelegate>;
-  authorityTokenAccount: Address<TAccountAuthorityTokenAccount>;
+  delegate?: Address<TAccountDelegate>;
+  authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  mint: Address<TAccountMint>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   rent?: Address<TAccountRent>;
   clock?: Address<TAccountClock>;
@@ -201,8 +201,8 @@ export type InitializeAsyncInput<
   heartbeatInterval: InitializeInstructionDataArgs["heartbeatInterval"];
   gracePeriod: InitializeInstructionDataArgs["gracePeriod"];
   pauseDuration: InitializeInstructionDataArgs["pauseDuration"];
-  label: InitializeInstructionDataArgs["label"];
   amount: InitializeInstructionDataArgs["amount"];
+  label: InitializeInstructionDataArgs["label"];
 };
 
 export async function getInitializeInstructionAsync<
@@ -380,12 +380,12 @@ export type InitializeInput<
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
-  delegate: Address<TAccountDelegate>;
-  authorityTokenAccount: Address<TAccountAuthorityTokenAccount>;
+  delegate?: Address<TAccountDelegate>;
+  authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  mint: Address<TAccountMint>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   rent?: Address<TAccountRent>;
   clock?: Address<TAccountClock>;
@@ -393,8 +393,8 @@ export type InitializeInput<
   heartbeatInterval: InitializeInstructionDataArgs["heartbeatInterval"];
   gracePeriod: InitializeInstructionDataArgs["gracePeriod"];
   pauseDuration: InitializeInstructionDataArgs["pauseDuration"];
-  label: InitializeInstructionDataArgs["label"];
   amount: InitializeInstructionDataArgs["amount"];
+  label: InitializeInstructionDataArgs["label"];
 };
 
 export function getInitializeInstruction<
@@ -538,12 +538,12 @@ export type ParsedInitializeInstruction<
   accounts: {
     authority: TAccountMetas[0];
     heir: TAccountMetas[1];
-    delegate: TAccountMetas[2];
-    authorityTokenAccount: TAccountMetas[3];
+    delegate?: TAccountMetas[2] | undefined;
+    authorityTokenAccount?: TAccountMetas[3] | undefined;
     estate: TAccountMetas[4];
     vault: TAccountMetas[5];
-    vaultTokenAccount: TAccountMetas[6];
-    mint: TAccountMetas[7];
+    vaultTokenAccount?: TAccountMetas[6] | undefined;
+    mint?: TAccountMetas[7] | undefined;
     tokenProgram: TAccountMetas[8];
     rent: TAccountMetas[9];
     clock: TAccountMetas[10];
@@ -575,17 +575,23 @@ export function parseInitializeInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       authority: getNextAccount(),
       heir: getNextAccount(),
-      delegate: getNextAccount(),
-      authorityTokenAccount: getNextAccount(),
+      delegate: getNextOptionalAccount(),
+      authorityTokenAccount: getNextOptionalAccount(),
       estate: getNextAccount(),
       vault: getNextAccount(),
-      vaultTokenAccount: getNextAccount(),
-      mint: getNextAccount(),
+      vaultTokenAccount: getNextOptionalAccount(),
+      mint: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       rent: getNextAccount(),
       clock: getNextAccount(),

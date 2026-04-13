@@ -7,13 +7,13 @@
 
   pub(crate) mod r#claim;
   pub(crate) mod r#delegate_defer;
-  pub(crate) mod r#heartbeat;
   pub(crate) mod r#initialize;
   pub(crate) mod r#revoke;
+  pub(crate) mod r#update;
 
   pub use self::r#claim::*;
   pub use self::r#delegate_defer::*;
-  pub use self::r#heartbeat::*;
   pub use self::r#initialize::*;
   pub use self::r#revoke::*;
+  pub use self::r#update::*;
 
