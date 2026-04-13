@@ -9,12 +9,15 @@
     "dev:ui": "turbo run dev --filter=app",
     "build": "turbo run build",
     "convert-idl": "bun run scripts/convert-idl.ts",
-    "build:client": "bash scripts/build-client.sh",
+    "generate:clients": "bun convert-idl && bunx codama run --all",
     "deploy": "bash scripts/deploy.sh",
     "test": "turbo run test",
     "airdrop": "bash scripts/airdrop.sh"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "latest",
+    "@codama/nodes-from-anchor": "^1.4.0",
+    "@codama/renderers-js": "^2.1.0",
+    "@codama/renderers-rust": "^3.0.0"
   }
 }

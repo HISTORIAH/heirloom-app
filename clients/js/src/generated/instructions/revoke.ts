@@ -40,7 +40,7 @@ import {
 import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
-export const REVOKE_DISCRIMINATOR = new Uint8Array([5]);
+export const REVOKE_DISCRIMINATOR = new Uint8Array([4]);
 
 export function getRevokeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 1).encode(REVOKE_DISCRIMINATOR);

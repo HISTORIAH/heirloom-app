@@ -8,7 +8,7 @@
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-pub const REVOKE_DISCRIMINATOR: [u8; 1] = [5];
+pub const REVOKE_DISCRIMINATOR: [u8; 1] = [4];
 
 /// Accounts.
 #[derive(Debug)]
@@ -105,7 +105,7 @@ impl Revoke {
 impl RevokeInstructionData {
   pub fn new() -> Self {
     Self {
-                        discriminator: [5],
+                        discriminator: [4],
                   }
   }
 

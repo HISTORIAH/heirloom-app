@@ -37,28 +37,23 @@ mod heirloom_program {
         Claim::claim_handler(&mut ctx)
     }
 
-    #[instruction(discriminator = 2)]
-    pub fn heartbeat(ctx: Ctx<Heartbeat>) -> Result<(), ProgramError> {
-        Heartbeat::heartbeat_handler(&mut ctx)
-    }
-
     // // draw small amounts here and there
-    // #[instruction(discriminator = 3)]
+    // #[instruction(discriminator = 2)]
     // pub fn withdraw(ctx: Ctx<Withdraw>) -> Result<(), ProgramError> {
     //     Withdraw::withdraw_handler(&mut ctx)
     // }
 
-    // #[instruction(discriminator = 4)]
-    // pub fn update(ctx: Ctx<Update>) -> Result<(), ProgramError> {
-    //     Update::update_handler(&mut ctx)
-    // }
+    #[instruction(discriminator = 3)]
+    pub fn update(ctx: Ctx<Update>) -> Result<(), ProgramError> {
+        Update::update_handler(&mut ctx)
+    }
 
-    #[instruction(discriminator = 5)]
+    #[instruction(discriminator = 4)]
     pub fn revoke(ctx: Ctx<Revoke>) -> Result<(), ProgramError> {
         Revoke::revoke_handler(&mut ctx)
     }
 
-    #[instruction(discriminator = 6)]
+    #[instruction(discriminator = 5)]
     pub fn delegate_defer(ctx: Ctx<Defer>) -> Result<(), ProgramError> {
         Defer::delegate_defer_handler(&mut ctx)
     }

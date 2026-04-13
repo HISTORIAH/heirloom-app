@@ -40,13 +40,13 @@ import {
 import { findEstatePda } from "../pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
-export const HEARTBEAT_DISCRIMINATOR = new Uint8Array([2]);
+export const UPDATE_DISCRIMINATOR = new Uint8Array([3]);
 
-export function getHeartbeatDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 1).encode(HEARTBEAT_DISCRIMINATOR);
+export function getUpdateDiscriminatorBytes() {
+  return fixEncoderSize(getBytesEncoder(), 1).encode(UPDATE_DISCRIMINATOR);
 }
 
-export type HeartbeatInstruction<
+export type UpdateInstruction<
   TProgram extends string = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
@@ -80,34 +80,34 @@ export type HeartbeatInstruction<
     ]
   >;
 
-export type HeartbeatInstructionData = { discriminator: ReadonlyUint8Array };
+export type UpdateInstructionData = { discriminator: ReadonlyUint8Array };
 
-export type HeartbeatInstructionDataArgs = {};
+export type UpdateInstructionDataArgs = {};
 
-export function getHeartbeatInstructionDataEncoder(): FixedSizeEncoder<HeartbeatInstructionDataArgs> {
+export function getUpdateInstructionDataEncoder(): FixedSizeEncoder<UpdateInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 1)]]),
-    (value) => ({ ...value, discriminator: HEARTBEAT_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPDATE_DISCRIMINATOR }),
   );
 }
 
-export function getHeartbeatInstructionDataDecoder(): FixedSizeDecoder<HeartbeatInstructionData> {
+export function getUpdateInstructionDataDecoder(): FixedSizeDecoder<UpdateInstructionData> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
   ]);
 }
 
-export function getHeartbeatInstructionDataCodec(): FixedSizeCodec<
-  HeartbeatInstructionDataArgs,
-  HeartbeatInstructionData
+export function getUpdateInstructionDataCodec(): FixedSizeCodec<
+  UpdateInstructionDataArgs,
+  UpdateInstructionData
 > {
   return combineCodec(
-    getHeartbeatInstructionDataEncoder(),
-    getHeartbeatInstructionDataDecoder(),
+    getUpdateInstructionDataEncoder(),
+    getUpdateInstructionDataDecoder(),
   );
 }
 
-export type HeartbeatAsyncInput<
+export type UpdateAsyncInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
@@ -121,7 +121,7 @@ export type HeartbeatAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export async function getHeartbeatInstructionAsync<
+export async function getUpdateInstructionAsync<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
@@ -129,7 +129,7 @@ export async function getHeartbeatInstructionAsync<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: HeartbeatAsyncInput<
+  input: UpdateAsyncInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -138,7 +138,7 @@ export async function getHeartbeatInstructionAsync<
   >,
   config?: { programAddress?: TProgramAddress },
 ): Promise<
-  HeartbeatInstruction<
+  UpdateInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
@@ -195,9 +195,9 @@ export async function getHeartbeatInstructionAsync<
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getHeartbeatInstructionDataEncoder().encode({}),
+    data: getUpdateInstructionDataEncoder().encode({}),
     programAddress,
-  } as HeartbeatInstruction<
+  } as UpdateInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
@@ -207,7 +207,7 @@ export async function getHeartbeatInstructionAsync<
   >);
 }
 
-export type HeartbeatInput<
+export type UpdateInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
@@ -221,7 +221,7 @@ export type HeartbeatInput<
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getHeartbeatInstruction<
+export function getUpdateInstruction<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
@@ -229,7 +229,7 @@ export function getHeartbeatInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: HeartbeatInput<
+  input: UpdateInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -237,7 +237,7 @@ export function getHeartbeatInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
-): HeartbeatInstruction<
+): UpdateInstruction<
   TProgramAddress,
   TAccountAuthority,
   TAccountHeir,
@@ -281,9 +281,9 @@ export function getHeartbeatInstruction<
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getHeartbeatInstructionDataEncoder().encode({}),
+    data: getUpdateInstructionDataEncoder().encode({}),
     programAddress,
-  } as HeartbeatInstruction<
+  } as UpdateInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
@@ -293,7 +293,7 @@ export function getHeartbeatInstruction<
   >);
 }
 
-export type ParsedHeartbeatInstruction<
+export type ParsedUpdateInstruction<
   TProgram extends string = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -305,17 +305,17 @@ export type ParsedHeartbeatInstruction<
     clock: TAccountMetas[3];
     systemProgram: TAccountMetas[4];
   };
-  data: HeartbeatInstructionData;
+  data: UpdateInstructionData;
 };
 
-export function parseHeartbeatInstruction<
+export function parseUpdateInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
-): ParsedHeartbeatInstruction<TProgram, TAccountMetas> {
+): ParsedUpdateInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
@@ -340,6 +340,6 @@ export function parseHeartbeatInstruction<
       clock: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getHeartbeatInstructionDataDecoder().decode(instruction.data),
+    data: getUpdateInstructionDataDecoder().decode(instruction.data),
   };
 }
