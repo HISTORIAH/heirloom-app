@@ -5,17 +5,22 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-#[cfg(feature = "fetch")]
-#[derive(Debug, Clone)]
-pub struct DecodedAccount<T> {
-    pub address: solana_address::Address,
-    pub account: solana_account::Account,
-    pub data: T,
-}
 
-#[cfg(feature = "fetch")]
-#[derive(Debug, Clonse)]
-pub enum MaybeAccount<T> {
-    Exists(DecodedAccount<T>),
-    NotFound(solana_address::Address),
-}
+
+
+    #[cfg(feature = "fetch")]
+    #[derive(Debug, Clone)]
+    pub struct DecodedAccount<T> {
+        pub address: solana_address::Address,
+        pub account: solana_account::Account,
+        pub data: T,
+    }
+
+    #[cfg(feature = "fetch")]
+    #[derive(Debug, Clone)]
+    pub enum MaybeAccount<T> {
+        Exists(DecodedAccount<T>),
+        NotFound(solana_address::Address),
+    }
+
+

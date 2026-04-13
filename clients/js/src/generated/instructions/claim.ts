@@ -152,12 +152,12 @@ export type ClaimAsyncInput<
 > = {
   heir: TransactionSigner<TAccountHeir>;
   authority: Address<TAccountAuthority>;
-  guardian: Address<TAccountGuardian>;
-  heirTokenAccount: Address<TAccountHeirTokenAccount>;
+  guardian?: Address<TAccountGuardian>;
+  heirTokenAccount?: Address<TAccountHeirTokenAccount>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  mint: Address<TAccountMint>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   rent?: Address<TAccountRent>;
   clock?: Address<TAccountClock>;
@@ -334,12 +334,12 @@ export type ClaimInput<
 > = {
   heir: TransactionSigner<TAccountHeir>;
   authority: Address<TAccountAuthority>;
-  guardian: Address<TAccountGuardian>;
-  heirTokenAccount: Address<TAccountHeirTokenAccount>;
+  guardian?: Address<TAccountGuardian>;
+  heirTokenAccount?: Address<TAccountHeirTokenAccount>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  mint: Address<TAccountMint>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   rent?: Address<TAccountRent>;
   clock?: Address<TAccountClock>;
@@ -482,12 +482,12 @@ export type ParsedClaimInstruction<
   accounts: {
     heir: TAccountMetas[0];
     authority: TAccountMetas[1];
-    guardian: TAccountMetas[2];
-    heirTokenAccount: TAccountMetas[3];
+    guardian?: TAccountMetas[2] | undefined;
+    heirTokenAccount?: TAccountMetas[3] | undefined;
     estate: TAccountMetas[4];
     vault: TAccountMetas[5];
-    vaultTokenAccount: TAccountMetas[6];
-    mint: TAccountMetas[7];
+    vaultTokenAccount?: TAccountMetas[6] | undefined;
+    mint?: TAccountMetas[7] | undefined;
     tokenProgram: TAccountMetas[8];
     rent: TAccountMetas[9];
     clock: TAccountMetas[10];
@@ -519,17 +519,23 @@ export function parseClaimInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       heir: getNextAccount(),
       authority: getNextAccount(),
-      guardian: getNextAccount(),
-      heirTokenAccount: getNextAccount(),
+      guardian: getNextOptionalAccount(),
+      heirTokenAccount: getNextOptionalAccount(),
       estate: getNextAccount(),
       vault: getNextAccount(),
-      vaultTokenAccount: getNextAccount(),
-      mint: getNextAccount(),
+      vaultTokenAccount: getNextOptionalAccount(),
+      mint: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       rent: getNextAccount(),
       clock: getNextAccount(),

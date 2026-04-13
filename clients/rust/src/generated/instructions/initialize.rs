@@ -21,10 +21,10 @@ pub struct Initialize {
           pub heir: solana_address::Address,
           
               
-          pub delegate: solana_address::Address,
+          pub delegate: Option<solana_address::Address>,
           
               
-          pub authority_token_account: solana_address::Address,
+          pub authority_token_account: Option<solana_address::Address>,
           
               
           pub estate: solana_address::Address,
@@ -33,10 +33,10 @@ pub struct Initialize {
           pub vault: solana_address::Address,
           
               
-          pub vault_token_account: solana_address::Address,
+          pub vault_token_account: Option<solana_address::Address>,
           
               
-          pub mint: solana_address::Address,
+          pub mint: Option<solana_address::Address>,
           
               
           pub token_program: solana_address::Address,
@@ -67,15 +67,29 @@ impl Initialize {
             self.heir,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.delegate,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.authority_token_account,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
+                                                      if let Some(delegate) = self.delegate {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                delegate,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(authority_token_account) = self.authority_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                authority_token_account,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                    accounts.push(solana_instruction::AccountMeta::new(
             self.estate,
             false
           ));
@@ -83,15 +97,29 @@ impl Initialize {
             self.vault,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.vault_token_account,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.mint,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+                                                      if let Some(vault_token_account) = self.vault_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                vault_token_account,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(mint) = self.mint {
+              accounts.push(solana_instruction::AccountMeta::new(
+                mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                    accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
             false
           ));
@@ -148,8 +176,8 @@ impl Default for InitializeInstructionData {
                   pub heartbeat_interval: i64,
                 pub grace_period: i64,
                 pub pause_duration: i64,
-                pub label: String,
                 pub amount: u64,
+                pub label: String,
       }
 
 impl InitializeInstructionArgs {
@@ -165,12 +193,12 @@ impl InitializeInstructionArgs {
 ///
                       ///   0. `[writable, signer]` authority
           ///   1. `[]` heir
-          ///   2. `[]` delegate
-                ///   3. `[writable]` authority_token_account
+                ///   2. `[optional]` delegate
+                      ///   3. `[writable, optional]` authority_token_account
                 ///   4. `[writable]` estate
                 ///   5. `[writable]` vault
-                ///   6. `[writable]` vault_token_account
-                ///   7. `[writable]` mint
+                      ///   6. `[writable, optional]` vault_token_account
+                      ///   7. `[writable, optional]` mint
                 ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
                 ///   9. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
                 ///   10. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
@@ -192,8 +220,8 @@ pub struct InitializeBuilder {
                         heartbeat_interval: Option<i64>,
                 grace_period: Option<i64>,
                 pause_duration: Option<i64>,
-                label: Option<String>,
                 amount: Option<u64>,
+                label: Option<String>,
         __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
@@ -211,14 +239,16 @@ impl InitializeBuilder {
                         self.heir = Some(heir);
                     self
     }
-            #[inline(always)]
-    pub fn delegate(&mut self, delegate: solana_address::Address) -> &mut Self {
-                        self.delegate = Some(delegate);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn delegate(&mut self, delegate: Option<solana_address::Address>) -> &mut Self {
+                        self.delegate = delegate;
                     self
     }
-            #[inline(always)]
-    pub fn authority_token_account(&mut self, authority_token_account: solana_address::Address) -> &mut Self {
-                        self.authority_token_account = Some(authority_token_account);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn authority_token_account(&mut self, authority_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.authority_token_account = authority_token_account;
                     self
     }
             #[inline(always)]
@@ -231,14 +261,16 @@ impl InitializeBuilder {
                         self.vault = Some(vault);
                     self
     }
-            #[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: solana_address::Address) -> &mut Self {
-                        self.vault_token_account = Some(vault_token_account);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn vault_token_account(&mut self, vault_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.vault_token_account = vault_token_account;
                     self
     }
-            #[inline(always)]
-    pub fn mint(&mut self, mint: solana_address::Address) -> &mut Self {
-                        self.mint = Some(mint);
+            /// `[optional account]`
+#[inline(always)]
+    pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
+                        self.mint = mint;
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
@@ -281,13 +313,13 @@ impl InitializeBuilder {
         self
       }
                 #[inline(always)]
-      pub fn label(&mut self, label: String) -> &mut Self {
-        self.label = Some(label);
+      pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
       }
                 #[inline(always)]
-      pub fn amount(&mut self, amount: u64) -> &mut Self {
-        self.amount = Some(amount);
+      pub fn label(&mut self, label: String) -> &mut Self {
+        self.label = Some(label);
         self
       }
         /// Add an additional account to the instruction.
@@ -307,12 +339,12 @@ impl InitializeBuilder {
     let accounts = Initialize {
                               authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
-                                        delegate: self.delegate.expect("delegate is not set"),
-                                        authority_token_account: self.authority_token_account.expect("authority_token_account is not set"),
+                                        delegate: self.delegate,
+                                        authority_token_account: self.authority_token_account,
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
-                                        vault_token_account: self.vault_token_account.expect("vault_token_account is not set"),
-                                        mint: self.mint.expect("mint is not set"),
+                                        vault_token_account: self.vault_token_account,
+                                        mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
@@ -322,8 +354,8 @@ impl InitializeBuilder {
                                                               heartbeat_interval: self.heartbeat_interval.clone().expect("heartbeat_interval is not set"),
                                                                   grace_period: self.grace_period.clone().expect("grace_period is not set"),
                                                                   pause_duration: self.pause_duration.clone().expect("pause_duration is not set"),
-                                                                  label: self.label.clone().expect("label is not set"),
                                                                   amount: self.amount.clone().expect("amount is not set"),
+                                                                  label: self.label.clone().expect("label is not set"),
                                     };
     
     accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -340,10 +372,10 @@ impl InitializeBuilder {
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub delegate: &'b solana_account_info::AccountInfo<'a>,
+              pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
-              pub authority_token_account: &'b solana_account_info::AccountInfo<'a>,
+              pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub estate: &'b solana_account_info::AccountInfo<'a>,
@@ -352,10 +384,10 @@ impl InitializeBuilder {
               pub vault: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+              pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
-              pub mint: &'b solana_account_info::AccountInfo<'a>,
+              pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -382,10 +414,10 @@ pub struct InitializeCpi<'a, 'b> {
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub delegate: &'b solana_account_info::AccountInfo<'a>,
+          pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
-          pub authority_token_account: &'b solana_account_info::AccountInfo<'a>,
+          pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
           pub estate: &'b solana_account_info::AccountInfo<'a>,
@@ -394,10 +426,10 @@ pub struct InitializeCpi<'a, 'b> {
           pub vault: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+          pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
-          pub mint: &'b solana_account_info::AccountInfo<'a>,
+          pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -466,14 +498,28 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             *self.heir.key,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.delegate.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.authority_token_account.key,
-            false
-          ));
+                                          if let Some(delegate) = self.delegate {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              *delegate.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(authority_token_account) = self.authority_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *authority_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.estate.key,
             false
@@ -482,14 +528,28 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             *self.vault.key,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.vault_token_account.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.mint.key,
-            false
-          ));
+                                          if let Some(vault_token_account) = self.vault_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *vault_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(mint) = self.mint {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *mint.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false
@@ -526,12 +586,20 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
-                        account_infos.push(self.delegate.clone());
-                        account_infos.push(self.authority_token_account.clone());
+                        if let Some(delegate) = self.delegate {
+          account_infos.push(delegate.clone());
+        }
+                        if let Some(authority_token_account) = self.authority_token_account {
+          account_infos.push(authority_token_account.clone());
+        }
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
-                        account_infos.push(self.vault_token_account.clone());
-                        account_infos.push(self.mint.clone());
+                        if let Some(vault_token_account) = self.vault_token_account {
+          account_infos.push(vault_token_account.clone());
+        }
+                        if let Some(mint) = self.mint {
+          account_infos.push(mint.clone());
+        }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.rent.clone());
                         account_infos.push(self.clock.clone());
@@ -552,12 +620,12 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 ///
                       ///   0. `[writable, signer]` authority
           ///   1. `[]` heir
-          ///   2. `[]` delegate
-                ///   3. `[writable]` authority_token_account
+                ///   2. `[optional]` delegate
+                      ///   3. `[writable, optional]` authority_token_account
                 ///   4. `[writable]` estate
                 ///   5. `[writable]` vault
-                ///   6. `[writable]` vault_token_account
-                ///   7. `[writable]` mint
+                      ///   6. `[writable, optional]` vault_token_account
+                      ///   7. `[writable, optional]` mint
           ///   8. `[]` token_program
           ///   9. `[]` rent
           ///   10. `[]` clock
@@ -586,8 +654,8 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                                             heartbeat_interval: None,
                                 grace_period: None,
                                 pause_duration: None,
-                                label: None,
                                 amount: None,
+                                label: None,
                     __remaining_accounts: Vec::new(),
     });
     Self { instruction }
@@ -602,14 +670,16 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                         self.instruction.heir = Some(heir);
                     self
     }
-      #[inline(always)]
-    pub fn delegate(&mut self, delegate: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.delegate = Some(delegate);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn delegate(&mut self, delegate: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.delegate = delegate;
                     self
     }
-      #[inline(always)]
-    pub fn authority_token_account(&mut self, authority_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.authority_token_account = Some(authority_token_account);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn authority_token_account(&mut self, authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.authority_token_account = authority_token_account;
                     self
     }
       #[inline(always)]
@@ -622,14 +692,16 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                         self.instruction.vault = Some(vault);
                     self
     }
-      #[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.vault_token_account = Some(vault_token_account);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn vault_token_account(&mut self, vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.vault_token_account = vault_token_account;
                     self
     }
-      #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.mint = Some(mint);
+      /// `[optional account]`
+#[inline(always)]
+    pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.mint = mint;
                     self
     }
       #[inline(always)]
@@ -668,13 +740,13 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
       }
                 #[inline(always)]
-      pub fn label(&mut self, label: String) -> &mut Self {
-        self.instruction.label = Some(label);
+      pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
       }
                 #[inline(always)]
-      pub fn amount(&mut self, amount: u64) -> &mut Self {
-        self.instruction.amount = Some(amount);
+      pub fn label(&mut self, label: String) -> &mut Self {
+        self.instruction.label = Some(label);
         self
       }
         /// Add an additional account to the instruction.
@@ -703,8 +775,8 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                                                               heartbeat_interval: self.instruction.heartbeat_interval.clone().expect("heartbeat_interval is not set"),
                                                                   grace_period: self.instruction.grace_period.clone().expect("grace_period is not set"),
                                                                   pause_duration: self.instruction.pause_duration.clone().expect("pause_duration is not set"),
-                                                                  label: self.instruction.label.clone().expect("label is not set"),
                                                                   amount: self.instruction.amount.clone().expect("amount is not set"),
+                                                                  label: self.instruction.label.clone().expect("label is not set"),
                                     };
         let instruction = InitializeCpi {
         __program: self.instruction.__program,
@@ -713,17 +785,17 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                   
           heir: self.instruction.heir.expect("heir is not set"),
                   
-          delegate: self.instruction.delegate.expect("delegate is not set"),
+          delegate: self.instruction.delegate,
                   
-          authority_token_account: self.instruction.authority_token_account.expect("authority_token_account is not set"),
+          authority_token_account: self.instruction.authority_token_account,
                   
           estate: self.instruction.estate.expect("estate is not set"),
                   
           vault: self.instruction.vault.expect("vault is not set"),
                   
-          vault_token_account: self.instruction.vault_token_account.expect("vault_token_account is not set"),
+          vault_token_account: self.instruction.vault_token_account,
                   
-          mint: self.instruction.mint.expect("mint is not set"),
+          mint: self.instruction.mint,
                   
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   
@@ -756,8 +828,8 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
                         heartbeat_interval: Option<i64>,
                 grace_period: Option<i64>,
                 pause_duration: Option<i64>,
-                label: Option<String>,
                 amount: Option<u64>,
+                label: Option<String>,
         /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

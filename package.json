@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "app",
-    "clients/*"
+    "clients/*",
+    "tests"
   ],
   "scripts": {
     "dev:ui": "turbo run dev --filter=app",

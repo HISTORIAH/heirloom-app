@@ -7,7 +7,7 @@ mod instructions;
 mod state;
 use instructions::*;
 
-declare_id!("ErmBxYMvNYkrTuFuWnGv1yjTUyJSnfVUQm8LjUnFtWMa");
+declare_id!("BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv");
 
 #[program]
 mod heirloom_program {
@@ -19,16 +19,16 @@ mod heirloom_program {
         heartbeat_interval: i64,
         grace_period: i64,
         pause_duration: i64,
-        label: String<u32, 10>,
         amount: u64, // in token amount
+        label: String<u32, 10>,
     ) -> Result<(), ProgramError> {
         Initialize::initialize_handler(
             &mut ctx,
             heartbeat_interval,
             grace_period,
             pause_duration,
-            label,
             amount,
+            label,
         )
     }
 

@@ -138,9 +138,9 @@ export type RevokeAsyncInput<
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
-  authorityTokenAccount: Address<TAccountAuthorityTokenAccount>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  mint: Address<TAccountMint>;
+  authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
@@ -288,9 +288,9 @@ export type RevokeInput<
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
-  authorityTokenAccount: Address<TAccountAuthorityTokenAccount>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  mint: Address<TAccountMint>;
+  authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
@@ -407,9 +407,9 @@ export type ParsedRevokeInstruction<
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
     vault: TAccountMetas[3];
-    authorityTokenAccount: TAccountMetas[4];
-    vaultTokenAccount: TAccountMetas[5];
-    mint: TAccountMetas[6];
+    authorityTokenAccount?: TAccountMetas[4] | undefined;
+    vaultTokenAccount?: TAccountMetas[5] | undefined;
+    mint?: TAccountMetas[6] | undefined;
     tokenProgram: TAccountMetas[7];
     systemProgram: TAccountMetas[8];
   };
@@ -439,6 +439,12 @@ export function parseRevokeInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
@@ -446,9 +452,9 @@ export function parseRevokeInstruction<
       heir: getNextAccount(),
       estate: getNextAccount(),
       vault: getNextAccount(),
-      authorityTokenAccount: getNextAccount(),
-      vaultTokenAccount: getNextAccount(),
-      mint: getNextAccount(),
+      authorityTokenAccount: getNextOptionalAccount(),
+      vaultTokenAccount: getNextOptionalAccount(),
+      mint: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
