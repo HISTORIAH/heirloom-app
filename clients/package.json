@@ -1,0 +1,10 @@
+{
+  "name": "@heirloom/clients",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "@codama/nodes-from-anchor": "^1.4.0",
+    "@codama/renderers-js": "^2.1.0",
+    "@codama/renderers-rust": "^3.0.0"
+  }
+}
