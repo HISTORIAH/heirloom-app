@@ -44,6 +44,7 @@ const HEARTBEAT_PRESETS = [
   { label: "60d", seconds: 60 * 86400 },
   { label: "90d", seconds: 90 * 86400 },
   { label: "180d", seconds: 180 * 86400 },
+  { label: "365d", seconds: 365 * 86400 },
 ];
 
 const GRACE_PRESETS = [
@@ -52,6 +53,8 @@ const GRACE_PRESETS = [
   { label: "7d", seconds: 7 * 86400 },
   { label: "14d", seconds: 14 * 86400 },
   { label: "30d", seconds: 30 * 86400 },
+  { label: "60d", seconds: 60 * 86400 },
+  { label: "90d", seconds: 90 * 86400 },
 ];
 
 const PAUSE_PRESETS = [
@@ -60,13 +63,14 @@ const PAUSE_PRESETS = [
   { label: "30d", seconds: 30 * 86400 },
 ];
 
-type Accent = "orange" | "cyan" | "lime" | "pink";
+type Accent = "orange" | "cyan" | "lime" | "pink" | "yellow";
 
 const ACCENT_BG: Record<Accent, string> = {
   orange: "bg-accent-orange",
   cyan: "bg-accent-cyan",
   lime: "bg-accent-lime",
   pink: "bg-accent-pink",
+  yellow: "bg-accent-yellow",
 };
 
 interface AssetCardProps {
@@ -202,6 +206,9 @@ const CreateVaultPage = () => {
     }
   };
 
+  const heartbeatSliderDays = Math.max(1, Math.round(heartbeatSeconds / 86400));
+  const graceSliderDays = Math.max(1, Math.round(graceSeconds / 86400));
+
   const isHeirValid = heirAddress.trim().length > 0 && label.trim().length > 0 && label.length <= LABEL_MAX_LEN;
   const canProceed = () => {
     if (step === 0) return heartbeatSeconds > 0 && graceSeconds > 0;
@@ -333,58 +340,96 @@ const CreateVaultPage = () => {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="neo-slide-up" key={step}>
           {step === 0 && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div>
                 <span className="neo-badge bg-accent-pink mb-4 inline-block">Step 1</span>
                 <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
                   Set your <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">heartbeat.</span>
                 </h2>
                 <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                  Pick how often you check in, the grace window, and an optional pause duration.
+                  How often will you check in? If you miss a heartbeat, the grace period starts.
                 </p>
               </div>
 
-              <div className="neo-card-static">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-accent-pink neo-border rounded-xl p-3">
-                    <Heart className="h-6 w-6" strokeWidth={2.5} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="neo-card-static">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-accent-pink neo-border rounded-xl p-3">
+                      <Heart className="h-6 w-6" strokeWidth={2.5} />
+                    </div>
+                    <h3 className="text-xl font-black">Heartbeat Interval</h3>
                   </div>
-                  <h3 className="text-xl font-black">Heartbeat Interval</h3>
+                  <div className="space-y-4">
+                    <input
+                      type="range"
+                      min={1}
+                      max={365}
+                      value={heartbeatSliderDays}
+                      onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * 86400)}
+                      className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer accent-accent-pink"
+                    />
+                    <div className="flex justify-between items-end">
+                      <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                        {heartbeatSeconds < 86400 ? "Seconds" : "Days"}
+                      </span>
+                      <span className="text-5xl font-black tabular-nums">
+                        {heartbeatSeconds < 86400 ? heartbeatSeconds : Math.round(heartbeatSeconds / 86400)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {HEARTBEAT_PRESETS.map((p) => (
+                        <button
+                          key={p.label}
+                          onClick={() => setHeartbeatSeconds(p.seconds)}
+                          className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${
+                            heartbeatSeconds === p.seconds ? "bg-accent-pink neo-shadow-sm" : "bg-secondary hover:bg-accent-pink/30"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {HEARTBEAT_PRESETS.map((p) => (
-                    <button
-                      key={p.label}
-                      onClick={() => setHeartbeatSeconds(p.seconds)}
-                      className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
-                        heartbeatSeconds === p.seconds ? "bg-accent-pink neo-shadow-sm" : "bg-secondary"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className="neo-card-static">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-accent-yellow neo-border rounded-xl p-3">
-                    <Clock className="h-6 w-6" strokeWidth={2.5} />
+                <div className="neo-card-static">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-accent-yellow neo-border rounded-xl p-3">
+                      <Clock className="h-6 w-6" strokeWidth={2.5} />
+                    </div>
+                    <h3 className="text-xl font-black">Grace Period</h3>
                   </div>
-                  <h3 className="text-xl font-black">Grace Period</h3>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {GRACE_PRESETS.map((p) => (
-                    <button
-                      key={p.label}
-                      onClick={() => setGraceSeconds(p.seconds)}
-                      className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
-                        graceSeconds === p.seconds ? "bg-accent-yellow neo-shadow-sm" : "bg-secondary"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+                  <div className="space-y-4">
+                    <input
+                      type="range"
+                      min={1}
+                      max={90}
+                      value={graceSliderDays}
+                      onChange={(e) => setGraceSeconds(Number(e.target.value) * 86400)}
+                      className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer accent-accent-yellow"
+                    />
+                    <div className="flex justify-between items-end">
+                      <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                        {graceSeconds < 86400 ? "Seconds" : "Days"}
+                      </span>
+                      <span className="text-5xl font-black tabular-nums">
+                        {graceSeconds < 86400 ? graceSeconds : Math.round(graceSeconds / 86400)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {GRACE_PRESETS.map((p) => (
+                        <button
+                          key={p.label}
+                          onClick={() => setGraceSeconds(p.seconds)}
+                          className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${
+                            graceSeconds === p.seconds ? "bg-accent-yellow neo-shadow-sm" : "bg-secondary hover:bg-accent-yellow/30"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -393,10 +438,10 @@ const CreateVaultPage = () => {
                   <div className="bg-accent-purple neo-border rounded-xl p-3">
                     <Shield className="h-6 w-6" strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-xl font-black">Delegate Pause Window</h3>
+                  <h3 className="text-xl font-black">Guardian Pause Window</h3>
                 </div>
                 <p className="text-sm font-medium text-muted-foreground mb-3">
-                  How long a delegate can pause the claim once (0 = no delegate pause).
+                  How long a guardian can pause the claim once (0 = no guardian pause).
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {PAUSE_PRESETS.map((p) => (
@@ -413,12 +458,16 @@ const CreateVaultPage = () => {
                 </div>
               </div>
 
-              <div className="neo-card-static bg-accent-lime/20">
-                <p className="text-base font-bold">
+              <div className="neo-card-static bg-accent-lime/30 flex items-center gap-4">
+                <div className="bg-accent-lime neo-border rounded-xl p-3 shrink-0">
+                  <Clock className="h-6 w-6" strokeWidth={2.5} />
+                </div>
+                <p className="text-base font-bold leading-snug">
                   Total deadline:{" "}
-                  <span className="text-2xl font-black">
+                  <span className="text-xl font-black">
                     {formatDuration(heartbeatSeconds + graceSeconds)}
                   </span>
+                  {" "}— if you don't check in for this long, your heirs can claim.
                 </p>
               </div>
             </div>
@@ -478,7 +527,7 @@ const CreateVaultPage = () => {
                   <div className="bg-accent-purple neo-border rounded-xl p-3">
                     <Shield className="h-6 w-6" strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-xl font-black">Delegate (Optional)</h3>
+                  <h3 className="text-xl font-black">Guardian (Optional)</h3>
                 </div>
                 <p className="text-sm font-medium text-muted-foreground mb-3">
                   A trusted address that can pause the claim window once.
@@ -489,7 +538,7 @@ const CreateVaultPage = () => {
                   onChange={(e) => setDelegate(e.target.value)}
                   maxLength={128}
                   className="neo-input font-mono text-sm focus:bg-accent-purple/20"
-                  placeholder="Solana address (leave empty for no delegate)"
+                  placeholder="Solana address (leave empty for no guardian)"
                 />
               </div>
             </div>
@@ -629,7 +678,7 @@ const CreateVaultPage = () => {
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5" strokeWidth={2.5} />
                     <p className="font-bold">
-                      Delegate: <span className="font-mono text-sm break-all">{delegate}</span>
+                      Guardian: <span className="font-mono text-sm break-all">{delegate}</span>
                     </p>
                   </div>
                 </div>
