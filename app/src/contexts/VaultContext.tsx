@@ -1,289 +1,327 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
+import { address as toAddress, type Address, type TransactionSigner, } from "@solana/kit";
+import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
-import { AnchorProvider } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
-import {
-  fetchVaultAccount,
-  createVault as createVaultContract,
-  depositSol as depositSolContract,
-  depositUsdc as depositUsdcContract,
-  sendHeartbeat as sendHeartbeatContract,
-  emergencyWithdraw as emergencyWithdrawContract,
-} from "@/lib/contracts";
-import { USDC_MINT } from "@/config/constants";
+import { fetchEstateByPair, getVaultAddress, sendInitialize, sendRevoke, sendUpdate, type Client, } from "@/lib/contracts";
 
-export interface Heir {
-  address: string;
+export interface EstateData {
+  authority: string;
+  heir: string;
   label: string;
-  splitBps: number;
-  hasClaimed?: boolean;
-}
-
-export interface VaultData {
-  state: "active" | "grace" | "claimable" | "distributed";
-  solBalance: number;
-  usdcBalance: number;
-  lastHeartbeat: number;
   heartbeatInterval: number;
   gracePeriod: number;
-  elapsedSeconds: number;
+  lastHeartbeat: number;
+  pauseDuration: number;
+  pausedUntil: number;
+  createdAt: number;
+  isClaimed: boolean;
+  isDeferred: boolean;
+  delegate: string | null;
+  mint: string | null;
+  estatePda: string;
+  vaultPda: string;
+  solBalance: number;
+  state: "active" | "grace" | "claimable" | "distributed";
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
-  heirCount: number;
-  guardian: string | null;
-  guardianPauseUsed: boolean;
-  isDistributed: boolean;
-  createdAt: number;
-  heirs: Heir[];
-  usdcMint: string;
+}
+
+export interface CreateEstateInput {
+  heir: string;
+  label: string;
+  heartbeatInterval: number;
+  gracePeriod: number;
+  pauseDuration: number;
+  amountLamports: bigint;
+  delegate?: string;
+  mint?: string;
 }
 
 interface VaultState {
-  vault: VaultData | null;
+  estates: EstateData[];
   loading: boolean;
   error: string | null;
   pendingTxId: string | null;
   pendingCreate: boolean;
-  fetchVault: () => Promise<void>;
-  createVaultOnChain: (
-    heartbeatInterval: number,
-    gracePeriod: number,
-    heirs: { address: string; label: string; splitBps: number }[],
-    guardian?: string
-  ) => Promise<string>;
-  depositSolOnChain: (amount: number) => Promise<string>;
-  depositUsdcOnChain: (amount: number) => Promise<string>;
-  sendHeartbeatOnChain: () => Promise<string>;
-  emergencyWithdrawOnChain: () => Promise<string>;
+  fetchEstates: () => Promise<void>;
+  createEstateOnChain: (input: CreateEstateInput) => Promise<string>;
+  sendHeartbeatOnChain: (heir: string) => Promise<string>;
+  revokeEstateOnChain: (heir: string, mint?: string) => Promise<string>;
   clearVault: () => void;
 }
 
 const VaultContext = createContext<VaultState | null>(null);
 
-function computeVaultState(
-  lastHeartbeat: number,
-  heartbeatInterval: number,
-  gracePeriod: number,
-  guardianPauseUsed: boolean,
-  isDistributed: boolean
-): { state: "active" | "grace" | "claimable" | "distributed"; elapsed: number; untilGrace: number; untilClaimable: number } {
-  if (isDistributed) {
-    return { state: "distributed", elapsed: 0, untilGrace: 0, untilClaimable: 0 };
-  }
+const KNOWN_HEIRS_KEY = "heirloom:known-heirs";
 
-  const now = Math.floor(Date.now() / 1000);
-  const elapsed = now - lastHeartbeat;
-  const pauseBonus = guardianPauseUsed ? 2592000 : 0;
-  const deadline = heartbeatInterval + gracePeriod + pauseBonus;
-
-  if (elapsed >= deadline) {
-    return { state: "claimable", elapsed, untilGrace: 0, untilClaimable: 0 };
-  } else if (elapsed >= heartbeatInterval) {
-    return {
-      state: "grace",
-      elapsed,
-      untilGrace: 0,
-      untilClaimable: deadline - elapsed,
-    };
-  } else {
-    return {
-      state: "active",
-      elapsed,
-      untilGrace: heartbeatInterval - elapsed,
-      untilClaimable: deadline - elapsed,
-    };
+function loadKnownHeirs(authority: string): string[] {
+  try {
+    const raw = localStorage.getItem(`${KNOWN_HEIRS_KEY}:${authority}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
   }
 }
 
-export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { publicKey, isConnected, connection, wallet: solWallet } = useWallet();
-  const [vault, setVault] = useState<VaultData | null>(null);
+function saveKnownHeirs(authority: string, heirs: string[]) {
+  try {
+    localStorage.setItem(`${KNOWN_HEIRS_KEY}:${authority}`, JSON.stringify(heirs));
+  } catch {
+    // ignore
+  }
+}
+
+function computeState(
+  lastHeartbeat: number,
+  heartbeatInterval: number,
+  gracePeriod: number,
+  pausedUntil: number,
+  isClaimed: boolean,
+): { state: EstateData["state"]; secondsUntilGrace: number; secondsUntilClaimable: number } {
+  if (isClaimed) {
+    return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const graceDeadline = lastHeartbeat + heartbeatInterval;
+  const baseClaimable = graceDeadline + gracePeriod;
+  const claimableAt = Math.max(baseClaimable, pausedUntil);
+
+  if (now >= claimableAt) {
+    return { state: "claimable", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
+  }
+  if (now >= graceDeadline) {
+    return {
+      state: "grace",
+      secondsUntilGrace: 0,
+      secondsUntilClaimable: claimableAt - now,
+    };
+  }
+  return {
+    state: "active",
+    secondsUntilGrace: graceDeadline - now,
+    secondsUntilClaimable: claimableAt - now,
+  };
+}
+
+type VaultUiShim = { account?: { address: string } | null };
+
+const VaultProviderInner: React.FC<{
+  signer: TransactionSigner;
+  authority: Address;
+  children: React.ReactNode;
+}> = ({ signer, authority, children }) => {
+  const { rpc, rpcSubscriptions } = useWallet();
+  const [estates, setEstates] = useState<EstateData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingTxId, setPendingTxId] = useState<string | null>(null);
   const [pendingCreate, setPendingCreate] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const getProvider = useCallback((): AnchorProvider => {
-    return new AnchorProvider(connection, solWallet as never, { commitment: "confirmed" });
-  }, [connection, solWallet]);
+  const client: Client = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
 
-  const fetchVault = useCallback(async () => {
-    if (!publicKey) return;
+  const fetchEstates = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      const ownerPk = new PublicKey(publicKey);
-      const vaultAccount = await fetchVaultAccount(connection, ownerPk);
-
-      if (!vaultAccount) {
-        setVault(null);
-        return;
+      const knownHeirs = loadKnownHeirs(authority);
+      const results: EstateData[] = [];
+      for (const heirStr of knownHeirs) {
+        try {
+          const heir = toAddress(heirStr);
+          const maybe = await fetchEstateByPair(rpc, authority, heir);
+          if (!maybe.exists) continue;
+          const estatePda = maybe.address;
+          const vaultPda = await getVaultAddress(authority, heir);
+          const { value: lamports } = await rpc.getBalance(vaultPda).send();
+          const lastHeartbeat = Number(maybe.data.lastHeartbeat);
+          const heartbeatInterval = Number(maybe.data.heartbeatInterval);
+          const gracePeriod = Number(maybe.data.gracePeriod);
+          const pausedUntil = Number(maybe.data.pausedUntil);
+          const { state, secondsUntilGrace, secondsUntilClaimable } = computeState(
+            lastHeartbeat,
+            heartbeatInterval,
+            gracePeriod,
+            pausedUntil,
+            maybe.data.isClaimed,
+          );
+          results.push({
+            authority: maybe.data.authority,
+            heir: maybe.data.heir,
+            label: maybe.data.label,
+            heartbeatInterval,
+            gracePeriod,
+            lastHeartbeat,
+            pauseDuration: Number(maybe.data.pauseDuration),
+            pausedUntil,
+            createdAt: Number(maybe.data.createdAt),
+            isClaimed: maybe.data.isClaimed,
+            isDeferred: maybe.data.isDeferred,
+            delegate:
+              maybe.data.delegate && "__option" in maybe.data.delegate
+                ? (maybe.data.delegate as { __option: "Some" | "None"; value?: string }).__option === "Some"
+                  ? ((maybe.data.delegate as { value: string }).value ?? null)
+                  : null
+                : null,
+            mint:
+              maybe.data.mint && "__option" in maybe.data.mint
+                ? (maybe.data.mint as { __option: "Some" | "None"; value?: string }).__option === "Some"
+                  ? ((maybe.data.mint as { value: string }).value ?? null)
+                  : null
+                : null,
+            estatePda,
+            vaultPda,
+            solBalance: Number(lamports),
+            state,
+            secondsUntilGrace,
+            secondsUntilClaimable,
+          });
+        } catch {
+          // skip failed heirs
+        }
       }
-
-      const lastHB = vaultAccount.lastHeartbeat.toNumber();
-      const interval = vaultAccount.heartbeatInterval.toNumber();
-      const grace = vaultAccount.gracePeriod.toNumber();
-      const { state, elapsed, untilGrace, untilClaimable } = computeVaultState(
-        lastHB,
-        interval,
-        grace,
-        vaultAccount.guardianPauseUsed,
-        vaultAccount.isDistributed
-      );
-
-      // If vault is distributed, treat as no vault so owner can create a new one
-      const allClaimed =
-        vaultAccount.heirs.length > 0 &&
-        vaultAccount.heirs.filter((h) => h.isActive).every((h) => h.hasClaimed);
-      if (vaultAccount.isDistributed || allClaimed) {
-        setVault(null);
-        return;
-      }
-
-      const heirs: Heir[] = vaultAccount.heirs
-        .filter((h) => h.isActive)
-        .map((h, i) => ({
-          address: h.heir.toBase58(),
-          label: `Heir ${i + 1}`,
-          splitBps: h.splitBps,
-          hasClaimed: h.hasClaimed,
-        }));
-
-      setVault({
-        state,
-        solBalance: vaultAccount.solBalance.toNumber(),
-        usdcBalance: vaultAccount.tokenBBalance.toNumber(),
-        lastHeartbeat: lastHB,
-        heartbeatInterval: interval,
-        gracePeriod: grace,
-        elapsedSeconds: elapsed,
-        secondsUntilGrace: untilGrace,
-        secondsUntilClaimable: untilClaimable,
-        heirCount: vaultAccount.heirCount,
-        guardian: vaultAccount.guardian?.toBase58() ?? null,
-        guardianPauseUsed: vaultAccount.guardianPauseUsed,
-        isDistributed: vaultAccount.isDistributed,
-        createdAt: vaultAccount.createdAt.toNumber(),
-        heirs,
-        usdcMint: vaultAccount.tokenBMint.toBase58(),
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to fetch vault";
-      if (msg.includes("Account does not exist")) {
-        setVault(null);
-      } else {
-        setError(msg);
-      }
+      setEstates(results);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to fetch estates");
     } finally {
       setLoading(false);
     }
-  }, [publicKey, connection]);
+  }, [authority, rpc]);
 
-  // Clear pendingCreate once vault is found
   useEffect(() => {
-    if (vault) {
-      setPendingCreate(false);
-    }
-  }, [vault]);
+    if (estates.length > 0) setPendingCreate(false);
+  }, [estates.length]);
 
-  // Auto-poll: 5s when pending creation, 15s otherwise
   useEffect(() => {
-    if (isConnected && publicKey) {
-      fetchVault();
-      const interval = pendingCreate ? 5000 : 15000;
-      pollRef.current = setInterval(fetchVault, interval);
-    } else {
-      setVault(null);
-    }
+    fetchEstates();
+    const interval = pendingCreate ? 5000 : 15000;
+    pollRef.current = setInterval(fetchEstates, interval);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [isConnected, publicKey, fetchVault, pendingCreate]);
+  }, [fetchEstates, pendingCreate]);
 
-  const createVaultOnChain = useCallback(
-    async (
-      heartbeatInterval: number,
-      gracePeriod: number,
-      heirs: { address: string; label: string; splitBps: number }[],
-      guardian?: string
-    ): Promise<string> => {
-      const provider = getProvider();
-      const txId = await createVaultContract(
-        provider,
-        heartbeatInterval,
-        gracePeriod,
-        heirs.map((h) => ({ address: h.address, splitBps: h.splitBps })),
-        USDC_MINT,
-        guardian
-      );
+  const createEstateOnChain = useCallback(
+    async (input: CreateEstateInput): Promise<string> => {
+      const heirAddress = toAddress(input.heir);
+      const txId = await sendInitialize(client, {
+        authority: signer,
+        heir: heirAddress,
+        amount: input.amountLamports,
+        label: input.label,
+        heartbeatInterval: BigInt(input.heartbeatInterval),
+        gracePeriod: BigInt(input.gracePeriod),
+        pauseDuration: BigInt(input.pauseDuration),
+        delegate: input.delegate ? toAddress(input.delegate) : undefined,
+        mint: input.mint ? toAddress(input.mint) : undefined,
+      });
+      const heirs = loadKnownHeirs(authority);
+      if (!heirs.includes(input.heir)) {
+        heirs.push(input.heir);
+        saveKnownHeirs(authority, heirs);
+      }
       setPendingTxId(txId);
       setPendingCreate(true);
       return txId;
     },
-    [getProvider]
+    [client, signer, authority],
   );
 
-  const depositSolOnChain = useCallback(
-    async (amount: number): Promise<string> => {
-      const provider = getProvider();
-      const txId = await depositSolContract(provider, amount);
+  const sendHeartbeatOnChain = useCallback(
+    async (heir: string): Promise<string> => {
+      const txId = await sendUpdate(client, {
+        authority: signer,
+        heir: toAddress(heir),
+      });
       setPendingTxId(txId);
       return txId;
     },
-    [getProvider]
+    [client, signer],
   );
 
-  const depositUsdcOnChain = useCallback(
-    async (amount: number): Promise<string> => {
-      const provider = getProvider();
-      const txId = await depositUsdcContract(provider, USDC_MINT, amount);
+  const revokeEstateOnChain = useCallback(
+    async (heir: string, mint?: string): Promise<string> => {
+      const txId = await sendRevoke(client, {
+        authority: signer,
+        heir: toAddress(heir),
+        mint: mint ? toAddress(mint) : undefined,
+      });
+      const heirs = loadKnownHeirs(authority).filter((h) => h !== heir);
+      saveKnownHeirs(authority, heirs);
       setPendingTxId(txId);
       return txId;
     },
-    [getProvider]
+    [client, signer, authority],
   );
-
-  const sendHeartbeatOnChain = useCallback(async (): Promise<string> => {
-    const provider = getProvider();
-    const txId = await sendHeartbeatContract(provider);
-    setPendingTxId(txId);
-    return txId;
-  }, [getProvider]);
-
-  const emergencyWithdrawOnChain = useCallback(async (): Promise<string> => {
-    const provider = getProvider();
-    const txId = await emergencyWithdrawContract(provider, USDC_MINT);
-    setPendingTxId(txId);
-    return txId;
-  }, [getProvider]);
 
   const clearVault = useCallback(() => {
-    setVault(null);
+    setEstates([]);
     setPendingTxId(null);
     setPendingCreate(false);
     setError(null);
   }, []);
 
+  const value: VaultState = {
+    estates,
+    loading,
+    error,
+    pendingTxId,
+    pendingCreate,
+    fetchEstates,
+    createEstateOnChain,
+    sendHeartbeatOnChain,
+    revokeEstateOnChain,
+    clearVault,
+  };
+
+  return <VaultContext.Provider value={value}>{children}</VaultContext.Provider>;
+};
+
+const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const stubValue: VaultState = {
+    estates: [],
+    loading: false,
+    error: null,
+    pendingTxId: null,
+    pendingCreate: false,
+    fetchEstates: async () => { },
+    createEstateOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    sendHeartbeatOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    revokeEstateOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    clearVault: () => { },
+  };
+  return <VaultContext.Provider value={stubValue}>{children}</VaultContext.Provider>;
+};
+
+export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const walletUi = useWalletUi() as unknown as VaultUiShim;
+  const account = walletUi?.account ?? null;
+
+  if (!account) {
+    return <VaultProviderDisconnected>{children}</VaultProviderDisconnected>;
+  }
+
+  return <ConnectedProvider account={account}>{children}</ConnectedProvider>;
+};
+
+const ConnectedProvider: React.FC<{
+  account: { address: string };
+  children: React.ReactNode;
+}> = ({ account, children }) => {
+  const signer = useWalletUiSigner() as unknown as TransactionSigner;
+  const authority = toAddress(account.address);
   return (
-    <VaultContext.Provider
-      value={{
-        vault,
-        loading,
-        error,
-        pendingTxId,
-        pendingCreate,
-        fetchVault,
-        createVaultOnChain,
-        depositSolOnChain,
-        depositUsdcOnChain,
-        sendHeartbeatOnChain,
-        emergencyWithdrawOnChain,
-        clearVault,
-      }}
-    >
+    <VaultProviderInner signer={signer} authority={authority}>
       {children}
-    </VaultContext.Provider>
+    </VaultProviderInner>
   );
 };
 

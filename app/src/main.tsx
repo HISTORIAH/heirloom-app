@@ -1,6 +1,3 @@
-import { Buffer } from "buffer";
-(window as never as Record<string, unknown>).Buffer = Buffer;
-
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";

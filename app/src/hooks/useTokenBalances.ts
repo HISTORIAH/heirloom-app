@@ -1,12 +1,7 @@
-import { useState, useEffect } from "react";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import {
-  RPC_URL,
-  USDC_MINT,
-  SOL_DECIMALS,
-  USDC_DECIMALS,
-} from "@/config/constants";
+import { useEffect, useState } from "react";
+import { address as toAddress } from "@solana/kit";
+import { useWallet } from "@/contexts/WalletContext";
+import { SOL_DECIMALS, USDC_DECIMALS, USDC_MINT } from "@/config/constants";
 
 interface TokenBalances {
   sol: number;
@@ -14,39 +9,45 @@ interface TokenBalances {
   loading: boolean;
 }
 
-export function useTokenBalances(address: string | null): TokenBalances {
-  const [balances, setBalances] = useState<TokenBalances>({
-    sol: 0,
-    usdc: 0,
-    loading: true,
-  });
+export function useTokenBalances(addressStr: string | null): TokenBalances {
+  const { rpc } = useWallet();
+  const [balances, setBalances] = useState<TokenBalances>({ sol: 0, usdc: 0, loading: true });
 
   useEffect(() => {
-    if (!address) {
+    if (!addressStr) {
       setBalances({ sol: 0, usdc: 0, loading: false });
       return;
     }
-
     let cancelled = false;
 
-    async function fetchBalances() {
+    (async () => {
       try {
-        const connection = new Connection(RPC_URL, "confirmed");
-        const owner = new PublicKey(address!);
-
-        const usdcAta = getAssociatedTokenAddressSync(USDC_MINT, owner);
-
-        const [solResult, usdcResult] = await Promise.allSettled([
-          connection.getBalance(owner, "confirmed"),
-          connection.getTokenAccountBalance(usdcAta),
+        const owner = toAddress(addressStr);
+        const [solRes, tokenRes] = await Promise.allSettled([
+          rpc.getBalance(owner).send(),
+          rpc
+            .getTokenAccountsByOwner(
+              owner,
+              { mint: USDC_MINT },
+              { encoding: "jsonParsed" },
+            )
+            .send(),
         ]);
 
         const solRaw =
-          solResult.status === "fulfilled" ? solResult.value : 0;
-        const usdcRaw =
-          usdcResult.status === "fulfilled"
-            ? Number(usdcResult.value.value.amount)
-            : 0;
+          solRes.status === "fulfilled" ? Number(solRes.value.value) : 0;
+
+        let usdcRaw = 0;
+        if (tokenRes.status === "fulfilled") {
+          type ParsedTokenAmount = { tokenAmount?: { amount?: string } };
+          const accounts = tokenRes.value.value as unknown as Array<{
+            account: { data: { parsed: { info: ParsedTokenAmount } } };
+          }>;
+          for (const a of accounts) {
+            const amt = a.account?.data?.parsed?.info?.tokenAmount?.amount;
+            if (amt) usdcRaw += Number(amt);
+          }
+        }
 
         if (!cancelled) {
           setBalances({
@@ -56,17 +57,14 @@ export function useTokenBalances(address: string | null): TokenBalances {
           });
         }
       } catch {
-        if (!cancelled) {
-          setBalances({ sol: 0, usdc: 0, loading: false });
-        }
+        if (!cancelled) setBalances({ sol: 0, usdc: 0, loading: false });
       }
-    }
+    })();
 
-    fetchBalances();
     return () => {
       cancelled = true;
     };
-  }, [address]);
+  }, [addressStr, rpc]);
 
   return balances;
 }
