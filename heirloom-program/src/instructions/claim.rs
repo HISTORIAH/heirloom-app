@@ -50,6 +50,9 @@ impl Claim<'_> {
         // transfer assets
         ctx.accounts.transfer_assets(&ctx.bumps)?;
 
+        // update account
+        ctx.accounts.estate.is_claimed = PodBool::from(true);
+
         Ok(())
     }
 
