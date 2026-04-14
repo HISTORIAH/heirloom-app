@@ -1,356 +1,196 @@
-import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
-import { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
-import { PROGRAM_ID, VAULT_SEED, USDC_MINT } from "@/config/constants";
-import idl from "./idl.json";
+  appendTransactionMessageInstruction,
+  createTransactionMessage,
+  getBase58Decoder,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signAndSendTransactionMessageWithSigners,
+  type Address,
+  type MaybeAccount,
+  type TransactionSigner,
+} from "@solana/kit";
+import {
+  fetchMaybeEstate,
+  findEstatePda,
+  findVaultPda,
+  getClaimInstructionAsync,
+  getDelegateDeferInstructionAsync,
+  getInitializeInstructionAsync,
+  getRevokeInstructionAsync,
+  getUpdateInstructionAsync,
+  type Estate,
+} from "@historiah/heirloom";
+import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export type HeirloomProgram = Program<any>;
+export type Client = {
+  rpc: AppRpc;
+  rpcSubscriptions: AppRpcSubscriptions;
+};
 
-export function getProgram(provider: AnchorProvider): HeirloomProgram {
-  return new Program(idl as any, provider);
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
+export type EstateAccount = MaybeAccount<Estate>;
 
-export function getVaultPDA(owner: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from(VAULT_SEED), owner.toBuffer()],
-    PROGRAM_ID
+const base58 = getBase58Decoder();
+
+async function sendTx(
+  client: Client,
+  feePayer: TransactionSigner,
+  ix: Parameters<typeof appendTransactionMessageInstruction>[0],
+): Promise<string> {
+  const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
+
+  const message = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstruction(ix, tx),
   );
+
+  const signatureBytes = await signAndSendTransactionMessageWithSigners(message);
+  return base58.decode(signatureBytes);
 }
 
-// ---- WRITE FUNCTIONS ----
+export async function getEstateAddress(
+  authority: Address,
+  heir: Address,
+): Promise<Address> {
+  const [pda] = await findEstatePda({ authority, heir });
+  return pda;
+}
 
-export async function createVault(
-  provider: AnchorProvider,
-  heartbeatInterval: number,
-  gracePeriod: number,
-  heirs: { address: string; splitBps: number }[],
-  usdcMint: PublicKey,
-  guardian?: string
+export async function getVaultAddress(
+  authority: Address,
+  heir: Address,
+): Promise<Address> {
+  const [pda] = await findVaultPda({ authority, heir });
+  return pda;
+}
+
+export async function fetchEstateByPair(
+  rpc: AppRpc,
+  authority: Address,
+  heir: Address,
+): Promise<EstateAccount> {
+  const pda = await getEstateAddress(authority, heir);
+  return fetchMaybeEstate(rpc, pda);
+}
+
+export interface InitializeArgs {
+  authority: TransactionSigner;
+  heir: Address;
+  amount: bigint;
+  label: string;
+  heartbeatInterval: bigint;
+  gracePeriod: bigint;
+  pauseDuration: bigint;
+  delegate?: Address;
+  mint?: Address;
+  tokenProgram?: Address;
+  authorityTokenAccount?: Address;
+  vaultTokenAccount?: Address;
+}
+
+export async function sendInitialize(
+  client: Client,
+  args: InitializeArgs,
 ): Promise<string> {
-  const program = getProgram(provider);
-  const owner = provider.publicKey;
-  const [vault] = getVaultPDA(owner);
-
-  const vaultUsdc = getAssociatedTokenAddressSync(usdcMint, vault, true);
-
-  const heirInputs = heirs.map((h) => ({
-    heir: new PublicKey(h.address),
-    splitBps: h.splitBps,
-  }));
-
-  const guardianPubkey = guardian ? new PublicKey(guardian) : null;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .createVault(
-      new BN(heartbeatInterval),
-      new BN(gracePeriod),
-      heirInputs,
-      guardianPubkey
-    )
-    .accounts({
-      owner,
-      vault,
-      tokenBMint: usdcMint,
-      vaultTokenB: vaultUsdc,
-      systemProgram: SystemProgram.programId,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    })
-    .rpc();
-
-  return tx;
+  const ix = await getInitializeInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+    delegate: args.delegate,
+    authorityTokenAccount: args.authorityTokenAccount,
+    vaultTokenAccount: args.vaultTokenAccount,
+    mint: args.mint,
+    tokenProgram: args.tokenProgram,
+    heartbeatInterval: args.heartbeatInterval,
+    gracePeriod: args.gracePeriod,
+    pauseDuration: args.pauseDuration,
+    amount: args.amount,
+    label: args.label,
+  });
+  return sendTx(client, args.authority, ix);
 }
 
-export async function depositSol(
-  provider: AnchorProvider,
-  amount: number
+export interface UpdateArgs {
+  authority: TransactionSigner;
+  heir: Address;
+}
+
+export async function sendUpdate(
+  client: Client,
+  args: UpdateArgs,
 ): Promise<string> {
-  const program = getProgram(provider);
-  const owner = provider.publicKey;
-  const [vault] = getVaultPDA(owner);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .depositSol(new BN(amount))
-    .accounts({
-      owner,
-      vault,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
-
-  return tx;
+  const ix = await getUpdateInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+  });
+  return sendTx(client, args.authority, ix);
 }
 
-export async function depositUsdc(
-  provider: AnchorProvider,
-  mint: PublicKey,
-  amount: number
+export interface RevokeArgs {
+  authority: TransactionSigner;
+  heir: Address;
+  mint?: Address;
+  tokenProgram?: Address;
+  authorityTokenAccount?: Address;
+  vaultTokenAccount?: Address;
+}
+
+export async function sendRevoke(
+  client: Client,
+  args: RevokeArgs,
 ): Promise<string> {
-  const program = getProgram(provider);
-  const owner = provider.publicKey;
-  const [vault] = getVaultPDA(owner);
-
-  const ownerTokenAccount = getAssociatedTokenAddressSync(mint, owner);
-  const vaultTokenAccount = getAssociatedTokenAddressSync(mint, vault, true);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .depositToken(new BN(amount))
-    .accounts({
-      owner,
-      vault,
-      mint,
-      ownerTokenAccount,
-      vaultTokenAccount,
-      tokenProgram: TOKEN_PROGRAM_ID,
-    })
-    .rpc();
-
-  return tx;
+  const ix = await getRevokeInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+    mint: args.mint,
+    tokenProgram: args.tokenProgram,
+    authorityTokenAccount: args.authorityTokenAccount,
+    vaultTokenAccount: args.vaultTokenAccount,
+  });
+  return sendTx(client, args.authority, ix);
 }
 
-export async function sendHeartbeat(provider: AnchorProvider): Promise<string> {
-  const program = getProgram(provider);
-  const owner = provider.publicKey;
-  const [vault] = getVaultPDA(owner);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .heartbeat()
-    .accounts({ owner, vault })
-    .rpc();
-
-  return tx;
+export interface ClaimArgs {
+  heir: TransactionSigner;
+  authority: Address;
+  mint?: Address;
+  tokenProgram?: Address;
+  vaultTokenAccount?: Address;
+  heirTokenAccount?: Address;
+  guardian?: Address;
 }
 
-export async function claimInheritance(
-  provider: AnchorProvider,
-  vaultOwner: PublicKey,
-  usdcMint: PublicKey
+export async function sendClaim(
+  client: Client,
+  args: ClaimArgs,
 ): Promise<string> {
-  const program = getProgram(provider);
-  const heir = provider.publicKey;
-  const [vault] = getVaultPDA(vaultOwner);
-
-  const vaultUsdc = getAssociatedTokenAddressSync(usdcMint, vault, true);
-  const heirUsdc = getAssociatedTokenAddressSync(usdcMint, heir);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .claim()
-    .accounts({
-      heir,
-      vaultOwner,
-      vault,
-      tokenBMint: usdcMint,
-      vaultTokenB: vaultUsdc,
-      heirTokenB: heirUsdc,
-      systemProgram: SystemProgram.programId,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    })
-    .rpc();
-
-  return tx;
+  const ix = await getClaimInstructionAsync({
+    heir: args.heir,
+    authority: args.authority,
+    mint: args.mint,
+    tokenProgram: args.tokenProgram,
+    vaultTokenAccount: args.vaultTokenAccount,
+    heirTokenAccount: args.heirTokenAccount,
+    guardian: args.guardian,
+  });
+  return sendTx(client, args.heir, ix);
 }
 
-export async function emergencyWithdraw(
-  provider: AnchorProvider,
-  usdcMint: PublicKey
+export interface DelegateDeferArgs {
+  delegate: TransactionSigner;
+  authority: Address;
+  heir: Address;
+}
+
+export async function sendDelegateDefer(
+  client: Client,
+  args: DelegateDeferArgs,
 ): Promise<string> {
-  const program = getProgram(provider);
-  const owner = provider.publicKey;
-  const [vault] = getVaultPDA(owner);
-
-  const vaultUsdc = getAssociatedTokenAddressSync(usdcMint, vault, true);
-  const ownerUsdc = getAssociatedTokenAddressSync(usdcMint, owner);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .emergencyWithdraw()
-    .accounts({
-      owner,
-      vault,
-      tokenBMint: usdcMint,
-      vaultTokenB: vaultUsdc,
-      ownerTokenB: ownerUsdc,
-      systemProgram: SystemProgram.programId,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    })
-    .rpc();
-
-  return tx;
-}
-
-export async function guardianPause(
-  provider: AnchorProvider,
-  vaultOwner: PublicKey
-): Promise<string> {
-  const program = getProgram(provider);
-  const [vault] = getVaultPDA(vaultOwner);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .guardianPause()
-    .accounts({
-      guardian: provider.publicKey,
-      vaultOwner,
-      vault,
-    })
-    .rpc();
-
-  return tx;
-}
-
-export async function updateHeirs(
-  provider: AnchorProvider,
-  newHeirs: { address: string; splitBps: number }[]
-): Promise<string> {
-  const program = getProgram(provider);
-  const owner = provider.publicKey;
-  const [vault] = getVaultPDA(owner);
-
-  const heirInputs = newHeirs.map((h) => ({
-    heir: new PublicKey(h.address),
-    splitBps: h.splitBps,
-  }));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const methods = program.methods as any;
-  const tx: string = await methods
-    .updateHeirs(heirInputs)
-    .accounts({ owner, vault })
-    .rpc();
-
-  return tx;
-}
-
-// ---- READ FUNCTIONS ----
-
-export interface VaultAccount {
-  owner: PublicKey;
-  tokenBMint: PublicKey;
-  heartbeatInterval: BN;
-  gracePeriod: BN;
-  lastHeartbeat: BN;
-  solBalance: BN;
-  tokenBBalance: BN;
-  guardian: PublicKey | null;
-  guardianPauseUsed: boolean;
-  isDistributed: boolean;
-  createdAt: BN;
-  heirCount: number;
-  claimsCount: number;
-  bump: number;
-  heirs: {
-    heir: PublicKey;
-    splitBps: number;
-    hasClaimed: boolean;
-    isActive: boolean;
-  }[];
-}
-
-export async function fetchVaultAccount(
-  connection: Connection,
-  owner: PublicKey
-): Promise<VaultAccount | null> {
-  try {
-    const provider = new AnchorProvider(
-      connection,
-      { publicKey: owner, signTransaction: async <T>(t: T) => t, signAllTransactions: async <T>(t: T) => t } as never,
-      { commitment: "confirmed" }
-    );
-    const program = getProgram(provider);
-    const [vaultPDA] = getVaultPDA(owner);
-    const vault = await (program.account as Record<string, { fetch: (addr: PublicKey) => Promise<unknown> }>)["vault"].fetch(vaultPDA);
-    return vault as unknown as VaultAccount;
-  } catch {
-    return null;
-  }
-}
-
-export async function lookupSingleVault(
-  connection: Connection,
-  ownerAddress: string,
-  heirAddress: string
-): Promise<{
-  ownerAddress: string;
-  vaultState: string;
-  solBalance: number;
-  usdcBalance: number;
-  splitBps: number;
-  hasClaimed: boolean;
-  solShare: number;
-  usdcShare: number;
-  usdcMint: string;
-} | null> {
-  try {
-    const ownerPk = new PublicKey(ownerAddress);
-    const heirPk = new PublicKey(heirAddress);
-
-    if (ownerPk.equals(heirPk)) return null;
-
-    const vault = await fetchVaultAccount(connection, ownerPk);
-    if (!vault) return null;
-
-    const heirEntry = vault.heirs.find(
-      (h) => h.isActive && h.heir.equals(heirPk)
-    );
-    if (!heirEntry) return null;
-
-    const now = Math.floor(Date.now() / 1000);
-    const lastHB = vault.lastHeartbeat.toNumber();
-    const interval = vault.heartbeatInterval.toNumber();
-    const grace = vault.gracePeriod.toNumber();
-    const pauseBonus = vault.guardianPauseUsed ? 2592000 : 0;
-    const elapsed = now - lastHB;
-    const deadline = interval + grace + pauseBonus;
-
-    let vaultState: string;
-    if (vault.isDistributed) {
-      vaultState = "distributed";
-    } else if (elapsed >= deadline) {
-      vaultState = "claimable";
-    } else if (elapsed >= interval) {
-      vaultState = "grace";
-    } else {
-      vaultState = "active";
-    }
-
-    if (vault.isDistributed && heirEntry.hasClaimed) return null;
-
-    const solBal = vault.solBalance.toNumber();
-    const usdcBal = vault.tokenBBalance.toNumber();
-    const splitBps = heirEntry.splitBps;
-
-    return {
-      ownerAddress,
-      vaultState,
-      solBalance: solBal,
-      usdcBalance: usdcBal,
-      splitBps,
-      hasClaimed: heirEntry.hasClaimed,
-      solShare: Math.floor((solBal * splitBps) / 10000),
-      usdcShare: Math.floor((usdcBal * splitBps) / 10000),
-      usdcMint: vault.tokenBMint.toBase58(),
-    };
-  } catch {
-    return null;
-  }
+  const ix = await getDelegateDeferInstructionAsync({
+    delegate: args.delegate,
+    authority: args.authority,
+    heir: args.heir,
+  });
+  return sendTx(client, args.delegate, ix);
 }

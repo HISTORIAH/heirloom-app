@@ -1,66 +1,54 @@
 import React, { createContext, useContext, useMemo } from "react";
+import { useWalletUi } from "@wallet-ui/react";
 import {
-  ConnectionProvider,
-  WalletProvider as SolanaWalletProvider,
-  useWallet as useSolanaWallet,
-  useConnection,
-} from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { RPC_URL } from "@/config/constants";
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  type Address,
+} from "@solana/kit";
+import { RPC_URL, RPC_WS_URL } from "@/config/constants";
 
-import "@solana/wallet-adapter-react-ui/styles.css";
+const rpcSingleton = createSolanaRpc(RPC_URL);
+const rpcSubscriptionsSingleton = createSolanaRpcSubscriptions(RPC_WS_URL);
+
+export type AppRpc = typeof rpcSingleton;
+export type AppRpcSubscriptions = typeof rpcSubscriptionsSingleton;
 
 interface WalletState {
   isConnected: boolean;
   publicKey: string | null;
-  connectWallet: () => Promise<void>;
+  address: Address | null;
+  rpc: AppRpc;
+  rpcSubscriptions: AppRpcSubscriptions;
   disconnectWallet: () => Promise<void>;
-  connection: import("@solana/web3.js").Connection;
-  wallet: ReturnType<typeof useSolanaWallet>;
 }
 
 const WalletContext = createContext<WalletState | null>(null);
 
-const WalletContextInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const wallet = useSolanaWallet();
-  const { connection } = useConnection();
+export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const walletUi = useWalletUi() as unknown as {
+    account?: { address: string } | null;
+    connected?: boolean;
+    disconnect?: () => Promise<void> | void;
+  };
+
+  const account = walletUi?.account ?? null;
+  const addressStr: string | null = account?.address ?? null;
 
   const value: WalletState = useMemo(
     () => ({
-      isConnected: wallet.connected,
-      publicKey: wallet.publicKey?.toBase58() ?? null,
-      connectWallet: async () => {
-        if (wallet.wallet) {
-          await wallet.connect();
-        } else {
-          await wallet.select("Phantom" as never);
-        }
-      },
+      isConnected: !!account,
+      publicKey: addressStr,
+      address: addressStr as Address | null,
+      rpc: rpcSingleton,
+      rpcSubscriptions: rpcSubscriptionsSingleton,
       disconnectWallet: async () => {
-        await wallet.disconnect();
+        await walletUi?.disconnect?.();
       },
-      connection,
-      wallet,
     }),
-    [wallet, connection]
+    [account, addressStr, walletUi],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
-};
-
-export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
-
-  return (
-    <ConnectionProvider endpoint={RPC_URL}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <WalletContextInner>{children}</WalletContextInner>
-        </WalletModalProvider>
-      </SolanaWalletProvider>
-    </ConnectionProvider>
-  );
 };
 
 export const useWallet = () => {
