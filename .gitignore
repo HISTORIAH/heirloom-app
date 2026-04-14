@@ -1,10 +1,32 @@
-# dependencies (bun install)
+# dependencies
 node_modules
+.pnp.*
 
-# output
+# yarn berry
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# build output
 out
 dist
+build
 *.tgz
+
+# turbo
+.turbo
+
+# rust / cargo
+target
+Cargo.lock.bak
+
+# solana / quasar
+heirloom-program/target
+test-ledger
+*.so
 
 # code coverage
 coverage
@@ -12,23 +34,29 @@ coverage
 
 # logs
 logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# dotenv environment variable files
+# dotenv
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
 
 # caches
 .eslintcache
 .cache
 *.tsbuildinfo
+.vite
 
-# IntelliJ based IDEs
+# editors
 .idea
+.vscode/*
+!.vscode/extensions.json
+*.swp
 
-# Finder (MacOS) folder config
+# os
 .DS_Store
+Thumbs.db
