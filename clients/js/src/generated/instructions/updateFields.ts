@@ -43,7 +43,7 @@ import {
   getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findEstatePda, findVaultPda } from "../pdas";
+import { findEstatePda } from "../pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
 export const UPDATE_FIELDS_DISCRIMINATOR = new Uint8Array([3]);
@@ -59,15 +59,8 @@ export type UpdateFieldsInstruction<
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
-  TAccountVault extends string | AccountMeta<string> = string,
-  TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
-  TAccountMint extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -78,29 +71,14 @@ export type UpdateFieldsInstruction<
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
       TAccountHeir extends string
-        ? WritableAccount<TAccountHeir>
+        ? ReadonlyAccount<TAccountHeir>
         : TAccountHeir,
       TAccountEstate extends string
         ? WritableAccount<TAccountEstate>
         : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
-      TAccountVaultTokenAccount extends string
-        ? WritableAccount<TAccountVaultTokenAccount>
-        : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
-      TAccountTokenProgram extends string
-        ? ReadonlyAccount<TAccountTokenProgram>
-        : TAccountTokenProgram,
       TAccountClock extends string
         ? ReadonlyAccount<TAccountClock>
         : TAccountClock,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -153,22 +131,12 @@ export type UpdateFieldsAsyncInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountMint extends string = string,
-  TAccountTokenProgram extends string = string,
   TAccountClock extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
-  vault?: Address<TAccountVault>;
-  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
-  mint?: Address<TAccountMint>;
-  tokenProgram?: Address<TAccountTokenProgram>;
   clock?: Address<TAccountClock>;
-  systemProgram?: Address<TAccountSystemProgram>;
   heartbeatInterval: UpdateFieldsInstructionDataArgs["heartbeatInterval"];
   gracePeriod: UpdateFieldsInstructionDataArgs["gracePeriod"];
   pauseDuration: UpdateFieldsInstructionDataArgs["pauseDuration"];
@@ -178,24 +146,14 @@ export async function getUpdateFieldsInstructionAsync<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountMint extends string,
-  TAccountTokenProgram extends string,
   TAccountClock extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UpdateFieldsAsyncInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountTokenProgram,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >,
   config?: { programAddress?: TProgramAddress },
 ): Promise<
@@ -204,12 +162,7 @@ export async function getUpdateFieldsInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountTokenProgram,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >
 > {
   // Program address.
@@ -219,17 +172,9 @@ export async function getUpdateFieldsInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: true },
+    heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
-    mint: { value: input.mint ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -252,29 +197,9 @@ export async function getUpdateFieldsInstructionAsync<
       ),
     });
   }
-  if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
-  }
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
-  }
   if (!accounts.clock.value) {
     accounts.clock.value =
       "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
@@ -283,12 +208,7 @@ export async function getUpdateFieldsInstructionAsync<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
-      getAccountMeta("vault", accounts.vault),
-      getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
-      getAccountMeta("mint", accounts.mint),
-      getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("clock", accounts.clock),
-      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getUpdateFieldsInstructionDataEncoder().encode(
       args as UpdateFieldsInstructionDataArgs,
@@ -299,12 +219,7 @@ export async function getUpdateFieldsInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountTokenProgram,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >);
 }
 
@@ -312,22 +227,12 @@ export type UpdateFieldsInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountMint extends string = string,
-  TAccountTokenProgram extends string = string,
   TAccountClock extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
-  vault: Address<TAccountVault>;
-  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
-  mint?: Address<TAccountMint>;
-  tokenProgram?: Address<TAccountTokenProgram>;
   clock?: Address<TAccountClock>;
-  systemProgram?: Address<TAccountSystemProgram>;
   heartbeatInterval: UpdateFieldsInstructionDataArgs["heartbeatInterval"];
   gracePeriod: UpdateFieldsInstructionDataArgs["gracePeriod"];
   pauseDuration: UpdateFieldsInstructionDataArgs["pauseDuration"];
@@ -337,24 +242,14 @@ export function getUpdateFieldsInstruction<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountMint extends string,
-  TAccountTokenProgram extends string,
   TAccountClock extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UpdateFieldsInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountTokenProgram,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >,
   config?: { programAddress?: TProgramAddress },
 ): UpdateFieldsInstruction<
@@ -362,12 +257,7 @@ export function getUpdateFieldsInstruction<
   TAccountAuthority,
   TAccountHeir,
   TAccountEstate,
-  TAccountVault,
-  TAccountVaultTokenAccount,
-  TAccountMint,
-  TAccountTokenProgram,
-  TAccountClock,
-  TAccountSystemProgram
+  TAccountClock
 > {
   // Program address.
   const programAddress =
@@ -376,17 +266,9 @@ export function getUpdateFieldsInstruction<
   // Original accounts.
   const originalAccounts = {
     authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: true },
+    heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
-    mint: { value: input.mint ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -397,17 +279,9 @@ export function getUpdateFieldsInstruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.tokenProgram.value) {
-    accounts.tokenProgram.value =
-      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
-  }
   if (!accounts.clock.value) {
     accounts.clock.value =
       "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
@@ -416,12 +290,7 @@ export function getUpdateFieldsInstruction<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
-      getAccountMeta("vault", accounts.vault),
-      getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
-      getAccountMeta("mint", accounts.mint),
-      getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("clock", accounts.clock),
-      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getUpdateFieldsInstructionDataEncoder().encode(
       args as UpdateFieldsInstructionDataArgs,
@@ -432,12 +301,7 @@ export function getUpdateFieldsInstruction<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountTokenProgram,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >);
 }
 
@@ -450,12 +314,7 @@ export type ParsedUpdateFieldsInstruction<
     authority: TAccountMetas[0];
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
-    vault: TAccountMetas[3];
-    vaultTokenAccount?: TAccountMetas[4] | undefined;
-    mint?: TAccountMetas[5] | undefined;
-    tokenProgram: TAccountMetas[6];
-    clock: TAccountMetas[7];
-    systemProgram: TAccountMetas[8];
+    clock: TAccountMetas[3];
   };
   data: UpdateFieldsInstructionData;
 };
@@ -468,12 +327,12 @@ export function parseUpdateFieldsInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpdateFieldsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 4) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 9,
+        expectedAccountMetas: 4,
       },
     );
   }
@@ -483,24 +342,13 @@ export function parseUpdateFieldsInstruction<
     accountIndex += 1;
     return accountMeta;
   };
-  const getNextOptionalAccount = () => {
-    const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
-  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       authority: getNextAccount(),
       heir: getNextAccount(),
       estate: getNextAccount(),
-      vault: getNextAccount(),
-      vaultTokenAccount: getNextOptionalAccount(),
-      mint: getNextOptionalAccount(),
-      tokenProgram: getNextAccount(),
       clock: getNextAccount(),
-      systemProgram: getNextAccount(),
     },
     data: getUpdateFieldsInstructionDataDecoder().decode(instruction.data),
   };

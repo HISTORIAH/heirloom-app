@@ -43,6 +43,12 @@ pub enum HeirloomProgramError {
     /// 10 - 
     #[error("")]
     EstatePaused = 0xA,
+    /// 11 - 
+    #[error("")]
+    MissingAccount = 0xB,
+    /// 12 - 
+    #[error("")]
+    InvalidAccount = 0xC,
 }
 
 impl From<HeirloomProgramError> for solana_program_error::ProgramError {

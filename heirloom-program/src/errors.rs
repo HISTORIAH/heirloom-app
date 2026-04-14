@@ -13,4 +13,6 @@ pub enum HeirloomError {
     ClaimDefferred,
     MismatchedAddress,
     EstatePaused,
+    MissingAccount,
+    InvalidAccount,
 }

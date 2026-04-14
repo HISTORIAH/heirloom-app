@@ -25,22 +25,7 @@ pub struct UpdateFields {
           pub estate: solana_address::Address,
           
               
-          pub vault: solana_address::Address,
-          
-              
-          pub vault_token_account: Option<solana_address::Address>,
-          
-              
-          pub mint: Option<solana_address::Address>,
-          
-              
-          pub token_program: solana_address::Address,
-          
-              
           pub clock: solana_address::Address,
-          
-              
-          pub system_program: solana_address::Address,
       }
 
 impl UpdateFields {
@@ -50,12 +35,12 @@ impl UpdateFields {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: UpdateFieldsInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(9+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(4+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.heir,
             false
           ));
@@ -63,42 +48,8 @@ impl UpdateFields {
             self.estate,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.vault,
-            false
-          ));
-                                                      if let Some(vault_token_account) = self.vault_token_account {
-              accounts.push(solana_instruction::AccountMeta::new(
-                vault_token_account,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
-                crate::HEIRLOOM_PROGRAM_ID,
-                false,
-              ));
-            }
-                                                                if let Some(mint) = self.mint {
-              accounts.push(solana_instruction::AccountMeta::new(
-                mint,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
-                crate::HEIRLOOM_PROGRAM_ID,
-                false,
-              ));
-            }
-                                                    accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.token_program,
-            false
-          ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.clock,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.system_program,
             false
           ));
                       accounts.extend_from_slice(remaining_accounts);
@@ -156,25 +107,15 @@ impl UpdateFieldsInstructionArgs {
 /// ### Accounts:
 ///
                       ///   0. `[writable, signer]` authority
-                ///   1. `[writable]` heir
+          ///   1. `[]` heir
                 ///   2. `[writable]` estate
-                ///   3. `[writable]` vault
-                      ///   4. `[writable, optional]` vault_token_account
-                      ///   5. `[writable, optional]` mint
-                ///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   7. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   3. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct UpdateFieldsBuilder {
             authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
-                vault: Option<solana_address::Address>,
-                vault_token_account: Option<solana_address::Address>,
-                mint: Option<solana_address::Address>,
-                token_program: Option<solana_address::Address>,
                 clock: Option<solana_address::Address>,
-                system_program: Option<solana_address::Address>,
                         heartbeat_interval: Option<Address>,
                 grace_period: Option<Address>,
                 pause_duration: Option<Address>,
@@ -200,39 +141,10 @@ impl UpdateFieldsBuilder {
                         self.estate = Some(estate);
                     self
     }
-            #[inline(always)]
-    pub fn vault(&mut self, vault: solana_address::Address) -> &mut Self {
-                        self.vault = Some(vault);
-                    self
-    }
-            /// `[optional account]`
-#[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: Option<solana_address::Address>) -> &mut Self {
-                        self.vault_token_account = vault_token_account;
-                    self
-    }
-            /// `[optional account]`
-#[inline(always)]
-    pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
-                        self.mint = mint;
-                    self
-    }
-            /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
-#[inline(always)]
-    pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
-                        self.token_program = Some(token_program);
-                    self
-    }
             /// `[optional account, default to 'SysvarC1ock11111111111111111111111111111111']`
 #[inline(always)]
     pub fn clock(&mut self, clock: solana_address::Address) -> &mut Self {
                         self.clock = Some(clock);
-                    self
-    }
-            /// `[optional account, default to '11111111111111111111111111111111']`
-#[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
-                        self.system_program = Some(system_program);
                     self
     }
                     /// `[optional argument]`
@@ -271,12 +183,7 @@ impl UpdateFieldsBuilder {
                               authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
-                                        vault: self.vault.expect("vault is not set"),
-                                        vault_token_account: self.vault_token_account,
-                                        mint: self.mint,
-                                        token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
-                                        system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
           let args = UpdateFieldsInstructionArgs {
                                                               heartbeat_interval: self.heartbeat_interval.clone(),
@@ -301,22 +208,7 @@ impl UpdateFieldsBuilder {
               pub estate: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub vault: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
-                    
-              pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
-                    
-              pub token_program: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
               pub clock: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
 /// `update_fields` CPI instruction.
@@ -334,22 +226,7 @@ pub struct UpdateFieldsCpi<'a, 'b> {
           pub estate: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub vault: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
-              
-          pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
-              
-          pub token_program: &'b solana_account_info::AccountInfo<'a>,
-          
-              
           pub clock: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub system_program: &'b solana_account_info::AccountInfo<'a>,
             /// The arguments for the instruction.
     pub __args: UpdateFieldsInstructionArgs,
   }
@@ -365,12 +242,7 @@ impl<'a, 'b> UpdateFieldsCpi<'a, 'b> {
               authority: accounts.authority,
               heir: accounts.heir,
               estate: accounts.estate,
-              vault: accounts.vault,
-              vault_token_account: accounts.vault_token_account,
-              mint: accounts.mint,
-              token_program: accounts.token_program,
               clock: accounts.clock,
-              system_program: accounts.system_program,
                     __args: args,
           }
   }
@@ -394,12 +266,12 @@ impl<'a, 'b> UpdateFieldsCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(9+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(4+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.heir.key,
             false
           ));
@@ -407,42 +279,8 @@ impl<'a, 'b> UpdateFieldsCpi<'a, 'b> {
             *self.estate.key,
             false
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.vault.key,
-            false
-          ));
-                                          if let Some(vault_token_account) = self.vault_token_account {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *vault_token_account.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_PROGRAM_ID,
-              false,
-            ));
-          }
-                                          if let Some(mint) = self.mint {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *mint.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_PROGRAM_ID,
-              false,
-            ));
-          }
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.token_program.key,
-            false
-          ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.clock.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
             false
           ));
                       remaining_accounts.iter().for_each(|remaining_account| {
@@ -461,21 +299,12 @@ impl<'a, 'b> UpdateFieldsCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(10 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(5 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
-                        account_infos.push(self.vault.clone());
-                        if let Some(vault_token_account) = self.vault_token_account {
-          account_infos.push(vault_token_account.clone());
-        }
-                        if let Some(mint) = self.mint {
-          account_infos.push(mint.clone());
-        }
-                        account_infos.push(self.token_program.clone());
                         account_infos.push(self.clock.clone());
-                        account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
     if signers_seeds.is_empty() {
@@ -491,14 +320,9 @@ impl<'a, 'b> UpdateFieldsCpi<'a, 'b> {
 /// ### Accounts:
 ///
                       ///   0. `[writable, signer]` authority
-                ///   1. `[writable]` heir
+          ///   1. `[]` heir
                 ///   2. `[writable]` estate
-                ///   3. `[writable]` vault
-                      ///   4. `[writable, optional]` vault_token_account
-                      ///   5. `[writable, optional]` mint
-          ///   6. `[]` token_program
-          ///   7. `[]` clock
-          ///   8. `[]` system_program
+          ///   3. `[]` clock
 #[derive(Clone, Debug)]
 pub struct UpdateFieldsCpiBuilder<'a, 'b> {
   instruction: Box<UpdateFieldsCpiBuilderInstruction<'a, 'b>>,
@@ -511,12 +335,7 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
               authority: None,
               heir: None,
               estate: None,
-              vault: None,
-              vault_token_account: None,
-              mint: None,
-              token_program: None,
               clock: None,
-              system_program: None,
                                             heartbeat_interval: None,
                                 grace_period: None,
                                 pause_duration: None,
@@ -540,35 +359,8 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
                     self
     }
       #[inline(always)]
-    pub fn vault(&mut self, vault: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.vault = Some(vault);
-                    self
-    }
-      /// `[optional account]`
-#[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.vault_token_account = vault_token_account;
-                    self
-    }
-      /// `[optional account]`
-#[inline(always)]
-    pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.mint = mint;
-                    self
-    }
-      #[inline(always)]
-    pub fn token_program(&mut self, token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.token_program = Some(token_program);
-                    self
-    }
-      #[inline(always)]
     pub fn clock(&mut self, clock: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.clock = Some(clock);
-                    self
-    }
-      #[inline(always)]
-    pub fn system_program(&mut self, system_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.system_program = Some(system_program);
                     self
     }
                     /// `[optional argument]`
@@ -625,17 +417,7 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
                   
           estate: self.instruction.estate.expect("estate is not set"),
                   
-          vault: self.instruction.vault.expect("vault is not set"),
-                  
-          vault_token_account: self.instruction.vault_token_account,
-                  
-          mint: self.instruction.mint,
-                  
-          token_program: self.instruction.token_program.expect("token_program is not set"),
-                  
           clock: self.instruction.clock.expect("clock is not set"),
-                  
-          system_program: self.instruction.system_program.expect("system_program is not set"),
                           __args: args,
             };
     instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
@@ -648,12 +430,7 @@ struct UpdateFieldsCpiBuilderInstruction<'a, 'b> {
             authority: Option<&'b solana_account_info::AccountInfo<'a>>,
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                vault: Option<&'b solana_account_info::AccountInfo<'a>>,
-                vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-                token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 clock: Option<&'b solana_account_info::AccountInfo<'a>>,
-                system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                         heartbeat_interval: Option<Address>,
                 grace_period: Option<Address>,
                 pause_duration: Option<Address>,

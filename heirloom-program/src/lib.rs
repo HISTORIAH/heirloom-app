@@ -48,13 +48,13 @@ mod heirloom_program {
 
     #[instruction(discriminator = 3)]
     pub fn update_fields(
-        ctx: Ctx<Update>,
+        ctx: Ctx<UpdateFields>,
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
         // label: Option<String<u32, 32>>,
     ) -> Result<(), ProgramError> {
-        Update::update_fields_handler(
+        UpdateFields::handler(
             &mut ctx,
             heartbeat_interval,
             grace_period,
@@ -74,7 +74,7 @@ mod heirloom_program {
     }
 
     #[instruction(discriminator = 6)]
-    pub fn transfer_heir(ctx: Ctx<Update>) -> Result<(), ProgramError> {
-        Update::transfer_heir_handler(&mut ctx)
+    pub fn update_heir(ctx: Ctx<UpdateHeir>) -> Result<(), ProgramError> {
+        UpdateHeir::handler(&mut ctx)
     }
 }

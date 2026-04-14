@@ -20,10 +20,10 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub heir_token_account: Option<InterfaceAccount<Token>>,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump)]
+    #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
     pub estate: Account<Estate<'info>>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump, close=heir)]
+    #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump, close=heir)]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -48,7 +48,7 @@ impl Claim<'_> {
         ctx.accounts.validate()?;
 
         // transfer assets
-        ctx.accounts.transfer_assets()?;
+        ctx.accounts.transfer_assets(&ctx.bumps)?;
 
         Ok(())
     }
@@ -114,7 +114,7 @@ impl Claim<'_> {
     }
 
     #[inline(always)]
-    pub fn transfer_assets(&self) -> Result<(), ProgramError> {
+    pub fn transfer_assets(&self, claim_ix_bumps: &ClaimBumps) -> Result<(), ProgramError> {
         // token transfer block
         match self.heir_token_account.as_ref() {
             Some(heir_ta) => {
@@ -129,6 +129,9 @@ impl Claim<'_> {
                         .invoke()?;
                 }
 
+                let vault_seeds = self.vault_seeds(claim_ix_bumps);
+
+                // FIXME: seeds since we are signing with vault
                 self.token_program
                     .transfer_checked(
                         vault_token_account,
@@ -138,7 +141,7 @@ impl Claim<'_> {
                         vault_token_account.amount(),
                         mint.decimals(),
                     )
-                    .invoke()?;
+                    .invoke_signed(&vault_seeds)?;
             }
             // sol transfer block
             None => {
