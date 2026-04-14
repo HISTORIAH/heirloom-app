@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
@@ -10,6 +10,7 @@ import {
   SOL_DECIMALS,
   LABEL_MAX_LEN,
 } from "@/config/constants";
+import { useWalletSplTokens, type SplTokenAsset } from "@/hooks/useWalletSplTokens";
 import {
   ArrowLeft,
   ArrowRight,
@@ -21,6 +22,7 @@ import {
   CheckCircle,
   Loader2,
   ExternalLink,
+  DollarSign,
 } from "lucide-react";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
@@ -58,6 +60,109 @@ const PAUSE_PRESETS = [
   { label: "30d", seconds: 30 * 86400 },
 ];
 
+type Accent = "orange" | "cyan" | "lime" | "pink";
+
+const ACCENT_BG: Record<Accent, string> = {
+  orange: "bg-accent-orange",
+  cyan: "bg-accent-cyan",
+  lime: "bg-accent-lime",
+  pink: "bg-accent-pink",
+};
+
+interface AssetCardProps {
+  cardKey: string;
+  title: string;
+  subtitle: string;
+  accent: Accent;
+  icon: React.ReactNode;
+  decimals: number;
+  presets: number[];
+  presetLabel: (value: number) => string;
+  selected: boolean;
+  amount: number;
+  onSelect: (value: number) => void;
+  onSkip: () => void;
+  maxAmount?: number;
+}
+
+const AssetCard: React.FC<AssetCardProps> = ({
+  title,
+  subtitle,
+  accent,
+  icon,
+  decimals,
+  presets,
+  presetLabel,
+  selected,
+  amount,
+  onSelect,
+  onSkip,
+  maxAmount,
+}) => {
+  const accentBg = ACCENT_BG[accent];
+  const isSkip = !selected || amount <= 0;
+  return (
+    <div className="neo-card-static">
+      <div className="flex items-center gap-3 mb-4">
+        <div className={`${accentBg} neo-border rounded-xl p-3`}>{icon}</div>
+        <div>
+          <h3 className="text-xl font-black">{title}</h3>
+          <p className="text-xs font-bold text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      <input
+        type="number"
+        min={0}
+        max={maxAmount}
+        step={1 / Math.pow(10, Math.min(6, decimals))}
+        value={selected ? amount : 0}
+        onChange={(e) => {
+          const v = Math.max(0, Number(e.target.value));
+          if (v === 0) onSkip();
+          else onSelect(v);
+        }}
+        className="neo-input font-black text-3xl text-center !py-4"
+      />
+      <div className="flex gap-2 flex-wrap mt-4">
+        <button
+          onClick={onSkip}
+          className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
+            isSkip ? `${accentBg} neo-shadow-sm` : "bg-secondary"
+          }`}
+        >
+          Skip
+        </button>
+        {presets.map((p) => (
+          <button
+            key={p}
+            onClick={() => onSelect(p)}
+            className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
+              selected && amount === p ? `${accentBg} neo-shadow-sm` : "bg-secondary"
+            }`}
+          >
+            {presetLabel(p)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SOL_KEY = "sol";
+
+const SOL_PRESETS = [0.01, 0.1, 0.5, 1, 5];
+
+function presetsForDecimals(decimals: number): number[] {
+  if (decimals >= 8) return [0.001, 0.01, 0.05, 0.1];
+  if (decimals >= 6) return [10, 100, 500, 1000];
+  return [1, 10, 100, 1000];
+}
+
+function formatPreset(value: number, symbol: string): string {
+  if (symbol === "USDC" || symbol === "USDCx") return `$${value}`;
+  return `${value} ${symbol}`;
+}
+
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
   const { createEstateOnChain } = useVault();
@@ -74,16 +179,34 @@ const CreateVaultPage = () => {
   const [label, setLabel] = useState("heir");
   const [delegate, setDelegate] = useState("");
 
-  const [solDeposit, setSolDeposit] = useState(0.1);
+  const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
+
+  const [selectedKey, setSelectedKey] = useState<string>(SOL_KEY);
+  const [amount, setAmount] = useState<number>(0.1);
 
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [txId, setTxId] = useState<string | null>(null);
+
+  const selectedToken: SplTokenAsset | undefined =
+    selectedKey === SOL_KEY ? undefined : tokens.find((t) => t.mint === selectedKey);
+  const selectedDecimals = selectedToken ? selectedToken.decimals : SOL_DECIMALS;
+
+  const selectCard = (key: string, nextAmount: number) => {
+    setSelectedKey(key);
+    setAmount(nextAmount);
+  };
+
+  const skipCard = (key: string) => {
+    if (selectedKey === key) {
+      setAmount(0);
+    }
+  };
 
   const isHeirValid = heirAddress.trim().length > 0 && label.trim().length > 0 && label.length <= LABEL_MAX_LEN;
   const canProceed = () => {
     if (step === 0) return heartbeatSeconds > 0 && graceSeconds > 0;
     if (step === 1) return isHeirValid;
-    if (step === 2) return solDeposit > 0;
+    if (step === 2) return amount > 0;
     return true;
   };
 
@@ -94,7 +217,7 @@ const CreateVaultPage = () => {
     }
     try {
       setSubmitState("creating");
-      const amountLamports = BigInt(Math.round(solDeposit * Math.pow(10, SOL_DECIMALS)));
+      const amountLamports = BigInt(Math.round(amount * Math.pow(10, selectedDecimals)));
       const createTxId = await createEstateOnChain({
         heir: heirAddress.trim(),
         label: label.trim().slice(0, LABEL_MAX_LEN),
@@ -103,6 +226,7 @@ const CreateVaultPage = () => {
         pauseDuration: pauseSeconds,
         amountLamports,
         delegate: delegate.trim() || undefined,
+        mint: selectedToken?.mint,
       });
       setTxId(createTxId);
       setSubmitState("complete");
@@ -376,42 +500,67 @@ const CreateVaultPage = () => {
               <div>
                 <span className="neo-badge bg-accent-orange mb-4 inline-block">Step 3</span>
                 <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
-                  Fund your <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">estate.</span>
+                  Fund your <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">vault.</span>
                 </h2>
                 <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                  Deposit {SOL_LABEL} into the vault. This amount is locked at initialization.
+                  Pick one asset to fund the vault with. One estate holds one token.
                 </p>
               </div>
 
-              <div className="neo-card-static">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-accent-orange neo-border rounded-xl p-3">
-                    <Coins className="h-6 w-6" strokeWidth={2.5} />
-                  </div>
-                  <h3 className="text-xl font-black">{SOL_LABEL} Amount</h3>
+              {tokensLoading && (
+                <div className="neo-card-static flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                  <span className="font-bold">Scanning wallet for SPL tokens…</span>
                 </div>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.0001}
-                  value={solDeposit}
-                  onChange={(e) => setSolDeposit(Math.max(0, Number(e.target.value)))}
-                  className="neo-input font-black text-3xl text-center focus:bg-accent-orange/20 !py-4"
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AssetCard
+                  cardKey={SOL_KEY}
+                  title={SOL_LABEL}
+                  subtitle={`Amount in SOL (${SOL_DECIMALS} decimals)`}
+                  accent="orange"
+                  icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
+                  decimals={SOL_DECIMALS}
+                  presets={SOL_PRESETS}
+                  presetLabel={(v) => formatPreset(v, SOL_LABEL)}
+                  selected={selectedKey === SOL_KEY}
+                  amount={selectedKey === SOL_KEY ? amount : 0}
+                  onSelect={(v) => selectCard(SOL_KEY, v)}
+                  onSkip={() => skipCard(SOL_KEY)}
                 />
-                <div className="flex gap-2 flex-wrap mt-4">
-                  {[0.01, 0.1, 0.5, 1, 5].map((amt) => (
-                    <button
-                      key={amt}
-                      onClick={() => setSolDeposit(amt)}
-                      className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
-                        solDeposit === amt ? "bg-accent-orange neo-shadow-sm" : "bg-secondary"
-                      }`}
-                    >
-                      {amt} {SOL_LABEL}
-                    </button>
-                  ))}
-                </div>
+                {tokens.map((t) => {
+                  const accent = t.label === "USDC" ? "cyan" : "lime";
+                  const ic =
+                    t.label === "USDC"
+                      ? <DollarSign className="h-6 w-6" strokeWidth={2.5} />
+                      : <Coins className="h-6 w-6" strokeWidth={2.5} />;
+                  return (
+                    <AssetCard
+                      key={t.mint}
+                      cardKey={t.mint}
+                      title={t.label}
+                      subtitle={`Amount in ${t.label} (${t.decimals} decimals) · Bal ${t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: Math.min(6, t.decimals) })}`}
+                      accent={accent}
+                      icon={ic}
+                      decimals={t.decimals}
+                      presets={presetsForDecimals(t.decimals)}
+                      presetLabel={(v) => formatPreset(v, t.label)}
+                      selected={selectedKey === t.mint}
+                      amount={selectedKey === t.mint ? amount : 0}
+                      onSelect={(v) => selectCard(t.mint, v)}
+                      onSkip={() => skipCard(t.mint)}
+                      maxAmount={t.uiAmount}
+                    />
+                  );
+                })}
               </div>
+
+              {!tokensLoading && tokens.length === 0 && (
+                <p className="text-sm font-medium text-muted-foreground">
+                  No SPL tokens with balance found in your wallet. Funding with {SOL_LABEL}.
+                </p>
+              )}
             </div>
           )}
 
@@ -456,9 +605,14 @@ const CreateVaultPage = () => {
                     Deposit
                   </h3>
                   <div className="flex justify-between">
-                    <span className="font-bold">{SOL_LABEL}</span>
-                    <span className="font-black text-xl">{solDeposit.toFixed(4)}</span>
+                    <span className="font-bold">{selectedToken ? selectedToken.label : SOL_LABEL}</span>
+                    <span className="font-black text-xl">{amount.toFixed(Math.min(6, selectedDecimals))}</span>
                   </div>
+                  {selectedToken && (
+                    <p className="text-[10px] font-mono text-muted-foreground break-all mt-2">
+                      {selectedToken.mint}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -497,7 +651,7 @@ const CreateVaultPage = () => {
               variant="lime"
               size="xl"
               onClick={handleSubmit}
-              disabled={!isHeirValid || solDeposit <= 0}
+              disabled={!isHeirValid || amount <= 0}
               className="neo-glow-lime"
             >
               Create Estate
