@@ -5,26 +5,21 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+use solana_address::Address;
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-pub const CLAIM_DISCRIMINATOR: [u8; 1] = [1];
+pub const UPDATE_FIELDS_DISCRIMINATOR: [u8; 1] = [3];
 
 /// Accounts.
 #[derive(Debug)]
-pub struct Claim {
+pub struct UpdateFields {
       
-              
-          pub heir: solana_address::Address,
-          
               
           pub authority: solana_address::Address,
           
               
-          pub delegate: Option<solana_address::Address>,
-          
-              
-          pub heir_token_account: Option<solana_address::Address>,
+          pub heir: solana_address::Address,
           
               
           pub estate: solana_address::Address,
@@ -42,54 +37,29 @@ pub struct Claim {
           pub token_program: solana_address::Address,
           
               
-          pub rent: solana_address::Address,
-          
-              
           pub clock: solana_address::Address,
           
               
           pub system_program: solana_address::Address,
       }
 
-impl Claim {
-  pub fn instruction(&self) -> solana_instruction::Instruction {
-    self.instruction_with_remaining_accounts(&[])
+impl UpdateFields {
+  pub fn instruction(&self, args: UpdateFieldsInstructionArgs) -> solana_instruction::Instruction {
+    self.instruction_with_remaining_accounts(args, &[])
   }
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
-  pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
+  pub fn instruction_with_remaining_accounts(&self, args: UpdateFieldsInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
+    let mut accounts = Vec::with_capacity(9+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
-            self.heir,
+            self.authority,
             true
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.authority,
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            self.heir,
             false
           ));
-                                                      if let Some(delegate) = self.delegate {
-              accounts.push(solana_instruction::AccountMeta::new(
-                delegate,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
-                crate::HEIRLOOM_PROGRAM_ID,
-                false,
-              ));
-            }
-                                                                if let Some(heir_token_account) = self.heir_token_account {
-              accounts.push(solana_instruction::AccountMeta::new(
-                heir_token_account,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
-                crate::HEIRLOOM_PROGRAM_ID,
-                false,
-              ));
-            }
-                                                    accounts.push(solana_instruction::AccountMeta::new(
+                                          accounts.push(solana_instruction::AccountMeta::new(
             self.estate,
             false
           ));
@@ -124,10 +94,6 @@ impl Claim {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.rent,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.clock,
             false
           ));
@@ -136,7 +102,9 @@ impl Claim {
             false
           ));
                       accounts.extend_from_slice(remaining_accounts);
-    let data = ClaimInstructionData::new().try_to_vec().unwrap();
+    let mut data = UpdateFieldsInstructionData::new().try_to_vec().unwrap();
+          let mut args = args.try_to_vec().unwrap();
+      data.append(&mut args);
     
     solana_instruction::Instruction {
       program_id: crate::HEIRLOOM_PROGRAM_ID,
@@ -147,15 +115,15 @@ impl Claim {
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
- pub struct ClaimInstructionData {
+ pub struct UpdateFieldsInstructionData {
             discriminator: [u8; 1],
-      }
+                        }
 
-impl ClaimInstructionData {
+impl UpdateFieldsInstructionData {
   pub fn new() -> Self {
     Self {
-                        discriminator: [1],
-                  }
+                        discriminator: [3],
+                                                            }
   }
 
     pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
@@ -163,71 +131,68 @@ impl ClaimInstructionData {
   }
   }
 
-impl Default for ClaimInstructionData {
+impl Default for UpdateFieldsInstructionData {
   fn default() -> Self {
     Self::new()
   }
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
+ pub struct UpdateFieldsInstructionArgs {
+                  pub heartbeat_interval: Option<Address>,
+                pub grace_period: Option<Address>,
+                pub pause_duration: Option<Address>,
+      }
+
+impl UpdateFieldsInstructionArgs {
+  pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
+    borsh::to_vec(self)
+  }
+}
 
 
-/// Instruction builder for `Claim`.
+/// Instruction builder for `UpdateFields`.
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` heir
-          ///   1. `[]` authority
-                      ///   2. `[writable, optional]` delegate
-                      ///   3. `[writable, optional]` heir_token_account
-                ///   4. `[writable]` estate
-                ///   5. `[writable]` vault
-                      ///   6. `[writable, optional]` vault_token_account
-                      ///   7. `[writable, optional]` mint
-                ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   9. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
-                ///   10. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   11. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                      ///   0. `[writable, signer]` authority
+                ///   1. `[writable]` heir
+                ///   2. `[writable]` estate
+                ///   3. `[writable]` vault
+                      ///   4. `[writable, optional]` vault_token_account
+                      ///   5. `[writable, optional]` mint
+                ///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   7. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
+                ///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct ClaimBuilder {
-            heir: Option<solana_address::Address>,
-                authority: Option<solana_address::Address>,
-                delegate: Option<solana_address::Address>,
-                heir_token_account: Option<solana_address::Address>,
+pub struct UpdateFieldsBuilder {
+            authority: Option<solana_address::Address>,
+                heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
                 vault: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
-                rent: Option<solana_address::Address>,
                 clock: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
-                __remaining_accounts: Vec<solana_instruction::AccountMeta>,
+                        heartbeat_interval: Option<Address>,
+                grace_period: Option<Address>,
+                pause_duration: Option<Address>,
+        __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
-impl ClaimBuilder {
+impl UpdateFieldsBuilder {
   pub fn new() -> Self {
     Self::default()
   }
-            #[inline(always)]
-    pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
-                        self.heir = Some(heir);
-                    self
-    }
             #[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
                         self.authority = Some(authority);
                     self
     }
-            /// `[optional account]`
-#[inline(always)]
-    pub fn delegate(&mut self, delegate: Option<solana_address::Address>) -> &mut Self {
-                        self.delegate = delegate;
-                    self
-    }
-            /// `[optional account]`
-#[inline(always)]
-    pub fn heir_token_account(&mut self, heir_token_account: Option<solana_address::Address>) -> &mut Self {
-                        self.heir_token_account = heir_token_account;
+            #[inline(always)]
+    pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
+                        self.heir = Some(heir);
                     self
     }
             #[inline(always)]
@@ -258,12 +223,6 @@ impl ClaimBuilder {
                         self.token_program = Some(token_program);
                     self
     }
-            /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
-#[inline(always)]
-    pub fn rent(&mut self, rent: solana_address::Address) -> &mut Self {
-                        self.rent = Some(rent);
-                    self
-    }
             /// `[optional account, default to 'SysvarC1ock11111111111111111111111111111111']`
 #[inline(always)]
     pub fn clock(&mut self, clock: solana_address::Address) -> &mut Self {
@@ -276,7 +235,25 @@ impl ClaimBuilder {
                         self.system_program = Some(system_program);
                     self
     }
-            /// Add an additional account to the instruction.
+                    /// `[optional argument]`
+#[inline(always)]
+      pub fn heartbeat_interval(&mut self, heartbeat_interval: Address) -> &mut Self {
+        self.heartbeat_interval = Some(heartbeat_interval);
+        self
+      }
+                /// `[optional argument]`
+#[inline(always)]
+      pub fn grace_period(&mut self, grace_period: Address) -> &mut Self {
+        self.grace_period = Some(grace_period);
+        self
+      }
+                /// `[optional argument]`
+#[inline(always)]
+      pub fn pause_duration(&mut self, pause_duration: Address) -> &mut Self {
+        self.pause_duration = Some(pause_duration);
+        self
+      }
+        /// Add an additional account to the instruction.
   #[inline(always)]
   pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
     self.__remaining_accounts.push(account);
@@ -290,39 +267,35 @@ impl ClaimBuilder {
   }
   #[allow(clippy::clone_on_copy)]
   pub fn instruction(&self) -> solana_instruction::Instruction {
-    let accounts = Claim {
-                              heir: self.heir.expect("heir is not set"),
-                                        authority: self.authority.expect("authority is not set"),
-                                        delegate: self.delegate,
-                                        heir_token_account: self.heir_token_account,
+    let accounts = UpdateFields {
+                              authority: self.authority.expect("authority is not set"),
+                                        heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
                                         vault_token_account: self.vault_token_account,
                                         mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
-                                        rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
+          let args = UpdateFieldsInstructionArgs {
+                                                              heartbeat_interval: self.heartbeat_interval.clone(),
+                                                                  grace_period: self.grace_period.clone(),
+                                                                  pause_duration: self.pause_duration.clone(),
+                                    };
     
-    accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
+    accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
   }
 }
 
-  /// `claim` CPI accounts.
-  pub struct ClaimCpiAccounts<'a, 'b> {
+  /// `update_fields` CPI accounts.
+  pub struct UpdateFieldsCpiAccounts<'a, 'b> {
           
-                    
-              pub heir: &'b solana_account_info::AccountInfo<'a>,
-                
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
-                    
-              pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+              pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub estate: &'b solana_account_info::AccountInfo<'a>,
@@ -340,31 +313,22 @@ impl ClaimBuilder {
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub rent: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
               pub clock: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
-/// `claim` CPI instruction.
-pub struct ClaimCpi<'a, 'b> {
+/// `update_fields` CPI instruction.
+pub struct UpdateFieldsCpi<'a, 'b> {
   /// The program to invoke.
   pub __program: &'b solana_account_info::AccountInfo<'a>,
       
               
-          pub heir: &'b solana_account_info::AccountInfo<'a>,
-          
-              
           pub authority: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
-              
-          pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+          pub heir: &'b solana_account_info::AccountInfo<'a>,
           
               
           pub estate: &'b solana_account_info::AccountInfo<'a>,
@@ -382,35 +346,33 @@ pub struct ClaimCpi<'a, 'b> {
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub rent: &'b solana_account_info::AccountInfo<'a>,
-          
-              
           pub clock: &'b solana_account_info::AccountInfo<'a>,
           
               
           pub system_program: &'b solana_account_info::AccountInfo<'a>,
-        }
+            /// The arguments for the instruction.
+    pub __args: UpdateFieldsInstructionArgs,
+  }
 
-impl<'a, 'b> ClaimCpi<'a, 'b> {
+impl<'a, 'b> UpdateFieldsCpi<'a, 'b> {
   pub fn new(
     program: &'b solana_account_info::AccountInfo<'a>,
-          accounts: ClaimCpiAccounts<'a, 'b>,
-          ) -> Self {
+          accounts: UpdateFieldsCpiAccounts<'a, 'b>,
+              args: UpdateFieldsInstructionArgs,
+      ) -> Self {
     Self {
       __program: program,
-              heir: accounts.heir,
               authority: accounts.authority,
-              delegate: accounts.delegate,
-              heir_token_account: accounts.heir_token_account,
+              heir: accounts.heir,
               estate: accounts.estate,
               vault: accounts.vault,
               vault_token_account: accounts.vault_token_account,
               mint: accounts.mint,
               token_program: accounts.token_program,
-              rent: accounts.rent,
               clock: accounts.clock,
               system_program: accounts.system_program,
-                }
+                    __args: args,
+          }
   }
   #[inline(always)]
   pub fn invoke(&self) -> solana_program_error::ProgramResult {
@@ -432,37 +394,15 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(9+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
-            *self.heir.key,
+            *self.authority.key,
             true
           ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.authority.key,
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            *self.heir.key,
             false
           ));
-                                          if let Some(delegate) = self.delegate {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *delegate.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_PROGRAM_ID,
-              false,
-            ));
-          }
-                                          if let Some(heir_token_account) = self.heir_token_account {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *heir_token_account.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_PROGRAM_ID,
-              false,
-            ));
-          }
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.estate.key,
             false
@@ -498,10 +438,6 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.rent.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.clock.key,
             false
           ));
@@ -516,23 +452,19 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
           is_writable: remaining_account.2,
       })
     });
-    let data = ClaimInstructionData::new().try_to_vec().unwrap();
+    let mut data = UpdateFieldsInstructionData::new().try_to_vec().unwrap();
+          let mut args = self.__args.try_to_vec().unwrap();
+      data.append(&mut args);
     
     let instruction = solana_instruction::Instruction {
       program_id: crate::HEIRLOOM_PROGRAM_ID,
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(13 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(10 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
-                  account_infos.push(self.heir.clone());
-                        account_infos.push(self.authority.clone());
-                        if let Some(delegate) = self.delegate {
-          account_infos.push(delegate.clone());
-        }
-                        if let Some(heir_token_account) = self.heir_token_account {
-          account_infos.push(heir_token_account.clone());
-        }
+                  account_infos.push(self.authority.clone());
+                        account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
                         if let Some(vault_token_account) = self.vault_token_account {
@@ -542,7 +474,6 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
           account_infos.push(mint.clone());
         }
                         account_infos.push(self.token_program.clone());
-                        account_infos.push(self.rent.clone());
                         account_infos.push(self.clock.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -555,67 +486,52 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
   }
 }
 
-/// Instruction builder for `Claim` via CPI.
+/// Instruction builder for `UpdateFields` via CPI.
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` heir
-          ///   1. `[]` authority
-                      ///   2. `[writable, optional]` delegate
-                      ///   3. `[writable, optional]` heir_token_account
-                ///   4. `[writable]` estate
-                ///   5. `[writable]` vault
-                      ///   6. `[writable, optional]` vault_token_account
-                      ///   7. `[writable, optional]` mint
-          ///   8. `[]` token_program
-          ///   9. `[]` rent
-          ///   10. `[]` clock
-          ///   11. `[]` system_program
+                      ///   0. `[writable, signer]` authority
+                ///   1. `[writable]` heir
+                ///   2. `[writable]` estate
+                ///   3. `[writable]` vault
+                      ///   4. `[writable, optional]` vault_token_account
+                      ///   5. `[writable, optional]` mint
+          ///   6. `[]` token_program
+          ///   7. `[]` clock
+          ///   8. `[]` system_program
 #[derive(Clone, Debug)]
-pub struct ClaimCpiBuilder<'a, 'b> {
-  instruction: Box<ClaimCpiBuilderInstruction<'a, 'b>>,
+pub struct UpdateFieldsCpiBuilder<'a, 'b> {
+  instruction: Box<UpdateFieldsCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
+impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
   pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
-    let instruction = Box::new(ClaimCpiBuilderInstruction {
+    let instruction = Box::new(UpdateFieldsCpiBuilderInstruction {
       __program: program,
-              heir: None,
               authority: None,
-              delegate: None,
-              heir_token_account: None,
+              heir: None,
               estate: None,
               vault: None,
               vault_token_account: None,
               mint: None,
               token_program: None,
-              rent: None,
               clock: None,
               system_program: None,
-                                __remaining_accounts: Vec::new(),
+                                            heartbeat_interval: None,
+                                grace_period: None,
+                                pause_duration: None,
+                    __remaining_accounts: Vec::new(),
     });
     Self { instruction }
   }
-      #[inline(always)]
-    pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.heir = Some(heir);
-                    self
-    }
       #[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.authority = Some(authority);
                     self
     }
-      /// `[optional account]`
-#[inline(always)]
-    pub fn delegate(&mut self, delegate: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.delegate = delegate;
-                    self
-    }
-      /// `[optional account]`
-#[inline(always)]
-    pub fn heir_token_account(&mut self, heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.heir_token_account = heir_token_account;
+      #[inline(always)]
+    pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.heir = Some(heir);
                     self
     }
       #[inline(always)]
@@ -646,11 +562,6 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                     self
     }
       #[inline(always)]
-    pub fn rent(&mut self, rent: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.rent = Some(rent);
-                    self
-    }
-      #[inline(always)]
     pub fn clock(&mut self, clock: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.clock = Some(clock);
                     self
@@ -660,7 +571,25 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                         self.instruction.system_program = Some(system_program);
                     self
     }
-            /// Add an additional account to the instruction.
+                    /// `[optional argument]`
+#[inline(always)]
+      pub fn heartbeat_interval(&mut self, heartbeat_interval: Address) -> &mut Self {
+        self.instruction.heartbeat_interval = Some(heartbeat_interval);
+        self
+      }
+                /// `[optional argument]`
+#[inline(always)]
+      pub fn grace_period(&mut self, grace_period: Address) -> &mut Self {
+        self.instruction.grace_period = Some(grace_period);
+        self
+      }
+                /// `[optional argument]`
+#[inline(always)]
+      pub fn pause_duration(&mut self, pause_duration: Address) -> &mut Self {
+        self.instruction.pause_duration = Some(pause_duration);
+        self
+      }
+        /// Add an additional account to the instruction.
   #[inline(always)]
   pub fn add_remaining_account(&mut self, account: &'b solana_account_info::AccountInfo<'a>, is_writable: bool, is_signer: bool) -> &mut Self {
     self.instruction.__remaining_accounts.push((account, is_writable, is_signer));
@@ -682,16 +611,17 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
   #[allow(clippy::clone_on_copy)]
   #[allow(clippy::vec_init_then_push)]
   pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
-        let instruction = ClaimCpi {
+          let args = UpdateFieldsInstructionArgs {
+                                                              heartbeat_interval: self.instruction.heartbeat_interval.clone(),
+                                                                  grace_period: self.instruction.grace_period.clone(),
+                                                                  pause_duration: self.instruction.pause_duration.clone(),
+                                    };
+        let instruction = UpdateFieldsCpi {
         __program: self.instruction.__program,
-                  
-          heir: self.instruction.heir.expect("heir is not set"),
                   
           authority: self.instruction.authority.expect("authority is not set"),
                   
-          delegate: self.instruction.delegate,
-                  
-          heir_token_account: self.instruction.heir_token_account,
+          heir: self.instruction.heir.expect("heir is not set"),
                   
           estate: self.instruction.estate.expect("estate is not set"),
                   
@@ -703,32 +633,31 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                   
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   
-          rent: self.instruction.rent.expect("rent is not set"),
-                  
           clock: self.instruction.clock.expect("clock is not set"),
                   
           system_program: self.instruction.system_program.expect("system_program is not set"),
-                    };
+                          __args: args,
+            };
     instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
   }
 }
 
 #[derive(Clone, Debug)]
-struct ClaimCpiBuilderInstruction<'a, 'b> {
+struct UpdateFieldsCpiBuilderInstruction<'a, 'b> {
   __program: &'b solana_account_info::AccountInfo<'a>,
-            heir: Option<&'b solana_account_info::AccountInfo<'a>>,
-                authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-                delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+            authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+                heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-                rent: Option<&'b solana_account_info::AccountInfo<'a>>,
                 clock: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
+                        heartbeat_interval: Option<Address>,
+                grace_period: Option<Address>,
+                pause_duration: Option<Address>,
+        /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }
 

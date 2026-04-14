@@ -8,22 +8,22 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
-    #[account(mut)]
+    #[account(mut,address=estate.heir,)]
     pub heir: Signer,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
+    #[account(address=estate.authority)]
     pub authority: UncheckedAccount,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
-    pub guardian: Option<UncheckedAccount>,
+    #[account(mut)]
+    pub delegate: Option<UncheckedAccount>,
 
     #[account(mut)]
     pub heir_token_account: Option<InterfaceAccount<Token>>,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump )]
+    #[account(mut, seeds = Estate::seeds(authority, heir), bump)]
     pub estate: Account<Estate<'info>>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump)]
+    #[account(mut, seeds = Vault::seeds(authority, heir), bump, close=heir)]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -58,6 +58,17 @@ impl Claim<'_> {
         // already claimed
         if self.estate.is_claimed.get() {
             return Err(HeirloomError::AlreadyClaimed.into());
+        }
+
+        // check delegate addresses
+        if let (Some(delegate_stored), Some(delegate_acc)) =
+            (self.estate.delegate, self.delegate.as_ref())
+        {
+            require_eq!(
+                &delegate_stored,
+                delegate_acc.address(),
+                HeirloomError::MismatchedAddress
+            )
         }
 
         // timeline: claimable only after last_heartbeat + interval + grace_period,

@@ -2,9 +2,12 @@
 
 use quasar_lang::prelude::*;
 
+mod constants;
 mod errors;
+mod helpers;
 mod instructions;
 mod state;
+
 use instructions::*;
 
 declare_id!("BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv");
@@ -20,7 +23,7 @@ mod heirloom_program {
         grace_period: i64,
         pause_duration: i64,
         amount: u64, // in token amount
-        label: String<u32, 10>,
+        label: String<u32, 32>,
     ) -> Result<(), ProgramError> {
         Initialize::initialize_handler(
             &mut ctx,
@@ -44,8 +47,20 @@ mod heirloom_program {
     // }
 
     #[instruction(discriminator = 3)]
-    pub fn update(ctx: Ctx<Update>) -> Result<(), ProgramError> {
-        Update::update_handler(&mut ctx)
+    pub fn update_fields(
+        ctx: Ctx<Update>,
+        heartbeat_interval: Option<i64>,
+        grace_period: Option<i64>,
+        pause_duration: Option<i64>,
+        // label: Option<String<u32, 32>>,
+    ) -> Result<(), ProgramError> {
+        Update::update_fields_handler(
+            &mut ctx,
+            heartbeat_interval,
+            grace_period,
+            pause_duration,
+            // label.as_deref(),
+        )
     }
 
     #[instruction(discriminator = 4)]
@@ -56,5 +71,10 @@ mod heirloom_program {
     #[instruction(discriminator = 5)]
     pub fn delegate_defer(ctx: Ctx<Defer>) -> Result<(), ProgramError> {
         Defer::delegate_defer_handler(&mut ctx)
+    }
+
+    #[instruction(discriminator = 6)]
+    pub fn transfer_heir(ctx: Ctx<Update>) -> Result<(), ProgramError> {
+        Update::transfer_heir_handler(&mut ctx)
     }
 }

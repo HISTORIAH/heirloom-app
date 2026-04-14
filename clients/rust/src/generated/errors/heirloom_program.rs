@@ -34,6 +34,15 @@ pub enum HeirloomProgramError {
     /// 7 - 
     #[error("")]
     DeferWindowExpired = 0x7,
+    /// 8 - 
+    #[error("")]
+    ClaimDefferred = 0x8,
+    /// 9 - 
+    #[error("")]
+    MismatchedAddress = 0x9,
+    /// 10 - 
+    #[error("")]
+    EstatePaused = 0xA,
 }
 
 impl From<HeirloomProgramError> for solana_program_error::ProgramError {

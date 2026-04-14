@@ -10,4 +10,7 @@ pub enum HeirloomError {
     InsufficientVaultBalance,
     AlreadyDeferred,
     DeferWindowExpired,
+    ClaimDefferred,
+    MismatchedAddress,
+    EstatePaused,
 }

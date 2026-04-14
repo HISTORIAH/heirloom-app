@@ -37,20 +37,27 @@ import {
   getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findEstatePda } from "../pdas";
+import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
-export const UPDATE_DISCRIMINATOR = new Uint8Array([3]);
+export const TRANSFER_HEIR_DISCRIMINATOR = new Uint8Array([6]);
 
-export function getUpdateDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 1).encode(UPDATE_DISCRIMINATOR);
+export function getTransferHeirDiscriminatorBytes() {
+  return fixEncoderSize(getBytesEncoder(), 1).encode(
+    TRANSFER_HEIR_DISCRIMINATOR,
+  );
 }
 
-export type UpdateInstruction<
+export type TransferHeirInstruction<
   TProgram extends string = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
+  TAccountVault extends string | AccountMeta<string> = string,
+  TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
+  TAccountMint extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -65,11 +72,23 @@ export type UpdateInstruction<
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
       TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
+        ? WritableAccount<TAccountHeir>
         : TAccountHeir,
       TAccountEstate extends string
         ? WritableAccount<TAccountEstate>
         : TAccountEstate,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountVaultTokenAccount extends string
+        ? WritableAccount<TAccountVaultTokenAccount>
+        : TAccountVaultTokenAccount,
+      TAccountMint extends string
+        ? WritableAccount<TAccountMint>
+        : TAccountMint,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       TAccountClock extends string
         ? ReadonlyAccount<TAccountClock>
         : TAccountClock,
@@ -80,69 +99,89 @@ export type UpdateInstruction<
     ]
   >;
 
-export type UpdateInstructionData = { discriminator: ReadonlyUint8Array };
+export type TransferHeirInstructionData = { discriminator: ReadonlyUint8Array };
 
-export type UpdateInstructionDataArgs = {};
+export type TransferHeirInstructionDataArgs = {};
 
-export function getUpdateInstructionDataEncoder(): FixedSizeEncoder<UpdateInstructionDataArgs> {
+export function getTransferHeirInstructionDataEncoder(): FixedSizeEncoder<TransferHeirInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 1)]]),
-    (value) => ({ ...value, discriminator: UPDATE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: TRANSFER_HEIR_DISCRIMINATOR }),
   );
 }
 
-export function getUpdateInstructionDataDecoder(): FixedSizeDecoder<UpdateInstructionData> {
+export function getTransferHeirInstructionDataDecoder(): FixedSizeDecoder<TransferHeirInstructionData> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
   ]);
 }
 
-export function getUpdateInstructionDataCodec(): FixedSizeCodec<
-  UpdateInstructionDataArgs,
-  UpdateInstructionData
+export function getTransferHeirInstructionDataCodec(): FixedSizeCodec<
+  TransferHeirInstructionDataArgs,
+  TransferHeirInstructionData
 > {
   return combineCodec(
-    getUpdateInstructionDataEncoder(),
-    getUpdateInstructionDataDecoder(),
+    getTransferHeirInstructionDataEncoder(),
+    getTransferHeirInstructionDataDecoder(),
   );
 }
 
-export type UpdateAsyncInput<
+export type TransferHeirAsyncInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
+  TAccountVault extends string = string,
+  TAccountVaultTokenAccount extends string = string,
+  TAccountMint extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountClock extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
+  vault?: Address<TAccountVault>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
+  tokenProgram?: Address<TAccountTokenProgram>;
   clock?: Address<TAccountClock>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export async function getUpdateInstructionAsync<
+export async function getTransferHeirInstructionAsync<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
+  TAccountVault extends string,
+  TAccountVaultTokenAccount extends string,
+  TAccountMint extends string,
+  TAccountTokenProgram extends string,
   TAccountClock extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: UpdateAsyncInput<
+  input: TransferHeirAsyncInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
+    TAccountVault,
+    TAccountVaultTokenAccount,
+    TAccountMint,
+    TAccountTokenProgram,
     TAccountClock,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
 ): Promise<
-  UpdateInstruction<
+  TransferHeirInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
+    TAccountVault,
+    TAccountVaultTokenAccount,
+    TAccountMint,
+    TAccountTokenProgram,
     TAccountClock,
     TAccountSystemProgram
   >
@@ -154,8 +193,15 @@ export async function getUpdateInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: false },
+    heir: { value: input.heir ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
+    vault: { value: input.vault ?? null, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isWritable: true,
+    },
+    mint: { value: input.mint ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -177,6 +223,22 @@ export async function getUpdateInstructionAsync<
       ),
     });
   }
+  if (!accounts.vault.value) {
+    accounts.vault.value = await findVaultPda({
+      authority: getAddressFromResolvedInstructionAccount(
+        "authority",
+        accounts.authority.value,
+      ),
+      heir: getAddressFromResolvedInstructionAccount(
+        "heir",
+        accounts.heir.value,
+      ),
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
   if (!accounts.clock.value) {
     accounts.clock.value =
       "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
@@ -192,56 +254,84 @@ export async function getUpdateInstructionAsync<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
+      getAccountMeta("mint", accounts.mint),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getUpdateInstructionDataEncoder().encode({}),
+    data: getTransferHeirInstructionDataEncoder().encode({}),
     programAddress,
-  } as UpdateInstruction<
+  } as TransferHeirInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
+    TAccountVault,
+    TAccountVaultTokenAccount,
+    TAccountMint,
+    TAccountTokenProgram,
     TAccountClock,
     TAccountSystemProgram
   >);
 }
 
-export type UpdateInput<
+export type TransferHeirInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
+  TAccountVault extends string = string,
+  TAccountVaultTokenAccount extends string = string,
+  TAccountMint extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountClock extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
+  vault: Address<TAccountVault>;
+  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  mint?: Address<TAccountMint>;
+  tokenProgram?: Address<TAccountTokenProgram>;
   clock?: Address<TAccountClock>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getUpdateInstruction<
+export function getTransferHeirInstruction<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
+  TAccountVault extends string,
+  TAccountVaultTokenAccount extends string,
+  TAccountMint extends string,
+  TAccountTokenProgram extends string,
   TAccountClock extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: UpdateInput<
+  input: TransferHeirInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
+    TAccountVault,
+    TAccountVaultTokenAccount,
+    TAccountMint,
+    TAccountTokenProgram,
     TAccountClock,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
-): UpdateInstruction<
+): TransferHeirInstruction<
   TProgramAddress,
   TAccountAuthority,
   TAccountHeir,
   TAccountEstate,
+  TAccountVault,
+  TAccountVaultTokenAccount,
+  TAccountMint,
+  TAccountTokenProgram,
   TAccountClock,
   TAccountSystemProgram
 > {
@@ -252,8 +342,15 @@ export function getUpdateInstruction<
   // Original accounts.
   const originalAccounts = {
     authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: false },
+    heir: { value: input.heir ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
+    vault: { value: input.vault ?? null, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isWritable: true,
+    },
+    mint: { value: input.mint ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -263,6 +360,10 @@ export function getUpdateInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
   if (!accounts.clock.value) {
     accounts.clock.value =
       "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
@@ -278,22 +379,30 @@ export function getUpdateInstruction<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
+      getAccountMeta("vault", accounts.vault),
+      getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
+      getAccountMeta("mint", accounts.mint),
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getUpdateInstructionDataEncoder().encode({}),
+    data: getTransferHeirInstructionDataEncoder().encode({}),
     programAddress,
-  } as UpdateInstruction<
+  } as TransferHeirInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
+    TAccountVault,
+    TAccountVaultTokenAccount,
+    TAccountMint,
+    TAccountTokenProgram,
     TAccountClock,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedUpdateInstruction<
+export type ParsedTransferHeirInstruction<
   TProgram extends string = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -302,26 +411,30 @@ export type ParsedUpdateInstruction<
     authority: TAccountMetas[0];
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
-    clock: TAccountMetas[3];
-    systemProgram: TAccountMetas[4];
+    vault: TAccountMetas[3];
+    vaultTokenAccount?: TAccountMetas[4] | undefined;
+    mint?: TAccountMetas[5] | undefined;
+    tokenProgram: TAccountMetas[6];
+    clock: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
   };
-  data: UpdateInstructionData;
+  data: TransferHeirInstructionData;
 };
 
-export function parseUpdateInstruction<
+export function parseTransferHeirInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
-): ParsedUpdateInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+): ParsedTransferHeirInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 9) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 5,
+        expectedAccountMetas: 9,
       },
     );
   }
@@ -331,15 +444,25 @@ export function parseUpdateInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       authority: getNextAccount(),
       heir: getNextAccount(),
       estate: getNextAccount(),
+      vault: getNextAccount(),
+      vaultTokenAccount: getNextOptionalAccount(),
+      mint: getNextOptionalAccount(),
+      tokenProgram: getNextAccount(),
       clock: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getUpdateInstructionDataDecoder().decode(instruction.data),
+    data: getTransferHeirInstructionDataDecoder().decode(instruction.data),
   };
 }
