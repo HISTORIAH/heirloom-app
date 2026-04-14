@@ -1,27 +1,8 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import {
-  address as toAddress,
-  type Address,
-  type TransactionSigner,
-} from "@solana/kit";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
+import { address as toAddress, type Address, type TransactionSigner, } from "@solana/kit";
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
-import {
-  fetchEstateByPair,
-  getVaultAddress,
-  sendInitialize,
-  sendRevoke,
-  sendUpdate,
-  type Client,
-} from "@/lib/contracts";
+import { fetchEstateByPair, getVaultAddress, sendInitialize, sendRevoke, sendUpdate, type Client, } from "@/lib/contracts";
 
 export interface EstateData {
   authority: string;
@@ -305,7 +286,7 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     error: null,
     pendingTxId: null,
     pendingCreate: false,
-    fetchEstates: async () => {},
+    fetchEstates: async () => { },
     createEstateOnChain: async () => {
       throw new Error("Wallet not connected");
     },
@@ -315,7 +296,7 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     revokeEstateOnChain: async () => {
       throw new Error("Wallet not connected");
     },
-    clearVault: () => {},
+    clearVault: () => { },
   };
   return <VaultContext.Provider value={stubValue}>{children}</VaultContext.Provider>;
 };

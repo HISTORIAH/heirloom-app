@@ -1,19 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import heroVault from "@/assets/Heirloomapp-hero.png";
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
   const navigate = useNavigate();
-  const { setVisible: setWalletModalVisible } = useWalletModal();
 
   const handleLaunch = () => {
     if (isConnected) {
       navigate("/create-vault");
     } else {
-      setWalletModalVisible(true);
+      navigate("/create-vault");
     }
   };
 

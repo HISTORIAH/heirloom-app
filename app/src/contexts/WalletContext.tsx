@@ -1,10 +1,6 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useWalletUi } from "@wallet-ui/react";
-import {
-  createSolanaRpc,
-  createSolanaRpcSubscriptions,
-  type Address,
-} from "@solana/kit";
+import { createSolanaRpc, createSolanaRpcSubscriptions, type Address, } from "@solana/kit";
 import { RPC_URL, RPC_WS_URL } from "@/config/constants";
 
 const rpcSingleton = createSolanaRpc(RPC_URL);
