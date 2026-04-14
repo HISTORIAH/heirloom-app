@@ -9,11 +9,13 @@
   pub(crate) mod r#delegate_defer;
   pub(crate) mod r#initialize;
   pub(crate) mod r#revoke;
-  pub(crate) mod r#update;
+  pub(crate) mod r#update_fields;
+  pub(crate) mod r#update_heir;
 
   pub use self::r#claim::*;
   pub use self::r#delegate_defer::*;
   pub use self::r#initialize::*;
   pub use self::r#revoke::*;
-  pub use self::r#update::*;
+  pub use self::r#update_fields::*;
+  pub use self::r#update_heir::*;
 

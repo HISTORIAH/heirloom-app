@@ -10,4 +10,5 @@ export * from "./claim";
 export * from "./delegateDefer";
 export * from "./initialize";
 export * from "./revoke";
-export * from "./update";
+export * from "./updateFields";
+export * from "./updateHeir";

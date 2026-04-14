@@ -8,22 +8,22 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
-    #[account(mut)]
+    #[account(mut,address=estate.heir,)]
     pub heir: Signer,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
+    #[account(address=estate.authority)]
     pub authority: UncheckedAccount,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
-    pub guardian: Option<UncheckedAccount>,
+    #[account(mut)]
+    pub delegate: Option<UncheckedAccount>,
 
     #[account(mut)]
     pub heir_token_account: Option<InterfaceAccount<Token>>,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump )]
+    #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
     pub estate: Account<Estate<'info>>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump)]
+    #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump, close=heir)]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -48,7 +48,10 @@ impl Claim<'_> {
         ctx.accounts.validate()?;
 
         // transfer assets
-        ctx.accounts.transfer_assets()?;
+        ctx.accounts.transfer_assets(&ctx.bumps)?;
+
+        // update account
+        ctx.accounts.estate.is_claimed = PodBool::from(true);
 
         Ok(())
     }
@@ -58,6 +61,17 @@ impl Claim<'_> {
         // already claimed
         if self.estate.is_claimed.get() {
             return Err(HeirloomError::AlreadyClaimed.into());
+        }
+
+        // check delegate addresses
+        if let (Some(delegate_stored), Some(delegate_acc)) =
+            (self.estate.delegate, self.delegate.as_ref())
+        {
+            require_eq!(
+                &delegate_stored,
+                delegate_acc.address(),
+                HeirloomError::MismatchedAddress
+            )
         }
 
         // timeline: claimable only after last_heartbeat + interval + grace_period,
@@ -103,7 +117,7 @@ impl Claim<'_> {
     }
 
     #[inline(always)]
-    pub fn transfer_assets(&self) -> Result<(), ProgramError> {
+    pub fn transfer_assets(&self, claim_ix_bumps: &ClaimBumps) -> Result<(), ProgramError> {
         // token transfer block
         match self.heir_token_account.as_ref() {
             Some(heir_ta) => {
@@ -118,6 +132,9 @@ impl Claim<'_> {
                         .invoke()?;
                 }
 
+                let vault_seeds = self.vault_seeds(claim_ix_bumps);
+
+                // FIXME: seeds since we are signing with vault
                 self.token_program
                     .transfer_checked(
                         vault_token_account,
@@ -127,7 +144,7 @@ impl Claim<'_> {
                         vault_token_account.amount(),
                         mint.decimals(),
                     )
-                    .invoke()?;
+                    .invoke_signed(&vault_seeds)?;
             }
             // sol transfer block
             None => {

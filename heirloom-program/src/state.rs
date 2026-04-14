@@ -29,7 +29,7 @@ pub struct Estate<'a> {
 
     pub mint: Option<Address>,
 
-    pub label: String<10>, // FIXME: SET THIS AS A CONST
+    pub label: String<32>, // FIXME: SET THIS AS A CONST
                            // read allocated amount from vault balance
 }
 

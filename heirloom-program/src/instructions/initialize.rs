@@ -1,7 +1,10 @@
 use quasar_lang::prelude::*;
 use quasar_spl::{Mint, Token, TokenCpi, TokenInterface};
 
-use crate::state::{Estate, EstateInner, Vault, VaultInner};
+use crate::{
+    errors::HeirloomError,
+    state::{Estate, EstateInner, Vault, VaultInner},
+};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -49,7 +52,7 @@ impl Initialize<'_> {
         label: &str,
     ) -> Result<(), ProgramError> {
         // validate everything
-        ctx.accounts.validate()?;
+        ctx.accounts.validate_inputs(amount)?;
 
         let estate_bump = ctx.bumps.estate;
         let vault_bump = ctx.bumps.vault;
@@ -64,6 +67,9 @@ impl Initialize<'_> {
             vault_bump,
         )?;
 
+        // init vault token account if needed
+        ctx.accounts.init_vault_token_account()?;
+
         // transfer assets
         ctx.accounts.transfer_assets(amount)?;
 
@@ -73,21 +79,64 @@ impl Initialize<'_> {
     }
 
     #[inline(always)]
-    pub fn validate(&self) -> Result<(), ProgramError> {
-        // ? check account balance here
+    pub fn validate_inputs(&self, amount: u64) -> Result<(), ProgramError> {
+        match self.authority_token_account.as_ref() {
+            Some(authority_ta) => {
+                // all three token accounts must be present together
+                let _vault_ta = self
+                    .vault_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
+                let mint = self
+                    .mint
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-        // ? if token account specified
+                // mint must be initialized
+                if !mint.is_initialized() {
+                    return Err(HeirloomError::MintMismatch.into());
+                }
 
-        // if let Some(authority_ata) = self.authority_token_account {
-        //     // check balances
-        // }
-        //
-        //
-        // ? check the mint match the auathority ata
+                // authority ATA must belong to the correct mint
+                if authority_ta.mint() != mint.to_account_view().address() {
+                    return Err(HeirloomError::MintMismatch.into());
+                }
 
-        // ? check if mint initialized
+                // authority must have sufficient token balance
+                if authority_ta.amount() < amount {
+                    return Err(HeirloomError::InsufficientVaultBalance.into());
+                }
+            }
+            None => {
+                // token accounts passed without authority ATA is invalid
+                if self.vault_token_account.is_some() || self.mint.is_some() {
+                    return Err(HeirloomError::MissingTokenAccounts.into());
+                }
 
-        // ? if one token type is passed check if the rest are passed as well
+                // authority must have sufficient SOL (amount is in lamports on SOL path)
+                if self.authority.to_account_view().lamports() < amount {
+                    return Err(HeirloomError::InsufficientVaultBalance.into());
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    pub fn init_vault_token_account(&self) -> Result<(), ProgramError> {
+        let vault_ta = match self.vault_token_account.as_ref() {
+            Some(ta) => ta,
+            None => return Ok(()),
+        };
+        let mint = self.mint.as_ref().unwrap();
+
+        // uninitialized
+        if vault_ta.to_account_view().is_data_empty() {
+            self.token_program
+                .initialize_account3(vault_ta, mint, self.vault.address())
+                .invoke()?;
+        }
 
         Ok(())
     }
@@ -142,12 +191,6 @@ impl Initialize<'_> {
                 // safe to unwrap since it is checked in validate
                 let vault_token_account = self.vault_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
-
-                if !vault_token_account.is_initialized() {
-                    self.token_program
-                        .initialize_account3(vault_token_account, mint, self.vault.address())
-                        .invoke()?;
-                }
 
                 self.token_program
                     .transfer_checked(

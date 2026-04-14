@@ -44,12 +44,14 @@ import {
   getDelegateDeferInstructionAsync,
   getInitializeInstructionAsync,
   getRevokeInstructionAsync,
-  getUpdateInstructionAsync,
+  getUpdateFieldsInstructionAsync,
+  getUpdateHeirInstructionAsync,
   parseClaimInstruction,
   parseDelegateDeferInstruction,
   parseInitializeInstruction,
   parseRevokeInstruction,
-  parseUpdateInstruction,
+  parseUpdateFieldsInstruction,
+  parseUpdateHeirInstruction,
   type ClaimAsyncInput,
   type DelegateDeferAsyncInput,
   type InitializeAsyncInput,
@@ -57,9 +59,11 @@ import {
   type ParsedDelegateDeferInstruction,
   type ParsedInitializeInstruction,
   type ParsedRevokeInstruction,
-  type ParsedUpdateInstruction,
+  type ParsedUpdateFieldsInstruction,
+  type ParsedUpdateHeirInstruction,
   type RevokeAsyncInput,
-  type UpdateAsyncInput,
+  type UpdateFieldsAsyncInput,
+  type UpdateHeirAsyncInput,
 } from "../instructions";
 import { findEstatePda, findVaultPda } from "../pdas";
 
@@ -102,9 +106,10 @@ export function identifyHeirloomProgramAccount(
 export enum HeirloomProgramInstruction {
   Initialize,
   Claim,
-  Update,
+  UpdateFields,
   Revoke,
   DelegateDefer,
+  UpdateHeir,
 }
 
 export function identifyHeirloomProgramInstruction(
@@ -136,7 +141,7 @@ export function identifyHeirloomProgramInstruction(
       0,
     )
   ) {
-    return HeirloomProgramInstruction.Update;
+    return HeirloomProgramInstruction.UpdateFields;
   }
   if (
     containsBytes(
@@ -156,6 +161,15 @@ export function identifyHeirloomProgramInstruction(
   ) {
     return HeirloomProgramInstruction.DelegateDefer;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([6])),
+      0,
+    )
+  ) {
+    return HeirloomProgramInstruction.UpdateHeir;
+  }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     { instructionData: data, programName: "heirloomProgram" },
@@ -172,14 +186,17 @@ export type ParsedHeirloomProgramInstruction<
       instructionType: HeirloomProgramInstruction.Claim;
     } & ParsedClaimInstruction<TProgram>)
   | ({
-      instructionType: HeirloomProgramInstruction.Update;
-    } & ParsedUpdateInstruction<TProgram>)
+      instructionType: HeirloomProgramInstruction.UpdateFields;
+    } & ParsedUpdateFieldsInstruction<TProgram>)
   | ({
       instructionType: HeirloomProgramInstruction.Revoke;
     } & ParsedRevokeInstruction<TProgram>)
   | ({
       instructionType: HeirloomProgramInstruction.DelegateDefer;
-    } & ParsedDelegateDeferInstruction<TProgram>);
+    } & ParsedDelegateDeferInstruction<TProgram>)
+  | ({
+      instructionType: HeirloomProgramInstruction.UpdateHeir;
+    } & ParsedUpdateHeirInstruction<TProgram>);
 
 export function parseHeirloomProgramInstruction<TProgram extends string>(
   instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -200,11 +217,11 @@ export function parseHeirloomProgramInstruction<TProgram extends string>(
         ...parseClaimInstruction(instruction),
       };
     }
-    case HeirloomProgramInstruction.Update: {
+    case HeirloomProgramInstruction.UpdateFields: {
       assertIsInstructionWithAccounts(instruction);
       return {
-        instructionType: HeirloomProgramInstruction.Update,
-        ...parseUpdateInstruction(instruction),
+        instructionType: HeirloomProgramInstruction.UpdateFields,
+        ...parseUpdateFieldsInstruction(instruction),
       };
     }
     case HeirloomProgramInstruction.Revoke: {
@@ -219,6 +236,13 @@ export function parseHeirloomProgramInstruction<TProgram extends string>(
       return {
         instructionType: HeirloomProgramInstruction.DelegateDefer,
         ...parseDelegateDeferInstruction(instruction),
+      };
+    }
+    case HeirloomProgramInstruction.UpdateHeir: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomProgramInstruction.UpdateHeir,
+        ...parseUpdateHeirInstruction(instruction),
       };
     }
     default:
@@ -253,15 +277,20 @@ export type HeirloomProgramPluginInstructions = {
   claim: (
     input: ClaimAsyncInput,
   ) => ReturnType<typeof getClaimInstructionAsync> & SelfPlanAndSendFunctions;
-  update: (
-    input: UpdateAsyncInput,
-  ) => ReturnType<typeof getUpdateInstructionAsync> & SelfPlanAndSendFunctions;
+  updateFields: (
+    input: UpdateFieldsAsyncInput,
+  ) => ReturnType<typeof getUpdateFieldsInstructionAsync> &
+    SelfPlanAndSendFunctions;
   revoke: (
     input: RevokeAsyncInput,
   ) => ReturnType<typeof getRevokeInstructionAsync> & SelfPlanAndSendFunctions;
   delegateDefer: (
     input: DelegateDeferAsyncInput,
   ) => ReturnType<typeof getDelegateDeferInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  updateHeir: (
+    input: UpdateHeirAsyncInput,
+  ) => ReturnType<typeof getUpdateHeirInstructionAsync> &
     SelfPlanAndSendFunctions;
 };
 
@@ -296,10 +325,10 @@ export function heirloomProgramProgram() {
               client,
               getClaimInstructionAsync(input),
             ),
-          update: (input) =>
+          updateFields: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getUpdateInstructionAsync(input),
+              getUpdateFieldsInstructionAsync(input),
             ),
           revoke: (input) =>
             addSelfPlanAndSendFunctions(
@@ -310,6 +339,11 @@ export function heirloomProgramProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getDelegateDeferInstructionAsync(input),
+            ),
+          updateHeir: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getUpdateHeirInstructionAsync(input),
             ),
         },
         pdas: { estate: findEstatePda, vault: findVaultPda },
