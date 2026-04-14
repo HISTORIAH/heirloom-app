@@ -130,7 +130,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </p>
         {estate.delegate && (
           <span className="neo-badge bg-accent-purple/20 text-xs flex items-center gap-1">
-            <Shield className="h-3 w-3" /> Delegate set
+            <Shield className="h-3 w-3" /> Guardian set
           </span>
         )}
       </div>

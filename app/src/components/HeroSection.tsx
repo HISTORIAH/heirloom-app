@@ -1,57 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
-import { useWalletUi, useWalletUiWallet, type UiWallet } from "@wallet-ui/react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
 import heroVault from "@/assets/Heirloomapp-hero.png";
-
-interface WalletRowProps {
-  wallet: UiWallet;
-  onConnected: () => void;
-}
-
-const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
-  const { connect, isConnecting } = useWalletUiWallet({ wallet });
-  return (
-    <button
-      type="button"
-      disabled={isConnecting}
-      onClick={async () => {
-        try {
-          const accounts = await connect();
-          if (accounts.length > 0) onConnected();
-        } catch (err) {
-          console.error("wallet connect failed", err);
-        }
-      }}
-      className="w-full neo-border rounded-xl px-4 py-3 bg-secondary hover:bg-accent-lime transition-all duration-150 flex items-center gap-3 font-black disabled:opacity-60"
-    >
-      {wallet.icon && (
-        <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />
-      )}
-      <span className="flex-1 text-left">{wallet.name}</span>
-      {isConnecting && <span className="text-xs font-bold">Connecting…</span>}
-    </button>
-  );
-};
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
   const navigate = useNavigate();
-  const walletUi = useWalletUi() as unknown as { wallets?: UiWallet[] };
-  const wallets = walletUi?.wallets ?? [];
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (isConnected && dialogOpen) setDialogOpen(false);
-  }, [isConnected, dialogOpen]);
 
   const handleLaunch = () => {
     if (isConnected) {
@@ -121,36 +78,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="neo-card-static max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black">Connect Wallet</DialogTitle>
-            <DialogDescription className="font-medium">
-              Choose a Solana wallet to continue.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 mt-2">
-            {wallets.length === 0 ? (
-              <a
-                href="https://solana.com/solana-wallets"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="neo-border rounded-xl px-4 py-3 bg-accent-yellow font-black text-center"
-              >
-                No wallets detected — install one
-              </a>
-            ) : (
-              wallets.map((w) => (
-                <WalletRow
-                  key={w.name}
-                  wallet={w}
-                  onConnected={() => setDialogOpen(false)}
-                />
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <WalletConnectDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </section>
   );
 };
