@@ -45,7 +45,7 @@ impl Claim<'_> {
         ctx.accounts.validate()?;
         ctx.accounts.transfer_assets(&ctx.bumps)?;
 
-        let authority_view = ctx.accounts.authority.to_account_view();
+        let heir_view = ctx.accounts.heir.to_account_view();
 
         match ctx.accounts.heir_token_account.as_ref() {
             Some(_) => {
@@ -54,14 +54,14 @@ impl Claim<'_> {
                 ctx.accounts.estate.claimable_assets = remaining;
 
                 if remaining == 0 {
-                    ctx.accounts.estate.close(authority_view)?;
-                    ctx.accounts.vault.close(authority_view)?;
+                    ctx.accounts.estate.close(heir_view)?;
+                    ctx.accounts.vault.close(heir_view)?;
                 }
             }
             None => {
-                // SOL claim — close immediately, account gone so no point writing is_claimed
-                ctx.accounts.estate.close(authority_view)?;
-                ctx.accounts.vault.close(authority_view)?;
+                // SOL path: close() transfers vault lamports to heir
+                ctx.accounts.estate.close(heir_view)?;
+                ctx.accounts.vault.close(heir_view)?;
             }
         }
 
@@ -149,14 +149,8 @@ impl Claim<'_> {
                     .close_account(vault_ta, &self.heir, &self.vault)
                     .invoke_signed(&vault_seeds)?;
             }
-            None => {
-                let heir = self.heir.to_account_view();
-                let vault = self.vault.to_account_view();
-                let amount = vault.lamports();
-
-                set_lamports(vault, 0);
-                set_lamports(heir, heir.lamports() + amount);
-            }
+            // SOL path: close() in claim_handler transfers vault lamports to heir
+            None => {}
         }
 
         Ok(())
