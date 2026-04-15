@@ -79,12 +79,20 @@ function computeState(
   gracePeriod: number,
   pausedUntil: number,
   isClaimed: boolean,
+  createdAt: number,
+  vaultEmpty: boolean,
 ): { state: EstateData["state"]; secondsUntilGrace: number; secondsUntilClaimable: number } {
-  if (isClaimed) {
+  // Empty vault or already claimed → distributed. Program leaves the estate
+  // account on-chain after claim; we treat a drained vault as distributed
+  // from the UI so it cannot be misread as claimable.
+  if (isClaimed || vaultEmpty) {
     return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
   }
+  // Program initialize leaves last_heartbeat = 0 until the first heartbeat,
+  // so anchor the timer to created_at when no heartbeat has landed yet.
+  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
   const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = lastHeartbeat + heartbeatInterval;
+  const graceDeadline = anchor + heartbeatInterval;
   const baseClaimable = graceDeadline + gracePeriod;
   const claimableAt = Math.max(baseClaimable, pausedUntil);
 
@@ -140,12 +148,29 @@ const VaultProviderInner: React.FC<{
           const heartbeatInterval = Number(maybe.data.heartbeatInterval);
           const gracePeriod = Number(maybe.data.gracePeriod);
           const pausedUntil = Number(maybe.data.pausedUntil);
+          const createdAt = Number(maybe.data.createdAt);
+          const mintOpt =
+            maybe.data.mint && "__option" in maybe.data.mint
+              ? (maybe.data.mint as { __option: "Some" | "None"; value?: string }).__option === "Some"
+                ? ((maybe.data.mint as { value: string }).value ?? null)
+                : null
+              : null;
+          // SOL path: vault drained → lamports == 0. Token path: we can't
+          // cheaply fetch the vault ATA balance here, so fall back to
+          // is_claimed only. (Program-side fix would close the estate.)
+          // Treat distributed + empty vaults as "closed" from the UI: the
+          // program leaves the estate PDA on-chain after claim, so we hide
+          // them (and prune the known-heirs cache below) to match the
+          // expected owner flow ("vault should close after distribution").
+          const vaultEmpty = mintOpt === null && Number(lamports) === 0;
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeState(
             lastHeartbeat,
             heartbeatInterval,
             gracePeriod,
             pausedUntil,
             maybe.data.isClaimed,
+            createdAt,
+            vaultEmpty,
           );
           results.push({
             authority: maybe.data.authority,
@@ -156,7 +181,7 @@ const VaultProviderInner: React.FC<{
             lastHeartbeat,
             pauseDuration: Number(maybe.data.pauseDuration),
             pausedUntil,
-            createdAt: Number(maybe.data.createdAt),
+            createdAt,
             isClaimed: maybe.data.isClaimed,
             isDeferred: maybe.data.isDeferred,
             delegate:
@@ -165,12 +190,7 @@ const VaultProviderInner: React.FC<{
                   ? ((maybe.data.delegate as { value: string }).value ?? null)
                   : null
                 : null,
-            mint:
-              maybe.data.mint && "__option" in maybe.data.mint
-                ? (maybe.data.mint as { __option: "Some" | "None"; value?: string }).__option === "Some"
-                  ? ((maybe.data.mint as { value: string }).value ?? null)
-                  : null
-                : null,
+            mint: mintOpt,
             estatePda,
             vaultPda,
             solBalance: Number(lamports),
@@ -182,7 +202,21 @@ const VaultProviderInner: React.FC<{
           // skip failed heirs
         }
       }
-      setEstates(results);
+      // Hide fully-distributed-and-empty estates from the owner dashboard
+      // and drop them from the known-heirs cache so the slot is "free" again.
+      const visible = results.filter(
+        (r) => !(r.state === "distributed" && r.solBalance === 0 && r.mint === null),
+      );
+      const hidden = results.filter(
+        (r) => r.state === "distributed" && r.solBalance === 0 && r.mint === null,
+      );
+      if (hidden.length > 0) {
+        const heirs = loadKnownHeirs(authority).filter(
+          (h) => !hidden.some((x) => x.heir === h),
+        );
+        saveKnownHeirs(authority, heirs);
+      }
+      setEstates(visible);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to fetch estates");
     } finally {
@@ -206,6 +240,16 @@ const VaultProviderInner: React.FC<{
   const createEstateOnChain = useCallback(
     async (input: CreateEstateInput): Promise<string> => {
       const heirAddress = toAddress(input.heir);
+      // Pre-flight: program PDA is seeded on (authority, heir) and is NOT
+      // closed after claim, so re-initialising with the same pair will fail
+      // with account-already-exists. Give a clear message before the wallet
+      // pops a cryptic simulation error.
+      const existing = await fetchEstateByPair(rpc, authority, heirAddress);
+      if (existing.exists) {
+        throw new Error(
+          "An estate already exists for this heir address. The on-chain account persists after claim/distribution — pick a different heir address, or (program-side) close the estate on claim.",
+        );
+      }
       const txId = await sendInitialize(client, {
         authority: signer,
         heir: heirAddress,
@@ -226,7 +270,7 @@ const VaultProviderInner: React.FC<{
       setPendingCreate(true);
       return txId;
     },
-    [client, signer, authority],
+    [client, rpc, signer, authority],
   );
 
   const sendHeartbeatOnChain = useCallback(

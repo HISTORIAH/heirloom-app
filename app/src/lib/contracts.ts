@@ -3,7 +3,7 @@ import { appendTransactionMessageInstruction, createTransactionMessage, getBase5
   type MaybeAccount,
   type TransactionSigner,
 } from "@solana/kit";
-import { fetchMaybeEstate, findEstatePda, findVaultPda, getClaimInstructionAsync, getDelegateDeferInstructionAsync, getInitializeInstructionAsync, getRevokeInstructionAsync, getUpdateInstructionAsync,
+import { fetchMaybeEstate, findEstatePda, findVaultPda, getClaimInstructionAsync, getDelegateDeferInstructionAsync, getInitializeInstructionAsync, getRevokeInstructionAsync, getUpdateFieldsInstructionAsync,
   type Estate,
 } from "@historiah/heirloom";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
@@ -105,9 +105,13 @@ export async function sendUpdate(
   client: Client,
   args: UpdateArgs,
 ): Promise<string> {
-  const ix = await getUpdateInstructionAsync({
+  // updateFields with all None → heartbeat-only (program sets last_heartbeat = now).
+  const ix = await getUpdateFieldsInstructionAsync({
     authority: args.authority,
     heir: args.heir,
+    heartbeatInterval: null,
+    gracePeriod: null,
+    pauseDuration: null,
   });
   return sendTx(client, args.authority, ix);
 }
@@ -143,7 +147,7 @@ export interface ClaimArgs {
   tokenProgram?: Address;
   vaultTokenAccount?: Address;
   heirTokenAccount?: Address;
-  guardian?: Address;
+  delegate?: Address;
 }
 
 export async function sendClaim(
@@ -157,7 +161,7 @@ export async function sendClaim(
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     heirTokenAccount: args.heirTokenAccount,
-    guardian: args.guardian,
+    delegate: args.delegate,
   });
   return sendTx(client, args.heir, ix);
 }

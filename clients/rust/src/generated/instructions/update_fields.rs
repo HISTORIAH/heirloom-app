@@ -5,7 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use solana_address::Address;
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
@@ -90,9 +89,9 @@ impl Default for UpdateFieldsInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
  pub struct UpdateFieldsInstructionArgs {
-                  pub heartbeat_interval: Option<Address>,
-                pub grace_period: Option<Address>,
-                pub pause_duration: Option<Address>,
+                  pub heartbeat_interval: Option<i64>,
+                pub grace_period: Option<i64>,
+                pub pause_duration: Option<i64>,
       }
 
 impl UpdateFieldsInstructionArgs {
@@ -116,9 +115,9 @@ pub struct UpdateFieldsBuilder {
                 heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
                 clock: Option<solana_address::Address>,
-                        heartbeat_interval: Option<Address>,
-                grace_period: Option<Address>,
-                pause_duration: Option<Address>,
+                        heartbeat_interval: Option<i64>,
+                grace_period: Option<i64>,
+                pause_duration: Option<i64>,
         __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
@@ -149,19 +148,19 @@ impl UpdateFieldsBuilder {
     }
                     /// `[optional argument]`
 #[inline(always)]
-      pub fn heartbeat_interval(&mut self, heartbeat_interval: Address) -> &mut Self {
+      pub fn heartbeat_interval(&mut self, heartbeat_interval: i64) -> &mut Self {
         self.heartbeat_interval = Some(heartbeat_interval);
         self
       }
                 /// `[optional argument]`
 #[inline(always)]
-      pub fn grace_period(&mut self, grace_period: Address) -> &mut Self {
+      pub fn grace_period(&mut self, grace_period: i64) -> &mut Self {
         self.grace_period = Some(grace_period);
         self
       }
                 /// `[optional argument]`
 #[inline(always)]
-      pub fn pause_duration(&mut self, pause_duration: Address) -> &mut Self {
+      pub fn pause_duration(&mut self, pause_duration: i64) -> &mut Self {
         self.pause_duration = Some(pause_duration);
         self
       }
@@ -365,19 +364,19 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
     }
                     /// `[optional argument]`
 #[inline(always)]
-      pub fn heartbeat_interval(&mut self, heartbeat_interval: Address) -> &mut Self {
+      pub fn heartbeat_interval(&mut self, heartbeat_interval: i64) -> &mut Self {
         self.instruction.heartbeat_interval = Some(heartbeat_interval);
         self
       }
                 /// `[optional argument]`
 #[inline(always)]
-      pub fn grace_period(&mut self, grace_period: Address) -> &mut Self {
+      pub fn grace_period(&mut self, grace_period: i64) -> &mut Self {
         self.instruction.grace_period = Some(grace_period);
         self
       }
                 /// `[optional argument]`
 #[inline(always)]
-      pub fn pause_duration(&mut self, pause_duration: Address) -> &mut Self {
+      pub fn pause_duration(&mut self, pause_duration: i64) -> &mut Self {
         self.instruction.pause_duration = Some(pause_duration);
         self
       }
@@ -431,9 +430,9 @@ struct UpdateFieldsCpiBuilderInstruction<'a, 'b> {
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 clock: Option<&'b solana_account_info::AccountInfo<'a>>,
-                        heartbeat_interval: Option<Address>,
-                grace_period: Option<Address>,
-                pause_duration: Option<Address>,
+                        heartbeat_interval: Option<i64>,
+                grace_period: Option<i64>,
+                pause_duration: Option<i64>,
         /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

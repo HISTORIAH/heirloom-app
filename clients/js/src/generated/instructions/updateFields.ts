@@ -10,10 +10,10 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressDecoder,
-  getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getI64Decoder,
+  getI64Encoder,
   getOptionDecoder,
   getOptionEncoder,
   getStructDecoder,
@@ -85,24 +85,24 @@ export type UpdateFieldsInstruction<
 
 export type UpdateFieldsInstructionData = {
   discriminator: ReadonlyUint8Array;
-  heartbeatInterval: Option<Address>;
-  gracePeriod: Option<Address>;
-  pauseDuration: Option<Address>;
+  heartbeatInterval: Option<bigint>;
+  gracePeriod: Option<bigint>;
+  pauseDuration: Option<bigint>;
 };
 
 export type UpdateFieldsInstructionDataArgs = {
-  heartbeatInterval: OptionOrNullable<Address>;
-  gracePeriod: OptionOrNullable<Address>;
-  pauseDuration: OptionOrNullable<Address>;
+  heartbeatInterval: OptionOrNullable<number | bigint>;
+  gracePeriod: OptionOrNullable<number | bigint>;
+  pauseDuration: OptionOrNullable<number | bigint>;
 };
 
 export function getUpdateFieldsInstructionDataEncoder(): Encoder<UpdateFieldsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ["discriminator", fixEncoderSize(getBytesEncoder(), 1)],
-      ["heartbeatInterval", getOptionEncoder(getAddressEncoder())],
-      ["gracePeriod", getOptionEncoder(getAddressEncoder())],
-      ["pauseDuration", getOptionEncoder(getAddressEncoder())],
+      ["heartbeatInterval", getOptionEncoder(getI64Encoder())],
+      ["gracePeriod", getOptionEncoder(getI64Encoder())],
+      ["pauseDuration", getOptionEncoder(getI64Encoder())],
     ]),
     (value) => ({ ...value, discriminator: UPDATE_FIELDS_DISCRIMINATOR }),
   );
@@ -111,9 +111,9 @@ export function getUpdateFieldsInstructionDataEncoder(): Encoder<UpdateFieldsIns
 export function getUpdateFieldsInstructionDataDecoder(): Decoder<UpdateFieldsInstructionData> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-    ["heartbeatInterval", getOptionDecoder(getAddressDecoder())],
-    ["gracePeriod", getOptionDecoder(getAddressDecoder())],
-    ["pauseDuration", getOptionDecoder(getAddressDecoder())],
+    ["heartbeatInterval", getOptionDecoder(getI64Decoder())],
+    ["gracePeriod", getOptionDecoder(getI64Decoder())],
+    ["pauseDuration", getOptionDecoder(getI64Decoder())],
   ]);
 }
 

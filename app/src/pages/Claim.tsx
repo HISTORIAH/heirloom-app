@@ -31,6 +31,7 @@ interface InheritanceInfo {
   heartbeatInterval: number;
   gracePeriod: number;
   lastHeartbeat: number;
+  createdAt: number;
   pausedUntil: number;
 }
 
@@ -47,10 +48,13 @@ function computeState(
   gracePeriod: number,
   pausedUntil: number,
   isClaimed: boolean,
+  createdAt: number,
+  vaultEmpty: boolean,
 ): InheritanceInfo["vaultState"] {
-  if (isClaimed) return "distributed";
+  if (isClaimed || vaultEmpty) return "distributed";
+  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
   const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = lastHeartbeat + heartbeatInterval;
+  const graceDeadline = anchor + heartbeatInterval;
   const claimableAt = Math.max(graceDeadline + gracePeriod, pausedUntil);
   if (now >= claimableAt) return "claimable";
   if (now >= graceDeadline) return "grace";
@@ -79,9 +83,19 @@ async function lookupEstate(
     const heartbeatInterval = Number(maybe.data.heartbeatInterval);
     const gracePeriod = Number(maybe.data.gracePeriod);
     const pausedUntil = Number(maybe.data.pausedUntil);
+    const createdAt = Number(maybe.data.createdAt);
+    const vaultEmpty = mint === null && Number(lamports) === 0;
     return {
       ownerAddress: authorityStr,
-      vaultState: computeState(lastHeartbeat, heartbeatInterval, gracePeriod, pausedUntil, maybe.data.isClaimed),
+      vaultState: computeState(
+        lastHeartbeat,
+        heartbeatInterval,
+        gracePeriod,
+        pausedUntil,
+        maybe.data.isClaimed,
+        createdAt,
+        vaultEmpty,
+      ),
       solBalance: Number(lamports),
       label: maybe.data.label,
       isClaimed: maybe.data.isClaimed,
@@ -89,6 +103,7 @@ async function lookupEstate(
       heartbeatInterval,
       gracePeriod,
       lastHeartbeat,
+      createdAt,
       pausedUntil,
     };
   } catch {
@@ -249,7 +264,12 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                 {inheritances.map((inh) => {
                   const txId = claimTxIds[inh.ownerAddress];
                   const isClaiming = claimingOwner === inh.ownerAddress;
-                  const canClaim = inh.vaultState === "claimable" && !inh.isClaimed;
+                  const nothingToClaim =
+                    inh.mint === null && inh.solBalance === 0;
+                  const canClaim =
+                    inh.vaultState === "claimable" &&
+                    !inh.isClaimed &&
+                    !nothingToClaim;
 
                   return (
                     <div key={inh.ownerAddress} className="neo-card-static space-y-5">
@@ -316,6 +336,8 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                           >
                             {isClaiming ? (
                               <><Loader2 className="h-5 w-5 animate-spin" /> Claiming...</>
+                            ) : nothingToClaim ? (
+                              <><CheckCircle className="h-5 w-5" /> Nothing to claim</>
                             ) : inh.isClaimed ? (
                               <><CheckCircle className="h-5 w-5" /> Already Claimed</>
                             ) : inh.vaultState !== "claimable" ? (
