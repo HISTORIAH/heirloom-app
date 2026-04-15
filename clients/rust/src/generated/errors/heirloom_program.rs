@@ -49,6 +49,9 @@ pub enum HeirloomProgramError {
     /// 12 - 
     #[error("")]
     InvalidAccount = 0xC,
+    /// 13 - 
+    #[error("")]
+    ClaimableAssetsRemaining = 0xD,
 }
 
 impl From<HeirloomProgramError> for solana_program_error::ProgramError {
