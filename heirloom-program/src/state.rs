@@ -27,7 +27,8 @@ pub struct Estate<'a> {
 
     pub delegate: Option<Address>,
 
-    pub mint: Option<Address>,
+    /// number of vault token accounts (ATAs) still open under this estate
+    pub claimable_assets: u8,
 
     pub label: String<32>, // FIXME: SET THIS AS A CONST
                            // read allocated amount from vault balance

@@ -15,4 +15,5 @@ pub enum HeirloomError {
     EstatePaused,
     MissingAccount,
     InvalidAccount,
+    ClaimableAssetsRemaining,
 }

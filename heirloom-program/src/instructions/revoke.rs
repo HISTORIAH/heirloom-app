@@ -67,6 +67,13 @@ impl Revoke<'_> {
             return Err(HeirloomError::MissingTokenAccounts.into());
         }
 
+        // vault token account must be owned by vault PDA
+        if let Some(vault_ta) = self.vault_token_account.as_ref() {
+            if vault_ta.owner() != self.vault.address() {
+                return Err(HeirloomError::InvalidAccount.into());
+            }
+        }
+
         Ok(())
     }
 

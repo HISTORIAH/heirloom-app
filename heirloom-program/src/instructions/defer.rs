@@ -10,10 +10,8 @@ pub struct Defer<'info> {
     )]
     pub delegate: Signer,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
     pub authority: UncheckedAccount,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
     pub heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump )]

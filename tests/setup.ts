@@ -41,6 +41,8 @@ import {
   getRevokeInstructionAsync,
   getClaimInstructionAsync,
   getDelegateDeferInstructionAsync,
+  getRegisterAssetInstructionAsync,
+  getCloseEstateInstructionAsync,
   findEstatePda,
   findVaultPda,
   HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
@@ -179,6 +181,7 @@ export const sendInitialize = async (
 
   const { amount, label, gracePeriod, pauseDuration, heartbeatInterval } = args;
 
+  console.log("[initialize] authority:", authority.address, "heir:", heir.address);
   const createIx = await getInitializeInstructionAsync({
     authority,
     heir: heir.address,
@@ -212,6 +215,7 @@ export const sendUpdateFields = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
+  console.log("[update_fields] authority:", authority.address, "heir:", args.heir);
   const ix = await getUpdateFieldsInstructionAsync({
     authority,
     heir: args.heir,
@@ -253,6 +257,7 @@ export const sendUpdateHeir = async (
     heir: newHeir.address,
   });
 
+  console.log("[update_heir] authority:", authority.address, "old heir:", args.heir, "new heir:", newHeir.address);
   const ix = await getUpdateHeirInstructionAsync({
     authority,
     heir: args.heir,
@@ -286,6 +291,7 @@ export const sendRevoke = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
+  console.log("[revoke] authority:", authority.address, "heir:", args.heir);
   const ix = await getRevokeInstructionAsync({
     authority,
     heir: args.heir,
@@ -317,6 +323,7 @@ export const sendClaim = async (
 ): Promise<{ heir: Address }> => {
   const authority = await loadDefaultKeypair();
 
+  console.log("[claim] heir:", args.heir.address, "authority:", authority.address);
   const ix = await getClaimInstructionAsync({
     heir: args.heir,
     authority: authority.address,
@@ -347,6 +354,7 @@ export const sendDelegateDefer = async (
     generateKeyPairSigner(),
   ]);
 
+  console.log("[delegate_defer] authority:", authority.address, "heir:", args.heir, "delegate:", delegate.address);
   const ix = await getDelegateDeferInstructionAsync({
     delegate,
     authority: authority.address,
@@ -360,4 +368,56 @@ export const sendDelegateDefer = async (
   );
 
   return { delegate };
+};
+
+export const sendRegisterAsset = async (
+  client: Client,
+  args: {
+    heir: Address;
+    mint: Address;
+    vaultTokenAccount: Address;
+    tokenProgram?: Address;
+  },
+): Promise<{ authority: Address }> => {
+  const authority = await loadDefaultKeypair();
+
+  console.log("[register_asset] authority:", authority.address, "heir:", args.heir, "mint:", args.mint);
+  const ix = await getRegisterAssetInstructionAsync({
+    authority,
+    heir: args.heir,
+    mint: args.mint,
+    vaultTokenAccount: args.vaultTokenAccount,
+    tokenProgram: args.tokenProgram,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionMessageInstruction(ix, tx),
+    (tx) => signAndSendTransaction(client, tx),
+  );
+
+  return { authority: authority.address };
+};
+
+export const sendCloseEstate = async (
+  client: Client,
+  args: {
+    heir: Address;
+  },
+): Promise<{ authority: Address }> => {
+  const authority = await loadDefaultKeypair();
+
+  console.log("[close_estate] authority:", authority.address, "heir:", args.heir);
+  const ix = await getCloseEstateInstructionAsync({
+    authority,
+    heir: args.heir,
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionMessageInstruction(ix, tx),
+    (tx) => signAndSendTransaction(client, tx),
+  );
+
+  return { authority: authority.address };
 };

@@ -25,6 +25,7 @@ mod heirloom_program {
         amount: u64, // in token amount
         label: String<u32, 32>,
     ) -> Result<(), ProgramError> {
+        log("ix: initialize");
         Initialize::initialize_handler(
             &mut ctx,
             heartbeat_interval,
@@ -37,6 +38,7 @@ mod heirloom_program {
 
     #[instruction(discriminator = 1)]
     pub fn claim(ctx: Ctx<Claim>) -> Result<(), ProgramError> {
+        log("ix: claim");
         Claim::claim_handler(&mut ctx)
     }
 
@@ -54,6 +56,7 @@ mod heirloom_program {
         pause_duration: Option<i64>,
         // label: Option<String<u32, 32>>,
     ) -> Result<(), ProgramError> {
+        log("ix: update_fields");
         UpdateFields::handler(
             &mut ctx,
             heartbeat_interval,
@@ -65,16 +68,32 @@ mod heirloom_program {
 
     #[instruction(discriminator = 4)]
     pub fn revoke(ctx: Ctx<Revoke>) -> Result<(), ProgramError> {
+        log("ix: revoke");
         Revoke::revoke_handler(&mut ctx)
     }
 
     #[instruction(discriminator = 5)]
     pub fn delegate_defer(ctx: Ctx<Defer>) -> Result<(), ProgramError> {
+        log("ix: delegate_defer");
         Defer::delegate_defer_handler(&mut ctx)
     }
 
     #[instruction(discriminator = 6)]
     pub fn update_heir(ctx: Ctx<UpdateHeir>) -> Result<(), ProgramError> {
+        log("ix: update_heir");
         UpdateHeir::handler(&mut ctx)
+    }
+
+    #[instruction(discriminator = 7)]
+    pub fn register_asset(ctx: Ctx<RegisterAsset>) -> Result<(), ProgramError> {
+        log("ix: register_asset");
+        RegisterAsset::handler(&mut ctx)
+    }
+
+    // ! TEMP: WILL BE REMOVED AFTER estates are recovered
+    #[instruction(discriminator = 8)]
+    pub fn close_estate(ctx: Ctx<CloseEstate>) -> Result<(), ProgramError> {
+        log("ix: close_estate");
+        CloseEstate::handler(&mut ctx)
     }
 }
