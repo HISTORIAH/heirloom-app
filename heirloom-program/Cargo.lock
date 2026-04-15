@@ -966,7 +966,7 @@ dependencies = [
  "quasar-spl",
  "quasar-svm",
  "solana-account",
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-instruction",
  "solana-pubkey 4.2.0",
 ]
@@ -975,8 +975,8 @@ dependencies = [
 name = "heirloom-program-client"
 version = "0.1.0"
 dependencies = [
- "quasar-lang 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "solana-address 2.6.0",
+ "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
+ "solana-address 2.2.0",
  "solana-instruction",
  "wincode 0.4.9",
 ]
@@ -1371,7 +1371,7 @@ version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
 dependencies = [
- "toml_edit",
+ "toml_edit 0.25.11+spec-1.1.0",
 ]
 
 [[package]]
@@ -1397,10 +1397,12 @@ dependencies = [
 [[package]]
 name = "quasar-derive"
 version = "0.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c1d78da748185b3916f4c26dae709725c32e55af05fd294aae5eea65caf15c4"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6afb2cac2e518f932b5bc920d4f04e1f47672a5f"
 dependencies = [
+ "bs58",
+ "const-crypto",
  "proc-macro2",
+ "quasar-idl",
  "quote",
  "serde",
  "serde_json",
@@ -1420,21 +1422,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "quasar-idl"
+version = "0.0.0"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6afb2cac2e518f932b5bc920d4f04e1f47672a5f"
+dependencies = [
+ "proc-macro2",
+ "serde",
+ "serde_json",
+ "syn 2.0.117",
+ "toml",
+]
+
+[[package]]
 name = "quasar-lang"
 version = "0.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccdd4a85bb9f468314ce537ead6d893700d070132273abe9a6701084e77a64a8"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6afb2cac2e518f932b5bc920d4f04e1f47672a5f"
 dependencies = [
  "const-crypto",
- "quasar-derive 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "quasar-pod 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
+ "quasar-pod 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
  "solana-account-view",
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-define-syscall 5.0.0",
  "solana-instruction",
  "solana-instruction-view",
  "solana-program-error",
  "solana-program-log",
+ "wincode 0.4.9",
 ]
 
 [[package]]
@@ -1446,7 +1460,7 @@ dependencies = [
  "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "quasar-pod 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "solana-account-view",
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-define-syscall 5.0.0",
  "solana-instruction",
  "solana-instruction-view",
@@ -1458,8 +1472,10 @@ dependencies = [
 [[package]]
 name = "quasar-pod"
 version = "0.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77bfb6e40210b4e61cdf6424fc78ebc4ee15ed0a7b68d270ba9b098bf89b418e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6afb2cac2e518f932b5bc920d4f04e1f47672a5f"
+dependencies = [
+ "wincode 0.4.9",
+]
 
 [[package]]
 name = "quasar-pod"
@@ -1475,7 +1491,7 @@ version = "0.0.0"
 source = "git+https://github.com/blueshift-gg/quasar#03d5ea7c1fe4193134f0c8130e4d3953335de8e3"
 dependencies = [
  "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
 ]
 
 [[package]]
@@ -1754,6 +1770,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_spanned"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1840,7 +1865,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9cf16495d9eb53e3d04e72366a33bb1c20c24e78c171d8b8f5978357b63ae95"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-program-error",
  "solana-program-memory",
 ]
@@ -1851,7 +1876,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc141b940560430425ebaadb7645496c45f6a10fad9911d719bd03eab7f4d422"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-program-error",
 ]
 
@@ -1861,14 +1886,14 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2ecac8e1b7f74c2baa9e774c42817e3e75b20787134b76cc4d45e8a604488f5"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
 ]
 
 [[package]]
 name = "solana-address"
-version = "2.6.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1384b52c435a750cc9c538760fc7bb472fd78e65a9900a2d07312c5bb335b72"
+checksum = "68c5d02824391b072dc5cd0aaa85fb0af9784a21d23286a767994d1e8a322131"
 dependencies = [
  "borsh",
  "bytemuck",
@@ -1884,7 +1909,7 @@ dependencies = [
  "solana-program-error",
  "solana-sanitize",
  "solana-sha256-hasher",
- "wincode 0.5.1",
+ "wincode 0.4.9",
 ]
 
 [[package]]
@@ -2143,7 +2168,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ab7a27d0c4214b9f7389c3dd00b68c93093a67f1dcc5b7893aebe299bbcbb47"
 dependencies = [
  "solana-account-view",
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-define-syscall 5.0.0",
  "solana-program-error",
 ]
@@ -2226,7 +2251,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0448b1fd891c5f46491e5dc7d9986385ba3c852c340db2911dd29faa01d2b08d"
 dependencies = [
  "lazy_static",
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-hash 4.3.0",
  "solana-instruction",
  "solana-sanitize",
@@ -2424,7 +2449,7 @@ version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7db719574990de7e8b0f55a8593ac92a5ccb42c8ce67b3e4bf05b139d5d9ee71"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
 ]
 
 [[package]]
@@ -2469,7 +2494,7 @@ version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "def234c1956ff616d46c9dd953f251fa7096ddbaa6d52b165218de97882b7280"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
 ]
 
 [[package]]
@@ -2728,7 +2753,7 @@ version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17358d1e9a13e5b9c2264d301102126cf11a47fd394cdf3dec174fe7bc96e1de"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-sdk-ids",
 ]
 
@@ -2738,7 +2763,7 @@ version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96697cff5075a028265324255efed226099f6d761ca67342b230d09f72cc48d2"
 dependencies = [
- "solana-address 2.6.0",
+ "solana-address 2.2.0",
  "solana-hash 4.3.0",
  "solana-instruction",
  "solana-instruction-error",
@@ -2925,6 +2950,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "toml"
+version = "0.8.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
+dependencies = [
+ "serde",
+ "serde_spanned",
+ "toml_datetime 0.6.11",
+ "toml_edit 0.22.27",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "0.6.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "toml_datetime"
 version = "1.1.1+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2935,14 +2981,28 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
+version = "0.22.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
+dependencies = [
+ "indexmap",
+ "serde",
+ "serde_spanned",
+ "toml_datetime 0.6.11",
+ "toml_write",
+ "winnow 0.7.15",
+]
+
+[[package]]
+name = "toml_edit"
 version = "0.25.11+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b59c4d22ed448339746c59b905d24568fcbb3ab65a500494f7b8c3e97739f2b"
 dependencies = [
  "indexmap",
- "toml_datetime",
+ "toml_datetime 1.1.1+spec-1.1.0",
  "toml_parser",
- "winnow",
+ "winnow 1.0.1",
 ]
 
 [[package]]
@@ -2951,8 +3011,14 @@ version = "1.1.2+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2abe9b86193656635d2411dc43050282ca48aa31c2451210f4202550afb7526"
 dependencies = [
- "winnow",
+ "winnow 1.0.1",
 ]
+
+[[package]]
+name = "toml_write"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "typenum"
@@ -3073,6 +3139,15 @@ name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
+
+[[package]]
+name = "winnow"
+version = "0.7.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "winnow"
