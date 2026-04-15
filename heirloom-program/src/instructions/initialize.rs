@@ -11,10 +11,8 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
     pub heir: UncheckedAccount,
 
-    //  FIXME: conflicting wincode versions don't allow us to pass them as args
     pub delegate: Option<UncheckedAccount>,
 
     #[account(mut)]
@@ -72,8 +70,6 @@ impl Initialize<'_> {
 
         // transfer assets
         ctx.accounts.transfer_assets(amount)?;
-
-        log("creating vault"); // ! DEBUG STATEMENT
 
         Ok(())
     }
@@ -159,12 +155,12 @@ impl Initialize<'_> {
                 heir: *self.heir.address(),
                 heartbeat_interval,
                 grace_period,
-                last_heartbeat: 0,
+                last_heartbeat: self.clock.unix_timestamp.get(),
                 created_at: self.clock.unix_timestamp.get(),
                 bump: estate_bump,
                 is_claimed: false,
                 delegate: self.delegate.as_ref().map(|a| *a.address()),
-                mint: self.mint.as_ref().map(|m| *m.address()),
+                claimable_assets: 0,
                 label,
                 pause_duration,
                 paused_until: 0,

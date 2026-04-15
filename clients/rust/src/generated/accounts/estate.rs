@@ -25,7 +25,7 @@ pub pause_duration: i64,
 pub paused_until: i64,
 pub is_deferred: bool,
 pub delegate: Option<Address>,
-pub mint: Option<Address>,
+pub claimable_assets: u8,
 pub label: String,
 }
 

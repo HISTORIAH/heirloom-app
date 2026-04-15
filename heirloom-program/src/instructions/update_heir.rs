@@ -189,7 +189,7 @@ impl UpdateHeir<'_> {
                 bump: new_estate_bump,
                 is_claimed: false,
                 delegate: self.estate.delegate,
-                mint: self.estate.mint,
+                claimable_assets: self.estate.claimable_assets,
                 label: self.estate.label(),
                 pause_duration: self.estate.pause_duration.get(),
                 paused_until: 0,
@@ -252,6 +252,8 @@ impl UpdateHeir<'_> {
         );
 
         // token path: if mint provided, all token accounts must be present
+        // token path: if mint is provided, all token accounts must be present
+        // and the vault TA must be owned by the vault PDA
         if let Some(mint_acc) = self.mint.as_ref() {
             let vault_ta = self
                 .vault_token_account
@@ -262,12 +264,9 @@ impl UpdateHeir<'_> {
                 .as_ref()
                 .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-            let estate_mint = self.estate.mint.ok_or(HeirloomError::MissingAccount)?;
-            require_eq!(
-                &estate_mint,
-                mint_acc.address(),
-                HeirloomError::MintMismatch
-            );
+            if vault_ta.owner() != self.vault.address() {
+                return Err(HeirloomError::InvalidAccount.into());
+            }
             require_eq!(
                 vault_ta.mint(),
                 mint_acc.address(),

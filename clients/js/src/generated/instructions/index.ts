@@ -7,8 +7,10 @@
  */
 
 export * from "./claim";
+export * from "./closeEstate";
 export * from "./delegateDefer";
 export * from "./initialize";
+export * from "./registerAsset";
 export * from "./revoke";
 export * from "./updateFields";
 export * from "./updateHeir";

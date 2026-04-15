@@ -41,26 +41,34 @@ import {
 } from "../accounts";
 import {
   getClaimInstructionAsync,
+  getCloseEstateInstructionAsync,
   getDelegateDeferInstructionAsync,
   getInitializeInstructionAsync,
+  getRegisterAssetInstructionAsync,
   getRevokeInstructionAsync,
   getUpdateFieldsInstructionAsync,
   getUpdateHeirInstructionAsync,
   parseClaimInstruction,
+  parseCloseEstateInstruction,
   parseDelegateDeferInstruction,
   parseInitializeInstruction,
+  parseRegisterAssetInstruction,
   parseRevokeInstruction,
   parseUpdateFieldsInstruction,
   parseUpdateHeirInstruction,
   type ClaimAsyncInput,
+  type CloseEstateAsyncInput,
   type DelegateDeferAsyncInput,
   type InitializeAsyncInput,
   type ParsedClaimInstruction,
+  type ParsedCloseEstateInstruction,
   type ParsedDelegateDeferInstruction,
   type ParsedInitializeInstruction,
+  type ParsedRegisterAssetInstruction,
   type ParsedRevokeInstruction,
   type ParsedUpdateFieldsInstruction,
   type ParsedUpdateHeirInstruction,
+  type RegisterAssetAsyncInput,
   type RevokeAsyncInput,
   type UpdateFieldsAsyncInput,
   type UpdateHeirAsyncInput,
@@ -110,6 +118,8 @@ export enum HeirloomProgramInstruction {
   Revoke,
   DelegateDefer,
   UpdateHeir,
+  RegisterAsset,
+  CloseEstate,
 }
 
 export function identifyHeirloomProgramInstruction(
@@ -170,6 +180,24 @@ export function identifyHeirloomProgramInstruction(
   ) {
     return HeirloomProgramInstruction.UpdateHeir;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([7])),
+      0,
+    )
+  ) {
+    return HeirloomProgramInstruction.RegisterAsset;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([8])),
+      0,
+    )
+  ) {
+    return HeirloomProgramInstruction.CloseEstate;
+  }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     { instructionData: data, programName: "heirloomProgram" },
@@ -196,7 +224,13 @@ export type ParsedHeirloomProgramInstruction<
     } & ParsedDelegateDeferInstruction<TProgram>)
   | ({
       instructionType: HeirloomProgramInstruction.UpdateHeir;
-    } & ParsedUpdateHeirInstruction<TProgram>);
+    } & ParsedUpdateHeirInstruction<TProgram>)
+  | ({
+      instructionType: HeirloomProgramInstruction.RegisterAsset;
+    } & ParsedRegisterAssetInstruction<TProgram>)
+  | ({
+      instructionType: HeirloomProgramInstruction.CloseEstate;
+    } & ParsedCloseEstateInstruction<TProgram>);
 
 export function parseHeirloomProgramInstruction<TProgram extends string>(
   instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -245,6 +279,20 @@ export function parseHeirloomProgramInstruction<TProgram extends string>(
         ...parseUpdateHeirInstruction(instruction),
       };
     }
+    case HeirloomProgramInstruction.RegisterAsset: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomProgramInstruction.RegisterAsset,
+        ...parseRegisterAssetInstruction(instruction),
+      };
+    }
+    case HeirloomProgramInstruction.CloseEstate: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomProgramInstruction.CloseEstate,
+        ...parseCloseEstateInstruction(instruction),
+      };
+    }
     default:
       throw new SolanaError(
         SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
@@ -291,6 +339,14 @@ export type HeirloomProgramPluginInstructions = {
   updateHeir: (
     input: UpdateHeirAsyncInput,
   ) => ReturnType<typeof getUpdateHeirInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  registerAsset: (
+    input: RegisterAssetAsyncInput,
+  ) => ReturnType<typeof getRegisterAssetInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  closeEstate: (
+    input: CloseEstateAsyncInput,
+  ) => ReturnType<typeof getCloseEstateInstructionAsync> &
     SelfPlanAndSendFunctions;
 };
 
@@ -344,6 +400,16 @@ export function heirloomProgramProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getUpdateHeirInstructionAsync(input),
+            ),
+          registerAsset: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getRegisterAssetInstructionAsync(input),
+            ),
+          closeEstate: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCloseEstateInstructionAsync(input),
             ),
         },
         pdas: { estate: findEstatePda, vault: findVaultPda },
