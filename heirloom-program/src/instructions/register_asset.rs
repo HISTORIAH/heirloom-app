@@ -37,7 +37,9 @@ pub struct RegisterAsset {
 
 impl RegisterAsset {
     #[inline(always)]
-    pub fn handler<'a>(ctx: &mut Ctx<'a, RegisterAsset>) -> Result<(), ProgramError> {
+    pub fn register_asset_handler<'a>(
+        ctx: &mut Ctx<'a, RegisterAsset>,
+    ) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         // create the vault token account owned by the vault PDA

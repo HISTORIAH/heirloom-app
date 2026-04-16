@@ -56,7 +56,8 @@ mod heirloom_program {
         pause_duration: Option<i64>,
         // label: Option<String<32>>,
     ) -> Result<(), ProgramError> {
-        UpdateFields::handler(
+        log("ix: update_fields");
+        UpdateFields::update_fields_handler(
             &mut ctx,
             heartbeat_interval,
             grace_period,
@@ -86,13 +87,13 @@ mod heirloom_program {
     #[instruction(discriminator = 7)]
     pub fn register_asset(ctx: Ctx<RegisterAsset>) -> Result<(), ProgramError> {
         log("ix: register_asset");
-        RegisterAsset::handler(&mut ctx)
+        RegisterAsset::register_asset_handler(&mut ctx)
     }
 
     // ! TEMP: WILL BE REMOVED AFTER estates are recovered
     #[instruction(discriminator = 8)]
     pub fn close_estate(ctx: Ctx<CloseEstate>) -> Result<(), ProgramError> {
         log("ix: close_estate");
-        CloseEstate::handler(&mut ctx)
+        CloseEstate::close_estate_handler(&mut ctx)
     }
 }

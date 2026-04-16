@@ -28,7 +28,7 @@ pub struct CloseEstate {
 
 impl CloseEstate {
     #[inline(always)]
-    pub fn handler(ctx: &mut Ctx<CloseEstate>) -> Result<(), ProgramError> {
+    pub fn close_estate_handler(ctx: &mut Ctx<CloseEstate>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         let authority_view = ctx.accounts.authority.to_account_view();
