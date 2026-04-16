@@ -7,7 +7,6 @@ pub struct UpdateFields {
     #[account(mut, address = estate.authority)]
     pub authority: Signer,
 
-    // FIXME: conflicting wincode versions don't allow us to pass them as args
     #[account(address = estate.heir)]
     pub heir: UncheckedAccount,
 
@@ -19,7 +18,7 @@ pub struct UpdateFields {
 
 impl UpdateFields {
     #[inline(always)]
-    pub fn handler<'a>(
+    pub fn update_fields_handler<'a>(
         ctx: &mut Ctx<UpdateFields>,
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,

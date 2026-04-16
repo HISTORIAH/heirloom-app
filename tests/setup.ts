@@ -38,7 +38,6 @@ import {
 import { systemProgram } from "@solana-program/system";
 import {
   getInitializeInstructionAsync,
-  getUpdateFieldsInstructionAsync,
   getUpdateHeirInstructionAsync,
   getRevokeInstructionAsync,
   getClaimInstructionAsync,
@@ -49,6 +48,7 @@ import {
   findVaultPda,
   HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 } from '@historiah/heirloom';
+import { getUpdateFieldsInstructionAsync } from '../clients/js/src/overrides/updateFields';
 
 export type Client = {
   rpc: Rpc<SolanaRpcApi>;

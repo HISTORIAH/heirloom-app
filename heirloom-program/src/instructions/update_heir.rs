@@ -84,94 +84,110 @@ impl UpdateHeir {
             .validate_inputs(&new_vault_addr, &new_estate_addr)?;
         log("validate has run"); // ! DEBUG STATEMENT
 
-        // // --- create new estate ---
-        // let estate_lamports = rent.try_minimum_balance(Estate::SPACE)?;
-        // {
-        //     let authority_view = ctx.accounts.authority.to_account_view();
-        //     let new_estate_view = ctx.accounts.new_estate.to_account_view();
-        //     ctx.accounts
-        //         .system_program
-        //         .create_account(
-        //             authority_view,
-        //             new_estate_view,
-        //             estate_lamports,
-        //             Estate::SPACE as u64,
-        //             &crate::id(),
-        //         )
-        //         .invoke()?;
-        // }
+        // --- create new estate ---
+        let estate_lamports = rent.try_minimum_balance(Estate::SPACE)?;
+        {
+            let new_estate_bump_arr = [new_estate_bump];
+            let new_estate_seeds = [
+                Seed::from(<Estate as HasSeeds>::SEED_PREFIX),
+                Seed::from(authority_addr.as_ref()),
+                Seed::from(new_heir_addr.as_ref()),
+                Seed::from(new_estate_bump_arr.as_slice()),
+            ];
 
-        // // --- create new vault ---
-        // let vault_lamports = rent.try_minimum_balance(Vault::SPACE)?;
-        // {
-        //     let authority_view = ctx.accounts.authority.to_account_view();
-        //     let new_vault_view = ctx.accounts.new_vault.to_account_view();
-        //     ctx.accounts
-        //         .system_program
-        //         .create_account(
-        //             authority_view,
-        //             new_vault_view,
-        //             vault_lamports,
-        //             Vault::SPACE as u64,
-        //             &crate::id(),
-        //         )
-        //         .invoke()?;
-        // }
-        // log("create new accounts has run"); // ! DEBUG STATEMENT
+            let authority_view = ctx.accounts.authority.to_account_view();
+            let new_estate_view = ctx.accounts.new_estate.to_account_view();
+            ctx.accounts
+                .system_program
+                .create_account(
+                    authority_view,
+                    new_estate_view,
+                    estate_lamports,
+                    Estate::SPACE as u64,
+                    &crate::id(),
+                )
+                .invoke_signed(&new_estate_seeds)?;
+        }
 
-        // // --- write data into new estate and vault ---
-        // ctx.accounts
-        //     .set_new_account_data(new_estate_addr, new_estate_bump, new_vault_bump)?;
+        // --- create new vault ---
+        let vault_lamports = rent.try_minimum_balance(Vault::SPACE)?;
+        {
+            let new_vault_bump_arr = [new_vault_bump];
+            let new_vault_seeds = [
+                Seed::from(<Vault as HasSeeds>::SEED_PREFIX),
+                Seed::from(authority_addr.as_ref()),
+                Seed::from(new_heir_addr.as_ref()),
+                Seed::from(new_vault_bump_arr.as_slice()),
+            ];
 
-        // log("set new account data has run"); // ! DEBUG STATEMENT
+            let authority_view = ctx.accounts.authority.to_account_view();
+            let new_vault_view = ctx.accounts.new_vault.to_account_view();
+            ctx.accounts
+                .system_program
+                .create_account(
+                    authority_view,
+                    new_vault_view,
+                    vault_lamports,
+                    Vault::SPACE as u64,
+                    &crate::id(),
+                )
+                .invoke_signed(&new_vault_seeds)?;
+        }
+        log("create new accounts has run"); // ! DEBUG STATEMENT
 
-        // // --- token path: transfer tokens and close old vault token account ---
-        // if let Some(vault_ta) = ctx.accounts.vault_token_account.as_ref() {
-        //     let new_vault_ta = ctx.accounts.new_vault_token_account.as_ref().unwrap();
-        //     let mint = ctx.accounts.mint.as_ref().unwrap();
-        //     let amount = vault_ta.amount();
-        //     let new_vault_addr = *ctx.accounts.new_vault.address();
+        // --- write data into new estate and vault ---
+        ctx.accounts
+            .set_new_account_data(new_estate_addr, new_estate_bump, new_vault_bump)?;
 
-        //     //  create and init new vault ata
-        //     if new_vault_ta.to_account_view().is_data_empty() {
-        //         ctx.accounts
-        //             .token_program
-        //             .initialize_account3(new_vault_ta, mint, &new_vault_addr)
-        //             .invoke()?;
-        //     }
+        log("set new account data has run"); // ! DEBUG STATEMENT
 
-        //     // transfer tokens from old vault TA to new vault TA
-        //     ctx.accounts
-        //         .token_program
-        //         .transfer_checked(
-        //             vault_ta,
-        //             mint,
-        //             new_vault_ta,
-        //             &ctx.accounts.vault,
-        //             amount,
-        //             mint.decimals(),
-        //         )
-        //         .invoke()?;
+        // --- token path: transfer tokens and close old vault token account ---
+        if let Some(vault_ta) = ctx.accounts.vault_token_account.as_ref() {
+            let new_vault_ta = ctx.accounts.new_vault_token_account.as_ref().unwrap();
+            let mint = ctx.accounts.mint.as_ref().unwrap();
+            let amount = vault_ta.amount();
+            let new_vault_addr = *ctx.accounts.new_vault.address();
 
-        //     // close old vault token account, rent back to authority
-        //     ctx.accounts
-        //         .token_program
-        //         .close_account(vault_ta, &ctx.accounts.authority, &ctx.accounts.vault)
-        //         .invoke()?;
-        // } else {
-        //     // --- SOL path: transfer lamports from old vault to new vault ---
-        //     let old_vault_view = ctx.accounts.vault.to_account_view();
-        //     let new_vault_view = ctx.accounts.new_vault.to_account_view();
-        //     let amount = old_vault_view.lamports();
+            //  create and init new vault ata
+            if new_vault_ta.to_account_view().is_data_empty() {
+                ctx.accounts
+                    .token_program
+                    .initialize_account3(new_vault_ta, mint, &new_vault_addr)
+                    .invoke()?;
+            }
 
-        //     set_lamports(old_vault_view, 0);
-        //     set_lamports(new_vault_view, new_vault_view.lamports() + amount);
-        // }
+            // transfer tokens from old vault TA to new vault TA
+            ctx.accounts
+                .token_program
+                .transfer_checked(
+                    vault_ta,
+                    mint,
+                    new_vault_ta,
+                    &ctx.accounts.vault,
+                    amount,
+                    mint.decimals(),
+                )
+                .invoke()?;
 
-        // // --- close old estate and vault, rent back to authority ---
-        // let authority_view = ctx.accounts.authority.to_account_view();
-        // crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
-        // crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
+            // close old vault token account, rent back to authority
+            ctx.accounts
+                .token_program
+                .close_account(vault_ta, &ctx.accounts.authority, &ctx.accounts.vault)
+                .invoke()?;
+        } else {
+            // --- SOL path: transfer lamports from old vault to new vault ---
+            let old_vault_view = ctx.accounts.vault.to_account_view();
+            let new_vault_view = ctx.accounts.new_vault.to_account_view();
+            let amount = old_vault_view.lamports();
+
+            set_lamports(old_vault_view, 0);
+            set_lamports(new_vault_view, new_vault_view.lamports() + amount);
+        }
+
+        // --- close old estate and vault, rent back to authority ---
+        let authority_view = ctx.accounts.authority.to_account_view();
+        crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
+        crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
 
         Ok(())
     }
@@ -263,9 +279,7 @@ impl UpdateHeir {
             HeirloomError::MismatchedAddress
         );
 
-        // token path: if mint provided, all token accounts must be present
         // token path: if mint is provided, all token accounts must be present
-        // and the vault TA must be owned by the vault PDA
         if let Some(mint_acc) = self.mint.as_ref() {
             let vault_ta = self
                 .vault_token_account
