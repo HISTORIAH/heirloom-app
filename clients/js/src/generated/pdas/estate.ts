@@ -24,7 +24,7 @@ export async function findEstatePda(
   config: { programAddress?: Address | undefined } = {},
 ): Promise<ProgramDerivedAddress> {
   const {
-    programAddress = "BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv" as Address<"BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv">,
+    programAddress = "JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN" as Address<"JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN">,
   } = config;
   return await getProgramDerivedAddress({
     programAddress,

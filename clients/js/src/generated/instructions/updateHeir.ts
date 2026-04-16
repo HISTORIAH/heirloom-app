@@ -60,6 +60,8 @@ export type UpdateHeirInstruction<
   TAccountMint extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
   TAccountRent extends string | AccountMeta<string> =
     "SysvarRent111111111111111111111111111111111",
   TAccountClock extends string | AccountMeta<string> =
@@ -105,6 +107,9 @@ export type UpdateHeirInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountRent extends string
         ? ReadonlyAccount<TAccountRent>
         : TAccountRent,
@@ -157,6 +162,7 @@ export type UpdateHeirAsyncInput<
   TAccountNewVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountRent extends string = string,
   TAccountClock extends string = string,
   TAccountSystemProgram extends string = string,
@@ -172,6 +178,7 @@ export type UpdateHeirAsyncInput<
   newVaultTokenAccount?: Address<TAccountNewVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   rent?: Address<TAccountRent>;
   clock?: Address<TAccountClock>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -189,6 +196,7 @@ export async function getUpdateHeirInstructionAsync<
   TAccountNewVaultTokenAccount extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountRent extends string,
   TAccountClock extends string,
   TAccountSystemProgram extends string,
@@ -206,6 +214,7 @@ export async function getUpdateHeirInstructionAsync<
     TAccountNewVaultTokenAccount,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountRent,
     TAccountClock,
     TAccountSystemProgram
@@ -225,6 +234,7 @@ export async function getUpdateHeirInstructionAsync<
     TAccountNewVaultTokenAccount,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountRent,
     TAccountClock,
     TAccountSystemProgram
@@ -253,6 +263,10 @@ export async function getUpdateHeirInstructionAsync<
     },
     mint: { value: input.mint ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     rent: { value: input.rent ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -291,6 +305,10 @@ export async function getUpdateHeirInstructionAsync<
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
   }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
   if (!accounts.rent.value) {
     accounts.rent.value =
       "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
@@ -318,6 +336,7 @@ export async function getUpdateHeirInstructionAsync<
       getAccountMeta("newVaultTokenAccount", accounts.newVaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("rent", accounts.rent),
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
@@ -337,6 +356,7 @@ export async function getUpdateHeirInstructionAsync<
     TAccountNewVaultTokenAccount,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountRent,
     TAccountClock,
     TAccountSystemProgram
@@ -355,6 +375,7 @@ export type UpdateHeirInput<
   TAccountNewVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountRent extends string = string,
   TAccountClock extends string = string,
   TAccountSystemProgram extends string = string,
@@ -370,6 +391,7 @@ export type UpdateHeirInput<
   newVaultTokenAccount?: Address<TAccountNewVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   rent?: Address<TAccountRent>;
   clock?: Address<TAccountClock>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -387,6 +409,7 @@ export function getUpdateHeirInstruction<
   TAccountNewVaultTokenAccount extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountRent extends string,
   TAccountClock extends string,
   TAccountSystemProgram extends string,
@@ -404,6 +427,7 @@ export function getUpdateHeirInstruction<
     TAccountNewVaultTokenAccount,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountRent,
     TAccountClock,
     TAccountSystemProgram
@@ -422,6 +446,7 @@ export function getUpdateHeirInstruction<
   TAccountNewVaultTokenAccount,
   TAccountMint,
   TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
   TAccountRent,
   TAccountClock,
   TAccountSystemProgram
@@ -449,6 +474,10 @@ export function getUpdateHeirInstruction<
     },
     mint: { value: input.mint ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     rent: { value: input.rent ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -462,6 +491,10 @@ export function getUpdateHeirInstruction<
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
   }
   if (!accounts.rent.value) {
     accounts.rent.value =
@@ -490,6 +523,7 @@ export function getUpdateHeirInstruction<
       getAccountMeta("newVaultTokenAccount", accounts.newVaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("rent", accounts.rent),
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
@@ -509,6 +543,7 @@ export function getUpdateHeirInstruction<
     TAccountNewVaultTokenAccount,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountRent,
     TAccountClock,
     TAccountSystemProgram
@@ -532,9 +567,10 @@ export type ParsedUpdateHeirInstruction<
     newVaultTokenAccount?: TAccountMetas[8] | undefined;
     mint?: TAccountMetas[9] | undefined;
     tokenProgram: TAccountMetas[10];
-    rent: TAccountMetas[11];
-    clock: TAccountMetas[12];
-    systemProgram: TAccountMetas[13];
+    associatedTokenProgram: TAccountMetas[11];
+    rent: TAccountMetas[12];
+    clock: TAccountMetas[13];
+    systemProgram: TAccountMetas[14];
   };
   data: UpdateHeirInstructionData;
 };
@@ -547,12 +583,12 @@ export function parseUpdateHeirInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpdateHeirInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 14) {
+  if (instruction.accounts.length < 15) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 14,
+        expectedAccountMetas: 15,
       },
     );
   }
@@ -582,6 +618,7 @@ export function parseUpdateHeirInstruction<
       newVaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       rent: getNextAccount(),
       clock: getNextAccount(),
       systemProgram: getNextAccount(),
