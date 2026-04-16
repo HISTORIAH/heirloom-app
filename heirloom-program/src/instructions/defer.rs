@@ -3,7 +3,7 @@ use quasar_lang::prelude::*;
 use crate::{errors::HeirloomError, state::Estate};
 
 #[derive(Accounts)]
-pub struct Defer<'info> {
+pub struct Defer {
     #[account(
       mut,
       address  = estate.delegate.unwrap(), // ! NOTE: UNTESTED
@@ -15,16 +15,16 @@ pub struct Defer<'info> {
     pub heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump )]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     pub clock: Sysvar<Clock>,
 
     pub system_program: Program<System>,
 }
 
-impl Defer<'_> {
+impl Defer {
     #[inline(always)]
-    pub fn delegate_defer_handler<'a>(ctx: &mut Ctx<'a, Defer<'a>>) -> Result<(), ProgramError> {
+    pub fn delegate_defer_handler(ctx: &mut Ctx<Defer>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         let now = ctx.accounts.clock.unix_timestamp;

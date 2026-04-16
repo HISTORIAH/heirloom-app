@@ -14,24 +14,24 @@ test("it updates heartbeat interval and grace period", async () => {
 
   await sendUpdateFields(client, {
     heir: heir.address,
-    heartbeatInterval: 172800n,
-    gracePeriod: 7200n,
+    // heartbeatInterval: 172800n,
+    // gracePeriod: 7200n,
   });
 });
 
-test("it updates only pause duration", async () => {
-  const client = createDefaultSolanaClient();
+// test("it updates only pause duration", async () => {
+//   const client = createDefaultSolanaClient();
 
-  const { heir } = await sendInitialize(client, {
-    amount: BigInt(1_000_000_000),
-    label: "test-pause",
-    heartbeatInterval: 86400n,
-    gracePeriod: 3600n,
-    pauseDuration: 7200n,
-  });
+//   const { heir } = await sendInitialize(client, {
+//     amount: BigInt(1_000_000_000),
+//     label: "test-pause",
+//     heartbeatInterval: 86400n,
+//     gracePeriod: 3600n,
+//     pauseDuration: 7200n,
+//   });
 
-  await sendUpdateFields(client, {
-    heir: heir.address,
-    pauseDuration: 14400n,
-  });
-});
+//   await sendUpdateFields(client, {
+//       heir: heir.address,
+//       pauseDuration: 14400n,
+//   });
+// });

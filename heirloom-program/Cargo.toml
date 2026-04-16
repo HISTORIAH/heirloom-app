@@ -20,6 +20,11 @@ debug = []
 [dependencies]
 quasar-lang = { git = "https://github.com/blueshift-gg/quasar" }
 quasar-spl = { git = "https://github.com/blueshift-gg/quasar" }
+
+# quasar-lang = { git = "https://github.com/jim4067/quasar" }
+# quasar-spl = { git = "https://github.com/jim4067/quasar" }
+
+solana-account-view = { version = "2.0.0" }
 solana-instruction = { version = "3.2.0" }
 
 

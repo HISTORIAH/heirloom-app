@@ -9,7 +9,7 @@ use crate::{
 /// Creates an ATA for the vault PDA for a given mint and increments claimable_assets.
 /// Must be called by authority before heir can claim that token type.
 #[derive(Accounts)]
-pub struct RegisterAsset<'info> {
+pub struct RegisterAsset {
     #[account(mut, address = estate.authority)]
     pub authority: Signer,
 
@@ -17,7 +17,7 @@ pub struct RegisterAsset<'info> {
     pub heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     #[account(seeds = Vault::seeds(authority, heir), bump = vault.bump)]
     pub vault: Account<Vault>,
@@ -35,9 +35,9 @@ pub struct RegisterAsset<'info> {
     pub system_program: Program<System>,
 }
 
-impl RegisterAsset<'_> {
+impl RegisterAsset {
     #[inline(always)]
-    pub fn handler<'a>(ctx: &mut Ctx<'a, RegisterAsset<'a>>) -> Result<(), ProgramError> {
+    pub fn handler<'a>(ctx: &mut Ctx<'a, RegisterAsset>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         // create the vault token account owned by the vault PDA

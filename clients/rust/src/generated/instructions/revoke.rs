@@ -36,6 +36,9 @@ pub struct Revoke {
           pub mint: Option<solana_address::Address>,
           
               
+          pub rent: solana_address::Address,
+          
+              
           pub token_program: solana_address::Address,
           
               
@@ -49,7 +52,7 @@ impl Revoke {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(9+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(10+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -100,6 +103,10 @@ impl Revoke {
               ));
             }
                                                     accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.rent,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
             false
           ));
@@ -154,8 +161,9 @@ impl Default for RevokeInstructionData {
                       ///   4. `[writable, optional]` authority_token_account
                       ///   5. `[writable, optional]` vault_token_account
                       ///   6. `[writable, optional]` mint
-                ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   7. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct RevokeBuilder {
             authority: Option<solana_address::Address>,
@@ -165,6 +173,7 @@ pub struct RevokeBuilder {
                 authority_token_account: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
+                rent: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
                 __remaining_accounts: Vec<solana_instruction::AccountMeta>,
@@ -212,6 +221,12 @@ impl RevokeBuilder {
                         self.mint = mint;
                     self
     }
+            /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
+#[inline(always)]
+    pub fn rent(&mut self, rent: solana_address::Address) -> &mut Self {
+                        self.rent = Some(rent);
+                    self
+    }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
@@ -246,6 +261,7 @@ impl RevokeBuilder {
                                         authority_token_account: self.authority_token_account,
                                         vault_token_account: self.vault_token_account,
                                         mint: self.mint,
+                                        rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
@@ -277,6 +293,9 @@ impl RevokeBuilder {
                 
                     
               pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                
+                    
+              pub rent: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -312,6 +331,9 @@ pub struct RevokeCpi<'a, 'b> {
           pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
+          pub rent: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -332,6 +354,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
               authority_token_account: accounts.authority_token_account,
               vault_token_account: accounts.vault_token_account,
               mint: accounts.mint,
+              rent: accounts.rent,
               token_program: accounts.token_program,
               system_program: accounts.system_program,
                 }
@@ -356,7 +379,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(9+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(10+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -407,6 +430,10 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
             ));
           }
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.rent.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false
           ));
@@ -428,7 +455,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(10 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(11 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
@@ -443,6 +470,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
                         if let Some(mint) = self.mint {
           account_infos.push(mint.clone());
         }
+                        account_infos.push(self.rent.clone());
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -466,8 +494,9 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
                       ///   4. `[writable, optional]` authority_token_account
                       ///   5. `[writable, optional]` vault_token_account
                       ///   6. `[writable, optional]` mint
-          ///   7. `[]` token_program
-          ///   8. `[]` system_program
+          ///   7. `[]` rent
+          ///   8. `[]` token_program
+          ///   9. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct RevokeCpiBuilder<'a, 'b> {
   instruction: Box<RevokeCpiBuilderInstruction<'a, 'b>>,
@@ -484,6 +513,7 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
               authority_token_account: None,
               vault_token_account: None,
               mint: None,
+              rent: None,
               token_program: None,
               system_program: None,
                                 __remaining_accounts: Vec::new(),
@@ -526,6 +556,11 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.mint = mint;
+                    self
+    }
+      #[inline(always)]
+    pub fn rent(&mut self, rent: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.rent = Some(rent);
                     self
     }
       #[inline(always)]
@@ -577,6 +612,8 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
                   
           mint: self.instruction.mint,
                   
+          rent: self.instruction.rent.expect("rent is not set"),
+                  
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   
           system_program: self.instruction.system_program.expect("system_program is not set"),
@@ -595,6 +632,7 @@ struct RevokeCpiBuilderInstruction<'a, 'b> {
                 authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                rent: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
+pub struct Initialize {
     #[account(mut)]
     pub authority: Signer,
 
@@ -19,7 +19,7 @@ pub struct Initialize<'info> {
     pub authority_token_account: Option<InterfaceAccount<Token>>,
 
     #[account(mut, init, payer = authority, seeds = Estate::seeds(authority, heir), bump )]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     #[account(mut, init, payer = authority, seeds = Vault::seeds(authority, heir), bump )]
     pub vault: Account<Vault>,
@@ -39,10 +39,10 @@ pub struct Initialize<'info> {
     pub system_program: Program<System>,
 }
 
-impl Initialize<'_> {
+impl Initialize {
     #[inline(always)]
-    pub fn initialize_handler<'a>(
-        ctx: &mut Ctx<'a, Initialize<'a>>,
+    pub fn initialize_handler(
+        ctx: &mut Ctx<Initialize>,
         heartbeat_interval: i64,
         grace_period: i64,
         pause_duration: i64,
@@ -160,14 +160,15 @@ impl Initialize<'_> {
                 bump: estate_bump,
                 is_claimed: false,
                 delegate: self.delegate.as_ref().map(|a| *a.address()),
-                claimable_assets: 0,
+                claimable_assets: 1,
                 label,
                 pause_duration,
                 paused_until: 0,
                 is_deferred: false,
             },
             self.authority.to_account_view(),
-            Some(&self.rent),
+            self.rent.lamports_per_byte(),
+            self.rent.exemption_threshold_raw(),
         )?;
 
         self.vault.set_inner(VaultInner {

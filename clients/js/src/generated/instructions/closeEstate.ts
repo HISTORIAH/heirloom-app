@@ -54,6 +54,8 @@ export type CloseEstateInstruction<
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
   TAccountVault extends string | AccountMeta<string> = string,
+  TAccountRent extends string | AccountMeta<string> =
+    "SysvarRent111111111111111111111111111111111",
   TAccountSystemProgram extends string | AccountMeta<string> =
     "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -74,6 +76,9 @@ export type CloseEstateInstruction<
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
+      TAccountRent extends string
+        ? ReadonlyAccount<TAccountRent>
+        : TAccountRent,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -113,12 +118,14 @@ export type CloseEstateAsyncInput<
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
   TAccountVault extends string = string,
+  TAccountRent extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
+  rent?: Address<TAccountRent>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
@@ -127,6 +134,7 @@ export async function getCloseEstateInstructionAsync<
   TAccountHeir extends string,
   TAccountEstate extends string,
   TAccountVault extends string,
+  TAccountRent extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
@@ -135,6 +143,7 @@ export async function getCloseEstateInstructionAsync<
     TAccountHeir,
     TAccountEstate,
     TAccountVault,
+    TAccountRent,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -145,6 +154,7 @@ export async function getCloseEstateInstructionAsync<
     TAccountHeir,
     TAccountEstate,
     TAccountVault,
+    TAccountRent,
     TAccountSystemProgram
   >
 > {
@@ -158,6 +168,7 @@ export async function getCloseEstateInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
+    rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -190,6 +201,10 @@ export async function getCloseEstateInstructionAsync<
       ),
     });
   }
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -202,6 +217,7 @@ export async function getCloseEstateInstructionAsync<
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
       getAccountMeta("vault", accounts.vault),
+      getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCloseEstateInstructionDataEncoder().encode({}),
@@ -212,6 +228,7 @@ export async function getCloseEstateInstructionAsync<
     TAccountHeir,
     TAccountEstate,
     TAccountVault,
+    TAccountRent,
     TAccountSystemProgram
   >);
 }
@@ -221,12 +238,14 @@ export type CloseEstateInput<
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
   TAccountVault extends string = string,
+  TAccountRent extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
+  rent?: Address<TAccountRent>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
@@ -235,6 +254,7 @@ export function getCloseEstateInstruction<
   TAccountHeir extends string,
   TAccountEstate extends string,
   TAccountVault extends string,
+  TAccountRent extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
@@ -243,6 +263,7 @@ export function getCloseEstateInstruction<
     TAccountHeir,
     TAccountEstate,
     TAccountVault,
+    TAccountRent,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -252,6 +273,7 @@ export function getCloseEstateInstruction<
   TAccountHeir,
   TAccountEstate,
   TAccountVault,
+  TAccountRent,
   TAccountSystemProgram
 > {
   // Program address.
@@ -264,6 +286,7 @@ export function getCloseEstateInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
+    rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -272,6 +295,10 @@ export function getCloseEstateInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -284,6 +311,7 @@ export function getCloseEstateInstruction<
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
       getAccountMeta("vault", accounts.vault),
+      getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCloseEstateInstructionDataEncoder().encode({}),
@@ -294,6 +322,7 @@ export function getCloseEstateInstruction<
     TAccountHeir,
     TAccountEstate,
     TAccountVault,
+    TAccountRent,
     TAccountSystemProgram
   >);
 }
@@ -308,7 +337,8 @@ export type ParsedCloseEstateInstruction<
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
     vault: TAccountMetas[3];
-    systemProgram: TAccountMetas[4];
+    rent: TAccountMetas[4];
+    systemProgram: TAccountMetas[5];
   };
   data: CloseEstateInstructionData;
 };
@@ -321,12 +351,12 @@ export function parseCloseEstateInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCloseEstateInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+  if (instruction.accounts.length < 6) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 5,
+        expectedAccountMetas: 6,
       },
     );
   }
@@ -343,6 +373,7 @@ export function parseCloseEstateInstruction<
       heir: getNextAccount(),
       estate: getNextAccount(),
       vault: getNextAccount(),
+      rent: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getCloseEstateInstructionDataDecoder().decode(instruction.data),

@@ -8,7 +8,7 @@ use crate::{
 /// Authority closes the estate and vault, reclaiming rent.
 /// All token assets (claimable_assets) must have been withdrawn first.
 #[derive(Accounts)]
-pub struct CloseEstate<'info> {
+pub struct CloseEstate {
     #[account(mut, address = estate.authority)]
     pub authority: Signer,
 
@@ -16,22 +16,24 @@ pub struct CloseEstate<'info> {
     pub heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump)]
     pub vault: Account<Vault>,
 
+    pub rent: Sysvar<Rent>,
+
     pub system_program: Program<System>,
 }
 
-impl CloseEstate<'_> {
+impl CloseEstate {
     #[inline(always)]
-    pub fn handler<'a>(ctx: &mut Ctx<'a, CloseEstate<'a>>) -> Result<(), ProgramError> {
+    pub fn handler(ctx: &mut Ctx<CloseEstate>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         let authority_view = ctx.accounts.authority.to_account_view();
-        ctx.accounts.estate.close(authority_view)?;
-        ctx.accounts.vault.close(authority_view)?;
+        crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
+        crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
 
         Ok(())
     }
