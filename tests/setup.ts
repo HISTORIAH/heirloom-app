@@ -31,6 +31,7 @@ import os from "os";
 import path from "path";
 import {
   associatedTokenProgram,
+  findAssociatedTokenPda,
   TOKEN_PROGRAM_ADDRESS,
   tokenProgram,
 } from "@solana-program/token";
@@ -184,12 +185,13 @@ export const sendInitialize = async (
     heartbeatInterval: bigint;
     gracePeriod: bigint;
     pauseDuration: bigint;
+    heir?: KeyPairSigner,
+    authorityTokenAccount?: Address
   },
 ): Promise<{ authority: Address; heir: KeyPairSigner }> => {
   const [authority, heir] = await Promise.all([
     loadDefaultKeypair(),
-    generateKeyPairSigner()
-    // loadDefaultClaimKeypair(),
+    args.heir ?? generateKeyPairSigner(),
   ]);
 
   // airdrop heir
@@ -208,6 +210,7 @@ export const sendInitialize = async (
     tokenProgram: args.tokenProgram,
     mint: args.mint,
     vaultTokenAccount: args.vaultTokenAccount,
+    authorityTokenAccount: args.authorityTokenAccount
   });
 
   await pipe(
@@ -250,37 +253,47 @@ export const sendUpdateFields = async (
 export const sendUpdateHeir = async (
   client: Client,
   args: {
-    heir: Address;
+    newHeir: Address,
+    oldHeir: Address;
     mint?: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
-    newVaultTokenAccount?: Address;
   },
-): Promise<{ authority: Address; newHeir: KeyPairSigner }> => {
-  const [authority, newHeir] = await Promise.all([
+): Promise<{ authority: Address }> => {
+  const [authority,  ] = await Promise.all([
     loadDefaultKeypair(),
-    generateKeyPairSigner(),
   ]);
+  const { newHeir, oldHeir, tokenProgram, mint } = args;
 
   const [newEstate] = await findEstatePda({
     authority: authority.address,
-    heir: newHeir.address,
+    heir: newHeir,
   });
   const [newVault] = await findVaultPda({
     authority: authority.address,
-    heir: newHeir.address,
+    heir: newHeir,
   });
+
+  let newVaultTokenAccount = undefined;
+  if (mint && tokenProgram) {
+    newVaultTokenAccount = (await findAssociatedTokenPda(
+      {
+        owner: newVault,
+        tokenProgram: tokenProgram, // because the plugins only support og token acc
+        mint: mint
+      }))[0]
+  }
 
   const ix = await getUpdateHeirInstructionAsync({
     authority,
-    heir: args.heir,
-    newHeir: newHeir.address,
+    heir: oldHeir,
+    newHeir: newHeir,
     newEstate,
     newVault,
     mint: args.mint,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
-    newVaultTokenAccount: args.newVaultTokenAccount,
+    newVaultTokenAccount,
   });
 
   await pipe(
@@ -289,7 +302,7 @@ export const sendUpdateHeir = async (
     (tx) => signAndSendTransaction(client, tx),
   );
 
-  return { authority: authority.address, newHeir };
+  return { authority: authority.address,  };
 };
 
 export const sendRevoke = async (

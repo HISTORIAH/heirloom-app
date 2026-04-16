@@ -1,5 +1,7 @@
 use quasar_lang::prelude::*;
-use quasar_spl::{Mint, Token, TokenCpi, TokenInterface};
+use quasar_spl::{
+    AssociatedTokenCpi, AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface,
+};
 
 use crate::{
     errors::HeirloomError,
@@ -31,6 +33,8 @@ pub struct Initialize {
     pub mint: Option<Account<Mint>>,
 
     pub token_program: Interface<TokenInterface>,
+
+    pub associated_token_program: Program<AssociatedTokenProgram>,
 
     pub rent: Sysvar<Rent>,
 
@@ -129,8 +133,15 @@ impl Initialize {
 
         // uninitialized
         if vault_ta.to_account_view().is_data_empty() {
-            self.token_program
-                .initialize_account3(vault_ta, mint, self.vault.address())
+            self.associated_token_program
+                .create_idempotent(
+                    self.authority.to_account_view(),
+                    &vault_ta.to_account_view(),
+                    self.vault.to_account_view(),
+                    mint,
+                    &self.system_program,
+                    &self.token_program,
+                )
                 .invoke()?;
         }
 

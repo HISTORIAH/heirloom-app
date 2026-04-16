@@ -10,7 +10,7 @@ mod state;
 
 use instructions::*;
 
-declare_id!("BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv");
+declare_id!("JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN");
 
 #[program]
 mod heirloom_program {
@@ -80,7 +80,7 @@ mod heirloom_program {
     #[instruction(discriminator = 6)]
     pub fn update_heir(ctx: Ctx<UpdateHeir>) -> Result<(), ProgramError> {
         log("ix: update_heir");
-        UpdateHeir::handler(&mut ctx)
+        UpdateHeir::update_heir_handler(&mut ctx)
     }
 
     #[instruction(discriminator = 7)]

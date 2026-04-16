@@ -962,7 +962,7 @@ name = "heirloom-program"
 version = "0.1.0"
 dependencies = [
  "heirloom-program-client",
- "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
+ "quasar-lang 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods)",
  "quasar-spl",
  "quasar-svm",
  "solana-account",
@@ -1398,12 +1398,12 @@ dependencies = [
 [[package]]
 name = "quasar-derive"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods#9b8c43aec8fa71dac2a92b1b4a138c3eeb0121d2"
 dependencies = [
  "bs58",
  "const-crypto",
  "proc-macro2",
- "quasar-idl 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
+ "quasar-idl",
  "quote",
  "serde",
  "serde_json",
@@ -1413,12 +1413,10 @@ dependencies = [
 [[package]]
 name = "quasar-derive"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
 dependencies = [
- "bs58",
- "const-crypto",
  "proc-macro2",
- "quasar-idl 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
+ "quasar-schema",
  "quote",
  "serde",
  "serde_json",
@@ -1428,19 +1426,7 @@ dependencies = [
 [[package]]
 name = "quasar-idl"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
-dependencies = [
- "proc-macro2",
- "serde",
- "serde_json",
- "syn 2.0.117",
- "toml",
-]
-
-[[package]]
-name = "quasar-idl"
-version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods#9b8c43aec8fa71dac2a92b1b4a138c3eeb0121d2"
 dependencies = [
  "proc-macro2",
  "serde",
@@ -1452,7 +1438,25 @@ dependencies = [
 [[package]]
 name = "quasar-lang"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods#9b8c43aec8fa71dac2a92b1b4a138c3eeb0121d2"
+dependencies = [
+ "const-crypto",
+ "quasar-derive 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods)",
+ "quasar-pod 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods)",
+ "solana-account-view",
+ "solana-address 2.2.0",
+ "solana-define-syscall 5.1.0",
+ "solana-instruction",
+ "solana-instruction-view",
+ "solana-program-error",
+ "solana-program-log",
+ "wincode 0.4.9",
+]
+
+[[package]]
+name = "quasar-lang"
+version = "0.0.0"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
 dependencies = [
  "const-crypto",
  "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
@@ -1468,27 +1472,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "quasar-lang"
-version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
-dependencies = [
- "const-crypto",
- "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
- "quasar-pod 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
- "solana-account-view",
- "solana-address 2.2.0",
- "solana-define-syscall 5.1.0",
- "solana-instruction",
- "solana-instruction-view",
- "solana-program-error",
- "solana-program-log",
- "wincode 0.4.9",
-]
-
-[[package]]
 name = "quasar-pod"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods#9b8c43aec8fa71dac2a92b1b4a138c3eeb0121d2"
 dependencies = [
  "wincode 0.4.9",
 ]
@@ -1496,17 +1482,25 @@ dependencies = [
 [[package]]
 name = "quasar-pod"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
 dependencies = [
  "wincode 0.4.9",
+]
+
+[[package]]
+name = "quasar-schema"
+version = "0.0.0"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
 name = "quasar-spl"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods#9b8c43aec8fa71dac2a92b1b4a138c3eeb0121d2"
 dependencies = [
- "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
+ "quasar-lang 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fata-cpi-methods)",
  "solana-address 2.2.0",
 ]
 
@@ -2179,9 +2173,9 @@ dependencies = [
 
 [[package]]
 name = "solana-instruction-view"
-version = "2.1.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ab7a27d0c4214b9f7389c3dd00b68c93093a67f1dcc5b7893aebe299bbcbb47"
+checksum = "7c35d02cd27575b1fd05938d3624e476b0173208139053b51aa48dd9bec149f1"
 dependencies = [
  "solana-account-view",
  "solana-address 2.2.0",

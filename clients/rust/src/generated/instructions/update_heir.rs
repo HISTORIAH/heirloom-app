@@ -48,6 +48,9 @@ pub struct UpdateHeir {
           pub token_program: solana_address::Address,
           
               
+          pub associated_token_program: solana_address::Address,
+          
+              
           pub rent: solana_address::Address,
           
               
@@ -64,7 +67,7 @@ impl UpdateHeir {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(15+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -131,6 +134,10 @@ impl UpdateHeir {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.associated_token_program,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.rent,
             false
           ));
@@ -193,9 +200,10 @@ impl Default for UpdateHeirInstructionData {
                       ///   8. `[writable, optional]` new_vault_token_account
                       ///   9. `[writable, optional]` mint
                 ///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   11. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
-                ///   12. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   11. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   12. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   13. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
+                ///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct UpdateHeirBuilder {
             authority: Option<solana_address::Address>,
@@ -209,6 +217,7 @@ pub struct UpdateHeirBuilder {
                 new_vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
+                associated_token_program: Option<solana_address::Address>,
                 rent: Option<solana_address::Address>,
                 clock: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
@@ -278,6 +287,12 @@ impl UpdateHeirBuilder {
                         self.token_program = Some(token_program);
                     self
     }
+            /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
+#[inline(always)]
+    pub fn associated_token_program(&mut self, associated_token_program: solana_address::Address) -> &mut Self {
+                        self.associated_token_program = Some(associated_token_program);
+                    self
+    }
             /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
 #[inline(always)]
     pub fn rent(&mut self, rent: solana_address::Address) -> &mut Self {
@@ -322,6 +337,7 @@ impl UpdateHeirBuilder {
                                         new_vault_token_account: self.new_vault_token_account,
                                         mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
+                                        associated_token_program: self.associated_token_program.unwrap_or(solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")),
                                         rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
@@ -366,6 +382,9 @@ impl UpdateHeirBuilder {
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
+              pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub rent: &'b solana_account_info::AccountInfo<'a>,
@@ -416,6 +435,9 @@ pub struct UpdateHeirCpi<'a, 'b> {
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
               
+          pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub rent: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -443,6 +465,7 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
               new_vault_token_account: accounts.new_vault_token_account,
               mint: accounts.mint,
               token_program: accounts.token_program,
+              associated_token_program: accounts.associated_token_program,
               rent: accounts.rent,
               clock: accounts.clock,
               system_program: accounts.system_program,
@@ -468,7 +491,7 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(15+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -535,6 +558,10 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.associated_token_program.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.rent.key,
             false
           ));
@@ -560,7 +587,7 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(16 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
@@ -579,6 +606,7 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
           account_infos.push(mint.clone());
         }
                         account_infos.push(self.token_program.clone());
+                        account_infos.push(self.associated_token_program.clone());
                         account_infos.push(self.rent.clone());
                         account_infos.push(self.clock.clone());
                         account_infos.push(self.system_program.clone());
@@ -607,9 +635,10 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
                       ///   8. `[writable, optional]` new_vault_token_account
                       ///   9. `[writable, optional]` mint
           ///   10. `[]` token_program
-          ///   11. `[]` rent
-          ///   12. `[]` clock
-          ///   13. `[]` system_program
+          ///   11. `[]` associated_token_program
+          ///   12. `[]` rent
+          ///   13. `[]` clock
+          ///   14. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct UpdateHeirCpiBuilder<'a, 'b> {
   instruction: Box<UpdateHeirCpiBuilderInstruction<'a, 'b>>,
@@ -630,6 +659,7 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
               new_vault_token_account: None,
               mint: None,
               token_program: None,
+              associated_token_program: None,
               rent: None,
               clock: None,
               system_program: None,
@@ -696,6 +726,11 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
                     self
     }
       #[inline(always)]
+    pub fn associated_token_program(&mut self, associated_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.associated_token_program = Some(associated_token_program);
+                    self
+    }
+      #[inline(always)]
     pub fn rent(&mut self, rent: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.rent = Some(rent);
                     self
@@ -757,6 +792,8 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
                   
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   
+          associated_token_program: self.instruction.associated_token_program.expect("associated_token_program is not set"),
+                  
           rent: self.instruction.rent.expect("rent is not set"),
                   
           clock: self.instruction.clock.expect("clock is not set"),
@@ -781,6 +818,7 @@ struct UpdateHeirCpiBuilderInstruction<'a, 'b> {
                 new_vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+                associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 rent: Option<&'b solana_account_info::AccountInfo<'a>>,
                 clock: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
