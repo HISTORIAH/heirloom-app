@@ -5,10 +5,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
 import {
+  discoverVaultTokenAccounts,
   fetchEstateByPair,
+  getAtaAddress,
   getVaultAddress,
   sendClaim,
   type Client,
+  type VaultTokenInfo,
 } from "@/lib/contracts";
 import {
   address as toAddress,
@@ -27,12 +30,13 @@ interface InheritanceInfo {
   solBalance: number;
   label: string;
   isClaimed: boolean;
-  mint: string | null;
+  claimableAssets: number;
   heartbeatInterval: number;
   gracePeriod: number;
   lastHeartbeat: number;
   createdAt: number;
   pausedUntil: number;
+  vaultTokens: VaultTokenInfo[];
 }
 
 const stateColors: Record<string, string> = {
@@ -72,19 +76,17 @@ async function lookupEstate(
     const maybe = await fetchEstateByPair(client.rpc, authority, heir);
     if (!maybe.exists) return null;
     const vaultPda = await getVaultAddress(authority, heir);
-    const { value: lamports } = await client.rpc.getBalance(vaultPda).send();
-    const mint =
-      maybe.data.mint && "__option" in maybe.data.mint
-        ? (maybe.data.mint as { __option: "Some" | "None"; value?: string }).__option === "Some"
-          ? ((maybe.data.mint as { value: string }).value ?? null)
-          : null
-        : null;
+    const [{ value: lamports }, vaultTokens] = await Promise.all([
+      client.rpc.getBalance(vaultPda).send(),
+      discoverVaultTokenAccounts(client.rpc, vaultPda),
+    ]);
     const lastHeartbeat = Number(maybe.data.lastHeartbeat);
     const heartbeatInterval = Number(maybe.data.heartbeatInterval);
     const gracePeriod = Number(maybe.data.gracePeriod);
     const pausedUntil = Number(maybe.data.pausedUntil);
     const createdAt = Number(maybe.data.createdAt);
-    const vaultEmpty = mint === null && Number(lamports) === 0;
+    const claimableAssets = maybe.data.claimableAssets;
+    const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0;
     return {
       ownerAddress: authorityStr,
       vaultState: computeState(
@@ -99,12 +101,13 @@ async function lookupEstate(
       solBalance: Number(lamports),
       label: maybe.data.label,
       isClaimed: maybe.data.isClaimed,
-      mint,
+      claimableAssets,
       heartbeatInterval,
       gracePeriod,
       lastHeartbeat,
       createdAt,
       pausedUntil,
+      vaultTokens,
     };
   } catch {
     return null;
@@ -181,12 +184,31 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   const handleClaim = async (inh: InheritanceInfo) => {
     setClaimingOwner(inh.ownerAddress);
     try {
-      const tx = await sendClaim(client, {
-        heir: signer,
-        authority: toAddress(inh.ownerAddress),
-        mint: inh.mint ? toAddress(inh.mint) : undefined,
-      });
-      setClaimTxIds((p) => ({ ...p, [inh.ownerAddress]: tx }));
+      const authorityAddr = toAddress(inh.ownerAddress);
+      let lastTx = "";
+
+      // Claim each token first (program decrements claimable_assets per token)
+      for (const vt of inh.vaultTokens) {
+        const mint = toAddress(vt.mint);
+        const heirAta = await getAtaAddress(heirAddress, mint);
+        lastTx = await sendClaim(client, {
+          heir: signer,
+          authority: authorityAddr,
+          mint,
+          vaultTokenAccount: toAddress(vt.address),
+          heirTokenAccount: heirAta,
+        });
+      }
+
+      // Claim SOL (closes estate + vault if no remaining tokens)
+      if (inh.solBalance > 0 || inh.vaultTokens.length === 0) {
+        lastTx = await sendClaim(client, {
+          heir: signer,
+          authority: authorityAddr,
+        });
+      }
+
+      setClaimTxIds((p) => ({ ...p, [inh.ownerAddress]: lastTx }));
       toast({ title: "Claim submitted", description: "Assets transferred to your wallet." });
     } catch (err: unknown) {
       toast({
@@ -265,7 +287,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                   const txId = claimTxIds[inh.ownerAddress];
                   const isClaiming = claimingOwner === inh.ownerAddress;
                   const nothingToClaim =
-                    inh.mint === null && inh.solBalance === 0;
+                    inh.claimableAssets === 0 && inh.solBalance === 0;
                   const canClaim =
                     inh.vaultState === "claimable" &&
                     !inh.isClaimed &&
@@ -296,7 +318,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                           <p className="text-lg font-black">{inh.label}</p>
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">{SOL_LABEL} Share</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase">{SOL_LABEL}</p>
                           <div className="flex items-center gap-1">
                             <Coins className="h-4 w-4" />
                             <p className="text-lg font-black">
@@ -305,12 +327,26 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                           </div>
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">Claimed</p>
-                          <p className="text-lg font-black">
-                            {inh.isClaimed ? "Yes" : "No"}
-                          </p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase">Tokens</p>
+                          <p className="text-lg font-black">{inh.claimableAssets}</p>
                         </div>
                       </div>
+
+                      {inh.vaultTokens.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                            Token Balances
+                          </p>
+                          {inh.vaultTokens.map((vt) => (
+                            <div key={vt.address} className="neo-border rounded-lg p-3 bg-secondary flex justify-between items-center">
+                              <span className="font-mono text-xs break-all max-w-[60%]">{vt.mint}</span>
+                              <span className="font-black">
+                                {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="pt-3 border-t-2 border-foreground/10">
                         {txId ? (

@@ -2,7 +2,16 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { address as toAddress, type Address, type TransactionSigner, } from "@solana/kit";
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
-import { fetchEstateByPair, getVaultAddress, sendInitialize, sendRevoke, sendUpdate, type Client, } from "@/lib/contracts";
+import {
+  fetchEstateByPair,
+  getVaultAddress,
+  sendCloseEstate,
+  sendInitialize,
+  sendRegisterAndDeposit,
+  sendRevoke,
+  sendUpdate,
+  type Client,
+} from "@/lib/contracts";
 
 export interface EstateData {
   authority: string;
@@ -17,13 +26,20 @@ export interface EstateData {
   isClaimed: boolean;
   isDeferred: boolean;
   delegate: string | null;
-  mint: string | null;
+  claimableAssets: number;
   estatePda: string;
   vaultPda: string;
   solBalance: number;
   state: "active" | "grace" | "claimable" | "distributed";
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
+}
+
+export interface TokenDeposit {
+  mint: string;
+  amount: bigint;
+  decimals: number;
+  tokenProgram?: string;
 }
 
 export interface CreateEstateInput {
@@ -34,7 +50,7 @@ export interface CreateEstateInput {
   pauseDuration: number;
   amountLamports: bigint;
   delegate?: string;
-  mint?: string;
+  tokens?: TokenDeposit[];
 }
 
 interface VaultState {
@@ -45,6 +61,7 @@ interface VaultState {
   pendingCreate: boolean;
   fetchEstates: () => Promise<void>;
   createEstateOnChain: (input: CreateEstateInput) => Promise<string>;
+  registerAssetOnChain: (heir: string, token: TokenDeposit) => Promise<string>;
   sendHeartbeatOnChain: (heir: string) => Promise<string>;
   revokeEstateOnChain: (heir: string, mint?: string) => Promise<string>;
   clearVault: () => void;
@@ -149,20 +166,12 @@ const VaultProviderInner: React.FC<{
           const gracePeriod = Number(maybe.data.gracePeriod);
           const pausedUntil = Number(maybe.data.pausedUntil);
           const createdAt = Number(maybe.data.createdAt);
-          const mintOpt =
-            maybe.data.mint && "__option" in maybe.data.mint
-              ? (maybe.data.mint as { __option: "Some" | "None"; value?: string }).__option === "Some"
-                ? ((maybe.data.mint as { value: string }).value ?? null)
-                : null
-              : null;
-          // SOL path: vault drained → lamports == 0. Token path: we can't
-          // cheaply fetch the vault ATA balance here, so fall back to
-          // is_claimed only. (Program-side fix would close the estate.)
-          // Treat distributed + empty vaults as "closed" from the UI: the
-          // program leaves the estate PDA on-chain after claim, so we hide
-          // them (and prune the known-heirs cache below) to match the
-          // expected owner flow ("vault should close after distribution").
-          const vaultEmpty = mintOpt === null && Number(lamports) === 0;
+          // SOL path: vault drained → lamports == 0. Token path relies on
+          // claimable_assets count. Treat distributed + empty vaults as
+          // "closed" from the UI: the program leaves the estate PDA on-chain
+          // after claim, so we hide them (and prune the known-heirs cache
+          // below) to match the expected owner flow.
+          const vaultEmpty = maybe.data.claimableAssets === 0 && Number(lamports) === 0;
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeState(
             lastHeartbeat,
             heartbeatInterval,
@@ -190,7 +199,7 @@ const VaultProviderInner: React.FC<{
                   ? ((maybe.data.delegate as { value: string }).value ?? null)
                   : null
                 : null,
-            mint: mintOpt,
+            claimableAssets: maybe.data.claimableAssets,
             estatePda,
             vaultPda,
             solBalance: Number(lamports),
@@ -205,10 +214,10 @@ const VaultProviderInner: React.FC<{
       // Hide fully-distributed-and-empty estates from the owner dashboard
       // and drop them from the known-heirs cache so the slot is "free" again.
       const visible = results.filter(
-        (r) => !(r.state === "distributed" && r.solBalance === 0 && r.mint === null),
+        (r) => !(r.state === "distributed" && r.solBalance === 0),
       );
       const hidden = results.filter(
-        (r) => r.state === "distributed" && r.solBalance === 0 && r.mint === null,
+        (r) => r.state === "distributed" && r.solBalance === 0,
       );
       if (hidden.length > 0) {
         const heirs = loadKnownHeirs(authority).filter(
@@ -240,15 +249,21 @@ const VaultProviderInner: React.FC<{
   const createEstateOnChain = useCallback(
     async (input: CreateEstateInput): Promise<string> => {
       const heirAddress = toAddress(input.heir);
-      // Pre-flight: program PDA is seeded on (authority, heir) and is NOT
-      // closed after claim, so re-initialising with the same pair will fail
-      // with account-already-exists. Give a clear message before the wallet
-      // pops a cryptic simulation error.
+      // Pre-flight: if estate already exists, try to close it first.
+      // closeEstate succeeds only when claimable_assets == 0 (i.e. stale/empty).
       const existing = await fetchEstateByPair(rpc, authority, heirAddress);
       if (existing.exists) {
-        throw new Error(
-          "An estate already exists for this heir address. The on-chain account persists after claim/distribution — pick a different heir address, or (program-side) close the estate on claim.",
-        );
+        const canClose = existing.data.claimableAssets === 0;
+        if (!canClose) {
+          throw new Error(
+            "An active estate with registered assets already exists for this heir. Revoke or claim it first.",
+          );
+        }
+        // Close stale estate so we can re-init the PDA.
+        await sendCloseEstate(client, {
+          authority: signer,
+          heir: heirAddress,
+        });
       }
       const txId = await sendInitialize(client, {
         authority: signer,
@@ -259,8 +274,20 @@ const VaultProviderInner: React.FC<{
         gracePeriod: BigInt(input.gracePeriod),
         pauseDuration: BigInt(input.pauseDuration),
         delegate: input.delegate ? toAddress(input.delegate) : undefined,
-        mint: input.mint ? toAddress(input.mint) : undefined,
       });
+      // Register additional token assets after init
+      if (input.tokens && input.tokens.length > 0) {
+        for (const tok of input.tokens) {
+          await sendRegisterAndDeposit(client, {
+            authority: signer,
+            heir: heirAddress,
+            mint: toAddress(tok.mint),
+            amount: tok.amount,
+            decimals: tok.decimals,
+            tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
+          });
+        }
+      }
       const heirs = loadKnownHeirs(authority);
       if (!heirs.includes(input.heir)) {
         heirs.push(input.heir);
@@ -271,6 +298,22 @@ const VaultProviderInner: React.FC<{
       return txId;
     },
     [client, rpc, signer, authority],
+  );
+
+  const registerAssetOnChain = useCallback(
+    async (heir: string, token: TokenDeposit): Promise<string> => {
+      const txId = await sendRegisterAndDeposit(client, {
+        authority: signer,
+        heir: toAddress(heir),
+        mint: toAddress(token.mint),
+        amount: token.amount,
+        decimals: token.decimals,
+        tokenProgram: token.tokenProgram ? toAddress(token.tokenProgram) : undefined,
+      });
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
   );
 
   const sendHeartbeatOnChain = useCallback(
@@ -315,6 +358,7 @@ const VaultProviderInner: React.FC<{
     pendingCreate,
     fetchEstates,
     createEstateOnChain,
+    registerAssetOnChain,
     sendHeartbeatOnChain,
     revokeEstateOnChain,
     clearVault,
@@ -332,6 +376,9 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     pendingCreate: false,
     fetchEstates: async () => { },
     createEstateOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    registerAssetOnChain: async () => {
       throw new Error("Wallet not connected");
     },
     sendHeartbeatOnChain: async () => {
