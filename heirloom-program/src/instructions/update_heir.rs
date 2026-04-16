@@ -1,5 +1,5 @@
 use quasar_lang::{pda::find_program_address_const, prelude::*, sysvars::Sysvar as _};
-use quasar_spl::{Mint, Token, TokenCpi, TokenInterface};
+use quasar_spl::{AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface};
 
 use crate::{
     errors::HeirloomError,
@@ -39,6 +39,8 @@ pub struct UpdateHeir {
     pub mint: Option<Account<Mint>>,
 
     pub token_program: Interface<TokenInterface>,
+
+    pub associated_token_program: Program<AssociatedTokenProgram>,
 
     pub rent: Sysvar<Rent>,
 
@@ -121,7 +123,7 @@ impl UpdateHeir {
             let amount = vault_ta.amount();
             let new_vault_addr = *ctx.accounts.new_vault.address();
 
-            // init new vault token account if uninitialized
+            //  create and init new vault ata
             if new_vault_ta.to_account_view().is_data_empty() {
                 ctx.accounts
                     .token_program

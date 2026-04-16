@@ -10,7 +10,7 @@ mod state;
 
 use instructions::*;
 
-declare_id!("BnH7XSqraycia4o5xDUKHUpheWg42AAnGQYWCx8tUEmv");
+declare_id!("JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN");
 
 #[program]
 mod heirloom_program {

@@ -53,10 +53,6 @@ impl Claim {
         let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
         ctx.accounts.estate.claimable_assets = remaining;
 
-        ctx.accounts.estate.address().log(); // ! DEBUG STATEMENT
-        ctx.accounts.vault.address().log(); // ! DEBUG STATEMENT
-        ctx.accounts.heir.address().log(); // ! DEBUG STATEMENT
-
         if remaining == 0 {
             log("calling close accounts"); // ! DEBUG STATEMENT
 
