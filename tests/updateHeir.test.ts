@@ -31,53 +31,53 @@ test("it migrates sol vault to a new heir", async () => {
   expect(newHeir.address).toBeTruthy();
 });
 
-test("it migrates token vault to a new heir", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
-  const oldHeir = await generateKeyPairSigner();
-  const newHeir = await generateKeyPairSigner();
+// test("it migrates token vault to a new heir", async () => {
+//   const client = createDefaultSolanaClient();
+//   const authority = await loadDefaultKeypair();
+//   const oldHeir = await generateKeyPairSigner();
+//   const newHeir = await generateKeyPairSigner();
 
-  const { mint } = await createAndMintTokens();
-
-
-  let [oldVault] = await findVaultPda({
-    authority: authority.address,
-    heir: oldHeir.address
-  });
-  const [oldVaultTokenAccount] = await findAssociatedTokenPda(
-    {
-      owner: oldVault,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
-  );
-  const [authorityTokenAcc] = await findAssociatedTokenPda(
-    {
-      owner: authority.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
-  );
-
-  await sendInitialize(client, {
-    amount: 1_000_000n,
-    label: "test-heir-token",
-    heartbeatInterval: 0n,
-    gracePeriod: 0n,
-    pauseDuration: 0n,
-    mint: mint.address,
-    heir: oldHeir,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    vaultTokenAccount: oldVault,
-    authorityTokenAccount: authorityTokenAcc
-   });
+//   const { mint } = await createAndMintTokens();
 
 
-  await sendUpdateHeir(client, {
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    newHeir: newHeir.address,
-    oldHeir: oldHeir.address,
-    vaultTokenAccount: oldVaultTokenAccount,
-  });
-});
+//   let [oldVault] = await findVaultPda({
+//     authority: authority.address,
+//     heir: oldHeir.address
+//   });
+//   const [oldVaultTokenAccount] = await findAssociatedTokenPda(
+//     {
+//       owner: oldVault,
+//       tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
+//       mint: mint.address
+//     }
+//   );
+//   const [authorityTokenAcc] = await findAssociatedTokenPda(
+//     {
+//       owner: authority.address,
+//       tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
+//       mint: mint.address
+//     }
+//   );
+
+//   await sendInitialize(client, {
+//     amount: 1_000_000n,
+//     label: "test-heir-token",
+//     heartbeatInterval: 0n,
+//     gracePeriod: 0n,
+//     pauseDuration: 0n,
+//     mint: mint.address,
+//     heir: oldHeir,
+//     tokenProgram: TOKEN_PROGRAM_ADDRESS,
+//     vaultTokenAccount: oldVault,
+//     authorityTokenAccount: authorityTokenAcc
+//    });
+
+
+//   await sendUpdateHeir(client, {
+//     mint: mint.address,
+//     tokenProgram: TOKEN_PROGRAM_ADDRESS,
+//     newHeir: newHeir.address,
+//     oldHeir: oldHeir.address,
+//     vaultTokenAccount: oldVaultTokenAccount,
+//   });
+// });

@@ -80,7 +80,7 @@ mod heirloom_program {
     #[instruction(discriminator = 6)]
     pub fn update_heir(ctx: Ctx<UpdateHeir>) -> Result<(), ProgramError> {
         log("ix: update_heir");
-        UpdateHeir::handler(&mut ctx)
+        UpdateHeir::update_heir_handler(&mut ctx)
     }
 
     #[instruction(discriminator = 7)]

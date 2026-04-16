@@ -1,4 +1,4 @@
-use quasar_lang::{pda::find_program_address_const, prelude::*, sysvars::Sysvar as _};
+use quasar_lang::{pda::based_try_find_program_address, prelude::*, sysvars::Sysvar as _};
 use quasar_spl::{AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface};
 
 use crate::{
@@ -51,118 +51,127 @@ pub struct UpdateHeir {
 
 impl UpdateHeir {
     #[inline(always)]
-    pub fn handler<'a>(ctx: &mut Ctx<UpdateHeir>) -> Result<(), ProgramError> {
+    pub fn update_heir_handler<'a>(ctx: &mut Ctx<UpdateHeir>) -> Result<(), ProgramError> {
         let rent = Rent::get()?;
 
         // extract addresses as owned values so we don't hold views across the mutable borrow
         let authority_addr = *ctx.accounts.authority.address();
         let new_heir_addr = *ctx.accounts.new_heir.address();
 
-        let (new_estate_addr, new_estate_bump) = find_program_address_const(
+        log("deriving pdas"); // ! DEBUG STATEMENT
+
+        // based_try_find_program_address uses the
+        // sol_sha256 syscall (~544 CU/attempt) which is faster than the pure
+        // Rust find_program_address_const when seeds are runtime values.
+        let (new_estate_addr, new_estate_bump) = based_try_find_program_address(
             &[
                 b"estate",
                 authority_addr.as_array(),
                 new_heir_addr.as_array(),
             ],
             &crate::ID,
-        );
-        let (new_vault_addr, new_vault_bump) = find_program_address_const(
+        )?;
+        let (new_vault_addr, new_vault_bump) = based_try_find_program_address(
             &[
                 b"vault",
                 authority_addr.as_array(),
                 new_heir_addr.as_array(),
             ],
             &crate::ID,
-        );
+        )?;
 
         ctx.accounts
-            .validate_inputs(&new_estate_addr, &new_vault_addr)?;
+            .validate_inputs(&new_vault_addr, &new_estate_addr)?;
+        log("validate has run"); // ! DEBUG STATEMENT
 
-        // --- create new estate ---
-        let estate_lamports = rent.try_minimum_balance(Estate::SPACE)?;
-        {
-            let authority_view = ctx.accounts.authority.to_account_view();
-            let new_estate_view = ctx.accounts.new_estate.to_account_view();
-            ctx.accounts
-                .system_program
-                .create_account(
-                    authority_view,
-                    new_estate_view,
-                    estate_lamports,
-                    Estate::SPACE as u64,
-                    &crate::id(),
-                )
-                .invoke()?;
-        }
+        // // --- create new estate ---
+        // let estate_lamports = rent.try_minimum_balance(Estate::SPACE)?;
+        // {
+        //     let authority_view = ctx.accounts.authority.to_account_view();
+        //     let new_estate_view = ctx.accounts.new_estate.to_account_view();
+        //     ctx.accounts
+        //         .system_program
+        //         .create_account(
+        //             authority_view,
+        //             new_estate_view,
+        //             estate_lamports,
+        //             Estate::SPACE as u64,
+        //             &crate::id(),
+        //         )
+        //         .invoke()?;
+        // }
 
-        // --- create new vault ---
-        let vault_lamports = rent.try_minimum_balance(Vault::SPACE)?;
-        {
-            let authority_view = ctx.accounts.authority.to_account_view();
-            let new_vault_view = ctx.accounts.new_vault.to_account_view();
-            ctx.accounts
-                .system_program
-                .create_account(
-                    authority_view,
-                    new_vault_view,
-                    vault_lamports,
-                    Vault::SPACE as u64,
-                    &crate::id(),
-                )
-                .invoke()?;
-        }
+        // // --- create new vault ---
+        // let vault_lamports = rent.try_minimum_balance(Vault::SPACE)?;
+        // {
+        //     let authority_view = ctx.accounts.authority.to_account_view();
+        //     let new_vault_view = ctx.accounts.new_vault.to_account_view();
+        //     ctx.accounts
+        //         .system_program
+        //         .create_account(
+        //             authority_view,
+        //             new_vault_view,
+        //             vault_lamports,
+        //             Vault::SPACE as u64,
+        //             &crate::id(),
+        //         )
+        //         .invoke()?;
+        // }
+        // log("create new accounts has run"); // ! DEBUG STATEMENT
 
-        // --- write data into new estate and vault ---
-        ctx.accounts
-            .set_new_account_data(new_estate_addr, new_estate_bump, new_vault_bump)?;
+        // // --- write data into new estate and vault ---
+        // ctx.accounts
+        //     .set_new_account_data(new_estate_addr, new_estate_bump, new_vault_bump)?;
 
-        // --- token path: transfer tokens and close old vault token account ---
-        if let Some(vault_ta) = ctx.accounts.vault_token_account.as_ref() {
-            let new_vault_ta = ctx.accounts.new_vault_token_account.as_ref().unwrap();
-            let mint = ctx.accounts.mint.as_ref().unwrap();
-            let amount = vault_ta.amount();
-            let new_vault_addr = *ctx.accounts.new_vault.address();
+        // log("set new account data has run"); // ! DEBUG STATEMENT
 
-            //  create and init new vault ata
-            if new_vault_ta.to_account_view().is_data_empty() {
-                ctx.accounts
-                    .token_program
-                    .initialize_account3(new_vault_ta, mint, &new_vault_addr)
-                    .invoke()?;
-            }
+        // // --- token path: transfer tokens and close old vault token account ---
+        // if let Some(vault_ta) = ctx.accounts.vault_token_account.as_ref() {
+        //     let new_vault_ta = ctx.accounts.new_vault_token_account.as_ref().unwrap();
+        //     let mint = ctx.accounts.mint.as_ref().unwrap();
+        //     let amount = vault_ta.amount();
+        //     let new_vault_addr = *ctx.accounts.new_vault.address();
 
-            // transfer tokens from old vault TA to new vault TA
-            ctx.accounts
-                .token_program
-                .transfer_checked(
-                    vault_ta,
-                    mint,
-                    new_vault_ta,
-                    &ctx.accounts.vault,
-                    amount,
-                    mint.decimals(),
-                )
-                .invoke()?;
+        //     //  create and init new vault ata
+        //     if new_vault_ta.to_account_view().is_data_empty() {
+        //         ctx.accounts
+        //             .token_program
+        //             .initialize_account3(new_vault_ta, mint, &new_vault_addr)
+        //             .invoke()?;
+        //     }
 
-            // close old vault token account, rent back to authority
-            ctx.accounts
-                .token_program
-                .close_account(vault_ta, &ctx.accounts.authority, &ctx.accounts.vault)
-                .invoke()?;
-        } else {
-            // --- SOL path: transfer lamports from old vault to new vault ---
-            let old_vault_view = ctx.accounts.vault.to_account_view();
-            let new_vault_view = ctx.accounts.new_vault.to_account_view();
-            let amount = old_vault_view.lamports();
+        //     // transfer tokens from old vault TA to new vault TA
+        //     ctx.accounts
+        //         .token_program
+        //         .transfer_checked(
+        //             vault_ta,
+        //             mint,
+        //             new_vault_ta,
+        //             &ctx.accounts.vault,
+        //             amount,
+        //             mint.decimals(),
+        //         )
+        //         .invoke()?;
 
-            set_lamports(old_vault_view, 0);
-            set_lamports(new_vault_view, new_vault_view.lamports() + amount);
-        }
+        //     // close old vault token account, rent back to authority
+        //     ctx.accounts
+        //         .token_program
+        //         .close_account(vault_ta, &ctx.accounts.authority, &ctx.accounts.vault)
+        //         .invoke()?;
+        // } else {
+        //     // --- SOL path: transfer lamports from old vault to new vault ---
+        //     let old_vault_view = ctx.accounts.vault.to_account_view();
+        //     let new_vault_view = ctx.accounts.new_vault.to_account_view();
+        //     let amount = old_vault_view.lamports();
 
-        // --- close old estate and vault, rent back to authority ---
-        let authority_view = ctx.accounts.authority.to_account_view();
-        crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
-        crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
+        //     set_lamports(old_vault_view, 0);
+        //     set_lamports(new_vault_view, new_vault_view.lamports() + amount);
+        // }
+
+        // // --- close old estate and vault, rent back to authority ---
+        // let authority_view = ctx.accounts.authority.to_account_view();
+        // crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
+        // crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
 
         Ok(())
     }

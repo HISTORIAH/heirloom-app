@@ -45,26 +45,15 @@ impl Claim {
     #[inline(always)]
     pub fn claim_handler<'a>(ctx: &mut Ctx<Claim>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
-        log("validate has run"); // ! DEBUG STATEMENT
         ctx.accounts.transfer_assets(&ctx.bumps)?;
-        log("transfer assets has run"); // ! DEBUG STATEMENT
         let heir_view = &ctx.accounts.heir.to_account_view();
 
         let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
         ctx.accounts.estate.claimable_assets = remaining;
 
         if remaining == 0 {
-            log("calling close accounts"); // ! DEBUG STATEMENT
-
-            log("calling close estate"); // ! DEBUG STATEMENT
             crate::helpers::close_account(&mut ctx.accounts.estate, heir_view)?;
-            log("calling close vault"); // ! DEBUG STATEMENT
             crate::helpers::close_account(&mut ctx.accounts.vault, heir_view)?;
-
-            // log("calling close estate with quasar");
-            // ctx.accounts.estate.close(&heir_view)?;
-            // log("calling close vault with quasar");
-            // ctx.accounts.vault.close(&heir_view)?;
         }
 
         Ok(())
