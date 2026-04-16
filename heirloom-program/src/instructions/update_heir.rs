@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct UpdateHeir<'info> {
+pub struct UpdateHeir {
     #[account(mut, address = estate.authority)]
     pub authority: Signer,
 
@@ -17,7 +17,7 @@ pub struct UpdateHeir<'info> {
     pub new_heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     #[account(mut)]
     pub new_estate: UncheckedAccount,
@@ -47,9 +47,9 @@ pub struct UpdateHeir<'info> {
     pub system_program: Program<System>,
 }
 
-impl UpdateHeir<'_> {
+impl UpdateHeir {
     #[inline(always)]
-    pub fn handler<'a>(ctx: &mut Ctx<'a, UpdateHeir<'a>>) -> Result<(), ProgramError> {
+    pub fn handler<'a>(ctx: &mut Ctx<UpdateHeir>) -> Result<(), ProgramError> {
         let rent = Rent::get()?;
 
         // extract addresses as owned values so we don't hold views across the mutable borrow
@@ -159,16 +159,8 @@ impl UpdateHeir<'_> {
 
         // --- close old estate and vault, rent back to authority ---
         let authority_view = ctx.accounts.authority.to_account_view();
-        crate::helpers::close_account(
-            &mut ctx.accounts.estate,
-            authority_view,
-            Some(&ctx.accounts.rent),
-        )?;
-        crate::helpers::close_account(
-            &mut ctx.accounts.vault,
-            authority_view,
-            Some(&ctx.accounts.rent),
-        )?;
+        crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
+        crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
 
         Ok(())
     }
@@ -204,7 +196,8 @@ impl UpdateHeir<'_> {
                 is_deferred: false,
             },
             self.authority.to_account_view(),
-            Some(&self.rent),
+            self.rent.lamports_per_byte(),
+            self.rent.exemption_threshold_raw(),
         )?;
 
         let new_vault_acc =

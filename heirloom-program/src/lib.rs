@@ -23,7 +23,7 @@ mod heirloom_program {
         grace_period: i64,
         pause_duration: i64,
         amount: u64, // in token amount
-        label: String<u32, 32>,
+        label: String<32>,
     ) -> Result<(), ProgramError> {
         log("ix: initialize");
         Initialize::initialize_handler(
@@ -54,15 +54,14 @@ mod heirloom_program {
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
-        // label: Option<String<u32, 32>>,
+        // label: Option<String<32>>,
     ) -> Result<(), ProgramError> {
-        log("ix: update_fields");
         UpdateFields::handler(
             &mut ctx,
             heartbeat_interval,
             grace_period,
             pause_duration,
-            // label.as_deref(),
+            // label,
         )
     }
 

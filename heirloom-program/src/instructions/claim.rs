@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct Claim<'info> {
+pub struct Claim {
     #[account(mut, address = estate.heir)]
     pub heir: Signer,
 
@@ -21,7 +21,7 @@ pub struct Claim<'info> {
     pub heir_token_account: Option<InterfaceAccount<Token>>,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump)]
     pub vault: Account<Vault>,
@@ -41,9 +41,9 @@ pub struct Claim<'info> {
     pub system_program: Program<System>,
 }
 
-impl Claim<'_> {
+impl Claim {
     #[inline(always)]
-    pub fn claim_handler<'a>(ctx: &mut Ctx<'a, Claim<'a>>) -> Result<(), ProgramError> {
+    pub fn claim_handler<'a>(ctx: &mut Ctx<Claim>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
         log("validate has run"); // ! DEBUG STATEMENT
         ctx.accounts.transfer_assets(&ctx.bumps)?;
@@ -61,17 +61,14 @@ impl Claim<'_> {
             log("calling close accounts"); // ! DEBUG STATEMENT
 
             log("calling close estate"); // ! DEBUG STATEMENT
-            crate::helpers::close_account(
-                &mut ctx.accounts.estate,
-                heir_view,
-                Some(&ctx.accounts.rent),
-            )?;
+            crate::helpers::close_account(&mut ctx.accounts.estate, heir_view)?;
             log("calling close vault"); // ! DEBUG STATEMENT
-            crate::helpers::close_account(
-                &mut ctx.accounts.vault,
-                heir_view,
-                Some(&ctx.accounts.rent),
-            )?;
+            crate::helpers::close_account(&mut ctx.accounts.vault, heir_view)?;
+
+            // log("calling close estate with quasar");
+            // ctx.accounts.estate.close(&heir_view)?;
+            // log("calling close vault with quasar");
+            // ctx.accounts.vault.close(&heir_view)?;
         }
 
         Ok(())

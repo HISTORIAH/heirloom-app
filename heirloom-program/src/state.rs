@@ -2,7 +2,7 @@ use quasar_lang::prelude::*;
 
 #[account(discriminator = 1, set_inner)]
 #[seeds(b"estate", authority: Address, heir: Address)]
-pub struct Estate<'a> {
+pub struct Estate {
     pub authority: Address,
 
     pub heir: Address,

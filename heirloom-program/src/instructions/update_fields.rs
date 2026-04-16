@@ -3,7 +3,7 @@ use quasar_lang::prelude::*;
 use crate::{errors::HeirloomError, state::Estate};
 
 #[derive(Accounts)]
-pub struct UpdateFields<'info> {
+pub struct UpdateFields {
     #[account(mut, address = estate.authority)]
     pub authority: Signer,
 
@@ -12,15 +12,15 @@ pub struct UpdateFields<'info> {
     pub heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     pub clock: Sysvar<Clock>,
 }
 
-impl UpdateFields<'_> {
+impl UpdateFields {
     #[inline(always)]
     pub fn handler<'a>(
-        ctx: &mut Ctx<'a, UpdateFields<'a>>,
+        ctx: &mut Ctx<UpdateFields>,
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
@@ -43,7 +43,9 @@ impl UpdateFields<'_> {
             ctx.accounts.estate.pause_duration = PodI64::from(pd);
         }
         // if let Some(l) = label {
-        //     ctx.accounts.estate.set_label(ctx.accounts.authority.to_account_view(), l);
+        //     ctx.accounts
+        //         .estate
+        //         .set_label(ctx.accounts.authority.to_account_view(), l);
         // }
 
         Ok(())

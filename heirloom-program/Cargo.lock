@@ -962,10 +962,11 @@ name = "heirloom-program"
 version = "0.1.0"
 dependencies = [
  "heirloom-program-client",
- "quasar-lang 0.0.0 (git+https://github.com/jim4067/quasar)",
+ "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "quasar-spl",
  "quasar-svm",
  "solana-account",
+ "solana-account-view",
  "solana-address 2.2.0",
  "solana-instruction",
  "solana-pubkey 4.2.0",
@@ -1402,7 +1403,7 @@ dependencies = [
  "bs58",
  "const-crypto",
  "proc-macro2",
- "quasar-idl",
+ "quasar-idl 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
  "quote",
  "serde",
  "serde_json",
@@ -1412,9 +1413,12 @@ dependencies = [
 [[package]]
 name = "quasar-derive"
 version = "0.0.0"
-source = "git+https://github.com/jim4067/quasar#b0f7f84c3abc8c532d6cb7a224c18135b0e819f0"
+source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
 dependencies = [
+ "bs58",
+ "const-crypto",
  "proc-macro2",
+ "quasar-idl 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "quote",
  "serde",
  "serde_json",
@@ -1425,6 +1429,18 @@ dependencies = [
 name = "quasar-idl"
 version = "0.0.0"
 source = "git+https://github.com/blueshift-gg/quasar?branch=master#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
+dependencies = [
+ "proc-macro2",
+ "serde",
+ "serde_json",
+ "syn 2.0.117",
+ "toml",
+]
+
+[[package]]
+name = "quasar-idl"
+version = "0.0.0"
+source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
 dependencies = [
  "proc-macro2",
  "serde",
@@ -1454,11 +1470,11 @@ dependencies = [
 [[package]]
 name = "quasar-lang"
 version = "0.0.0"
-source = "git+https://github.com/jim4067/quasar#b0f7f84c3abc8c532d6cb7a224c18135b0e819f0"
+source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
 dependencies = [
  "const-crypto",
- "quasar-derive 0.0.0 (git+https://github.com/jim4067/quasar)",
- "quasar-pod 0.0.0 (git+https://github.com/jim4067/quasar)",
+ "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
+ "quasar-pod 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "solana-account-view",
  "solana-address 2.2.0",
  "solana-define-syscall 5.0.0",
@@ -1480,7 +1496,7 @@ dependencies = [
 [[package]]
 name = "quasar-pod"
 version = "0.0.0"
-source = "git+https://github.com/jim4067/quasar#b0f7f84c3abc8c532d6cb7a224c18135b0e819f0"
+source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
 dependencies = [
  "wincode 0.4.9",
 ]
@@ -1488,9 +1504,9 @@ dependencies = [
 [[package]]
 name = "quasar-spl"
 version = "0.0.0"
-source = "git+https://github.com/jim4067/quasar#b0f7f84c3abc8c532d6cb7a224c18135b0e819f0"
+source = "git+https://github.com/blueshift-gg/quasar#fd62fe32a59c7b3fc1f2bae15b62b3858c740553"
 dependencies = [
- "quasar-lang 0.0.0 (git+https://github.com/jim4067/quasar)",
+ "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "solana-address 2.2.0",
 ]
 

@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Accounts)]
-pub struct Revoke<'info> {
+pub struct Revoke {
     #[account(
         mut,
         address = estate.authority,
@@ -18,7 +18,7 @@ pub struct Revoke<'info> {
     pub heir: UncheckedAccount,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump, close=authority)]
-    pub estate: Account<Estate<'info>>,
+    pub estate: Account<Estate>,
 
     #[account(mut, seeds = Vault::seeds(authority, heir), bump, close=authority)]
     pub vault: Account<Vault>,
@@ -39,9 +39,9 @@ pub struct Revoke<'info> {
     pub system_program: Program<System>,
 }
 
-impl Revoke<'_> {
+impl Revoke {
     #[inline(always)]
-    pub fn revoke_handler<'a>(ctx: &mut Ctx<'a, Revoke<'a>>) -> Result<(), ProgramError> {
+    pub fn revoke_handler<'a>(ctx: &mut Ctx<'a, Revoke>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         // return funds to authority
@@ -49,16 +49,14 @@ impl Revoke<'_> {
 
         // close estate and vault, rent lamports go back to authority
         let authority_view = ctx.accounts.authority.to_account_view();
-        crate::helpers::close_account(
-            &mut ctx.accounts.estate,
-            authority_view,
-            Some(&ctx.accounts.rent),
-        )?;
-        crate::helpers::close_account(
-            &mut ctx.accounts.vault,
-            authority_view,
-            Some(&ctx.accounts.rent),
-        )?;
+
+        let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
+        ctx.accounts.estate.claimable_assets = remaining;
+
+        if remaining == 0 {
+            crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
+            crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
+        }
 
         Ok(())
     }
