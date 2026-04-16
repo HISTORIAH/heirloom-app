@@ -21,6 +21,8 @@ pub struct CloseEstate<'info> {
     #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump)]
     pub vault: Account<Vault>,
 
+    pub rent: Sysvar<Rent>,
+
     pub system_program: Program<System>,
 }
 
@@ -30,8 +32,16 @@ impl CloseEstate<'_> {
         ctx.accounts.validate()?;
 
         let authority_view = ctx.accounts.authority.to_account_view();
-        ctx.accounts.estate.close(authority_view)?;
-        ctx.accounts.vault.close(authority_view)?;
+        crate::helpers::close_account(
+            &mut ctx.accounts.estate,
+            authority_view,
+            Some(&ctx.accounts.rent),
+        )?;
+        crate::helpers::close_account(
+            &mut ctx.accounts.vault,
+            authority_view,
+            Some(&ctx.accounts.rent),
+        )?;
 
         Ok(())
     }

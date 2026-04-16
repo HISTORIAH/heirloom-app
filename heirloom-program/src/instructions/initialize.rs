@@ -160,7 +160,7 @@ impl Initialize<'_> {
                 bump: estate_bump,
                 is_claimed: false,
                 delegate: self.delegate.as_ref().map(|a| *a.address()),
-                claimable_assets: 0,
+                claimable_assets: 1,
                 label,
                 pause_duration,
                 paused_until: 0,

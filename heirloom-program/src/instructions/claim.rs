@@ -36,6 +36,8 @@ pub struct Claim<'info> {
 
     pub clock: Sysvar<Clock>,
 
+    pub rent: Sysvar<Rent>,
+
     pub system_program: Program<System>,
 }
 
@@ -43,26 +45,33 @@ impl Claim<'_> {
     #[inline(always)]
     pub fn claim_handler<'a>(ctx: &mut Ctx<'a, Claim<'a>>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
+        log("validate has run"); // ! DEBUG STATEMENT
         ctx.accounts.transfer_assets(&ctx.bumps)?;
+        log("transfer assets has run"); // ! DEBUG STATEMENT
+        let heir_view = &ctx.accounts.heir.to_account_view();
 
-        let heir_view = ctx.accounts.heir.to_account_view();
+        let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
+        ctx.accounts.estate.claimable_assets = remaining;
 
-        match ctx.accounts.heir_token_account.as_ref() {
-            Some(_) => {
-                // decrement claimable_assets; close estate+vault only when all token assets claimed
-                let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
-                ctx.accounts.estate.claimable_assets = remaining;
+        ctx.accounts.estate.address().log(); // ! DEBUG STATEMENT
+        ctx.accounts.vault.address().log(); // ! DEBUG STATEMENT
+        ctx.accounts.heir.address().log(); // ! DEBUG STATEMENT
 
-                if remaining == 0 {
-                    ctx.accounts.estate.close(heir_view)?;
-                    ctx.accounts.vault.close(heir_view)?;
-                }
-            }
-            None => {
-                // SOL path: close() transfers vault lamports to heir
-                ctx.accounts.estate.close(heir_view)?;
-                ctx.accounts.vault.close(heir_view)?;
-            }
+        if remaining == 0 {
+            log("calling close accounts"); // ! DEBUG STATEMENT
+
+            log("calling close estate"); // ! DEBUG STATEMENT
+            crate::helpers::close_account(
+                &mut ctx.accounts.estate,
+                heir_view,
+                Some(&ctx.accounts.rent),
+            )?;
+            log("calling close vault"); // ! DEBUG STATEMENT
+            crate::helpers::close_account(
+                &mut ctx.accounts.vault,
+                heir_view,
+                Some(&ctx.accounts.rent),
+            )?;
         }
 
         Ok(())

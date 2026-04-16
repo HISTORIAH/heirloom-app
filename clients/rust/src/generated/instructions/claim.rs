@@ -45,6 +45,9 @@ pub struct Claim {
           pub clock: solana_address::Address,
           
               
+          pub rent: solana_address::Address,
+          
+              
           pub system_program: solana_address::Address,
       }
 
@@ -55,7 +58,7 @@ impl Claim {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(11+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.heir,
             true
@@ -125,6 +128,10 @@ impl Claim {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.rent,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.system_program,
             false
           ));
@@ -178,7 +185,8 @@ impl Default for ClaimInstructionData {
                       ///   7. `[writable, optional]` mint
                 ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
                 ///   9. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   10. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   11. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ClaimBuilder {
             heir: Option<solana_address::Address>,
@@ -191,6 +199,7 @@ pub struct ClaimBuilder {
                 mint: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
                 clock: Option<solana_address::Address>,
+                rent: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
                 __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
@@ -255,6 +264,12 @@ impl ClaimBuilder {
                         self.clock = Some(clock);
                     self
     }
+            /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
+#[inline(always)]
+    pub fn rent(&mut self, rent: solana_address::Address) -> &mut Self {
+                        self.rent = Some(rent);
+                    self
+    }
             /// `[optional account, default to '11111111111111111111111111111111']`
 #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
@@ -286,6 +301,7 @@ impl ClaimBuilder {
                                         mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
+                                        rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
     
@@ -327,6 +343,9 @@ impl ClaimBuilder {
               pub clock: &'b solana_account_info::AccountInfo<'a>,
                 
                     
+              pub rent: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
               pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
@@ -366,6 +385,9 @@ pub struct ClaimCpi<'a, 'b> {
           pub clock: &'b solana_account_info::AccountInfo<'a>,
           
               
+          pub rent: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub system_program: &'b solana_account_info::AccountInfo<'a>,
         }
 
@@ -386,6 +408,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
               mint: accounts.mint,
               token_program: accounts.token_program,
               clock: accounts.clock,
+              rent: accounts.rent,
               system_program: accounts.system_program,
                 }
   }
@@ -409,7 +432,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(11+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.heir.key,
             true
@@ -479,6 +502,10 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.rent.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false
           ));
@@ -496,7 +523,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(12 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(13 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.heir.clone());
                         account_infos.push(self.authority.clone());
@@ -516,6 +543,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
         }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.clock.clone());
+                        account_infos.push(self.rent.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
@@ -541,7 +569,8 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
                       ///   7. `[writable, optional]` mint
           ///   8. `[]` token_program
           ///   9. `[]` clock
-          ///   10. `[]` system_program
+          ///   10. `[]` rent
+          ///   11. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct ClaimCpiBuilder<'a, 'b> {
   instruction: Box<ClaimCpiBuilderInstruction<'a, 'b>>,
@@ -561,6 +590,7 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
               mint: None,
               token_program: None,
               clock: None,
+              rent: None,
               system_program: None,
                                 __remaining_accounts: Vec::new(),
     });
@@ -621,6 +651,11 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                     self
     }
       #[inline(always)]
+    pub fn rent(&mut self, rent: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.rent = Some(rent);
+                    self
+    }
+      #[inline(always)]
     pub fn system_program(&mut self, system_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.system_program = Some(system_program);
                     self
@@ -670,6 +705,8 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                   
           clock: self.instruction.clock.expect("clock is not set"),
                   
+          rent: self.instruction.rent.expect("rent is not set"),
+                  
           system_program: self.instruction.system_program.expect("system_program is not set"),
                     };
     instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
@@ -689,6 +726,7 @@ struct ClaimCpiBuilderInstruction<'a, 'b> {
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 clock: Option<&'b solana_account_info::AccountInfo<'a>>,
+                rent: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,

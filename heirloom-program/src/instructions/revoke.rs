@@ -32,6 +32,8 @@ pub struct Revoke<'info> {
     #[account(mut)]
     pub mint: Option<Account<Mint>>,
 
+    pub rent: Sysvar<Rent>,
+
     pub token_program: Interface<TokenInterface>,
 
     pub system_program: Program<System>,
@@ -47,8 +49,16 @@ impl Revoke<'_> {
 
         // close estate and vault, rent lamports go back to authority
         let authority_view = ctx.accounts.authority.to_account_view();
-        ctx.accounts.estate.close(authority_view)?;
-        ctx.accounts.vault.close(authority_view)?;
+        crate::helpers::close_account(
+            &mut ctx.accounts.estate,
+            authority_view,
+            Some(&ctx.accounts.rent),
+        )?;
+        crate::helpers::close_account(
+            &mut ctx.accounts.vault,
+            authority_view,
+            Some(&ctx.accounts.rent),
+        )?;
 
         Ok(())
     }

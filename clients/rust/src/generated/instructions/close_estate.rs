@@ -27,6 +27,9 @@ pub struct CloseEstate {
           pub vault: solana_address::Address,
           
               
+          pub rent: solana_address::Address,
+          
+              
           pub system_program: solana_address::Address,
       }
 
@@ -37,7 +40,7 @@ impl CloseEstate {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(5+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(6+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -52,6 +55,10 @@ impl CloseEstate {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
             self.vault,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.rent,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
@@ -102,13 +109,15 @@ impl Default for CloseEstateInstructionData {
           ///   1. `[]` heir
                 ///   2. `[writable]` estate
                 ///   3. `[writable]` vault
-                ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   4. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct CloseEstateBuilder {
             authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
                 vault: Option<solana_address::Address>,
+                rent: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
                 __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
@@ -137,6 +146,12 @@ impl CloseEstateBuilder {
                         self.vault = Some(vault);
                     self
     }
+            /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
+#[inline(always)]
+    pub fn rent(&mut self, rent: solana_address::Address) -> &mut Self {
+                        self.rent = Some(rent);
+                    self
+    }
             /// `[optional account, default to '11111111111111111111111111111111']`
 #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
@@ -162,6 +177,7 @@ impl CloseEstateBuilder {
                                         heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
+                                        rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
     
@@ -185,6 +201,9 @@ impl CloseEstateBuilder {
               pub vault: &'b solana_account_info::AccountInfo<'a>,
                 
                     
+              pub rent: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
               pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
@@ -206,6 +225,9 @@ pub struct CloseEstateCpi<'a, 'b> {
           pub vault: &'b solana_account_info::AccountInfo<'a>,
           
               
+          pub rent: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub system_program: &'b solana_account_info::AccountInfo<'a>,
         }
 
@@ -220,6 +242,7 @@ impl<'a, 'b> CloseEstateCpi<'a, 'b> {
               heir: accounts.heir,
               estate: accounts.estate,
               vault: accounts.vault,
+              rent: accounts.rent,
               system_program: accounts.system_program,
                 }
   }
@@ -243,7 +266,7 @@ impl<'a, 'b> CloseEstateCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(5+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(6+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -258,6 +281,10 @@ impl<'a, 'b> CloseEstateCpi<'a, 'b> {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.vault.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.rent.key,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
@@ -278,12 +305,13 @@ impl<'a, 'b> CloseEstateCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
+                        account_infos.push(self.rent.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
@@ -303,7 +331,8 @@ impl<'a, 'b> CloseEstateCpi<'a, 'b> {
           ///   1. `[]` heir
                 ///   2. `[writable]` estate
                 ///   3. `[writable]` vault
-          ///   4. `[]` system_program
+          ///   4. `[]` rent
+          ///   5. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct CloseEstateCpiBuilder<'a, 'b> {
   instruction: Box<CloseEstateCpiBuilderInstruction<'a, 'b>>,
@@ -317,6 +346,7 @@ impl<'a, 'b> CloseEstateCpiBuilder<'a, 'b> {
               heir: None,
               estate: None,
               vault: None,
+              rent: None,
               system_program: None,
                                 __remaining_accounts: Vec::new(),
     });
@@ -340,6 +370,11 @@ impl<'a, 'b> CloseEstateCpiBuilder<'a, 'b> {
       #[inline(always)]
     pub fn vault(&mut self, vault: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.vault = Some(vault);
+                    self
+    }
+      #[inline(always)]
+    pub fn rent(&mut self, rent: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.rent = Some(rent);
                     self
     }
       #[inline(always)]
@@ -380,6 +415,8 @@ impl<'a, 'b> CloseEstateCpiBuilder<'a, 'b> {
                   
           vault: self.instruction.vault.expect("vault is not set"),
                   
+          rent: self.instruction.rent.expect("rent is not set"),
+                  
           system_program: self.instruction.system_program.expect("system_program is not set"),
                     };
     instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
@@ -393,6 +430,7 @@ struct CloseEstateCpiBuilderInstruction<'a, 'b> {
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
+                rent: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,

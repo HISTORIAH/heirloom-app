@@ -55,6 +55,8 @@ export type RevokeInstruction<
   TAccountAuthorityTokenAccount extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
+  TAccountRent extends string | AccountMeta<string> =
+    "SysvarRent111111111111111111111111111111111",
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -86,6 +88,9 @@ export type RevokeInstruction<
       TAccountMint extends string
         ? WritableAccount<TAccountMint>
         : TAccountMint,
+      TAccountRent extends string
+        ? ReadonlyAccount<TAccountRent>
+        : TAccountRent,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -131,6 +136,7 @@ export type RevokeAsyncInput<
   TAccountAuthorityTokenAccount extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountRent extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
@@ -141,6 +147,7 @@ export type RevokeAsyncInput<
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  rent?: Address<TAccountRent>;
   tokenProgram?: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
@@ -153,6 +160,7 @@ export async function getRevokeInstructionAsync<
   TAccountAuthorityTokenAccount extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountRent extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
@@ -165,6 +173,7 @@ export async function getRevokeInstructionAsync<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountRent,
     TAccountTokenProgram,
     TAccountSystemProgram
   >,
@@ -179,6 +188,7 @@ export async function getRevokeInstructionAsync<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountRent,
     TAccountTokenProgram,
     TAccountSystemProgram
   >
@@ -202,6 +212,7 @@ export async function getRevokeInstructionAsync<
       isWritable: true,
     },
     mint: { value: input.mint ?? null, isWritable: true },
+    rent: { value: input.rent ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -235,6 +246,10 @@ export async function getRevokeInstructionAsync<
       ),
     });
   }
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
@@ -254,6 +269,7 @@ export async function getRevokeInstructionAsync<
       getAccountMeta("authorityTokenAccount", accounts.authorityTokenAccount),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("rent", accounts.rent),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
@@ -268,6 +284,7 @@ export async function getRevokeInstructionAsync<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountRent,
     TAccountTokenProgram,
     TAccountSystemProgram
   >);
@@ -281,6 +298,7 @@ export type RevokeInput<
   TAccountAuthorityTokenAccount extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountRent extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
@@ -291,6 +309,7 @@ export type RevokeInput<
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  rent?: Address<TAccountRent>;
   tokenProgram?: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
@@ -303,6 +322,7 @@ export function getRevokeInstruction<
   TAccountAuthorityTokenAccount extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountRent extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
@@ -315,6 +335,7 @@ export function getRevokeInstruction<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountRent,
     TAccountTokenProgram,
     TAccountSystemProgram
   >,
@@ -328,6 +349,7 @@ export function getRevokeInstruction<
   TAccountAuthorityTokenAccount,
   TAccountVaultTokenAccount,
   TAccountMint,
+  TAccountRent,
   TAccountTokenProgram,
   TAccountSystemProgram
 > {
@@ -350,6 +372,7 @@ export function getRevokeInstruction<
       isWritable: true,
     },
     mint: { value: input.mint ?? null, isWritable: true },
+    rent: { value: input.rent ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -359,6 +382,10 @@ export function getRevokeInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
@@ -378,6 +405,7 @@ export function getRevokeInstruction<
       getAccountMeta("authorityTokenAccount", accounts.authorityTokenAccount),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("rent", accounts.rent),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
@@ -392,6 +420,7 @@ export function getRevokeInstruction<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountRent,
     TAccountTokenProgram,
     TAccountSystemProgram
   >);
@@ -410,8 +439,9 @@ export type ParsedRevokeInstruction<
     authorityTokenAccount?: TAccountMetas[4] | undefined;
     vaultTokenAccount?: TAccountMetas[5] | undefined;
     mint?: TAccountMetas[6] | undefined;
-    tokenProgram: TAccountMetas[7];
-    systemProgram: TAccountMetas[8];
+    rent: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
   };
   data: RevokeInstructionData;
 };
@@ -424,12 +454,12 @@ export function parseRevokeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRevokeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 10) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 9,
+        expectedAccountMetas: 10,
       },
     );
   }
@@ -455,6 +485,7 @@ export function parseRevokeInstruction<
       authorityTokenAccount: getNextOptionalAccount(),
       vaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
+      rent: getNextAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },

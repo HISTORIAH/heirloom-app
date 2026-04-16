@@ -57,10 +57,15 @@ impl UpdateFields<'_> {
             HeirloomError::AlreadyClaimed
         );
 
-        let now = self.clock.unix_timestamp;
-        if now < self.estate.paused_until {
-            return Err(HeirloomError::EstatePaused.into());
-        }
+        /* The pause should
+           only gate the claim instruction, not heartbeats.
+        */
+        //
+        // let now = self.clock.unix_timestamp;
+        //
+        // if now < self.estate.paused_until {
+        //     return Err(HeirloomError::EstatePaused.into());
+        // }
 
         Ok(())
     }

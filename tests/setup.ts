@@ -9,6 +9,7 @@
   generateKeyPairSigner,
   getSignatureFromTransaction,
   type KeyPairSigner,
+  lamports,
   pipe,
   type Rpc,
   type RpcSubscriptions,
@@ -58,6 +59,13 @@ export const createDefaultSolanaClient = (): Client => {
   const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
   return { rpc, rpcSubscriptions };
 };
+
+export const createDevnetSolanaClient = (): Client => {
+  const rpc = createSolanaRpc("https://api.devnet.solana.com");
+  const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com/");
+  return { rpc, rpcSubscriptions };
+};
+
 
 export async function createProgramsClient() {
   const [authority] = await Promise.all([loadDefaultKeypair()]);
@@ -129,6 +137,10 @@ export async function loadDefaultKeypair(): Promise<KeyPairSigner<string>> {
   return await loadKeypairFromFile("~/.config/solana/id.json");
 }
 
+export async function loadDefaultClaimKeypair(): Promise<KeyPairSigner<string>> {
+  return await loadKeypairFromFile("~/.config/solana/id-new.json");
+}
+
 // create and mint tokens to default default keypair
 export async function createAndMintTokens() {
   let programsClient = await createProgramsClient();
@@ -176,12 +188,15 @@ export const sendInitialize = async (
 ): Promise<{ authority: Address; heir: KeyPairSigner }> => {
   const [authority, heir] = await Promise.all([
     loadDefaultKeypair(),
-    generateKeyPairSigner(),
+    generateKeyPairSigner()
+    // loadDefaultClaimKeypair(),
   ]);
+
+  // airdrop heir
+  await client.rpc.requestAirdrop(heir.address, lamports(1_000_000_00n)).send()
 
   const { amount, label, gracePeriod, pauseDuration, heartbeatInterval } = args;
 
-  console.log("[initialize] authority:", authority.address, "heir:", heir.address);
   const createIx = await getInitializeInstructionAsync({
     authority,
     heir: heir.address,
@@ -208,18 +223,17 @@ export const sendUpdateFields = async (
   client: Client,
   args: {
     heir: Address;
-    heartbeatInterval: bigint;
+    heartbeatInterval?: bigint;
     gracePeriod?: bigint;
     pauseDuration?: bigint;
   },
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
-  console.log("[update_fields] authority:", authority.address, "heir:", args.heir);
   const ix = await getUpdateFieldsInstructionAsync({
     authority,
     heir: args.heir,
-    heartbeatInterval: args.heartbeatInterval,
+    heartbeatInterval: args.heartbeatInterval ?? null,
     gracePeriod: args.gracePeriod ?? null,
     pauseDuration: args.pauseDuration ?? null,
   });
@@ -257,7 +271,6 @@ export const sendUpdateHeir = async (
     heir: newHeir.address,
   });
 
-  console.log("[update_heir] authority:", authority.address, "old heir:", args.heir, "new heir:", newHeir.address);
   const ix = await getUpdateHeirInstructionAsync({
     authority,
     heir: args.heir,
@@ -291,7 +304,6 @@ export const sendRevoke = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
-  console.log("[revoke] authority:", authority.address, "heir:", args.heir);
   const ix = await getRevokeInstructionAsync({
     authority,
     heir: args.heir,
@@ -323,7 +335,6 @@ export const sendClaim = async (
 ): Promise<{ heir: Address }> => {
   const authority = await loadDefaultKeypair();
 
-  console.log("[claim] heir:", args.heir.address, "authority:", authority.address);
   const ix = await getClaimInstructionAsync({
     heir: args.heir,
     authority: authority.address,
@@ -334,7 +345,7 @@ export const sendClaim = async (
     delegate: args.delegate,
   });
 
-  await pipe(
+  let sig = await pipe(
     await createDefaultTransaction(client, args.heir),
     (tx) => appendTransactionMessageInstruction(ix, tx),
     (tx) => signAndSendTransaction(client, tx),
@@ -354,7 +365,6 @@ export const sendDelegateDefer = async (
     generateKeyPairSigner(),
   ]);
 
-  console.log("[delegate_defer] authority:", authority.address, "heir:", args.heir, "delegate:", delegate.address);
   const ix = await getDelegateDeferInstructionAsync({
     delegate,
     authority: authority.address,
@@ -381,7 +391,6 @@ export const sendRegisterAsset = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
-  console.log("[register_asset] authority:", authority.address, "heir:", args.heir, "mint:", args.mint);
   const ix = await getRegisterAssetInstructionAsync({
     authority,
     heir: args.heir,
@@ -407,7 +416,6 @@ export const sendCloseEstate = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
-  console.log("[close_estate] authority:", authority.address, "heir:", args.heir);
   const ix = await getCloseEstateInstructionAsync({
     authority,
     heir: args.heir,

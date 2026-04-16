@@ -1,7 +1,41 @@
+use quasar_lang::prelude::*;
+
 use crate::constants::{
     BPS_DENOMINATOR, FEE_RATE_BPS_PER_DAY, MAX_CLAIM_FEE_BPS, MAX_WITHDRAW_FEE_BPS,
 };
 
+/// Closes a program-owned account correctly:
+/// resize to 0 first (while still program-owned), then reassign to system
+/// program, then drain lamports to `destination`.
+///
+/// Quasar's built-in `close()` does assign before resize, which fails at
+/// runtime \because the program no longer owns the account when resize fires.
+pub fn close_account<T: Discriminator>(
+    account: &mut Account<T>,
+    destination: &AccountView,
+    rent: Option<&Rent>,
+) -> Result<(), ProgramError> {
+    if !destination.is_writable() {
+        return Err(ProgramError::Immutable);
+    }
+
+    let view = unsafe { &mut *(account as *mut Account<T> as *mut AccountView) };
+
+    // 1. wipe data
+    realloc_account(view, 0, destination, rent)?;
+
+    // 2. drain lamports
+    let lamports = view.lamports();
+    let new_lamports = destination
+        .lamports()
+        .checked_add(lamports)
+        .ok_or(ProgramError::InvalidArgument)?;
+
+    set_lamports(destination, new_lamports);
+    view.set_lamports(0);
+
+    Ok(())
+}
 /// Calculates the protocol fee to deduct from `amount`.
 ///
 /// `created_at` and `now` are Unix timestamps (seconds).
