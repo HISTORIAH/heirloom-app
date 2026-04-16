@@ -200,8 +200,11 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
         });
       }
 
-      // Claim SOL (closes estate + vault if no remaining tokens)
-      if (inh.solBalance > 0 || inh.vaultTokens.length === 0) {
+      // Claim SOL — always send when vault has lamports.
+      // Program uses saturating_sub(1) on claimable_assets, so this works
+      // even if claimable_assets is already 0. When remaining hits 0,
+      // close_account transfers all vault lamports to heir.
+      if (inh.solBalance > 0) {
         lastTx = await sendClaim(client, {
           heir: signer,
           authority: authorityAddr,
@@ -209,6 +212,24 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
       }
 
       setClaimTxIds((p) => ({ ...p, [inh.ownerAddress]: lastTx }));
+
+      // Refresh inheritance data to show updated state
+      const updated = await lookupEstate(client, inh.ownerAddress, heirAddress.toString());
+      if (updated) {
+        setInheritances((prev) =>
+          prev.map((i) => (i.ownerAddress === inh.ownerAddress ? updated : i)),
+        );
+      } else {
+        // Estate was closed on-chain — mark as distributed
+        setInheritances((prev) =>
+          prev.map((i) =>
+            i.ownerAddress === inh.ownerAddress
+              ? { ...i, vaultState: "distributed", solBalance: 0, claimableAssets: 0, vaultTokens: [], isClaimed: true }
+              : i,
+          ),
+        );
+      }
+
       toast({ title: "Claim submitted", description: "Assets transferred to your wallet." });
     } catch (err: unknown) {
       toast({

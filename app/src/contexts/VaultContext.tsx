@@ -5,6 +5,7 @@ import { useWallet } from "./WalletContext";
 import {
   discoverVaultTokenAccounts,
   fetchEstateByPair,
+  fetchEstatesByAuthority,
   getAtaAddress,
   getVaultAddress,
   sendCloseEstate,
@@ -73,32 +74,12 @@ interface VaultState {
   createEstateOnChain: (input: CreateEstateInput) => Promise<string>;
   registerAssetOnChain: (heir: string, token: TokenDeposit) => Promise<string>;
   sendHeartbeatOnChain: (heir: string) => Promise<string>;
-  revokeEstateOnChain: (heir: string, mint?: string) => Promise<string>;
+  revokeEstateOnChain: (heir: string) => Promise<string>;
   clearVault: () => void;
 }
 
 const VaultContext = createContext<VaultState | null>(null);
 
-const KNOWN_HEIRS_KEY = "heirloom:known-heirs";
-
-function loadKnownHeirs(authority: string): string[] {
-  try {
-    const raw = localStorage.getItem(`${KNOWN_HEIRS_KEY}:${authority}`);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveKnownHeirs(authority: string, heirs: string[]) {
-  try {
-    localStorage.setItem(`${KNOWN_HEIRS_KEY}:${authority}`, JSON.stringify(heirs));
-  } catch {
-    // ignore
-  }
-}
 
 function computeState(
   lastHeartbeat: number,
@@ -115,8 +96,8 @@ function computeState(
   if (isClaimed || vaultEmpty) {
     return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
   }
-  // Program initialize leaves last_heartbeat = 0 until the first heartbeat,
-  // so anchor the timer to created_at when no heartbeat has landed yet.
+  // Program sets last_heartbeat = clock.unix_timestamp on init (same as created_at).
+  // Fallback to created_at only as a defensive measure.
   const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
   const now = Math.floor(Date.now() / 1000);
   const graceDeadline = anchor + heartbeatInterval;
@@ -161,56 +142,58 @@ const VaultProviderInner: React.FC<{
     setLoading(true);
     setError(null);
     try {
-      const knownHeirs = loadKnownHeirs(authority);
+      // Discover all estates on-chain where this wallet is authority.
+      const onChainEstates = await fetchEstatesByAuthority(rpc, authority);
+
       const results: EstateData[] = [];
-      for (const heirStr of knownHeirs) {
+      for (const estate of onChainEstates) {
         try {
-          const heir = toAddress(heirStr);
-          const maybe = await fetchEstateByPair(rpc, authority, heir);
-          if (!maybe.exists) continue;
-          const estatePda = maybe.address;
+          const heir = toAddress(estate.data.heir);
           const vaultPda = await getVaultAddress(authority, heir);
           const [{ value: lamports }, vaultTokens] = await Promise.all([
             rpc.getBalance(vaultPda).send(),
             discoverVaultTokenAccounts(rpc, vaultPda),
           ]);
-          const lastHeartbeat = Number(maybe.data.lastHeartbeat);
-          const heartbeatInterval = Number(maybe.data.heartbeatInterval);
-          const gracePeriod = Number(maybe.data.gracePeriod);
-          const pausedUntil = Number(maybe.data.pausedUntil);
-          const createdAt = Number(maybe.data.createdAt);
-          // Vault is empty when claimable_assets == 0 and no SOL or tokens remain.
+          const lastHeartbeat = Number(estate.data.lastHeartbeat);
+          const heartbeatInterval = Number(estate.data.heartbeatInterval);
+          const gracePeriod = Number(estate.data.gracePeriod);
+          const pausedUntil = Number(estate.data.pausedUntil);
+          const createdAt = Number(estate.data.createdAt);
           const hasTokenBalance = vaultTokens.length > 0;
-          const vaultEmpty = maybe.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
+          const vaultEmpty = estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeState(
             lastHeartbeat,
             heartbeatInterval,
             gracePeriod,
             pausedUntil,
-            maybe.data.isClaimed,
+            estate.data.isClaimed,
             createdAt,
             vaultEmpty,
           );
+
+          // Extract delegate address from Option
+          let delegateAddr: string | null = null;
+          const del = estate.data.delegate;
+          if (del && typeof del === "object" && "__option" in del) {
+            const opt = del as { __option: "Some" | "None"; value?: string };
+            if (opt.__option === "Some" && opt.value) delegateAddr = opt.value;
+          }
+
           results.push({
-            authority: maybe.data.authority,
-            heir: maybe.data.heir,
-            label: maybe.data.label,
+            authority: estate.data.authority,
+            heir: estate.data.heir,
+            label: estate.data.label,
             heartbeatInterval,
             gracePeriod,
             lastHeartbeat,
-            pauseDuration: Number(maybe.data.pauseDuration),
+            pauseDuration: Number(estate.data.pauseDuration),
             pausedUntil,
             createdAt,
-            isClaimed: maybe.data.isClaimed,
-            isDeferred: maybe.data.isDeferred,
-            delegate:
-              maybe.data.delegate && "__option" in maybe.data.delegate
-                ? (maybe.data.delegate as { __option: "Some" | "None"; value?: string }).__option === "Some"
-                  ? ((maybe.data.delegate as { value: string }).value ?? null)
-                  : null
-                : null,
-            claimableAssets: maybe.data.claimableAssets,
-            estatePda,
+            isClaimed: estate.data.isClaimed,
+            isDeferred: estate.data.isDeferred,
+            delegate: delegateAddr,
+            claimableAssets: estate.data.claimableAssets,
+            estatePda: estate.address,
             vaultPda,
             solBalance: Number(lamports),
             vaultTokens,
@@ -219,21 +202,13 @@ const VaultProviderInner: React.FC<{
             secondsUntilClaimable,
           });
         } catch {
-          // skip failed heirs
+          // skip failed estates
         }
       }
-      // Hide fully-distributed-and-empty estates from the owner dashboard
-      // and drop them from the known-heirs cache so the slot is "free" again.
+      // Hide fully-distributed-and-empty estates from dashboard display
       const isFullyEmpty = (r: EstateData) =>
         r.state === "distributed" && r.solBalance === 0 && r.vaultTokens.length === 0;
       const visible = results.filter((r) => !isFullyEmpty(r));
-      const hidden = results.filter(isFullyEmpty);
-      if (hidden.length > 0) {
-        const heirs = loadKnownHeirs(authority).filter(
-          (h) => !hidden.some((x) => x.heir === h),
-        );
-        saveKnownHeirs(authority, heirs);
-      }
       setEstates(visible);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to fetch estates");
@@ -300,11 +275,6 @@ const VaultProviderInner: React.FC<{
           });
         }
       }
-      const heirs = loadKnownHeirs(authority);
-      if (!heirs.includes(input.heir)) {
-        heirs.push(input.heir);
-        saveKnownHeirs(authority, heirs);
-      }
       setPendingTxId(txId);
       setPendingCreate(true);
       return txId;
@@ -341,7 +311,7 @@ const VaultProviderInner: React.FC<{
   );
 
   const revokeEstateOnChain = useCallback(
-    async (heir: string, mint?: string): Promise<string> => {
+    async (heir: string): Promise<string> => {
       const heirAddr = toAddress(heir);
       let lastTx = "";
 
@@ -365,11 +335,8 @@ const VaultProviderInner: React.FC<{
       lastTx = await sendRevoke(client, {
         authority: signer,
         heir: heirAddr,
-        mint: mint ? toAddress(mint) : undefined,
       });
 
-      const heirs = loadKnownHeirs(authority).filter((h) => h !== heir);
-      saveKnownHeirs(authority, heirs);
       setPendingTxId(lastTx);
       return lastTx;
     },

@@ -75,8 +75,8 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
       countdown: { days: 0, hours: 0, minutes: 0, seconds: 0 },
     };
   }
-  // Anchor to last_heartbeat if set, otherwise to created_at. Program
-  // initialize leaves last_heartbeat = 0 until the first heartbeat.
+  // Program sets last_heartbeat = clock.unix_timestamp on init (same as created_at).
+  // Fallback to created_at only as a defensive measure.
   const anchor = estate.lastHeartbeat > 0 ? estate.lastHeartbeat : estate.createdAt;
   const now = Math.floor(Date.now() / 1000);
   const graceDeadline = anchor + estate.heartbeatInterval;
@@ -119,6 +119,7 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
 const EstateCard = ({ estate }: { estate: EstateData }) => {
   const { sendHeartbeatOnChain, revokeEstateOnChain } = useVault();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [sendingHeartbeat, setSendingHeartbeat] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);

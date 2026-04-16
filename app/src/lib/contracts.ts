@@ -12,8 +12,11 @@ import {
   type TransactionSigner,
 } from "@solana/kit";
 import {
+  decodeEstate,
   fetchMaybeEstate,
   findEstatePda,
+  HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+  type Estate,
   findVaultPda,
   getClaimInstructionAsync,
   getCloseEstateInstructionAsync,
@@ -109,6 +112,50 @@ export async function fetchEstateByPair(
 ): Promise<EstateAccount> {
   const pda = await getEstateAddress(authority, heir);
   return fetchMaybeEstate(rpc, pda);
+}
+
+/**
+ * Fetch all Estate accounts where the given address is the authority,
+ * directly from the chain using getProgramAccounts with memcmp filters.
+ *
+ * Estate layout: discriminator(1) | authority(32) | heir(32) | ...
+ * Filter: discriminator == 1 (estate) AND authority == wallet address.
+ */
+export async function fetchEstatesByAuthority(
+  rpc: AppRpc,
+  authority: Address,
+): Promise<Array<{ address: Address; data: Estate }>> {
+  const accounts = await rpc
+    .getProgramAccounts(HEIRLOOM_PROGRAM_PROGRAM_ADDRESS, {
+      encoding: "base64",
+      filters: [
+        // Estate discriminator = [1] → base64 "AQ=="
+        { memcmp: { offset: 0n, bytes: "AQ==", encoding: "base64" } },
+        // Authority at offset 1 (base58 address)
+        { memcmp: { offset: 1n, bytes: authority, encoding: "base58" } },
+      ],
+    })
+    .send();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return accounts.map((item: any) => {
+    const b64: string = Array.isArray(item.account.data)
+      ? item.account.data[0]
+      : item.account.data;
+    const binary = atob(b64);
+    const raw = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) raw[i] = binary.charCodeAt(i);
+
+    const decoded = decodeEstate({
+      address: item.pubkey,
+      data: raw,
+      executable: item.account.executable,
+      lamports: item.account.lamports,
+      programAddress: HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+      exists: true,
+    });
+    return { address: item.pubkey as Address, data: decoded.data };
+  });
 }
 
 // ---------------------------------------------------------------------------
