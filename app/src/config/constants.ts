@@ -17,7 +17,7 @@ export const SOL_DECIMALS = 9;
 export const USDC_LABEL = "USDC";
 export const USDC_DECIMALS = 6;
 
-export const LABEL_MAX_LEN = 10;
+export const LABEL_MAX_LEN = 32;
 
 export function explorerTxUrl(signature: string): string {
   if (NETWORK === "mainnet-beta") return `https://explorer.solana.com/tx/${signature}`;

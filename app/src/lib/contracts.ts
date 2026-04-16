@@ -1,11 +1,36 @@
-import { appendTransactionMessageInstruction, createTransactionMessage, getBase58Decoder, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, signAndSendTransactionMessageWithSigners,
-  type Address, 
+import {
+  appendTransactionMessageInstruction,
+  createTransactionMessage,
+  generateKeyPairSigner,
+  getBase58Decoder,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signAndSendTransactionMessageWithSigners,
+  type Address,
   type MaybeAccount,
   type TransactionSigner,
 } from "@solana/kit";
-import { fetchMaybeEstate, findEstatePda, findVaultPda, getClaimInstructionAsync, getDelegateDeferInstructionAsync, getInitializeInstructionAsync, getRevokeInstructionAsync, getUpdateFieldsInstructionAsync,
+import {
+  fetchMaybeEstate,
+  findEstatePda,
+  findVaultPda,
+  getClaimInstructionAsync,
+  getCloseEstateInstructionAsync,
+  getDelegateDeferInstructionAsync,
+  getInitializeInstructionAsync,
+  getRegisterAssetInstructionAsync,
+  getRevokeInstructionAsync,
+  getUpdateFieldsInstructionAsync,
   type Estate,
 } from "@historiah/heirloom";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import {
+  findAssociatedTokenPda,
+  getCreateAssociatedTokenIdempotentInstructionAsync,
+  getTransferCheckedInstruction,
+  TOKEN_PROGRAM_ADDRESS,
+} from "@solana-program/token";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
 
 export type Client = {
@@ -17,23 +42,36 @@ export type EstateAccount = MaybeAccount<Estate>;
 
 const base58 = getBase58Decoder();
 
+// Size of a standard SPL Token account (165 bytes).
+const TOKEN_ACCOUNT_SIZE = 165n;
+
+type Ix = Parameters<typeof appendTransactionMessageInstruction>[0];
+
 async function sendTx(
   client: Client,
   feePayer: TransactionSigner,
-  ix: Parameters<typeof appendTransactionMessageInstruction>[0],
+  ix: Ix | Ix[],
 ): Promise<string> {
+  const ixs = Array.isArray(ix) ? ix : [ix];
   const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
 
-  const message = pipe(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let message: any = pipe(
     createTransactionMessage({ version: 0 }),
     (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
     (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
   );
+  for (const instruction of ixs) {
+    message = appendTransactionMessageInstruction(instruction, message);
+  }
 
   const signatureBytes = await signAndSendTransactionMessageWithSigners(message);
   return base58.decode(signatureBytes);
 }
+
+// ---------------------------------------------------------------------------
+// PDA helpers
+// ---------------------------------------------------------------------------
 
 export async function getEstateAddress(
   authority: Address,
@@ -51,6 +89,19 @@ export async function getVaultAddress(
   return pda;
 }
 
+export async function getAtaAddress(
+  owner: Address,
+  mint: Address,
+  tokenProgram: Address = TOKEN_PROGRAM_ADDRESS,
+): Promise<Address> {
+  const [ata] = await findAssociatedTokenPda({ owner, mint, tokenProgram });
+  return ata;
+}
+
+// ---------------------------------------------------------------------------
+// Read helpers
+// ---------------------------------------------------------------------------
+
 export async function fetchEstateByPair(
   rpc: AppRpc,
   authority: Address,
@@ -59,6 +110,10 @@ export async function fetchEstateByPair(
   const pda = await getEstateAddress(authority, heir);
   return fetchMaybeEstate(rpc, pda);
 }
+
+// ---------------------------------------------------------------------------
+// Instructions
+// ---------------------------------------------------------------------------
 
 export interface InitializeArgs {
   authority: TransactionSigner;
@@ -129,7 +184,21 @@ export async function sendRevoke(
   client: Client,
   args: RevokeArgs,
 ): Promise<string> {
-  const ix = await getRevokeInstructionAsync({
+  const ixs: Ix[] = [];
+
+  // For token revokes, create authority ATA idempotently so tokens have a destination
+  if (args.mint && args.authorityTokenAccount) {
+    const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
+    const createAtaIx = await getCreateAssociatedTokenIdempotentInstructionAsync({
+      payer: args.authority,
+      owner: args.authority.address,
+      mint: args.mint,
+      tokenProgram,
+    });
+    ixs.push(createAtaIx);
+  }
+
+  const revokeIx = await getRevokeInstructionAsync({
     authority: args.authority,
     heir: args.heir,
     mint: args.mint,
@@ -137,7 +206,9 @@ export async function sendRevoke(
     authorityTokenAccount: args.authorityTokenAccount,
     vaultTokenAccount: args.vaultTokenAccount,
   });
-  return sendTx(client, args.authority, ix);
+  ixs.push(revokeIx);
+
+  return sendTx(client, args.authority, ixs);
 }
 
 export interface ClaimArgs {
@@ -154,7 +225,21 @@ export async function sendClaim(
   client: Client,
   args: ClaimArgs,
 ): Promise<string> {
-  const ix = await getClaimInstructionAsync({
+  const ixs: Ix[] = [];
+
+  // For token claims, create the heir ATA idempotently before claiming
+  if (args.mint && args.heirTokenAccount) {
+    const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
+    const createAtaIx = await getCreateAssociatedTokenIdempotentInstructionAsync({
+      payer: args.heir,
+      owner: args.heir.address,
+      mint: args.mint,
+      tokenProgram,
+    });
+    ixs.push(createAtaIx);
+  }
+
+  const claimIx = await getClaimInstructionAsync({
     heir: args.heir,
     authority: args.authority,
     mint: args.mint,
@@ -163,7 +248,9 @@ export async function sendClaim(
     heirTokenAccount: args.heirTokenAccount,
     delegate: args.delegate,
   });
-  return sendTx(client, args.heir, ix);
+  ixs.push(claimIx);
+
+  return sendTx(client, args.heir, ixs);
 }
 
 export interface DelegateDeferArgs {
@@ -182,4 +269,135 @@ export async function sendDelegateDefer(
     heir: args.heir,
   });
   return sendTx(client, args.delegate, ix);
+}
+
+// ---------------------------------------------------------------------------
+// Close Estate — reclaim rent from a stale/empty estate
+// ---------------------------------------------------------------------------
+
+export interface CloseEstateArgs {
+  authority: TransactionSigner;
+  heir: Address;
+}
+
+export async function sendCloseEstate(
+  client: Client,
+  args: CloseEstateArgs,
+): Promise<string> {
+  const ix = await getCloseEstateInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+  });
+  return sendTx(client, args.authority, ix);
+}
+
+// ---------------------------------------------------------------------------
+// Register Asset + Deposit — adds a token type to an existing estate
+// ---------------------------------------------------------------------------
+
+export interface RegisterAndDepositArgs {
+  authority: TransactionSigner;
+  heir: Address;
+  mint: Address;
+  amount: bigint;
+  decimals: number;
+  tokenProgram?: Address;
+}
+
+/**
+ * Registers a new token asset on an existing estate and deposits tokens.
+ * Bundles three instructions in one transaction:
+ *   1. system_program.create_account — allocate vault TA
+ *   2. heirloom.register_asset — init vault TA + increment claimable_assets
+ *   3. spl_token.transfer_checked — move tokens from authority ATA to vault TA
+ */
+export async function sendRegisterAndDeposit(
+  client: Client,
+  args: RegisterAndDepositArgs,
+): Promise<string> {
+  const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
+
+  // 1. Rent-exempt lamports for a token account
+  const rentLamports = await client.rpc
+    .getMinimumBalanceForRentExemption(TOKEN_ACCOUNT_SIZE)
+    .send();
+
+  // 2. Generate a new keypair for the vault token account
+  const vaultTaKeypair = await generateKeyPairSigner();
+
+  // 3. Build create_account instruction
+  const createAccountIx = getCreateAccountInstruction({
+    payer: args.authority,
+    newAccount: vaultTaKeypair,
+    lamports: rentLamports,
+    space: TOKEN_ACCOUNT_SIZE,
+    programAddress: tokenProgram,
+  });
+
+  // 4. Build registerAsset instruction
+  const registerIx = await getRegisterAssetInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+    mint: args.mint,
+    vaultTokenAccount: vaultTaKeypair.address,
+    tokenProgram,
+  });
+
+  // 5. Build transfer_checked instruction
+  const authorityAta = await getAtaAddress(
+    args.authority.address,
+    args.mint,
+    tokenProgram,
+  );
+  const transferIx = getTransferCheckedInstruction({
+    source: authorityAta,
+    mint: args.mint,
+    destination: vaultTaKeypair.address,
+    authority: args.authority,
+    amount: args.amount,
+    decimals: args.decimals,
+  });
+
+  return sendTx(client, args.authority, [createAccountIx, registerIx, transferIx]);
+}
+
+// ---------------------------------------------------------------------------
+// Discover vault token accounts (for claim flow)
+// ---------------------------------------------------------------------------
+
+export interface VaultTokenInfo {
+  mint: string;
+  address: string;
+  amount: bigint;
+  decimals: number;
+}
+
+export async function discoverVaultTokenAccounts(
+  rpc: AppRpc,
+  vaultPda: Address,
+): Promise<VaultTokenInfo[]> {
+  const result = await rpc
+    .getTokenAccountsByOwner(
+      vaultPda,
+      { programId: TOKEN_PROGRAM_ADDRESS },
+      { encoding: "jsonParsed" },
+    )
+    .send();
+
+  const tokens: VaultTokenInfo[] = [];
+  for (const item of result.value) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = (item.account.data as any)?.parsed;
+    if (!parsed?.info) continue;
+    const info = parsed.info;
+    const rawAmount = info.tokenAmount?.amount;
+    if (!rawAmount || rawAmount === "0") continue;
+    tokens.push({
+      mint: info.mint,
+      address: item.pubkey,
+      amount: BigInt(rawAmount),
+      decimals: info.tokenAmount?.decimals ?? 0,
+    });
+  }
+  return tokens;
 }

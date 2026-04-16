@@ -10,7 +10,7 @@ import {
   SOL_DECIMALS,
   LABEL_MAX_LEN,
 } from "@/config/constants";
-import { useWalletSplTokens, type SplTokenAsset } from "@/hooks/useWalletSplTokens";
+import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,7 +22,8 @@ import {
   CheckCircle,
   Loader2,
   ExternalLink,
-  DollarSign,
+  Plus,
+  X,
 } from "lucide-react";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
@@ -185,26 +186,27 @@ const CreateVaultPage = () => {
 
   const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
 
-  const [selectedKey, setSelectedKey] = useState<string>(SOL_KEY);
-  const [amount, setAmount] = useState<number>(0.1);
+  // Multi-asset state: SOL amount + per-token amounts
+  const [solAmount, setSolAmount] = useState<number>(0.1);
+  const [tokenAmounts, setTokenAmounts] = useState<Record<string, number>>({});
 
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [txId, setTxId] = useState<string | null>(null);
+  const [submitProgress, setSubmitProgress] = useState<string>("");
 
-  const selectedToken: SplTokenAsset | undefined =
-    selectedKey === SOL_KEY ? undefined : tokens.find((t) => t.mint === selectedKey);
-  const selectedDecimals = selectedToken ? selectedToken.decimals : SOL_DECIMALS;
-
-  const selectCard = (key: string, nextAmount: number) => {
-    setSelectedKey(key);
-    setAmount(nextAmount);
+  const setTokenAmount = (mint: string, val: number) => {
+    setTokenAmounts((prev) => ({ ...prev, [mint]: val }));
+  };
+  const removeToken = (mint: string) => {
+    setTokenAmounts((prev) => {
+      const next = { ...prev };
+      delete next[mint];
+      return next;
+    });
   };
 
-  const skipCard = (key: string) => {
-    if (selectedKey === key) {
-      setAmount(0);
-    }
-  };
+  const selectedTokenEntries = Object.entries(tokenAmounts).filter(([, v]) => v > 0);
+  const hasAnyDeposit = solAmount > 0 || selectedTokenEntries.length > 0;
 
   const heartbeatSliderDays = Math.max(1, Math.round(heartbeatSeconds / 86400));
   const graceSliderDays = Math.max(1, Math.round(graceSeconds / 86400));
@@ -213,7 +215,7 @@ const CreateVaultPage = () => {
   const canProceed = () => {
     if (step === 0) return heartbeatSeconds > 0 && graceSeconds > 0;
     if (step === 1) return isHeirValid;
-    if (step === 2) return amount > 0;
+    if (step === 2) return hasAnyDeposit;
     return true;
   };
 
@@ -224,16 +226,35 @@ const CreateVaultPage = () => {
     }
     try {
       setSubmitState("creating");
-      const amountLamports = BigInt(Math.round(amount * Math.pow(10, selectedDecimals)));
+      const lamports = BigInt(Math.round(solAmount * Math.pow(10, SOL_DECIMALS)));
+
+      // Build token deposits list
+      const tokenDeposits = selectedTokenEntries.map(([mint, amt]) => {
+        const tok = tokens.find((t) => t.mint === mint);
+        const decimals = tok?.decimals ?? 9;
+        return {
+          mint,
+          amount: BigInt(Math.round(amt * Math.pow(10, decimals))),
+          decimals,
+          tokenProgram: tok?.tokenProgram,
+        };
+      });
+
+      setSubmitProgress(
+        tokenDeposits.length > 0
+          ? `Creating estate + registering ${tokenDeposits.length} token(s)...`
+          : "Creating estate...",
+      );
+
       const createTxId = await createEstateOnChain({
         heir: heirAddress.trim(),
         label: label.trim().slice(0, LABEL_MAX_LEN),
         heartbeatInterval: heartbeatSeconds,
         gracePeriod: graceSeconds,
         pauseDuration: pauseSeconds,
-        amountLamports,
+        amountLamports: lamports,
         delegate: delegate.trim() || undefined,
-        mint: selectedToken?.mint,
+        tokens: tokenDeposits,
       });
       setTxId(createTxId);
       setSubmitState("complete");
@@ -270,7 +291,7 @@ const CreateVaultPage = () => {
               </div>
               <h2 className="text-3xl font-black mb-3">Creating Estate...</h2>
               <p className="text-lg font-medium text-muted-foreground mb-4">
-                Confirm the transaction in your wallet
+                {submitProgress || "Confirm the transaction in your wallet"}
               </p>
             </>
           )}
@@ -552,7 +573,7 @@ const CreateVaultPage = () => {
                   Fund your <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">vault.</span>
                 </h2>
                 <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                  Pick one asset to fund the vault with. One estate holds one token.
+                  Deposit SOL and/or multiple SPL tokens into the vault.
                 </p>
               </div>
 
@@ -563,52 +584,79 @@ const CreateVaultPage = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <AssetCard
-                  cardKey={SOL_KEY}
-                  title={SOL_LABEL}
-                  subtitle={`Amount in SOL (${SOL_DECIMALS} decimals)`}
-                  accent="orange"
-                  icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
-                  decimals={SOL_DECIMALS}
-                  presets={SOL_PRESETS}
-                  presetLabel={(v) => formatPreset(v, SOL_LABEL)}
-                  selected={selectedKey === SOL_KEY}
-                  amount={selectedKey === SOL_KEY ? amount : 0}
-                  onSelect={(v) => selectCard(SOL_KEY, v)}
-                  onSkip={() => skipCard(SOL_KEY)}
-                />
-                {tokens.map((t) => {
-                  const accent = t.label === "USDC" ? "cyan" : "lime";
-                  const ic =
-                    t.label === "USDC"
-                      ? <DollarSign className="h-6 w-6" strokeWidth={2.5} />
-                      : <Coins className="h-6 w-6" strokeWidth={2.5} />;
-                  return (
-                    <AssetCard
-                      key={t.mint}
-                      cardKey={t.mint}
-                      title={t.label}
-                      subtitle={`Amount in ${t.label} (${t.decimals} decimals) · Bal ${t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: Math.min(6, t.decimals) })}`}
-                      accent={accent}
-                      icon={ic}
-                      decimals={t.decimals}
-                      presets={presetsForDecimals(t.decimals)}
-                      presetLabel={(v) => formatPreset(v, t.label)}
-                      selected={selectedKey === t.mint}
-                      amount={selectedKey === t.mint ? amount : 0}
-                      onSelect={(v) => selectCard(t.mint, v)}
-                      onSkip={() => skipCard(t.mint)}
-                      maxAmount={t.uiAmount}
-                    />
-                  );
-                })}
-              </div>
+              {/* SOL deposit — always shown */}
+              <AssetCard
+                cardKey={SOL_KEY}
+                title={SOL_LABEL}
+                subtitle={`Amount in SOL (${SOL_DECIMALS} decimals)`}
+                accent="orange"
+                icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
+                decimals={SOL_DECIMALS}
+                presets={SOL_PRESETS}
+                presetLabel={(v) => formatPreset(v, SOL_LABEL)}
+                selected={solAmount > 0}
+                amount={solAmount}
+                onSelect={(v) => setSolAmount(v)}
+                onSkip={() => setSolAmount(0)}
+              />
+
+              {/* Token deposits — each independently togglable */}
+              {tokens.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-black mb-3">SPL Tokens (optional)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {tokens.map((t) => {
+                      const isActive = (tokenAmounts[t.mint] ?? 0) > 0;
+                      return (
+                        <div key={t.mint} className="relative">
+                          {isActive && (
+                            <button
+                              onClick={() => removeToken(t.mint)}
+                              className="absolute top-3 right-3 z-10 neo-border rounded-full p-1 bg-accent-red/20 hover:bg-accent-red/40 transition-colors"
+                            >
+                              <X className="h-4 w-4" strokeWidth={3} />
+                            </button>
+                          )}
+                          <AssetCard
+                            cardKey={t.mint}
+                            title={t.label}
+                            subtitle={`Bal ${t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: Math.min(6, t.decimals) })}`}
+                            accent={t.label === "USDC" ? "cyan" : "lime"}
+                            icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
+                            decimals={t.decimals}
+                            presets={presetsForDecimals(t.decimals)}
+                            presetLabel={(v) => formatPreset(v, t.label)}
+                            selected={isActive}
+                            amount={tokenAmounts[t.mint] ?? 0}
+                            onSelect={(v) => setTokenAmount(t.mint, v)}
+                            onSkip={() => removeToken(t.mint)}
+                            maxAmount={t.uiAmount}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {!tokensLoading && tokens.length === 0 && (
                 <p className="text-sm font-medium text-muted-foreground">
                   No SPL tokens with balance found in your wallet. Funding with {SOL_LABEL}.
                 </p>
+              )}
+
+              {selectedTokenEntries.length > 0 && (
+                <div className="neo-card-static bg-accent-lime/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Plus className="h-4 w-4" strokeWidth={3} />
+                    <span className="text-sm font-black uppercase tracking-widest">
+                      {selectedTokenEntries.length} token{selectedTokenEntries.length !== 1 ? "s" : ""} selected
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Each token requires a separate on-chain transaction after estate creation.
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -651,15 +699,29 @@ const CreateVaultPage = () => {
 
                 <div className="neo-card-static">
                   <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                    Deposit
+                    Deposits
                   </h3>
-                  <div className="flex justify-between">
-                    <span className="font-bold">{selectedToken ? selectedToken.label : SOL_LABEL}</span>
-                    <span className="font-black text-xl">{amount.toFixed(Math.min(6, selectedDecimals))}</span>
-                  </div>
-                  {selectedToken && (
-                    <p className="text-[10px] font-mono text-muted-foreground break-all mt-2">
-                      {selectedToken.mint}
+                  {solAmount > 0 && (
+                    <div className="flex justify-between mb-2">
+                      <span className="font-bold">{SOL_LABEL}</span>
+                      <span className="font-black text-xl">{solAmount.toFixed(Math.min(6, SOL_DECIMALS))}</span>
+                    </div>
+                  )}
+                  {selectedTokenEntries.map(([mint, amt]) => {
+                    const tok = tokens.find((t) => t.mint === mint);
+                    const tokLabel = tok?.label ?? mint.slice(0, 8);
+                    const dec = tok?.decimals ?? 9;
+                    return (
+                      <div key={mint} className="flex justify-between mb-2">
+                        <span className="font-bold">{tokLabel}</span>
+                        <span className="font-black text-xl">{amt.toFixed(Math.min(6, dec))}</span>
+                      </div>
+                    );
+                  })}
+                  {selectedTokenEntries.length > 0 && (
+                    <p className="text-xs text-muted-foreground font-medium mt-2 border-t-2 border-foreground/10 pt-2">
+                      {selectedTokenEntries.length + (solAmount > 0 ? 1 : 0)} asset(s) total
+                      {selectedTokenEntries.length > 0 && " — tokens require separate transactions"}
                     </p>
                   )}
                 </div>
@@ -700,7 +762,7 @@ const CreateVaultPage = () => {
               variant="lime"
               size="xl"
               onClick={handleSubmit}
-              disabled={!isHeirValid || amount <= 0}
+              disabled={!isHeirValid || !hasAnyDeposit}
               className="neo-glow-lime"
             >
               Create Estate

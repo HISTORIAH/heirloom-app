@@ -11,7 +11,6 @@ import {
   Users,
   Shield,
   Coins,
-  DollarSign,
   LogOut,
   AlertTriangle,
   ArrowLeft,
@@ -125,7 +124,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const vaultEmpty = estate.mint === null && estate.solBalance === 0;
+  const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0;
   const initial = computeTick(estate, vaultEmpty);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);
@@ -173,7 +172,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     if (!confirm("Are you sure? This will return all assets and cancel the vault permanently.")) return;
     setWithdrawing(true);
     try {
-      const tx = await revokeEstateOnChain(estate.heir, estate.mint || undefined);
+      const tx = await revokeEstateOnChain(estate.heir);
       setLastTxId(tx);
       toast({ title: "Emergency Withdraw", description: "Assets returned to your wallet." });
     } catch (err: unknown) {
@@ -195,11 +194,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 
   const config = statusConfig[computedState];
   const solDisplay = (estate.solBalance / Math.pow(10, SOL_DECIMALS)).toFixed(4);
-  const tokenIcon = estate.mint ? (
-    <DollarSign className="h-6 w-6" strokeWidth={2.5} />
-  ) : (
-    <Coins className="h-6 w-6" strokeWidth={2.5} />
-  );
+  const tokenIcon = <Coins className="h-6 w-6" strokeWidth={2.5} />;
   const totalWindow = estate.heartbeatInterval + estate.gracePeriod;
 
   return (
@@ -300,11 +295,11 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <div className="bg-accent-orange neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]">
               {tokenIcon}
             </div>
-            <h3 className="font-black">{estate.mint ? "Token Locked" : `${SOL_LABEL} Locked`}</h3>
+            <h3 className="font-black">{`${SOL_LABEL} Locked`}</h3>
           </div>
           <p className="text-3xl md:text-4xl font-black tabular-nums">{solDisplay}</p>
           <p className="text-sm font-bold text-muted-foreground">
-            {estate.mint ? "SPL token vault" : `${estate.solBalance.toLocaleString()} lamports`}
+            {`${estate.solBalance.toLocaleString()} lamports`}
           </p>
         </div>
 
@@ -345,6 +340,33 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
       </div>
 
+      {/* Token balances */}
+      {estate.vaultTokens.length > 0 && (
+        <div className="neo-card-static">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-accent-cyan neo-border rounded-xl p-3">
+                <Coins className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-xl font-black">Token Assets ({estate.vaultTokens.length})</h3>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {estate.vaultTokens.map((vt) => (
+              <div
+                key={vt.address}
+                className="flex items-center justify-between neo-border rounded-lg p-4 bg-secondary"
+              >
+                <span className="font-mono text-xs break-all max-w-[60%]">{vt.mint}</span>
+                <span className="font-black text-lg">
+                  {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Heirs */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
@@ -374,7 +396,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <div className="text-right">
               <p className="font-black text-2xl">100%</p>
               <p className="text-xs font-bold text-muted-foreground">
-                {solDisplay} {estate.mint ? "tok" : SOL_LABEL}
+                {solDisplay} {SOL_LABEL}
               </p>
               {estate.isClaimed && (
                 <span className="neo-badge bg-accent-lime text-xs mt-1 inline-block">Claimed</span>
