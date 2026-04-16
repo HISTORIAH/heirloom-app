@@ -1459,7 +1459,7 @@ dependencies = [
  "quasar-pod 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
  "solana-account-view",
  "solana-address 2.2.0",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "solana-instruction",
  "solana-instruction-view",
  "solana-program-error",
@@ -1477,7 +1477,7 @@ dependencies = [
  "quasar-pod 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
  "solana-account-view",
  "solana-address 2.2.0",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "solana-instruction",
  "solana-instruction-view",
  "solana-program-error",
@@ -1921,7 +1921,7 @@ dependencies = [
  "serde_derive",
  "sha2-const-stable",
  "solana-atomic-u64",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "solana-program-error",
  "solana-sanitize",
  "solana-sha256-hasher",
@@ -1981,7 +1981,7 @@ dependencies = [
  "ark-ff 0.5.0",
  "ark-serialize 0.5.0",
  "bytemuck",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "thiserror 2.0.18",
 ]
 
@@ -2079,9 +2079,9 @@ checksum = "57e5b1c0bc1d4a4d10c88a4100499d954c09d3fecfae4912c1a074dff68b1738"
 
 [[package]]
 name = "solana-define-syscall"
-version = "5.0.0"
+version = "5.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03aacdd7a61e2109887a7a7f046caebafce97ddf1150f33722eeac04f9039c73"
+checksum = "21e14a4f604117f379840956a8fc8695e4c84f5b0ebed192f31f60d9b85d581d"
 
 [[package]]
 name = "solana-epoch-rewards"
@@ -2162,7 +2162,7 @@ dependencies = [
  "bincode",
  "serde",
  "serde_derive",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "solana-instruction-error",
  "solana-pubkey 4.2.0",
 ]
@@ -2185,7 +2185,7 @@ checksum = "6ab7a27d0c4214b9f7389c3dd00b68c93093a67f1dcc5b7893aebe299bbcbb47"
 dependencies = [
  "solana-account-view",
  "solana-address 2.2.0",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "solana-program-error",
 ]
 
@@ -2281,7 +2281,7 @@ version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "726b7cbbc6be6f1c6f29146ac824343b9415133eee8cce156452ad1db93f8008"
 dependencies = [
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
 ]
 
 [[package]]
@@ -2532,7 +2532,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7c5f18893d62e6c73117dcba48f8f5e3266d90e5ec3d0a0a90f9785adac36c1"
 dependencies = [
  "k256",
- "solana-define-syscall 5.0.0",
+ "solana-define-syscall 5.1.0",
  "thiserror 2.0.18",
 ]
 

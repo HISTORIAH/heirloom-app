@@ -3,7 +3,9 @@ import { address as toAddress, type Address, type TransactionSigner, } from "@so
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
 import {
+  discoverVaultTokenAccounts,
   fetchEstateByPair,
+  getAtaAddress,
   getVaultAddress,
   sendCloseEstate,
   sendInitialize,
@@ -12,6 +14,13 @@ import {
   sendUpdate,
   type Client,
 } from "@/lib/contracts";
+
+export interface VaultTokenDisplay {
+  mint: string;
+  address: string;
+  amount: bigint;
+  decimals: number;
+}
 
 export interface EstateData {
   authority: string;
@@ -30,6 +39,7 @@ export interface EstateData {
   estatePda: string;
   vaultPda: string;
   solBalance: number;
+  vaultTokens: VaultTokenDisplay[];
   state: "active" | "grace" | "claimable" | "distributed";
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
@@ -160,18 +170,18 @@ const VaultProviderInner: React.FC<{
           if (!maybe.exists) continue;
           const estatePda = maybe.address;
           const vaultPda = await getVaultAddress(authority, heir);
-          const { value: lamports } = await rpc.getBalance(vaultPda).send();
+          const [{ value: lamports }, vaultTokens] = await Promise.all([
+            rpc.getBalance(vaultPda).send(),
+            discoverVaultTokenAccounts(rpc, vaultPda),
+          ]);
           const lastHeartbeat = Number(maybe.data.lastHeartbeat);
           const heartbeatInterval = Number(maybe.data.heartbeatInterval);
           const gracePeriod = Number(maybe.data.gracePeriod);
           const pausedUntil = Number(maybe.data.pausedUntil);
           const createdAt = Number(maybe.data.createdAt);
-          // SOL path: vault drained → lamports == 0. Token path relies on
-          // claimable_assets count. Treat distributed + empty vaults as
-          // "closed" from the UI: the program leaves the estate PDA on-chain
-          // after claim, so we hide them (and prune the known-heirs cache
-          // below) to match the expected owner flow.
-          const vaultEmpty = maybe.data.claimableAssets === 0 && Number(lamports) === 0;
+          // Vault is empty when claimable_assets == 0 and no SOL or tokens remain.
+          const hasTokenBalance = vaultTokens.length > 0;
+          const vaultEmpty = maybe.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeState(
             lastHeartbeat,
             heartbeatInterval,
@@ -203,6 +213,7 @@ const VaultProviderInner: React.FC<{
             estatePda,
             vaultPda,
             solBalance: Number(lamports),
+            vaultTokens,
             state,
             secondsUntilGrace,
             secondsUntilClaimable,
@@ -213,12 +224,10 @@ const VaultProviderInner: React.FC<{
       }
       // Hide fully-distributed-and-empty estates from the owner dashboard
       // and drop them from the known-heirs cache so the slot is "free" again.
-      const visible = results.filter(
-        (r) => !(r.state === "distributed" && r.solBalance === 0),
-      );
-      const hidden = results.filter(
-        (r) => r.state === "distributed" && r.solBalance === 0,
-      );
+      const isFullyEmpty = (r: EstateData) =>
+        r.state === "distributed" && r.solBalance === 0 && r.vaultTokens.length === 0;
+      const visible = results.filter((r) => !isFullyEmpty(r));
+      const hidden = results.filter(isFullyEmpty);
       if (hidden.length > 0) {
         const heirs = loadKnownHeirs(authority).filter(
           (h) => !hidden.some((x) => x.heir === h),
@@ -256,7 +265,8 @@ const VaultProviderInner: React.FC<{
         const canClose = existing.data.claimableAssets === 0;
         if (!canClose) {
           throw new Error(
-            "An active estate with registered assets already exists for this heir. Revoke or claim it first.",
+            "An active estate with registered assets already exists for this heir. " +
+            "Revoke or claim all assets first, then try again.",
           );
         }
         // Close stale estate so we can re-init the PDA.
@@ -264,6 +274,8 @@ const VaultProviderInner: React.FC<{
           authority: signer,
           heir: heirAddress,
         });
+        // Small delay to let the close tx finalize before re-init
+        await new Promise((r) => setTimeout(r, 1000));
       }
       const txId = await sendInitialize(client, {
         authority: signer,
@@ -330,17 +342,38 @@ const VaultProviderInner: React.FC<{
 
   const revokeEstateOnChain = useCallback(
     async (heir: string, mint?: string): Promise<string> => {
-      const txId = await sendRevoke(client, {
+      const heirAddr = toAddress(heir);
+      let lastTx = "";
+
+      // Discover vault token accounts and revoke each one first
+      const vaultPda = await getVaultAddress(authority, heirAddr);
+      const vaultTokens = await discoverVaultTokenAccounts(rpc, vaultPda);
+
+      for (const vt of vaultTokens) {
+        const mintAddr = toAddress(vt.mint);
+        const authorityAta = await getAtaAddress(authority, mintAddr);
+        lastTx = await sendRevoke(client, {
+          authority: signer,
+          heir: heirAddr,
+          mint: mintAddr,
+          authorityTokenAccount: authorityAta,
+          vaultTokenAccount: toAddress(vt.address),
+        });
+      }
+
+      // Revoke SOL (closes estate + vault when claimable_assets reaches 0)
+      lastTx = await sendRevoke(client, {
         authority: signer,
-        heir: toAddress(heir),
+        heir: heirAddr,
         mint: mint ? toAddress(mint) : undefined,
       });
+
       const heirs = loadKnownHeirs(authority).filter((h) => h !== heir);
       saveKnownHeirs(authority, heirs);
-      setPendingTxId(txId);
-      return txId;
+      setPendingTxId(lastTx);
+      return lastTx;
     },
-    [client, signer, authority],
+    [client, rpc, signer, authority],
   );
 
   const clearVault = useCallback(() => {

@@ -340,6 +340,33 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
       </div>
 
+      {/* Token balances */}
+      {estate.vaultTokens.length > 0 && (
+        <div className="neo-card-static">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-accent-cyan neo-border rounded-xl p-3">
+                <Coins className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-xl font-black">Token Assets ({estate.vaultTokens.length})</h3>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {estate.vaultTokens.map((vt) => (
+              <div
+                key={vt.address}
+                className="flex items-center justify-between neo-border rounded-lg p-4 bg-secondary"
+              >
+                <span className="font-mono text-xs break-all max-w-[60%]">{vt.mint}</span>
+                <span className="font-black text-lg">
+                  {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Heirs */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">

@@ -27,6 +27,7 @@ import {
 import { getCreateAccountInstruction } from "@solana-program/system";
 import {
   findAssociatedTokenPda,
+  getCreateAssociatedTokenIdempotentInstructionAsync,
   getTransferCheckedInstruction,
   TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
@@ -183,7 +184,21 @@ export async function sendRevoke(
   client: Client,
   args: RevokeArgs,
 ): Promise<string> {
-  const ix = await getRevokeInstructionAsync({
+  const ixs: Ix[] = [];
+
+  // For token revokes, create authority ATA idempotently so tokens have a destination
+  if (args.mint && args.authorityTokenAccount) {
+    const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
+    const createAtaIx = await getCreateAssociatedTokenIdempotentInstructionAsync({
+      payer: args.authority,
+      owner: args.authority.address,
+      mint: args.mint,
+      tokenProgram,
+    });
+    ixs.push(createAtaIx);
+  }
+
+  const revokeIx = await getRevokeInstructionAsync({
     authority: args.authority,
     heir: args.heir,
     mint: args.mint,
@@ -191,7 +206,9 @@ export async function sendRevoke(
     authorityTokenAccount: args.authorityTokenAccount,
     vaultTokenAccount: args.vaultTokenAccount,
   });
-  return sendTx(client, args.authority, ix);
+  ixs.push(revokeIx);
+
+  return sendTx(client, args.authority, ixs);
 }
 
 export interface ClaimArgs {
@@ -208,7 +225,21 @@ export async function sendClaim(
   client: Client,
   args: ClaimArgs,
 ): Promise<string> {
-  const ix = await getClaimInstructionAsync({
+  const ixs: Ix[] = [];
+
+  // For token claims, create the heir ATA idempotently before claiming
+  if (args.mint && args.heirTokenAccount) {
+    const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
+    const createAtaIx = await getCreateAssociatedTokenIdempotentInstructionAsync({
+      payer: args.heir,
+      owner: args.heir.address,
+      mint: args.mint,
+      tokenProgram,
+    });
+    ixs.push(createAtaIx);
+  }
+
+  const claimIx = await getClaimInstructionAsync({
     heir: args.heir,
     authority: args.authority,
     mint: args.mint,
@@ -217,7 +248,9 @@ export async function sendClaim(
     heirTokenAccount: args.heirTokenAccount,
     delegate: args.delegate,
   });
-  return sendTx(client, args.heir, ix);
+  ixs.push(claimIx);
+
+  return sendTx(client, args.heir, ixs);
 }
 
 export interface DelegateDeferArgs {
