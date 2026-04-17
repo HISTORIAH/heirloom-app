@@ -15,8 +15,6 @@ import {
   decodeEstate,
   fetchMaybeEstate,
   findEstatePda,
-  HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
-  type Estate,
   findVaultPda,
   getClaimInstructionAsync,
   getCloseEstateInstructionAsync,
@@ -25,6 +23,8 @@ import {
   getRegisterAssetInstructionAsync,
   getRevokeInstructionAsync,
   getUpdateFieldsInstructionAsync,
+  getUpdateHeirInstructionAsync,
+  HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
   type Estate,
 } from "@historiah/heirloom";
 import { getCreateAccountInstruction } from "@solana-program/system";
@@ -316,6 +316,41 @@ export async function sendDelegateDefer(
     heir: args.heir,
   });
   return sendTx(client, args.delegate, ix);
+}
+
+// ---------------------------------------------------------------------------
+// Update Heir — reassign estate to a new heir
+// ---------------------------------------------------------------------------
+
+export interface UpdateHeirArgs {
+  authority: TransactionSigner;
+  heir: Address;
+  newHeir: Address;
+}
+
+export async function sendUpdateHeir(
+  client: Client,
+  args: UpdateHeirArgs,
+): Promise<string> {
+  // newEstate and newVault are NOT auto-derived by the generated client,
+  // so we must derive them manually using the new heir.
+  const [newEstate] = await findEstatePda({
+    authority: args.authority.address,
+    heir: args.newHeir,
+  });
+  const [newVault] = await findVaultPda({
+    authority: args.authority.address,
+    heir: args.newHeir,
+  });
+
+  const ix = await getUpdateHeirInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+    newHeir: args.newHeir,
+    newEstate,
+    newVault,
+  });
+  return sendTx(client, args.authority, ix);
 }
 
 // ---------------------------------------------------------------------------

@@ -18,6 +18,7 @@ import Index from "@/pages/Index";
 import CreateVault from "@/pages/CreateVault";
 import Dashboard from "@/pages/Dashboard";
 import Claim from "@/pages/Claim";
+import Defer from "@/pages/Defer";
 import NotFound from "@/pages/NotFound";
 import { NETWORK } from "@/config/constants";
 
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/create-vault" element={<CreateVault />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/claim" element={<Claim />} />
+                <Route path="/defer" element={<Defer />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

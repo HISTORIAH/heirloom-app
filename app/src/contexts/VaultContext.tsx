@@ -13,6 +13,7 @@ import {
   sendRegisterAndDeposit,
   sendRevoke,
   sendUpdate,
+  sendUpdateHeir,
   type Client,
 } from "@/lib/contracts";
 
@@ -75,6 +76,8 @@ interface VaultState {
   registerAssetOnChain: (heir: string, token: TokenDeposit) => Promise<string>;
   sendHeartbeatOnChain: (heir: string) => Promise<string>;
   revokeEstateOnChain: (heir: string) => Promise<string>;
+  updateHeirOnChain: (heir: string, newHeir: string) => Promise<string>;
+  closeEstateOnChain: (heir: string) => Promise<string>;
   clearVault: () => void;
 }
 
@@ -205,11 +208,7 @@ const VaultProviderInner: React.FC<{
           // skip failed estates
         }
       }
-      // Hide fully-distributed-and-empty estates from dashboard display
-      const isFullyEmpty = (r: EstateData) =>
-        r.state === "distributed" && r.solBalance === 0 && r.vaultTokens.length === 0;
-      const visible = results.filter((r) => !isFullyEmpty(r));
-      setEstates(visible);
+      setEstates(results);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to fetch estates");
     } finally {
@@ -343,6 +342,31 @@ const VaultProviderInner: React.FC<{
     [client, rpc, signer, authority],
   );
 
+  const updateHeirOnChain = useCallback(
+    async (heir: string, newHeir: string): Promise<string> => {
+      const txId = await sendUpdateHeir(client, {
+        authority: signer,
+        heir: toAddress(heir),
+        newHeir: toAddress(newHeir),
+      });
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
+  );
+
+  const closeEstateOnChain = useCallback(
+    async (heir: string): Promise<string> => {
+      const txId = await sendCloseEstate(client, {
+        authority: signer,
+        heir: toAddress(heir),
+      });
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
+  );
+
   const clearVault = useCallback(() => {
     setEstates([]);
     setPendingTxId(null);
@@ -361,6 +385,8 @@ const VaultProviderInner: React.FC<{
     registerAssetOnChain,
     sendHeartbeatOnChain,
     revokeEstateOnChain,
+    updateHeirOnChain,
+    closeEstateOnChain,
     clearVault,
   };
 
@@ -385,6 +411,12 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
       throw new Error("Wallet not connected");
     },
     revokeEstateOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    updateHeirOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    closeEstateOnChain: async () => {
       throw new Error("Wallet not connected");
     },
     clearVault: () => { },
