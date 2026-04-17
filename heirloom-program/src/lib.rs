@@ -85,9 +85,9 @@ mod heirloom_program {
     }
 
     #[instruction(discriminator = 7)]
-    pub fn register_asset(ctx: Ctx<RegisterAsset>) -> Result<(), ProgramError> {
+    pub fn register_asset(ctx: Ctx<RegisterAsset>, amount: u64) -> Result<(), ProgramError> {
         log("ix: register_asset");
-        RegisterAsset::register_asset_handler(&mut ctx)
+        RegisterAsset::register_asset_handler(&mut ctx, amount)
     }
 
     // ! TEMP: WILL BE REMOVED AFTER estates are recovered

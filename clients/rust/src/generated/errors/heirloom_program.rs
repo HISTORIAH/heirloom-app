@@ -52,6 +52,12 @@ pub enum HeirloomProgramError {
     /// 13 - 
     #[error("")]
     ClaimableAssetsRemaining = 0xD,
+    /// 14 - 
+    #[error("")]
+    ZeroDepositAmount = 0xE,
+    /// 15 - 
+    #[error("")]
+    TooManyClaimableAssets = 0xF,
 }
 
 impl From<HeirloomProgramError> for solana_program_error::ProgramError {

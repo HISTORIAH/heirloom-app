@@ -1,7 +1,6 @@
 import {
   appendTransactionMessageInstruction,
   createTransactionMessage,
-  generateKeyPairSigner,
   getBase58Decoder,
   pipe,
   setTransactionMessageFeePayerSigner,
@@ -29,7 +28,6 @@ import {
   HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
   type Estate,
 } from "@historiah/heirloom";
-import { getCreateAccountInstruction } from "@solana-program/system";
 import {
   findAssociatedTokenPda,
   getCreateAssociatedTokenIdempotentInstructionAsync,
@@ -46,9 +44,6 @@ export type Client = {
 export type EstateAccount = MaybeAccount<Estate>;
 
 const base58 = getBase58Decoder();
-
-// Size of a standard SPL Token account (165 bytes).
-const TOKEN_ACCOUNT_SIZE = 165n;
 
 type Ix = Parameters<typeof appendTransactionMessageInstruction>[0];
 
@@ -433,33 +428,22 @@ export async function sendRegisterAndDeposit(
 ): Promise<string> {
   const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
 
-  // 1. Rent-exempt lamports for a token account
-  const rentLamports = await client.rpc
-    .getMinimumBalanceForRentExemption(TOKEN_ACCOUNT_SIZE)
-    .send();
-
-  // 2. Generate a new keypair for the vault token account
-  const vaultTaKeypair = await generateKeyPairSigner();
-
-  // 3. Build create_account instruction
-  const createAccountIx = getCreateAccountInstruction({
-    payer: args.authority,
-    newAccount: vaultTaKeypair,
-    lamports: rentLamports,
-    space: TOKEN_ACCOUNT_SIZE,
-    programAddress: tokenProgram,
-  });
-
-  // 4. Build registerAsset instruction
-  const registerIx = await getRegisterAssetInstructionAsync({
-    authority: args.authority,
-    heir: args.heir,
+  // Derive the vault ATA — registerAsset creates it via CPI
+  const [vaultTokenAccount] = await findAssociatedTokenPda({
+    owner: (await findVaultPda({ authority: args.authority.address, heir: args.heir }))[0],
     mint: args.mint,
-    vaultTokenAccount: vaultTaKeypair.address,
     tokenProgram,
   });
 
-  // 5. Build transfer_checked instruction
+  const registerIx = await getRegisterAssetInstructionAsync({
+      authority: args.authority,
+      heir: args.heir,
+      mint: args.mint,
+      vaultTokenAccount,
+      tokenProgram,
+      amount: args.amount,
+  });
+
   const authorityAta = await getAtaAddress(
     args.authority.address,
     args.mint,
@@ -468,13 +452,13 @@ export async function sendRegisterAndDeposit(
   const transferIx = getTransferCheckedInstruction({
     source: authorityAta,
     mint: args.mint,
-    destination: vaultTaKeypair.address,
+    destination: vaultTokenAccount,
     authority: args.authority,
     amount: args.amount,
     decimals: args.decimals,
   });
 
-  return sendTx(client, args.authority, [createAccountIx, registerIx, transferIx]);
+  return sendTx(client, args.authority, [registerIx, transferIx]);
 }
 
 // ---------------------------------------------------------------------------

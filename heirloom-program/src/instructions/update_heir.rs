@@ -107,6 +107,11 @@ impl UpdateHeir {
             HeirloomError::AlreadyClaimed
         );
 
+        require!(
+            self.estate.claimable_assets <= 1,
+            HeirloomError::TooManyClaimableAssets
+        );
+
         let now = self.clock.unix_timestamp;
         if now < self.estate.paused_until {
             return Err(HeirloomError::EstatePaused.into());
