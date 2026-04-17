@@ -53,7 +53,6 @@ import {
   type UpdateFieldsInstructionData,
   type UpdateFieldsInstructionDataArgs,
 } from "../generated/instructions/updateFields";
-import { findEstatePda } from "../generated/pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../generated/programs";
 import type { Address } from "@solana/kit";
 
@@ -131,15 +130,13 @@ export async function getUpdateFieldsInstructionAsync<
   TAccountHeir extends string,
   TAccountEstate extends string,
   TAccountClock extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UpdateFieldsAsyncInput<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >,
   config?: { programAddress?: TProgramAddress },
 ): Promise<
@@ -148,8 +145,7 @@ export async function getUpdateFieldsInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountClock,
-    TAccountSystemProgram
+    TAccountClock
   >
 > {
   const ix = await _getUpdateFieldsInstructionAsync(input, config);
