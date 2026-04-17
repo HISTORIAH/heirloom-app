@@ -19,6 +19,8 @@ import {
   Copy,
   Check,
   Plus,
+  UserPlus,
+  Trash2,
 } from "lucide-react";
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
@@ -117,13 +119,17 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
 }
 
 const EstateCard = ({ estate }: { estate: EstateData }) => {
-  const { sendHeartbeatOnChain, revokeEstateOnChain } = useVault();
+  const { sendHeartbeatOnChain, revokeEstateOnChain, updateHeirOnChain, closeEstateOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [sendingHeartbeat, setSendingHeartbeat] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [newHeirAddress, setNewHeirAddress] = useState("");
+  const [updatingHeir, setUpdatingHeir] = useState(false);
+  const [showUpdateHeir, setShowUpdateHeir] = useState(false);
+  const [closingEstate, setClosingEstate] = useState(false);
 
   const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0;
   const initial = computeTick(estate, vaultEmpty);
@@ -191,6 +197,56 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     navigator.clipboard.writeText(estate.heir);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleUpdateHeir = async () => {
+    const trimmed = newHeirAddress.trim();
+    if (!trimmed) return;
+    if (trimmed === estate.heir) {
+      toast({
+        title: "Same heir",
+        description: "New heir address matches current heir.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!confirm(`Reassign estate from ${estate.heir.slice(0, 8)}... to ${trimmed.slice(0, 8)}...?`)) return;
+    setUpdatingHeir(true);
+    try {
+      const tx = await updateHeirOnChain(estate.heir, trimmed);
+      setLastTxId(tx);
+      setNewHeirAddress("");
+      setShowUpdateHeir(false);
+      toast({ title: "Heir Updated", description: "Estate reassigned to new heir." });
+      await fetchEstates();
+    } catch (err: unknown) {
+      toast({
+        title: "Update Failed",
+        description: err instanceof Error ? err.message : "Transaction rejected",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingHeir(false);
+    }
+  };
+
+  const handleCloseEstate = async () => {
+    if (!confirm("Close empty estate and reclaim rent? Estate account will be deleted.")) return;
+    setClosingEstate(true);
+    try {
+      const tx = await closeEstateOnChain(estate.heir);
+      setLastTxId(tx);
+      toast({ title: "Estate Closed", description: "Rent reclaimed to your wallet." });
+      await fetchEstates();
+    } catch (err: unknown) {
+      toast({
+        title: "Close Failed",
+        description: err instanceof Error ? err.message : "Transaction rejected",
+        variant: "destructive",
+      });
+    } finally {
+      setClosingEstate(false);
+    }
   };
 
   const config = statusConfig[computedState];
@@ -422,6 +478,57 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
       )}
 
+      {/* Update Heir */}
+      {computedState !== "distributed" && (
+        <div className="neo-card-static">
+          <button
+            onClick={() => setShowUpdateHeir(!showUpdateHeir)}
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-accent-cyan neo-border rounded-xl p-3">
+                <UserPlus className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <div className="text-left">
+                <h3 className="font-black text-lg">Reassign Heir</h3>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Transfer estate to a different heir address.
+                </p>
+              </div>
+            </div>
+            <span className="text-2xl font-black">{showUpdateHeir ? "−" : "+"}</span>
+          </button>
+          {showUpdateHeir && (
+            <div className="space-y-3 mt-4 pt-4 border-t-2 border-foreground/10">
+              <input
+                type="text"
+                value={newHeirAddress}
+                onChange={(e) => setNewHeirAddress(e.target.value)}
+                maxLength={128}
+                className="neo-input w-full font-mono text-sm focus:bg-accent-cyan/20"
+                placeholder="New heir Solana address..."
+              />
+              <Button
+                variant="default"
+                size="default"
+                onClick={handleUpdateHeir}
+                disabled={updatingHeir || !newHeirAddress.trim()}
+                className="w-full"
+              >
+                {updatingHeir ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Reassigning...</>
+                ) : (
+                  <><UserPlus className="h-4 w-4" /> Reassign Heir</>
+                )}
+              </Button>
+              <p className="text-xs font-medium text-muted-foreground">
+                Warning: this moves the estate PDA + vault assets to the new heir. Old heir can no longer claim.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Emergency */}
       {computedState !== "distributed" && (
         <div className="neo-card-static border-accent-red">
@@ -447,6 +554,37 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 <><Loader2 className="h-4 w-4 animate-spin" /> Withdrawing...</>
               ) : (
                 <><AlertTriangle className="h-4 w-4" /> Emergency Withdraw</>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Close Estate (for empty/distributed estates) */}
+      {computedState === "distributed" && (
+        <div className="neo-card-static">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-secondary neo-border rounded-xl p-3 shrink-0">
+                <Trash2 className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="font-black text-lg">Close Estate</h3>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Delete empty estate account and reclaim rent lamports.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleCloseEstate}
+              disabled={closingEstate}
+            >
+              {closingEstate ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Closing...</>
+              ) : (
+                <><Trash2 className="h-4 w-4" /> Close & Reclaim Rent</>
               )}
             </Button>
           </div>
