@@ -16,4 +16,5 @@ pub enum HeirloomError {
     MissingAccount,
     InvalidAccount,
     ClaimableAssetsRemaining,
+    ZeroDepositAmount,
 }

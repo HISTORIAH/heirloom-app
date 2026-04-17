@@ -19,6 +19,8 @@ test("it updates heartbeat interval and grace period", async () => {
   });
 });
 
+
+// // TODO: fix, this isn't tested
 // test("it updates only pause duration", async () => {
 //   const client = createDefaultSolanaClient();
 

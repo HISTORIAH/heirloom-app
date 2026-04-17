@@ -315,7 +315,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94893f1e0c6eeab764ade8dc4c0db24caf4fe7cbbaafc0eba0a9030f447b5185"
 dependencies = [
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.6",
 ]
 
 [[package]]
@@ -325,7 +325,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "246a225cc6131e9ee4f24619af0f19d67761fff15d7ccc22e42b80846e69449a"
 dependencies = [
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.6",
 ]
 
 [[package]]
@@ -1413,7 +1413,7 @@ dependencies = [
 [[package]]
 name = "quasar-derive"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#387fed0c8fe260a58879199d0a38d0adb4c89654"
 dependencies = [
  "proc-macro2",
  "quasar-schema",
@@ -1456,7 +1456,7 @@ dependencies = [
 [[package]]
 name = "quasar-lang"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#387fed0c8fe260a58879199d0a38d0adb4c89654"
 dependencies = [
  "const-crypto",
  "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
@@ -1482,7 +1482,7 @@ dependencies = [
 [[package]]
 name = "quasar-pod"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#387fed0c8fe260a58879199d0a38d0adb4c89654"
 dependencies = [
  "wincode 0.4.9",
 ]
@@ -1490,7 +1490,7 @@ dependencies = [
 [[package]]
 name = "quasar-schema"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#6a113506b62318ef4029180d86e6eb6146574e7e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#387fed0c8fe260a58879199d0a38d0adb4c89654"
 dependencies = [
  "serde",
 ]
@@ -1575,9 +1575,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.8.5"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
+checksum = "5ca0ecfa931c29007047d1bc58e623ab12e5590e8c7cc53200d5202b69266d8a"
 dependencies = [
  "libc",
  "rand_chacha 0.3.1",
@@ -2410,7 +2410,7 @@ dependencies = [
  "itertools 0.12.1",
  "log",
  "percentage",
- "rand 0.8.5",
+ "rand 0.8.6",
  "serde",
  "solana-account",
  "solana-account-info",
@@ -2492,7 +2492,7 @@ dependencies = [
  "hash32",
  "libc",
  "log",
- "rand 0.8.5",
+ "rand 0.8.6",
  "rustc-demangle",
  "thiserror 2.0.18",
  "winapi",
@@ -2681,7 +2681,7 @@ version = "3.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa888be46794b88f130508f694e989fb8802c823b9048acd4d0240e9818502fe"
 dependencies = [
- "rand 0.8.5",
+ "rand 0.8.6",
 ]
 
 [[package]]
