@@ -20,7 +20,6 @@ import {
   Check,
   Plus,
   UserPlus,
-  Trash2,
 } from "lucide-react";
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
@@ -119,9 +118,8 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
 }
 
 const EstateCard = ({ estate }: { estate: EstateData }) => {
-  const { sendHeartbeatOnChain, revokeEstateOnChain, updateHeirOnChain, closeEstateOnChain, fetchEstates } = useVault();
+  const { sendHeartbeatOnChain, revokeEstateOnChain, updateHeirOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [sendingHeartbeat, setSendingHeartbeat] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);
@@ -129,7 +127,6 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [newHeirAddress, setNewHeirAddress] = useState("");
   const [updatingHeir, setUpdatingHeir] = useState(false);
   const [showUpdateHeir, setShowUpdateHeir] = useState(false);
-  const [closingEstate, setClosingEstate] = useState(false);
 
   const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0;
   const initial = computeTick(estate, vaultEmpty);
@@ -227,25 +224,6 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       });
     } finally {
       setUpdatingHeir(false);
-    }
-  };
-
-  const handleCloseEstate = async () => {
-    if (!confirm("Close empty estate and reclaim rent? Estate account will be deleted.")) return;
-    setClosingEstate(true);
-    try {
-      const tx = await closeEstateOnChain(estate.heir);
-      setLastTxId(tx);
-      toast({ title: "Estate Closed", description: "Rent reclaimed to your wallet." });
-      await fetchEstates();
-    } catch (err: unknown) {
-      toast({
-        title: "Close Failed",
-        description: err instanceof Error ? err.message : "Transaction rejected",
-        variant: "destructive",
-      });
-    } finally {
-      setClosingEstate(false);
     }
   };
 
@@ -560,36 +538,6 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
       )}
 
-      {/* Close Estate (for empty/distributed estates) */}
-      {computedState === "distributed" && (
-        <div className="neo-card-static">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-secondary neo-border rounded-xl p-3 shrink-0">
-                <Trash2 className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="font-black text-lg">Close Estate</h3>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Delete empty estate account and reclaim rent lamports.
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handleCloseEstate}
-              disabled={closingEstate}
-            >
-              {closingEstate ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Closing...</>
-              ) : (
-                <><Trash2 className="h-4 w-4" /> Close & Reclaim Rent</>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

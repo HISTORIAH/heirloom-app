@@ -6,7 +6,9 @@ import {
   discoverVaultTokenAccounts,
   fetchEstateByPair,
   fetchEstatesByAuthority,
+  fetchVaultClaimableLamports,
   getAtaAddress,
+  getEstateAddress,
   getVaultAddress,
   sendCloseEstate,
   sendInitialize,
@@ -77,7 +79,6 @@ interface VaultState {
   sendHeartbeatOnChain: (heir: string) => Promise<string>;
   revokeEstateOnChain: (heir: string) => Promise<string>;
   updateHeirOnChain: (heir: string, newHeir: string) => Promise<string>;
-  closeEstateOnChain: (heir: string) => Promise<string>;
   clearVault: () => void;
 }
 
@@ -153,8 +154,8 @@ const VaultProviderInner: React.FC<{
         try {
           const heir = toAddress(estate.data.heir);
           const vaultPda = await getVaultAddress(authority, heir);
-          const [{ value: lamports }, vaultTokens] = await Promise.all([
-            rpc.getBalance(vaultPda).send(),
+          const [lamports, vaultTokens] = await Promise.all([
+            fetchVaultClaimableLamports(rpc, vaultPda),
             discoverVaultTokenAccounts(rpc, vaultPda),
           ]);
           const lastHeartbeat = Number(estate.data.lastHeartbeat);
@@ -232,25 +233,58 @@ const VaultProviderInner: React.FC<{
   const createEstateOnChain = useCallback(
     async (input: CreateEstateInput): Promise<string> => {
       const heirAddress = toAddress(input.heir);
-      // Pre-flight: if estate already exists, try to close it first.
-      // closeEstate succeeds only when claimable_assets == 0 (i.e. stale/empty).
+      const estatePda = await getEstateAddress(authority, heirAddress);
+      const vaultPda = await getVaultAddress(authority, heirAddress);
+
+      // Raw account check — fetchMaybeEstate decodes as Estate; we need the
+      // underlying account because post-claim/revoke PDAs can linger briefly
+      // with 0 lamports before runtime GC propagates to the RPC node.
+      const rawAccountExists = async (pda: Address): Promise<boolean> => {
+        try {
+          const res = await rpc.getAccountInfo(pda, { commitment: "confirmed" }).send();
+          return res?.value != null;
+        } catch {
+          return false;
+        }
+      };
+
+      // Preflight: if estate still has data, close it if possible (stale case).
       const existing = await fetchEstateByPair(rpc, authority, heirAddress);
       if (existing.exists) {
-        const canClose = existing.data.claimableAssets === 0;
-        if (!canClose) {
+        if (existing.data.claimableAssets !== 0) {
           throw new Error(
             "An active estate with registered assets already exists for this heir. " +
             "Revoke or claim all assets first, then try again.",
           );
         }
-        // Close stale estate so we can re-init the PDA.
         await sendCloseEstate(client, {
           authority: signer,
           heir: heirAddress,
         });
-        // Small delay to let the close tx finalize before re-init
-        await new Promise((r) => setTimeout(r, 1000));
       }
+
+      // Wait for both PDAs to be fully reaped. Runtime GCs 0-lamport accounts
+      // at tx-end, but RPC snapshots may lag — init will fail with
+      // "account already borrowed" if it runs against stale state.
+      const deadline = Date.now() + 20000;
+      while (Date.now() < deadline) {
+        const [e, v] = await Promise.all([
+          rawAccountExists(estatePda),
+          rawAccountExists(vaultPda),
+        ]);
+        if (!e && !v) break;
+        await new Promise((r) => setTimeout(r, 750));
+      }
+      const [stillEstate, stillVault] = await Promise.all([
+        rawAccountExists(estatePda),
+        rawAccountExists(vaultPda),
+      ]);
+      if (stillEstate || stillVault) {
+        throw new Error(
+          "Prior estate/vault PDAs not yet cleared on-chain. Wait a few seconds and retry.",
+        );
+      }
+
       const txId = await sendInitialize(client, {
         authority: signer,
         heir: heirAddress,
@@ -355,18 +389,6 @@ const VaultProviderInner: React.FC<{
     [client, signer],
   );
 
-  const closeEstateOnChain = useCallback(
-    async (heir: string): Promise<string> => {
-      const txId = await sendCloseEstate(client, {
-        authority: signer,
-        heir: toAddress(heir),
-      });
-      setPendingTxId(txId);
-      return txId;
-    },
-    [client, signer],
-  );
-
   const clearVault = useCallback(() => {
     setEstates([]);
     setPendingTxId(null);
@@ -386,7 +408,6 @@ const VaultProviderInner: React.FC<{
     sendHeartbeatOnChain,
     revokeEstateOnChain,
     updateHeirOnChain,
-    closeEstateOnChain,
     clearVault,
   };
 
@@ -414,9 +435,6 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
       throw new Error("Wallet not connected");
     },
     updateHeirOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    closeEstateOnChain: async () => {
       throw new Error("Wallet not connected");
     },
     clearVault: () => { },

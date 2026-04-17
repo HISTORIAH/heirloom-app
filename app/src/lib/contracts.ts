@@ -8,6 +8,8 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   signAndSendTransactionMessageWithSigners,
   type Address,
+  type Base58EncodedBytes,
+  type Base64EncodedBytes,
   type MaybeAccount,
   type TransactionSigner,
 } from "@solana/kit";
@@ -115,6 +117,26 @@ export async function fetchEstateByPair(
 }
 
 /**
+ * Returns the claimable SOL in a vault (lamports above rent-exempt minimum).
+ * The vault PDA's raw balance includes the rent-exempt reserve, which is not
+ * user-allocated funds — subtract it so the UI shows the true deposit.
+ */
+export async function fetchVaultClaimableLamports(
+  rpc: AppRpc,
+  vaultPda: Address,
+): Promise<bigint> {
+  const { value } = await rpc
+    .getAccountInfo(vaultPda, { encoding: "base64", commitment: "confirmed" })
+    .send();
+  if (!value) return 0n;
+  const rentMin = await rpc
+    .getMinimumBalanceForRentExemption(value.space)
+    .send();
+  const balance = value.lamports as unknown as bigint;
+  return balance > rentMin ? balance - rentMin : 0n;
+}
+
+/**
  * Fetch all Estate accounts where the given address is the authority,
  * directly from the chain using getProgramAccounts with memcmp filters.
  *
@@ -130,15 +152,27 @@ export async function fetchEstatesByAuthority(
       encoding: "base64",
       filters: [
         // Estate discriminator = [1] → base64 "AQ=="
-        { memcmp: { offset: 0n, bytes: "AQ==", encoding: "base64" } },
+        {
+          memcmp: {
+            offset: 0n,
+            bytes: "AQ==" as unknown as Base64EncodedBytes,
+            encoding: "base64",
+          },
+        },
         // Authority at offset 1 (base58 address)
-        { memcmp: { offset: 1n, bytes: authority, encoding: "base58" } },
+        {
+          memcmp: {
+            offset: 1n,
+            bytes: authority as unknown as Base58EncodedBytes,
+            encoding: "base58",
+          },
+        },
       ],
     })
     .send();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return accounts.map((item: any) => {
+  return (accounts as any[]).map((item: any) => {
     const b64: string = Array.isArray(item.account.data)
       ? item.account.data[0]
       : item.account.data;
@@ -151,8 +185,8 @@ export async function fetchEstatesByAuthority(
       data: raw,
       executable: item.account.executable,
       lamports: item.account.lamports,
+      space: BigInt(raw.length),
       programAddress: HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
-      exists: true,
     });
     return { address: item.pubkey as Address, data: decoded.data };
   });

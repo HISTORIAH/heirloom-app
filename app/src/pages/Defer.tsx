@@ -7,6 +7,7 @@ import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
 import {
   discoverVaultTokenAccounts,
   fetchEstateByPair,
+  fetchVaultClaimableLamports,
   getVaultAddress,
   sendDelegateDefer,
   type Client,
@@ -87,8 +88,8 @@ async function lookupEstate(
     const maybe = await fetchEstateByPair(client.rpc, authority, heir);
     if (!maybe.exists) return null;
     const vaultPda = await getVaultAddress(authority, heir);
-    const [{ value: lamports }, vaultTokens] = await Promise.all([
-      client.rpc.getBalance(vaultPda).send(),
+    const [lamports, vaultTokens] = await Promise.all([
+      fetchVaultClaimableLamports(client.rpc, vaultPda),
       discoverVaultTokenAccounts(client.rpc, vaultPda),
     ]);
     const lastHeartbeat = Number(maybe.data.lastHeartbeat);
