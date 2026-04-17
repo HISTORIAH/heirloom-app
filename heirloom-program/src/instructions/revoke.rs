@@ -44,7 +44,7 @@ impl Revoke {
         ctx.accounts.validate()?;
 
         // return funds to authority
-        ctx.accounts.return_assets()?;
+        ctx.accounts.return_assets(&ctx.bumps)?;
 
         // close estate and vault, rent lamports go back to authority
         let authority_view = ctx.accounts.authority.to_account_view();
@@ -131,12 +131,13 @@ impl Revoke {
     }
 
     #[inline(always)]
-    pub fn return_assets(&self) -> Result<(), ProgramError> {
+    pub fn return_assets(&self, revoke_ix_bumps: &RevokeBumps) -> Result<(), ProgramError> {
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
                 let vault_token_account = self.vault_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_token_account.amount();
+                let vault_seeds = self.vault_seeds(revoke_ix_bumps);
 
                 self.token_program
                     .transfer_checked(
@@ -147,7 +148,7 @@ impl Revoke {
                         amount,
                         mint.decimals(),
                     )
-                    .invoke()?;
+                    .invoke_signed(&vault_seeds)?;
 
                 // close vault token account, rent back to authority
                 self.token_program

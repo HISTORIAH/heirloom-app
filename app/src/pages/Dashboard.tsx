@@ -128,7 +128,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [updatingHeir, setUpdatingHeir] = useState(false);
   const [showUpdateHeir, setShowUpdateHeir] = useState(false);
 
-  const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0;
+  const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
   const initial = computeTick(estate, vaultEmpty);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);

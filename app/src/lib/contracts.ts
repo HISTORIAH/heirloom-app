@@ -31,7 +31,6 @@ import {
 import {
   findAssociatedTokenPda,
   getCreateAssociatedTokenIdempotentInstructionAsync,
-  getTransferCheckedInstruction,
   TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
@@ -411,16 +410,12 @@ export interface RegisterAndDepositArgs {
   heir: Address;
   mint: Address;
   amount: bigint;
-  decimals: number;
   tokenProgram?: Address;
 }
 
 /**
  * Registers a new token asset on an existing estate and deposits tokens.
- * Bundles three instructions in one transaction:
- *   1. system_program.create_account — allocate vault TA
- *   2. heirloom.register_asset — init vault TA + increment claimable_assets
- *   3. spl_token.transfer_checked — move tokens from authority ATA to vault TA
+ * The program handles token transfer internally — no separate transfer ix needed.
  */
 export async function sendRegisterAndDeposit(
   client: Client,
@@ -428,37 +423,31 @@ export async function sendRegisterAndDeposit(
 ): Promise<string> {
   const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
 
-  // Derive the vault ATA — registerAsset creates it via CPI
+  const [vaultPda] = await findVaultPda({ authority: args.authority.address, heir: args.heir });
+
   const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: (await findVaultPda({ authority: args.authority.address, heir: args.heir }))[0],
+    owner: vaultPda,
+    mint: args.mint,
+    tokenProgram,
+  });
+
+  const [authorityTokenAccount] = await findAssociatedTokenPda({
+    owner: args.authority.address,
     mint: args.mint,
     tokenProgram,
   });
 
   const registerIx = await getRegisterAssetInstructionAsync({
-      authority: args.authority,
-      heir: args.heir,
-      mint: args.mint,
-      vaultTokenAccount,
-      tokenProgram,
-      amount: args.amount,
-  });
-
-  const authorityAta = await getAtaAddress(
-    args.authority.address,
-    args.mint,
-    tokenProgram,
-  );
-  const transferIx = getTransferCheckedInstruction({
-    source: authorityAta,
-    mint: args.mint,
-    destination: vaultTokenAccount,
     authority: args.authority,
+    heir: args.heir,
+    mint: args.mint,
+    vaultTokenAccount,
+    authorityTokenAccount,
+    tokenProgram,
     amount: args.amount,
-    decimals: args.decimals,
   });
 
-  return sendTx(client, args.authority, [registerIx, transferIx]);
+  return sendTx(client, args.authority, registerIx);
 }
 
 // ---------------------------------------------------------------------------
