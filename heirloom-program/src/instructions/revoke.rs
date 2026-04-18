@@ -14,13 +14,12 @@ pub struct Revoke {
     )]
     pub authority: Signer,
 
-    // FIXME: conflicting wincode versions don't allow us to pass them as args
     pub heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump, close=authority)]
+    #[account(mut, seeds = Estate::seeds(authority, heir), bump)]
     pub estate: Account<Estate>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump, close=authority)]
+    #[account(mut, seeds = Vault::seeds(authority, heir), bump)]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -45,7 +44,7 @@ impl Revoke {
         ctx.accounts.validate()?;
 
         // return funds to authority
-        ctx.accounts.return_assets()?;
+        ctx.accounts.return_assets(&ctx.bumps)?;
 
         // close estate and vault, rent lamports go back to authority
         let authority_view = ctx.accounts.authority.to_account_view();
@@ -68,30 +67,77 @@ impl Revoke {
             return Err(HeirloomError::AlreadyClaimed.into());
         }
 
-        // token accounts must all be present together
-        if self.authority_token_account.is_some()
-            && (self.vault_token_account.is_none() || self.mint.is_none())
-        {
-            return Err(HeirloomError::MissingTokenAccounts.into());
-        }
+        match self.mint.as_ref() {
+            Some(mint) => {
+                let vault_token_account = self
+                    .vault_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-        // vault token account must be owned by vault PDA
-        if let Some(vault_ta) = self.vault_token_account.as_ref() {
-            if vault_ta.owner() != self.vault.address() {
-                return Err(HeirloomError::InvalidAccount.into());
+                let authority_token_account = self
+                    .authority_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
+
+                // vault token account must be owned by vault
+                if vault_token_account.owner() != self.vault.address() {
+                    return Err(HeirloomError::InvalidAccount.into());
+                }
+
+                require_eq!(
+                    authority_token_account.mint(),
+                    mint.address(),
+                    HeirloomError::MintMismatch
+                );
+                require_eq!(
+                    vault_token_account.mint(),
+                    mint.address(),
+                    HeirloomError::MintMismatch
+                );
+            }
+            None => {
+                // SOL revoke drains all vault lamports — must be last, after all tokens are revoked
+                if self.authority_token_account.is_none() && self.estate.claimable_assets > 1 {
+                    return Err(HeirloomError::TooManyClaimableAssets.into());
+                }
             }
         }
+
+        // // token accounts must all be present together
+        // if self.authority_token_account.is_some()
+        //     && (self.vault_token_account.is_none() || self.mint.is_none())
+        // {
+        //     return Err(HeirloomError::MissingTokenAccounts.into());
+        // }
+
+        // // vault token account must be owned by vault PDA
+        // if let Some(vault_ta) = self.vault_token_account.as_ref() {
+        //     if vault_ta.owner() != self.vault.address() {
+        //         return Err(HeirloomError::InvalidAccount.into());
+        //     }
+        // }
+
+        // // token accounts must all be present together — check mint too, not just authority TA
+        // if self.vault_token_account.is_some() && self.mint.is_none() {
+        //     return Err(HeirloomError::MissingTokenAccounts.into());
+        // }
+
+        // // SOL revoke drains all vault lamports — must be last, after all tokens are revoked
+        // if self.authority_token_account.is_none() && self.estate.claimable_assets > 1 {
+        //     return Err(HeirloomError::TooManyClaimableAssets.into());
+        // }
 
         Ok(())
     }
 
     #[inline(always)]
-    pub fn return_assets(&self) -> Result<(), ProgramError> {
+    pub fn return_assets(&self, revoke_ix_bumps: &RevokeBumps) -> Result<(), ProgramError> {
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
                 let vault_token_account = self.vault_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_token_account.amount();
+                let vault_seeds = self.vault_seeds(revoke_ix_bumps);
 
                 self.token_program
                     .transfer_checked(
@@ -102,12 +148,12 @@ impl Revoke {
                         amount,
                         mint.decimals(),
                     )
-                    .invoke()?;
+                    .invoke_signed(&vault_seeds)?;
 
                 // close vault token account, rent back to authority
                 self.token_program
                     .close_account(vault_token_account, &self.authority, &self.vault)
-                    .invoke()?;
+                    .invoke_signed(&vault_seeds)?;
             }
             // SOL path: drain vault lamports back to authority
             None => {

@@ -1,5 +1,5 @@
 use quasar_lang::prelude::*;
-use quasar_spl::{Mint, Token, TokenCpi, TokenInterface};
+use quasar_spl::{AssociatedTokenCpi, AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface};
 
 use crate::{
     errors::HeirloomError,
@@ -18,7 +18,7 @@ pub struct Claim {
     pub delegate: Option<UncheckedAccount>,
 
     #[account(mut)]
-    pub heir_token_account: Option<InterfaceAccount<Token>>,
+    pub heir_token_account: Option<UncheckedAccount>,
 
     #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
     pub estate: Account<Estate>,
@@ -33,6 +33,8 @@ pub struct Claim {
     pub mint: Option<Account<Mint>>,
 
     pub token_program: Interface<TokenInterface>,
+
+    pub associated_token_program: Program<AssociatedTokenProgram>,
 
     pub clock: Sysvar<Clock>,
 
@@ -123,6 +125,18 @@ impl Claim {
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_ta.amount();
                 let vault_seeds = self.vault_seeds(claim_ix_bumps);
+
+                // Create heir's ATA if it doesn't exist yet
+                self.associated_token_program
+                    .create_idempotent(
+                        self.heir.to_account_view(),
+                        &heir_ta.to_account_view(),
+                        self.heir.to_account_view(),
+                        mint,
+                        &self.system_program,
+                        &self.token_program,
+                    )
+                    .invoke()?;
 
                 self.token_program
                     .transfer_checked(

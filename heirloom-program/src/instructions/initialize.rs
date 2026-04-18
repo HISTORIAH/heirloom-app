@@ -26,8 +26,9 @@ pub struct Initialize {
     #[account(mut, init, payer = authority, seeds = Vault::seeds(authority, heir), bump )]
     pub vault: Account<Vault>,
 
+    // we create this ourselves
     #[account(mut)]
-    pub vault_token_account: Option<InterfaceAccount<Token>>,
+    pub vault_token_account: Option<UncheckedAccount>,
 
     #[account(mut)]
     pub mint: Option<Account<Mint>>,
@@ -80,6 +81,8 @@ impl Initialize {
 
     #[inline(always)]
     pub fn validate_inputs(&self, amount: u64) -> Result<(), ProgramError> {
+        require!(amount > 0, HeirloomError::ZeroDepositAmount);
+
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
                 // all three token accounts must be present together
@@ -94,7 +97,7 @@ impl Initialize {
 
                 // mint must be initialized
                 if !mint.is_initialized() {
-                    return Err(HeirloomError::MintMismatch.into());
+                    return Err(HeirloomError::InvalidAccount.into());
                 }
 
                 // authority ATA must belong to the correct mint
@@ -131,19 +134,16 @@ impl Initialize {
         };
         let mint = self.mint.as_ref().unwrap();
 
-        // uninitialized
-        if vault_ta.to_account_view().is_data_empty() {
-            self.associated_token_program
-                .create_idempotent(
-                    self.authority.to_account_view(),
-                    &vault_ta.to_account_view(),
-                    self.vault.to_account_view(),
-                    mint,
-                    &self.system_program,
-                    &self.token_program,
-                )
-                .invoke()?;
-        }
+        self.associated_token_program
+            .create_idempotent(
+                self.authority.to_account_view(),
+                &vault_ta.to_account_view(),
+                self.vault.to_account_view(),
+                mint,
+                &self.system_program,
+                &self.token_program,
+            )
+            .invoke()?;
 
         Ok(())
     }

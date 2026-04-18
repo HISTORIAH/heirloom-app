@@ -397,19 +397,22 @@ export const sendRegisterAsset = async (
   client: Client,
   args: {
     heir: Address;
-    mint: Address;
-    vaultTokenAccount: Address;
+    amount: bigint,
+    mint?: Address;
+    vaultTokenAccount?: Address;
     tokenProgram?: Address;
   },
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
+
   const ix = await getRegisterAssetInstructionAsync({
     authority,
     heir: args.heir,
+    amount: args.amount,
     mint: args.mint,
     vaultTokenAccount: args.vaultTokenAccount,
-    tokenProgram: args.tokenProgram,
+    tokenProgram:args.tokenProgram
   });
 
   await pipe(

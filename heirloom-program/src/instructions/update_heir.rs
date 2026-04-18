@@ -1,5 +1,7 @@
 use quasar_lang::{pda::based_try_find_program_address, prelude::*, sysvars::Sysvar as _};
-use quasar_spl::{AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface};
+use quasar_spl::{
+    AssociatedTokenCpi, AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface,
+};
 
 use crate::{
     errors::HeirloomError,
@@ -28,12 +30,12 @@ pub struct UpdateHeir {
     #[account(mut)]
     pub new_vault: UncheckedAccount,
 
-    // token path — optional
     #[account(mut)]
     pub vault_token_account: Option<InterfaceAccount<Token>>,
 
+    // this will be created by the program
     #[account(mut)]
-    pub new_vault_token_account: Option<InterfaceAccount<Token>>,
+    pub new_vault_token_account: Option<UncheckedAccount>,
 
     #[account(mut)]
     pub mint: Option<Account<Mint>>,
@@ -52,17 +54,9 @@ pub struct UpdateHeir {
 impl UpdateHeir {
     #[inline(always)]
     pub fn update_heir_handler<'a>(ctx: &mut Ctx<UpdateHeir>) -> Result<(), ProgramError> {
-        let rent = Rent::get()?;
-
-        // extract addresses as owned values so we don't hold views across the mutable borrow
         let authority_addr = *ctx.accounts.authority.address();
         let new_heir_addr = *ctx.accounts.new_heir.address();
 
-        log("deriving pdas"); // ! DEBUG STATEMENT
-
-        // based_try_find_program_address uses the
-        // sol_sha256 syscall (~544 CU/attempt) which is faster than the pure
-        // Rust find_program_address_const when seeds are runtime values.
         let (new_estate_addr, new_estate_bump) = based_try_find_program_address(
             &[
                 b"estate",
@@ -82,112 +76,137 @@ impl UpdateHeir {
 
         ctx.accounts
             .validate_inputs(&new_vault_addr, &new_estate_addr)?;
-        log("validate has run"); // ! DEBUG STATEMENT
 
-        // --- create new estate ---
-        let estate_lamports = rent.try_minimum_balance(Estate::SPACE)?;
-        {
-            let new_estate_bump_arr = [new_estate_bump];
-            let new_estate_seeds = [
-                Seed::from(<Estate as HasSeeds>::SEED_PREFIX),
-                Seed::from(authority_addr.as_ref()),
-                Seed::from(new_heir_addr.as_ref()),
-                Seed::from(new_estate_bump_arr.as_slice()),
-            ];
+        ctx.accounts.create_new_accounts(
+            authority_addr,
+            new_heir_addr,
+            new_estate_bump,
+            new_vault_bump,
+        )?;
 
-            let authority_view = ctx.accounts.authority.to_account_view();
-            let new_estate_view = ctx.accounts.new_estate.to_account_view();
-            ctx.accounts
-                .system_program
-                .create_account(
-                    authority_view,
-                    new_estate_view,
-                    estate_lamports,
-                    Estate::SPACE as u64,
-                    &crate::id(),
-                )
-                .invoke_signed(&new_estate_seeds)?;
-        }
-
-        // --- create new vault ---
-        let vault_lamports = rent.try_minimum_balance(Vault::SPACE)?;
-        {
-            let new_vault_bump_arr = [new_vault_bump];
-            let new_vault_seeds = [
-                Seed::from(<Vault as HasSeeds>::SEED_PREFIX),
-                Seed::from(authority_addr.as_ref()),
-                Seed::from(new_heir_addr.as_ref()),
-                Seed::from(new_vault_bump_arr.as_slice()),
-            ];
-
-            let authority_view = ctx.accounts.authority.to_account_view();
-            let new_vault_view = ctx.accounts.new_vault.to_account_view();
-            ctx.accounts
-                .system_program
-                .create_account(
-                    authority_view,
-                    new_vault_view,
-                    vault_lamports,
-                    Vault::SPACE as u64,
-                    &crate::id(),
-                )
-                .invoke_signed(&new_vault_seeds)?;
-        }
-        log("create new accounts has run"); // ! DEBUG STATEMENT
-
-        // --- write data into new estate and vault ---
         ctx.accounts
             .set_new_account_data(new_estate_addr, new_estate_bump, new_vault_bump)?;
 
-        log("set new account data has run"); // ! DEBUG STATEMENT
+        ctx.accounts.migrate_assets(&ctx.bumps)?;
 
-        // --- token path: transfer tokens and close old vault token account ---
-        if let Some(vault_ta) = ctx.accounts.vault_token_account.as_ref() {
-            let new_vault_ta = ctx.accounts.new_vault_token_account.as_ref().unwrap();
-            let mint = ctx.accounts.mint.as_ref().unwrap();
-            let amount = vault_ta.amount();
-            let new_vault_addr = *ctx.accounts.new_vault.address();
+        Ok(())
+    }
 
-            //  create and init new vault ata
-            if new_vault_ta.to_account_view().is_data_empty() {
-                ctx.accounts
-                    .token_program
-                    .initialize_account3(new_vault_ta, mint, &new_vault_addr)
-                    .invoke()?;
-            }
+    #[inline(always)]
+    pub fn validate_inputs(
+        &self,
+        expected_vault: &Address,
+        expected_estate: &Address,
+    ) -> Result<(), ProgramError> {
+        let new_estate_view = self.new_estate.to_account_view();
+        let new_vault_view = self.new_vault.to_account_view();
 
-            // transfer tokens from old vault TA to new vault TA
-            ctx.accounts
-                .token_program
-                .transfer_checked(
-                    vault_ta,
-                    mint,
-                    new_vault_ta,
-                    &ctx.accounts.vault,
-                    amount,
-                    mint.decimals(),
-                )
-                .invoke()?;
+        require_eq!(
+            self.estate.is_claimed.get(),
+            false,
+            HeirloomError::AlreadyClaimed
+        );
 
-            // close old vault token account, rent back to authority
-            ctx.accounts
-                .token_program
-                .close_account(vault_ta, &ctx.accounts.authority, &ctx.accounts.vault)
-                .invoke()?;
-        } else {
-            // --- SOL path: transfer lamports from old vault to new vault ---
-            let old_vault_view = ctx.accounts.vault.to_account_view();
-            let new_vault_view = ctx.accounts.new_vault.to_account_view();
-            let amount = old_vault_view.lamports();
+        require!(
+            self.estate.claimable_assets <= 1,
+            HeirloomError::TooManyClaimableAssets
+        );
 
-            set_lamports(old_vault_view, 0);
-            set_lamports(new_vault_view, new_vault_view.lamports() + amount);
+        let now = self.clock.unix_timestamp;
+        if now < self.estate.paused_until {
+            return Err(HeirloomError::EstatePaused.into());
         }
 
-        // --- close old estate and vault, rent back to authority ---
-        let authority_view = ctx.accounts.authority.to_account_view();
-        crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
-        crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
+        // new PDAs must be uninitialised
+        require!(
+            new_estate_view.is_data_empty(),
+            HeirloomError::InvalidAccount
+        );
+        require!(
+            new_vault_view.is_data_empty(),
+            HeirloomError::InvalidAccount
+        );
+
+        require_eq!(
+            new_estate_view.address(),
+            expected_estate,
+            HeirloomError::MismatchedAddress
+        );
+        require_eq!(
+            new_vault_view.address(),
+            expected_vault,
+            HeirloomError::MismatchedAddress
+        );
+
+        // token path: if mint is provided, all token accounts must be present
+        if let Some(mint_acc) = self.mint.as_ref() {
+            let vault_ta = self
+                .vault_token_account
+                .as_ref()
+                .ok_or(HeirloomError::MissingTokenAccounts)?;
+            let _new_vault_ta = self
+                .new_vault_token_account
+                .as_ref()
+                .ok_or(HeirloomError::MissingTokenAccounts)?;
+
+            if vault_ta.owner() != self.vault.address() {
+                return Err(HeirloomError::InvalidAccount.into());
+            }
+            require_eq!(
+                vault_ta.mint(),
+                mint_acc.address(),
+                HeirloomError::MintMismatch
+            );
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    pub fn create_new_accounts(
+        &self,
+        authority_addr: Address,
+        new_heir_addr: Address,
+        new_estate_bump: u8,
+        new_vault_bump: u8,
+    ) -> Result<(), ProgramError> {
+        let rent = Rent::get()?;
+
+        let estate_lamports = rent.try_minimum_balance(Estate::SPACE)?;
+        let new_estate_bump_arr = [new_estate_bump];
+        let new_estate_seeds = [
+            Seed::from(<Estate as HasSeeds>::SEED_PREFIX),
+            Seed::from(authority_addr.as_ref()),
+            Seed::from(new_heir_addr.as_ref()),
+            Seed::from(new_estate_bump_arr.as_slice()),
+        ];
+        self.system_program
+            .create_account(
+                self.authority.to_account_view(),
+                self.new_estate.to_account_view(),
+                estate_lamports,
+                Estate::SPACE as u64,
+                &crate::id(),
+            )
+            .invoke_signed(&new_estate_seeds)?;
+
+        let vault_lamports = rent.try_minimum_balance(Vault::SPACE)?;
+        let new_vault_bump_arr = [new_vault_bump];
+        let new_vault_seeds = [
+            Seed::from(<Vault as HasSeeds>::SEED_PREFIX),
+            Seed::from(authority_addr.as_ref()),
+            Seed::from(new_heir_addr.as_ref()),
+            Seed::from(new_vault_bump_arr.as_slice()),
+        ];
+        self.system_program
+            .create_account(
+                self.authority.to_account_view(),
+                self.new_vault.to_account_view(),
+                vault_lamports,
+                Vault::SPACE as u64,
+                &crate::id(),
+            )
+            .invoke_signed(&new_vault_seeds)?;
 
         Ok(())
     }
@@ -239,66 +258,53 @@ impl UpdateHeir {
     }
 
     #[inline(always)]
-    pub fn validate_inputs(
-        &self,
-        expected_vault: &Address,
-        expected_estate: &Address,
+    pub fn migrate_assets(
+        &mut self,
+        update_heir_ix_bumps: &UpdateHeirBumps,
     ) -> Result<(), ProgramError> {
-        let new_estate_view = self.new_estate.to_account_view();
-        let new_vault_view = self.new_vault.to_account_view();
+        if let Some(vault_ta) = self.vault_token_account.as_ref() {
+            let new_vault_ta = self.new_vault_token_account.as_ref().unwrap();
+            let mint = self.mint.as_ref().unwrap();
+            let amount = vault_ta.amount();
+            let vault_seeds = self.vault_seeds(update_heir_ix_bumps);
 
-        require_eq!(
-            self.estate.is_claimed.get(),
-            false,
-            HeirloomError::AlreadyClaimed
-        );
+            self.associated_token_program
+                .create_idempotent(
+                    self.authority.to_account_view(),
+                    &new_vault_ta.to_account_view(),
+                    self.new_vault.to_account_view(),
+                    mint,
+                    &self.system_program,
+                    &self.token_program,
+                )
+                .invoke()?;
 
-        let now = self.clock.unix_timestamp;
-        if now < self.estate.paused_until {
-            return Err(HeirloomError::EstatePaused.into());
+            self.token_program
+                .transfer_checked(
+                    vault_ta,
+                    mint,
+                    new_vault_ta,
+                    &self.vault,
+                    amount,
+                    mint.decimals(),
+                )
+                .invoke_signed(&vault_seeds)?;
+
+            self.token_program
+                .close_account(vault_ta, &self.authority, &self.vault)
+                .invoke_signed(&vault_seeds)?;
+        } else {
+            let old_vault_view = self.vault.to_account_view();
+            let new_vault_view = self.new_vault.to_account_view();
+            let amount = old_vault_view.lamports();
+
+            set_lamports(old_vault_view, 0);
+            set_lamports(new_vault_view, new_vault_view.lamports() + amount);
         }
 
-        // new PDAs must be uninitialised
-        require!(
-            new_estate_view.is_data_empty(),
-            HeirloomError::InvalidAccount
-        );
-        require!(
-            new_vault_view.is_data_empty(),
-            HeirloomError::InvalidAccount
-        );
-
-        require_eq!(
-            new_estate_view.address(),
-            expected_estate,
-            HeirloomError::MismatchedAddress
-        );
-        require_eq!(
-            new_vault_view.address(),
-            expected_vault,
-            HeirloomError::MismatchedAddress
-        );
-
-        // token path: if mint is provided, all token accounts must be present
-        if let Some(mint_acc) = self.mint.as_ref() {
-            let vault_ta = self
-                .vault_token_account
-                .as_ref()
-                .ok_or(HeirloomError::MissingTokenAccounts)?;
-            let _new_vault_ta = self
-                .new_vault_token_account
-                .as_ref()
-                .ok_or(HeirloomError::MissingTokenAccounts)?;
-
-            if vault_ta.owner() != self.vault.address() {
-                return Err(HeirloomError::InvalidAccount.into());
-            }
-            require_eq!(
-                vault_ta.mint(),
-                mint_acc.address(),
-                HeirloomError::MintMismatch
-            );
-        }
+        let authority_view = self.authority.to_account_view();
+        crate::helpers::close_account(&mut self.estate, authority_view)?;
+        crate::helpers::close_account(&mut self.vault, authority_view)?;
 
         Ok(())
     }

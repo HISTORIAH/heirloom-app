@@ -285,25 +285,66 @@ const VaultProviderInner: React.FC<{
         );
       }
 
-      const txId = await sendInitialize(client, {
-        authority: signer,
-        heir: heirAddress,
-        amount: input.amountLamports,
-        label: input.label,
-        heartbeatInterval: BigInt(input.heartbeatInterval),
-        gracePeriod: BigInt(input.gracePeriod),
-        pauseDuration: BigInt(input.pauseDuration),
-        delegate: input.delegate ? toAddress(input.delegate) : undefined,
-      });
-      // Register additional token assets after init
-      if (input.tokens && input.tokens.length > 0) {
-        for (const tok of input.tokens) {
+      const validTokens = (input.tokens ?? []).filter((tok) => tok.amount > 0n);
+
+      let txId: string;
+
+      if (input.amountLamports > 0n) {
+        // SOL is the primary asset for initialize
+        txId = await sendInitialize(client, {
+          authority: signer,
+          heir: heirAddress,
+          amount: input.amountLamports,
+          label: input.label,
+          heartbeatInterval: BigInt(input.heartbeatInterval),
+          gracePeriod: BigInt(input.gracePeriod),
+          pauseDuration: BigInt(input.pauseDuration),
+          delegate: input.delegate ? toAddress(input.delegate) : undefined,
+        });
+        for (const tok of validTokens) {
           await sendRegisterAndDeposit(client, {
             authority: signer,
             heir: heirAddress,
             mint: toAddress(tok.mint),
             amount: tok.amount,
-            decimals: tok.decimals,
+            tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
+          });
+        }
+      } else {
+        // First selected token is the primary asset for initialize
+        const [primaryToken, ...remainingTokens] = validTokens;
+        if (!primaryToken) {
+          throw new Error("Select at least one asset (SOL or a token) to create a vault.");
+        }
+        const mintAddr = toAddress(primaryToken.mint);
+        const tokenProgram = primaryToken.tokenProgram ? toAddress(primaryToken.tokenProgram) : undefined;
+        const vaultTokenAccount = tokenProgram
+          ? await getAtaAddress(vaultPda, mintAddr, tokenProgram)
+          : await getAtaAddress(vaultPda, mintAddr);
+        const authorityTokenAccount = tokenProgram
+          ? await getAtaAddress(authority, mintAddr, tokenProgram)
+          : await getAtaAddress(authority, mintAddr);
+
+        txId = await sendInitialize(client, {
+          authority: signer,
+          heir: heirAddress,
+          amount: primaryToken.amount,
+          label: input.label,
+          heartbeatInterval: BigInt(input.heartbeatInterval),
+          gracePeriod: BigInt(input.gracePeriod),
+          pauseDuration: BigInt(input.pauseDuration),
+          delegate: input.delegate ? toAddress(input.delegate) : undefined,
+          mint: mintAddr,
+          tokenProgram,
+          vaultTokenAccount,
+          authorityTokenAccount,
+        });
+        for (const tok of remainingTokens) {
+          await sendRegisterAndDeposit(client, {
+            authority: signer,
+            heir: heirAddress,
+            mint: toAddress(tok.mint),
+            amount: tok.amount,
             tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
           });
         }
