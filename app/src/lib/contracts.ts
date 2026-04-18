@@ -287,7 +287,7 @@ export async function sendRevokeAll(
   tokens: RevokeTokenAsset[],
   revokeSol: boolean,
 ): Promise<string> {
-  const ixs = await Promise.all(
+  const ixs: Ix[] = await Promise.all(
     tokens.map((t) =>
       getRevokeInstructionAsync({
         authority,
@@ -353,7 +353,7 @@ export async function sendClaimAll(
   claimSol: boolean,
   delegate?: Address,
 ): Promise<string> {
-  const ixs = await Promise.all(
+  const ixs: Ix[] = await Promise.all(
     tokens.map((t) =>
       getClaimInstructionAsync({
         heir,
