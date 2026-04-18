@@ -356,7 +356,6 @@ const VaultProviderInner: React.FC<{
         heir: toAddress(heir),
         mint: toAddress(token.mint),
         amount: token.amount,
-        // decimals: token.decimals,
         tokenProgram: token.tokenProgram ? toAddress(token.tokenProgram) : undefined,
       });
       setPendingTxId(txId);
@@ -398,11 +397,14 @@ const VaultProviderInner: React.FC<{
         });
       }
 
-      // Revoke SOL (closes estate + vault when claimable_assets reaches 0)
-      lastTx = await sendRevoke(client, {
-        authority: signer,
-        heir: heirAddr,
-      });
+      // Only revoke SOL if the vault actually holds lamports above rent
+      const solBalance = await fetchVaultClaimableLamports(rpc, vaultPda);
+      if (solBalance > 0n) {
+        lastTx = await sendRevoke(client, {
+          authority: signer,
+          heir: heirAddr,
+        });
+      }
 
       setPendingTxId(lastTx);
       return lastTx;
