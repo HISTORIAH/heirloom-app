@@ -363,7 +363,6 @@ const VaultProviderInner: React.FC<{
         heir: toAddress(heir),
         mint: toAddress(token.mint),
         amount: token.amount,
-        decimals: token.decimals,
         tokenProgram: token.tokenProgram ? toAddress(token.tokenProgram) : undefined,
       });
       setPendingTxId(txId);
