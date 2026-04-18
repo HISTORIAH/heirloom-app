@@ -269,6 +269,44 @@ export async function sendRevoke(
   return sendTx(client, args.authority, revokeIx);
 }
 
+export interface RevokeTokenAsset {
+  mint: Address;
+  vaultTokenAccount: Address;
+  authorityTokenAccount: Address;
+  tokenProgram?: Address;
+}
+
+/**
+ * Revokes all tokens then SOL in a single transaction.
+ * tokens must be ordered with all token revokes before the SOL revoke.
+ */
+export async function sendRevokeAll(
+  client: Client,
+  authority: TransactionSigner,
+  heir: Address,
+  tokens: RevokeTokenAsset[],
+  revokeSol: boolean,
+): Promise<string> {
+  const ixs = await Promise.all(
+    tokens.map((t) =>
+      getRevokeInstructionAsync({
+        authority,
+        heir,
+        mint: t.mint,
+        tokenProgram: t.tokenProgram,
+        authorityTokenAccount: t.authorityTokenAccount,
+        vaultTokenAccount: t.vaultTokenAccount,
+      }),
+    ),
+  );
+
+  if (revokeSol) {
+    ixs.push(await getRevokeInstructionAsync({ authority, heir }));
+  }
+
+  return sendTx(client, authority, ixs);
+}
+
 export interface ClaimArgs {
   heir: TransactionSigner;
   authority: Address;
@@ -294,6 +332,46 @@ export async function sendClaim(
   });
 
   return sendTx(client, args.heir, claimIx);
+}
+
+export interface ClaimTokenAsset {
+  mint: Address;
+  vaultTokenAccount: Address;
+  heirTokenAccount: Address;
+  tokenProgram?: Address;
+}
+
+/**
+ * Claims all tokens then SOL in a single transaction.
+ * Tokens must come before SOL — the SOL claim closes the vault account.
+ */
+export async function sendClaimAll(
+  client: Client,
+  heir: TransactionSigner,
+  authority: Address,
+  tokens: ClaimTokenAsset[],
+  claimSol: boolean,
+  delegate?: Address,
+): Promise<string> {
+  const ixs = await Promise.all(
+    tokens.map((t) =>
+      getClaimInstructionAsync({
+        heir,
+        authority,
+        mint: t.mint,
+        tokenProgram: t.tokenProgram,
+        vaultTokenAccount: t.vaultTokenAccount,
+        heirTokenAccount: t.heirTokenAccount,
+        delegate,
+      }),
+    ),
+  );
+
+  if (claimSol) {
+    ixs.push(await getClaimInstructionAsync({ heir, authority, delegate }));
+  }
+
+  return sendTx(client, heir, ixs);
 }
 
 export interface DelegateDeferArgs {
@@ -361,6 +439,27 @@ export interface RegisterAndDepositArgs {
   tokenProgram?: Address;
 }
 
+async function buildRegisterAssetIx(
+  authority: TransactionSigner,
+  heir: Address,
+  mint: Address,
+  amount: bigint,
+  tokenProgram: Address,
+): Promise<Ix> {
+  const [vaultPda] = await findVaultPda({ authority: authority.address, heir });
+  const [vaultTokenAccount] = await findAssociatedTokenPda({ owner: vaultPda, mint, tokenProgram });
+  const [authorityTokenAccount] = await findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram });
+  return getRegisterAssetInstructionAsync({
+    authority,
+    heir,
+    mint,
+    vaultTokenAccount,
+    authorityTokenAccount,
+    tokenProgram,
+    amount,
+  });
+}
+
 /**
  * Registers a new token asset on an existing estate and deposits tokens.
  * The program handles token transfer internally — no separate transfer ix needed.
@@ -370,32 +469,54 @@ export async function sendRegisterAndDeposit(
   args: RegisterAndDepositArgs,
 ): Promise<string> {
   const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
+  const ix = await buildRegisterAssetIx(args.authority, args.heir, args.mint, args.amount, tokenProgram);
+  return sendTx(client, args.authority, ix);
+}
 
-  const [vaultPda] = await findVaultPda({ authority: args.authority.address, heir: args.heir });
+export interface TokenRegistration {
+  mint: Address;
+  amount: bigint;
+  tokenProgram?: Address;
+}
 
-  const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vaultPda,
-    mint: args.mint,
-    tokenProgram,
+/**
+ * Bundles initialize + all token registrations into a single transaction.
+ * initArgs describes the primary asset (SOL or first token).
+ * extraTokens are additional tokens to register in the same tx.
+ */
+export async function sendInitializeWithTokens(
+  client: Client,
+  initArgs: InitializeArgs,
+  extraTokens: TokenRegistration[],
+): Promise<string> {
+  const initIx = await getInitializeInstructionAsync({
+    authority: initArgs.authority,
+    heir: initArgs.heir,
+    delegate: initArgs.delegate,
+    authorityTokenAccount: initArgs.authorityTokenAccount,
+    vaultTokenAccount: initArgs.vaultTokenAccount,
+    mint: initArgs.mint,
+    tokenProgram: initArgs.tokenProgram,
+    heartbeatInterval: initArgs.heartbeatInterval,
+    gracePeriod: initArgs.gracePeriod,
+    pauseDuration: initArgs.pauseDuration,
+    amount: initArgs.amount,
+    label: initArgs.label,
   });
 
-  const [authorityTokenAccount] = await findAssociatedTokenPda({
-    owner: args.authority.address,
-    mint: args.mint,
-    tokenProgram,
-  });
+  const registerIxs = await Promise.all(
+    extraTokens.map((tok) =>
+      buildRegisterAssetIx(
+        initArgs.authority,
+        initArgs.heir,
+        tok.mint,
+        tok.amount,
+        tok.tokenProgram ?? TOKEN_PROGRAM_ADDRESS,
+      ),
+    ),
+  );
 
-  const registerIx = await getRegisterAssetInstructionAsync({
-    authority: args.authority,
-    heir: args.heir,
-    mint: args.mint,
-    vaultTokenAccount,
-    authorityTokenAccount,
-    tokenProgram,
-    amount: args.amount,
-  });
-
-  return sendTx(client, args.authority, registerIx);
+  return sendTx(client, initArgs.authority, [initIx, ...registerIxs]);
 }
 
 // ---------------------------------------------------------------------------
