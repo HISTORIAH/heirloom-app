@@ -1,5 +1,7 @@
 use quasar_lang::prelude::*;
-use quasar_spl::{AssociatedTokenCpi, AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface};
+use quasar_spl::{
+    AssociatedTokenCpi, AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface,
+};
 
 use crate::{
     errors::HeirloomError,

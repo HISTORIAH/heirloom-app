@@ -18,7 +18,6 @@ import {
   findEstatePda,
   findVaultPda,
   getClaimInstructionAsync,
-  getCloseEstateInstructionAsync,
   getDelegateDeferInstructionAsync,
   getInitializeInstructionAsync,
   getRegisterAssetInstructionAsync,
@@ -346,26 +345,6 @@ export async function sendUpdateHeir(
     newHeir: args.newHeir,
     newEstate,
     newVault,
-  });
-  return sendTx(client, args.authority, ix);
-}
-
-// ---------------------------------------------------------------------------
-// Close Estate — reclaim rent from a stale/empty estate
-// ---------------------------------------------------------------------------
-
-export interface CloseEstateArgs {
-  authority: TransactionSigner;
-  heir: Address;
-}
-
-export async function sendCloseEstate(
-  client: Client,
-  args: CloseEstateArgs,
-): Promise<string> {
-  const ix = await getCloseEstateInstructionAsync({
-    authority: args.authority,
-    heir: args.heir,
   });
   return sendTx(client, args.authority, ix);
 }

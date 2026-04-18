@@ -89,11 +89,4 @@ mod heirloom_program {
         log("ix: register_asset");
         RegisterAsset::register_asset_handler(&mut ctx, amount)
     }
-
-    // ! TEMP: WILL BE REMOVED AFTER estates are recovered
-    #[instruction(discriminator = 8)]
-    pub fn close_estate(ctx: Ctx<CloseEstate>) -> Result<(), ProgramError> {
-        log("ix: close_estate");
-        CloseEstate::close_estate_handler(&mut ctx)
-    }
 }
