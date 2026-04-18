@@ -10,7 +10,7 @@ import {
   getAtaAddress,
   getEstateAddress,
   getVaultAddress,
-  sendInitialize,
+  sendInitializeWithTokens,
   sendRegisterAndDeposit,
   sendRevoke,
   sendUpdate,
@@ -280,11 +280,11 @@ const VaultProviderInner: React.FC<{
 
       const validTokens = (input.tokens ?? []).filter((tok) => tok.amount > 0n);
 
-      let txId: string;
+      let initArgs: Parameters<typeof sendInitializeWithTokens>[1];
+      let extraTokens: Parameters<typeof sendInitializeWithTokens>[2];
 
       if (input.amountLamports > 0n) {
-        // SOL is the primary asset for initialize
-        txId = await sendInitialize(client, {
+        initArgs = {
           authority: signer,
           heir: heirAddress,
           amount: input.amountLamports,
@@ -293,18 +293,13 @@ const VaultProviderInner: React.FC<{
           gracePeriod: BigInt(input.gracePeriod),
           pauseDuration: BigInt(input.pauseDuration),
           delegate: input.delegate ? toAddress(input.delegate) : undefined,
-        });
-        for (const tok of validTokens) {
-          await sendRegisterAndDeposit(client, {
-            authority: signer,
-            heir: heirAddress,
-            mint: toAddress(tok.mint),
-            amount: tok.amount,
-            tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
-          });
-        }
+        };
+        extraTokens = validTokens.map((tok) => ({
+          mint: toAddress(tok.mint),
+          amount: tok.amount,
+          tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
+        }));
       } else {
-        // First selected token is the primary asset for initialize
         const [primaryToken, ...remainingTokens] = validTokens;
         if (!primaryToken) {
           throw new Error("Select at least one asset (SOL or a token) to create a vault.");
@@ -317,8 +312,7 @@ const VaultProviderInner: React.FC<{
         const authorityTokenAccount = tokenProgram
           ? await getAtaAddress(authority, mintAddr, tokenProgram)
           : await getAtaAddress(authority, mintAddr);
-
-        txId = await sendInitialize(client, {
+        initArgs = {
           authority: signer,
           heir: heirAddress,
           amount: primaryToken.amount,
@@ -331,17 +325,15 @@ const VaultProviderInner: React.FC<{
           tokenProgram,
           vaultTokenAccount,
           authorityTokenAccount,
-        });
-        for (const tok of remainingTokens) {
-          await sendRegisterAndDeposit(client, {
-            authority: signer,
-            heir: heirAddress,
-            mint: toAddress(tok.mint),
-            amount: tok.amount,
-            tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
-          });
-        }
+        };
+        extraTokens = remainingTokens.map((tok) => ({
+          mint: toAddress(tok.mint),
+          amount: tok.amount,
+          tokenProgram: tok.tokenProgram ? toAddress(tok.tokenProgram) : undefined,
+        }));
       }
+
+      const txId = await sendInitializeWithTokens(client, initArgs, extraTokens);
       setPendingTxId(txId);
       setPendingCreate(true);
       return txId;
