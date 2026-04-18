@@ -269,6 +269,44 @@ export async function sendRevoke(
   return sendTx(client, args.authority, revokeIx);
 }
 
+export interface RevokeTokenAsset {
+  mint: Address;
+  vaultTokenAccount: Address;
+  authorityTokenAccount: Address;
+  tokenProgram?: Address;
+}
+
+/**
+ * Revokes all tokens then SOL in a single transaction.
+ * tokens must be ordered with all token revokes before the SOL revoke.
+ */
+export async function sendRevokeAll(
+  client: Client,
+  authority: TransactionSigner,
+  heir: Address,
+  tokens: RevokeTokenAsset[],
+  revokeSol: boolean,
+): Promise<string> {
+  const ixs = await Promise.all(
+    tokens.map((t) =>
+      getRevokeInstructionAsync({
+        authority,
+        heir,
+        mint: t.mint,
+        tokenProgram: t.tokenProgram,
+        authorityTokenAccount: t.authorityTokenAccount,
+        vaultTokenAccount: t.vaultTokenAccount,
+      }),
+    ),
+  );
+
+  if (revokeSol) {
+    ixs.push(await getRevokeInstructionAsync({ authority, heir }));
+  }
+
+  return sendTx(client, authority, ixs);
+}
+
 export interface ClaimArgs {
   heir: TransactionSigner;
   authority: Address;
@@ -294,6 +332,46 @@ export async function sendClaim(
   });
 
   return sendTx(client, args.heir, claimIx);
+}
+
+export interface ClaimTokenAsset {
+  mint: Address;
+  vaultTokenAccount: Address;
+  heirTokenAccount: Address;
+  tokenProgram?: Address;
+}
+
+/**
+ * Claims all tokens then SOL in a single transaction.
+ * Tokens must come before SOL — the SOL claim closes the vault account.
+ */
+export async function sendClaimAll(
+  client: Client,
+  heir: TransactionSigner,
+  authority: Address,
+  tokens: ClaimTokenAsset[],
+  claimSol: boolean,
+  delegate?: Address,
+): Promise<string> {
+  const ixs = await Promise.all(
+    tokens.map((t) =>
+      getClaimInstructionAsync({
+        heir,
+        authority,
+        mint: t.mint,
+        tokenProgram: t.tokenProgram,
+        vaultTokenAccount: t.vaultTokenAccount,
+        heirTokenAccount: t.heirTokenAccount,
+        delegate,
+      }),
+    ),
+  );
+
+  if (claimSol) {
+    ixs.push(await getClaimInstructionAsync({ heir, authority, delegate }));
+  }
+
+  return sendTx(client, heir, ixs);
 }
 
 export interface DelegateDeferArgs {

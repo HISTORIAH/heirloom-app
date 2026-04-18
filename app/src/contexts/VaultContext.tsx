@@ -12,7 +12,7 @@ import {
   getVaultAddress,
   sendInitializeWithTokens,
   sendRegisterAndDeposit,
-  sendRevoke,
+  sendRevokeAll,
   sendUpdate,
   sendUpdateHeir,
   type Client,
@@ -371,35 +371,28 @@ const VaultProviderInner: React.FC<{
   const revokeEstateOnChain = useCallback(
     async (heir: string): Promise<string> => {
       const heirAddr = toAddress(heir);
-      let lastTx = "";
-
-      // Discover vault token accounts and revoke each one first
       const vaultPda = await getVaultAddress(authority, heirAddr);
-      const vaultTokens = await discoverVaultTokenAccounts(rpc, vaultPda);
 
-      for (const vt of vaultTokens) {
-        const mintAddr = toAddress(vt.mint);
-        const authorityAta = await getAtaAddress(authority, mintAddr);
-        lastTx = await sendRevoke(client, {
-          authority: signer,
-          heir: heirAddr,
-          mint: mintAddr,
-          authorityTokenAccount: authorityAta,
-          vaultTokenAccount: toAddress(vt.address),
-        });
-      }
+      const [vaultTokens, solBalance] = await Promise.all([
+        discoverVaultTokenAccounts(rpc, vaultPda),
+        fetchVaultClaimableLamports(rpc, vaultPda),
+      ]);
 
-      // Only revoke SOL if the vault actually holds lamports above rent
-      const solBalance = await fetchVaultClaimableLamports(rpc, vaultPda);
-      if (solBalance > 0n) {
-        lastTx = await sendRevoke(client, {
-          authority: signer,
-          heir: heirAddr,
-        });
-      }
+      const tokenAssets = await Promise.all(
+        vaultTokens.map(async (vt) => {
+          const mintAddr = toAddress(vt.mint);
+          const authorityAta = await getAtaAddress(authority, mintAddr);
+          return {
+            mint: mintAddr,
+            vaultTokenAccount: toAddress(vt.address),
+            authorityTokenAccount: authorityAta,
+          };
+        }),
+      );
 
-      setPendingTxId(lastTx);
-      return lastTx;
+      const txId = await sendRevokeAll(client, signer, heirAddr, tokenAssets, solBalance > 0n);
+      setPendingTxId(txId);
+      return txId;
     },
     [client, rpc, signer, authority],
   );

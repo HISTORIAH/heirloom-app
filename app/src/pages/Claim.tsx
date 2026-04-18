@@ -10,7 +10,7 @@ import {
   fetchVaultClaimableLamports,
   getAtaAddress,
   getVaultAddress,
-  sendClaim,
+  sendClaimAll,
   type Client,
   type VaultTokenInfo,
 } from "@/lib/contracts";
@@ -186,31 +186,26 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
     setClaimingOwner(inh.ownerAddress);
     try {
       const authorityAddr = toAddress(inh.ownerAddress);
-      let lastTx = "";
 
-      // Claim each token first (program decrements claimable_assets per token)
-      for (const vt of inh.vaultTokens) {
-        const mint = toAddress(vt.mint);
-        const heirAta = await getAtaAddress(heirAddress, mint);
-        lastTx = await sendClaim(client, {
-          heir: signer,
-          authority: authorityAddr,
-          mint,
-          vaultTokenAccount: toAddress(vt.address),
-          heirTokenAccount: heirAta,
-        });
-      }
+      const tokenAssets = await Promise.all(
+        inh.vaultTokens.map(async (vt) => {
+          const mint = toAddress(vt.mint);
+          const heirAta = await getAtaAddress(heirAddress, mint);
+          return {
+            mint,
+            vaultTokenAccount: toAddress(vt.address),
+            heirTokenAccount: heirAta,
+          };
+        }),
+      );
 
-      // Claim SOL — always send when vault has lamports.
-      // Program uses saturating_sub(1) on claimable_assets, so this works
-      // even if claimable_assets is already 0. When remaining hits 0,
-      // close_account transfers all vault lamports to heir.
-      if (inh.solBalance > 0) {
-        lastTx = await sendClaim(client, {
-          heir: signer,
-          authority: authorityAddr,
-        });
-      }
+      const lastTx = await sendClaimAll(
+        client,
+        signer,
+        authorityAddr,
+        tokenAssets,
+        inh.solBalance > 0,
+      );
 
       setClaimTxIds((p) => ({ ...p, [inh.ownerAddress]: lastTx }));
 
