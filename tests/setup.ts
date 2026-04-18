@@ -43,7 +43,6 @@ import {
   getClaimInstructionAsync,
   getDelegateDeferInstructionAsync,
   getRegisterAssetInstructionAsync,
-  getCloseEstateInstructionAsync,
   findEstatePda,
   findVaultPda,
   HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
@@ -413,28 +412,6 @@ export const sendRegisterAsset = async (
     mint: args.mint,
     vaultTokenAccount: args.vaultTokenAccount,
     tokenProgram:args.tokenProgram
-  });
-
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
-  return { authority: authority.address };
-};
-
-export const sendCloseEstate = async (
-  client: Client,
-  args: {
-    heir: Address;
-  },
-): Promise<{ authority: Address }> => {
-  const authority = await loadDefaultKeypair();
-
-  const ix = await getCloseEstateInstructionAsync({
-    authority,
-    heir: args.heir,
   });
 
   await pipe(

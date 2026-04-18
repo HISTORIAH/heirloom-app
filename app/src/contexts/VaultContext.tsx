@@ -10,7 +10,6 @@ import {
   getAtaAddress,
   getEstateAddress,
   getVaultAddress,
-  sendCloseEstate,
   sendInitialize,
   sendRegisterAndDeposit,
   sendRevoke,
@@ -248,19 +247,13 @@ const VaultProviderInner: React.FC<{
         }
       };
 
-      // Preflight: if estate still has data, close it if possible (stale case).
+      // Preflight: reject if an active estate already exists for this heir.
       const existing = await fetchEstateByPair(rpc, authority, heirAddress);
       if (existing.exists) {
-        if (existing.data.claimableAssets !== 0) {
-          throw new Error(
-            "An active estate with registered assets already exists for this heir. " +
-            "Revoke or claim all assets first, then try again.",
-          );
-        }
-        await sendCloseEstate(client, {
-          authority: signer,
-          heir: heirAddress,
-        });
+        throw new Error(
+          "An active estate already exists for this heir. " +
+          "Revoke or claim all assets first, then try again.",
+        );
       }
 
       // Wait for both PDAs to be fully reaped. Runtime GCs 0-lamport accounts
@@ -363,7 +356,7 @@ const VaultProviderInner: React.FC<{
         heir: toAddress(heir),
         mint: toAddress(token.mint),
         amount: token.amount,
-        decimals: token.decimals,
+        // decimals: token.decimals,
         tokenProgram: token.tokenProgram ? toAddress(token.tokenProgram) : undefined,
       });
       setPendingTxId(txId);
