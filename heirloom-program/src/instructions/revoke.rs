@@ -16,10 +16,10 @@ pub struct Revoke {
 
     pub heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump, close=authority)]
+    #[account(mut, seeds = Estate::seeds(authority, heir), bump)]
     pub estate: Account<Estate>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump, close=authority)]
+    #[account(mut, seeds = Vault::seeds(authority, heir), bump)]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -153,7 +153,7 @@ impl Revoke {
                 // close vault token account, rent back to authority
                 self.token_program
                     .close_account(vault_token_account, &self.authority, &self.vault)
-                    .invoke()?;
+                    .invoke_signed(&vault_seeds)?;
             }
             // SOL path: drain vault lamports back to authority
             None => {

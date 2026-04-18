@@ -87,7 +87,7 @@ async function lookupEstate(
     const pausedUntil = Number(maybe.data.pausedUntil);
     const createdAt = Number(maybe.data.createdAt);
     const claimableAssets = maybe.data.claimableAssets;
-    const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0;
+    const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0 && vaultTokens.length === 0;
     return {
       ownerAddress: authorityStr,
       vaultState: computeState(

@@ -19,7 +19,8 @@
     "@codama/nodes-from-anchor": "^1.4.0",
     "@codama/renderers-js": "^2.1.0",
     "@codama/renderers-rust": "^3.0.0",
-    "turbo": "latest"
+    "turbo": "latest",
+    "typescript": "^6.0.3"
   },
-  "packageManager": "yarn@4.1.0+sha512.5b7bc055cad63273dda27df1570a5d2eb4a9f03b35b394d3d55393c2a5560a17f5cef30944b11d6a48bcbcfc1c3a26d618aae77044774c529ba36cb771ad5b0f"
+  "packageManager": "bun"
 }

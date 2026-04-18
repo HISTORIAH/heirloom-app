@@ -10,26 +10,26 @@ import { generateKeyPairSigner } from "@solana/kit";
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { findVaultPda } from "@historiah/heirloom";
 
-// test("it migrates sol vault to a new heir", async () => {
-//   const client = createDefaultSolanaClient();
+test("it migrates sol vault to a new heir", async () => {
+  const client = createDefaultSolanaClient();
 
-//   const { heir } = await sendInitialize(client, {
-//     amount: BigInt(1_000_000_000),
-//     label: "test-heir",
-//     heartbeatInterval: 0n,
-//     gracePeriod: 0n,
-//     pauseDuration: 0n,
-//   });
+  const { heir } = await sendInitialize(client, {
+    amount: BigInt(1_000_000_000),
+    label: "test-heir",
+    heartbeatInterval: 0n,
+    gracePeriod: 0n,
+    pauseDuration: 0n,
+  });
 
-//   const newHeir = await generateKeyPairSigner();
+  const newHeir = await generateKeyPairSigner();
 
-//   const { authority } = await sendUpdateHeir(client, {
-//     newHeir: newHeir.address,
-//     oldHeir: heir.address,
-//   });
+  const { authority } = await sendUpdateHeir(client, {
+    newHeir: newHeir.address,
+    oldHeir: heir.address,
+  });
 
-//   expect(newHeir.address).toBeTruthy();
-// });
+  expect(newHeir.address).toBeTruthy();
+});
 
 test("it migrates token vault to a new heir", async () => {
   const client = createDefaultSolanaClient();
