@@ -40,7 +40,7 @@ const HeroSection = () => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl font-medium leading-relaxed mb-10 max-w-xl">
-              Lock tokens into a heartbeat vault on Solana.
+              Lock assets into a heartbeat vault on Solana.
               Check in periodically -- or your heirs inherit automatically.
               No lawyers. No custodians. No seed phrase sharing.
             </p>
@@ -49,7 +49,7 @@ const HeroSection = () => {
                 {isConnected ? "Create Vault" : "Launch App"}
               </Button>
               <a
-                href="https://ge0frey-heirloom-61.mintlify.app/introduction"
+                href=""
                 target="_blank"
                 rel="noopener noreferrer"
               >

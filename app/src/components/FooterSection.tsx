@@ -27,14 +27,25 @@ const FooterSection = () => {
           <div>
             <h4 className="text-xl font-black uppercase tracking-widest mb-6">Community</h4>
             <ul className="space-y-3">
-              {["Discord", "Twitter / X", "Solana Forum", "Blog"].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-lg font-bold hover:underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity">
-                    {link}
+              {[
+                { name: "Discord", href: "#" },
+                { name: "Twitter / X", href: "https://x.com/heirloom_app" },
+                { name: "Solana Forum", href: "#" },
+                { name: "Blog", href: "#" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <a
+                    href={link.href}
+                    className="text-lg font-bold hover:underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+                    target={link.href.startsWith("http") ? "_blank" : undefined}
+                    rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  >
+                    {link.name}
                   </a>
                 </li>
               ))}
             </ul>
+       
           </div>
         </div>
 
