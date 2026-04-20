@@ -24,6 +24,9 @@ import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
   AlertTriangle, Coins, Gift,
 } from "lucide-react";
+import TokenAvatar from "@/components/TokenAvatar";
+import WalletPill from "@/components/WalletPill";
+import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
 interface InheritanceInfo {
   ownerAddress: string;
@@ -135,6 +138,9 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   const [manualAddress, setManualAddress] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
+
+  const allVaultMints = inheritances.flatMap((inh) => inh.vaultTokens.map((vt) => vt.mint));
+  const { metadata: tokenMeta } = useTokenMetadata(allVaultMints);
 
   const runLookup = useCallback(
     async (ownerStr: string) => {
@@ -250,9 +256,8 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
             <Gift className="h-5 w-5" strokeWidth={3} />
             <span className="text-2xl font-black">Claim</span>
           </div>
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : "Not connected"}
-          </div>
+          <WalletPill />
+
         </div>
       </div>
 
@@ -304,7 +309,9 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                   const txId = claimTxIds[inh.ownerAddress];
                   const isClaiming = claimingOwner === inh.ownerAddress;
                   const nothingToClaim =
-                    inh.claimableAssets === 0 && inh.solBalance === 0;
+                    inh.solBalance === 0 &&
+                    inh.vaultTokens.length === 0 &&
+                    inh.claimableAssets === 0;
                   const canClaim =
                     inh.vaultState === "claimable" &&
                     !inh.isClaimed &&
@@ -345,7 +352,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
                           <p className="text-xs font-bold text-muted-foreground uppercase">Tokens</p>
-                          <p className="text-lg font-black">{inh.claimableAssets}</p>
+                          <p className="text-lg font-black">{inh.vaultTokens.length}</p>
                         </div>
                       </div>
 
@@ -354,14 +361,41 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                             Token Balances
                           </p>
-                          {inh.vaultTokens.map((vt) => (
-                            <div key={vt.address} className="neo-border rounded-lg p-3 bg-secondary flex justify-between items-center">
-                              <span className="font-mono text-xs break-all max-w-[60%]">{vt.mint}</span>
-                              <span className="font-black">
-                                {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
-                              </span>
-                            </div>
-                          ))}
+                          {inh.vaultTokens.map((vt) => {
+                            const meta = tokenMeta.get(vt.mint);
+                            const symbol = meta?.symbol;
+                            const name = meta?.name;
+                            const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
+                            const primary = symbol || name || shortMint;
+                            const secondary =
+                              name && name !== primary ? name : symbol ? shortMint : null;
+                            return (
+                              <div
+                                key={vt.address}
+                                className="flex items-center gap-4 neo-border rounded-lg p-4 bg-secondary"
+                              >
+                                <TokenAvatar
+                                  image={meta?.image}
+                                  label={primary}
+                                  size="md"
+                                  accent="bg-accent-cyan"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-black text-lg leading-tight truncate">{primary}</p>
+                                  {secondary && (
+                                    <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
+                                      {secondary}
+                                    </p>
+                                  )}
+                                </div>
+                                <span className="font-black text-lg tabular-nums shrink-0">
+                                  {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(
+                                    Math.min(6, vt.decimals),
+                                  )}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
 

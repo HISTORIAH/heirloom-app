@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
@@ -11,6 +11,8 @@ import {
   LABEL_MAX_LEN,
 } from "@/config/constants";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
+import TokenAvatar from "@/components/TokenAvatar";
+import WalletPill from "@/components/WalletPill";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,8 +24,11 @@ import {
   CheckCircle,
   Loader2,
   ExternalLink,
-  Plus,
   X,
+  Search,
+  ChevronDown,
+  Pencil,
+  ArrowUpDown,
 } from "lucide-react";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
@@ -157,16 +162,11 @@ const SOL_KEY = "sol";
 
 const SOL_PRESETS = [0.01, 0.1, 0.5, 1, 5];
 
-function presetsForDecimals(decimals: number): number[] {
-  if (decimals >= 8) return [0.001, 0.01, 0.05, 0.1];
-  if (decimals >= 6) return [10, 100, 500, 1000];
-  return [1, 10, 100, 1000];
-}
-
 function formatPreset(value: number, symbol: string): string {
   if (symbol === "USDC" || symbol === "USDCx") return `$${value}`;
   return `${value} ${symbol}`;
 }
+
 
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
@@ -187,8 +187,15 @@ const CreateVaultPage = () => {
   const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
 
   // Multi-asset state: SOL amount + per-token amounts
-  const [solAmount, setSolAmount] = useState<number>(0.1);
+  const [solAmount, setSolAmount] = useState<number>(0);
   const [tokenAmounts, setTokenAmounts] = useState<Record<string, number>>({});
+
+  // Presentational-only state for Step 3 token browser
+  const [tokenSearch, setTokenSearch] = useState("");
+  const [tokenSort, setTokenSort] = useState<"balance" | "name">("balance");
+  const [activeMint, setActiveMint] = useState<string | null>(null);
+  const [tokensPanelOpen, setTokensPanelOpen] = useState(true);
+  const solSectionRef = useRef<HTMLDivElement | null>(null);
 
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [txId, setTxId] = useState<string | null>(null);
@@ -207,6 +214,51 @@ const CreateVaultPage = () => {
 
   const selectedTokenEntries = Object.entries(tokenAmounts).filter(([, v]) => v > 0);
   const hasAnyDeposit = solAmount > 0 || selectedTokenEntries.length > 0;
+
+  const filteredTokens = useMemo(() => {
+    const q = tokenSearch.trim().toLowerCase();
+    let list = tokens;
+    if (q) {
+      list = list.filter(
+        (t) =>
+          t.label.toLowerCase().includes(q) ||
+          (t.name?.toLowerCase().includes(q) ?? false) ||
+          (t.symbol?.toLowerCase().includes(q) ?? false) ||
+          t.mint.toLowerCase().includes(q),
+      );
+    }
+    const sorted = [...list];
+    if (tokenSort === "balance") sorted.sort((a, b) => b.uiAmount - a.uiAmount);
+    else sorted.sort((a, b) => a.label.localeCompare(b.label));
+    return sorted;
+  }, [tokens, tokenSearch, tokenSort]);
+
+  const setTokenByPercent = (mint: string, pct: number) => {
+    const tok = tokens.find((t) => t.mint === mint);
+    if (!tok) return;
+    const raw = tok.uiAmount * (pct / 100);
+    const factorDec = Math.min(tok.decimals, 9);
+    const factor = Math.pow(10, factorDec);
+    const v = Math.floor(raw * factor) / factor;
+    if (v <= 0) removeToken(mint);
+    else setTokenAmount(mint, v);
+  };
+
+  const editToken = (mint: string) => {
+    setActiveMint(mint);
+    setTokensPanelOpen(true);
+    setTokenSearch("");
+    setTimeout(() => {
+      document
+        .getElementById(`token-row-${mint}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
+  };
+
+  const editSol = () => {
+    solSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    solSectionRef.current?.querySelector("input")?.focus();
+  };
 
   const heartbeatSliderDays = Math.max(1, Math.round(heartbeatSeconds / 86400));
   const graceSliderDays = Math.max(1, Math.round(graceSeconds / 86400));
@@ -270,48 +322,15 @@ const CreateVaultPage = () => {
     }
   };
 
-  if (submitState !== "idle" && submitState !== "error") {
-    return (
-      <div className="min-h-screen bg-accent-lime flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
-          {submitState === "complete" ? (
-            <>
-              <div className="bg-accent-lime neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
-              </div>
-              <h2 className="text-3xl font-black mb-3">Estate Created!</h2>
-              <p className="text-lg font-medium text-muted-foreground mb-4">
-                Your heartbeat is live. Redirecting to dashboard...
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
-              </div>
-              <h2 className="text-3xl font-black mb-3">Creating Estate...</h2>
-              <p className="text-lg font-medium text-muted-foreground mb-4">
-                {submitProgress || "Confirm the transaction in your wallet"}
-              </p>
-            </>
-          )}
-          {txId && (
-            <a
-              href={explorerTxUrl(txId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
-            >
-              View on Explorer <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const isSubmitting = submitState === "creating" || submitState === "complete";
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+    <div
+      className="min-h-screen bg-background"
+      aria-hidden={isSubmitting}
+      style={isSubmitting ? { pointerEvents: "none" } : undefined}
+    >
       <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button
@@ -322,9 +341,8 @@ const CreateVaultPage = () => {
             Back
           </button>
           <span className="text-2xl font-black">Create Estate</span>
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : ""}
-          </div>
+          <WalletPill />
+
         </div>
       </div>
 
@@ -577,65 +595,116 @@ const CreateVaultPage = () => {
                 </p>
               </div>
 
-              {tokensLoading && (
-                <div className="neo-card-static flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
-                  <span className="font-bold">Scanning wallet for SPL tokens…</span>
+              {/* SOL deposit — dedicated, top, always visible */}
+              <div ref={solSectionRef}>
+                <AssetCard
+                  cardKey={SOL_KEY}
+                  title={SOL_LABEL}
+                  subtitle={`Amount in SOL (${SOL_DECIMALS} decimals)`}
+                  accent="orange"
+                  icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
+                  decimals={SOL_DECIMALS}
+                  presets={SOL_PRESETS}
+                  presetLabel={(v) => formatPreset(v, SOL_LABEL)}
+                  selected={solAmount > 0}
+                  amount={solAmount}
+                  onSelect={(v) => setSolAmount(v)}
+                  onSkip={() => setSolAmount(0)}
+                />
+              </div>
+
+              {/* Selected deposits summary */}
+              {(solAmount > 0 || selectedTokenEntries.length > 0) && (
+                <div className="neo-card-static !p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-black uppercase tracking-widest">
+                      Selected Deposits
+                    </h3>
+                    <span className="neo-badge bg-accent-lime !px-3 !py-0.5 !text-xs">
+                      {selectedTokenEntries.length + (solAmount > 0 ? 1 : 0)}
+                    </span>
+                  </div>
+                  <ul className="divide-y-2 divide-foreground/10">
+                    {solAmount > 0 && (
+                      <li className="flex items-center gap-3 py-2.5">
+                        <div className="bg-accent-orange neo-border rounded-lg p-1.5 shrink-0">
+                          <Coins className="h-4 w-4" strokeWidth={2.5} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-base truncate">{SOL_LABEL}</p>
+                        </div>
+                        <span className="font-black tabular-nums text-base">
+                          {solAmount.toLocaleString(undefined, {
+                            maximumFractionDigits: Math.min(6, SOL_DECIMALS),
+                          })}
+                        </span>
+                        <button
+                          onClick={editSol}
+                          aria-label={`Edit ${SOL_LABEL}`}
+                          className="neo-border rounded-lg p-1.5 bg-secondary hover:bg-accent-yellow transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" strokeWidth={3} />
+                        </button>
+                        <button
+                          onClick={() => setSolAmount(0)}
+                          aria-label={`Remove ${SOL_LABEL}`}
+                          className="neo-border rounded-lg p-1.5 bg-secondary hover:bg-accent-pink transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" strokeWidth={3} />
+                        </button>
+                      </li>
+                    )}
+                    {selectedTokenEntries.map(([mint, amt]) => {
+                      const tok = tokens.find((t) => t.mint === mint);
+                      const tokLabel = tok?.label ?? `${mint.slice(0, 4)}…${mint.slice(-4)}`;
+                      const tokName = tok?.name;
+                      const dec = tok?.decimals ?? 9;
+                      return (
+                        <li key={mint} className="flex items-center gap-3 py-2.5">
+                          <TokenAvatar
+                            image={tok?.image}
+                            label={tokLabel}
+                            accent="bg-accent-cyan"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-black text-base truncate">{tokLabel}</p>
+                            {tokName && tokName !== tokLabel && (
+                              <p className="text-[11px] font-medium text-muted-foreground truncate">
+                                {tokName}
+                              </p>
+                            )}
+                          </div>
+                          <span className="font-black tabular-nums text-base">
+                            {amt.toLocaleString(undefined, {
+                              maximumFractionDigits: Math.min(6, dec),
+                            })}
+                          </span>
+                          <button
+                            onClick={() => editToken(mint)}
+                            aria-label={`Edit ${tokLabel}`}
+                            className="neo-border rounded-lg p-1.5 bg-secondary hover:bg-accent-yellow transition-colors"
+                          >
+                            <Pencil className="h-3.5 w-3.5" strokeWidth={3} />
+                          </button>
+                          <button
+                            onClick={() => removeToken(mint)}
+                            aria-label={`Remove ${tokLabel}`}
+                            className="neo-border rounded-lg p-1.5 bg-secondary hover:bg-accent-pink transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" strokeWidth={3} />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               )}
 
-              {/* SOL deposit — always shown */}
-              <AssetCard
-                cardKey={SOL_KEY}
-                title={SOL_LABEL}
-                subtitle={`Amount in SOL (${SOL_DECIMALS} decimals)`}
-                accent="orange"
-                icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
-                decimals={SOL_DECIMALS}
-                presets={SOL_PRESETS}
-                presetLabel={(v) => formatPreset(v, SOL_LABEL)}
-                selected={solAmount > 0}
-                amount={solAmount}
-                onSelect={(v) => setSolAmount(v)}
-                onSkip={() => setSolAmount(0)}
-              />
-
-              {/* Token deposits — each independently togglable */}
-              {tokens.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-black mb-3">SPL Tokens (optional)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {tokens.map((t) => {
-                      const isActive = (tokenAmounts[t.mint] ?? 0) > 0;
-                      return (
-                        <div key={t.mint} className="relative">
-                          {isActive && (
-                            <button
-                              onClick={() => removeToken(t.mint)}
-                              className="absolute top-3 right-3 z-10 neo-border rounded-full p-1 bg-accent-red/20 hover:bg-accent-red/40 transition-colors"
-                            >
-                              <X className="h-4 w-4" strokeWidth={3} />
-                            </button>
-                          )}
-                          <AssetCard
-                            cardKey={t.mint}
-                            title={t.label}
-                            subtitle={`Bal ${t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: Math.min(6, t.decimals) })}`}
-                            accent={t.label === "USDC" ? "cyan" : "lime"}
-                            icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
-                            decimals={t.decimals}
-                            presets={presetsForDecimals(t.decimals)}
-                            presetLabel={(v) => formatPreset(v, t.label)}
-                            selected={isActive}
-                            amount={tokenAmounts[t.mint] ?? 0}
-                            onSelect={(v) => setTokenAmount(t.mint, v)}
-                            onSkip={() => removeToken(t.mint)}
-                            maxAmount={t.uiAmount}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+              {/* SPL token browser — collapsible, searchable, fixed-height */}
+              {tokensLoading && (
+                <div className="neo-card-static flex items-center gap-3 !p-5">
+                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                  <span className="font-bold">Scanning wallet for SPL tokens…</span>
                 </div>
               )}
 
@@ -645,17 +714,172 @@ const CreateVaultPage = () => {
                 </p>
               )}
 
-              {selectedTokenEntries.length > 0 && (
-                <div className="neo-card-static bg-accent-lime/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Plus className="h-4 w-4" strokeWidth={3} />
-                    <span className="text-sm font-black uppercase tracking-widest">
-                      {selectedTokenEntries.length} token{selectedTokenEntries.length !== 1 ? "s" : ""} selected
-                    </span>
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Each token requires a separate on-chain transaction after estate creation.
-                  </p>
+              {!tokensLoading && tokens.length > 0 && (
+                <div className="neo-card-static !p-0 overflow-hidden">
+                  <button
+                    onClick={() => setTokensPanelOpen((v) => !v)}
+                    aria-expanded={tokensPanelOpen}
+                    aria-controls="spl-token-panel"
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-accent-lime neo-border rounded-lg p-2">
+                        <Coins className="h-5 w-5" strokeWidth={2.5} />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-lg font-black leading-tight">SPL Tokens</h3>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          {tokens.length} available · {selectedTokenEntries.length} selected
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 transition-transform ${tokensPanelOpen ? "rotate-180" : ""}`}
+                      strokeWidth={3}
+                    />
+                  </button>
+
+                  {tokensPanelOpen && (
+                    <div id="spl-token-panel" className="border-t-4 border-foreground">
+                      <div className="flex items-center gap-3 p-4 bg-secondary/40 border-b-4 border-foreground">
+                        <div className="relative flex-1">
+                          <Search
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                            strokeWidth={3}
+                          />
+                          <input
+                            type="text"
+                            value={tokenSearch}
+                            onChange={(e) => setTokenSearch(e.target.value)}
+                            placeholder="Search token or mint…"
+                            aria-label="Search tokens"
+                            className="neo-input !pl-10 !py-3 text-sm"
+                          />
+                        </div>
+                        <button
+                          onClick={() =>
+                            setTokenSort((s) => (s === "balance" ? "name" : "balance"))
+                          }
+                          aria-label={`Sort by ${tokenSort === "balance" ? "name" : "balance"}`}
+                          className="neo-border rounded-lg px-4 py-3 text-xs font-black uppercase tracking-widest bg-background hover:bg-accent-yellow transition-colors flex items-center gap-1.5 shrink-0"
+                        >
+                          <ArrowUpDown className="h-3.5 w-3.5" strokeWidth={3} />
+                          {tokenSort === "balance" ? "Bal" : "Name"}
+                        </button>
+                      </div>
+
+                      <div
+                        role="listbox"
+                        aria-label="SPL tokens"
+                        className="max-h-[420px] overflow-y-auto divide-y-2 divide-foreground/10"
+                      >
+                        {filteredTokens.length === 0 && (
+                          <p className="text-sm font-medium text-muted-foreground px-5 py-6 text-center">
+                            No tokens match “{tokenSearch}”.
+                          </p>
+                        )}
+                        {filteredTokens.map((t) => {
+                          const amount = tokenAmounts[t.mint] ?? 0;
+                          const isActive = amount > 0;
+                          const isOpen = activeMint === t.mint;
+                          const dec = Math.min(6, t.decimals);
+                          return (
+                            <div
+                              key={t.mint}
+                              id={`token-row-${t.mint}`}
+                              className={isActive ? "bg-accent-lime/15" : ""}
+                            >
+                              <button
+                                role="option"
+                                aria-selected={isActive}
+                                aria-expanded={isOpen}
+                                onClick={() =>
+                                  setActiveMint(isOpen ? null : t.mint)
+                                }
+                                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-accent-yellow/30 transition-colors text-left"
+                              >
+                                <TokenAvatar
+                                  image={t.image}
+                                  label={t.label}
+                                  size="md"
+                                  accent={isActive ? "bg-accent-lime" : "bg-secondary"}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-black text-lg leading-tight truncate">{t.label}</p>
+                                  <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
+                                    {t.name && t.name !== t.label
+                                      ? t.name
+                                      : `${t.mint.slice(0, 8)}…${t.mint.slice(-4)}`}
+                                  </p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  {isActive && (
+                                    <p className="text-xs font-black uppercase tracking-widest text-foreground">
+                                      +{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}
+                                    </p>
+                                  )}
+                                  <p className="text-sm font-bold text-muted-foreground tabular-nums">
+                                    Bal {t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: dec })}
+                                  </p>
+                                </div>
+                                <ChevronDown
+                                  className={`h-5 w-5 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                  strokeWidth={3}
+                                />
+                              </button>
+
+                              {isOpen && (
+                                <div className="px-4 pb-4 pt-1 space-y-3 bg-background/50">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={t.uiAmount}
+                                    step={1 / Math.pow(10, dec)}
+                                    value={amount || ""}
+                                    onChange={(e) => {
+                                      const v = Math.max(0, Number(e.target.value));
+                                      if (v === 0) removeToken(t.mint);
+                                      else setTokenAmount(t.mint, v);
+                                    }}
+                                    placeholder="0"
+                                    aria-label={`${t.label} amount`}
+                                    className="neo-input font-black text-2xl text-center !py-3"
+                                  />
+                                  <div className="flex gap-2 flex-wrap">
+                                    <button
+                                      onClick={() => removeToken(t.mint)}
+                                      className={`neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-widest transition-all duration-150 ${
+                                        !isActive
+                                          ? "bg-accent-pink neo-shadow-sm"
+                                          : "bg-secondary hover:bg-accent-pink/40"
+                                      }`}
+                                    >
+                                      Skip
+                                    </button>
+                                    {[25, 50, 75].map((pct) => (
+                                      <button
+                                        key={pct}
+                                        onClick={() => setTokenByPercent(t.mint, pct)}
+                                        className="neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-widest bg-secondary hover:bg-accent-lime/60 transition-all duration-150"
+                                      >
+                                        {pct}%
+                                      </button>
+                                    ))}
+                                    <button
+                                      onClick={() => setTokenByPercent(t.mint, 100)}
+                                      className="neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-widest bg-accent-lime hover:neo-shadow-sm transition-all duration-150"
+                                    >
+                                      Max
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -750,11 +974,21 @@ const CreateVaultPage = () => {
         </div>
 
         <div className="flex justify-between items-center mt-12 pt-8 border-t-4 border-foreground">
-          <Button variant="outline" size="lg" onClick={() => setStep(step - 1)} disabled={step === 0}>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setStep(step - 1)}
+            disabled={step === 0 || isSubmitting}
+          >
             <ArrowLeft className="h-5 w-5" /> Back
           </Button>
           {step < 3 ? (
-            <Button variant="lime" size="lg" onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+            <Button
+              variant="lime"
+              size="lg"
+              onClick={() => setStep(step + 1)}
+              disabled={!canProceed() || isSubmitting}
+            >
               Next <ArrowRight className="h-5 w-5" />
             </Button>
           ) : (
@@ -762,15 +996,73 @@ const CreateVaultPage = () => {
               variant="lime"
               size="xl"
               onClick={handleSubmit}
-              disabled={!isHeirValid || !hasAnyDeposit}
+              disabled={!isHeirValid || !hasAnyDeposit || isSubmitting}
               className="neo-glow-lime"
             >
-              Create Estate
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                  Creating…
+                </>
+              ) : (
+                "Create Estate"
+              )}
             </Button>
           )}
         </div>
       </div>
     </div>
+    {isSubmitting && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-live="polite"
+        className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
+      >
+        <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
+          {submitState === "complete" ? (
+            <>
+              <div className="bg-accent-lime neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
+              </div>
+              <h2 className="text-3xl font-black mb-3">Estate Created!</h2>
+              <p className="text-lg font-medium text-muted-foreground mb-4">
+                Your heartbeat is live on-chain.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
+              </div>
+              <h2 className="text-3xl font-black mb-3">Creating Estate…</h2>
+              <p className="text-lg font-medium text-muted-foreground mb-4">
+                {submitProgress || "Confirm the transaction in your wallet"}
+              </p>
+            </>
+          )}
+          <div className="flex flex-wrap gap-2 justify-center items-center">
+            {txId && (
+              <a
+                href={explorerTxUrl(txId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
+              >
+                View on Explorer <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+          {submitState === "complete" && (
+            <div className="flex items-center justify-center gap-2 mt-5 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+              Redirecting to dashboard…
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

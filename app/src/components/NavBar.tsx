@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, ChevronDown, LayoutDashboard, Gift, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Gift, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -11,6 +11,7 @@ const NavBar = () => {
   const [open, setOpen] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { isConnected, publicKey, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { sol, usdc, loading: balancesLoading } = useTokenBalances(
@@ -68,7 +69,6 @@ const NavBar = () => {
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-lime font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                   >
-                    <span className="h-2.5 w-2.5 rounded-full bg-green-600 animate-pulse" />
                     {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
                     <ChevronDown
                       className={`h-3.5 w-3.5 transition-transform duration-200 ${
@@ -78,27 +78,41 @@ const NavBar = () => {
                   </button>
 
                   {dropdownOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-72 border-4 border-foreground rounded-xl bg-background p-4 space-y-3 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50">
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                          Wallet Balances
-                        </p>
-                        <div className="flex items-center justify-between border-2 border-foreground rounded-lg px-3 py-2 bg-accent-yellow/20">
-                          <span className="text-sm font-bold">{SOL_LABEL}</span>
-                          <span className="text-sm font-black tabular-nums">
-                            {balancesLoading ? "..." : sol.toFixed(4)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between border-2 border-foreground rounded-lg px-3 py-2 bg-accent-cyan/20">
-                          <span className="text-sm font-bold">{USDC_LABEL}</span>
-                          <span className="text-sm font-black tabular-nums">
-                            {balancesLoading ? "..." : usdc.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
+                    <div className="absolute right-0 top-full mt-2 w-64 border-4 border-foreground rounded-xl bg-background p-3 space-y-2 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50">
+                      <button
+                        onClick={async () => {
+                          if (!publicKey) return;
+                          try {
+                            await navigator.clipboard.writeText(publicKey);
+                            setCopied(true);
+                            setTimeout(() => {
+                              setCopied(false);
+                              setDropdownOpen(false);
+                            }, 1200);
+                          } catch {
+                            setCopied(false);
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
+                      >
+                        {copied ? (
+                          <><Check className="h-4 w-4" /> Copied</>
+                        ) : (
+                          <><Copy className="h-4 w-4" /> Copy address</>
+                        )}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setDropdownOpen(false);
+                          await disconnectWallet();
+                          setWalletDialogOpen(true);
+                        }}
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Change wallet
+                      </button>
                       <div className="border-t-2 border-foreground" />
-
                       <button
                         onClick={() => {
                           setDropdownOpen(false);
@@ -107,7 +121,7 @@ const NavBar = () => {
                         className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left"
                       >
                         <LogOut className="h-4 w-4" />
-                        Disconnect
+                        Disconnect wallet
                       </button>
                     </div>
                   )}

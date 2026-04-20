@@ -5,6 +5,9 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
+import { useTokenMetadata } from "@/hooks/useTokenMetadata";
+import TokenAvatar from "@/components/TokenAvatar";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   Heart,
   Clock,
@@ -127,8 +130,15 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [newHeirAddress, setNewHeirAddress] = useState("");
   const [updatingHeir, setUpdatingHeir] = useState(false);
   const [showUpdateHeir, setShowUpdateHeir] = useState(false);
+  const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
+  const [reassignConfirm, setReassignConfirm] = useState<{ open: boolean; next: string }>({
+    open: false,
+    next: "",
+  });
 
   const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
+  const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
+  const { metadata: tokenMeta } = useTokenMetadata(vaultMints);
   const initial = computeTick(estate, vaultEmpty);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);
@@ -172,12 +182,12 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     }
   };
 
-  const handleEmergencyWithdraw = async () => {
-    if (!confirm("Are you sure? This will return all assets and cancel the vault permanently.")) return;
+  const performEmergencyWithdraw = async () => {
     setWithdrawing(true);
     try {
       const tx = await revokeEstateOnChain(estate.heir);
       setLastTxId(tx);
+      setWithdrawConfirmOpen(false);
       toast({ title: "Emergency Withdraw", description: "Assets returned to your wallet." });
     } catch (err: unknown) {
       toast({
@@ -196,7 +206,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleUpdateHeir = async () => {
+  const handleUpdateHeir = () => {
     const trimmed = newHeirAddress.trim();
     if (!trimmed) return;
     if (trimmed === estate.heir) {
@@ -207,13 +217,19 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       });
       return;
     }
-    if (!confirm(`Reassign estate from ${estate.heir.slice(0, 8)}... to ${trimmed.slice(0, 8)}...?`)) return;
+    setReassignConfirm({ open: true, next: trimmed });
+  };
+
+  const performUpdateHeir = async () => {
+    const trimmed = reassignConfirm.next;
+    if (!trimmed) return;
     setUpdatingHeir(true);
     try {
       const tx = await updateHeirOnChain(estate.heir, trimmed);
       setLastTxId(tx);
       setNewHeirAddress("");
       setShowUpdateHeir(false);
+      setReassignConfirm({ open: false, next: "" });
       toast({ title: "Heir Updated", description: "Estate reassigned to new heir." });
       await fetchEstates();
     } catch (err: unknown) {
@@ -387,17 +403,43 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             </div>
           </div>
           <div className="space-y-3">
-            {estate.vaultTokens.map((vt) => (
-              <div
-                key={vt.address}
-                className="flex items-center justify-between neo-border rounded-lg p-4 bg-secondary"
-              >
-                <span className="font-mono text-xs break-all max-w-[60%]">{vt.mint}</span>
-                <span className="font-black text-lg">
-                  {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
-                </span>
-              </div>
-            ))}
+            {estate.vaultTokens.map((vt) => {
+              const meta = tokenMeta.get(vt.mint);
+              const symbol = meta?.symbol;
+              const name = meta?.name;
+              const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
+              const primary = symbol || name || shortMint;
+              const secondary =
+                name && name !== primary
+                  ? name
+                  : symbol
+                    ? shortMint
+                    : null;
+              return (
+                <div
+                  key={vt.address}
+                  className="flex items-center gap-4 neo-border rounded-lg p-4 bg-secondary"
+                >
+                  <TokenAvatar
+                    image={meta?.image}
+                    label={primary}
+                    size="md"
+                    accent="bg-accent-cyan"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-lg leading-tight truncate">{primary}</p>
+                    {secondary && (
+                      <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
+                        {secondary}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-black text-lg tabular-nums shrink-0">
+                    {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -525,7 +567,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <Button
               variant="destructive"
               size="default"
-              onClick={handleEmergencyWithdraw}
+              onClick={() => setWithdrawConfirmOpen(true)}
               disabled={withdrawing}
             >
               {withdrawing ? (
@@ -538,6 +580,46 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
       )}
 
+      <ConfirmDialog
+        open={withdrawConfirmOpen}
+        title="Emergency Withdraw?"
+        description="This returns all SOL and tokens to your wallet and permanently cancels the vault. Heirs will no longer be able to claim."
+        confirmLabel="Withdraw & Cancel"
+        cancelLabel="Keep Vault"
+        variant="destructive"
+        loading={withdrawing}
+        onConfirm={performEmergencyWithdraw}
+        onCancel={() => {
+          if (!withdrawing) setWithdrawConfirmOpen(false);
+        }}
+      />
+
+      <ConfirmDialog
+        open={reassignConfirm.open}
+        title="Reassign Heir?"
+        description="The estate PDA and vault assets move to the new heir. The current heir can no longer claim."
+        confirmLabel="Reassign"
+        cancelLabel="Cancel"
+        variant="default"
+        loading={updatingHeir}
+        icon={<UserPlus className="h-6 w-6" strokeWidth={2.5} />}
+        accent="bg-accent-cyan/20"
+        onConfirm={performUpdateHeir}
+        onCancel={() => {
+          if (!updatingHeir) setReassignConfirm({ open: false, next: "" });
+        }}
+      >
+        <div className="space-y-2 text-sm">
+          <div className="neo-border rounded-lg p-3 bg-secondary">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">From</p>
+            <p className="font-mono text-xs break-all">{estate.heir}</p>
+          </div>
+          <div className="neo-border rounded-lg p-3 bg-accent-cyan/10">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">To</p>
+            <p className="font-mono text-xs break-all">{reassignConfirm.next}</p>
+          </div>
+        </div>
+      </ConfirmDialog>
     </div>
   );
 };

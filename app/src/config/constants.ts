@@ -19,6 +19,17 @@ export const USDC_DECIMALS = 6;
 
 export const LABEL_MAX_LEN = 32;
 
+export const HELIUS_API_KEY: string = import.meta.env.VITE_HELIUS_API_KEY || "";
+
+export function heliusRpcUrl(): string | null {
+  const override = import.meta.env.VITE_HELIUS_RPC_URL as string | undefined;
+  if (override && override.trim().length > 0) return override.trim();
+  if (!HELIUS_API_KEY) return null;
+  if (NETWORK === "mainnet-beta") return `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  if (NETWORK === "devnet") return `https://devnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return null;
+}
+
 export function explorerTxUrl(signature: string): string {
   if (NETWORK === "mainnet-beta") return `https://explorer.solana.com/tx/${signature}`;
   return `https://explorer.solana.com/tx/${signature}?cluster=${NETWORK}`;
