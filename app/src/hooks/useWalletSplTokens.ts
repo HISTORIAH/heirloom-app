@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import { address as toAddress, type Address } from "@solana/kit";
 import { useWallet } from "@/contexts/WalletContext";
-import { TOKEN_PROGRAM_ID, USDC_MINT, USDC_LABEL, USDC_DECIMALS } from "@/config/constants";
+import {
+  TOKEN_PROGRAM_ID,
+  USDC_MINT,
+  USDC_LABEL,
+  USDC_DECIMALS,
+  heliusRpcUrl,
+} from "@/config/constants";
 
 const TOKEN_2022_PROGRAM_ID = toAddress("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
 export interface SplTokenAsset {
   mint: string;
   label: string;
+  name?: string;
+  symbol?: string;
+  image?: string;
   decimals: number;
   rawAmount: bigint;
   uiAmount: number;
@@ -24,9 +33,61 @@ function shortMint(mint: string): string {
   return `${mint.slice(0, 4)}…${mint.slice(-4)}`;
 }
 
-function labelForMint(mint: string, decimals: number): string {
+function fallbackLabel(mint: string, decimals: number): string {
   if (mint === USDC_MINT.toString() && decimals === USDC_DECIMALS) return USDC_LABEL;
   return shortMint(mint);
+}
+
+type DasFile = { uri?: string; cdn_uri?: string; mime?: string };
+type DasMetadata = { name?: string; symbol?: string };
+type DasLinks = { image?: string };
+type DasContent = { metadata?: DasMetadata; links?: DasLinks; files?: DasFile[] };
+type DasTokenInfo = { symbol?: string };
+type DasAsset = {
+  id?: string;
+  content?: DasContent;
+  token_info?: DasTokenInfo;
+};
+
+function pickImage(content?: DasContent): string | undefined {
+  const file = content?.files?.find((f) => !f.mime || f.mime.startsWith("image/"));
+  return file?.cdn_uri || content?.links?.image || file?.uri;
+}
+
+async function fetchAssetBatch(
+  url: string,
+  ids: string[],
+  signal: AbortSignal,
+): Promise<Map<string, DasAsset>> {
+  const out = new Map<string, DasAsset>();
+  if (ids.length === 0) return out;
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += 1000) chunks.push(ids.slice(i, i + 1000));
+
+  for (const chunk of chunks) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "heirloom-token-metadata",
+        method: "getAssetBatch",
+        params: { ids: chunk },
+      }),
+    });
+    if (!res.ok) throw new Error(`Helius ${res.status}`);
+    const json = (await res.json()) as { result?: Array<DasAsset | null> };
+    const items = Array.isArray(json.result) ? json.result : [];
+    items.forEach((item, idx) => {
+      if (!item) return;
+      const mint = item.id ?? chunk[idx];
+      if (!mint) return;
+      out.set(mint, item);
+    });
+  }
+  return out;
 }
 
 export function useWalletSplTokens(ownerStr: string | null): HookState {
@@ -38,6 +99,7 @@ export function useWalletSplTokens(ownerStr: string | null): HookState {
       setState({ tokens: [], loading: false, error: null });
       return;
     }
+    const ac = new AbortController();
     let cancelled = false;
     setState((s) => ({ ...s, loading: true, error: null }));
 
@@ -79,7 +141,7 @@ export function useWalletSplTokens(ownerStr: string | null): HookState {
             const prev = byMint.get(mint);
             const next: SplTokenAsset = {
               mint,
-              label: labelForMint(mint, decimals),
+              label: fallbackLabel(mint, decimals),
               decimals,
               rawAmount: (prev?.rawAmount ?? 0n) + raw,
               uiAmount: 0,
@@ -90,12 +152,51 @@ export function useWalletSplTokens(ownerStr: string | null): HookState {
           }
         });
 
+        const initial = Array.from(byMint.values()).sort((a, b) => b.uiAmount - a.uiAmount);
+
         if (!cancelled) {
-          setState({
-            tokens: Array.from(byMint.values()).sort((a, b) => b.uiAmount - a.uiAmount),
-            loading: false,
-            error: null,
-          });
+          setState({ tokens: initial, loading: true, error: null });
+        }
+
+        const heliusUrl = heliusRpcUrl();
+        if (heliusUrl && initial.length > 0) {
+          try {
+            const meta = await fetchAssetBatch(
+              heliusUrl,
+              initial.map((t) => t.mint),
+              ac.signal,
+            );
+            if (cancelled) return;
+            const enriched = initial.map((t) => {
+              const m = meta.get(t.mint);
+              if (!m) return t;
+              const name = m.content?.metadata?.name?.trim() || undefined;
+              const symbol =
+                m.token_info?.symbol?.trim() ||
+                m.content?.metadata?.symbol?.trim() ||
+                undefined;
+              const image = pickImage(m.content);
+              const label =
+                symbol ||
+                name ||
+                fallbackLabel(t.mint, t.decimals);
+              return { ...t, name, symbol, image, label };
+            });
+            if (!cancelled) {
+              setState({ tokens: enriched, loading: false, error: null });
+            }
+          } catch (metaErr) {
+            if (!cancelled) {
+              setState({
+                tokens: initial,
+                loading: false,
+                error:
+                  metaErr instanceof Error ? `Metadata: ${metaErr.message}` : null,
+              });
+            }
+          }
+        } else if (!cancelled) {
+          setState({ tokens: initial, loading: false, error: null });
         }
       } catch (e) {
         if (!cancelled) {
@@ -110,6 +211,7 @@ export function useWalletSplTokens(ownerStr: string | null): HookState {
 
     return () => {
       cancelled = true;
+      ac.abort();
     };
   }, [ownerStr, rpc]);
 

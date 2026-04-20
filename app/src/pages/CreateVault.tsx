@@ -160,16 +160,52 @@ const SOL_KEY = "sol";
 
 const SOL_PRESETS = [0.01, 0.1, 0.5, 1, 5];
 
-function presetsForDecimals(decimals: number): number[] {
-  if (decimals >= 8) return [0.001, 0.01, 0.05, 0.1];
-  if (decimals >= 6) return [10, 100, 500, 1000];
-  return [1, 10, 100, 1000];
-}
-
 function formatPreset(value: number, symbol: string): string {
   if (symbol === "USDC" || symbol === "USDCx") return `$${value}`;
   return `${value} ${symbol}`;
 }
+
+interface TokenAvatarProps {
+  image?: string;
+  label: string;
+  size?: "sm" | "md";
+  accent?: string;
+}
+
+const TokenAvatar: React.FC<TokenAvatarProps> = ({
+  image,
+  label,
+  size = "sm",
+  accent = "bg-secondary",
+}) => {
+  const [broken, setBroken] = useState(false);
+  const dim = size === "md" ? "h-9 w-9" : "h-7 w-7";
+  const innerIcon = size === "md" ? "h-5 w-5" : "h-4 w-4";
+  if (image && !broken) {
+    return (
+      <img
+        src={image}
+        alt={label}
+        loading="lazy"
+        onError={() => setBroken(true)}
+        className={`${dim} rounded-lg neo-border object-cover shrink-0 bg-background`}
+      />
+    );
+  }
+  const initial = label.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase();
+  return (
+    <div
+      className={`${dim} ${accent} neo-border rounded-lg flex items-center justify-center shrink-0`}
+      aria-hidden="true"
+    >
+      {initial ? (
+        <span className="font-black text-xs">{initial}</span>
+      ) : (
+        <Coins className={innerIcon} strokeWidth={2.5} />
+      )}
+    </div>
+  );
+};
 
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
@@ -225,6 +261,8 @@ const CreateVaultPage = () => {
       list = list.filter(
         (t) =>
           t.label.toLowerCase().includes(q) ||
+          (t.name?.toLowerCase().includes(q) ?? false) ||
+          (t.symbol?.toLowerCase().includes(q) ?? false) ||
           t.mint.toLowerCase().includes(q),
       );
     }
@@ -692,14 +730,22 @@ const CreateVaultPage = () => {
                     {selectedTokenEntries.map(([mint, amt]) => {
                       const tok = tokens.find((t) => t.mint === mint);
                       const tokLabel = tok?.label ?? `${mint.slice(0, 4)}…${mint.slice(-4)}`;
+                      const tokName = tok?.name;
                       const dec = tok?.decimals ?? 9;
                       return (
                         <li key={mint} className="flex items-center gap-3 py-2.5">
-                          <div className="bg-accent-cyan neo-border rounded-lg p-1.5 shrink-0">
-                            <Coins className="h-4 w-4" strokeWidth={2.5} />
-                          </div>
+                          <TokenAvatar
+                            image={tok?.image}
+                            label={tokLabel}
+                            accent="bg-accent-cyan"
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="font-black text-base truncate">{tokLabel}</p>
+                            {tokName && tokName !== tokLabel && (
+                              <p className="text-[11px] font-medium text-muted-foreground truncate">
+                                {tokName}
+                              </p>
+                            )}
                           </div>
                           <span className="font-black tabular-nums text-base">
                             {amt.toLocaleString(undefined, {
@@ -724,11 +770,6 @@ const CreateVaultPage = () => {
                       );
                     })}
                   </ul>
-                  {selectedTokenEntries.length > 0 && (
-                    <p className="text-xs font-medium text-muted-foreground mt-3 pt-3 border-t-2 border-foreground/10">
-                      Tokens require separate transactions after estate creation.
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -830,17 +871,18 @@ const CreateVaultPage = () => {
                                 }
                                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent-yellow/30 transition-colors text-left"
                               >
-                                <div
-                                  className={`neo-border rounded-lg p-1.5 shrink-0 ${
-                                    isActive ? "bg-accent-lime" : "bg-secondary"
-                                  }`}
-                                >
-                                  <Coins className="h-4 w-4" strokeWidth={2.5} />
-                                </div>
+                                <TokenAvatar
+                                  image={t.image}
+                                  label={t.label}
+                                  size="md"
+                                  accent={isActive ? "bg-accent-lime" : "bg-secondary"}
+                                />
                                 <div className="flex-1 min-w-0">
                                   <p className="font-black text-base truncate">{t.label}</p>
-                                  <p className="text-[11px] font-mono text-muted-foreground truncate">
-                                    {t.mint.slice(0, 8)}…{t.mint.slice(-4)}
+                                  <p className="text-[11px] font-medium text-muted-foreground truncate">
+                                    {t.name && t.name !== t.label
+                                      ? t.name
+                                      : `${t.mint.slice(0, 8)}…${t.mint.slice(-4)}`}
                                   </p>
                                 </div>
                                 <div className="text-right shrink-0">
