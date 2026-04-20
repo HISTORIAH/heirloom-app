@@ -221,6 +221,17 @@ impl UpdateHeir {
         let authority_addr = *self.authority.address();
         let new_heir_addr = *self.new_heir.address();
 
+        // `init` normally writes the discriminator before set_inner; since
+        // new_estate/new_vault are UncheckedAccount (no init constraint), we
+        // must write it manually — set_inner skips the first disc_len bytes.
+        unsafe {
+            core::ptr::copy_nonoverlapping(
+                Estate::DISCRIMINATOR.as_ptr(),
+                self.new_estate.to_account_view().data_ptr() as *mut u8,
+                Estate::DISCRIMINATOR.len(),
+            );
+        }
+
         let new_estate_acc =
             unsafe { &mut *(&mut self.new_estate as *mut UncheckedAccount as *mut Estate) };
 
@@ -245,6 +256,14 @@ impl UpdateHeir {
             self.rent.lamports_per_byte(),
             self.rent.exemption_threshold_raw(),
         )?;
+
+        unsafe {
+            core::ptr::copy_nonoverlapping(
+                Vault::DISCRIMINATOR.as_ptr(),
+                self.new_vault.to_account_view().data_ptr() as *mut u8,
+                Vault::DISCRIMINATOR.len(),
+            );
+        }
 
         let new_vault_acc =
             unsafe { &mut *(&mut self.new_vault as *mut UncheckedAccount as *mut Vault) };
