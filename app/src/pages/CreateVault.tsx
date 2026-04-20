@@ -179,8 +179,9 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
   accent = "bg-secondary",
 }) => {
   const [broken, setBroken] = useState(false);
-  const dim = size === "md" ? "h-9 w-9" : "h-7 w-7";
-  const innerIcon = size === "md" ? "h-5 w-5" : "h-4 w-4";
+  const dim = size === "md" ? "h-11 w-11" : "h-8 w-8";
+  const innerIcon = size === "md" ? "h-6 w-6" : "h-4 w-4";
+  const fontSize = size === "md" ? "text-sm" : "text-xs";
   if (image && !broken) {
     return (
       <img
@@ -199,7 +200,7 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
       aria-hidden="true"
     >
       {initial ? (
-        <span className="font-black text-xs">{initial}</span>
+        <span className={`font-black ${fontSize}`}>{initial}</span>
       ) : (
         <Coins className={innerIcon} strokeWidth={2.5} />
       )}
@@ -814,10 +815,10 @@ const CreateVaultPage = () => {
 
                   {tokensPanelOpen && (
                     <div id="spl-token-panel" className="border-t-4 border-foreground">
-                      <div className="flex items-center gap-2 p-3 bg-secondary/40 border-b-4 border-foreground">
+                      <div className="flex items-center gap-3 p-4 bg-secondary/40 border-b-4 border-foreground">
                         <div className="relative flex-1">
                           <Search
-                            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
                             strokeWidth={3}
                           />
                           <input
@@ -826,7 +827,7 @@ const CreateVaultPage = () => {
                             onChange={(e) => setTokenSearch(e.target.value)}
                             placeholder="Search token or mint…"
                             aria-label="Search tokens"
-                            className="neo-input !pl-9 !py-2 text-sm"
+                            className="neo-input !pl-10 !py-3 text-sm"
                           />
                         </div>
                         <button
@@ -834,7 +835,7 @@ const CreateVaultPage = () => {
                             setTokenSort((s) => (s === "balance" ? "name" : "balance"))
                           }
                           aria-label={`Sort by ${tokenSort === "balance" ? "name" : "balance"}`}
-                          className="neo-border rounded-lg px-3 py-2 text-xs font-black uppercase tracking-widest bg-background hover:bg-accent-yellow transition-colors flex items-center gap-1.5 shrink-0"
+                          className="neo-border rounded-lg px-4 py-3 text-xs font-black uppercase tracking-widest bg-background hover:bg-accent-yellow transition-colors flex items-center gap-1.5 shrink-0"
                         >
                           <ArrowUpDown className="h-3.5 w-3.5" strokeWidth={3} />
                           {tokenSort === "balance" ? "Bal" : "Name"}
@@ -844,7 +845,7 @@ const CreateVaultPage = () => {
                       <div
                         role="listbox"
                         aria-label="SPL tokens"
-                        className="max-h-[360px] overflow-y-auto divide-y-2 divide-foreground/10"
+                        className="max-h-[420px] overflow-y-auto divide-y-2 divide-foreground/10"
                       >
                         {filteredTokens.length === 0 && (
                           <p className="text-sm font-medium text-muted-foreground px-5 py-6 text-center">
@@ -869,7 +870,7 @@ const CreateVaultPage = () => {
                                 onClick={() =>
                                   setActiveMint(isOpen ? null : t.mint)
                                 }
-                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent-yellow/30 transition-colors text-left"
+                                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-accent-yellow/30 transition-colors text-left"
                               >
                                 <TokenAvatar
                                   image={t.image}
@@ -878,8 +879,8 @@ const CreateVaultPage = () => {
                                   accent={isActive ? "bg-accent-lime" : "bg-secondary"}
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-black text-base truncate">{t.label}</p>
-                                  <p className="text-[11px] font-medium text-muted-foreground truncate">
+                                  <p className="font-black text-lg leading-tight truncate">{t.label}</p>
+                                  <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
                                     {t.name && t.name !== t.label
                                       ? t.name
                                       : `${t.mint.slice(0, 8)}…${t.mint.slice(-4)}`}
@@ -891,12 +892,12 @@ const CreateVaultPage = () => {
                                       +{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}
                                     </p>
                                   )}
-                                  <p className="text-xs font-bold text-muted-foreground tabular-nums">
+                                  <p className="text-sm font-bold text-muted-foreground tabular-nums">
                                     Bal {t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: dec })}
                                   </p>
                                 </div>
                                 <ChevronDown
-                                  className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                  className={`h-5 w-5 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
                                   strokeWidth={3}
                                 />
                               </button>
