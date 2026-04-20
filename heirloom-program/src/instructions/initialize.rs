@@ -83,6 +83,8 @@ impl Initialize {
     pub fn validate_inputs(&self, amount: u64) -> Result<(), ProgramError> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
+        // TODO: heir cannot be own account
+
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
                 // all three token accounts must be present together
