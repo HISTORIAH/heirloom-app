@@ -309,7 +309,9 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                   const txId = claimTxIds[inh.ownerAddress];
                   const isClaiming = claimingOwner === inh.ownerAddress;
                   const nothingToClaim =
-                    inh.claimableAssets === 0 && inh.solBalance === 0;
+                    inh.solBalance === 0 &&
+                    inh.vaultTokens.length === 0 &&
+                    inh.claimableAssets === 0;
                   const canClaim =
                     inh.vaultState === "claimable" &&
                     !inh.isClaimed &&
@@ -350,7 +352,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
                           <p className="text-xs font-bold text-muted-foreground uppercase">Tokens</p>
-                          <p className="text-lg font-black">{inh.claimableAssets}</p>
+                          <p className="text-lg font-black">{inh.vaultTokens.length}</p>
                         </div>
                       </div>
 
