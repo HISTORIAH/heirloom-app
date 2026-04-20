@@ -25,6 +25,7 @@ import {
   AlertTriangle, Coins, Gift,
 } from "lucide-react";
 import TokenAvatar from "@/components/TokenAvatar";
+import WalletPill from "@/components/WalletPill";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
 interface InheritanceInfo {
@@ -255,9 +256,8 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
             <Gift className="h-5 w-5" strokeWidth={3} />
             <span className="text-2xl font-black">Claim</span>
           </div>
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : "Not connected"}
-          </div>
+          <WalletPill />
+
         </div>
       </div>
 

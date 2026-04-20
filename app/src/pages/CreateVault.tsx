@@ -12,6 +12,7 @@ import {
 } from "@/config/constants";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import TokenAvatar from "@/components/TokenAvatar";
+import WalletPill from "@/components/WalletPill";
 import {
   ArrowLeft,
   ArrowRight,
@@ -340,9 +341,8 @@ const CreateVaultPage = () => {
             Back
           </button>
           <span className="text-2xl font-black">Create Estate</span>
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : ""}
-          </div>
+          <WalletPill />
+
         </div>
       </div>
 
@@ -1052,15 +1052,13 @@ const CreateVaultPage = () => {
                 View on Explorer <ExternalLink className="h-4 w-4" />
               </a>
             )}
-            {submitState === "complete" && (
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="inline-flex items-center gap-2 neo-badge bg-accent-lime hover:neo-shadow-sm transition-all"
-              >
-                Go to Dashboard <ArrowRight className="h-4 w-4" strokeWidth={3} />
-              </button>
-            )}
           </div>
+          {submitState === "complete" && (
+            <div className="flex items-center justify-center gap-2 mt-5 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+              Redirecting to dashboard…
+            </div>
+          )}
         </div>
       </div>
     )}
