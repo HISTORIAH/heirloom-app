@@ -11,6 +11,7 @@ import {
   LABEL_MAX_LEN,
 } from "@/config/constants";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
+import TokenAvatar from "@/components/TokenAvatar";
 import {
   ArrowLeft,
   ArrowRight,
@@ -165,48 +166,6 @@ function formatPreset(value: number, symbol: string): string {
   return `${value} ${symbol}`;
 }
 
-interface TokenAvatarProps {
-  image?: string;
-  label: string;
-  size?: "sm" | "md";
-  accent?: string;
-}
-
-const TokenAvatar: React.FC<TokenAvatarProps> = ({
-  image,
-  label,
-  size = "sm",
-  accent = "bg-secondary",
-}) => {
-  const [broken, setBroken] = useState(false);
-  const dim = size === "md" ? "h-11 w-11" : "h-8 w-8";
-  const innerIcon = size === "md" ? "h-6 w-6" : "h-4 w-4";
-  const fontSize = size === "md" ? "text-sm" : "text-xs";
-  if (image && !broken) {
-    return (
-      <img
-        src={image}
-        alt={label}
-        loading="lazy"
-        onError={() => setBroken(true)}
-        className={`${dim} rounded-lg neo-border object-cover shrink-0 bg-background`}
-      />
-    );
-  }
-  const initial = label.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase();
-  return (
-    <div
-      className={`${dim} ${accent} neo-border rounded-lg flex items-center justify-center shrink-0`}
-      aria-hidden="true"
-    >
-      {initial ? (
-        <span className={`font-black ${fontSize}`}>{initial}</span>
-      ) : (
-        <Coins className={innerIcon} strokeWidth={2.5} />
-      )}
-    </div>
-  );
-};
 
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
@@ -362,48 +321,15 @@ const CreateVaultPage = () => {
     }
   };
 
-  if (submitState !== "idle" && submitState !== "error") {
-    return (
-      <div className="min-h-screen bg-accent-lime flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
-          {submitState === "complete" ? (
-            <>
-              <div className="bg-accent-lime neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
-              </div>
-              <h2 className="text-3xl font-black mb-3">Estate Created!</h2>
-              <p className="text-lg font-medium text-muted-foreground mb-4">
-                Your heartbeat is live. Redirecting to dashboard...
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
-              </div>
-              <h2 className="text-3xl font-black mb-3">Creating Estate...</h2>
-              <p className="text-lg font-medium text-muted-foreground mb-4">
-                {submitProgress || "Confirm the transaction in your wallet"}
-              </p>
-            </>
-          )}
-          {txId && (
-            <a
-              href={explorerTxUrl(txId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
-            >
-              View on Explorer <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const isSubmitting = submitState === "creating" || submitState === "complete";
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+    <div
+      className="min-h-screen bg-background"
+      aria-hidden={isSubmitting}
+      style={isSubmitting ? { pointerEvents: "none" } : undefined}
+    >
       <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button
@@ -1048,11 +974,21 @@ const CreateVaultPage = () => {
         </div>
 
         <div className="flex justify-between items-center mt-12 pt-8 border-t-4 border-foreground">
-          <Button variant="outline" size="lg" onClick={() => setStep(step - 1)} disabled={step === 0}>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setStep(step - 1)}
+            disabled={step === 0 || isSubmitting}
+          >
             <ArrowLeft className="h-5 w-5" /> Back
           </Button>
           {step < 3 ? (
-            <Button variant="lime" size="lg" onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+            <Button
+              variant="lime"
+              size="lg"
+              onClick={() => setStep(step + 1)}
+              disabled={!canProceed() || isSubmitting}
+            >
               Next <ArrowRight className="h-5 w-5" />
             </Button>
           ) : (
@@ -1060,15 +996,75 @@ const CreateVaultPage = () => {
               variant="lime"
               size="xl"
               onClick={handleSubmit}
-              disabled={!isHeirValid || !hasAnyDeposit}
+              disabled={!isHeirValid || !hasAnyDeposit || isSubmitting}
               className="neo-glow-lime"
             >
-              Create Estate
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                  Creating…
+                </>
+              ) : (
+                "Create Estate"
+              )}
             </Button>
           )}
         </div>
       </div>
     </div>
+    {isSubmitting && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-live="polite"
+        className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
+      >
+        <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
+          {submitState === "complete" ? (
+            <>
+              <div className="bg-accent-lime neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
+              </div>
+              <h2 className="text-3xl font-black mb-3">Estate Created!</h2>
+              <p className="text-lg font-medium text-muted-foreground mb-4">
+                Your heartbeat is live on-chain.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
+              </div>
+              <h2 className="text-3xl font-black mb-3">Creating Estate…</h2>
+              <p className="text-lg font-medium text-muted-foreground mb-4">
+                {submitProgress || "Confirm the transaction in your wallet"}
+              </p>
+            </>
+          )}
+          <div className="flex flex-wrap gap-2 justify-center items-center">
+            {txId && (
+              <a
+                href={explorerTxUrl(txId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
+              >
+                View on Explorer <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+            {submitState === "complete" && (
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="inline-flex items-center gap-2 neo-badge bg-accent-lime hover:neo-shadow-sm transition-all"
+              >
+                Go to Dashboard <ArrowRight className="h-4 w-4" strokeWidth={3} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

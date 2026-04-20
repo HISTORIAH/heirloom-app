@@ -5,6 +5,8 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
+import { useTokenMetadata } from "@/hooks/useTokenMetadata";
+import TokenAvatar from "@/components/TokenAvatar";
 import {
   Heart,
   Clock,
@@ -129,6 +131,8 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [showUpdateHeir, setShowUpdateHeir] = useState(false);
 
   const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
+  const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
+  const { metadata: tokenMeta } = useTokenMetadata(vaultMints);
   const initial = computeTick(estate, vaultEmpty);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);
@@ -387,17 +391,43 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             </div>
           </div>
           <div className="space-y-3">
-            {estate.vaultTokens.map((vt) => (
-              <div
-                key={vt.address}
-                className="flex items-center justify-between neo-border rounded-lg p-4 bg-secondary"
-              >
-                <span className="font-mono text-xs break-all max-w-[60%]">{vt.mint}</span>
-                <span className="font-black text-lg">
-                  {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
-                </span>
-              </div>
-            ))}
+            {estate.vaultTokens.map((vt) => {
+              const meta = tokenMeta.get(vt.mint);
+              const symbol = meta?.symbol;
+              const name = meta?.name;
+              const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
+              const primary = symbol || name || shortMint;
+              const secondary =
+                name && name !== primary
+                  ? name
+                  : symbol
+                    ? shortMint
+                    : null;
+              return (
+                <div
+                  key={vt.address}
+                  className="flex items-center gap-4 neo-border rounded-lg p-4 bg-secondary"
+                >
+                  <TokenAvatar
+                    image={meta?.image}
+                    label={primary}
+                    size="md"
+                    accent="bg-accent-cyan"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-lg leading-tight truncate">{primary}</p>
+                    {secondary && (
+                      <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
+                        {secondary}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-black text-lg tabular-nums shrink-0">
+                    {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
