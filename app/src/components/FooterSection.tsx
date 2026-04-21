@@ -45,7 +45,7 @@ const FooterSection = () => {
                 </li>
               ))}
             </ul>
-       
+
           </div>
         </div>
 
@@ -54,7 +54,7 @@ const FooterSection = () => {
             Heirloom is not a legal will. It is programmable self-custody continuity.
           </p>
           <p className="text-sm font-bold uppercase tracking-widest opacity-60">
-            Built on Solana -- Powered by Quasar
+            Powered by Solana
           </p>
         </div>
       </div>
