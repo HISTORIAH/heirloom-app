@@ -22,7 +22,7 @@ const HeroSection = () => {
     <section className="relative overflow-hidden py-16 px-6 md:py-24 lg:py-32">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex justify-start">
-          <span className="neo-badge bg-accent-lime rotate-[-2deg]">
+          <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em]">
             Solana Inheritance Protocol
           </span>
         </div>
@@ -67,12 +67,6 @@ const HeroSection = () => {
                 alt="Heirloom Vault with heartbeat pulse"
                 className="w-full h-auto"
               />
-            </div>
-            <div className="absolute -top-4 -right-2 neo-badge bg-accent-yellow rotate-[12deg] animate-float text-xs">
-              Secured
-            </div>
-            <div className="absolute -bottom-4 left-4 neo-badge bg-accent-cyan rotate-[-6deg] text-xs">
-              On Solana
             </div>
           </div>
         </div>
