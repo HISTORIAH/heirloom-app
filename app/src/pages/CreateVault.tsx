@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
@@ -11,6 +11,7 @@ import {
   LABEL_MAX_LEN,
 } from "@/config/constants";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
+import { useTokenBalances } from "@/hooks/useTokenBalances";
 import TokenAvatar from "@/components/TokenAvatar";
 import WalletPill from "@/components/WalletPill";
 import {
@@ -69,105 +70,6 @@ const PAUSE_PRESETS = [
   { label: "30d", seconds: 30 * 86400 },
 ];
 
-type Accent = "orange" | "cyan" | "lime" | "pink" | "yellow";
-
-const ACCENT_BG: Record<Accent, string> = {
-  orange: "bg-accent-orange",
-  cyan: "bg-accent-cyan",
-  lime: "bg-accent-lime",
-  pink: "bg-accent-pink",
-  yellow: "bg-accent-yellow",
-};
-
-interface AssetCardProps {
-  cardKey: string;
-  title: string;
-  subtitle: string;
-  accent: Accent;
-  icon: React.ReactNode;
-  decimals: number;
-  presets: number[];
-  presetLabel: (value: number) => string;
-  selected: boolean;
-  amount: number;
-  onSelect: (value: number) => void;
-  onSkip: () => void;
-  maxAmount?: number;
-}
-
-const AssetCard: React.FC<AssetCardProps> = ({
-  title,
-  subtitle,
-  accent,
-  icon,
-  decimals,
-  presets,
-  presetLabel,
-  selected,
-  amount,
-  onSelect,
-  onSkip,
-  maxAmount,
-}) => {
-  const accentBg = ACCENT_BG[accent];
-  const isSkip = !selected || amount <= 0;
-  return (
-    <div className="neo-card-static">
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`${accentBg} neo-border rounded-xl p-3`}>{icon}</div>
-        <div>
-          <h3 className="text-xl font-black">{title}</h3>
-          <p className="text-xs font-bold text-muted-foreground">{subtitle}</p>
-        </div>
-      </div>
-      <input
-        type="number"
-        min={0}
-        max={maxAmount}
-        step={1 / Math.pow(10, Math.min(6, decimals))}
-        value={selected ? amount : 0}
-        onChange={(e) => {
-          const v = Math.max(0, Number(e.target.value));
-          if (v === 0) onSkip();
-          else onSelect(v);
-        }}
-        className="neo-input font-black text-3xl text-center !py-4"
-      />
-      <div className="flex gap-2 flex-wrap mt-4">
-        <button
-          onClick={onSkip}
-          className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
-            isSkip ? `${accentBg} neo-shadow-sm` : "bg-secondary"
-          }`}
-        >
-          Skip
-        </button>
-        {presets.map((p) => (
-          <button
-            key={p}
-            onClick={() => onSelect(p)}
-            className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
-              selected && amount === p ? `${accentBg} neo-shadow-sm` : "bg-secondary"
-            }`}
-          >
-            {presetLabel(p)}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const SOL_KEY = "sol";
-
-const SOL_PRESETS = [0.01, 0.1, 0.5, 1, 5];
-
-function formatPreset(value: number, symbol: string): string {
-  if (symbol === "USDC" || symbol === "USDCx") return `$${value}`;
-  return `${value} ${symbol}`;
-}
-
-
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
   const { createEstateOnChain } = useVault();
@@ -185,6 +87,7 @@ const CreateVaultPage = () => {
   const [delegate, setDelegate] = useState("");
 
   const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
+  const { sol: solBalance, loading: solLoading } = useTokenBalances(isConnected ? publicKey : null);
 
   // Multi-asset state: SOL amount + per-token amounts
   const [solAmount, setSolAmount] = useState<number>(0);
@@ -232,6 +135,13 @@ const CreateVaultPage = () => {
     else sorted.sort((a, b) => a.label.localeCompare(b.label));
     return sorted;
   }, [tokens, tokenSearch, tokenSort]);
+
+  const setSolByPercent = (pct: number) => {
+    const factorDec = Math.min(SOL_DECIMALS, 9);
+    const factor = Math.pow(10, factorDec);
+    const v = Math.floor(solBalance * (pct / 100) * factor) / factor;
+    setSolAmount(Math.max(0, v));
+  };
 
   const setTokenByPercent = (mint: string, pct: number) => {
     const tok = tokens.find((t) => t.mint === mint);
@@ -595,22 +505,71 @@ const CreateVaultPage = () => {
                 </p>
               </div>
 
-              {/* SOL deposit — dedicated, top, always visible */}
-              <div ref={solSectionRef}>
-                <AssetCard
-                  cardKey={SOL_KEY}
-                  title={SOL_LABEL}
-                  subtitle={`Amount in SOL (${SOL_DECIMALS} decimals)`}
-                  accent="orange"
-                  icon={<Coins className="h-6 w-6" strokeWidth={2.5} />}
-                  decimals={SOL_DECIMALS}
-                  presets={SOL_PRESETS}
-                  presetLabel={(v) => formatPreset(v, SOL_LABEL)}
-                  selected={solAmount > 0}
-                  amount={solAmount}
-                  onSelect={(v) => setSolAmount(v)}
-                  onSkip={() => setSolAmount(0)}
+              {/* SOL deposit — percent-based, mirrors SPL token UI */}
+              <div ref={solSectionRef} className="neo-card-static">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-accent-orange neo-border rounded-xl p-3">
+                    <Coins className="h-6 w-6" strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-black">{SOL_LABEL}</h3>
+                    <p className="text-xs font-bold text-muted-foreground">
+                      Amount in SOL ({SOL_DECIMALS} decimals)
+                    </p>
+                  </div>
+                  {isConnected && (
+                    <p className="text-sm font-bold text-muted-foreground tabular-nums shrink-0">
+                      {solLoading
+                        ? "Bal …"
+                        : `Bal ${solBalance.toLocaleString(undefined, {
+                            maximumFractionDigits: Math.min(6, SOL_DECIMALS),
+                          })}`}
+                    </p>
+                  )}
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  max={solBalance}
+                  step={1 / Math.pow(10, Math.min(6, SOL_DECIMALS))}
+                  value={solAmount || ""}
+                  onChange={(e) => {
+                    const v = Math.max(0, Number(e.target.value));
+                    setSolAmount(v);
+                  }}
+                  placeholder="0"
+                  aria-label={`${SOL_LABEL} amount`}
+                  className="neo-input font-black text-3xl text-center !py-4"
                 />
+                <div className="flex gap-2 flex-wrap mt-4">
+                  <button
+                    onClick={() => setSolAmount(0)}
+                    className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
+                      solAmount <= 0
+                        ? "bg-accent-orange neo-shadow-sm"
+                        : "bg-secondary hover:bg-accent-pink/40"
+                    }`}
+                  >
+                    Skip
+                  </button>
+                  {[25, 50, 75].map((pct) => (
+                    <button
+                      key={pct}
+                      onClick={() => setSolByPercent(pct)}
+                      disabled={!isConnected || solBalance <= 0}
+                      className="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-secondary hover:bg-accent-orange/40 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setSolByPercent(100)}
+                    disabled={!isConnected || solBalance <= 0}
+                    className="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-accent-orange hover:neo-shadow-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Max
+                  </button>
+                </div>
               </div>
 
               {/* Selected deposits summary */}
