@@ -160,16 +160,19 @@ heirloom-app/
 ## Tools and Technologies
 
 **On-chain**
+
 - Rust (edition 2021)
 - [Quasar](https://github.com/blueshift-gg/quasar) - Anchor-inspired framework for Solana programs
 - `solana-account-view`, `solana-instruction` - low-level Solana primitives
 
 **Client generation**
+
 - [Codama](https://github.com/codama-idl/codama) - IDL-driven multi-language client generator
 - `@codama/renderers-js` and `@codama/renderers-rust` - target-specific renderers
 - `@codama/nodes-from-anchor` - bridges Anchor-style IDL into Codama's AST
 
 **Frontend**
+
 - React 18 + TypeScript 5.6
 - Vite 6 (dev server + bundler)
 - Tailwind CSS 3 + `tailwindcss-animate`
@@ -180,14 +183,15 @@ heirloom-app/
 - `sonner` for transient toasts
 
 **Solana integration**
+
 - `@solana/kit` - modern tree-shakable Solana client SDK (v6)
 - `@wallet-ui/react` - wallet connection modal and signer adapter
 - `@solana-program/system`, `@solana-program/token` - SPL Token + System Program instruction builders
 - `gill` - RPC helpers
 
 **Tooling and infrastructure**
-- Yarn 4 workspaces (root package manager)
-- Bun (test runner for the TypeScript integration suite)
+
+- Bun (root package manager and test runner for the TypeScript integration suite)
 - Turborepo (monorepo task pipeline)
 - `quasar-svm` (Solana VM harness for Rust tests)
 
@@ -210,15 +214,15 @@ Accounts: `Estate` (discriminator 1, PDA seeds `[b"estate", authority, heir]`) a
 
 ### Prerequisites
 
-- Node.js 18+ and Yarn 4
-- Bun 1.1+ (for tests and IDL conversion)
+- Node.js 18+
+- Bun 1.1+ (for project initialization, tests and IDL conversion)
 - Rust stable + the Solana toolchain (for building the program)
-- A funded devnet wallet (use `yarn airdrop` or `solana airdrop`)
+- A funded devnet wallet (use `solana airdrop [int]`)
 
 ### Install
 
 ```bash
-yarn install
+bun install
 ```
 
 ### Build the program and regenerate clients
@@ -226,7 +230,7 @@ yarn install
 ```bash
 # Inside heirloom-program/ build with your Solana toolchain of choice,
 # then from the repo root:
-yarn generate:clients
+bun generate:clients
 ```
 
 This runs `scripts/convert-idl.ts` to normalize the Quasar IDL, then invokes Codama to emit both the JS and Rust client crates.
@@ -234,7 +238,7 @@ This runs `scripts/convert-idl.ts` to normalize the Quasar IDL, then invokes Cod
 ### Run the frontend
 
 ```bash
-yarn dev:ui
+bun dev:ui
 ```
 
 Vite serves the app on `http://localhost:5173`. The default network is devnet; override with environment variables:
@@ -250,7 +254,7 @@ VITE_USDC_MINT=4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
 ### Run the tests
 
 ```bash
-yarn test
+bun test
 ```
 
 The test suite exercises every instruction through the generated Rust client against a `quasar-svm` in-process Solana VM, so no validator is required.
@@ -258,7 +262,7 @@ The test suite exercises every instruction through the generated Rust client aga
 ### Deploy
 
 ```bash
-yarn deploy
+bun deploy
 ```
 
 ## Networks
@@ -275,4 +279,3 @@ yarn deploy
 - Pausing is delegate-only when a delegate is configured. An estate with no delegate cannot be paused.
 - `close_estate` is a recovery path for drained or orphaned estates and does not touch funds. It will be removed once on-chain housekeeping is no longer needed.
 - The frontend never handles private keys. All signing happens inside the user's wallet via `@wallet-ui/react`.
-
