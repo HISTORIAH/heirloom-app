@@ -18,13 +18,13 @@ pub struct UpdateHeir {
 
     pub new_heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
+    #[account(mut, address = Estate::seeds(authority.address(), heir.address()))]
     pub estate: Account<Estate>,
 
     #[account(mut)]
     pub new_estate: UncheckedAccount,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump)]
+    #[account(mut, address = Vault::seeds(authority.address(), heir.address()))]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -48,7 +48,7 @@ pub struct UpdateHeir {
 
     pub clock: Sysvar<Clock>,
 
-    pub system_program: Program<System>,
+    pub system_program: Program<SystemProgram>,
 }
 
 impl UpdateHeir {
@@ -245,7 +245,7 @@ impl UpdateHeir {
                 created_at: self.estate.created_at.get(), // for calc fee, clock not reset
                 bump: new_estate_bump,
                 is_claimed: false,
-                delegate: self.estate.delegate,
+                delegate: self.estate.delegate.get(),
                 claimable_assets: self.estate.claimable_assets,
                 label: self.estate.label(),
                 pause_duration: self.estate.pause_duration.get(),
@@ -285,7 +285,15 @@ impl UpdateHeir {
             let new_vault_ta = self.new_vault_token_account.as_ref().unwrap();
             let mint = self.mint.as_ref().unwrap();
             let amount = vault_ta.amount();
-            let vault_seeds = self.vault_seeds(update_heir_ix_bumps);
+
+            // signer seeds
+            let bump = [update_heir_ix_bumps.vault];
+            let vault_seeds = [
+                Seed::from(b"vault" as &[u8]),
+                Seed::from(self.authority.address().as_ref()),
+                Seed::from(self.heir.address().as_ref()),
+                Seed::from(bump.as_ref()),
+            ];
 
             self.associated_token_program
                 .create_idempotent(
@@ -322,8 +330,11 @@ impl UpdateHeir {
         }
 
         let authority_view = self.authority.to_account_view();
-        crate::helpers::close_account(&mut self.estate, authority_view)?;
-        crate::helpers::close_account(&mut self.vault, authority_view)?;
+        // crate::helpers::close_account(&mut self.estate, authority_view)?;
+        // crate::helpers::close_account(&mut self.vault, authority_view)?;
+
+        self.estate.close(authority_view)?;
+        self.vault.close(authority_view)?;
 
         Ok(())
     }

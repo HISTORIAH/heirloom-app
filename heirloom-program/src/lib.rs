@@ -42,12 +42,6 @@ mod heirloom_program {
         Claim::claim_handler(&mut ctx)
     }
 
-    // // draw small amounts here and there
-    // #[instruction(discriminator = 2)]
-    // pub fn withdraw(ctx: Ctx<Withdraw>) -> Result<(), ProgramError> {
-    //     Withdraw::withdraw_handler(&mut ctx)
-    // }
-
     #[instruction(discriminator = 3)]
     pub fn update_fields(
         ctx: Ctx<UpdateFields>,
@@ -89,4 +83,10 @@ mod heirloom_program {
         log("ix: register_asset");
         RegisterAsset::register_asset_handler(&mut ctx, amount)
     }
+
+    //   // // draw small amounts here and there
+    // #[instruction(discriminator = 2)]
+    // pub fn withdraw(ctx: Ctx<Withdraw>) -> Result<(), ProgramError> {
+    //     Withdraw::withdraw_handler(&mut ctx)
+    // }
 }

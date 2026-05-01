@@ -10,7 +10,7 @@ pub struct UpdateFields {
     #[account(address = estate.heir)]
     pub heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
+    #[account(mut, address = Estate::seeds(authority.address(), heir.address()))]
     pub estate: Account<Estate>,
 
     pub clock: Sysvar<Clock>,

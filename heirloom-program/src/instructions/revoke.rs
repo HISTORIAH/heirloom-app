@@ -16,10 +16,10 @@ pub struct Revoke {
 
     pub heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump)]
+    #[account(mut, address = Estate::seeds(authority.address(), heir.address()))]
     pub estate: Account<Estate>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump)]
+    #[account(mut, address = Vault::seeds(authority.address(), heir.address()))]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -35,7 +35,7 @@ pub struct Revoke {
 
     pub token_program: Interface<TokenInterface>,
 
-    pub system_program: Program<System>,
+    pub system_program: Program<SystemProgram>,
 }
 
 impl Revoke {
@@ -137,7 +137,15 @@ impl Revoke {
                 let vault_token_account = self.vault_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_token_account.amount();
-                let vault_seeds = self.vault_seeds(revoke_ix_bumps);
+
+                // signer seeds
+                let bump = [revoke_ix_bumps.vault];
+                let vault_seeds = [
+                    Seed::from(b"vault" as &[u8]),
+                    Seed::from(self.authority.address().as_ref()),
+                    Seed::from(self.heir.address().as_ref()),
+                    Seed::from(bump.as_ref()),
+                ];
 
                 self.token_program
                     .transfer_checked(
