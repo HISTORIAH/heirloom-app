@@ -48,7 +48,7 @@ mod heirloom_program {
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
-        // label: Option<String<32>>,
+        label: Option<String<32>>,
     ) -> Result<(), ProgramError> {
         log("ix: update_fields");
         UpdateFields::update_fields_handler(
@@ -56,7 +56,7 @@ mod heirloom_program {
             heartbeat_interval,
             grace_period,
             pause_duration,
-            // label,
+            label,
         )
     }
 

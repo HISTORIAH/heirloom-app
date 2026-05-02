@@ -23,7 +23,7 @@ impl UpdateFields {
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
-        // label: Option<&str>,
+        label: Option<String<32>>,
     ) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
@@ -41,6 +41,7 @@ impl UpdateFields {
         if let Some(pd) = pause_duration {
             ctx.accounts.estate.pause_duration = PodI64::from(pd);
         }
+
         // if let Some(l) = label {
         //     ctx.accounts
         //         .estate
@@ -57,6 +58,8 @@ impl UpdateFields {
             false,
             HeirloomError::AlreadyClaimed
         );
+
+        // check the authority,
 
         /* The pause should
            only gate the claim instruction, not heartbeats.
