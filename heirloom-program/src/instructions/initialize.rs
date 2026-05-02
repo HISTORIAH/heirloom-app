@@ -20,17 +20,16 @@ pub struct Initialize {
     #[account(mut)]
     pub authority_token_account: Option<InterfaceAccount<Token>>,
 
-    #[account(mut, init, payer = authority, seeds = Estate::seeds(authority, heir), bump )]
+    #[account(mut, init, payer = authority, address = Estate::seeds(authority.address(), heir.address()))]
     pub estate: Account<Estate>,
 
-    #[account(mut, init, payer = authority, seeds = Vault::seeds(authority, heir), bump )]
+    #[account(mut, init, payer = authority, address = Vault::seeds(authority.address(), heir.address()))]
     pub vault: Account<Vault>,
 
     // we create this ourselves
     #[account(mut)]
     pub vault_token_account: Option<UncheckedAccount>,
 
-    #[account(mut)]
     pub mint: Option<Account<Mint>>,
 
     pub token_program: Interface<TokenInterface>,
@@ -41,7 +40,7 @@ pub struct Initialize {
 
     pub clock: Sysvar<Clock>,
 
-    pub system_program: Program<System>,
+    pub system_program: Program<SystemProgram>,
 }
 
 impl Initialize {

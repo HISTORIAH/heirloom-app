@@ -18,10 +18,10 @@ pub struct RegisterAsset {
     #[account(address = estate.heir)]
     pub heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
+    #[account(mut, address = Estate::seeds(authority.address(), heir.address()))]
     pub estate: Account<Estate>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump)]
+    #[account(mut, address = Vault::seeds(authority.address(), heir.address()))]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -39,7 +39,7 @@ pub struct RegisterAsset {
 
     pub rent: Sysvar<Rent>,
 
-    pub system_program: Program<System>,
+    pub system_program: Program<SystemProgram>,
 }
 
 impl RegisterAsset {

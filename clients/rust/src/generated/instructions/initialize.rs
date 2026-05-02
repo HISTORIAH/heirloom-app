@@ -112,7 +112,7 @@ impl Initialize {
               ));
             }
                                                                 if let Some(mint) = self.mint {
-              accounts.push(solana_instruction::AccountMeta::new(
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
                 mint,
                 false,
               ));
@@ -205,7 +205,7 @@ impl InitializeInstructionArgs {
                 ///   4. `[writable]` estate
                 ///   5. `[writable]` vault
                       ///   6. `[writable, optional]` vault_token_account
-                      ///   7. `[writable, optional]` mint
+                ///   7. `[optional]` mint
                 ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
                 ///   9. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
                 ///   10. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
@@ -563,7 +563,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             ));
           }
                                           if let Some(mint) = self.mint {
-            accounts.push(solana_instruction::AccountMeta::new(
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
               *mint.key,
               false,
             ));
@@ -653,7 +653,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
                 ///   4. `[writable]` estate
                 ///   5. `[writable]` vault
                       ///   6. `[writable, optional]` vault_token_account
-                      ///   7. `[writable, optional]` mint
+                ///   7. `[optional]` mint
           ///   8. `[]` token_program
           ///   9. `[]` associated_token_program
           ///   10. `[]` rent

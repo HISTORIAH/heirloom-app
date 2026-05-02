@@ -6,7 +6,6 @@
 //!
 
   pub(crate) mod r#claim;
-  pub(crate) mod r#close_estate;
   pub(crate) mod r#delegate_defer;
   pub(crate) mod r#initialize;
   pub(crate) mod r#register_asset;
@@ -15,7 +14,6 @@
   pub(crate) mod r#update_heir;
 
   pub use self::r#claim::*;
-  pub use self::r#close_estate::*;
   pub use self::r#delegate_defer::*;
   pub use self::r#initialize::*;
   pub use self::r#register_asset::*;

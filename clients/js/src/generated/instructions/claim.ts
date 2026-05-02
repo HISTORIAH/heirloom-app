@@ -34,7 +34,6 @@ import {
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
-  getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
 import { findEstatePda, findVaultPda } from "../pdas";
@@ -62,8 +61,6 @@ export type ClaimInstruction<
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountRent extends string | AccountMeta<string> =
-    "SysvarRent111111111111111111111111111111111",
   TAccountSystemProgram extends string | AccountMeta<string> =
     "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -104,9 +101,6 @@ export type ClaimInstruction<
       TAccountClock extends string
         ? ReadonlyAccount<TAccountClock>
         : TAccountClock,
-      TAccountRent extends string
-        ? ReadonlyAccount<TAccountRent>
-        : TAccountRent,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -153,7 +147,6 @@ export type ClaimAsyncInput<
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountClock extends string = string,
-  TAccountRent extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   heir: TransactionSigner<TAccountHeir>;
@@ -167,7 +160,6 @@ export type ClaimAsyncInput<
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   clock?: Address<TAccountClock>;
-  rent?: Address<TAccountRent>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
@@ -183,7 +175,6 @@ export async function getClaimInstructionAsync<
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountClock extends string,
-  TAccountRent extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
@@ -199,7 +190,6 @@ export async function getClaimInstructionAsync<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
-    TAccountRent,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -217,7 +207,6 @@ export async function getClaimInstructionAsync<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
-    TAccountRent,
     TAccountSystemProgram
   >
 > {
@@ -247,7 +236,6 @@ export async function getClaimInstructionAsync<
       isWritable: false,
     },
     clock: { value: input.clock ?? null, isWritable: false },
-    rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -257,28 +245,10 @@ export async function getClaimInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.estate.value = await findEstatePda();
   }
   if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.vault.value = await findVaultPda();
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -291,10 +261,6 @@ export async function getClaimInstructionAsync<
   if (!accounts.clock.value) {
     accounts.clock.value =
       "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
-  }
-  if (!accounts.rent.value) {
-    accounts.rent.value =
-      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -315,7 +281,6 @@ export async function getClaimInstructionAsync<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("clock", accounts.clock),
-      getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getClaimInstructionDataEncoder().encode({}),
@@ -333,7 +298,6 @@ export async function getClaimInstructionAsync<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
-    TAccountRent,
     TAccountSystemProgram
   >);
 }
@@ -350,7 +314,6 @@ export type ClaimInput<
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountClock extends string = string,
-  TAccountRent extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   heir: TransactionSigner<TAccountHeir>;
@@ -364,7 +327,6 @@ export type ClaimInput<
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   clock?: Address<TAccountClock>;
-  rent?: Address<TAccountRent>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
@@ -380,7 +342,6 @@ export function getClaimInstruction<
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountClock extends string,
-  TAccountRent extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
@@ -396,7 +357,6 @@ export function getClaimInstruction<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
-    TAccountRent,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -413,7 +373,6 @@ export function getClaimInstruction<
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountClock,
-  TAccountRent,
   TAccountSystemProgram
 > {
   // Program address.
@@ -442,7 +401,6 @@ export function getClaimInstruction<
       isWritable: false,
     },
     clock: { value: input.clock ?? null, isWritable: false },
-    rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -463,10 +421,6 @@ export function getClaimInstruction<
     accounts.clock.value =
       "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
   }
-  if (!accounts.rent.value) {
-    accounts.rent.value =
-      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
-  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -486,7 +440,6 @@ export function getClaimInstruction<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("clock", accounts.clock),
-      getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getClaimInstructionDataEncoder().encode({}),
@@ -504,7 +457,6 @@ export function getClaimInstruction<
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
-    TAccountRent,
     TAccountSystemProgram
   >);
 }
@@ -526,8 +478,7 @@ export type ParsedClaimInstruction<
     tokenProgram: TAccountMetas[8];
     associatedTokenProgram: TAccountMetas[9];
     clock: TAccountMetas[10];
-    rent: TAccountMetas[11];
-    systemProgram: TAccountMetas[12];
+    systemProgram: TAccountMetas[11];
   };
   data: ClaimInstructionData;
 };
@@ -540,12 +491,12 @@ export function parseClaimInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedClaimInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 12) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 13,
+        expectedAccountMetas: 12,
       },
     );
   }
@@ -575,7 +526,6 @@ export function parseClaimInstruction<
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       clock: getNextAccount(),
-      rent: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getClaimInstructionDataDecoder().decode(instruction.data),

@@ -36,7 +36,6 @@ import {
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
-  getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
 import { findEstatePda, findVaultPda } from "../pdas";
@@ -163,6 +162,7 @@ export type RegisterAssetAsyncInput<
   vault?: Address<TAccountVault>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  /** token path only */
   mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -252,28 +252,10 @@ export async function getRegisterAssetInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.estate.value = await findEstatePda();
   }
   if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.vault.value = await findVaultPda();
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -346,6 +328,7 @@ export type RegisterAssetInput<
   vault: Address<TAccountVault>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  /** token path only */
   mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -496,6 +479,7 @@ export type ParsedRegisterAssetInstruction<
     vault: TAccountMetas[3];
     authorityTokenAccount?: TAccountMetas[4] | undefined;
     vaultTokenAccount?: TAccountMetas[5] | undefined;
+    /** token path only */
     mint?: TAccountMetas[6] | undefined;
     tokenProgram: TAccountMetas[7];
     associatedTokenProgram: TAccountMetas[8];

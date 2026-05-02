@@ -40,7 +40,6 @@ import {
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
-  getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
 import { findEstatePda } from "../pdas";
@@ -186,16 +185,7 @@ export async function getUpdateFieldsInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.estate.value = await findEstatePda();
   }
   if (!accounts.clock.value) {
     accounts.clock.value =

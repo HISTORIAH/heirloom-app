@@ -1,17 +1,18 @@
-import { expect, test } from "bun:test";
+import { test } from "bun:test";
+import { generateKeyPairSigner } from "@solana/kit";
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
-  createDefaultSolanaClient,
+  createTestContext,
+  createAndMintTokens,
+  createHeir,
   sendInitialize,
   sendClaim,
-  createAndMintTokens,
-  loadDefaultKeypair,
-  createDevnetSolanaClient,
+  deriveEstateVault,
+  deriveTokenAccounts,
 } from "./setup";
-import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 
 test("it claims a native SOL vault", async () => {
-  const client = createDefaultSolanaClient();
-  // const client = createDevnetSolanaClient();
+  const { client } = await createTestContext();
 
   const { heir } = await sendInitialize(client, {
     amount: BigInt(100_000),
@@ -21,31 +22,39 @@ test("it claims a native SOL vault", async () => {
     pauseDuration: 0n,
   });
 
-  console.log("calling claim for heir next", heir.address);
-
   await sendClaim(client, { heir });
 });
 
 test("it claims a token vault", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
-
+  const { client, authority } = await createTestContext();
   const { mint } = await createAndMintTokens();
+  const heir = await createHeir(client);
 
-  const { heir } = await sendInitialize(client, {
+  const { vault, estate } = await deriveEstateVault(
+    authority.address,
+    heir.address,
+  );
+  const { vaultTokenAccount, authorityTokenAccount, heirTokenAccount } =
+    await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
+
+  await sendInitialize(client, {
     amount: 1_000_000n,
-    label: "test-claim-token",
+    label: "test-heir-migration-token",
     heartbeatInterval: 0n,
     gracePeriod: 0n,
     pauseDuration: 0n,
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    vaultTokenAccount,
+    heir,
+    authorityTokenAccount,
   });
 
-  // TODO: pass heirTokenAccount once ATA derivation is wired in sendClaim
   await sendClaim(client, {
     heir,
     mint: mint.address,
+    vaultTokenAccount,
+    heirTokenAccount,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
 });

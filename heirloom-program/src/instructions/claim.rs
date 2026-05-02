@@ -22,10 +22,10 @@ pub struct Claim {
     #[account(mut)]
     pub heir_token_account: Option<UncheckedAccount>,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump = estate.bump)]
+    #[account(mut, address = Estate::seeds(authority.address(), heir.address()))]
     pub estate: Account<Estate>,
 
-    #[account(mut, seeds = Vault::seeds(authority, heir), bump = vault.bump)]
+    #[account(mut, address = Vault::seeds(authority.address(), heir.address()))]
     pub vault: Account<Vault>,
 
     #[account(mut)]
@@ -40,14 +40,12 @@ pub struct Claim {
 
     pub clock: Sysvar<Clock>,
 
-    pub rent: Sysvar<Rent>,
-
-    pub system_program: Program<System>,
+    pub system_program: Program<SystemProgram>,
 }
 
 impl Claim {
     #[inline(always)]
-    pub fn claim_handler<'a>(ctx: &mut Ctx<Claim>) -> Result<(), ProgramError> {
+    pub fn claim_handler(ctx: &mut Ctx<Claim>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
         ctx.accounts.transfer_assets(&ctx.bumps)?;
         let heir_view = &ctx.accounts.heir.to_account_view();
@@ -70,7 +68,7 @@ impl Claim {
         }
 
         if let (Some(delegate_stored), Some(delegate_acc)) =
-            (self.estate.delegate, self.delegate.as_ref())
+            (self.estate.delegate.get(), self.delegate.as_ref())
         {
             require_eq!(
                 &delegate_stored,
@@ -126,7 +124,15 @@ impl Claim {
                 let vault_ta = self.vault_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_ta.amount();
-                let vault_seeds = self.vault_seeds(claim_ix_bumps);
+
+                // signer seeds
+                let bump = [claim_ix_bumps.vault];
+                let vault_seeds = [
+                    Seed::from(b"vault" as &[u8]),
+                    Seed::from(self.authority.address().as_ref()),
+                    Seed::from(self.heir.address().as_ref()),
+                    Seed::from(bump.as_ref()),
+                ];
 
                 // Create heir's ATA if it doesn't exist yet
                 self.associated_token_program

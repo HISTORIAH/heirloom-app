@@ -207,6 +207,11 @@ export async function sendInitialize(
   client: Client,
   args: InitializeArgs,
 ): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(args.authority.address, args.heir),
+    getVaultAddress(args.authority.address, args.heir),
+  ]);
+
   const ix = await getInitializeInstructionAsync({
     authority: args.authority,
     heir: args.heir,
@@ -220,6 +225,8 @@ export async function sendInitialize(
     pauseDuration: args.pauseDuration,
     amount: args.amount,
     label: args.label,
+    estate,
+    vault,
   });
   return sendTx(client, args.authority, ix);
 }
@@ -233,6 +240,8 @@ export async function sendUpdate(
   client: Client,
   args: UpdateArgs,
 ): Promise<string> {
+  const estate = await getEstateAddress(args.authority.address, args.heir);
+
   // updateFields with all None → heartbeat-only (program sets last_heartbeat = now).
   const ix = await getUpdateFieldsInstructionAsync({
     authority: args.authority,
@@ -240,6 +249,7 @@ export async function sendUpdate(
     heartbeatInterval: null,
     gracePeriod: null,
     pauseDuration: null,
+    estate,
   });
   return sendTx(client, args.authority, ix);
 }
@@ -257,6 +267,11 @@ export async function sendRevoke(
   client: Client,
   args: RevokeArgs,
 ): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(args.authority.address, args.heir),
+    getVaultAddress(args.authority.address, args.heir),
+  ]);
+
   const revokeIx = await getRevokeInstructionAsync({
     authority: args.authority,
     heir: args.heir,
@@ -264,6 +279,8 @@ export async function sendRevoke(
     tokenProgram: args.tokenProgram,
     authorityTokenAccount: args.authorityTokenAccount,
     vaultTokenAccount: args.vaultTokenAccount,
+    estate,
+    vault,
   });
 
   return sendTx(client, args.authority, revokeIx);
@@ -287,6 +304,11 @@ export async function sendRevokeAll(
   tokens: RevokeTokenAsset[],
   revokeSol: boolean,
 ): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(authority.address, heir),
+    getVaultAddress(authority.address, heir),
+  ]);
+
   const ixs: Ix[] = await Promise.all(
     tokens.map((t) =>
       getRevokeInstructionAsync({
@@ -296,12 +318,16 @@ export async function sendRevokeAll(
         tokenProgram: t.tokenProgram,
         authorityTokenAccount: t.authorityTokenAccount,
         vaultTokenAccount: t.vaultTokenAccount,
+        estate,
+        vault,
       }),
     ),
   );
 
   if (revokeSol) {
-    ixs.push(await getRevokeInstructionAsync({ authority, heir }));
+    ixs.push(
+      await getRevokeInstructionAsync({ authority, heir, estate, vault }),
+    );
   }
 
   return sendTx(client, authority, ixs);
@@ -321,6 +347,11 @@ export async function sendClaim(
   client: Client,
   args: ClaimArgs,
 ): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(args.authority, args.heir.address),
+    getVaultAddress(args.authority, args.heir.address),
+  ]);
+
   const claimIx = await getClaimInstructionAsync({
     heir: args.heir,
     authority: args.authority,
@@ -329,6 +360,8 @@ export async function sendClaim(
     vaultTokenAccount: args.vaultTokenAccount,
     heirTokenAccount: args.heirTokenAccount,
     delegate: args.delegate,
+    estate,
+    vault,
   });
 
   return sendTx(client, args.heir, claimIx);
@@ -353,6 +386,11 @@ export async function sendClaimAll(
   claimSol: boolean,
   delegate?: Address,
 ): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(authority, heir.address),
+    getVaultAddress(authority, heir.address),
+  ]);
+
   const ixs: Ix[] = await Promise.all(
     tokens.map((t) =>
       getClaimInstructionAsync({
@@ -363,12 +401,16 @@ export async function sendClaimAll(
         vaultTokenAccount: t.vaultTokenAccount,
         heirTokenAccount: t.heirTokenAccount,
         delegate,
+        estate,
+        vault,
       }),
     ),
   );
 
   if (claimSol) {
-    ixs.push(await getClaimInstructionAsync({ heir, authority, delegate }));
+    ixs.push(
+      await getClaimInstructionAsync({ heir, authority, delegate, estate, vault }),
+    );
   }
 
   return sendTx(client, heir, ixs);
@@ -384,10 +426,13 @@ export async function sendDelegateDefer(
   client: Client,
   args: DelegateDeferArgs,
 ): Promise<string> {
+  const estate = await getEstateAddress(args.authority, args.heir);
+
   const ix = await getDelegateDeferInstructionAsync({
     delegate: args.delegate,
     authority: args.authority,
     heir: args.heir,
+    estate,
   });
   return sendTx(client, args.delegate, ix);
 }
@@ -400,22 +445,30 @@ export interface UpdateHeirArgs {
   authority: TransactionSigner;
   heir: Address;
   newHeir: Address;
+  mint?: Address;
+  tokenProgram?: Address;
+  vaultTokenAccount?: Address;
 }
 
 export async function sendUpdateHeir(
   client: Client,
   args: UpdateHeirArgs,
 ): Promise<string> {
-  // newEstate and newVault are NOT auto-derived by the generated client,
-  // so we must derive them manually using the new heir.
-  const [newEstate] = await findEstatePda({
-    authority: args.authority.address,
-    heir: args.newHeir,
-  });
-  const [newVault] = await findVaultPda({
-    authority: args.authority.address,
-    heir: args.newHeir,
-  });
+  const [newEstate, newVault, estate, vault] = await Promise.all([
+    getEstateAddress(args.authority.address, args.newHeir),
+    getVaultAddress(args.authority.address, args.newHeir),
+    getEstateAddress(args.authority.address, args.heir),
+    getVaultAddress(args.authority.address, args.heir),
+  ]);
+
+  let newVaultTokenAccount: Address | undefined;
+  if (args.mint && args.tokenProgram) {
+    [newVaultTokenAccount] = await findAssociatedTokenPda({
+      owner: newVault,
+      mint: args.mint,
+      tokenProgram: args.tokenProgram,
+    });
+  }
 
   const ix = await getUpdateHeirInstructionAsync({
     authority: args.authority,
@@ -423,6 +476,11 @@ export async function sendUpdateHeir(
     newHeir: args.newHeir,
     newEstate,
     newVault,
+    estate,
+    vault,
+    mint: args.mint,
+    vaultTokenAccount: args.vaultTokenAccount,
+    newVaultTokenAccount,
   });
   return sendTx(client, args.authority, ix);
 }
@@ -447,8 +505,22 @@ async function buildRegisterAssetIx(
   tokenProgram: Address,
 ): Promise<Ix> {
   const [vaultPda] = await findVaultPda({ authority: authority.address, heir });
-  const [vaultTokenAccount] = await findAssociatedTokenPda({ owner: vaultPda, mint, tokenProgram });
-  const [authorityTokenAccount] = await findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram });
+  const [vaultTokenAccount] = await findAssociatedTokenPda({
+    owner: vaultPda,
+    mint,
+    tokenProgram,
+  });
+  const [authorityTokenAccount] = await findAssociatedTokenPda({
+    owner: authority.address,
+    mint,
+    tokenProgram,
+  });
+
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(authority.address, heir),
+    getVaultAddress(authority.address, heir),
+  ]);
+
   return getRegisterAssetInstructionAsync({
     authority,
     heir,
@@ -457,6 +529,8 @@ async function buildRegisterAssetIx(
     authorityTokenAccount,
     tokenProgram,
     amount,
+    estate,
+    vault,
   });
 }
 
@@ -469,7 +543,13 @@ export async function sendRegisterAndDeposit(
   args: RegisterAndDepositArgs,
 ): Promise<string> {
   const tokenProgram = args.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
-  const ix = await buildRegisterAssetIx(args.authority, args.heir, args.mint, args.amount, tokenProgram);
+  const ix = await buildRegisterAssetIx(
+    args.authority,
+    args.heir,
+    args.mint,
+    args.amount,
+    tokenProgram,
+  );
   return sendTx(client, args.authority, ix);
 }
 
@@ -489,6 +569,11 @@ export async function sendInitializeWithTokens(
   initArgs: InitializeArgs,
   extraTokens: TokenRegistration[],
 ): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(initArgs.authority.address, initArgs.heir),
+    getVaultAddress(initArgs.authority.address, initArgs.heir),
+  ]);
+
   const initIx = await getInitializeInstructionAsync({
     authority: initArgs.authority,
     heir: initArgs.heir,
@@ -502,6 +587,8 @@ export async function sendInitializeWithTokens(
     pauseDuration: initArgs.pauseDuration,
     amount: initArgs.amount,
     label: initArgs.label,
+    estate,
+    vault,
   });
 
   const registerIxs = await Promise.all(

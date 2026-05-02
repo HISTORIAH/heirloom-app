@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { createDefaultSolanaClient, sendInitialize, sendUpdateFields } from "./setup";
+import { test } from "bun:test";
+import { createTestContext, sendInitialize, sendUpdateFields } from "./setup";
 
 test("it updates heartbeat interval and grace period", async () => {
-  const client = createDefaultSolanaClient();
+  const { client } = await createTestContext();
 
   const { heir } = await sendInitialize(client, {
     amount: BigInt(1_000_000_000),
@@ -19,10 +19,9 @@ test("it updates heartbeat interval and grace period", async () => {
   });
 });
 
-
 // TODO: fix, this isn't tested
 test("it updates only pause duration", async () => {
-  const client = createDefaultSolanaClient();
+  const { client } = await createTestContext();
 
   const { heir } = await sendInitialize(client, {
     amount: BigInt(1_000_000_000),
@@ -33,7 +32,7 @@ test("it updates only pause duration", async () => {
   });
 
   await sendUpdateFields(client, {
-      heir: heir.address,
-      pauseDuration: 14400n,
+    heir: heir.address,
+    pauseDuration: 14400n,
   });
 });

@@ -44,7 +44,6 @@ import {
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
-  getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
 import { findEstatePda, findVaultPda } from "../pdas";
@@ -104,7 +103,7 @@ export type InitializeInstruction<
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
       TAccountMint extends string
-        ? WritableAccount<TAccountMint>
+        ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -281,7 +280,7 @@ export async function getInitializeInstructionAsync<
       value: input.vaultTokenAccount ?? null,
       isWritable: true,
     },
-    mint: { value: input.mint ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -301,28 +300,10 @@ export async function getInitializeInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.estate.value = await findEstatePda();
   }
   if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount(
-        "authority",
-        accounts.authority.value,
-      ),
-      heir: getAddressFromResolvedInstructionAccount(
-        "heir",
-        accounts.heir.value,
-      ),
-    });
+    accounts.vault.value = await findVaultPda();
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -486,7 +467,7 @@ export function getInitializeInstruction<
       value: input.vaultTokenAccount ?? null,
       isWritable: true,
     },
-    mint: { value: input.mint ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,

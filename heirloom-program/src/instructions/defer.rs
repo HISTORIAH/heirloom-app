@@ -6,7 +6,7 @@ use crate::{errors::HeirloomError, state::Estate};
 pub struct Defer {
     #[account(
       mut,
-      address  = estate.delegate.unwrap(), // ! NOTE: UNTESTED
+      address  = estate.delegate.get().unwrap(), // ! NOTE: UNTESTED
     )]
     pub delegate: Signer,
 
@@ -14,12 +14,12 @@ pub struct Defer {
 
     pub heir: UncheckedAccount,
 
-    #[account(mut, seeds = Estate::seeds(authority, heir), bump )]
+    #[account(mut, address = Estate::seeds(authority.address(), heir.address()) )]
     pub estate: Account<Estate>,
 
     pub clock: Sysvar<Clock>,
 
-    pub system_program: Program<System>,
+    pub system_program: Program<SystemProgram>,
 }
 
 impl Defer {

@@ -1,17 +1,18 @@
 import { expect, test } from "bun:test";
+import { generateKeyPairSigner } from "@solana/kit";
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
-  createDefaultSolanaClient,
+  createTestContext,
+  createAndMintTokens,
+  createHeir,
   sendInitialize,
   sendUpdateHeir,
-  createAndMintTokens,
-  loadDefaultKeypair,
+  deriveEstateVault,
+  deriveTokenAccounts,
 } from "./setup";
-import { generateKeyPairSigner } from "@solana/kit";
-import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { findVaultPda } from "@historiah/heirloom";
 
 test("it migrates sol vault to a new heir", async () => {
-  const client = createDefaultSolanaClient();
+  const { client } = await createTestContext();
 
   const { heir } = await sendInitialize(client, {
     amount: BigInt(1_000_000_000),
@@ -23,7 +24,7 @@ test("it migrates sol vault to a new heir", async () => {
 
   const newHeir = await generateKeyPairSigner();
 
-  const { authority } = await sendUpdateHeir(client, {
+  await sendUpdateHeir(client, {
     newHeir: newHeir.address,
     oldHeir: heir.address,
   });
@@ -32,32 +33,18 @@ test("it migrates sol vault to a new heir", async () => {
 });
 
 test("it migrates token vault to a new heir", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
-  const oldHeir = await generateKeyPairSigner();
+  const { client, authority } = await createTestContext();
+  const oldHeir = await createHeir(client);
   const newHeir = await generateKeyPairSigner();
 
   const { mint } = await createAndMintTokens();
 
-
-  let [oldVault] = await findVaultPda({
-    authority: authority.address,
-    heir: oldHeir.address
-  });
-  const [oldVaultTokenAccount] = await findAssociatedTokenPda(
-    {
-      owner: oldVault,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
+  const { vault: oldVault } = await deriveEstateVault(
+    authority.address,
+    oldHeir.address,
   );
-  const [authorityTokenAcc] = await findAssociatedTokenPda(
-    {
-      owner: authority.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
-  );
+  const { vaultTokenAccount: oldVaultTokenAccount, authorityTokenAccount } =
+    await deriveTokenAccounts(oldVault, authority.address, oldHeir.address, mint.address);
 
   await sendInitialize(client, {
     amount: 1_000_000n,
@@ -69,9 +56,8 @@ test("it migrates token vault to a new heir", async () => {
     heir: oldHeir,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount: oldVaultTokenAccount,
-    authorityTokenAccount: authorityTokenAcc
-   });
-
+    authorityTokenAccount,
+  });
 
   await sendUpdateHeir(client, {
     mint: mint.address,

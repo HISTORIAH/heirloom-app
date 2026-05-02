@@ -31,7 +31,9 @@ pub struct RegisterAsset {
           
               
           pub vault_token_account: Option<solana_address::Address>,
-          
+                /// token path only
+
+    
               
           pub mint: Option<solana_address::Address>,
           
@@ -238,6 +240,7 @@ impl RegisterAssetBuilder {
                     self
     }
             /// `[optional account]`
+/// token path only
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
                         self.mint = mint;
@@ -327,7 +330,9 @@ impl RegisterAssetBuilder {
                 
                     
               pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// token path only
+
+      
                     
               pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
@@ -366,7 +371,9 @@ pub struct RegisterAssetCpi<'a, 'b> {
           
               
           pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// token path only
+
+    
               
           pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
@@ -611,6 +618,7 @@ impl<'a, 'b> RegisterAssetCpiBuilder<'a, 'b> {
                     self
     }
       /// `[optional account]`
+/// token path only
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.mint = mint;
