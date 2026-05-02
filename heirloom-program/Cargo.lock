@@ -962,7 +962,7 @@ name = "heirloom-program"
 version = "0.1.0"
 dependencies = [
  "heirloom-program-client",
- "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
+ "quasar-lang 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check)",
  "quasar-spl",
  "quasar-svm",
  "solana-account",
@@ -1398,7 +1398,20 @@ dependencies = [
 [[package]]
 name = "quasar-derive"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check#861d3c2c32131429fd4318385998db348137b71c"
+dependencies = [
+ "proc-macro2",
+ "quasar-schema 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check)",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "quasar-derive"
+version = "0.0.0"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#814e17446a0336d0a4979d44ad1652d16ac5e324"
 dependencies = [
  "proc-macro2",
  "quasar-schema 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
@@ -1409,22 +1422,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "quasar-derive"
+name = "quasar-lang"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check#861d3c2c32131429fd4318385998db348137b71c"
 dependencies = [
- "proc-macro2",
- "quasar-schema 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
- "quote",
- "serde",
- "serde_json",
- "syn 2.0.117",
+ "const-crypto",
+ "quasar-derive 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check)",
+ "solana-account-view",
+ "solana-address 2.2.0",
+ "solana-define-syscall 5.1.0",
+ "solana-instruction",
+ "solana-instruction-view",
+ "solana-program-error",
+ "solana-program-log",
+ "wincode 0.4.9",
+ "zeropod",
 ]
 
 [[package]]
 name = "quasar-lang"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#814e17446a0336d0a4979d44ad1652d16ac5e324"
 dependencies = [
  "const-crypto",
  "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar?branch=master)",
@@ -1440,27 +1458,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "quasar-lang"
-version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
-dependencies = [
- "const-crypto",
- "quasar-derive 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
- "solana-account-view",
- "solana-address 2.2.0",
- "solana-define-syscall 5.1.0",
- "solana-instruction",
- "solana-instruction-view",
- "solana-program-error",
- "solana-program-log",
- "wincode 0.4.9",
- "zeropod",
-]
-
-[[package]]
 name = "quasar-schema"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar?branch=master#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check#861d3c2c32131429fd4318385998db348137b71c"
 dependencies = [
  "serde",
 ]
@@ -1468,7 +1468,7 @@ dependencies = [
 [[package]]
 name = "quasar-schema"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
+source = "git+https://github.com/blueshift-gg/quasar?branch=master#814e17446a0336d0a4979d44ad1652d16ac5e324"
 dependencies = [
  "serde",
 ]
@@ -1476,9 +1476,9 @@ dependencies = [
 [[package]]
 name = "quasar-spl"
 version = "0.0.0"
-source = "git+https://github.com/blueshift-gg/quasar#f94383e9edaf6301bcdfb6179636e29c3bd6720e"
+source = "git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check#861d3c2c32131429fd4318385998db348137b71c"
 dependencies = [
- "quasar-lang 0.0.0 (git+https://github.com/blueshift-gg/quasar)",
+ "quasar-lang 0.0.0 (git+https://github.com/jim4067/quasar?branch=jimii%2Fnon-dup-check)",
  "solana-address 2.2.0",
 ]
 
@@ -3135,9 +3135,9 @@ dependencies = [
 
 [[package]]
 name = "zeropod"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a3bf073396a7d0821f071de24c92627e38f6c2805373cc0afa85e9e5358c274"
+checksum = "347560ea42254b19900a39f5e7a96dc247e841b3867ac88c729a2d25e5ec498e"
 dependencies = [
  "solana-address 2.2.0",
  "solana-program-error",
@@ -3147,9 +3147,9 @@ dependencies = [
 
 [[package]]
 name = "zeropod-derive"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "637cf615077fd256810487d431215048927bf253a7bb945b04a653820a93b14d"
+checksum = "4b8369005ce19ec7a48b139c6535983521a9e721949ea0c9a1b56c53131749fa"
 dependencies = [
  "proc-macro2",
  "quote",

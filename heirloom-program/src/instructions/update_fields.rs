@@ -18,7 +18,7 @@ pub struct UpdateFields {
 
 impl UpdateFields {
     #[inline(always)]
-    pub fn update_fields_handler<'a>(
+    pub fn update_fields_handler(
         ctx: &mut Ctx<UpdateFields>,
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,

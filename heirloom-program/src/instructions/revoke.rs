@@ -40,7 +40,7 @@ pub struct Revoke {
 
 impl Revoke {
     #[inline(always)]
-    pub fn revoke_handler<'a>(ctx: &mut Ctx<'a, Revoke>) -> Result<(), ProgramError> {
+    pub fn revoke_handler(ctx: &mut Ctx<Revoke>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
         // return funds to authority

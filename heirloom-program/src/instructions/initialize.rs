@@ -30,7 +30,6 @@ pub struct Initialize {
     #[account(mut)]
     pub vault_token_account: Option<UncheckedAccount>,
 
-    #[account(mut)]
     pub mint: Option<Account<Mint>>,
 
     pub token_program: Interface<TokenInterface>,

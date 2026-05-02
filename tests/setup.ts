@@ -206,6 +206,8 @@ export const sendInitialize = async (
     pauseDuration,
     label,
     amount,
+    vault: (await findVaultPda({authority: authority.address, heir: heir.address}))[0],
+    estate: (await findEstatePda({authority: authority.address, heir: heir.address}))[0],
     tokenProgram: args.tokenProgram,
     mint: args.mint,
     vaultTokenAccount: args.vaultTokenAccount,
@@ -236,6 +238,7 @@ export const sendUpdateFields = async (
     authority,
     heir: args.heir,
     heartbeatInterval: args.heartbeatInterval ?? null,
+    estate: (await findEstatePda({authority: authority.address, heir: args.heir}))[0],
     gracePeriod: args.gracePeriod ?? null,
     pauseDuration: args.pauseDuration ?? null,
   });
@@ -290,6 +293,8 @@ export const sendUpdateHeir = async (
     newEstate,
     newVault,
     mint: args.mint,
+    vault: (await findVaultPda({authority: authority.address, heir: oldHeir}))[0],
+    estate: (await findEstatePda({authority: authority.address, heir: oldHeir}))[0],
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     newVaultTokenAccount,
@@ -322,6 +327,8 @@ export const sendRevoke = async (
     mint: args.mint,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
+    vault: (await findVaultPda({authority: authority.address, heir: args.heir}))[0],
+    estate: (await findEstatePda({authority: authority.address, heir: args.heir}))[0],
     authorityTokenAccount: args.authorityTokenAccount,
   });
 
@@ -345,15 +352,20 @@ export const sendClaim = async (
     delegate?: Address;
   },
 ): Promise<{ heir: Address }> => {
-  const authority = await loadDefaultKeypair();
+  const [authority, heir] = await Promise.all([
+    loadDefaultKeypair(),
+    args.heir
+  ])
 
   const ix = await getClaimInstructionAsync({
-    heir: args.heir,
+    heir: heir,
     authority: authority.address,
     mint: args.mint,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     heirTokenAccount: args.heirTokenAccount,
+    vault: (await findVaultPda({authority: authority.address, heir: heir.address}))[0],
+    estate: (await findEstatePda({authority: authority.address, heir: heir.address}))[0],
     delegate: args.delegate,
   });
 
@@ -381,6 +393,7 @@ export const sendDelegateDefer = async (
     delegate,
     authority: authority.address,
     heir: args.heir,
+    estate: (await findEstatePda({authority: authority.address, heir: args.heir}))[0],
   });
 
   await pipe(
@@ -402,16 +415,20 @@ export const sendRegisterAsset = async (
     tokenProgram?: Address;
   },
 ): Promise<{ authority: Address }> => {
-  const authority = await loadDefaultKeypair();
-
+  const [authority, heir] = await Promise.all([
+    loadDefaultKeypair(),
+    args.heir
+  ])
 
   const ix = await getRegisterAssetInstructionAsync({
     authority,
-    heir: args.heir,
+    heir: heir,
     amount: args.amount,
     mint: args.mint,
+    vault: (await findVaultPda({authority: authority.address, heir}))[0],
+    estate: (await findEstatePda({authority: authority.address, heir}))[0],
     vaultTokenAccount: args.vaultTokenAccount,
-    tokenProgram:args.tokenProgram
+    tokenProgram: args.tokenProgram
   });
 
   await pipe(

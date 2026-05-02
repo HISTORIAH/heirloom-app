@@ -39,7 +39,6 @@ test("it migrates token vault to a new heir", async () => {
 
   const { mint } = await createAndMintTokens();
 
-
   let [oldVault] = await findVaultPda({
     authority: authority.address,
     heir: oldHeir.address

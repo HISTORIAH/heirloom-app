@@ -7,7 +7,6 @@
  */
 
 export * from "./claim";
-export * from "./closeEstate";
 export * from "./delegateDefer";
 export * from "./initialize";
 export * from "./registerAsset";

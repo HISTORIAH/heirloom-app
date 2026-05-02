@@ -40,14 +40,12 @@ pub struct Claim {
 
     pub clock: Sysvar<Clock>,
 
-    pub rent: Sysvar<Rent>,
-
     pub system_program: Program<SystemProgram>,
 }
 
 impl Claim {
     #[inline(always)]
-    pub fn claim_handler<'a>(ctx: &mut Ctx<Claim>) -> Result<(), ProgramError> {
+    pub fn claim_handler(ctx: &mut Ctx<Claim>) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
         ctx.accounts.transfer_assets(&ctx.bumps)?;
         let heir_view = &ctx.accounts.heir.to_account_view();
