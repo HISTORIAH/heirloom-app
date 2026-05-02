@@ -4,16 +4,18 @@ use crate::{errors::HeirloomError, state::Estate};
 
 #[derive(Accounts)]
 pub struct UpdateFields {
-    #[account(mut, address = estate.authority)]
+    #[account(mut)]
     pub authority: Signer,
 
     #[account(address = estate.heir)]
     pub heir: UncheckedAccount,
 
-    #[account(mut, address = Estate::seeds(authority.address(), heir.address()))]
+    #[account(mut)]
     pub estate: Account<Estate>,
 
     pub clock: Sysvar<Clock>,
+
+    pub system_program: Program<SystemProgram>,
 }
 
 impl UpdateFields {
@@ -27,26 +29,38 @@ impl UpdateFields {
     ) -> Result<(), ProgramError> {
         ctx.accounts.validate()?;
 
+        let estate = &mut ctx.accounts.estate;
         let now = ctx.accounts.clock.unix_timestamp;
 
         // heartbeat is always updated
-        ctx.accounts.estate.last_heartbeat = now;
+        estate.last_heartbeat = now;
 
-        if let Some(hi) = heartbeat_interval {
-            ctx.accounts.estate.heartbeat_interval = PodI64::from(hi);
-        }
-        if let Some(gp) = grace_period {
-            ctx.accounts.estate.grace_period = PodI64::from(gp);
-        }
-        if let Some(pd) = pause_duration {
-            ctx.accounts.estate.pause_duration = PodI64::from(pd);
+        // only main authority can update config values
+        if *ctx.accounts.authority.address() == estate.authority {
+            if let Some(hi) = heartbeat_interval {
+                estate.heartbeat_interval = hi.into();
+            }
+            if let Some(gp) = grace_period {
+                estate.grace_period = gp.into();
+            }
+            if let Some(pd) = pause_duration {
+                estate.pause_duration = pd.into();
+            }
         }
 
-        // if let Some(l) = label {
-        //     ctx.accounts
-        //         .estate
-        //         .set_label(ctx.accounts.authority.to_account_view(), l);
-        // }
+        // label is also restricted to main authority
+        // as_mut() borrows estate mutably, so we call it after the &mut estate borrow above is dropped
+        if *ctx.accounts.authority.address() == ctx.accounts.estate.authority {
+            if let Some(l) = label {
+                let mut guard = ctx
+                    .accounts
+                    .estate
+                    .as_mut(&ctx.accounts.authority.to_account_view());
+                if !guard.label.set(l.as_str()) {
+                    return Err(HeirloomError::LabelTooLong.into());
+                }
+            }
+        }
 
         Ok(())
     }
@@ -59,17 +73,21 @@ impl UpdateFields {
             HeirloomError::AlreadyClaimed
         );
 
-        // check the authority,
+        // Verify the estate PDA was derived from (estate.authority, heir).
+        let seeds = Estate::seeds(&self.estate.authority, self.heir.address());
+        seeds.verify(self.estate.to_account_view().address(), &crate::ID)?;
 
-        /* The pause should
-           only gate the claim instruction, not heartbeats.
-        */
-        //
-        // let now = self.clock.unix_timestamp;
-        //
-        // if now < self.estate.paused_until {
-        //     return Err(HeirloomError::EstatePaused.into());
-        // }
+        // signer must be the authority, or the designated hb_signer
+        let signer = *self.authority.address();
+        if signer != self.estate.authority {
+            if let Some(hb_signer) = self.estate.hb_signer.get() {
+                if signer != hb_signer {
+                    return Err(HeirloomError::Unauthorized.into());
+                }
+            } else {
+                return Err(HeirloomError::Unauthorized.into());
+            }
+        }
 
         Ok(())
     }

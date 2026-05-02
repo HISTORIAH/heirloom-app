@@ -71,6 +71,7 @@ export type Estate = {
   pausedUntil: bigint;
   isDeferred: boolean;
   delegate: Option<Address>;
+  hbSigner: Option<Address>;
   claimableAssets: number;
   label: string;
 };
@@ -88,6 +89,7 @@ export type EstateArgs = {
   pausedUntil: number | bigint;
   isDeferred: boolean;
   delegate: OptionOrNullable<Address>;
+  hbSigner: OptionOrNullable<Address>;
   claimableAssets: number;
   label: string;
 };
@@ -109,6 +111,7 @@ export function getEstateEncoder(): Encoder<EstateArgs> {
       ["pausedUntil", getI64Encoder()],
       ["isDeferred", getBooleanEncoder()],
       ["delegate", getOptionEncoder(getAddressEncoder())],
+      ["hbSigner", getOptionEncoder(getAddressEncoder())],
       ["claimableAssets", getU8Encoder()],
       ["label", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ]),
@@ -132,6 +135,7 @@ export function getEstateDecoder(): Decoder<Estate> {
     ["pausedUntil", getI64Decoder()],
     ["isDeferred", getBooleanDecoder()],
     ["delegate", getOptionDecoder(getAddressDecoder())],
+    ["hbSigner", getOptionDecoder(getAddressDecoder())],
     ["claimableAssets", getU8Decoder()],
     ["label", addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
   ]);

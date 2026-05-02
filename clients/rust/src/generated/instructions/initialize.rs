@@ -24,6 +24,9 @@ pub struct Initialize {
           pub delegate: Option<solana_address::Address>,
           
               
+          pub hb_signer: Option<solana_address::Address>,
+          
+              
           pub authority_token_account: Option<solana_address::Address>,
           
               
@@ -61,7 +64,7 @@ impl Initialize {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: InitializeInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -73,6 +76,17 @@ impl Initialize {
                                                       if let Some(delegate) = self.delegate {
               accounts.push(solana_instruction::AccountMeta::new_readonly(
                 delegate,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(hb_signer) = self.hb_signer {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                hb_signer,
                 false,
               ));
             } else {
@@ -201,21 +215,23 @@ impl InitializeInstructionArgs {
                       ///   0. `[writable, signer]` authority
           ///   1. `[]` heir
                 ///   2. `[optional]` delegate
-                      ///   3. `[writable, optional]` authority_token_account
-                ///   4. `[writable]` estate
-                ///   5. `[writable]` vault
-                      ///   6. `[writable, optional]` vault_token_account
-                ///   7. `[optional]` mint
-                ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   9. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   10. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
-                ///   11. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   3. `[optional]` hb_signer
+                      ///   4. `[writable, optional]` authority_token_account
+                ///   5. `[writable]` estate
+                ///   6. `[writable]` vault
+                      ///   7. `[writable, optional]` vault_token_account
+                ///   8. `[optional]` mint
+                ///   9. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   10. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   11. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   12. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
+                ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct InitializeBuilder {
             authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 delegate: Option<solana_address::Address>,
+                hb_signer: Option<solana_address::Address>,
                 authority_token_account: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
                 vault: Option<solana_address::Address>,
@@ -252,6 +268,12 @@ impl InitializeBuilder {
 #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<solana_address::Address>) -> &mut Self {
                         self.delegate = delegate;
+                    self
+    }
+            /// `[optional account]`
+#[inline(always)]
+    pub fn hb_signer(&mut self, hb_signer: Option<solana_address::Address>) -> &mut Self {
+                        self.hb_signer = hb_signer;
                     self
     }
             /// `[optional account]`
@@ -355,6 +377,7 @@ impl InitializeBuilder {
                               authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
                                         delegate: self.delegate,
+                                        hb_signer: self.hb_signer,
                                         authority_token_account: self.authority_token_account,
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
@@ -389,6 +412,9 @@ impl InitializeBuilder {
                 
                     
               pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+                
+                    
+              pub hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
@@ -436,6 +462,9 @@ pub struct InitializeCpi<'a, 'b> {
           pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
+          pub hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
+          
+              
           pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
@@ -479,6 +508,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
               authority: accounts.authority,
               heir: accounts.heir,
               delegate: accounts.delegate,
+              hb_signer: accounts.hb_signer,
               authority_token_account: accounts.authority_token_account,
               estate: accounts.estate,
               vault: accounts.vault,
@@ -512,7 +542,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -524,6 +554,17 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
                                           if let Some(delegate) = self.delegate {
             accounts.push(solana_instruction::AccountMeta::new_readonly(
               *delegate.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
+                                          if let Some(hb_signer) = self.hb_signer {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              *hb_signer.key,
               false,
             ));
           } else {
@@ -609,12 +650,15 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(14 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         if let Some(delegate) = self.delegate {
           account_infos.push(delegate.clone());
+        }
+                        if let Some(hb_signer) = self.hb_signer {
+          account_infos.push(hb_signer.clone());
         }
                         if let Some(authority_token_account) = self.authority_token_account {
           account_infos.push(authority_token_account.clone());
@@ -649,16 +693,17 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
                       ///   0. `[writable, signer]` authority
           ///   1. `[]` heir
                 ///   2. `[optional]` delegate
-                      ///   3. `[writable, optional]` authority_token_account
-                ///   4. `[writable]` estate
-                ///   5. `[writable]` vault
-                      ///   6. `[writable, optional]` vault_token_account
-                ///   7. `[optional]` mint
-          ///   8. `[]` token_program
-          ///   9. `[]` associated_token_program
-          ///   10. `[]` rent
-          ///   11. `[]` clock
-          ///   12. `[]` system_program
+                ///   3. `[optional]` hb_signer
+                      ///   4. `[writable, optional]` authority_token_account
+                ///   5. `[writable]` estate
+                ///   6. `[writable]` vault
+                      ///   7. `[writable, optional]` vault_token_account
+                ///   8. `[optional]` mint
+          ///   9. `[]` token_program
+          ///   10. `[]` associated_token_program
+          ///   11. `[]` rent
+          ///   12. `[]` clock
+          ///   13. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct InitializeCpiBuilder<'a, 'b> {
   instruction: Box<InitializeCpiBuilderInstruction<'a, 'b>>,
@@ -671,6 +716,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
               authority: None,
               heir: None,
               delegate: None,
+              hb_signer: None,
               authority_token_account: None,
               estate: None,
               vault: None,
@@ -704,6 +750,12 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
 #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.delegate = delegate;
+                    self
+    }
+      /// `[optional account]`
+#[inline(always)]
+    pub fn hb_signer(&mut self, hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.hb_signer = hb_signer;
                     self
     }
       /// `[optional account]`
@@ -822,6 +874,8 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                   
           delegate: self.instruction.delegate,
                   
+          hb_signer: self.instruction.hb_signer,
+                  
           authority_token_account: self.instruction.authority_token_account,
                   
           estate: self.instruction.estate.expect("estate is not set"),
@@ -853,6 +907,7 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
             authority: Option<&'b solana_account_info::AccountInfo<'a>>,
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+                hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
                 authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,

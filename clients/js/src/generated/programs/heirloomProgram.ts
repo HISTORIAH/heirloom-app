@@ -45,7 +45,7 @@ import {
   getInitializeInstructionAsync,
   getRegisterAssetInstructionAsync,
   getRevokeInstructionAsync,
-  getUpdateFieldsInstructionAsync,
+  getUpdateFieldsInstruction,
   getUpdateHeirInstructionAsync,
   parseClaimInstruction,
   parseDelegateDeferInstruction,
@@ -66,7 +66,7 @@ import {
   type ParsedUpdateHeirInstruction,
   type RegisterAssetAsyncInput,
   type RevokeAsyncInput,
-  type UpdateFieldsAsyncInput,
+  type UpdateFieldsInput,
   type UpdateHeirAsyncInput,
 } from "../instructions";
 import { findEstatePda, findVaultPda } from "../pdas";
@@ -302,9 +302,8 @@ export type HeirloomProgramPluginInstructions = {
     input: ClaimAsyncInput,
   ) => ReturnType<typeof getClaimInstructionAsync> & SelfPlanAndSendFunctions;
   updateFields: (
-    input: UpdateFieldsAsyncInput,
-  ) => ReturnType<typeof getUpdateFieldsInstructionAsync> &
-    SelfPlanAndSendFunctions;
+    input: UpdateFieldsInput,
+  ) => ReturnType<typeof getUpdateFieldsInstruction> & SelfPlanAndSendFunctions;
   revoke: (
     input: RevokeAsyncInput,
   ) => ReturnType<typeof getRevokeInstructionAsync> & SelfPlanAndSendFunctions;
@@ -356,7 +355,7 @@ export function heirloomProgramProgram() {
           updateFields: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getUpdateFieldsInstructionAsync(input),
+              getUpdateFieldsInstruction(input),
             ),
           revoke: (input) =>
             addSelfPlanAndSendFunctions(

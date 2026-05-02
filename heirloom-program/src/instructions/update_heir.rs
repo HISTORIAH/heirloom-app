@@ -246,6 +246,7 @@ impl UpdateHeir {
                 bump: new_estate_bump,
                 is_claimed: false,
                 delegate: self.estate.delegate.get(),
+                hb_signer: self.estate.hb_signer.get(),
                 claimable_assets: self.estate.claimable_assets,
                 label: self.estate.label(),
                 pause_duration: self.estate.pause_duration.get(),

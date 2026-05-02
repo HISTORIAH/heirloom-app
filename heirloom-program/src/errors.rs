@@ -18,4 +18,5 @@ pub enum HeirloomError {
     ClaimableAssetsRemaining,
     ZeroDepositAmount,
     TooManyClaimableAssets,
+    LabelTooLong,
 }
