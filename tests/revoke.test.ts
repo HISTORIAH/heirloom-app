@@ -5,6 +5,7 @@ import {
 } from "@solana/kit";
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
+  findEstatePda,
   findVaultPda,
 } from "@historiah/heirloom";
 import {
@@ -24,13 +25,11 @@ test("it creates a token-only vault and revokes it", async () => {
 
   await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
 
-  const [vaultPda] = await findVaultPda({
-    authority: authority.address,
-    heir: heir.address,
-  });
+  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
+  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
 
   const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vaultPda,
+    owner: vault,
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
@@ -62,6 +61,8 @@ test("it creates a token-only vault and revokes it", async () => {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount,
     authorityTokenAccount,
+    vault,
+    estate
   });
 });
 
@@ -75,13 +76,11 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
 
   await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
 
-  const [vaultPda] = await findVaultPda({
-    authority: authority.address,
-    heir: heir.address,
-  });
+  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
+  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
 
   const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vaultPda,
+    owner: vault,
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
@@ -126,11 +125,16 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
   });
 
   // Revoke token — claimable_assets drops to 0 so program closes estate + vault
+  let [newVault] = await findVaultPda({ authority: authority.address, heir: newHeir.address });
+  let [newEstate] = await findEstatePda({ authority: authority.address, heir: newHeir.address });
+
   await sendRevoke(client, {
     heir: newHeir.address,
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount: newVaultTokenAccount,
     authorityTokenAccount,
+    vault: newVault,
+    estate: newEstate
   });
 });

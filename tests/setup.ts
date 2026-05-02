@@ -314,6 +314,8 @@ export const sendRevoke = async (
   args: {
     heir: Address;
     mint?: Address;
+    vault: Address;
+    estate: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
     authorityTokenAccount?: Address;
@@ -325,10 +327,10 @@ export const sendRevoke = async (
     authority,
     heir: args.heir,
     mint: args.mint,
+    vault: args.vault,
+    estate: args.estate,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
-    vault: (await findVaultPda({authority: authority.address, heir: args.heir}))[0],
-    estate: (await findEstatePda({authority: authority.address, heir: args.heir}))[0],
     authorityTokenAccount: args.authorityTokenAccount,
   });
 
@@ -346,6 +348,8 @@ export const sendClaim = async (
   args: {
     heir: TransactionSigner;
     mint?: Address;
+    estate?: Address;
+    vault?: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
     heirTokenAccount?: Address;
@@ -364,8 +368,8 @@ export const sendClaim = async (
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     heirTokenAccount: args.heirTokenAccount,
-    vault: (await findVaultPda({authority: authority.address, heir: heir.address}))[0],
-    estate: (await findEstatePda({authority: authority.address, heir: heir.address}))[0],
+    vault: args.vault,
+    estate: args.estate,
     delegate: args.delegate,
   });
 

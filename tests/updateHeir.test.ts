@@ -71,7 +71,6 @@ test("it migrates token vault to a new heir", async () => {
     authorityTokenAccount: authorityTokenAcc
    });
 
-
   await sendUpdateHeir(client, {
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,

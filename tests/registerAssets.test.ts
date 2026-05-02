@@ -10,6 +10,7 @@ import {
   getInitializeInstructionAsync,
   getRegisterAssetInstructionAsync,
   findVaultPda,
+  findEstatePda,
 } from "@historiah/heirloom";
 import {
   createDefaultSolanaClient,
@@ -30,17 +31,14 @@ test("it bundles init and register token in one transaction", async () => {
 
   await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
 
-  const [vaultPda] = await findVaultPda({
-    authority: authority.address,
-    heir: heir.address,
-  });
+  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
+  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
 
   const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vaultPda,
+    owner: vault,
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
-
 
   const [authorityTokenAccount] = await findAssociatedTokenPda({
     owner: authority.address,
@@ -52,20 +50,39 @@ test("it bundles init and register token in one transaction", async () => {
     authority,
     heir: heir.address,
     heartbeatInterval: 0n,
+    vault,
+    estate,
+    mint: mint.address,
+    vaultTokenAccount,
+    authorityTokenAccount,
     gracePeriod: 0n,
     pauseDuration: 0n,
     label: "test-register",
     amount: 100_000n,
   });
 
+  // register new asset
+  const { mint: newMint } = await createAndMintTokens();
+  const [newVaultTokenAccount] = await findAssociatedTokenPda({
+    owner: vault,
+    mint: newMint.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+  const [newAuthorityTokenAccount] = await findAssociatedTokenPda({
+    owner: authority.address,
+    mint: newMint.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
   const registerIx = await getRegisterAssetInstructionAsync({
     authority,
     heir: heir.address,
-    mint: mint.address,
-    vaultTokenAccount,
+    mint: newMint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     amount: 1_000_000,
-    authorityTokenAccount
+    vaultTokenAccount: newVaultTokenAccount,
+    vault,
+    estate,
+    authorityTokenAccount: newAuthorityTokenAccount
   });
 
   await pipe(
@@ -84,13 +101,11 @@ test("it creates a token-only vault and revokes it", async () => {
 
   await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
 
-  const [vaultPda] = await findVaultPda({
-    authority: authority.address,
-    heir: heir.address,
-  });
+  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
+  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
 
   const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vaultPda,
+    owner: vault,
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
@@ -119,6 +134,8 @@ test("it creates a token-only vault and revokes it", async () => {
   await sendRevoke(client, {
     heir: heir.address,
     mint: mint.address,
+    vault,
+    estate,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount,
     authorityTokenAccount,
