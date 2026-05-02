@@ -1,4 +1,4 @@
- import {
+import {
   type Address,
   appendTransactionMessageInstruction,
   type Commitment,
@@ -8,6 +8,7 @@
   createTransactionMessage,
   generateKeyPairSigner,
   getSignatureFromTransaction,
+  type Instruction,
   type KeyPairSigner,
   lamports,
   pipe,
@@ -23,7 +24,10 @@
   type TransactionMessageWithFeePayer,
   type TransactionSigner,
 } from "@solana/kit";
- import { assertIsSendableTransaction, assertIsTransactionWithBlockhashLifetime } from '@solana/transactions';
+import {
+  assertIsSendableTransaction,
+  assertIsTransactionWithBlockhashLifetime,
+} from "@solana/transactions";
 import { createClient } from "@solana/kit-client-rpc";
 
 import fs from "fs";
@@ -45,9 +49,8 @@ import {
   getRegisterAssetInstructionAsync,
   findEstatePda,
   findVaultPda,
-  HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
-} from '@historiah/heirloom';
-import { getUpdateFieldsInstructionAsync } from '../clients/js/src/overrides/updateFields';
+} from "@historiah/heirloom";
+import { getUpdateFieldsInstructionAsync } from "../clients/js/src/overrides/updateFields";
 
 export type Client = {
   rpc: Rpc<SolanaRpcApi>;
@@ -62,10 +65,11 @@ export const createDefaultSolanaClient = (): Client => {
 
 export const createDevnetSolanaClient = (): Client => {
   const rpc = createSolanaRpc("https://api.devnet.solana.com");
-  const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com/");
+  const rpcSubscriptions = createSolanaRpcSubscriptions(
+    "wss://api.devnet.solana.com/",
+  );
   return { rpc, rpcSubscriptions };
 };
-
 
 export async function createProgramsClient() {
   const [authority] = await Promise.all([loadDefaultKeypair()]);
@@ -99,10 +103,10 @@ export const createDefaultTransaction = async (
 export const signAndSendTransaction = async (
   client: Client,
   transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
-  commitment: Commitment = "confirmed"
+  commitment: Commitment = "confirmed",
 ) => {
   const signedTransaction = await signTransactionMessageWithSigners(
-    transactionMessage
+    transactionMessage,
   );
   assertIsSendableTransaction(signedTransaction);
 
@@ -118,36 +122,89 @@ export const signAndSendTransaction = async (
   return signature;
 };
 
+// ---------------------------------------------------------------------------
+// Transaction helpers
+// ---------------------------------------------------------------------------
+
+export async function sendInstruction(
+  client: Client,
+  feePayer: TransactionSigner,
+  instruction: Instruction,
+) {
+  await pipe(
+    await createDefaultTransaction(client, feePayer),
+    (tx) => appendTransactionMessageInstruction(instruction, tx),
+    (tx) => signAndSendTransaction(client, tx),
+  );
+}
+
+export async function sendInstructions(
+  client: Client,
+  feePayer: TransactionSigner,
+  instructions: Instruction[],
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let tx: any = await createDefaultTransaction(client, feePayer);
+  for (const ix of instructions) {
+    tx = appendTransactionMessageInstruction(ix, tx);
+  }
+  await signAndSendTransaction(client, tx);
+}
+
+// ---------------------------------------------------------------------------
+// Keypair helpers
+// ---------------------------------------------------------------------------
+
 export async function loadKeypairFromFile(
   filePath: string,
 ): Promise<KeyPairSigner<string>> {
-  // This is here so you can also load the default keypair from the file system.
   const resolvedPath = path.resolve(
     filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath,
   );
   const loadedKeyBytes = Uint8Array.from(
     JSON.parse(fs.readFileSync(resolvedPath, "utf8")),
   );
-  // Here you can also set the second parameter to true in case you need to extract your private key.
-  const keypairSigner = await createKeyPairSignerFromBytes(loadedKeyBytes);
-  return keypairSigner;
+  return createKeyPairSignerFromBytes(loadedKeyBytes);
 }
 
 export async function loadDefaultKeypair(): Promise<KeyPairSigner<string>> {
-  return await loadKeypairFromFile("~/.config/solana/id.json");
+  return loadKeypairFromFile("~/.config/solana/id.json");
 }
 
 export async function loadDefaultClaimKeypair(): Promise<KeyPairSigner<string>> {
-  return await loadKeypairFromFile("~/.config/solana/id-new.json");
+  return loadKeypairFromFile("~/.config/solana/id-new.json");
 }
 
-// create and mint tokens to default default keypair
+// ---------------------------------------------------------------------------
+// Test context helpers
+// ---------------------------------------------------------------------------
+
+export async function createTestContext() {
+  const client = createDefaultSolanaClient();
+  const authority = await loadDefaultKeypair();
+  return { client, authority };
+}
+
+export async function createHeir(
+  client: Client,
+  airdropLamports = 10_000_000n,
+): Promise<KeyPairSigner<string>> {
+  const heir = await generateKeyPairSigner();
+  await client.rpc
+    .requestAirdrop(heir.address, lamports(airdropLamports))
+    .send();
+  return heir;
+}
+
+// ---------------------------------------------------------------------------
+// Token helpers
+// ---------------------------------------------------------------------------
+
 export async function createAndMintTokens() {
-  let programsClient = await createProgramsClient();
+  const programsClient = await createProgramsClient();
 
   const mint = await generateKeyPairSigner();
 
-  // Setup: create a mint before minting tokens to the payer's ATA.
   await programsClient.token.instructions
     .createMint({
       newMint: mint,
@@ -157,22 +214,64 @@ export async function createAndMintTokens() {
     })
     .sendTransaction();
 
-  const result = await programsClient.token.instructions
+  await programsClient.token.instructions
     .mintToATA({
-      mint: mint.address, // Mint for the token being minted.
-      owner: programsClient.payer.address, // Account that owns the token account receiving the minted tokens.
-      mintAuthority: programsClient.payer, // Authority allowed to mint new tokens.
-      amount: 1_000_000_000n, // Token amount in base units(1000).
-      decimals: 6, // Decimals defined on the mint account.
+      mint: mint.address,
+      owner: programsClient.payer.address,
+      mintAuthority: programsClient.payer,
+      amount: 1_000_000_000n,
+      decimals: 6,
     })
     .sendTransaction();
+
 
   return { mint, TOKEN_PROGRAM_ADDRESS };
 }
 
-// ======================================================================================
-// INSTRUCTIONS
-// ======================================================================================
+export async function deriveAta(
+  owner: Address,
+  mint: Address,
+  tokenProgram: Address = TOKEN_PROGRAM_ADDRESS,
+): Promise<Address> {
+  const [ata] = await findAssociatedTokenPda({ owner, mint, tokenProgram });
+  return ata;
+}
+
+export async function deriveTokenAccounts(
+  vault: Address,
+  authority: Address,
+  heir: Address,
+  mint: Address,
+  tokenProgram: Address = TOKEN_PROGRAM_ADDRESS,
+) {
+  const [vaultTokenAccount, authorityTokenAccount, heirTokenAccount] =
+    await Promise.all([
+      deriveAta(vault, mint, tokenProgram),
+      deriveAta(authority, mint, tokenProgram),
+      deriveAta(heir, mint, tokenProgram),
+    ]);
+  return { vaultTokenAccount, authorityTokenAccount, heirTokenAccount };
+}
+
+// ---------------------------------------------------------------------------
+// PDA helpers
+// ---------------------------------------------------------------------------
+
+export async function deriveEstateVault(
+  authority: Address,
+  heir: Address,
+) {
+  const [[estate], [vault]] = await Promise.all([
+    findEstatePda({ authority, heir }),
+    findVaultPda({ authority, heir }),
+  ]);
+  return { estate, vault };
+}
+
+// ---------------------------------------------------------------------------
+// Instruction wrappers
+// ---------------------------------------------------------------------------
+
 export const sendInitialize = async (
   client: Client,
   args: {
@@ -184,8 +283,8 @@ export const sendInitialize = async (
     heartbeatInterval: bigint;
     gracePeriod: bigint;
     pauseDuration: bigint;
-    heir?: KeyPairSigner,
-    authorityTokenAccount?: Address
+    heir?: KeyPairSigner;
+    authorityTokenAccount?: Address;
   },
 ): Promise<{ authority: Address; heir: KeyPairSigner }> => {
   const [authority, heir] = await Promise.all([
@@ -193,12 +292,22 @@ export const sendInitialize = async (
     args.heir ?? generateKeyPairSigner(),
   ]);
 
-  // airdrop heir
-  await client.rpc.requestAirdrop(heir.address, lamports(1_000_000_00n)).send()
+  await client.rpc
+    .requestAirdrop(heir.address, lamports(1_000_000_00n))
+    .send();
 
   const { amount, label, gracePeriod, pauseDuration, heartbeatInterval } = args;
 
-  const createIx = await getInitializeInstructionAsync({
+  const [vault] = await findVaultPda({
+    authority: authority.address,
+    heir: heir.address,
+  });
+  const [estate] = await findEstatePda({
+    authority: authority.address,
+    heir: heir.address,
+  });
+
+  const ix = await getInitializeInstructionAsync({
     authority,
     heir: heir.address,
     heartbeatInterval,
@@ -206,20 +315,15 @@ export const sendInitialize = async (
     pauseDuration,
     label,
     amount,
-    vault: (await findVaultPda({authority: authority.address, heir: heir.address}))[0],
-    estate: (await findEstatePda({authority: authority.address, heir: heir.address}))[0],
+    vault,
+    estate,
     tokenProgram: args.tokenProgram,
     mint: args.mint,
     vaultTokenAccount: args.vaultTokenAccount,
-    authorityTokenAccount: args.authorityTokenAccount
+    authorityTokenAccount: args.authorityTokenAccount,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(createIx, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
+  await sendInstruction(client, authority, ix);
   return { authority: authority.address, heir };
 };
 
@@ -234,79 +338,65 @@ export const sendUpdateFields = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
+  const [estate] = await findEstatePda({
+    authority: authority.address,
+    heir: args.heir,
+  });
+
   const ix = await getUpdateFieldsInstructionAsync({
     authority,
     heir: args.heir,
     heartbeatInterval: args.heartbeatInterval ?? null,
-    estate: (await findEstatePda({authority: authority.address, heir: args.heir}))[0],
+    estate,
     gracePeriod: args.gracePeriod ?? null,
     pauseDuration: args.pauseDuration ?? null,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
+  await sendInstruction(client, authority, ix);
   return { authority: authority.address };
 };
 
 export const sendUpdateHeir = async (
   client: Client,
   args: {
-    newHeir: Address,
+    newHeir: Address;
     oldHeir: Address;
     mint?: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
   },
 ): Promise<{ authority: Address }> => {
-  const [authority,  ] = await Promise.all([
-    loadDefaultKeypair(),
-  ]);
+  const authority = await loadDefaultKeypair();
   const { newHeir, oldHeir, tokenProgram, mint } = args;
 
-  const [newEstate] = await findEstatePda({
-    authority: authority.address,
-    heir: newHeir,
-  });
-  const [newVault] = await findVaultPda({
-    authority: authority.address,
-    heir: newHeir,
-  });
+  const [[newEstate], [newVault], [estate], [vault]] = await Promise.all([
+    findEstatePda({ authority: authority.address, heir: newHeir }),
+    findVaultPda({ authority: authority.address, heir: newHeir }),
+    findEstatePda({ authority: authority.address, heir: oldHeir }),
+    findVaultPda({ authority: authority.address, heir: oldHeir }),
+  ]);
 
-  let newVaultTokenAccount = undefined;
+  let newVaultTokenAccount: Address | undefined;
   if (mint && tokenProgram) {
-    newVaultTokenAccount = (await findAssociatedTokenPda(
-      {
-        owner: newVault,
-        tokenProgram: tokenProgram, // because the plugins only support og token acc
-        mint: mint
-      }))[0]
+    newVaultTokenAccount = await deriveAta(newVault, mint, tokenProgram);
   }
 
   const ix = await getUpdateHeirInstructionAsync({
     authority,
     heir: oldHeir,
-    newHeir: newHeir,
+    newHeir,
     newEstate,
     newVault,
     mint: args.mint,
-    vault: (await findVaultPda({authority: authority.address, heir: oldHeir}))[0],
-    estate: (await findEstatePda({authority: authority.address, heir: oldHeir}))[0],
+    vault,
+    estate,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     newVaultTokenAccount,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
-  return { authority: authority.address,  };
+  await sendInstruction(client, authority, ix);
+  return { authority: authority.address };
 };
 
 export const sendRevoke = async (
@@ -314,8 +404,8 @@ export const sendRevoke = async (
   args: {
     heir: Address;
     mint?: Address;
-    vault: Address;
-    estate: Address;
+    vault?: Address;
+    estate?: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
     authorityTokenAccount?: Address;
@@ -323,23 +413,23 @@ export const sendRevoke = async (
 ): Promise<{ authority: Address }> => {
   const authority = await loadDefaultKeypair();
 
+  const { vault, estate } =
+    args.vault && args.estate
+      ? { vault: args.vault, estate: args.estate }
+      : await deriveEstateVault(authority.address, args.heir);
+
   const ix = await getRevokeInstructionAsync({
     authority,
     heir: args.heir,
     mint: args.mint,
-    vault: args.vault,
-    estate: args.estate,
+    vault,
+    estate,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     authorityTokenAccount: args.authorityTokenAccount,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
+  await sendInstruction(client, authority, ix);
   return { authority: authority.address };
 };
 
@@ -348,38 +438,36 @@ export const sendClaim = async (
   args: {
     heir: TransactionSigner;
     mint?: Address;
-    estate?: Address;
     vault?: Address;
+    estate?: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
     heirTokenAccount?: Address;
     delegate?: Address;
   },
 ): Promise<{ heir: Address }> => {
-  const [authority, heir] = await Promise.all([
-    loadDefaultKeypair(),
-    args.heir
-  ])
+  const authority = await loadDefaultKeypair();
+  const heir = args.heir;
+
+  const { vault, estate } =
+    args.vault && args.estate
+      ? { vault: args.vault, estate: args.estate }
+      : await deriveEstateVault(authority.address, heir.address);
 
   const ix = await getClaimInstructionAsync({
-    heir: heir,
+    heir,
     authority: authority.address,
     mint: args.mint,
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     heirTokenAccount: args.heirTokenAccount,
-    vault: args.vault,
-    estate: args.estate,
+    vault,
+    estate,
     delegate: args.delegate,
   });
 
-  let sig = await pipe(
-    await createDefaultTransaction(client, args.heir),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
-  return { heir: args.heir.address };
+  await sendInstruction(client, heir, ix);
+  return { heir: heir.address };
 };
 
 export const sendDelegateDefer = async (
@@ -393,19 +481,19 @@ export const sendDelegateDefer = async (
     generateKeyPairSigner(),
   ]);
 
+  const [estate] = await findEstatePda({
+    authority: authority.address,
+    heir: args.heir,
+  });
+
   const ix = await getDelegateDeferInstructionAsync({
     delegate,
     authority: authority.address,
     heir: args.heir,
-    estate: (await findEstatePda({authority: authority.address, heir: args.heir}))[0],
+    estate,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, delegate),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
+  await sendInstruction(client, delegate, ix);
   return { delegate };
 };
 
@@ -413,33 +501,30 @@ export const sendRegisterAsset = async (
   client: Client,
   args: {
     heir: Address;
-    amount: bigint,
+    amount: bigint;
     mint?: Address;
     vaultTokenAccount?: Address;
     tokenProgram?: Address;
   },
 ): Promise<{ authority: Address }> => {
-  const [authority, heir] = await Promise.all([
-    loadDefaultKeypair(),
-    args.heir
-  ])
+  const authority = await loadDefaultKeypair();
+
+  const [vault, estate] = await Promise.all([
+    findVaultPda({ authority: authority.address, heir: args.heir }),
+    findEstatePda({ authority: authority.address, heir: args.heir }),
+  ]);
 
   const ix = await getRegisterAssetInstructionAsync({
     authority,
-    heir: heir,
+    heir: args.heir,
     amount: args.amount,
     mint: args.mint,
-    vault: (await findVaultPda({authority: authority.address, heir}))[0],
-    estate: (await findEstatePda({authority: authority.address, heir}))[0],
+    vault: vault[0],
+    estate: estate[0],
     vaultTokenAccount: args.vaultTokenAccount,
-    tokenProgram: args.tokenProgram
+    tokenProgram: args.tokenProgram,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(ix, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
-
+  await sendInstruction(client, authority, ix);
   return { authority: authority.address };
 };

@@ -1,19 +1,18 @@
-import { expect, test } from "bun:test";
+import { test } from "bun:test";
+import { generateKeyPairSigner } from "@solana/kit";
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
-  createDefaultSolanaClient,
+  createTestContext,
+  createAndMintTokens,
+  createHeir,
   sendInitialize,
   sendClaim,
-  createAndMintTokens,
-  loadDefaultKeypair,
-  createDevnetSolanaClient,
+  deriveEstateVault,
+  deriveTokenAccounts,
 } from "./setup";
-import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { findEstatePda, findVaultPda } from "@historiah/heirloom";
-import { generateKeyPairSigner } from "@solana/kit";
 
 test("it claims a native SOL vault", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
+  const { client } = await createTestContext();
 
   const { heir } = await sendInitialize(client, {
     amount: BigInt(100_000),
@@ -23,44 +22,22 @@ test("it claims a native SOL vault", async () => {
     pauseDuration: 0n,
   });
 
-  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
-  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
-
-  await sendClaim(client, { heir, vault, estate });
+  await sendClaim(client, { heir });
 });
 
 test("it claims a token vault", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
+  const { client, authority } = await createTestContext();
   const { mint } = await createAndMintTokens();
-  const heir = await generateKeyPairSigner();
+  const heir = await createHeir(client);
 
-  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
-  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
+  const { vault, estate } = await deriveEstateVault(
+    authority.address,
+    heir.address,
+  );
+  const { vaultTokenAccount, authorityTokenAccount, heirTokenAccount } =
+    await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
-  const [vaultTokenAccount] = await findAssociatedTokenPda(
-    {
-      owner: vault,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
-  );
-  const [authorityTokenAccount] = await findAssociatedTokenPda(
-    {
-      owner: authority.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
-  );
-  const [heirTokenAccount] = await findAssociatedTokenPda(
-    {
-      owner: heir.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS, // because the plugins only support og token acc
-      mint: mint.address
-    }
-  );
-
-await sendInitialize(client, {
+  await sendInitialize(client, {
     amount: 1_000_000n,
     label: "test-heir-migration-token",
     heartbeatInterval: 0n,
@@ -78,8 +55,6 @@ await sendInitialize(client, {
     mint: mint.address,
     vaultTokenAccount,
     heirTokenAccount,
-    vault,
-    estate,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
 });

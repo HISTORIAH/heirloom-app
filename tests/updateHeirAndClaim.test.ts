@@ -1,19 +1,19 @@
 import { expect, test } from "bun:test";
+import { generateKeyPairSigner, lamports } from "@solana/kit";
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
-  createDefaultSolanaClient,
+  createTestContext,
+  createAndMintTokens,
+  createHeir,
   sendInitialize,
   sendUpdateHeir,
   sendClaim,
-  loadDefaultKeypair,
-  createAndMintTokens,
+  deriveEstateVault,
+  deriveTokenAccounts,
 } from "./setup";
-import { generateKeyPairSigner, lamports } from "@solana/kit";
-import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { findEstatePda, findVaultPda } from "@historiah/heirloom";
 
 test("init → update heir → claim SOL with new heir", async () => {
-  const authority = await loadDefaultKeypair();
-  const client = createDefaultSolanaClient();
+  const { client } = await createTestContext();
 
   const { heir: oldHeir } = await sendInitialize(client, {
     amount: BigInt(100_000),
@@ -24,45 +24,33 @@ test("init → update heir → claim SOL with new heir", async () => {
   });
 
   const newHeir = await generateKeyPairSigner();
-  await client.rpc.requestAirdrop(newHeir.address, lamports(100000n)).send();
+  await client.rpc
+    .requestAirdrop(newHeir.address, lamports(100000n))
+    .send();
 
   await sendUpdateHeir(client, {
     newHeir: newHeir.address,
     oldHeir: oldHeir.address,
   });
 
-  // claim
-  let [newVault] = await findVaultPda({ authority: authority.address, heir: newHeir.address });
-  let [newEstate] = await findEstatePda({ authority: authority.address, heir: newHeir.address });
-
-  await sendClaim(client, { heir: newHeir, estate: newEstate, vault: newVault });
+  await sendClaim(client, { heir: newHeir });
 
   expect(newHeir.address).toBeTruthy();
 });
 
 test("init → update heir → claim token with new heir", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
-  const oldHeir = await generateKeyPairSigner();
-  const newHeir = await generateKeyPairSigner();
-
-  await client.rpc.requestAirdrop(newHeir.address, lamports(10000000n)).send();
-  const balance = await client.rpc.getBalance(newHeir.address).send()
-  console.log("new heir lamports balance", balance.value.toString()); // ! debug statement
+  const { client, authority } = await createTestContext();
+  const oldHeir = await createHeir(client);
+  const newHeir = await createHeir(client);
 
   const { mint } = await createAndMintTokens();
 
-  const [oldVault] = await findVaultPda({ authority: authority.address, heir: oldHeir.address });
-  const [oldVaultTokenAccount] = await findAssociatedTokenPda({
-    owner: oldVault,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-  const [authorityTokenAccount] = await findAssociatedTokenPda({
-    owner: authority.address,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
+  const { vault: oldVault } = await deriveEstateVault(
+    authority.address,
+    oldHeir.address,
+  );
+  const { vaultTokenAccount: oldVaultTokenAccount, authorityTokenAccount } =
+    await deriveTokenAccounts(oldVault, authority.address, oldHeir.address, mint.address);
 
   await sendInitialize(client, {
     amount: 1_000_000n,
@@ -85,19 +73,12 @@ test("init → update heir → claim token with new heir", async () => {
     vaultTokenAccount: oldVaultTokenAccount,
   });
 
-  // claim with new heir
-  const [newVault] = await findVaultPda({ authority: authority.address, heir: newHeir.address });
-  const [newEstate] = await findEstatePda({ authority: authority.address, heir: newHeir.address });
-  const [newVaultTokenAccount] = await findAssociatedTokenPda({
-    owner: newVault,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-  const [heirTokenAccount] = await findAssociatedTokenPda({
-    owner: newHeir.address,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
+  const { vault: newVault, estate: newEstate } = await deriveEstateVault(
+    authority.address,
+    newHeir.address,
+  );
+  const { vaultTokenAccount: newVaultTokenAccount, heirTokenAccount } =
+    await deriveTokenAccounts(newVault, authority.address, newHeir.address, mint.address);
 
   await sendClaim(client, {
     heir: newHeir,
@@ -105,8 +86,6 @@ test("init → update heir → claim token with new heir", async () => {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount: newVaultTokenAccount,
     heirTokenAccount,
-    vault: newVault,
-    estate: newEstate
   });
 
   expect(newHeir.address).toBeTruthy();

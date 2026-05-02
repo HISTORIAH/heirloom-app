@@ -1,50 +1,33 @@
 import { test } from "bun:test";
-import {
-  appendTransactionMessageInstruction,
-  generateKeyPairSigner,
-  lamports,
-  pipe,
-} from "@solana/kit";
-import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { generateKeyPairSigner } from "@solana/kit";
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
   getInitializeInstructionAsync,
   getRegisterAssetInstructionAsync,
-  findVaultPda,
-  findEstatePda,
 } from "@historiah/heirloom";
 import {
-  createDefaultSolanaClient,
-  createDefaultTransaction,
+  createTestContext,
+  createHeir,
   createAndMintTokens,
-  loadDefaultKeypair,
   sendInitialize,
-  sendRegisterAsset,
   sendRevoke,
-  signAndSendTransaction,
+  sendRegisterAsset,
+  deriveEstateVault,
+  deriveTokenAccounts,
+  sendInstructions,
 } from "./setup";
 
 test("it bundles init and register token in one transaction", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
-  const heir = await generateKeyPairSigner();
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
   const { mint } = await createAndMintTokens();
 
-  await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
-
-  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
-  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
-
-  const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vault,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-
-  const [authorityTokenAccount] = await findAssociatedTokenPda({
-    owner: authority.address,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
+  const { vault, estate } = await deriveEstateVault(
+    authority.address,
+    heir.address,
+  );
+  const { vaultTokenAccount, authorityTokenAccount } =
+    await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
   const initIx = await getInitializeInstructionAsync({
     authority,
@@ -61,18 +44,10 @@ test("it bundles init and register token in one transaction", async () => {
     amount: 100_000n,
   });
 
-  // register new asset
   const { mint: newMint } = await createAndMintTokens();
-  const [newVaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vault,
-    mint: newMint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-  const [newAuthorityTokenAccount] = await findAssociatedTokenPda({
-    owner: authority.address,
-    mint: newMint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
+  const { vaultTokenAccount: newVaultTokenAccount, authorityTokenAccount: newAuthorityTokenAccount } =
+    await deriveTokenAccounts(vault, authority.address, heir.address, newMint.address);
+
   const registerIx = await getRegisterAssetInstructionAsync({
     authority,
     heir: heir.address,
@@ -82,41 +57,24 @@ test("it bundles init and register token in one transaction", async () => {
     vaultTokenAccount: newVaultTokenAccount,
     vault,
     estate,
-    authorityTokenAccount: newAuthorityTokenAccount
+    authorityTokenAccount: newAuthorityTokenAccount,
   });
 
-  await pipe(
-    await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionMessageInstruction(initIx, tx),
-    (tx) => appendTransactionMessageInstruction(registerIx, tx),
-    (tx) => signAndSendTransaction(client, tx),
-  );
+  await sendInstructions(client, authority, [initIx, registerIx]);
 });
 
 test("it creates a token-only vault and revokes it", async () => {
-  const client = createDefaultSolanaClient();
-  const authority = await loadDefaultKeypair();
-  const heir = await generateKeyPairSigner();
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
   const { mint } = await createAndMintTokens();
 
-  await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
+  const { vault, estate } = await deriveEstateVault(
+    authority.address,
+    heir.address,
+  );
+  const { vaultTokenAccount, authorityTokenAccount } =
+    await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
-  let [vault] = await findVaultPda({ authority: authority.address, heir: heir.address });
-  let [estate] = await findEstatePda({ authority: authority.address, heir: heir.address });
-
-  const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vault,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-
-  const [authorityTokenAccount] = await findAssociatedTokenPda({
-    owner: authority.address,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-
-  // Init with token as the sole primary asset — no SOL deposit
   await sendInitialize(client, {
     heir,
     heartbeatInterval: 0n,
@@ -130,12 +88,9 @@ test("it creates a token-only vault and revokes it", async () => {
     authorityTokenAccount,
   });
 
-  // Revoke token — claimable_assets drops to 0 so program closes estate + vault
   await sendRevoke(client, {
     heir: heir.address,
     mint: mint.address,
-    vault,
-    estate,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount,
     authorityTokenAccount,
@@ -143,32 +98,18 @@ test("it creates a token-only vault and revokes it", async () => {
 });
 
 test("it inits with a token then registers a SOL asset separately", async () => {
-  const client = createDefaultSolanaClient();
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
   const { mint } = await createAndMintTokens();
-  const authority = await loadDefaultKeypair();
-  const heir = await generateKeyPairSigner();
 
-  await client.rpc.requestAirdrop(heir.address, lamports(10_000_000n)).send();
+  const { vaultTokenAccount, authorityTokenAccount } =
+    await deriveTokenAccounts(
+      (await deriveEstateVault(authority.address, heir.address)).vault,
+      authority.address,
+      heir.address,
+      mint.address,
+    );
 
-  const [vaultPda] = await findVaultPda({
-    authority: authority.address,
-    heir: heir.address,
-  });
-
-  const [vaultTokenAccount] = await findAssociatedTokenPda({
-    owner: vaultPda,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-
-
-  const [authorityTokenAccount] = await findAssociatedTokenPda({
-    owner: authority.address,
-    mint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-
-  // Init estate with a token registered in the same tx
   await sendInitialize(client, {
     heir,
     heartbeatInterval: 0n,
@@ -179,10 +120,9 @@ test("it inits with a token then registers a SOL asset separately", async () => 
     mint: mint.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount,
-    authorityTokenAccount
+    authorityTokenAccount,
   });
 
-  // Register SOL asset (no mint) in a separate tx
   await sendRegisterAsset(client, {
     heir: heir.address,
     amount: 5_000_000_000n,
