@@ -58,6 +58,9 @@ pub enum HeirloomProgramError {
     /// 15 - 
     #[error("")]
     TooManyClaimableAssets = 0xF,
+    /// 16 - 
+    #[error("")]
+    LabelTooLong = 0x10,
 }
 
 impl From<HeirloomProgramError> for solana_program_error::ProgramError {

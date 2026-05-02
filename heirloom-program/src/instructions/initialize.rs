@@ -17,6 +17,8 @@ pub struct Initialize {
 
     pub delegate: Option<UncheckedAccount>,
 
+    pub hb_signer: Option<UncheckedAccount>,
+
     #[account(mut)]
     pub authority_token_account: Option<InterfaceAccount<Token>>,
 
@@ -172,6 +174,7 @@ impl Initialize {
                 bump: estate_bump,
                 is_claimed: false,
                 delegate: self.delegate.as_ref().map(|a| *a.address()),
+                hb_signer: self.hb_signer.as_ref().map(|a| *a.address()),
                 claimable_assets: 1,
                 label,
                 pause_duration,

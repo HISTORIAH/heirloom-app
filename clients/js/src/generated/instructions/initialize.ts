@@ -60,6 +60,7 @@ export type InitializeInstruction<
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountDelegate extends string | AccountMeta<string> = string,
+  TAccountHbSigner extends string | AccountMeta<string> = string,
   TAccountAuthorityTokenAccount extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
   TAccountVault extends string | AccountMeta<string> = string,
@@ -90,6 +91,9 @@ export type InitializeInstruction<
       TAccountDelegate extends string
         ? ReadonlyAccount<TAccountDelegate>
         : TAccountDelegate,
+      TAccountHbSigner extends string
+        ? ReadonlyAccount<TAccountHbSigner>
+        : TAccountHbSigner,
       TAccountAuthorityTokenAccount extends string
         ? WritableAccount<TAccountAuthorityTokenAccount>
         : TAccountAuthorityTokenAccount,
@@ -180,6 +184,7 @@ export type InitializeAsyncInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountDelegate extends string = string,
+  TAccountHbSigner extends string = string,
   TAccountAuthorityTokenAccount extends string = string,
   TAccountEstate extends string = string,
   TAccountVault extends string = string,
@@ -194,6 +199,7 @@ export type InitializeAsyncInput<
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   delegate?: Address<TAccountDelegate>;
+  hbSigner?: Address<TAccountHbSigner>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
@@ -215,6 +221,7 @@ export async function getInitializeInstructionAsync<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountDelegate extends string,
+  TAccountHbSigner extends string,
   TAccountAuthorityTokenAccount extends string,
   TAccountEstate extends string,
   TAccountVault extends string,
@@ -231,6 +238,7 @@ export async function getInitializeInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountDelegate,
+    TAccountHbSigner,
     TAccountAuthorityTokenAccount,
     TAccountEstate,
     TAccountVault,
@@ -249,6 +257,7 @@ export async function getInitializeInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountDelegate,
+    TAccountHbSigner,
     TAccountAuthorityTokenAccount,
     TAccountEstate,
     TAccountVault,
@@ -270,6 +279,7 @@ export async function getInitializeInstructionAsync<
     authority: { value: input.authority ?? null, isWritable: true },
     heir: { value: input.heir ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
+    hbSigner: { value: input.hbSigner ?? null, isWritable: false },
     authorityTokenAccount: {
       value: input.authorityTokenAccount ?? null,
       isWritable: true,
@@ -332,6 +342,7 @@ export async function getInitializeInstructionAsync<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("delegate", accounts.delegate),
+      getAccountMeta("hbSigner", accounts.hbSigner),
       getAccountMeta("authorityTokenAccount", accounts.authorityTokenAccount),
       getAccountMeta("estate", accounts.estate),
       getAccountMeta("vault", accounts.vault),
@@ -352,6 +363,7 @@ export async function getInitializeInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountDelegate,
+    TAccountHbSigner,
     TAccountAuthorityTokenAccount,
     TAccountEstate,
     TAccountVault,
@@ -369,6 +381,7 @@ export type InitializeInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountDelegate extends string = string,
+  TAccountHbSigner extends string = string,
   TAccountAuthorityTokenAccount extends string = string,
   TAccountEstate extends string = string,
   TAccountVault extends string = string,
@@ -383,6 +396,7 @@ export type InitializeInput<
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   delegate?: Address<TAccountDelegate>;
+  hbSigner?: Address<TAccountHbSigner>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
@@ -404,6 +418,7 @@ export function getInitializeInstruction<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountDelegate extends string,
+  TAccountHbSigner extends string,
   TAccountAuthorityTokenAccount extends string,
   TAccountEstate extends string,
   TAccountVault extends string,
@@ -420,6 +435,7 @@ export function getInitializeInstruction<
     TAccountAuthority,
     TAccountHeir,
     TAccountDelegate,
+    TAccountHbSigner,
     TAccountAuthorityTokenAccount,
     TAccountEstate,
     TAccountVault,
@@ -437,6 +453,7 @@ export function getInitializeInstruction<
   TAccountAuthority,
   TAccountHeir,
   TAccountDelegate,
+  TAccountHbSigner,
   TAccountAuthorityTokenAccount,
   TAccountEstate,
   TAccountVault,
@@ -457,6 +474,7 @@ export function getInitializeInstruction<
     authority: { value: input.authority ?? null, isWritable: true },
     heir: { value: input.heir ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
+    hbSigner: { value: input.hbSigner ?? null, isWritable: false },
     authorityTokenAccount: {
       value: input.authorityTokenAccount ?? null,
       isWritable: true,
@@ -513,6 +531,7 @@ export function getInitializeInstruction<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("delegate", accounts.delegate),
+      getAccountMeta("hbSigner", accounts.hbSigner),
       getAccountMeta("authorityTokenAccount", accounts.authorityTokenAccount),
       getAccountMeta("estate", accounts.estate),
       getAccountMeta("vault", accounts.vault),
@@ -533,6 +552,7 @@ export function getInitializeInstruction<
     TAccountAuthority,
     TAccountHeir,
     TAccountDelegate,
+    TAccountHbSigner,
     TAccountAuthorityTokenAccount,
     TAccountEstate,
     TAccountVault,
@@ -555,16 +575,17 @@ export type ParsedInitializeInstruction<
     authority: TAccountMetas[0];
     heir: TAccountMetas[1];
     delegate?: TAccountMetas[2] | undefined;
-    authorityTokenAccount?: TAccountMetas[3] | undefined;
-    estate: TAccountMetas[4];
-    vault: TAccountMetas[5];
-    vaultTokenAccount?: TAccountMetas[6] | undefined;
-    mint?: TAccountMetas[7] | undefined;
-    tokenProgram: TAccountMetas[8];
-    associatedTokenProgram: TAccountMetas[9];
-    rent: TAccountMetas[10];
-    clock: TAccountMetas[11];
-    systemProgram: TAccountMetas[12];
+    hbSigner?: TAccountMetas[3] | undefined;
+    authorityTokenAccount?: TAccountMetas[4] | undefined;
+    estate: TAccountMetas[5];
+    vault: TAccountMetas[6];
+    vaultTokenAccount?: TAccountMetas[7] | undefined;
+    mint?: TAccountMetas[8] | undefined;
+    tokenProgram: TAccountMetas[9];
+    associatedTokenProgram: TAccountMetas[10];
+    rent: TAccountMetas[11];
+    clock: TAccountMetas[12];
+    systemProgram: TAccountMetas[13];
   };
   data: InitializeInstructionData;
 };
@@ -577,12 +598,12 @@ export function parseInitializeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 14) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 13,
+        expectedAccountMetas: 14,
       },
     );
   }
@@ -604,6 +625,7 @@ export function parseInitializeInstruction<
       authority: getNextAccount(),
       heir: getNextAccount(),
       delegate: getNextOptionalAccount(),
+      hbSigner: getNextOptionalAccount(),
       authorityTokenAccount: getNextOptionalAccount(),
       estate: getNextAccount(),
       vault: getNextAccount(),

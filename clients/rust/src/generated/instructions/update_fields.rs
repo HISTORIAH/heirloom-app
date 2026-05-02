@@ -67,13 +67,13 @@ impl UpdateFields {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
  pub struct UpdateFieldsInstructionData {
             discriminator: [u8; 1],
-                        }
+                              }
 
 impl UpdateFieldsInstructionData {
   pub fn new() -> Self {
     Self {
                         discriminator: [3],
-                                                            }
+                                                                          }
   }
 
     pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
@@ -92,6 +92,7 @@ impl Default for UpdateFieldsInstructionData {
                   pub heartbeat_interval: Option<i64>,
                 pub grace_period: Option<i64>,
                 pub pause_duration: Option<i64>,
+                pub label: Option<String>,
       }
 
 impl UpdateFieldsInstructionArgs {
@@ -118,6 +119,7 @@ pub struct UpdateFieldsBuilder {
                         heartbeat_interval: Option<i64>,
                 grace_period: Option<i64>,
                 pause_duration: Option<i64>,
+                label: Option<String>,
         __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
@@ -164,6 +166,12 @@ impl UpdateFieldsBuilder {
         self.pause_duration = Some(pause_duration);
         self
       }
+                /// `[optional argument]`
+#[inline(always)]
+      pub fn label(&mut self, label: String) -> &mut Self {
+        self.label = Some(label);
+        self
+      }
         /// Add an additional account to the instruction.
   #[inline(always)]
   pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
@@ -188,6 +196,7 @@ impl UpdateFieldsBuilder {
                                                               heartbeat_interval: self.heartbeat_interval.clone(),
                                                                   grace_period: self.grace_period.clone(),
                                                                   pause_duration: self.pause_duration.clone(),
+                                                                  label: self.label.clone(),
                                     };
     
     accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -338,6 +347,7 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
                                             heartbeat_interval: None,
                                 grace_period: None,
                                 pause_duration: None,
+                                label: None,
                     __remaining_accounts: Vec::new(),
     });
     Self { instruction }
@@ -380,6 +390,12 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
         self.instruction.pause_duration = Some(pause_duration);
         self
       }
+                /// `[optional argument]`
+#[inline(always)]
+      pub fn label(&mut self, label: String) -> &mut Self {
+        self.instruction.label = Some(label);
+        self
+      }
         /// Add an additional account to the instruction.
   #[inline(always)]
   pub fn add_remaining_account(&mut self, account: &'b solana_account_info::AccountInfo<'a>, is_writable: bool, is_signer: bool) -> &mut Self {
@@ -406,6 +422,7 @@ impl<'a, 'b> UpdateFieldsCpiBuilder<'a, 'b> {
                                                               heartbeat_interval: self.instruction.heartbeat_interval.clone(),
                                                                   grace_period: self.instruction.grace_period.clone(),
                                                                   pause_duration: self.instruction.pause_duration.clone(),
+                                                                  label: self.instruction.label.clone(),
                                     };
         let instruction = UpdateFieldsCpi {
         __program: self.instruction.__program,
@@ -433,6 +450,7 @@ struct UpdateFieldsCpiBuilderInstruction<'a, 'b> {
                         heartbeat_interval: Option<i64>,
                 grace_period: Option<i64>,
                 pause_duration: Option<i64>,
+                label: Option<String>,
         /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

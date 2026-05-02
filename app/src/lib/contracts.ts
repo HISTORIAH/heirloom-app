@@ -234,8 +234,11 @@ export async function sendInitialize(
 export interface UpdateArgs {
   authority: TransactionSigner;
   heir: Address;
+  label?: string
 }
 
+
+// FIXME: THIS DOESN'T UPDATE ANYTHING
 export async function sendUpdate(
   client: Client,
   args: UpdateArgs,
@@ -250,6 +253,7 @@ export async function sendUpdate(
     gracePeriod: null,
     pauseDuration: null,
     estate,
+    label: null
   });
   return sendTx(client, args.authority, ix);
 }

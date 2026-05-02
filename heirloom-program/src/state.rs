@@ -27,6 +27,9 @@ pub struct Estate {
 
     pub delegate: Option<Address>,
 
+    /// hot signer wallet
+    pub hb_signer: Option<Address>,
+
     /// number of vault token accounts (ATAs) still open under this estate
     pub claimable_assets: u8,
 

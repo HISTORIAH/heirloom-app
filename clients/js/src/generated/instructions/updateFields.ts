@@ -7,6 +7,8 @@
  */
 
 import {
+  addDecoderSizePrefix,
+  addEncoderSizePrefix,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -18,6 +20,10 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU32Decoder,
+  getU32Encoder,
+  getUtf8Decoder,
+  getUtf8Encoder,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
   SolanaError,
   transformEncoder,
@@ -42,7 +48,6 @@ import {
   getAccountMetaFactory,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findEstatePda } from "../pdas";
 import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
 export const UPDATE_FIELDS_DISCRIMINATOR = new Uint8Array([3]);
@@ -87,12 +92,14 @@ export type UpdateFieldsInstructionData = {
   heartbeatInterval: Option<bigint>;
   gracePeriod: Option<bigint>;
   pauseDuration: Option<bigint>;
+  label: Option<string>;
 };
 
 export type UpdateFieldsInstructionDataArgs = {
   heartbeatInterval: OptionOrNullable<number | bigint>;
   gracePeriod: OptionOrNullable<number | bigint>;
   pauseDuration: OptionOrNullable<number | bigint>;
+  label: OptionOrNullable<string>;
 };
 
 export function getUpdateFieldsInstructionDataEncoder(): Encoder<UpdateFieldsInstructionDataArgs> {
@@ -102,6 +109,12 @@ export function getUpdateFieldsInstructionDataEncoder(): Encoder<UpdateFieldsIns
       ["heartbeatInterval", getOptionEncoder(getI64Encoder())],
       ["gracePeriod", getOptionEncoder(getI64Encoder())],
       ["pauseDuration", getOptionEncoder(getI64Encoder())],
+      [
+        "label",
+        getOptionEncoder(
+          addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()),
+        ),
+      ],
     ]),
     (value) => ({ ...value, discriminator: UPDATE_FIELDS_DISCRIMINATOR }),
   );
@@ -113,6 +126,10 @@ export function getUpdateFieldsInstructionDataDecoder(): Decoder<UpdateFieldsIns
     ["heartbeatInterval", getOptionDecoder(getI64Decoder())],
     ["gracePeriod", getOptionDecoder(getI64Decoder())],
     ["pauseDuration", getOptionDecoder(getI64Decoder())],
+    [
+      "label",
+      getOptionDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())),
+    ],
   ]);
 }
 
@@ -124,93 +141,6 @@ export function getUpdateFieldsInstructionDataCodec(): Codec<
     getUpdateFieldsInstructionDataEncoder(),
     getUpdateFieldsInstructionDataDecoder(),
   );
-}
-
-export type UpdateFieldsAsyncInput<
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountEstate extends string = string,
-  TAccountClock extends string = string,
-> = {
-  authority: TransactionSigner<TAccountAuthority>;
-  heir: Address<TAccountHeir>;
-  estate?: Address<TAccountEstate>;
-  clock?: Address<TAccountClock>;
-  heartbeatInterval: UpdateFieldsInstructionDataArgs["heartbeatInterval"];
-  gracePeriod: UpdateFieldsInstructionDataArgs["gracePeriod"];
-  pauseDuration: UpdateFieldsInstructionDataArgs["pauseDuration"];
-};
-
-export async function getUpdateFieldsInstructionAsync<
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountEstate extends string,
-  TAccountClock extends string,
-  TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
->(
-  input: UpdateFieldsAsyncInput<
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountClock
-  >,
-  config?: { programAddress?: TProgramAddress },
-): Promise<
-  UpdateFieldsInstruction<
-    TProgramAddress,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountClock
-  >
-> {
-  // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
-
-  // Original accounts.
-  const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: false },
-    estate: { value: input.estate ?? null, isWritable: true },
-    clock: { value: input.clock ?? null, isWritable: false },
-  };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedInstructionAccount
-  >;
-
-  // Original args.
-  const args = { ...input };
-
-  // Resolve default values.
-  if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda();
-  }
-  if (!accounts.clock.value) {
-    accounts.clock.value =
-      "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
-  }
-
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
-  return Object.freeze({
-    accounts: [
-      getAccountMeta("authority", accounts.authority),
-      getAccountMeta("heir", accounts.heir),
-      getAccountMeta("estate", accounts.estate),
-      getAccountMeta("clock", accounts.clock),
-    ],
-    data: getUpdateFieldsInstructionDataEncoder().encode(
-      args as UpdateFieldsInstructionDataArgs,
-    ),
-    programAddress,
-  } as UpdateFieldsInstruction<
-    TProgramAddress,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountClock
-  >);
 }
 
 export type UpdateFieldsInput<
@@ -226,6 +156,7 @@ export type UpdateFieldsInput<
   heartbeatInterval: UpdateFieldsInstructionDataArgs["heartbeatInterval"];
   gracePeriod: UpdateFieldsInstructionDataArgs["gracePeriod"];
   pauseDuration: UpdateFieldsInstructionDataArgs["pauseDuration"];
+  label: UpdateFieldsInstructionDataArgs["label"];
 };
 
 export function getUpdateFieldsInstruction<

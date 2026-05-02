@@ -285,6 +285,7 @@ export const sendInitialize = async (
     pauseDuration: bigint;
     heir?: KeyPairSigner;
     authorityTokenAccount?: Address;
+    hbSigner?: Address;
   },
 ): Promise<{ authority: Address; heir: KeyPairSigner }> => {
   const [authority, heir] = await Promise.all([
@@ -321,6 +322,7 @@ export const sendInitialize = async (
     mint: args.mint,
     vaultTokenAccount: args.vaultTokenAccount,
     authorityTokenAccount: args.authorityTokenAccount,
+    hbSigner: args.hbSigner,
   });
 
   await sendInstruction(client, authority, ix);
@@ -334,26 +336,31 @@ export const sendUpdateFields = async (
     heartbeatInterval?: bigint;
     gracePeriod?: bigint;
     pauseDuration?: bigint;
+    label?: string;
+    signer?: TransactionSigner;
+    authority?: Address;
   },
 ): Promise<{ authority: Address }> => {
-  const authority = await loadDefaultKeypair();
+  const signer = args.signer ?? await loadDefaultKeypair();
+  const authority = args.authority ?? signer.address;
 
   const [estate] = await findEstatePda({
-    authority: authority.address,
+    authority,
     heir: args.heir,
   });
 
   const ix = await getUpdateFieldsInstructionAsync({
-    authority,
+    authority: signer,
     heir: args.heir,
     heartbeatInterval: args.heartbeatInterval ?? null,
     estate,
     gracePeriod: args.gracePeriod ?? null,
     pauseDuration: args.pauseDuration ?? null,
+    label: args.label ?? null,
   });
 
-  await sendInstruction(client, authority, ix);
-  return { authority: authority.address };
+  await sendInstruction(client, signer, ix);
+  return { authority: signer.address };
 };
 
 export const sendUpdateHeir = async (
