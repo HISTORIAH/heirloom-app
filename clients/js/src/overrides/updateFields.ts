@@ -181,7 +181,8 @@ export function getUpdateFieldsInstructionDataCodec(): Codec<
 // Sync instruction builder — same account resolution as generated, fixed codec
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROGRAM_ADDRESS = "11111111111111111111111111111111" as Address;
+const SYSTEM_PROGRAM_ADDRESS =
+  "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
 
 export function getUpdateFieldsInstruction<
   TAccountAuthority extends string,
@@ -215,7 +216,13 @@ export function getUpdateFieldsInstruction<
     ...ix.accounts,
     { address: SYSTEM_PROGRAM_ADDRESS, role: AccountRole.READONLY },
   ];
-  return { ...ix, accounts, data } as typeof ix;
+  return { ...ix, accounts, data } as UpdateFieldsInstruction<
+    TProgramAddress,
+    TAccountAuthority,
+    TAccountHeir,
+    TAccountEstate,
+    TAccountClock
+  >;
 }
 
 // Keep async alias for backward compatibility (no PDA resolution needed).
