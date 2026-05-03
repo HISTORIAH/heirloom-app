@@ -4,7 +4,9 @@ use quasar_spl::{
 };
 
 use crate::{
+    constants::{CLAIM_FEE_BPS, TREASURY_ADDRESS},
     errors::HeirloomError,
+    helpers::calculate_distribution,
     state::{Estate, Vault},
 };
 
@@ -34,6 +36,12 @@ pub struct Claim {
     #[account(mut)]
     pub mint: Option<Account<Mint>>,
 
+    #[account(mut, address = TREASURY_ADDRESS)]
+    pub treasury: UncheckedAccount,
+
+    #[account(mut)]
+    pub treasury_token_account: Option<UncheckedAccount>,
+
     pub token_program: Interface<TokenInterface>,
 
     pub associated_token_program: Program<AssociatedTokenProgram>,
@@ -54,8 +62,11 @@ impl Claim {
         ctx.accounts.estate.claimable_assets = remaining;
 
         if remaining == 0 {
-            crate::helpers::close_account(&mut ctx.accounts.estate, heir_view)?;
-            crate::helpers::close_account(&mut ctx.accounts.vault, heir_view)?;
+            // crate::helpers::close_account(&mut ctx.accounts.estate, heir_view)?;
+            // crate::helpers::close_account(&mut ctx.accounts.vault, heir_view)?;
+
+            ctx.accounts.estate.close(heir_view)?;
+            ctx.accounts.vault.close(heir_view)?;
         }
 
         Ok(())
@@ -94,6 +105,15 @@ impl Claim {
                 if self.vault_token_account.is_none() || self.mint.is_none() {
                     return Err(HeirloomError::MissingTokenAccounts.into());
                 }
+                let _treasury_token_account = self
+                    .treasury_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
+
+                // TODO: MISSING TREASURY TOKEN ACCOUNT
+                //
+                // TODO: treasury owner checks
+                //
 
                 let vault_ta = self.vault_token_account.as_ref().unwrap();
 
@@ -121,6 +141,7 @@ impl Claim {
     pub fn transfer_assets(&self, claim_ix_bumps: &ClaimBumps) -> Result<(), ProgramError> {
         match self.heir_token_account.as_ref() {
             Some(heir_ta) => {
+                let treasury_ta = self.treasury_token_account.as_ref().unwrap();
                 let vault_ta = self.vault_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_ta.amount();
@@ -134,6 +155,34 @@ impl Claim {
                     Seed::from(bump.as_ref()),
                 ];
 
+                // calculate split between heir payout and protocol fees
+                let (protocol_fee, heir_payout) = calculate_distribution(amount, CLAIM_FEE_BPS)?;
+                if protocol_fee > 0 {
+                    // create treasury token acc if not exists
+                    self.associated_token_program
+                        .create_idempotent(
+                            self.heir.to_account_view(),
+                            &treasury_ta.to_account_view(),
+                            self.treasury.to_account_view(),
+                            mint,
+                            &self.system_program,
+                            &self.token_program,
+                        )
+                        .invoke()?;
+
+                    // transfer to the treasury
+                    self.token_program
+                        .transfer_checked(
+                            vault_ta,
+                            mint,
+                            treasury_ta,
+                            &self.vault,
+                            protocol_fee,
+                            mint.decimals(),
+                        )
+                        .invoke_signed(&vault_seeds)?;
+                }
+
                 // Create heir's ATA if it doesn't exist yet
                 self.associated_token_program
                     .create_idempotent(
@@ -146,24 +195,34 @@ impl Claim {
                     )
                     .invoke()?;
 
+                // 2. Pay Heir
                 self.token_program
                     .transfer_checked(
                         vault_ta,
                         mint,
                         heir_ta,
                         &self.vault,
-                        amount,
+                        heir_payout,
                         mint.decimals(),
                     )
                     .invoke_signed(&vault_seeds)?;
 
-                // close vault TA, rent back to heir
+                // 3. Close vault TA
                 self.token_program
                     .close_account(vault_ta, &self.heir, &self.vault)
                     .invoke_signed(&vault_seeds)?;
             }
-            // SOL path: close() in claim_handler transfers vault lamports to heir
-            None => {}
+            // SOL path:
+            None => {
+                let vault_view = self.vault.to_account_view();
+                let vault_lamports = vault_view.lamports();
+                let treasury_view = self.treasury.to_account_view();
+                let (protocol_fee, _) = calculate_distribution(vault_lamports, CLAIM_FEE_BPS)?;
+
+                // transfer to treasury
+                set_lamports(vault_view, vault_lamports - protocol_fee);
+                set_lamports(treasury_view, treasury_view.lamports() + protocol_fee);
+            }
         }
 
         Ok(())

@@ -39,6 +39,12 @@ pub struct Claim {
           pub mint: Option<solana_address::Address>,
           
               
+          pub treasury: solana_address::Address,
+          
+              
+          pub treasury_token_account: Option<solana_address::Address>,
+          
+              
           pub token_program: solana_address::Address,
           
               
@@ -58,7 +64,7 @@ impl Claim {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.heir,
             true
@@ -111,6 +117,21 @@ impl Claim {
                                                                 if let Some(mint) = self.mint {
               accounts.push(solana_instruction::AccountMeta::new(
                 mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_PROGRAM_ID,
+                false,
+              ));
+            }
+                                                    accounts.push(solana_instruction::AccountMeta::new(
+            self.treasury,
+            false
+          ));
+                                                      if let Some(treasury_token_account) = self.treasury_token_account {
+              accounts.push(solana_instruction::AccountMeta::new(
+                treasury_token_account,
                 false,
               ));
             } else {
@@ -183,10 +204,12 @@ impl Default for ClaimInstructionData {
                 ///   5. `[writable]` vault
                       ///   6. `[writable, optional]` vault_token_account
                       ///   7. `[writable, optional]` mint
-                ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   9. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   10. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   11. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   8. `[writable]` treasury
+                      ///   9. `[writable, optional]` treasury_token_account
+                ///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   11. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   12. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
+                ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ClaimBuilder {
             heir: Option<solana_address::Address>,
@@ -197,6 +220,8 @@ pub struct ClaimBuilder {
                 vault: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
+                treasury: Option<solana_address::Address>,
+                treasury_token_account: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
                 associated_token_program: Option<solana_address::Address>,
                 clock: Option<solana_address::Address>,
@@ -252,6 +277,17 @@ impl ClaimBuilder {
                         self.mint = mint;
                     self
     }
+            #[inline(always)]
+    pub fn treasury(&mut self, treasury: solana_address::Address) -> &mut Self {
+                        self.treasury = Some(treasury);
+                    self
+    }
+            /// `[optional account]`
+#[inline(always)]
+    pub fn treasury_token_account(&mut self, treasury_token_account: Option<solana_address::Address>) -> &mut Self {
+                        self.treasury_token_account = treasury_token_account;
+                    self
+    }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
@@ -299,6 +335,8 @@ impl ClaimBuilder {
                                         vault: self.vault.expect("vault is not set"),
                                         vault_token_account: self.vault_token_account,
                                         mint: self.mint,
+                                        treasury: self.treasury.expect("treasury is not set"),
+                                        treasury_token_account: self.treasury_token_account,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         associated_token_program: self.associated_token_program.unwrap_or(solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")),
                                         clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
@@ -335,6 +373,12 @@ impl ClaimBuilder {
                 
                     
               pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                
+                    
+              pub treasury: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
+              pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -379,6 +423,12 @@ pub struct ClaimCpi<'a, 'b> {
           pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
+          pub treasury: &'b solana_account_info::AccountInfo<'a>,
+          
+              
+          pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+          
+              
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -406,6 +456,8 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
               vault: accounts.vault,
               vault_token_account: accounts.vault_token_account,
               mint: accounts.mint,
+              treasury: accounts.treasury,
+              treasury_token_account: accounts.treasury_token_account,
               token_program: accounts.token_program,
               associated_token_program: accounts.associated_token_program,
               clock: accounts.clock,
@@ -432,7 +484,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.heir.key,
             true
@@ -493,6 +545,21 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
               false,
             ));
           }
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            *self.treasury.key,
+            false
+          ));
+                                          if let Some(treasury_token_account) = self.treasury_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *treasury_token_account.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_PROGRAM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false
@@ -523,7 +590,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(13 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.heir.clone());
                         account_infos.push(self.authority.clone());
@@ -540,6 +607,10 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
         }
                         if let Some(mint) = self.mint {
           account_infos.push(mint.clone());
+        }
+                        account_infos.push(self.treasury.clone());
+                        if let Some(treasury_token_account) = self.treasury_token_account {
+          account_infos.push(treasury_token_account.clone());
         }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.associated_token_program.clone());
@@ -567,10 +638,12 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
                 ///   5. `[writable]` vault
                       ///   6. `[writable, optional]` vault_token_account
                       ///   7. `[writable, optional]` mint
-          ///   8. `[]` token_program
-          ///   9. `[]` associated_token_program
-          ///   10. `[]` clock
-          ///   11. `[]` system_program
+                ///   8. `[writable]` treasury
+                      ///   9. `[writable, optional]` treasury_token_account
+          ///   10. `[]` token_program
+          ///   11. `[]` associated_token_program
+          ///   12. `[]` clock
+          ///   13. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct ClaimCpiBuilder<'a, 'b> {
   instruction: Box<ClaimCpiBuilderInstruction<'a, 'b>>,
@@ -588,6 +661,8 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
               vault: None,
               vault_token_account: None,
               mint: None,
+              treasury: None,
+              treasury_token_account: None,
               token_program: None,
               associated_token_program: None,
               clock: None,
@@ -638,6 +713,17 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.mint = mint;
+                    self
+    }
+      #[inline(always)]
+    pub fn treasury(&mut self, treasury: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.treasury = Some(treasury);
+                    self
+    }
+      /// `[optional account]`
+#[inline(always)]
+    pub fn treasury_token_account(&mut self, treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.treasury_token_account = treasury_token_account;
                     self
     }
       #[inline(always)]
@@ -701,6 +787,10 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                   
           mint: self.instruction.mint,
                   
+          treasury: self.instruction.treasury.expect("treasury is not set"),
+                  
+          treasury_token_account: self.instruction.treasury_token_account,
+                  
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   
           associated_token_program: self.instruction.associated_token_program.expect("associated_token_program is not set"),
@@ -724,6 +814,8 @@ struct ClaimCpiBuilderInstruction<'a, 'b> {
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                treasury: Option<&'b solana_account_info::AccountInfo<'a>>,
+                treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 clock: Option<&'b solana_account_info::AccountInfo<'a>>,

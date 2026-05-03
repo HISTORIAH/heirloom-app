@@ -77,7 +77,7 @@ test("init → update heir → claim token with new heir", async () => {
     authority.address,
     newHeir.address,
   );
-  const { vaultTokenAccount: newVaultTokenAccount, heirTokenAccount } =
+  const { vaultTokenAccount: newVaultTokenAccount, heirTokenAccount, treasuryTokenAccount} =
     await deriveTokenAccounts(newVault, authority.address, newHeir.address, mint.address);
 
   await sendClaim(client, {
@@ -86,6 +86,7 @@ test("init → update heir → claim token with new heir", async () => {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount: newVaultTokenAccount,
     heirTokenAccount,
+    treasuryTokenAccount
   });
 
   expect(newHeir.address).toBeTruthy();

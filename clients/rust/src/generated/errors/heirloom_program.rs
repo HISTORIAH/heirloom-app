@@ -61,6 +61,9 @@ pub enum HeirloomProgramError {
     /// 16 - 
     #[error("")]
     LabelTooLong = 0x10,
+    /// 17 - 
+    #[error("")]
+    MathOverflow = 0x11,
 }
 
 impl From<HeirloomProgramError> for solana_program_error::ProgramError {

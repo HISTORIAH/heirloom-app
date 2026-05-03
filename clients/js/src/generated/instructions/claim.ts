@@ -55,6 +55,8 @@ export type ClaimInstruction<
   TAccountVault extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
+  TAccountTreasury extends string | AccountMeta<string> = string,
+  TAccountTreasuryTokenAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
@@ -92,6 +94,12 @@ export type ClaimInstruction<
       TAccountMint extends string
         ? WritableAccount<TAccountMint>
         : TAccountMint,
+      TAccountTreasury extends string
+        ? WritableAccount<TAccountTreasury>
+        : TAccountTreasury,
+      TAccountTreasuryTokenAccount extends string
+        ? WritableAccount<TAccountTreasuryTokenAccount>
+        : TAccountTreasuryTokenAccount,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -144,6 +152,8 @@ export type ClaimAsyncInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountTreasuryTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountClock extends string = string,
@@ -157,6 +167,8 @@ export type ClaimAsyncInput<
   vault?: Address<TAccountVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  treasury: Address<TAccountTreasury>;
+  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   clock?: Address<TAccountClock>;
@@ -172,6 +184,8 @@ export async function getClaimInstructionAsync<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountTreasury extends string,
+  TAccountTreasuryTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountClock extends string,
@@ -187,6 +201,8 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -204,6 +220,8 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -230,6 +248,11 @@ export async function getClaimInstructionAsync<
       isWritable: true,
     },
     mint: { value: input.mint ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    treasuryTokenAccount: {
+      value: input.treasuryTokenAccount ?? null,
+      isWritable: true,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -278,6 +301,8 @@ export async function getClaimInstructionAsync<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("treasury", accounts.treasury),
+      getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("clock", accounts.clock),
@@ -295,6 +320,8 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -311,6 +338,8 @@ export type ClaimInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountTreasuryTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountClock extends string = string,
@@ -324,6 +353,8 @@ export type ClaimInput<
   vault: Address<TAccountVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  treasury: Address<TAccountTreasury>;
+  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   clock?: Address<TAccountClock>;
@@ -339,6 +370,8 @@ export function getClaimInstruction<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountTreasury extends string,
+  TAccountTreasuryTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountClock extends string,
@@ -354,6 +387,8 @@ export function getClaimInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -370,6 +405,8 @@ export function getClaimInstruction<
   TAccountVault,
   TAccountVaultTokenAccount,
   TAccountMint,
+  TAccountTreasury,
+  TAccountTreasuryTokenAccount,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountClock,
@@ -395,6 +432,11 @@ export function getClaimInstruction<
       isWritable: true,
     },
     mint: { value: input.mint ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    treasuryTokenAccount: {
+      value: input.treasuryTokenAccount ?? null,
+      isWritable: true,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -437,6 +479,8 @@ export function getClaimInstruction<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("treasury", accounts.treasury),
+      getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("clock", accounts.clock),
@@ -454,6 +498,8 @@ export function getClaimInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -475,10 +521,12 @@ export type ParsedClaimInstruction<
     vault: TAccountMetas[5];
     vaultTokenAccount?: TAccountMetas[6] | undefined;
     mint?: TAccountMetas[7] | undefined;
-    tokenProgram: TAccountMetas[8];
-    associatedTokenProgram: TAccountMetas[9];
-    clock: TAccountMetas[10];
-    systemProgram: TAccountMetas[11];
+    treasury: TAccountMetas[8];
+    treasuryTokenAccount?: TAccountMetas[9] | undefined;
+    tokenProgram: TAccountMetas[10];
+    associatedTokenProgram: TAccountMetas[11];
+    clock: TAccountMetas[12];
+    systemProgram: TAccountMetas[13];
   };
   data: ClaimInstructionData;
 };
@@ -491,12 +539,12 @@ export function parseClaimInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedClaimInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 12) {
+  if (instruction.accounts.length < 14) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 12,
+        expectedAccountMetas: 14,
       },
     );
   }
@@ -523,6 +571,8 @@ export function parseClaimInstruction<
       vault: getNextAccount(),
       vaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
+      treasury: getNextAccount(),
+      treasuryTokenAccount: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       clock: getNextAccount(),

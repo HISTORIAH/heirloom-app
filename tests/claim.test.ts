@@ -15,7 +15,7 @@ test("it claims a native SOL vault", async () => {
   const { client } = await createTestContext();
 
   const { heir } = await sendInitialize(client, {
-    amount: BigInt(100_000),
+    amount: BigInt(1_000_000_000), // one sol
     label: "test-claim-sol",
     heartbeatInterval: 0n,
     gracePeriod: 0n,
@@ -34,7 +34,7 @@ test("it claims a token vault", async () => {
     authority.address,
     heir.address,
   );
-  const { vaultTokenAccount, authorityTokenAccount, heirTokenAccount } =
+  const { vaultTokenAccount, authorityTokenAccount, heirTokenAccount, treasuryTokenAccount } =
     await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
   await sendInitialize(client, {
@@ -55,6 +55,7 @@ test("it claims a token vault", async () => {
     mint: mint.address,
     vaultTokenAccount,
     heirTokenAccount,
+    treasuryTokenAccount,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
 });
