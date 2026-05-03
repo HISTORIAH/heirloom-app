@@ -17,6 +17,7 @@ import {
   sendUpdateHeir,
   type Client,
 } from "@/lib/contracts";
+import { TREASURY_ADDRESS } from "@historiah/heirloom";
 
 export interface VaultTokenDisplay {
   mint: string;
@@ -382,10 +383,12 @@ const VaultProviderInner: React.FC<{
         vaultTokens.map(async (vt) => {
           const mintAddr = toAddress(vt.mint);
           const authorityAta = await getAtaAddress(authority, mintAddr);
+          const treasuryAta = await getAtaAddress(TREASURY_ADDRESS, mintAddr);
           return {
             mint: mintAddr,
             vaultTokenAccount: toAddress(vt.address),
             authorityTokenAccount: authorityAta,
+            treasuryTokenAccount: treasuryAta,
           };
         }),
       );
