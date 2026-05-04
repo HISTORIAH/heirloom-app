@@ -140,6 +140,24 @@ export async function fetchEstatesByAuthority(
   rpc: AppRpc,
   authority: Address,
 ): Promise<Array<{ address: Address; data: Estate }>> {
+  return fetchEstatesByMemcmp(rpc, { offset: 1n, addr: authority });
+}
+
+/**
+ * Fetch all Estate accounts where the given address is the heir.
+ * Heir is at offset 33 (1 discriminator + 32 authority).
+ */
+export async function fetchEstatesByHeir(
+  rpc: AppRpc,
+  heir: Address,
+): Promise<Array<{ address: Address; data: Estate }>> {
+  return fetchEstatesByMemcmp(rpc, { offset: 33n, addr: heir });
+}
+
+async function fetchEstatesByMemcmp(
+  rpc: AppRpc,
+  match: { offset: bigint; addr: Address },
+): Promise<Array<{ address: Address; data: Estate }>> {
   const accounts = await rpc
     .getProgramAccounts(HEIRLOOM_PROGRAM_PROGRAM_ADDRESS, {
       encoding: "base64",
@@ -152,11 +170,10 @@ export async function fetchEstatesByAuthority(
             encoding: "base64",
           },
         },
-        // Authority at offset 1 (base58 address)
         {
           memcmp: {
-            offset: 1n,
-            bytes: authority as unknown as Base58EncodedBytes,
+            offset: match.offset,
+            bytes: match.addr as unknown as Base58EncodedBytes,
             encoding: "base58",
           },
         },
@@ -164,8 +181,9 @@ export async function fetchEstatesByAuthority(
     })
     .send();
 
+  const out: Array<{ address: Address; data: Estate }> = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (accounts as any[]).map((item: any) => {
+  for (const item of accounts as any[]) {
     const b64: string = Array.isArray(item.account.data)
       ? item.account.data[0]
       : item.account.data;
@@ -173,16 +191,22 @@ export async function fetchEstatesByAuthority(
     const raw = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) raw[i] = binary.charCodeAt(i);
 
-    const decoded = decodeEstate({
-      address: item.pubkey,
-      data: raw,
-      executable: item.account.executable,
-      lamports: item.account.lamports,
-      space: BigInt(raw.length),
-      programAddress: HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
-    });
-    return { address: item.pubkey as Address, data: decoded.data };
-  });
+    try {
+      const decoded = decodeEstate({
+        address: item.pubkey,
+        data: raw,
+        executable: item.account.executable,
+        lamports: item.account.lamports,
+        space: BigInt(raw.length),
+        programAddress: HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+      });
+      out.push({ address: item.pubkey as Address, data: decoded.data });
+    } catch (err) {
+      // Stale layout or partially-initialized account — skip, don't poison the batch.
+      console.warn(`Skipping undecodable estate at ${item.pubkey}:`, err);
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
