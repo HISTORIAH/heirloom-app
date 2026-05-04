@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -7,6 +7,7 @@ import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
 import {
   discoverVaultTokenAccounts,
   fetchEstateByPair,
+  fetchEstatesByHeir,
   fetchVaultClaimableLamports,
   getAtaAddress,
   getVaultAddress,
@@ -69,6 +70,60 @@ function computeState(
   return "active";
 }
 
+type EstateLike = {
+  lastHeartbeat: bigint | number;
+  heartbeatInterval: bigint | number;
+  gracePeriod: bigint | number;
+  pausedUntil: bigint | number;
+  createdAt: bigint | number;
+  isClaimed: boolean;
+  claimableAssets: number;
+  label: string;
+};
+
+async function buildInheritance(
+  client: Client,
+  authorityStr: string,
+  heir: Address,
+  estateData: EstateLike,
+): Promise<InheritanceInfo> {
+  const authority = toAddress(authorityStr);
+  const vaultPda = await getVaultAddress(authority, heir);
+  const [lamports, vaultTokens] = await Promise.all([
+    fetchVaultClaimableLamports(client.rpc, vaultPda),
+    discoverVaultTokenAccounts(client.rpc, vaultPda),
+  ]);
+  const lastHeartbeat = Number(estateData.lastHeartbeat);
+  const heartbeatInterval = Number(estateData.heartbeatInterval);
+  const gracePeriod = Number(estateData.gracePeriod);
+  const pausedUntil = Number(estateData.pausedUntil);
+  const createdAt = Number(estateData.createdAt);
+  const claimableAssets = estateData.claimableAssets;
+  const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0 && vaultTokens.length === 0;
+  return {
+    ownerAddress: authorityStr,
+    vaultState: computeState(
+      lastHeartbeat,
+      heartbeatInterval,
+      gracePeriod,
+      pausedUntil,
+      estateData.isClaimed,
+      createdAt,
+      vaultEmpty,
+    ),
+    solBalance: Number(lamports),
+    label: estateData.label,
+    isClaimed: estateData.isClaimed,
+    claimableAssets,
+    heartbeatInterval,
+    gracePeriod,
+    lastHeartbeat,
+    createdAt,
+    pausedUntil,
+    vaultTokens,
+  };
+}
+
 async function lookupEstate(
   client: Client,
   authorityStr: string,
@@ -79,43 +134,27 @@ async function lookupEstate(
     const heir = toAddress(heirStr);
     const maybe = await fetchEstateByPair(client.rpc, authority, heir);
     if (!maybe.exists) return null;
-    const vaultPda = await getVaultAddress(authority, heir);
-    const [lamports, vaultTokens] = await Promise.all([
-      fetchVaultClaimableLamports(client.rpc, vaultPda),
-      discoverVaultTokenAccounts(client.rpc, vaultPda),
-    ]);
-    const lastHeartbeat = Number(maybe.data.lastHeartbeat);
-    const heartbeatInterval = Number(maybe.data.heartbeatInterval);
-    const gracePeriod = Number(maybe.data.gracePeriod);
-    const pausedUntil = Number(maybe.data.pausedUntil);
-    const createdAt = Number(maybe.data.createdAt);
-    const claimableAssets = maybe.data.claimableAssets;
-    const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0 && vaultTokens.length === 0;
-    return {
-      ownerAddress: authorityStr,
-      vaultState: computeState(
-        lastHeartbeat,
-        heartbeatInterval,
-        gracePeriod,
-        pausedUntil,
-        maybe.data.isClaimed,
-        createdAt,
-        vaultEmpty,
-      ),
-      solBalance: Number(lamports),
-      label: maybe.data.label,
-      isClaimed: maybe.data.isClaimed,
-      claimableAssets,
-      heartbeatInterval,
-      gracePeriod,
-      lastHeartbeat,
-      createdAt,
-      pausedUntil,
-      vaultTokens,
-    };
+    return buildInheritance(client, authorityStr, heir, maybe.data);
   } catch {
     return null;
   }
+}
+
+async function autoFetchInheritances(
+  client: Client,
+  heirAddress: Address,
+): Promise<InheritanceInfo[]> {
+  const estates = await fetchEstatesByHeir(client.rpc, heirAddress);
+  const results = await Promise.all(
+    estates.map(async (e) => {
+      try {
+        return await buildInheritance(client, e.data.authority, heirAddress, e.data);
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return results.filter((r): r is InheritanceInfo => r !== null);
 }
 
 const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address }> = ({
@@ -127,10 +166,11 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  const client: Client = { rpc, rpcSubscriptions };
+  const client: Client = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
 
   const [searching, setSearching] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
+  const [autoFetchFailed, setAutoFetchFailed] = useState(false);
   const [inheritances, setInheritances] = useState<InheritanceInfo[]>([]);
   const [claimingOwner, setClaimingOwner] = useState<string | null>(null);
   const [claimTxIds, setClaimTxIds] = useState<Record<string, string>>({});
@@ -152,21 +192,36 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
 
   useEffect(() => {
     if (!publicKey) return;
+    let cancelled = false;
     const ownerParam = searchParams.get("owner");
-    if (!ownerParam) {
-      setSearchDone(true);
-      return;
-    }
     setSearching(true);
-    runLookup(ownerParam)
-      .then((result) => {
-        if (result) setInheritances([result]);
-      })
-      .finally(() => {
-        setSearching(false);
-        setSearchDone(true);
-      });
-  }, [publicKey, searchParams, runLookup]);
+    setAutoFetchFailed(false);
+
+    (async () => {
+      const merged = new Map<string, InheritanceInfo>();
+      try {
+        const auto = await autoFetchInheritances(client, heirAddress);
+        for (const inh of auto) merged.set(inh.ownerAddress, inh);
+      } catch (err) {
+        console.error("Auto-fetch inheritances failed:", err);
+        if (!cancelled) setAutoFetchFailed(true);
+      }
+
+      if (ownerParam && !merged.has(ownerParam)) {
+        const single = await runLookup(ownerParam);
+        if (single) merged.set(single.ownerAddress, single);
+      }
+
+      if (cancelled) return;
+      setInheritances(Array.from(merged.values()));
+      setSearching(false);
+      setSearchDone(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [publicKey, searchParams, runLookup, client, heirAddress]);
 
   const handleManualLookup = async () => {
     if (!manualAddress.trim()) return;
@@ -286,7 +341,19 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
             {searching && (
               <div className="neo-card-static text-center">
                 <Loader2 className="h-10 w-10 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-                <h3 className="text-xl font-black">Looking up estate...</h3>
+                <h3 className="text-xl font-black">Scanning chain for inheritances...</h3>
+              </div>
+            )}
+
+            {searchDone && !searching && autoFetchFailed && (
+              <div className="neo-card-static bg-accent-yellow/20 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-black">Auto-fetch unavailable</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    RPC rejected the on-chain scan. Use manual lookup below.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -295,7 +362,9 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-xl font-black mb-2">No Estates Found</h3>
                 <p className="text-muted-foreground font-medium mb-4">
-                  Look up an estate by the vault owner's Solana address.
+                  {autoFetchFailed
+                    ? "Look up an estate by the vault owner's Solana address."
+                    : "No estates name your wallet as heir. Try manual lookup if you expect one."}
                 </p>
                 <Button variant="outline" onClick={() => setShowManual(true)}>
                   Manual lookup
