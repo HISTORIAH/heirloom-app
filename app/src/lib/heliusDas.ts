@@ -13,6 +13,17 @@ export type DasAsset = {
   token_info?: DasTokenInfo;
 };
 
+export type DasFungibleAsset = {
+  id: string;
+  token_info?: {
+    balance?: number;
+    decimals?: number;
+    symbol?: string;
+    token_program?: string;
+  };
+  content?: DasContent;
+};
+
 export function pickImage(content?: DasContent): string | undefined {
   const file = content?.files?.find((f) => !f.mime || f.mime.startsWith("image/"));
   return file?.cdn_uri || content?.links?.image || file?.uri;
@@ -52,4 +63,35 @@ export async function fetchAssetBatch(
     });
   }
   return out;
+}
+
+export async function fetchAssetsByOwner(
+  url: string,
+  owner: string,
+  signal: AbortSignal,
+): Promise<DasFungibleAsset[]> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal,
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "heirloom-assets",
+      method: "getAssetsByOwner",
+      params: {
+        ownerAddress: owner,
+        page: 1,
+        limit: 1000,
+        options: {
+          showFungible: true,
+          showZeroBalance: false,
+        },
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`Helius ${res.status}`);
+  const json = (await res.json()) as {
+    result?: { items?: Array<DasFungibleAsset | null> };
+  };
+  return (json.result?.items ?? []).filter((item): item is DasFungibleAsset => !!item);
 }

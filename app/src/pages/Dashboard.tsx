@@ -168,14 +168,14 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [addAssetMint, setAddAssetMint] = useState<"sol" | string>("sol");
   const [addAssetAmount, setAddAssetAmount] = useState<number>(0);
   const [addingAsset, setAddingAsset] = useState(false);
-  const { tokens: walletSplTokens, loading: walletTokensLoading } = useWalletSplTokens(
+  const { data: walletSplTokens, isLoading: walletTokensLoading } = useWalletSplTokens(
     isConnected && showAddAsset ? publicKey : null,
   );
   const { sol: walletSolBalance } = useTokenBalances(
     isConnected && showAddAsset ? publicKey : null,
   );
   const selectedToken = useMemo(
-    () => walletSplTokens.find((t) => t.mint === addAssetMint),
+    () => (walletSplTokens ?? []).find((t) => t.mint === addAssetMint),
     [walletSplTokens, addAssetMint],
   );
 
@@ -851,7 +851,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                   className="neo-input w-full font-bold"
                 >
                   <option value="sol">{SOL_LABEL}</option>
-                  {walletSplTokens.map((t) => (
+                  {(walletSplTokens ?? []).map((t) => (
                     <option key={t.mint} value={t.mint}>
                       {t.label} — bal {t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}
                     </option>
