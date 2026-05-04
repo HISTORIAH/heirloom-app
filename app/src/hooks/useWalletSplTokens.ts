@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchAssetsByOwner, pickImage, type DasFungibleAsset } from "@/lib/heliusDas";
-import { truncateAddress, convertToUiAmount } from "@/lib/utils";
+import { truncateAddress, toUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { heliusRpcUrl } from "@/config/constants";
@@ -12,10 +12,7 @@ function dasAssetToToken(asset: DasFungibleAsset): SplTokenAsset | null {
   if (!mint || (tokenInfo?.balance ?? 0) === 0) return null;
 
   const decimals = tokenInfo?.decimals ?? 0;
-  const balance = tokenInfo?.balance ?? 0;
-  const raw = BigInt(Math.floor(balance));
-
-  if (raw === 0n) return null;
+  const balance = BigInt(tokenInfo?.balance ?? 0);
 
   const symbol = tokenInfo?.symbol ?? asset.content?.metadata?.symbol;
 
@@ -26,7 +23,8 @@ function dasAssetToToken(asset: DasFungibleAsset): SplTokenAsset | null {
     symbol: symbol ?? undefined,
     image: pickImage(asset.content),
     decimals,
-    uiAmount: convertToUiAmount(raw, decimals),
+    amount: balance, // in token amount
+    uiAmount: toUiAmount(balance, decimals),
     // Pull from DAS or fallback to Legacy Token Program
     tokenProgram: tokenInfo?.token_program ?? TOKEN_PROGRAM_ADDRESS,
   };
