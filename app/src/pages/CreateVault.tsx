@@ -31,7 +31,7 @@ import {
   Pencil,
   ArrowUpDown,
 } from "lucide-react";
-import { formatUiAmount, toUiAmount } from "@/lib/utils";
+import { formatUiAmount } from "@/lib/utils";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 
