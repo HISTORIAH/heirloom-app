@@ -12,6 +12,7 @@ export const USDC_MINT: Address = address( import.meta.env.VITE_USDC_MINT || "4z
 
 export const TOKEN_PROGRAM_ID: Address = address( "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", );
 
+// ? temp, refactor me
 export const SOL_LABEL = "SOL";
 export const SOL_DECIMALS = 9;
 export const USDC_LABEL = "USDC";
