@@ -147,10 +147,10 @@ const CreateVaultPage = () => {
   const setTokenByPercent = (mint: string, pct: number) => {
     const tok = (tokens ?? []).find((t) => t.mint === mint);
     if (!tok) return;
-    const raw = tok.uiAmount * (pct / 100);
+    const target = tok.uiAmount * (pct / 100);
     const factorDec = Math.min(tok.decimals, 9);
     const factor = Math.pow(10, factorDec);
-    const v = Math.floor(raw * factor) / factor;
+    const v = Math.min(tok.uiAmount, Math.floor(target * factor) / factor);
     if (v <= 0) removeToken(mint);
     else setTokenAmount(mint, v);
   };
