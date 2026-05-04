@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchAssetsByOwner, pickImage, type DasFungibleAsset } from "@/lib/heliusDas";
-import { truncateAddress } from "@/lib/utils";
-import { convertToUiAmount } from "@/lib/tokenUtils";
+import { truncateAddress, convertToUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { heliusRpcUrl } from "@/config/constants";
