@@ -1,5 +1,4 @@
 import { test } from "bun:test";
-import { generateKeyPairSigner } from "@solana/kit";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
   getInitializeInstructionAsync,
@@ -127,4 +126,66 @@ test("it inits with a token then registers a SOL asset separately", async () => 
     heir: heir.address,
     amount: 5_000_000_000n,
   });
+});
+
+test("it registers 4 mints in a single transaction", async () => {
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
+
+  const { vault, estate } = await deriveEstateVault(
+    authority.address,
+    heir.address,
+  );
+
+  // Create 4 mints
+  const mints = await Promise.all([
+    createAndMintTokens(),
+    createAndMintTokens(),
+    createAndMintTokens(),
+    createAndMintTokens(),
+  ]);
+
+  // Derive token accounts for all 4 mints
+  const tokenAccounts = await Promise.all(
+    mints.map(({ mint }) =>
+      deriveTokenAccounts(vault, authority.address, heir.address, mint.address),
+    ),
+  );
+
+
+  // Initialize estate with first mint
+  const initIx = await getInitializeInstructionAsync({
+    authority,
+    heir: heir.address,
+    heartbeatInterval: 0n,
+    gracePeriod: 0n,
+    pauseDuration: 0n,
+    label: "test-4-mints",
+    amount: 100_000n,
+    vault,
+    estate,
+    mint: mints[0].mint.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    vaultTokenAccount: tokenAccounts[0]?.vaultTokenAccount,
+    authorityTokenAccount: tokenAccounts[0]?.authorityTokenAccount,
+  });
+
+  // Register the remaining 3 mints
+  const registerIxs = await Promise.all(
+    mints.slice(1).map(({ mint }, i) =>
+      getRegisterAssetInstructionAsync({
+        authority,
+        heir: heir.address,
+        mint: mint.address,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        amount: 1_000_000n,
+        vaultTokenAccount: tokenAccounts[i + 1]?.vaultTokenAccount,
+        vault,
+        estate,
+        authorityTokenAccount: tokenAccounts[i + 1]?.authorityTokenAccount,
+      }),
+    ),
+  );
+
+  await sendInstructions(client, authority, [initIx, ...registerIxs]);
 });

@@ -87,7 +87,7 @@ const CreateVaultPage = () => {
   const [delegate, setDelegate] = useState("");
   const [hbSigner, setHbSigner] = useState("");
 
-  const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
+  const { data: tokens, isLoading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
   const { sol: solBalance, loading: solLoading } = useTokenBalances(isConnected ? publicKey : null);
 
   // Multi-asset state: SOL amount + per-token amounts
@@ -121,7 +121,7 @@ const CreateVaultPage = () => {
 
   const filteredTokens = useMemo(() => {
     const q = tokenSearch.trim().toLowerCase();
-    let list = tokens;
+    let list = tokens ?? [];
     if (q) {
       list = list.filter(
         (t) =>
@@ -145,7 +145,7 @@ const CreateVaultPage = () => {
   };
 
   const setTokenByPercent = (mint: string, pct: number) => {
-    const tok = tokens.find((t) => t.mint === mint);
+    const tok = (tokens ?? []).find((t) => t.mint === mint);
     if (!tok) return;
     const raw = tok.uiAmount * (pct / 100);
     const factorDec = Math.min(tok.decimals, 9);
@@ -193,7 +193,7 @@ const CreateVaultPage = () => {
 
       // Build token deposits list
       const tokenDeposits = selectedTokenEntries.map(([mint, amt]) => {
-        const tok = tokens.find((t) => t.mint === mint);
+        const tok = (tokens ?? []).find((t) => t.mint === mint);
         const decimals = tok?.decimals ?? 9;
         return {
           mint,
@@ -637,7 +637,7 @@ const CreateVaultPage = () => {
                       </li>
                     )}
                     {selectedTokenEntries.map(([mint, amt]) => {
-                      const tok = tokens.find((t) => t.mint === mint);
+                      const tok = (tokens ?? []).find((t) => t.mint === mint);
                       const tokLabel = tok?.label ?? `${mint.slice(0, 4)}…${mint.slice(-4)}`;
                       const tokName = tok?.name;
                       const dec = tok?.decimals ?? 9;
@@ -690,13 +690,13 @@ const CreateVaultPage = () => {
                 </div>
               )}
 
-              {!tokensLoading && tokens.length === 0 && (
+              {!tokensLoading && (tokens ?? []).length === 0 && (
                 <p className="text-sm font-medium text-muted-foreground">
                   No SPL tokens with balance found in your wallet. Funding with {SOL_LABEL}.
                 </p>
               )}
 
-              {!tokensLoading && tokens.length > 0 && (
+              {!tokensLoading && (tokens ?? []).length > 0 && (
                 <div className="neo-card-static !p-0 overflow-hidden">
                   <button
                     onClick={() => setTokensPanelOpen((v) => !v)}
@@ -711,7 +711,7 @@ const CreateVaultPage = () => {
                       <div className="text-left">
                         <h3 className="text-lg font-black leading-tight">SPL Tokens</h3>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                          {tokens.length} available · {selectedTokenEntries.length} selected
+                          {(tokens ?? []).length} available · {selectedTokenEntries.length} selected
                         </p>
                       </div>
                     </div>
@@ -914,7 +914,7 @@ const CreateVaultPage = () => {
                     </div>
                   )}
                   {selectedTokenEntries.map(([mint, amt]) => {
-                    const tok = tokens.find((t) => t.mint === mint);
+                    const tok = (tokens ?? []).find((t) => t.mint === mint);
                     const tokLabel = tok?.label ?? mint.slice(0, 8);
                     const dec = tok?.decimals ?? 9;
                     return (
