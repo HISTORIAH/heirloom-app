@@ -12,6 +12,7 @@ import {
   getVaultAddress,
   sendInitializeWithTokens,
   sendRegisterAndDeposit,
+  sendRegisterSolDeposit,
   sendRevokeAll,
   sendUpdate,
   sendUpdateHeir,
@@ -38,6 +39,7 @@ export interface EstateData {
   isClaimed: boolean;
   isDeferred: boolean;
   delegate: string | null;
+  hbSigner: string | null;
   claimableAssets: number;
   estatePda: string;
   vaultPda: string;
@@ -63,7 +65,15 @@ export interface CreateEstateInput {
   pauseDuration: number;
   amountLamports: bigint;
   delegate?: string;
+  hbSigner?: string;
   tokens?: TokenDeposit[];
+}
+
+export interface UpdateEstateFields {
+  heartbeatInterval?: bigint;
+  gracePeriod?: bigint;
+  pauseDuration?: bigint;
+  label?: string;
 }
 
 interface VaultState {
@@ -75,7 +85,9 @@ interface VaultState {
   fetchEstates: () => Promise<void>;
   createEstateOnChain: (input: CreateEstateInput) => Promise<string>;
   registerAssetOnChain: (heir: string, token: TokenDeposit) => Promise<string>;
+  registerSolOnChain: (heir: string, lamports: bigint) => Promise<string>;
   sendHeartbeatOnChain: (heir: string) => Promise<string>;
+  updateEstateFieldsOnChain: (heir: string, fields: UpdateEstateFields) => Promise<string>;
   revokeEstateOnChain: (heir: string) => Promise<string>;
   updateHeirOnChain: (heir: string, newHeir: string) => Promise<string>;
   clearVault: () => void;
@@ -182,6 +194,13 @@ const VaultProviderInner: React.FC<{
             if (opt.__option === "Some" && opt.value) delegateAddr = opt.value;
           }
 
+          let hbSignerAddr: string | null = null;
+          const hbs = estate.data.hbSigner;
+          if (hbs && typeof hbs === "object" && "__option" in hbs) {
+            const opt = hbs as { __option: "Some" | "None"; value?: string };
+            if (opt.__option === "Some" && opt.value) hbSignerAddr = opt.value;
+          }
+
           results.push({
             authority: estate.data.authority,
             heir: estate.data.heir,
@@ -195,6 +214,7 @@ const VaultProviderInner: React.FC<{
             isClaimed: estate.data.isClaimed,
             isDeferred: estate.data.isDeferred,
             delegate: delegateAddr,
+            hbSigner: hbSignerAddr,
             claimableAssets: estate.data.claimableAssets,
             estatePda: estate.address,
             vaultPda,
@@ -293,6 +313,7 @@ const VaultProviderInner: React.FC<{
           gracePeriod: BigInt(input.gracePeriod),
           pauseDuration: BigInt(input.pauseDuration),
           delegate: input.delegate ? toAddress(input.delegate) : undefined,
+          hbSigner: input.hbSigner ? toAddress(input.hbSigner) : undefined,
         };
         extraTokens = validTokens.map((tok) => ({
           mint: toAddress(tok.mint),
@@ -321,6 +342,7 @@ const VaultProviderInner: React.FC<{
           gracePeriod: BigInt(input.gracePeriod),
           pauseDuration: BigInt(input.pauseDuration),
           delegate: input.delegate ? toAddress(input.delegate) : undefined,
+          hbSigner: input.hbSigner ? toAddress(input.hbSigner) : undefined,
           mint: mintAddr,
           tokenProgram,
           vaultTokenAccount,
@@ -356,11 +378,40 @@ const VaultProviderInner: React.FC<{
     [client, signer],
   );
 
+  const registerSolOnChain = useCallback(
+    async (heir: string, lamports: bigint): Promise<string> => {
+      const txId = await sendRegisterSolDeposit(client, {
+        authority: signer,
+        heir: toAddress(heir),
+        amount: lamports,
+      });
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
+  );
+
   const sendHeartbeatOnChain = useCallback(
     async (heir: string): Promise<string> => {
       const txId = await sendUpdate(client, {
         authority: signer,
         heir: toAddress(heir),
+      });
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
+  );
+
+  const updateEstateFieldsOnChain = useCallback(
+    async (heir: string, fields: UpdateEstateFields): Promise<string> => {
+      const txId = await sendUpdate(client, {
+        authority: signer,
+        heir: toAddress(heir),
+        heartbeatInterval: fields.heartbeatInterval,
+        gracePeriod: fields.gracePeriod,
+        pauseDuration: fields.pauseDuration,
+        label: fields.label,
       });
       setPendingTxId(txId);
       return txId;
@@ -426,7 +477,9 @@ const VaultProviderInner: React.FC<{
     fetchEstates,
     createEstateOnChain,
     registerAssetOnChain,
+    registerSolOnChain,
     sendHeartbeatOnChain,
+    updateEstateFieldsOnChain,
     revokeEstateOnChain,
     updateHeirOnChain,
     clearVault,
@@ -449,7 +502,13 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     registerAssetOnChain: async () => {
       throw new Error("Wallet not connected");
     },
+    registerSolOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
     sendHeartbeatOnChain: async () => {
+      throw new Error("Wallet not connected");
+    },
+    updateEstateFieldsOnChain: async () => {
       throw new Error("Wallet not connected");
     },
     revokeEstateOnChain: async () => {

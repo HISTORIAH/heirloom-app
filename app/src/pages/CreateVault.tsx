@@ -85,6 +85,7 @@ const CreateVaultPage = () => {
   const [heirAddress, setHeirAddress] = useState("");
   const [label, setLabel] = useState("heir");
   const [delegate, setDelegate] = useState("");
+  const [hbSigner, setHbSigner] = useState("");
 
   const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
   const { sol: solBalance, loading: solLoading } = useTokenBalances(isConnected ? publicKey : null);
@@ -216,6 +217,7 @@ const CreateVaultPage = () => {
         pauseDuration: pauseSeconds,
         amountLamports: lamports,
         delegate: delegate.trim() || undefined,
+        hbSigner: hbSigner.trim() || undefined,
         tokens: tokenDeposits,
       });
       setTxId(createTxId);
@@ -488,6 +490,27 @@ const CreateVaultPage = () => {
                   maxLength={128}
                   className="neo-input font-mono text-sm focus:bg-accent-purple/20"
                   placeholder="Solana address (leave empty for no guardian)"
+                />
+              </div>
+
+              <div className="neo-card-static">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-accent-pink neo-border rounded-xl p-3">
+                    <Heart className="h-6 w-6" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-xl font-black">Heartbeat Signer (Optional)</h3>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground mb-3">
+                  A hot wallet that can refresh the heartbeat for you. It cannot
+                  change settings, revoke, or reassign — only ping.
+                </p>
+                <input
+                  type="text"
+                  value={hbSigner}
+                  onChange={(e) => setHbSigner(e.target.value)}
+                  maxLength={128}
+                  className="neo-input font-mono text-sm focus:bg-accent-pink/20"
+                  placeholder="Solana address (leave empty to keep heartbeats authority-only)"
                 />
               </div>
             </div>
@@ -924,6 +947,17 @@ const CreateVaultPage = () => {
                     <Shield className="h-5 w-5" strokeWidth={2.5} />
                     <p className="font-bold">
                       Guardian: <span className="font-mono text-sm break-all">{delegate}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {hbSigner && (
+                <div className="neo-card-static bg-accent-pink/10">
+                  <div className="flex items-center gap-3">
+                    <Heart className="h-5 w-5" strokeWidth={2.5} />
+                    <p className="font-bold">
+                      Heartbeat Signer: <span className="font-mono text-sm break-all">{hbSigner}</span>
                     </p>
                   </div>
                 </div>
