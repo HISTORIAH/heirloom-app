@@ -215,7 +215,13 @@ export function getUpdateFieldsInstruction<
     ...ix.accounts,
     { address: SYSTEM_PROGRAM_ADDRESS, role: AccountRole.READONLY },
   ];
-  return { ...ix, accounts, data } as typeof ix;
+  return { ...ix, accounts, data } as UpdateFieldsInstruction<
+    TProgramAddress,
+    TAccountAuthority,
+    TAccountHeir,
+    TAccountEstate,
+    TAccountClock
+  >;
 }
 
 // Keep async alias for backward compatibility (no PDA resolution needed).
