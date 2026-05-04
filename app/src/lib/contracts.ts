@@ -197,6 +197,7 @@ export interface InitializeArgs {
   gracePeriod: bigint;
   pauseDuration: bigint;
   delegate?: Address;
+  hbSigner?: Address;
   mint?: Address;
   tokenProgram?: Address;
   authorityTokenAccount?: Address;
@@ -216,6 +217,7 @@ export async function sendInitialize(
     authority: args.authority,
     heir: args.heir,
     delegate: args.delegate,
+    hbSigner: args.hbSigner,
     authorityTokenAccount: args.authorityTokenAccount,
     vaultTokenAccount: args.vaultTokenAccount,
     mint: args.mint,
@@ -232,28 +234,40 @@ export async function sendInitialize(
 }
 
 export interface UpdateArgs {
+  /**
+   * Signer for the update_fields ix. Must be either the estate authority
+   * (full permissions) or the registered hb_signer (heartbeat-only).
+   * The estate is always derived from (authorityAddress, heir) — when the
+   * signer is the hb_signer, pass authorityAddress separately.
+   */
   authority: TransactionSigner;
+  /**
+   * Address used as the estate-derivation authority. Defaults to the signer's
+   * address when omitted (the common authority-signs case).
+   */
+  authorityAddress?: Address;
   heir: Address;
-  label?: string
+  heartbeatInterval?: bigint | null;
+  gracePeriod?: bigint | null;
+  pauseDuration?: bigint | null;
+  label?: string | null;
 }
 
-
-// FIXME: THIS DOESN'T UPDATE ANYTHING
 export async function sendUpdate(
   client: Client,
   args: UpdateArgs,
 ): Promise<string> {
-  const estate = await getEstateAddress(args.authority.address, args.heir);
+  const authorityAddr = args.authorityAddress ?? args.authority.address;
+  const estate = await getEstateAddress(authorityAddr, args.heir);
 
-  // updateFields with all None → heartbeat-only (program sets last_heartbeat = now).
   const ix = await getUpdateFieldsInstructionAsync({
     authority: args.authority,
     heir: args.heir,
-    heartbeatInterval: null,
-    gracePeriod: null,
-    pauseDuration: null,
+    heartbeatInterval: args.heartbeatInterval ?? null,
+    gracePeriod: args.gracePeriod ?? null,
+    pauseDuration: args.pauseDuration ?? null,
+    label: args.label ?? null,
     estate,
-    label: null
   });
   return sendTx(client, args.authority, ix);
 }
@@ -557,6 +571,35 @@ export async function sendRegisterAndDeposit(
   return sendTx(client, args.authority, ix);
 }
 
+export interface RegisterSolDepositArgs {
+  authority: TransactionSigner;
+  heir: Address;
+  amount: bigint; // lamports
+}
+
+/**
+ * Registers a SOL deposit on an existing estate. Uses the mint-less
+ * register_asset path (program handles the SOL transfer internally).
+ */
+export async function sendRegisterSolDeposit(
+  client: Client,
+  args: RegisterSolDepositArgs,
+): Promise<string> {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(args.authority.address, args.heir),
+    getVaultAddress(args.authority.address, args.heir),
+  ]);
+
+  const ix = await getRegisterAssetInstructionAsync({
+    authority: args.authority,
+    heir: args.heir,
+    estate,
+    vault,
+    amount: args.amount,
+  });
+  return sendTx(client, args.authority, ix);
+}
+
 export interface TokenRegistration {
   mint: Address;
   amount: bigint;
@@ -582,6 +625,7 @@ export async function sendInitializeWithTokens(
     authority: initArgs.authority,
     heir: initArgs.heir,
     delegate: initArgs.delegate,
+    hbSigner: initArgs.hbSigner,
     authorityTokenAccount: initArgs.authorityTokenAccount,
     vaultTokenAccount: initArgs.vaultTokenAccount,
     mint: initArgs.mint,

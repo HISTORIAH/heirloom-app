@@ -19,6 +19,7 @@ import CreateVault from "@/pages/CreateVault";
 import Dashboard from "@/pages/Dashboard";
 import Claim from "@/pages/Claim";
 import Defer from "@/pages/Defer";
+import Heartbeat from "@/pages/Heartbeat";
 import NotFound from "@/pages/NotFound";
 import { NETWORK } from "@/config/constants";
 
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/claim" element={<Claim />} />
                 <Route path="/defer" element={<Defer />} />
+                <Route path="/heartbeat" element={<Heartbeat />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, ChevronDown, LayoutDashboard, Gift, LogOut, Copy, Check, RefreshCw } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -63,6 +63,13 @@ const NavBar = () => {
                 >
                   <Gift className="h-5 w-5" />
                   Claim Inheritance
+                </button>
+                <button
+                  onClick={() => navigate("/heartbeat")}
+                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+                >
+                  <Heart className="h-5 w-5" />
+                  Heartbeat
                 </button>
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -191,6 +198,17 @@ const NavBar = () => {
                   }}
                 >
                   Claim Inheritance
+                </Button>
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/heartbeat");
+                  }}
+                >
+                  Heartbeat
                 </Button>
                 <Button
                   variant="ghost"
