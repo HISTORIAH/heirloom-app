@@ -10,3 +10,13 @@ export {
   getUpdateFieldsInstructionDataEncoder,
 } from "./overrides/updateFields";
 export {findVaultPda, findEstatePda} from "./overrides/pda"
+// Override generated Estate codec (Quasar OptionZc<Address> = 33 bytes, not 1/33-byte Option).
+export {
+  decodeEstate,
+  fetchEstate,
+  fetchMaybeEstate,
+  fetchAllEstate,
+  fetchAllMaybeEstate,
+  getEstateCodec,
+  getEstateDecoder,
+} from "./overrides/estate";
