@@ -31,6 +31,7 @@ import {
   Pencil,
   ArrowUpDown,
 } from "lucide-react";
+import { formatUiAmount } from "@/lib/utils";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 
@@ -122,19 +123,29 @@ const CreateVaultPage = () => {
   const filteredTokens = useMemo(() => {
     const q = tokenSearch.trim().toLowerCase();
     let list = tokens ?? [];
+
     if (q) {
       list = list.filter(
         (t) =>
           t.label.toLowerCase().includes(q) ||
-          (t.name?.toLowerCase().includes(q) ?? false) ||
-          (t.symbol?.toLowerCase().includes(q) ?? false) ||
+          t.name?.toLowerCase().includes(q) ||
+          t.symbol?.toLowerCase().includes(q) ||
           t.mint.toLowerCase().includes(q),
       );
     }
-    const sorted = [...list];
-    if (tokenSort === "balance") sorted.sort((a, b) => b.uiAmount - a.uiAmount);
-    else sorted.sort((a, b) => a.label.localeCompare(b.label));
-    return sorted;
+
+    // Create the sorted copy
+    return [...list].sort((a, b) => {
+      if (tokenSort === "balance") {
+        // Sort by amount descending
+        // If amounts are the same, fallback to alphabetical so the UI is stable
+        const diff = b.uiAmount - a.uiAmount;
+        return diff !== 0 ? diff : a.label.localeCompare(b.label);
+      }
+
+      // Default: Sort by label alphabetically
+      return a.label.localeCompare(b.label);
+    });
   }, [tokens, tokenSearch, tokenSort]);
 
   const setSolByPercent = (pct: number) => {
@@ -797,11 +808,12 @@ const CreateVaultPage = () => {
                                 <div className="text-right shrink-0">
                                   {isActive && (
                                     <p className="text-xs font-black uppercase tracking-widest text-foreground">
-                                      +{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}
+                                      {/*+{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}*/}
+                                      {formatUiAmount(amount)}
                                     </p>
                                   )}
                                   <p className="text-sm font-bold text-muted-foreground tabular-nums">
-                                    Bal {t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: dec })}
+                                    {formatUiAmount(t.uiAmount)}
                                   </p>
                                 </div>
                                 <ChevronDown
@@ -916,11 +928,12 @@ const CreateVaultPage = () => {
                   {selectedTokenEntries.map(([mint, amt]) => {
                     const tok = (tokens ?? []).find((t) => t.mint === mint);
                     const tokLabel = tok?.label ?? mint.slice(0, 8);
-                    const dec = tok?.decimals ?? 9;
+                    // const dec = tok?.decimals ?? 9;
                     return (
                       <div key={mint} className="flex justify-between mb-2">
                         <span className="font-bold">{tokLabel}</span>
-                        <span className="font-black text-xl">{amt.toFixed(Math.min(6, dec))}</span>
+                        {/*<span className="font-black text-xl">{amt.toFixed(Math.min(6, dec))}</span>*/}
+                        <span className="font-black text-xl">{formatUiAmount(amt)}</span>
                       </div>
                     );
                   })}

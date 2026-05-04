@@ -16,7 +16,7 @@ export type DasAsset = {
 export type DasFungibleAsset = {
   id: string;
   token_info?: {
-    balance?: number;
+    balance?: string | number;
     decimals?: number;
     symbol?: string;
     token_program?: string;

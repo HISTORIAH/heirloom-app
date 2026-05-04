@@ -6,5 +6,6 @@ export type SplTokenAsset = {
   image?: string;
   decimals: number;
   uiAmount: number;
+  amount: bigint;
   tokenProgram: string;
 };
