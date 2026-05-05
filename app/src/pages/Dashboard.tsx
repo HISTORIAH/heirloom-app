@@ -592,7 +592,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <div className="bg-accent-yellow neo-border rounded-xl p-3">
               <Users className="h-6 w-6" strokeWidth={2.5} />
             </div>
-            <h3 className="text-xl font-black">Heirs (1)</h3>
+            <h3 className="text-xl font-black">Heirs</h3>
           </div>
           <span className="neo-badge bg-secondary text-xs">
             {estate.isClaimed ? "1 claimed" : "0 claimed"}

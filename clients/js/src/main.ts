@@ -20,3 +20,12 @@ export {
   getEstateCodec,
   getEstateDecoder,
 } from "./overrides/estate";
+
+// Override generated initialize instruction (label uses u8 length prefix, not u32).
+export {
+  getInitializeInstruction,
+  getInitializeInstructionAsync,
+  getInitializeInstructionDataCodec,
+  getInitializeInstructionDataDecoder,
+  getInitializeInstructionDataEncoder,
+} from "./overrides/initialize";
