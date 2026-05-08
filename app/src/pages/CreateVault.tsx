@@ -82,6 +82,7 @@ const CreateVaultPage = () => {
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * 86400);
   const [graceSeconds, setGraceSeconds] = useState(30 * 86400);
   const [pauseSeconds, setPauseSeconds] = useState(0);
+  const isPauseDisable = pauseSeconds === 0;
 
   const [heirAddress, setHeirAddress] = useState("");
   const [label, setLabel] = useState("heir");
@@ -484,7 +485,7 @@ const CreateVaultPage = () => {
                 </div>
               </div>
 
-              <div className="neo-card-static">
+              {(!isPauseDisable) && <div className="neo-card-static">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="bg-accent-purple neo-border rounded-xl p-3">
                     <Shield className="h-6 w-6" strokeWidth={2.5} />
@@ -502,7 +503,7 @@ const CreateVaultPage = () => {
                   className="neo-input font-mono text-sm focus:bg-accent-purple/20"
                   placeholder="Solana address (leave empty for no guardian)"
                 />
-              </div>
+              </div>}
 
               <div className="neo-card-static">
                 <div className="flex items-center gap-3 mb-4">
