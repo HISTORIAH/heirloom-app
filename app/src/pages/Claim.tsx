@@ -19,6 +19,7 @@ import {
   type Address,
   type TransactionSigner,
 } from "@solana/kit";
+import { TREASURY_ADDRESS } from "@historiah/heirloom";
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
@@ -196,11 +197,15 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
       const tokenAssets = await Promise.all(
         inh.vaultTokens.map(async (vt) => {
           const mint = toAddress(vt.mint);
-          const heirAta = await getAtaAddress(heirAddress, mint);
+          const [heirAta, treasuryAta] = await Promise.all([
+            getAtaAddress(heirAddress, mint),
+            getAtaAddress(TREASURY_ADDRESS, mint),
+          ]);
           return {
             mint,
             vaultTokenAccount: toAddress(vt.address),
             heirTokenAccount: heirAta,
+            treasuryTokenAccount: treasuryAta,
           };
         }),
       );
