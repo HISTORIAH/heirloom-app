@@ -1,0 +1,24 @@
+# Ignore build outputs and artifacts
+dist/
+build/
+target/
+coverage/
+
+# Ignore dependencies (usually ignored by default, but good to be explicit)
+node_modules/
+
+# Ignore Rust code (to let rustfmt handle it)
+**/*.rs
+Cargo.lock
+
+# Ignore environment and lock files
+.env*
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Ignore static assets
+**/*.png
+**/*.svg
+**/*.jpg
+**/*.ico

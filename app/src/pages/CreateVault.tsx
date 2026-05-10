@@ -31,6 +31,7 @@ import {
   Pencil,
   ArrowUpDown,
 } from "lucide-react";
+import { formatUiAmount } from "@/lib/utils";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 
@@ -81,12 +82,14 @@ const CreateVaultPage = () => {
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * 86400);
   const [graceSeconds, setGraceSeconds] = useState(30 * 86400);
   const [pauseSeconds, setPauseSeconds] = useState(0);
+  const isPauseDisable = pauseSeconds === 0;
 
   const [heirAddress, setHeirAddress] = useState("");
   const [label, setLabel] = useState("heir");
   const [delegate, setDelegate] = useState("");
+  const [hbSigner, setHbSigner] = useState("");
 
-  const { tokens, loading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
+  const { data: tokens, isLoading: tokensLoading } = useWalletSplTokens(isConnected ? publicKey : null);
   const { sol: solBalance, loading: solLoading } = useTokenBalances(isConnected ? publicKey : null);
 
   // Multi-asset state: SOL amount + per-token amounts
@@ -120,20 +123,30 @@ const CreateVaultPage = () => {
 
   const filteredTokens = useMemo(() => {
     const q = tokenSearch.trim().toLowerCase();
-    let list = tokens;
+    let list = tokens ?? [];
+
     if (q) {
       list = list.filter(
         (t) =>
           t.label.toLowerCase().includes(q) ||
-          (t.name?.toLowerCase().includes(q) ?? false) ||
-          (t.symbol?.toLowerCase().includes(q) ?? false) ||
+          t.name?.toLowerCase().includes(q) ||
+          t.symbol?.toLowerCase().includes(q) ||
           t.mint.toLowerCase().includes(q),
       );
     }
-    const sorted = [...list];
-    if (tokenSort === "balance") sorted.sort((a, b) => b.uiAmount - a.uiAmount);
-    else sorted.sort((a, b) => a.label.localeCompare(b.label));
-    return sorted;
+
+    // Create the sorted copy
+    return [...list].sort((a, b) => {
+      if (tokenSort === "balance") {
+        // Sort by amount descending
+        // If amounts are the same, fallback to alphabetical so the UI is stable
+        const diff = b.uiAmount - a.uiAmount;
+        return diff !== 0 ? diff : a.label.localeCompare(b.label);
+      }
+
+      // Default: Sort by label alphabetically
+      return a.label.localeCompare(b.label);
+    });
   }, [tokens, tokenSearch, tokenSort]);
 
   const setSolByPercent = (pct: number) => {
@@ -144,12 +157,12 @@ const CreateVaultPage = () => {
   };
 
   const setTokenByPercent = (mint: string, pct: number) => {
-    const tok = tokens.find((t) => t.mint === mint);
+    const tok = (tokens ?? []).find((t) => t.mint === mint);
     if (!tok) return;
-    const raw = tok.uiAmount * (pct / 100);
+    const target = tok.uiAmount * (pct / 100);
     const factorDec = Math.min(tok.decimals, 9);
     const factor = Math.pow(10, factorDec);
-    const v = Math.floor(raw * factor) / factor;
+    const v = Math.min(tok.uiAmount, Math.floor(target * factor) / factor);
     if (v <= 0) removeToken(mint);
     else setTokenAmount(mint, v);
   };
@@ -192,7 +205,7 @@ const CreateVaultPage = () => {
 
       // Build token deposits list
       const tokenDeposits = selectedTokenEntries.map(([mint, amt]) => {
-        const tok = tokens.find((t) => t.mint === mint);
+        const tok = (tokens ?? []).find((t) => t.mint === mint);
         const decimals = tok?.decimals ?? 9;
         return {
           mint,
@@ -216,6 +229,7 @@ const CreateVaultPage = () => {
         pauseDuration: pauseSeconds,
         amountLamports: lamports,
         delegate: delegate.trim() || undefined,
+        hbSigner: hbSigner.trim() || undefined,
         tokens: tokenDeposits,
       });
       setTxId(createTxId);
@@ -471,7 +485,7 @@ const CreateVaultPage = () => {
                 </div>
               </div>
 
-              <div className="neo-card-static">
+              {(!isPauseDisable) && <div className="neo-card-static">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="bg-accent-purple neo-border rounded-xl p-3">
                     <Shield className="h-6 w-6" strokeWidth={2.5} />
@@ -488,6 +502,27 @@ const CreateVaultPage = () => {
                   maxLength={128}
                   className="neo-input font-mono text-sm focus:bg-accent-purple/20"
                   placeholder="Solana address (leave empty for no guardian)"
+                />
+              </div>}
+
+              <div className="neo-card-static">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-accent-pink neo-border rounded-xl p-3">
+                    <Heart className="h-6 w-6" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-xl font-black">Heartbeat Signer (Optional)</h3>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground mb-3">
+                  A hot wallet that can refresh the heartbeat for you. It cannot
+                  change settings, revoke, or reassign — only ping.
+                </p>
+                <input
+                  type="text"
+                  value={hbSigner}
+                  onChange={(e) => setHbSigner(e.target.value)}
+                  maxLength={128}
+                  className="neo-input font-mono text-sm focus:bg-accent-pink/20"
+                  placeholder="Solana address (leave empty to keep heartbeats authority-only)"
                 />
               </div>
             </div>
@@ -614,7 +649,7 @@ const CreateVaultPage = () => {
                       </li>
                     )}
                     {selectedTokenEntries.map(([mint, amt]) => {
-                      const tok = tokens.find((t) => t.mint === mint);
+                      const tok = (tokens ?? []).find((t) => t.mint === mint);
                       const tokLabel = tok?.label ?? `${mint.slice(0, 4)}…${mint.slice(-4)}`;
                       const tokName = tok?.name;
                       const dec = tok?.decimals ?? 9;
@@ -667,13 +702,13 @@ const CreateVaultPage = () => {
                 </div>
               )}
 
-              {!tokensLoading && tokens.length === 0 && (
+              {!tokensLoading && (tokens ?? []).length === 0 && (
                 <p className="text-sm font-medium text-muted-foreground">
                   No SPL tokens with balance found in your wallet. Funding with {SOL_LABEL}.
                 </p>
               )}
 
-              {!tokensLoading && tokens.length > 0 && (
+              {!tokensLoading && (tokens ?? []).length > 0 && (
                 <div className="neo-card-static !p-0 overflow-hidden">
                   <button
                     onClick={() => setTokensPanelOpen((v) => !v)}
@@ -688,7 +723,7 @@ const CreateVaultPage = () => {
                       <div className="text-left">
                         <h3 className="text-lg font-black leading-tight">SPL Tokens</h3>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                          {tokens.length} available · {selectedTokenEntries.length} selected
+                          {(tokens ?? []).length} available · {selectedTokenEntries.length} selected
                         </p>
                       </div>
                     </div>
@@ -774,11 +809,12 @@ const CreateVaultPage = () => {
                                 <div className="text-right shrink-0">
                                   {isActive && (
                                     <p className="text-xs font-black uppercase tracking-widest text-foreground">
-                                      +{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}
+                                      {/*+{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}*/}
+                                      {formatUiAmount(amount)}
                                     </p>
                                   )}
                                   <p className="text-sm font-bold text-muted-foreground tabular-nums">
-                                    Bal {t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: dec })}
+                                    {formatUiAmount(t.uiAmount)}
                                   </p>
                                 </div>
                                 <ChevronDown
@@ -891,13 +927,14 @@ const CreateVaultPage = () => {
                     </div>
                   )}
                   {selectedTokenEntries.map(([mint, amt]) => {
-                    const tok = tokens.find((t) => t.mint === mint);
+                    const tok = (tokens ?? []).find((t) => t.mint === mint);
                     const tokLabel = tok?.label ?? mint.slice(0, 8);
-                    const dec = tok?.decimals ?? 9;
+                    // const dec = tok?.decimals ?? 9;
                     return (
                       <div key={mint} className="flex justify-between mb-2">
                         <span className="font-bold">{tokLabel}</span>
-                        <span className="font-black text-xl">{amt.toFixed(Math.min(6, dec))}</span>
+                        {/*<span className="font-black text-xl">{amt.toFixed(Math.min(6, dec))}</span>*/}
+                        <span className="font-black text-xl">{formatUiAmount(amt)}</span>
                       </div>
                     );
                   })}
@@ -924,6 +961,17 @@ const CreateVaultPage = () => {
                     <Shield className="h-5 w-5" strokeWidth={2.5} />
                     <p className="font-bold">
                       Guardian: <span className="font-mono text-sm break-all">{delegate}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {hbSigner && (
+                <div className="neo-card-static bg-accent-pink/10">
+                  <div className="flex items-center gap-3">
+                    <Heart className="h-5 w-5" strokeWidth={2.5} />
+                    <p className="font-bold">
+                      Heartbeat Signer: <span className="font-mono text-sm break-all">{hbSigner}</span>
                     </p>
                   </div>
                 </div>

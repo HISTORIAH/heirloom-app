@@ -2,9 +2,41 @@ import { address, type Address } from "@solana/kit";
 
 export const NETWORK = import.meta.env.VITE_NETWORK || "devnet";
 
-export const RPC_URL = import.meta.env.VITE_RPC_URL || (NETWORK === "mainnet-beta" ? "https://api.mainnet-beta.solana.com" : NETWORK === "localnet" ? "http://127.0.0.1:8899" : "https://api.devnet.solana.com");
+export const HELIUS_API_KEY: string = import.meta.env.VITE_HELIUS_API_KEY || "";
 
-export const RPC_WS_URL = import.meta.env.VITE_RPC_WS_URL || (NETWORK === "mainnet-beta" ? "wss://api.mainnet-beta.solana.com" : NETWORK === "localnet" ? "ws://127.0.0.1:8900" : "wss://api.devnet.solana.com");
+function defaultHeliusHttp(): string | null {
+  const override = import.meta.env.VITE_HELIUS_RPC_URL as string | undefined;
+  if (override && override.trim().length > 0) return override.trim();
+  if (!HELIUS_API_KEY) return null;
+  if (NETWORK === "mainnet-beta") return `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  if (NETWORK === "devnet") return `https://devnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return null;
+}
+
+function defaultHeliusWs(): string | null {
+  if (!HELIUS_API_KEY) return null;
+  if (NETWORK === "mainnet-beta") return `wss://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  if (NETWORK === "devnet") return `wss://devnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+  return null;
+}
+
+export const RPC_URL =
+  import.meta.env.VITE_RPC_URL ||
+  defaultHeliusHttp() ||
+  (NETWORK === "mainnet-beta"
+    ? "https://api.mainnet-beta.solana.com"
+    : NETWORK === "localnet"
+      ? "http://127.0.0.1:8899"
+      : "https://api.devnet.solana.com");
+
+export const RPC_WS_URL =
+  import.meta.env.VITE_RPC_WS_URL ||
+  defaultHeliusWs() ||
+  (NETWORK === "mainnet-beta"
+    ? "wss://api.mainnet-beta.solana.com"
+    : NETWORK === "localnet"
+      ? "ws://127.0.0.1:8900"
+      : "wss://api.devnet.solana.com");
 
 export const PROGRAM_ID: Address = address( import.meta.env.VITE_PROGRAM_ID || "JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN", );
 
@@ -12,6 +44,7 @@ export const USDC_MINT: Address = address( import.meta.env.VITE_USDC_MINT || "4z
 
 export const TOKEN_PROGRAM_ID: Address = address( "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", );
 
+// ? temp, refactor me
 export const SOL_LABEL = "SOL";
 export const SOL_DECIMALS = 9;
 export const USDC_LABEL = "USDC";
@@ -19,15 +52,8 @@ export const USDC_DECIMALS = 6;
 
 export const LABEL_MAX_LEN = 32;
 
-export const HELIUS_API_KEY: string = import.meta.env.VITE_HELIUS_API_KEY || "";
-
 export function heliusRpcUrl(): string | null {
-  const override = import.meta.env.VITE_HELIUS_RPC_URL as string | undefined;
-  if (override && override.trim().length > 0) return override.trim();
-  if (!HELIUS_API_KEY) return null;
-  if (NETWORK === "mainnet-beta") return `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-  if (NETWORK === "devnet") return `https://devnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-  return null;
+  return defaultHeliusHttp();
 }
 
 export function explorerTxUrl(signature: string): string {
