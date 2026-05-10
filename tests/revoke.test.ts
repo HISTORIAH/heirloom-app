@@ -21,7 +21,7 @@ test("it creates a token-only vault and revokes it", async () => {
     authority.address,
     heir.address,
   );
-  const { vaultTokenAccount, authorityTokenAccount } =
+  const { vaultTokenAccount, authorityTokenAccount, treasuryTokenAccount } =
     await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
   await sendInitialize(client, {
@@ -43,6 +43,7 @@ test("it creates a token-only vault and revokes it", async () => {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount,
     authorityTokenAccount,
+    treasuryTokenAccount
   });
 });
 
@@ -56,7 +57,7 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
     authority.address,
     heir.address,
   );
-  const { vaultTokenAccount, authorityTokenAccount } =
+  const { vaultTokenAccount, authorityTokenAccount, treasuryTokenAccount } =
     await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
   const { vaultTokenAccount: newVaultTokenAccount } =
@@ -94,5 +95,6 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount: newVaultTokenAccount,
     authorityTokenAccount,
+    treasuryTokenAccount
   });
 });

@@ -42,9 +42,7 @@ import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 export const DELEGATE_DEFER_DISCRIMINATOR = new Uint8Array([5]);
 
 export function getDelegateDeferDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 1).encode(
-    DELEGATE_DEFER_DISCRIMINATOR,
-  );
+  return fixEncoderSize(getBytesEncoder(), 1).encode(DELEGATE_DEFER_DISCRIMINATOR);
 }
 
 export type DelegateDeferInstruction<
@@ -55,29 +53,19 @@ export type DelegateDeferInstruction<
   TAccountEstate extends string | AccountMeta<string> = string,
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountDelegate extends string
-        ? WritableSignerAccount<TAccountDelegate> &
-            AccountSignerMeta<TAccountDelegate>
+        ? WritableSignerAccount<TAccountDelegate> & AccountSignerMeta<TAccountDelegate>
         : TAccountDelegate,
-      TAccountAuthority extends string
-        ? ReadonlyAccount<TAccountAuthority>
-        : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountClock extends string
-        ? ReadonlyAccount<TAccountClock>
-        : TAccountClock,
+      TAccountAuthority extends string ? ReadonlyAccount<TAccountAuthority> : TAccountAuthority,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -85,9 +73,7 @@ export type DelegateDeferInstruction<
     ]
   >;
 
-export type DelegateDeferInstructionData = {
-  discriminator: ReadonlyUint8Array;
-};
+export type DelegateDeferInstructionData = { discriminator: ReadonlyUint8Array };
 
 export type DelegateDeferInstructionDataArgs = {};
 
@@ -99,9 +85,7 @@ export function getDelegateDeferInstructionDataEncoder(): FixedSizeEncoder<Deleg
 }
 
 export function getDelegateDeferInstructionDataDecoder(): FixedSizeDecoder<DelegateDeferInstructionData> {
-  return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-  ]);
+  return getStructDecoder([["discriminator", fixDecoderSize(getBytesDecoder(), 1)]]);
 }
 
 export function getDelegateDeferInstructionDataCodec(): FixedSizeCodec<
@@ -160,8 +144,7 @@ export async function getDelegateDeferInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -257,8 +240,7 @@ export function getDelegateDeferInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -332,13 +314,10 @@ export function parseDelegateDeferInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedDelegateDeferInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 6,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 6,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {

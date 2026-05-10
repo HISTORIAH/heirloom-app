@@ -70,57 +70,38 @@ export type InitializeInstruction<
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  TAccountRent extends string | AccountMeta<string> =
-    "SysvarRent111111111111111111111111111111111",
+  TAccountRent extends string | AccountMeta<string> = "SysvarRent111111111111111111111111111111111",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
+        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountDelegate extends string
-        ? ReadonlyAccount<TAccountDelegate>
-        : TAccountDelegate,
-      TAccountHbSigner extends string
-        ? ReadonlyAccount<TAccountHbSigner>
-        : TAccountHbSigner,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountDelegate extends string ? ReadonlyAccount<TAccountDelegate> : TAccountDelegate,
+      TAccountHbSigner extends string ? ReadonlyAccount<TAccountHbSigner> : TAccountHbSigner,
       TAccountAuthorityTokenAccount extends string
         ? WritableAccount<TAccountAuthorityTokenAccount>
         : TAccountAuthorityTokenAccount,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
+      TAccountMint extends string ? ReadonlyAccount<TAccountMint> : TAccountMint,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountRent extends string
-        ? ReadonlyAccount<TAccountRent>
-        : TAccountRent,
-      TAccountClock extends string
-        ? ReadonlyAccount<TAccountClock>
-        : TAccountClock,
+      TAccountRent extends string ? ReadonlyAccount<TAccountRent> : TAccountRent,
+      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -174,10 +155,7 @@ export function getInitializeInstructionDataCodec(): Codec<
   InitializeInstructionDataArgs,
   InitializeInstructionData
 > {
-  return combineCodec(
-    getInitializeInstructionDataEncoder(),
-    getInitializeInstructionDataDecoder(),
-  );
+  return combineCodec(getInitializeInstructionDataEncoder(), getInitializeInstructionDataDecoder());
 }
 
 export type InitializeAsyncInput<
@@ -271,8 +249,7 @@ export async function getInitializeInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -280,22 +257,13 @@ export async function getInitializeInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
     hbSigner: { value: input.hbSigner ?? null, isWritable: false },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -354,9 +322,7 @@ export async function getInitializeInstructionAsync<
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getInitializeInstructionDataEncoder().encode(
-      args as InitializeInstructionDataArgs,
-    ),
+    data: getInitializeInstructionDataEncoder().encode(args as InitializeInstructionDataArgs),
     programAddress,
   } as InitializeInstruction<
     TProgramAddress,
@@ -466,8 +432,7 @@ export function getInitializeInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -475,22 +440,13 @@ export function getInitializeInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: false },
     hbSigner: { value: input.hbSigner ?? null, isWritable: false },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -543,9 +499,7 @@ export function getInitializeInstruction<
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getInitializeInstructionDataEncoder().encode(
-      args as InitializeInstructionDataArgs,
-    ),
+    data: getInitializeInstructionDataEncoder().encode(args as InitializeInstructionDataArgs),
     programAddress,
   } as InitializeInstruction<
     TProgramAddress,
@@ -599,13 +553,10 @@ export function parseInitializeInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 14) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 14,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 14,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -615,9 +566,7 @@ export function parseInitializeInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,

@@ -63,8 +63,7 @@ export type ClaimInstruction<
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -73,30 +72,18 @@ export type ClaimInstruction<
       TAccountHeir extends string
         ? WritableSignerAccount<TAccountHeir> & AccountSignerMeta<TAccountHeir>
         : TAccountHeir,
-      TAccountAuthority extends string
-        ? ReadonlyAccount<TAccountAuthority>
-        : TAccountAuthority,
-      TAccountDelegate extends string
-        ? WritableAccount<TAccountDelegate>
-        : TAccountDelegate,
+      TAccountAuthority extends string ? ReadonlyAccount<TAccountAuthority> : TAccountAuthority,
+      TAccountDelegate extends string ? WritableAccount<TAccountDelegate> : TAccountDelegate,
       TAccountHeirTokenAccount extends string
         ? WritableAccount<TAccountHeirTokenAccount>
         : TAccountHeirTokenAccount,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
-      TAccountTreasury extends string
-        ? WritableAccount<TAccountTreasury>
-        : TAccountTreasury,
+      TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
+      TAccountTreasury extends string ? WritableAccount<TAccountTreasury> : TAccountTreasury,
       TAccountTreasuryTokenAccount extends string
         ? WritableAccount<TAccountTreasuryTokenAccount>
         : TAccountTreasuryTokenAccount,
@@ -106,9 +93,7 @@ export type ClaimInstruction<
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountClock extends string
-        ? ReadonlyAccount<TAccountClock>
-        : TAccountClock,
+      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -128,19 +113,14 @@ export function getClaimInstructionDataEncoder(): FixedSizeEncoder<ClaimInstruct
 }
 
 export function getClaimInstructionDataDecoder(): FixedSizeDecoder<ClaimInstructionData> {
-  return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-  ]);
+  return getStructDecoder([["discriminator", fixDecoderSize(getBytesDecoder(), 1)]]);
 }
 
 export function getClaimInstructionDataCodec(): FixedSizeCodec<
   ClaimInstructionDataArgs,
   ClaimInstructionData
 > {
-  return combineCodec(
-    getClaimInstructionDataEncoder(),
-    getClaimInstructionDataDecoder(),
-  );
+  return combineCodec(getClaimInstructionDataEncoder(), getClaimInstructionDataDecoder());
 }
 
 export type ClaimAsyncInput<
@@ -229,35 +209,22 @@ export async function getClaimInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
     heir: { value: input.heir ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: true },
-    heirTokenAccount: {
-      value: input.heirTokenAccount ?? null,
-      isWritable: true,
-    },
+    heirTokenAccount: { value: input.heirTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
-    treasuryTokenAccount: {
-      value: input.treasuryTokenAccount ?? null,
-      isWritable: true,
-    },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -413,35 +380,22 @@ export function getClaimInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
     heir: { value: input.heir ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: true },
-    heirTokenAccount: {
-      value: input.heirTokenAccount ?? null,
-      isWritable: true,
-    },
+    heirTokenAccount: { value: input.heirTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
-    treasuryTokenAccount: {
-      value: input.treasuryTokenAccount ?? null,
-      isWritable: true,
-    },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -540,13 +494,10 @@ export function parseClaimInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedClaimInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 14) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 14,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 14,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -556,9 +507,7 @@ export function parseClaimInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,

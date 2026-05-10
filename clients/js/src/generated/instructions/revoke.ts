@@ -56,50 +56,35 @@ export type RevokeInstruction<
   TAccountMint extends string | AccountMeta<string> = string,
   TAccountTreasury extends string | AccountMeta<string> = string,
   TAccountTreasuryTokenAccount extends string | AccountMeta<string> = string,
-  TAccountRent extends string | AccountMeta<string> =
-    "SysvarRent111111111111111111111111111111111",
+  TAccountRent extends string | AccountMeta<string> = "SysvarRent111111111111111111111111111111111",
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
+        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountAuthorityTokenAccount extends string
         ? WritableAccount<TAccountAuthorityTokenAccount>
         : TAccountAuthorityTokenAccount,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
-      TAccountTreasury extends string
-        ? WritableAccount<TAccountTreasury>
-        : TAccountTreasury,
+      TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
+      TAccountTreasury extends string ? WritableAccount<TAccountTreasury> : TAccountTreasury,
       TAccountTreasuryTokenAccount extends string
         ? WritableAccount<TAccountTreasuryTokenAccount>
         : TAccountTreasuryTokenAccount,
-      TAccountRent extends string
-        ? ReadonlyAccount<TAccountRent>
-        : TAccountRent,
+      TAccountRent extends string ? ReadonlyAccount<TAccountRent> : TAccountRent,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -125,19 +110,14 @@ export function getRevokeInstructionDataEncoder(): FixedSizeEncoder<RevokeInstru
 }
 
 export function getRevokeInstructionDataDecoder(): FixedSizeDecoder<RevokeInstructionData> {
-  return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-  ]);
+  return getStructDecoder([["discriminator", fixDecoderSize(getBytesDecoder(), 1)]]);
 }
 
 export function getRevokeInstructionDataCodec(): FixedSizeCodec<
   RevokeInstructionDataArgs,
   RevokeInstructionData
 > {
-  return combineCodec(
-    getRevokeInstructionDataEncoder(),
-    getRevokeInstructionDataDecoder(),
-  );
+  return combineCodec(getRevokeInstructionDataEncoder(), getRevokeInstructionDataDecoder());
 }
 
 export type RevokeAsyncInput<
@@ -221,8 +201,7 @@ export async function getRevokeInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -230,26 +209,14 @@ export async function getRevokeInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
-    treasuryTokenAccount: {
-      value: input.treasuryTokenAccount ?? null,
-      isWritable: true,
-    },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     rent: { value: input.rent ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -397,8 +364,7 @@ export function getRevokeInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -406,26 +372,14 @@ export function getRevokeInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
-    treasuryTokenAccount: {
-      value: input.treasuryTokenAccount ?? null,
-      isWritable: true,
-    },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     rent: { value: input.rent ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -520,13 +474,10 @@ export function parseRevokeInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRevokeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 13) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 13,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 13,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -536,9 +487,7 @@ export function parseRevokeInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,

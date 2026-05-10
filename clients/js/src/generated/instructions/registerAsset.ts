@@ -44,9 +44,7 @@ import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 export const REGISTER_ASSET_DISCRIMINATOR = new Uint8Array([7]);
 
 export function getRegisterAssetDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 1).encode(
-    REGISTER_ASSET_DISCRIMINATOR,
-  );
+  return fixEncoderSize(getBytesEncoder(), 1).encode(REGISTER_ASSET_DISCRIMINATOR);
 }
 
 export type RegisterAssetInstruction<
@@ -62,46 +60,33 @@ export type RegisterAssetInstruction<
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  TAccountRent extends string | AccountMeta<string> =
-    "SysvarRent111111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountRent extends string | AccountMeta<string> = "SysvarRent111111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
+        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountAuthorityTokenAccount extends string
         ? WritableAccount<TAccountAuthorityTokenAccount>
         : TAccountAuthorityTokenAccount,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
+      TAccountMint extends string ? ReadonlyAccount<TAccountMint> : TAccountMint,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountRent extends string
-        ? ReadonlyAccount<TAccountRent>
-        : TAccountRent,
+      TAccountRent extends string ? ReadonlyAccount<TAccountRent> : TAccountRent,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -109,10 +94,7 @@ export type RegisterAssetInstruction<
     ]
   >;
 
-export type RegisterAssetInstructionData = {
-  discriminator: ReadonlyUint8Array;
-  amount: bigint;
-};
+export type RegisterAssetInstructionData = { discriminator: ReadonlyUint8Array; amount: bigint };
 
 export type RegisterAssetInstructionDataArgs = { amount: number | bigint };
 
@@ -216,8 +198,7 @@ export async function getRegisterAssetInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -225,20 +206,11 @@ export async function getRegisterAssetInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -289,9 +261,7 @@ export async function getRegisterAssetInstructionAsync<
       getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getRegisterAssetInstructionDataEncoder().encode(
-      args as RegisterAssetInstructionDataArgs,
-    ),
+    data: getRegisterAssetInstructionDataEncoder().encode(args as RegisterAssetInstructionDataArgs),
     programAddress,
   } as RegisterAssetInstruction<
     TProgramAddress,
@@ -380,8 +350,7 @@ export function getRegisterAssetInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -389,20 +358,11 @@ export function getRegisterAssetInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -447,9 +407,7 @@ export function getRegisterAssetInstruction<
       getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getRegisterAssetInstructionDataEncoder().encode(
-      args as RegisterAssetInstructionDataArgs,
-    ),
+    data: getRegisterAssetInstructionDataEncoder().encode(args as RegisterAssetInstructionDataArgs),
     programAddress,
   } as RegisterAssetInstruction<
     TProgramAddress,
@@ -498,13 +456,10 @@ export function parseRegisterAssetInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRegisterAssetInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 11) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 11,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 11,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -514,9 +469,7 @@ export function parseRegisterAssetInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,

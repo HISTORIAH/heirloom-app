@@ -71,9 +71,7 @@ export type HeirloomProgramError =
   | typeof HEIRLOOM_PROGRAM_ERROR__UNAUTHORIZED
   | typeof HEIRLOOM_PROGRAM_ERROR__ZERO_DEPOSIT_AMOUNT;
 
-let heirloomProgramErrorMessages:
-  | Record<HeirloomProgramError, string>
-  | undefined;
+let heirloomProgramErrorMessages: Record<HeirloomProgramError, string> | undefined;
 if (process.env.NODE_ENV !== "production") {
   heirloomProgramErrorMessages = {
     [HEIRLOOM_PROGRAM_ERROR__ALREADY_CLAIMED]: ``,
@@ -97,25 +95,17 @@ if (process.env.NODE_ENV !== "production") {
   };
 }
 
-export function getHeirloomProgramErrorMessage(
-  code: HeirloomProgramError,
-): string {
+export function getHeirloomProgramErrorMessage(code: HeirloomProgramError): string {
   if (process.env.NODE_ENV !== "production") {
-    return (
-      heirloomProgramErrorMessages as Record<HeirloomProgramError, string>
-    )[code];
+    return (heirloomProgramErrorMessages as Record<HeirloomProgramError, string>)[code];
   }
 
   return "Error message not available in production bundles.";
 }
 
-export function isHeirloomProgramError<
-  TProgramErrorCode extends HeirloomProgramError,
->(
+export function isHeirloomProgramError<TProgramErrorCode extends HeirloomProgramError>(
   error: unknown,
-  transactionMessage: {
-    instructions: Record<number, { programAddress: Address }>;
-  },
+  transactionMessage: { instructions: Record<number, { programAddress: Address }> },
   code?: TProgramErrorCode,
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
   Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
