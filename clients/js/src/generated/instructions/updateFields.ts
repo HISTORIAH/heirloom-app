@@ -53,9 +53,7 @@ import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 export const UPDATE_FIELDS_DISCRIMINATOR = new Uint8Array([3]);
 
 export function getUpdateFieldsDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 1).encode(
-    UPDATE_FIELDS_DISCRIMINATOR,
-  );
+  return fixEncoderSize(getBytesEncoder(), 1).encode(UPDATE_FIELDS_DISCRIMINATOR);
 }
 
 export type UpdateFieldsInstruction<
@@ -65,26 +63,18 @@ export type UpdateFieldsInstruction<
   TAccountEstate extends string | AccountMeta<string> = string,
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
+        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountClock extends string
-        ? ReadonlyAccount<TAccountClock>
-        : TAccountClock,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -114,12 +104,7 @@ export function getUpdateFieldsInstructionDataEncoder(): Encoder<UpdateFieldsIns
       ["heartbeatInterval", getOptionEncoder(getI64Encoder())],
       ["gracePeriod", getOptionEncoder(getI64Encoder())],
       ["pauseDuration", getOptionEncoder(getI64Encoder())],
-      [
-        "label",
-        getOptionEncoder(
-          addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()),
-        ),
-      ],
+      ["label", getOptionEncoder(addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()))],
     ]),
     (value) => ({ ...value, discriminator: UPDATE_FIELDS_DISCRIMINATOR }),
   );
@@ -131,10 +116,7 @@ export function getUpdateFieldsInstructionDataDecoder(): Decoder<UpdateFieldsIns
     ["heartbeatInterval", getOptionDecoder(getI64Decoder())],
     ["gracePeriod", getOptionDecoder(getI64Decoder())],
     ["pauseDuration", getOptionDecoder(getI64Decoder())],
-    [
-      "label",
-      getOptionDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())),
-    ],
+    ["label", getOptionDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder()))],
   ]);
 }
 
@@ -191,8 +173,7 @@ export function getUpdateFieldsInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -229,9 +210,7 @@ export function getUpdateFieldsInstruction<
       getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getUpdateFieldsInstructionDataEncoder().encode(
-      args as UpdateFieldsInstructionDataArgs,
-    ),
+    data: getUpdateFieldsInstructionDataEncoder().encode(args as UpdateFieldsInstructionDataArgs),
     programAddress,
   } as UpdateFieldsInstruction<
     TProgramAddress,
@@ -267,13 +246,10 @@ export function parseUpdateFieldsInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpdateFieldsInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 5,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 5,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {

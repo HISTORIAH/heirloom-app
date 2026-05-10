@@ -55,14 +55,15 @@ export type ClaimInstruction<
   TAccountVault extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
+  TAccountTreasury extends string | AccountMeta<string> = string,
+  TAccountTreasuryTokenAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -71,36 +72,28 @@ export type ClaimInstruction<
       TAccountHeir extends string
         ? WritableSignerAccount<TAccountHeir> & AccountSignerMeta<TAccountHeir>
         : TAccountHeir,
-      TAccountAuthority extends string
-        ? ReadonlyAccount<TAccountAuthority>
-        : TAccountAuthority,
-      TAccountDelegate extends string
-        ? WritableAccount<TAccountDelegate>
-        : TAccountDelegate,
+      TAccountAuthority extends string ? ReadonlyAccount<TAccountAuthority> : TAccountAuthority,
+      TAccountDelegate extends string ? WritableAccount<TAccountDelegate> : TAccountDelegate,
       TAccountHeirTokenAccount extends string
         ? WritableAccount<TAccountHeirTokenAccount>
         : TAccountHeirTokenAccount,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
+      TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
+      TAccountTreasury extends string ? WritableAccount<TAccountTreasury> : TAccountTreasury,
+      TAccountTreasuryTokenAccount extends string
+        ? WritableAccount<TAccountTreasuryTokenAccount>
+        : TAccountTreasuryTokenAccount,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountClock extends string
-        ? ReadonlyAccount<TAccountClock>
-        : TAccountClock,
+      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -120,19 +113,14 @@ export function getClaimInstructionDataEncoder(): FixedSizeEncoder<ClaimInstruct
 }
 
 export function getClaimInstructionDataDecoder(): FixedSizeDecoder<ClaimInstructionData> {
-  return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-  ]);
+  return getStructDecoder([["discriminator", fixDecoderSize(getBytesDecoder(), 1)]]);
 }
 
 export function getClaimInstructionDataCodec(): FixedSizeCodec<
   ClaimInstructionDataArgs,
   ClaimInstructionData
 > {
-  return combineCodec(
-    getClaimInstructionDataEncoder(),
-    getClaimInstructionDataDecoder(),
-  );
+  return combineCodec(getClaimInstructionDataEncoder(), getClaimInstructionDataDecoder());
 }
 
 export type ClaimAsyncInput<
@@ -144,6 +132,8 @@ export type ClaimAsyncInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountTreasuryTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountClock extends string = string,
@@ -157,6 +147,8 @@ export type ClaimAsyncInput<
   vault?: Address<TAccountVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  treasury: Address<TAccountTreasury>;
+  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   clock?: Address<TAccountClock>;
@@ -172,6 +164,8 @@ export async function getClaimInstructionAsync<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountTreasury extends string,
+  TAccountTreasuryTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountClock extends string,
@@ -187,6 +181,8 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -204,6 +200,8 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -211,30 +209,22 @@ export async function getClaimInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
     heir: { value: input.heir ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: true },
-    heirTokenAccount: {
-      value: input.heirTokenAccount ?? null,
-      isWritable: true,
-    },
+    heirTokenAccount: { value: input.heirTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -278,6 +268,8 @@ export async function getClaimInstructionAsync<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("treasury", accounts.treasury),
+      getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("clock", accounts.clock),
@@ -295,6 +287,8 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -311,6 +305,8 @@ export type ClaimInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountTreasuryTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountClock extends string = string,
@@ -324,6 +320,8 @@ export type ClaimInput<
   vault: Address<TAccountVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  treasury: Address<TAccountTreasury>;
+  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   clock?: Address<TAccountClock>;
@@ -339,6 +337,8 @@ export function getClaimInstruction<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountTreasury extends string,
+  TAccountTreasuryTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountClock extends string,
@@ -354,6 +354,8 @@ export function getClaimInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -370,36 +372,30 @@ export function getClaimInstruction<
   TAccountVault,
   TAccountVaultTokenAccount,
   TAccountMint,
+  TAccountTreasury,
+  TAccountTreasuryTokenAccount,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountClock,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
     heir: { value: input.heir ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: false },
     delegate: { value: input.delegate ?? null, isWritable: true },
-    heirTokenAccount: {
-      value: input.heirTokenAccount ?? null,
-      isWritable: true,
-    },
+    heirTokenAccount: { value: input.heirTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -437,6 +433,8 @@ export function getClaimInstruction<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("treasury", accounts.treasury),
+      getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("clock", accounts.clock),
@@ -454,6 +452,8 @@ export function getClaimInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountClock,
@@ -475,10 +475,12 @@ export type ParsedClaimInstruction<
     vault: TAccountMetas[5];
     vaultTokenAccount?: TAccountMetas[6] | undefined;
     mint?: TAccountMetas[7] | undefined;
-    tokenProgram: TAccountMetas[8];
-    associatedTokenProgram: TAccountMetas[9];
-    clock: TAccountMetas[10];
-    systemProgram: TAccountMetas[11];
+    treasury: TAccountMetas[8];
+    treasuryTokenAccount?: TAccountMetas[9] | undefined;
+    tokenProgram: TAccountMetas[10];
+    associatedTokenProgram: TAccountMetas[11];
+    clock: TAccountMetas[12];
+    systemProgram: TAccountMetas[13];
   };
   data: ClaimInstructionData;
 };
@@ -491,14 +493,11 @@ export function parseClaimInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedClaimInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 12) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 12,
-      },
-    );
+  if (instruction.accounts.length < 14) {
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 14,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -508,9 +507,7 @@ export function parseClaimInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -523,6 +520,8 @@ export function parseClaimInstruction<
       vault: getNextAccount(),
       vaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
+      treasury: getNextAccount(),
+      treasuryTokenAccount: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       clock: getNextAccount(),

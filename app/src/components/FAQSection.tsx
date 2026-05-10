@@ -15,7 +15,12 @@ const faqs = [
   {
     question: "What does a heartbeat cost?",
     answer:
-      "A heartbeat is a simple Solana transaction that resets your timer. The only cost is the standard Solana network transaction fee (typically a fraction of a cent). There is no protocol fee.",
+      "A heartbeat costs only the standard Solana network transaction fee (typically a fraction of a cent). There is no protocol fee for sending heartbeats.",
+  },
+  {
+    question: "What are the protocol fees?",
+    answer:
+      "Inheritance claims incur a 0.75% protocol fee, and emergency withdrawals incur a 0.5% fee. These fees are deducted automatically from the vault assets and sent to the protocol treasury. Heartbeats and vault creation have no protocol fee.",
   },
   {
     question: "Can my heirs claim early?",
@@ -35,7 +40,7 @@ const faqs = [
   {
     question: "Is this a legal will?",
     answer:
-      "No. Heirloom is a programmable self-custody continuity tool, not a legal document. It operates entirely on-chain through an Anchor smart contract on Solana. It does not interact with any legal system or jurisdiction. Consider it a complement to -- not a replacement for -- traditional estate planning.",
+      "No. Heirloom is a programmable self-custody continuity tool, not a legal document. It operates entirely on-chain through q quasar program on Solana. It does not interact with any legal system or jurisdiction. Consider it a complement to -- not a replacement for -- traditional estate planning.",
   },
   {
     question: "Can I get my assets back after creating a vault?",

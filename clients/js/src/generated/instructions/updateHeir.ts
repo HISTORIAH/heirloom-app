@@ -61,60 +61,39 @@ export type UpdateHeirInstruction<
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  TAccountRent extends string | AccountMeta<string> =
-    "SysvarRent111111111111111111111111111111111",
+  TAccountRent extends string | AccountMeta<string> = "SysvarRent111111111111111111111111111111111",
   TAccountClock extends string | AccountMeta<string> =
     "SysvarC1ock11111111111111111111111111111111",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
+        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountNewHeir extends string
-        ? ReadonlyAccount<TAccountNewHeir>
-        : TAccountNewHeir,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountNewEstate extends string
-        ? WritableAccount<TAccountNewEstate>
-        : TAccountNewEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
-      TAccountNewVault extends string
-        ? WritableAccount<TAccountNewVault>
-        : TAccountNewVault,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountNewHeir extends string ? ReadonlyAccount<TAccountNewHeir> : TAccountNewHeir,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountNewEstate extends string ? WritableAccount<TAccountNewEstate> : TAccountNewEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
+      TAccountNewVault extends string ? WritableAccount<TAccountNewVault> : TAccountNewVault,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
       TAccountNewVaultTokenAccount extends string
         ? WritableAccount<TAccountNewVaultTokenAccount>
         : TAccountNewVaultTokenAccount,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
+      TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
-      TAccountRent extends string
-        ? ReadonlyAccount<TAccountRent>
-        : TAccountRent,
-      TAccountClock extends string
-        ? ReadonlyAccount<TAccountClock>
-        : TAccountClock,
+      TAccountRent extends string ? ReadonlyAccount<TAccountRent> : TAccountRent,
+      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -134,19 +113,14 @@ export function getUpdateHeirInstructionDataEncoder(): FixedSizeEncoder<UpdateHe
 }
 
 export function getUpdateHeirInstructionDataDecoder(): FixedSizeDecoder<UpdateHeirInstructionData> {
-  return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-  ]);
+  return getStructDecoder([["discriminator", fixDecoderSize(getBytesDecoder(), 1)]]);
 }
 
 export function getUpdateHeirInstructionDataCodec(): FixedSizeCodec<
   UpdateHeirInstructionDataArgs,
   UpdateHeirInstructionData
 > {
-  return combineCodec(
-    getUpdateHeirInstructionDataEncoder(),
-    getUpdateHeirInstructionDataDecoder(),
-  );
+  return combineCodec(getUpdateHeirInstructionDataEncoder(), getUpdateHeirInstructionDataDecoder());
 }
 
 export type UpdateHeirAsyncInput<
@@ -240,8 +214,7 @@ export async function getUpdateHeirInstructionAsync<
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -252,20 +225,11 @@ export async function getUpdateHeirInstructionAsync<
     newEstate: { value: input.newEstate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     newVault: { value: input.newVault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
-    newVaultTokenAccount: {
-      value: input.newVaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
+    newVaultTokenAccount: { value: input.newVaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -433,8 +397,7 @@ export function getUpdateHeirInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -445,20 +408,11 @@ export function getUpdateHeirInstruction<
     newEstate: { value: input.newEstate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     newVault: { value: input.newVault ?? null, isWritable: true },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
-    newVaultTokenAccount: {
-      value: input.newVaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
+    newVaultTokenAccount: { value: input.newVaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: {
-      value: input.associatedTokenProgram ?? null,
-      isWritable: false,
-    },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
     clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -565,13 +519,10 @@ export function parseUpdateHeirInstruction<
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpdateHeirInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 15) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 15,
-      },
-    );
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 15,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -581,9 +532,7 @@ export function parseUpdateHeirInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,

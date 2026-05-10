@@ -1,4 +1,5 @@
 import {
+  address,
   type Address,
   appendTransactionMessageInstruction,
   type Commitment,
@@ -49,6 +50,7 @@ import {
   getRegisterAssetInstructionAsync,
   findEstatePda,
   findVaultPda,
+  TREASURY_ADDRESS,
 } from "@historiah/heirloom";
 import { getUpdateFieldsInstructionAsync } from "../clients/js/src/overrides/updateFields";
 
@@ -244,13 +246,14 @@ export async function deriveTokenAccounts(
   mint: Address,
   tokenProgram: Address = TOKEN_PROGRAM_ADDRESS,
 ) {
-  const [vaultTokenAccount, authorityTokenAccount, heirTokenAccount] =
+  const [vaultTokenAccount, authorityTokenAccount, heirTokenAccount, treasuryTokenAccount] =
     await Promise.all([
       deriveAta(vault, mint, tokenProgram),
       deriveAta(authority, mint, tokenProgram),
       deriveAta(heir, mint, tokenProgram),
+      deriveAta(TREASURY_ADDRESS, mint, tokenProgram),
     ]);
-  return { vaultTokenAccount, authorityTokenAccount, heirTokenAccount };
+  return { vaultTokenAccount, authorityTokenAccount, heirTokenAccount, treasuryTokenAccount };
 }
 
 // ---------------------------------------------------------------------------
@@ -415,6 +418,7 @@ export const sendRevoke = async (
     estate?: Address;
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
+    treasuryTokenAccount?: Address;
     authorityTokenAccount?: Address;
   },
 ): Promise<{ authority: Address }> => {
@@ -434,6 +438,8 @@ export const sendRevoke = async (
     tokenProgram: args.tokenProgram,
     vaultTokenAccount: args.vaultTokenAccount,
     authorityTokenAccount: args.authorityTokenAccount,
+    treasuryTokenAccount: args.treasuryTokenAccount,
+    treasury: TREASURY_ADDRESS,
   });
 
   await sendInstruction(client, authority, ix);
@@ -450,6 +456,7 @@ export const sendClaim = async (
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
     heirTokenAccount?: Address;
+    treasuryTokenAccount?: Address;
     delegate?: Address;
   },
 ): Promise<{ heir: Address }> => {
@@ -471,6 +478,8 @@ export const sendClaim = async (
     vault,
     estate,
     delegate: args.delegate,
+    treasury: TREASURY_ADDRESS,
+    treasuryTokenAccount: args.treasuryTokenAccount
   });
 
   await sendInstruction(client, heir, ix);

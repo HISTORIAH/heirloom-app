@@ -21,8 +21,6 @@ export async function findEstatePda(
   } = config;
   return await getProgramDerivedAddress({
     programAddress,
-    seeds: [
-      getBytesEncoder().encode(new Uint8Array([101, 115, 116, 97, 116, 101])),
-    ],
+    seeds: [getBytesEncoder().encode(new Uint8Array([101, 115, 116, 97, 116, 101]))],
   });
 }

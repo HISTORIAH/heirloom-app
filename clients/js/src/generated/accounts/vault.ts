@@ -43,11 +43,7 @@ export function getVaultDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 1).encode(VAULT_DISCRIMINATOR);
 }
 
-export type Vault = {
-  discriminator: ReadonlyUint8Array;
-  estate: Address;
-  bump: number;
-};
+export type Vault = { discriminator: ReadonlyUint8Array; estate: Address; bump: number };
 
 export type VaultArgs = { estate: Address; bump: number };
 
@@ -86,10 +82,7 @@ export function decodeVault<TAddress extends string = string>(
 export function decodeVault<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
 ): Account<Vault, TAddress> | MaybeAccount<Vault, TAddress> {
-  return decodeAccount(
-    encodedAccount as MaybeEncodedAccount<TAddress>,
-    getVaultDecoder(),
-  );
+  return decodeAccount(encodedAccount as MaybeEncodedAccount<TAddress>, getVaultDecoder());
 }
 
 export async function fetchVault<TAddress extends string = string>(

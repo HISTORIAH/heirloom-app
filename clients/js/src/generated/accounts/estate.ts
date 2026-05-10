@@ -155,10 +155,7 @@ export function decodeEstate<TAddress extends string = string>(
 export function decodeEstate<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
 ): Account<Estate, TAddress> | MaybeAccount<Estate, TAddress> {
-  return decodeAccount(
-    encodedAccount as MaybeEncodedAccount<TAddress>,
-    getEstateDecoder(),
-  );
+  return decodeAccount(encodedAccount as MaybeEncodedAccount<TAddress>, getEstateDecoder());
 }
 
 export async function fetchEstate<TAddress extends string = string>(

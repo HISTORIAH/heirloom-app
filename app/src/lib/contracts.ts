@@ -25,6 +25,7 @@ import {
   getUpdateFieldsInstructionAsync,
   getUpdateHeirInstructionAsync,
   HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+  TREASURY_ADDRESS,
   type Estate,
 } from "@historiah/heirloom";
 import {
@@ -304,6 +305,7 @@ export interface RevokeArgs {
   tokenProgram?: Address;
   authorityTokenAccount?: Address;
   vaultTokenAccount?: Address;
+  treasuryTokenAccount?: Address;
 }
 
 export async function sendRevoke(
@@ -322,7 +324,9 @@ export async function sendRevoke(
     tokenProgram: args.tokenProgram,
     authorityTokenAccount: args.authorityTokenAccount,
     vaultTokenAccount: args.vaultTokenAccount,
+    treasuryTokenAccount: args.treasuryTokenAccount,
     estate,
+    treasury: TREASURY_ADDRESS,
     vault,
   });
 
@@ -333,6 +337,7 @@ export interface RevokeTokenAsset {
   mint: Address;
   vaultTokenAccount: Address;
   authorityTokenAccount: Address;
+  treasuryTokenAccount: Address;
   tokenProgram?: Address;
 }
 
@@ -363,13 +368,15 @@ export async function sendRevokeAll(
         vaultTokenAccount: t.vaultTokenAccount,
         estate,
         vault,
+        treasury: TREASURY_ADDRESS,
+        treasuryTokenAccount: t.treasuryTokenAccount
       }),
     ),
   );
 
   if (revokeSol) {
     ixs.push(
-      await getRevokeInstructionAsync({ authority, heir, estate, vault }),
+      await getRevokeInstructionAsync({ authority, heir, estate, vault, treasury: TREASURY_ADDRESS }),
     );
   }
 
@@ -383,6 +390,7 @@ export interface ClaimArgs {
   tokenProgram?: Address;
   vaultTokenAccount?: Address;
   heirTokenAccount?: Address;
+  treasuryTokenAccount?: Address;
   delegate?: Address;
 }
 
@@ -403,6 +411,8 @@ export async function sendClaim(
     vaultTokenAccount: args.vaultTokenAccount,
     heirTokenAccount: args.heirTokenAccount,
     delegate: args.delegate,
+    treasury: TREASURY_ADDRESS,
+    treasuryTokenAccount: args.treasuryTokenAccount,
     estate,
     vault,
   });
@@ -414,6 +424,7 @@ export interface ClaimTokenAsset {
   mint: Address;
   vaultTokenAccount: Address;
   heirTokenAccount: Address;
+  treasuryTokenAccount?: Address;
   tokenProgram?: Address;
 }
 
@@ -446,13 +457,15 @@ export async function sendClaimAll(
         delegate,
         estate,
         vault,
+        treasury: TREASURY_ADDRESS,
+        treasuryTokenAccount: t.treasuryTokenAccount,
       }),
     ),
   );
 
   if (claimSol) {
     ixs.push(
-      await getClaimInstructionAsync({ heir, authority, delegate, estate, vault }),
+      await getClaimInstructionAsync({ heir, authority, delegate, estate, vault, treasury: TREASURY_ADDRESS }),
     );
   }
 

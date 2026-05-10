@@ -1,8 +1,12 @@
 use quasar_lang::prelude::*;
-use quasar_spl::{Mint, Token, TokenCpi, TokenInterface};
+use quasar_spl::{
+    AssociatedTokenCpi, AssociatedTokenProgram, Mint, Token, TokenCpi, TokenInterface,
+};
 
 use crate::{
+    constants::{EMERGENCY_EXIT_FEE_BPS, TREASURY_ADDRESS},
     errors::HeirloomError,
+    helpers::calculate_distribution,
     state::{Estate, Vault},
 };
 
@@ -31,9 +35,17 @@ pub struct Revoke {
     #[account(mut)]
     pub mint: Option<Account<Mint>>,
 
+    #[account(mut, address = TREASURY_ADDRESS)]
+    pub treasury: UncheckedAccount,
+
+    #[account(mut)]
+    pub treasury_token_account: Option<UncheckedAccount>,
+
     pub rent: Sysvar<Rent>,
 
     pub token_program: Interface<TokenInterface>,
+
+    pub associated_token_program: Program<AssociatedTokenProgram>,
 
     pub system_program: Program<SystemProgram>,
 }
@@ -53,8 +65,11 @@ impl Revoke {
         ctx.accounts.estate.claimable_assets = remaining;
 
         if remaining == 0 {
-            crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
-            crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
+            // crate::helpers::close_account(&mut ctx.accounts.estate, authority_view)?;
+            // crate::helpers::close_account(&mut ctx.accounts.vault, authority_view)?;
+
+            ctx.accounts.estate.close(authority_view)?;
+            ctx.accounts.vault.close(authority_view)?;
         }
 
         Ok(())
@@ -73,6 +88,10 @@ impl Revoke {
                     .vault_token_account
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
+                let _treasury_token_account = self
+                    .treasury_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
 
                 let authority_token_account = self
                     .authority_token_account
@@ -83,6 +102,12 @@ impl Revoke {
                 if vault_token_account.owner() != self.vault.address() {
                     return Err(HeirloomError::InvalidAccount.into());
                 }
+
+                // TODO
+                // TODO: treasury owner checks
+                // if treasury_token_account.owner() != self.authority.address() {
+                //     return Err(HeirloomError::InvalidAccount.into());
+                // }
 
                 require_eq!(
                     authority_token_account.mint(),
@@ -103,30 +128,6 @@ impl Revoke {
             }
         }
 
-        // // token accounts must all be present together
-        // if self.authority_token_account.is_some()
-        //     && (self.vault_token_account.is_none() || self.mint.is_none())
-        // {
-        //     return Err(HeirloomError::MissingTokenAccounts.into());
-        // }
-
-        // // vault token account must be owned by vault PDA
-        // if let Some(vault_ta) = self.vault_token_account.as_ref() {
-        //     if vault_ta.owner() != self.vault.address() {
-        //         return Err(HeirloomError::InvalidAccount.into());
-        //     }
-        // }
-
-        // // token accounts must all be present together — check mint too, not just authority TA
-        // if self.vault_token_account.is_some() && self.mint.is_none() {
-        //     return Err(HeirloomError::MissingTokenAccounts.into());
-        // }
-
-        // // SOL revoke drains all vault lamports — must be last, after all tokens are revoked
-        // if self.authority_token_account.is_none() && self.estate.claimable_assets > 1 {
-        //     return Err(HeirloomError::TooManyClaimableAssets.into());
-        // }
-
         Ok(())
     }
 
@@ -135,6 +136,7 @@ impl Revoke {
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
                 let vault_token_account = self.vault_token_account.as_ref().unwrap();
+                let treasury_token_account = self.treasury_token_account.as_ref().unwrap();
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_token_account.amount();
 
@@ -147,13 +149,42 @@ impl Revoke {
                     Seed::from(bump.as_ref()),
                 ];
 
+                // calculate protocol fees
+                let (fee, authority_amt) = calculate_distribution(amount, EMERGENCY_EXIT_FEE_BPS)?;
+
+                if fee > 0 {
+                    // create treasury token acc if not exists
+                    self.associated_token_program
+                        .create_idempotent(
+                            self.authority.to_account_view(),
+                            &treasury_token_account.to_account_view(),
+                            self.treasury.to_account_view(),
+                            mint,
+                            &self.system_program,
+                            &self.token_program,
+                        )
+                        .invoke()?;
+
+                    // transfer to the treasury
+                    self.token_program
+                        .transfer_checked(
+                            vault_token_account,
+                            mint,
+                            treasury_token_account,
+                            &self.vault,
+                            fee,
+                            mint.decimals(),
+                        )
+                        .invoke_signed(&vault_seeds)?;
+                }
+
                 self.token_program
                     .transfer_checked(
                         vault_token_account,
                         mint,
                         authority_ta,
                         &self.vault,
-                        amount,
+                        authority_amt,
                         mint.decimals(),
                     )
                     .invoke_signed(&vault_seeds)?;
@@ -167,10 +198,19 @@ impl Revoke {
             None => {
                 let vault_view = self.vault.to_account_view();
                 let authority_view = self.authority.to_account_view();
-                let amount = vault_view.lamports();
+                let treasury_view = self.treasury.to_account_view();
+                let vault_lamports = vault_view.lamports();
 
+                let (protocol_fee, return_amount) =
+                    calculate_distribution(vault_lamports, EMERGENCY_EXIT_FEE_BPS)?;
+
+                // transfer to treasury
+                set_lamports(vault_view, vault_lamports - protocol_fee);
+                set_lamports(treasury_view, treasury_view.lamports() + protocol_fee);
+
+                // transfer to authority
                 set_lamports(vault_view, 0);
-                set_lamports(authority_view, authority_view.lamports() + amount);
+                set_lamports(authority_view, authority_view.lamports() + return_amount);
             }
         }
 

@@ -83,28 +83,16 @@ export function identifyHeirloomProgramAccount(
   account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): HeirloomProgramAccount {
   const data = "data" in account ? account.data : account;
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([1])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([1])), 0)) {
     return HeirloomProgramAccount.Estate;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([2])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([2])), 0)) {
     return HeirloomProgramAccount.Vault;
   }
-  throw new SolanaError(
-    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
-    { accountData: data, programName: "heirloomProgram" },
-  );
+  throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT, {
+    accountData: data,
+    programName: "heirloomProgram",
+  });
 }
 
 export enum HeirloomProgramInstruction {
@@ -121,73 +109,31 @@ export function identifyHeirloomProgramInstruction(
   instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): HeirloomProgramInstruction {
   const data = "data" in instruction ? instruction.data : instruction;
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([0])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([0])), 0)) {
     return HeirloomProgramInstruction.Initialize;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([1])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([1])), 0)) {
     return HeirloomProgramInstruction.Claim;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([3])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([3])), 0)) {
     return HeirloomProgramInstruction.UpdateFields;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([4])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([4])), 0)) {
     return HeirloomProgramInstruction.Revoke;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([5])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([5])), 0)) {
     return HeirloomProgramInstruction.DelegateDefer;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([6])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([6])), 0)) {
     return HeirloomProgramInstruction.UpdateHeir;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([7])),
-      0,
-    )
-  ) {
+  if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 1).encode(new Uint8Array([7])), 0)) {
     return HeirloomProgramInstruction.RegisterAsset;
   }
-  throw new SolanaError(
-    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
-    { instructionData: data, programName: "heirloomProgram" },
-  );
+  throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
+    instructionData: data,
+    programName: "heirloomProgram",
+  });
 }
 
 export type ParsedHeirloomProgramInstruction<
@@ -196,15 +142,11 @@ export type ParsedHeirloomProgramInstruction<
   | ({
       instructionType: HeirloomProgramInstruction.Initialize;
     } & ParsedInitializeInstruction<TProgram>)
-  | ({
-      instructionType: HeirloomProgramInstruction.Claim;
-    } & ParsedClaimInstruction<TProgram>)
+  | ({ instructionType: HeirloomProgramInstruction.Claim } & ParsedClaimInstruction<TProgram>)
   | ({
       instructionType: HeirloomProgramInstruction.UpdateFields;
     } & ParsedUpdateFieldsInstruction<TProgram>)
-  | ({
-      instructionType: HeirloomProgramInstruction.Revoke;
-    } & ParsedRevokeInstruction<TProgram>)
+  | ({ instructionType: HeirloomProgramInstruction.Revoke } & ParsedRevokeInstruction<TProgram>)
   | ({
       instructionType: HeirloomProgramInstruction.DelegateDefer;
     } & ParsedDelegateDeferInstruction<TProgram>)
@@ -270,13 +212,10 @@ export function parseHeirloomProgramInstruction<TProgram extends string>(
       };
     }
     default:
-      throw new SolanaError(
-        SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
-        {
-          instructionType: instructionType as string,
-          programName: "heirloomProgram",
-        },
-      );
+      throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
+        instructionType: instructionType as string,
+        programName: "heirloomProgram",
+      });
   }
 }
 
@@ -287,17 +226,14 @@ export type HeirloomProgramPlugin = {
 };
 
 export type HeirloomProgramPluginAccounts = {
-  estate: ReturnType<typeof getEstateCodec> &
-    SelfFetchFunctions<EstateArgs, Estate>;
-  vault: ReturnType<typeof getVaultCodec> &
-    SelfFetchFunctions<VaultArgs, Vault>;
+  estate: ReturnType<typeof getEstateCodec> & SelfFetchFunctions<EstateArgs, Estate>;
+  vault: ReturnType<typeof getVaultCodec> & SelfFetchFunctions<VaultArgs, Vault>;
 };
 
 export type HeirloomProgramPluginInstructions = {
   initialize: (
     input: InitializeAsyncInput,
-  ) => ReturnType<typeof getInitializeInstructionAsync> &
-    SelfPlanAndSendFunctions;
+  ) => ReturnType<typeof getInitializeInstructionAsync> & SelfPlanAndSendFunctions;
   claim: (
     input: ClaimAsyncInput,
   ) => ReturnType<typeof getClaimInstructionAsync> & SelfPlanAndSendFunctions;
@@ -309,16 +245,13 @@ export type HeirloomProgramPluginInstructions = {
   ) => ReturnType<typeof getRevokeInstructionAsync> & SelfPlanAndSendFunctions;
   delegateDefer: (
     input: DelegateDeferAsyncInput,
-  ) => ReturnType<typeof getDelegateDeferInstructionAsync> &
-    SelfPlanAndSendFunctions;
+  ) => ReturnType<typeof getDelegateDeferInstructionAsync> & SelfPlanAndSendFunctions;
   updateHeir: (
     input: UpdateHeirAsyncInput,
-  ) => ReturnType<typeof getUpdateHeirInstructionAsync> &
-    SelfPlanAndSendFunctions;
+  ) => ReturnType<typeof getUpdateHeirInstructionAsync> & SelfPlanAndSendFunctions;
   registerAsset: (
     input: RegisterAssetAsyncInput,
-  ) => ReturnType<typeof getRegisterAssetInstructionAsync> &
-    SelfPlanAndSendFunctions;
+  ) => ReturnType<typeof getRegisterAssetInstructionAsync> & SelfPlanAndSendFunctions;
 };
 
 export type HeirloomProgramPluginPdas = {
@@ -343,40 +276,17 @@ export function heirloomProgramProgram() {
         },
         instructions: {
           initialize: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getInitializeInstructionAsync(input),
-            ),
-          claim: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getClaimInstructionAsync(input),
-            ),
+            addSelfPlanAndSendFunctions(client, getInitializeInstructionAsync(input)),
+          claim: (input) => addSelfPlanAndSendFunctions(client, getClaimInstructionAsync(input)),
           updateFields: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getUpdateFieldsInstruction(input),
-            ),
-          revoke: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getRevokeInstructionAsync(input),
-            ),
+            addSelfPlanAndSendFunctions(client, getUpdateFieldsInstruction(input)),
+          revoke: (input) => addSelfPlanAndSendFunctions(client, getRevokeInstructionAsync(input)),
           delegateDefer: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getDelegateDeferInstructionAsync(input),
-            ),
+            addSelfPlanAndSendFunctions(client, getDelegateDeferInstructionAsync(input)),
           updateHeir: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getUpdateHeirInstructionAsync(input),
-            ),
+            addSelfPlanAndSendFunctions(client, getUpdateHeirInstructionAsync(input)),
           registerAsset: (input) =>
-            addSelfPlanAndSendFunctions(
-              client,
-              getRegisterAssetInstructionAsync(input),
-            ),
+            addSelfPlanAndSendFunctions(client, getRegisterAssetInstructionAsync(input)),
         },
         pdas: { estate: findEstatePda, vault: findVaultPda },
       },

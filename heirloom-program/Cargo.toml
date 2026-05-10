@@ -25,6 +25,7 @@ quasar-lang = { git = "https://github.com/jim4067/quasar", branch = "jimii/non-d
 quasar-spl = { git = "https://github.com/jim4067/quasar", branch = "jimii/non-dup-check" }
 
 solana-account-view = { version = "2.0.0" }
+solana-address = "2.2.0"
 solana-instruction = { version = "3.2.0" }
 
 

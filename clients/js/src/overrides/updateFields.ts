@@ -181,7 +181,8 @@ export function getUpdateFieldsInstructionDataCodec(): Codec<
 // Sync instruction builder — same account resolution as generated, fixed codec
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROGRAM_ADDRESS = "11111111111111111111111111111111" as Address;
+const SYSTEM_PROGRAM_ADDRESS =
+  "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
 
 export function getUpdateFieldsInstruction<
   TAccountAuthority extends string,

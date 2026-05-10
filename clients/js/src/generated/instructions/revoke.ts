@@ -54,45 +54,43 @@ export type RevokeInstruction<
   TAccountAuthorityTokenAccount extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
-  TAccountRent extends string | AccountMeta<string> =
-    "SysvarRent111111111111111111111111111111111",
+  TAccountTreasury extends string | AccountMeta<string> = string,
+  TAccountTreasuryTokenAccount extends string | AccountMeta<string> = string,
+  TAccountRent extends string | AccountMeta<string> = "SysvarRent111111111111111111111111111111111",
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+  TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
       TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
+        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountHeir extends string
-        ? ReadonlyAccount<TAccountHeir>
-        : TAccountHeir,
-      TAccountEstate extends string
-        ? WritableAccount<TAccountEstate>
-        : TAccountEstate,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
+      TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountAuthorityTokenAccount extends string
         ? WritableAccount<TAccountAuthorityTokenAccount>
         : TAccountAuthorityTokenAccount,
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
-      TAccountRent extends string
-        ? ReadonlyAccount<TAccountRent>
-        : TAccountRent,
+      TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
+      TAccountTreasury extends string ? WritableAccount<TAccountTreasury> : TAccountTreasury,
+      TAccountTreasuryTokenAccount extends string
+        ? WritableAccount<TAccountTreasuryTokenAccount>
+        : TAccountTreasuryTokenAccount,
+      TAccountRent extends string ? ReadonlyAccount<TAccountRent> : TAccountRent,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -112,19 +110,14 @@ export function getRevokeInstructionDataEncoder(): FixedSizeEncoder<RevokeInstru
 }
 
 export function getRevokeInstructionDataDecoder(): FixedSizeDecoder<RevokeInstructionData> {
-  return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
-  ]);
+  return getStructDecoder([["discriminator", fixDecoderSize(getBytesDecoder(), 1)]]);
 }
 
 export function getRevokeInstructionDataCodec(): FixedSizeCodec<
   RevokeInstructionDataArgs,
   RevokeInstructionData
 > {
-  return combineCodec(
-    getRevokeInstructionDataEncoder(),
-    getRevokeInstructionDataDecoder(),
-  );
+  return combineCodec(getRevokeInstructionDataEncoder(), getRevokeInstructionDataDecoder());
 }
 
 export type RevokeAsyncInput<
@@ -135,8 +128,11 @@ export type RevokeAsyncInput<
   TAccountAuthorityTokenAccount extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountTreasuryTokenAccount extends string = string,
   TAccountRent extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
@@ -146,8 +142,11 @@ export type RevokeAsyncInput<
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  treasury: Address<TAccountTreasury>;
+  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   rent?: Address<TAccountRent>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
@@ -159,8 +158,11 @@ export async function getRevokeInstructionAsync<
   TAccountAuthorityTokenAccount extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountTreasury extends string,
+  TAccountTreasuryTokenAccount extends string,
   TAccountRent extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
@@ -172,8 +174,11 @@ export async function getRevokeInstructionAsync<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountRent,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -187,14 +192,16 @@ export async function getRevokeInstructionAsync<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountRent,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -202,17 +209,14 @@ export async function getRevokeInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     rent: { value: input.rent ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -235,6 +239,10 @@ export async function getRevokeInstructionAsync<
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
   }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -250,8 +258,11 @@ export async function getRevokeInstructionAsync<
       getAccountMeta("authorityTokenAccount", accounts.authorityTokenAccount),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("treasury", accounts.treasury),
+      getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("rent", accounts.rent),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getRevokeInstructionDataEncoder().encode({}),
@@ -265,8 +276,11 @@ export async function getRevokeInstructionAsync<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountRent,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
@@ -279,8 +293,11 @@ export type RevokeInput<
   TAccountAuthorityTokenAccount extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountTreasuryTokenAccount extends string = string,
   TAccountRent extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
@@ -290,8 +307,11 @@ export type RevokeInput<
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  treasury: Address<TAccountTreasury>;
+  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   rent?: Address<TAccountRent>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
@@ -303,8 +323,11 @@ export function getRevokeInstruction<
   TAccountAuthorityTokenAccount extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountTreasury extends string,
+  TAccountTreasuryTokenAccount extends string,
   TAccountRent extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
 >(
@@ -316,8 +339,11 @@ export function getRevokeInstruction<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountRent,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -330,13 +356,15 @@ export function getRevokeInstruction<
   TAccountAuthorityTokenAccount,
   TAccountVaultTokenAccount,
   TAccountMint,
+  TAccountTreasury,
+  TAccountTreasuryTokenAccount,
   TAccountRent,
   TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -344,17 +372,14 @@ export function getRevokeInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
-    authorityTokenAccount: {
-      value: input.authorityTokenAccount ?? null,
-      isWritable: true,
-    },
-    vaultTokenAccount: {
-      value: input.vaultTokenAccount ?? null,
-      isWritable: true,
-    },
+    authorityTokenAccount: { value: input.authorityTokenAccount ?? null, isWritable: true },
+    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     rent: { value: input.rent ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -371,6 +396,10 @@ export function getRevokeInstruction<
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
   }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -386,8 +415,11 @@ export function getRevokeInstruction<
       getAccountMeta("authorityTokenAccount", accounts.authorityTokenAccount),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("treasury", accounts.treasury),
+      getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("rent", accounts.rent),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
+      getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getRevokeInstructionDataEncoder().encode({}),
@@ -401,8 +433,11 @@ export function getRevokeInstruction<
     TAccountAuthorityTokenAccount,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountTreasury,
+    TAccountTreasuryTokenAccount,
     TAccountRent,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
@@ -420,9 +455,12 @@ export type ParsedRevokeInstruction<
     authorityTokenAccount?: TAccountMetas[4] | undefined;
     vaultTokenAccount?: TAccountMetas[5] | undefined;
     mint?: TAccountMetas[6] | undefined;
-    rent: TAccountMetas[7];
-    tokenProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
+    treasury: TAccountMetas[7];
+    treasuryTokenAccount?: TAccountMetas[8] | undefined;
+    rent: TAccountMetas[9];
+    tokenProgram: TAccountMetas[10];
+    associatedTokenProgram: TAccountMetas[11];
+    systemProgram: TAccountMetas[12];
   };
   data: RevokeInstructionData;
 };
@@ -435,14 +473,11 @@ export function parseRevokeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRevokeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
-    throw new SolanaError(
-      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
-      {
-        actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 10,
-      },
-    );
+  if (instruction.accounts.length < 13) {
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+      actualAccountMetas: instruction.accounts.length,
+      expectedAccountMetas: 13,
+    });
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -452,9 +487,7 @@ export function parseRevokeInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
+    return accountMeta.address === HEIRLOOM_PROGRAM_PROGRAM_ADDRESS ? undefined : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -466,8 +499,11 @@ export function parseRevokeInstruction<
       authorityTokenAccount: getNextOptionalAccount(),
       vaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
+      treasury: getNextAccount(),
+      treasuryTokenAccount: getNextOptionalAccount(),
       rent: getNextAccount(),
       tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getRevokeInstructionDataDecoder().decode(instruction.data),
