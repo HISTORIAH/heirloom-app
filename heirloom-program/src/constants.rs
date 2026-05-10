@@ -1,5 +1,5 @@
 /// claim fee in bps
-pub const CLAIM_FEE_BPS: u16 = 100;
+pub const CLAIM_FEE_BPS: u16 = 75;
 
 /// emergency exit fee bps
 pub const EMERGENCY_EXIT_FEE_BPS: u16 = 50;
