@@ -49,7 +49,7 @@ const HeroSection = () => {
                 {isConnected ? "Create Vault" : "Launch App"}
               </Button>
               <a
-                href=""
+                href="https://docs.heirlm.xyz/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
