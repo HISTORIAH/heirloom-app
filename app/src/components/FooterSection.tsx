@@ -14,10 +14,20 @@ const FooterSection = () => {
           <div>
             <h4 className="text-xl font-black uppercase tracking-widest mb-6">Protocol</h4>
             <ul className="space-y-3">
-              {["Documentation", "Smart Contract", "GitHub", "Audit Report"].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-lg font-bold hover:underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity">
-                    {link}
+              {[
+                { name: "Documentation", href: "https://docs.heirlm.xyz/" },
+                { name: "Smart Contract", href: "#" },
+                { name: "GitHub", href: "https://github.com/HISTORIAH/Heirloom-app" },
+                { name: "Audit Report", href: "#" },
+              ].map((link) => (
+                <li key={link.name}>
+                  <a
+                    href={link.href}
+                    className="text-lg font-bold hover:underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+                    target={link.href.startsWith("http") ? "_blank" : undefined}
+                    rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  >
+                    {link.name}
                   </a>
                 </li>
               ))}
