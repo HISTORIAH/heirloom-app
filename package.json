@@ -13,6 +13,7 @@
     "dev:ui": "turbo run dev --filter=app",
     "dev:ika": "turbo run dev --filter=app-ika",
     "build:ui": "turbo run build --filter=app",
+    "build:ika": "turbo run build --filter=app-ika",
     "build": "turbo run build",
     "convert-idl": "bun run scripts/convert-idl.ts",
     "convert-idl:ika": "bun run scripts/convert-idl-ika.ts",
