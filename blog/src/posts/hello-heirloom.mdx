@@ -1,0 +1,108 @@
+---
+title: "What is Heirloom"
+date: "2025-06-09"
+excerpt: "A description of Heirloom."
+tags: ["solana", "web3"]
+published: true
+---
+import image from './assets/another.png'
+
+# What is Heirloom
+
+
+Heirloom is a Solana-native inheritance protocol. It lets any wallet holder lock SOL and SPL tokens into a programmatic estate that transfers to a designated heir if the owner goes silent for too long. No lawyers. No custodians. No probate court. Just a heartbeat, a grace period, and a public key.
+
+The owner (the "authority") configures two clocks when creating an estate: a heartbeat interval and a grace period. As long as the authority pings the program before the heartbeat expires, the estate stays locked to them and nobody else can touch it. If the heartbeat lapses and the grace period runs out, the heir - and only the heir - can claim the full vault on-chain. The authority can also name an optional delegate who is allowed to pause the clock on their behalf (useful for planned absences like travel, surgery, or detainment).
+
+Heirloom replaces the opaque, jurisdictional, and often adversarial machinery of traditional estate transfer with a transparent, deterministic smart contract that runs on the Solana runtime.
+
+<img src={image} alt="Bender"/>
+
+
+## Tagline
+
+> Your keys outlive you. Your wealth should too.
+
+## Core Concepts
+
+- **Estate** - a PDA "account that encodes the owner", heir, schedule, and status of a single inheritance arrangement.
+- **Vault** - a sibling PDA that custodies the deposited SOL and token accounts. Funds live here, not in the estate record.
+- **Heartbeat** - a no-op transaction from the authority that resets the inactivity clock. Think of it as a pulse.
+- **Grace period** - an extra buffer after a missed heartbeat, during which the owner can still recover.
+- **Pause / defer** - a time-boxed freeze on the heartbeat countdown, invokable by an optional delegate, for when the owner is knowingly unreachable.
+- **Claim** - the irreversible transfer of all vault assets to the heir once the estate reaches the `claimable` state.
+- **Revoke** - owner-initiated dismantling of an estate before the heir claims, returning all assets to the authority.
+
+## End-to-End User Flow
+
+Meet **Alice**. She is a long-term SOL holder and a mother of one. She wants her six-year-old daughter **Mia** to inherit her on-chain savings if anything happens to her, without handing over her seed phrase or trusting a centralized custodian. Alice also has a best friend, **Bob**, a lawyer she trusts to manage her affairs if she is ever incapacitated.
+
+### 1. Alice creates the vault
+
+Alice opens the Heirloom web app, clicks **Connect Wallet**, and signs in with her Solflare wallet. She lands on `/create-vault` and fills in the form:
+
+- **Heir**: Mia's wallet address (a custodial wallet Alice manages for now, which Mia will rotate to her own key at eighteen).
+- **Label**: `Mia trust`.
+- **Heartbeat interval**: 90 days.
+- **Grace period**: 30 days.
+- **Pause duration**: 60 days (the maximum she can freeze the clock in one go).
+- **Delegate**: Bob's wallet address.
+- **Initial deposit**: 500 SOL plus 10,000 USDC.
+
+She clicks **Create Estate**. The app composes a single Solana transaction bundling the `initialize` instruction, then `register_asset` and a token transfer for the USDC. Alice approves in her wallet. Seconds later, the dashboard shows one active estate card labeled **Mia trust** - state `active`, next heartbeat due in 90 days.
+
+### 2. Alice stays alive
+
+Every few weeks Alice opens the dashboard and clicks **Send Heartbeat**. One signed transaction, one lamport of fee, clock reset to zero. The estate stays in state `active`. Mia cannot claim.
+
+### 3. Alice goes on sabbatical
+
+Alice plans a three-month silent meditation retreat where she will have no device access. Before leaving, she messages Bob. Bob opens Heirloom, connects his own wallet, navigates to `/defer`, enters Alice's authority address and Mia's heir address, and signs the `delegate_defer` instruction. The estate's `paused_until` field jumps forward by Alice's configured pause duration. Even if Alice does not ping for two months, the clock does not advance.
+
+### 4. Alice comes back - or doesn't
+
+**Case A - she returns.** Alice sends a fresh heartbeat. State returns to `active`. Nothing changes.
+
+**Case B - she doesn't.** The pause expires. The heartbeat interval elapses. State transitions to `grace`. Thirty more days pass with no pulse. State transitions to `claimable`. Mia (or her guardian acting with Mia's key) opens `/claim`, connects the heir wallet, and signs a single transaction. The vault drains: 500 SOL and 10,000 USDC land in Mia's associated token accounts. The estate is marked `distributed`. The PDAs are closed. Rent is reclaimed. It is final.
+
+### 5. Alice changes her mind
+
+At any time before the claim, Alice can:
+
+- **Update heir** - rotate Mia's address to a new key after she comes of age.
+- **Revoke** - dismantle the estate and pull all assets back to her own wallet.
+- **Update fields** - change the heartbeat cadence or grace window.
+
+None of these are available to anyone but the authority. The contract enforces it.
+
+## Architecture
+
+```
++----------------------+         +--------------------------+
+|  React + Vite SPA    | ──────▶ |  @historiah/heirloom     |
+|  (heirloom-app/app)  |         |  (clients/js, generated) |
++----------+-----------+         +-------------+------------+
+           │                                   │
+           │  wallet signing                   │  instruction + account codecs
+           ▼                                   ▼
+     +------------+                   +-----------------------+
+     | @solana/kit|  RPC / tx ──────▶ |  Heirloom Program     |
+     |  + gill    |                   |  (Solana on-chain)    |
+     +------------+                   +-----------------------+
+                                                │
+                                                ▼
+                                      +-------------------+
+                                      |  Estate + Vault    |
+                                      |       PDAs         |
+                                      +-------------------+
+```
+
+Three layers, one contract:
+
+1. **On-chain program** - a Solana smart contract written in Rust using the Quasar framework. Owns the Estate and Vault account schemas, enforces every state transition, holds custody of deposited assets.
+2. **Generated clients** - strongly-typed instruction builders, account decoders, PDA derivers, and error types. Generated directly from the program's IDL by Codama into JavaScript (consumed by the app) and Rust (consumed by the test suite and any off-chain tooling).
+3. **React SPA** - the only user-facing surface. Handles wallet connection, estate discovery, human-readable state rendering, and transaction construction. Never speaks to the program directly; always through the generated client.
+
+### Why this split matters
+
+The generated client is the load-bearing boundary. When the on-chain program changes an instruction signature, regenerating the clients propagates the type change into the app at compile time. A breaking program update that the app forgets to handle will fail `tsc`, not production.

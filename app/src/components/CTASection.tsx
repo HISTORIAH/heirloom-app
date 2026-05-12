@@ -33,9 +33,15 @@ const CTASection = () => {
           <Button variant="default" size="xl" onClick={handleCreate}>
             Create Your Vault
           </Button>
-          <Button variant="outline" size="xl">
-            View Demo
-          </Button>
+          <a
+            href="https://docs.heirlm.xyz/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="xl">
+              Read the docs
+            </Button>
+          </a>
         </div>
       </div>
     </section>
