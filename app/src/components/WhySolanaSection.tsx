@@ -12,7 +12,7 @@ const reasons = [
   {
     icon: Lock,
     title: "Program-Level Security",
-    description: "Anchor framework ensures type safety, account validation, and constraint checking at compile time.",
+    description: "Quasar ensures type safety, account validation, and constraint checking at compile time.",
     badge: "SAFE",
     badgeColor: "bg-accent-cyan",
     rotate: "rotate-[1deg]",
@@ -43,9 +43,9 @@ const reasons = [
   },
   {
     icon: FileCode,
-    title: "Anchor Framework",
-    description: "Battle-tested Rust framework with IDL generation. Auditable, deterministic execution.",
-    badge: "AUDITABLE",
+    title: "Quasar Framework",
+    description: "Tiny binary footprint, minimal CU usage per instruction, and best-in-class developer tooling for fast iteration.",
+    badge: "EFFICIENT",
     badgeColor: "bg-accent-purple",
     rotate: "rotate-[0.5deg]",
   },
