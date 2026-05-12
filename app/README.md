@@ -2,7 +2,7 @@
 
 **The only interface Alice ever sees. The one that turns a PDA into a promise.**
 
-## Overview
+## Overview 
 
 This package is the user-facing React application for Heirloom. It is a single-page app that lets anyone connect a Solana wallet, create an inheritance vault, keep it alive with periodic heartbeats (either from the authority key or from an optional hot signer wallet), pause the clock through a trusted delegate, and, when the time comes, claim the assets as the designated heir.
 
