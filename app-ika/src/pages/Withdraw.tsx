@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@historiah/ui";
-import { ArrowLeft, CheckCircle, Loader2, Shield } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Loader2,
+  Shield,
+  AlertTriangle,
+  Globe,
+  Coins,
+  Search,
+  User,
+  ExternalLink,
+} from "lucide-react";
 import { getWithdrawTx, postWithdraw, signMessageHash } from "@/services/api";
 import type { WithdrawTxInfo } from "@/services/api";
 
@@ -20,6 +31,8 @@ function formatWei(wei: string): string {
   }
 }
 
+type Step = "select" | "preview" | "signing" | "submitting" | "done";
+
 export default function Withdraw() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -28,7 +41,7 @@ export default function Withdraw() {
   const [selectedEstateId, setSelectedEstateId] = useState(searchParams.get("estate") || "");
   const [destinationEth, setDestinationEth] = useState("");
   const [ownerAddress, setOwnerAddress] = useState("");
-  const [step, setStep] = useState<"select" | "preview" | "signing" | "submitting" | "done">("select");
+  const [step, setStep] = useState<Step>("select");
   const [txInfo, setTxInfo] = useState<WithdrawTxInfo | null>(null);
   const [result, setResult] = useState<{ solana_tx: string; eth_tx: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +51,13 @@ export default function Withdraw() {
     const vs = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
     setVaults(vs);
     if (searchParams.get("estate")) setStep("preview");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isValidEth = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
+
   const handlePreview = async () => {
-    if (!selectedEstateId || !destinationEth.startsWith("0x")) return;
+    if (!selectedEstateId || !isValidEth(destinationEth)) return;
     setBusy(true);
     setError(null);
     try {
@@ -56,14 +72,13 @@ export default function Withdraw() {
   };
 
   const handleSignAndWithdraw = async () => {
-    if (!txInfo || !ownerAddress.startsWith("0x")) return;
+    if (!txInfo || !isValidEth(ownerAddress)) return;
     setBusy(true);
     setError(null);
     setStep("signing");
 
     try {
       const sig = await signMessageHash(txInfo.message_hash_hex, ownerAddress);
-
       setStep("submitting");
 
       const resp = await postWithdraw({
@@ -83,165 +98,336 @@ export default function Withdraw() {
     }
   };
 
+  // === Done ================================================================
+  if (step === "done" && result) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
+          <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 text-lg font-black hover:underline group"
+            >
+              <ArrowLeft
+                className="h-5 w-5 transition-transform group-hover:-translate-x-1"
+                strokeWidth={3}
+              />
+              Dashboard
+            </button>
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5" strokeWidth={3} />
+              <span className="text-2xl font-black">Withdraw</span>
+            </div>
+            <span className="neo-badge bg-accent-lime text-[10px]">Submitted</span>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
+          <div className="neo-section-lime neo-border-thick rounded-2xl p-8 neo-shadow-xl text-center">
+            <div className="bg-background neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
+            </div>
+            <span className="neo-badge bg-background mb-3 inline-block">Withdrawal Submitted</span>
+            <h2 className="text-4xl md:text-5xl font-black uppercase">Funds On The Way</h2>
+            <p className="text-sm font-bold text-foreground/70 mt-2 max-w-md mx-auto">
+              The backend relayed the Solana tx and broadcast the ETH transfer.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="neo-card-static">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                Solana Tx
+              </h3>
+              <p className="font-mono text-xs break-all neo-border bg-secondary rounded-lg p-3">
+                {result.solana_tx || "N/A"}
+              </p>
+            </div>
+            <div className="neo-card-static">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                ETH Tx
+              </h3>
+              <p className="font-mono text-xs break-all neo-border bg-secondary rounded-lg p-3">
+                {result.eth_tx || "Pending…"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-8 border-t-4 border-foreground">
+            <Button variant="lime" size="xl" onClick={() => navigate("/")}>
+              Go to Dashboard <ExternalLink className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // === Wizard ==============================================================
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b-4 border-foreground sticky top-0 bg-background z-50">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-16">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 font-bold hover:underline">
-            <ArrowLeft className="h-4 w-4" /> Back
+      <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-lg font-black hover:underline group"
+          >
+            <ArrowLeft
+              className="h-5 w-5 transition-transform group-hover:-translate-x-1"
+              strokeWidth={3}
+            />
+            Back
           </button>
-          <span className="text-xl font-black">Withdraw</span>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5" strokeWidth={3} />
+            <span className="text-2xl font-black">Withdraw</span>
+          </div>
+          <span className="neo-badge bg-accent-yellow text-[10px]">Owner</span>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        {step === "done" && result ? (
-          <div className="neo-border rounded-2xl bg-card neo-shadow-lg p-8 text-center">
-            <CheckCircle className="h-12 w-12 mx-auto mb-4 text-accent-lime" />
-            <h2 className="text-2xl font-black mb-4">Withdrawal Submitted!</h2>
-            <p className="text-muted-foreground mb-6">The backend relayed the Solana tx and broadcast the ETH transfer.</p>
-            <div className="space-y-2 text-left max-w-lg mx-auto">
-              <div>
-                <p className="text-xs font-bold uppercase text-muted-foreground">Solana Tx</p>
-                <p className="font-mono text-xs break-all neo-border bg-background rounded-lg p-3 mt-1">{result.solana_tx || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase text-muted-foreground">ETH Tx</p>
-                <p className="font-mono text-xs break-all neo-border bg-background rounded-lg p-3 mt-1">{result.eth_tx || "Pending…"}</p>
+      <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
+        <div>
+          <span className="neo-badge bg-accent-yellow mb-4 inline-block">Owner Exit</span>
+          <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+            Pull funds{" "}
+            <span className="bg-accent-yellow px-2 inline-block rotate-[-1deg]">back out.</span>
+          </h2>
+          <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
+            Emergency exit as the vault owner. Paste your owner address and destination, then sign
+            once with MetaMask.
+          </p>
+        </div>
+
+        {error && (
+          <div className="neo-card-static bg-accent-red/10">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" strokeWidth={2.5} />
+              <div className="min-w-0">
+                <p className="font-black">Withdraw error</p>
+                <p className="text-sm font-medium text-muted-foreground break-words">{error}</p>
               </div>
             </div>
-            <Button variant="lime" size="lg" className="mt-6" onClick={() => navigate("/")}>Go to Dashboard</Button>
           </div>
-        ) : (
-          <>
-            <h2 className="text-3xl font-black mb-2">Withdraw Funds</h2>
-            <p className="text-muted-foreground mb-6">
-              Emergency exit as the vault owner. Paste your owner address and destination, then sign once.
-            </p>
+        )}
 
-            {error && (
-              <div className="neo-border bg-accent-red/20 rounded-xl p-4 mb-6">
-                <p className="font-bold text-sm">{error}</p>
+        {/* Step 1 — Select vault + destinations */}
+        {step === "select" && (
+          <div className="neo-card-static space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="bg-accent-cyan neo-border rounded-xl p-3">
+                <Search className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black">Select Vault</h3>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Pick a vault and enter the destination + owner addresses.
+                </p>
+              </div>
+            </div>
+
+            {vaults.length > 0 ? (
+              <div className="space-y-3">
+                {vaults.map((v) => {
+                  const isActive = selectedEstateId === v.estateId;
+                  return (
+                    <button
+                      key={v.estateId}
+                      onClick={() => setSelectedEstateId(v.estateId)}
+                      className={`w-full text-left neo-border rounded-xl p-4 transition-all duration-150 ${
+                        isActive
+                          ? "bg-accent-lime neo-shadow-sm translate-x-[-1px] translate-y-[-1px]"
+                          : "bg-secondary hover:bg-accent-lime/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="min-w-0">
+                          <p className="font-black text-lg truncate">{v.label}</p>
+                          <p className="text-xs font-mono text-muted-foreground break-all">
+                            {v.ethDepositAddress}
+                          </p>
+                        </div>
+                        {isActive && (
+                          <CheckCircle className="h-5 w-5 shrink-0" strokeWidth={3} />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                  Estate ID
+                </label>
+                <input
+                  type="text"
+                  value={selectedEstateId}
+                  onChange={(e) => setSelectedEstateId(e.target.value)}
+                  className="neo-input font-mono text-sm focus:bg-accent-yellow/20"
+                  placeholder="Paste estate ID..."
+                />
               </div>
             )}
 
-            <div className="space-y-4">
-              {step === "select" && (
-                <div className="neo-border rounded-2xl p-6 bg-card neo-shadow-lg">
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-3">Select Vault</label>
-                  {vaults.length > 0 ? (
-                    <div className="space-y-2">
-                      {vaults.map((v) => (
-                        <button
-                          key={v.estateId}
-                          onClick={() => setSelectedEstateId(v.estateId)}
-                          className={`w-full text-left neo-border rounded-xl p-4 transition-colors ${selectedEstateId === v.estateId ? "bg-accent-lime" : "bg-background hover:bg-secondary"}`}
-                        >
-                          <div className="font-bold">{v.label}</div>
-                          <div className="text-xs font-mono text-muted-foreground">{v.ethDepositAddress}</div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type="text" value={selectedEstateId}
-                      onChange={(e) => setSelectedEstateId(e.target.value)}
-                      placeholder="Paste estate ID" className="neo-input w-full font-mono text-sm"
-                    />
-                  )}
-
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mt-4 mb-2">Destination Address</label>
-                  <input
-                    type="text" value={destinationEth}
-                    onChange={(e) => setDestinationEth(e.target.value)}
-                    placeholder="0x… (where to send the ETH)" className="neo-input w-full font-mono text-sm"
-                  />
-
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mt-4 mb-2">Owner Address</label>
-                  <input
-                    type="text" value={ownerAddress}
-                    onChange={(e) => setOwnerAddress(e.target.value)}
-                    placeholder="0x… (your address for signing)" className="neo-input w-full font-mono text-sm"
-                  />
-
-                  <Button
-                    variant="lime" size="lg" className="mt-4"
-                    disabled={!selectedEstateId || !destinationEth.startsWith("0x") || !ownerAddress.startsWith("0x") || busy}
-                    onClick={handlePreview}
-                  >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {busy ? "Loading…" : "Preview Withdrawal"}
-                  </Button>
-                </div>
-              )}
-
-              {(step === "preview" || step === "signing" || step === "submitting") && (
-                <div className="neo-border rounded-2xl p-6 bg-card neo-shadow-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-accent-pink neo-border rounded-xl p-2"><Shield className="h-5 w-5" /></div>
-                    <h3 className="text-lg font-black">Review Withdrawal</h3>
-                  </div>
-
-                  {!txInfo && (
-                    <>
-                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-2">Destination Address</label>
-                      <input
-                        type="text" value={destinationEth}
-                        onChange={(e) => setDestinationEth(e.target.value)}
-                        placeholder="0x…" className="neo-input w-full font-mono text-sm mb-2"
-                      />
-                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-2">Owner Address</label>
-                      <input
-                        type="text" value={ownerAddress}
-                        onChange={(e) => setOwnerAddress(e.target.value)}
-                        placeholder="0x…" className="neo-input w-full font-mono text-sm mb-4"
-                      />
-                      <Button variant="lime" size="lg" disabled={busy || !destinationEth.startsWith("0x") || !ownerAddress.startsWith("0x")} onClick={handlePreview}>
-                        {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                        Load Transfer Details
-                      </Button>
-                    </>
-                  )}
-
-                  {txInfo && (
-                    <>
-                      <div className="space-y-2 mb-4 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">From (vault)</span>
-                          <span className="font-mono">{txInfo.eth_from.slice(0, 10)}…</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">To (destination)</span>
-                          <span className="font-mono">{txInfo.eth_to.slice(0, 10)}…</span>
-                        </div>
-                        <div className="flex justify-between font-black">
-                          <span>Amount</span>
-                          <span className="text-accent-lime">{formatWei(txInfo.amount_wei)}</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground mb-4">
-                        MetaMask will ask you to sign the transaction hash with <span className="font-mono">{ownerAddress.slice(0, 10)}…</span>. This authorizes the on-chain withdraw instruction.
-                      </p>
-
-                      <Button
-                        variant="lime" size="lg" className="w-full"
-                        disabled={busy}
-                        onClick={handleSignAndWithdraw}
-                      >
-                        {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                        {step === "signing" ? "Sign in MetaMask…"
-                          : step === "submitting" ? "Submitting…"
-                          : "Sign & Withdraw"}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                  Destination Address
+                </label>
+                <input
+                  type="text"
+                  value={destinationEth}
+                  onChange={(e) => setDestinationEth(e.target.value)}
+                  className="neo-input font-mono text-sm focus:bg-accent-yellow/20"
+                  placeholder="0x… where to send ETH"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                  Owner Address
+                </label>
+                <input
+                  type="text"
+                  value={ownerAddress}
+                  onChange={(e) => setOwnerAddress(e.target.value)}
+                  className="neo-input font-mono text-sm focus:bg-accent-cyan/20"
+                  placeholder="0x… your signing address"
+                />
+              </div>
             </div>
-          </>
+
+            <Button
+              variant="lime"
+              size="lg"
+              onClick={handlePreview}
+              disabled={
+                !selectedEstateId || !isValidEth(destinationEth) || !isValidEth(ownerAddress) || busy
+              }
+              className="w-full"
+            >
+              {busy ? (
+                <><Loader2 className="h-5 w-5 animate-spin" /> Loading…</>
+              ) : (
+                <><Search className="h-5 w-5" /> Preview Withdrawal</>
+              )}
+            </Button>
+          </div>
         )}
-      </main>
+
+        {/* Step 2 — Preview + sign */}
+        {(step === "preview" || step === "signing" || step === "submitting") && (
+          <div className="neo-card-static space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="bg-accent-pink neo-border rounded-xl p-3">
+                <Shield className="h-6 w-6" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black">Review Withdrawal</h3>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Sign the transaction hash with your owner wallet.
+                </p>
+              </div>
+            </div>
+
+            {!txInfo && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                      Destination Address
+                    </label>
+                    <input
+                      type="text"
+                      value={destinationEth}
+                      onChange={(e) => setDestinationEth(e.target.value)}
+                      className="neo-input font-mono text-sm focus:bg-accent-yellow/20"
+                      placeholder="0x…"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                      Owner Address
+                    </label>
+                    <input
+                      type="text"
+                      value={ownerAddress}
+                      onChange={(e) => setOwnerAddress(e.target.value)}
+                      className="neo-input font-mono text-sm focus:bg-accent-cyan/20"
+                      placeholder="0x…"
+                    />
+                  </div>
+                </div>
+                <Button
+                  variant="lime"
+                  size="lg"
+                  disabled={busy || !isValidEth(destinationEth) || !isValidEth(ownerAddress)}
+                  onClick={handlePreview}
+                  className="w-full"
+                >
+                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                  Load Transfer Details
+                </Button>
+              </>
+            )}
+
+            {txInfo && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="neo-border rounded-lg p-4 bg-secondary">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      From (vault)
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Globe className="h-4 w-4" strokeWidth={2.5} />
+                      <p className="font-mono text-sm font-bold break-all">{txInfo.eth_from}</p>
+                    </div>
+                  </div>
+                  <div className="neo-border rounded-lg p-4 bg-secondary">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      To (destination)
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <User className="h-4 w-4" strokeWidth={2.5} />
+                      <p className="font-mono text-sm font-bold break-all">{txInfo.eth_to}</p>
+                    </div>
+                  </div>
+                  <div className="neo-border rounded-lg p-4 bg-accent-lime/30 md:col-span-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      Amount
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Coins className="h-5 w-5" strokeWidth={2.5} />
+                      <p className="font-black text-2xl">{formatWei(txInfo.amount_wei)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs font-medium text-muted-foreground">
+                  MetaMask will ask you to sign the transaction hash with{" "}
+                  <span className="font-mono font-bold">{ownerAddress.slice(0, 10)}…</span>. This
+                  authorizes the on-chain withdraw instruction.
+                </p>
+
+                <Button
+                  variant="lime"
+                  size="xl"
+                  className={`w-full ${step === "preview" ? "neo-glow-lime" : ""}`}
+                  disabled={busy}
+                  onClick={handleSignAndWithdraw}
+                >
+                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                  {step === "signing"
+                    ? "Sign in MetaMask…"
+                    : step === "submitting"
+                      ? "Submitting…"
+                      : "Sign & Withdraw"}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
