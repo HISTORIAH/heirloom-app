@@ -48,7 +48,7 @@ const POSTS_PER_PAGE = 10;
 
 function BlogList() {
   const [page, setPage] = useState(1);
-  const published = posts.filter((p) => p.published);
+  const published = posts.filter((p: PostMeta) => p.published);
 
   const totalPages = Math.ceil(published.length / POSTS_PER_PAGE);
   const start = (page - 1) * POSTS_PER_PAGE;
@@ -109,7 +109,7 @@ function BlogList() {
 
                 <div className="flex-1">
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {post.tags.map((tag) => (
+                    {post.tags.map((tag: string) => (
                       <span
                         key={tag}
                         className={`text-[10px] font-bold uppercase tracking-widest border-2 px-2 py-0.5 ${accent.tag}`}

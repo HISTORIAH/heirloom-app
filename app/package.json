@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@historiah/blog": "workspace:*",
     "@historiah/heirloom": "workspace:*",
     "@mysten/bcs": "^2.0.5",
     "@noble/curves": "^1.9.7",

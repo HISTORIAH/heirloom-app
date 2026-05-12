@@ -4,6 +4,7 @@
   "workspaces": [
     "app",
     "app-ika",
+    "blog",
     "packages/*",
     "clients/*",
     "clients-ika/*",
