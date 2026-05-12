@@ -7,5 +7,10 @@
   },
   "observability": {
     "enabled": true
+  },
+  "env": {
+    "preview": {
+      "name": "heirloom-app-preview"
+    }
   }
 }
