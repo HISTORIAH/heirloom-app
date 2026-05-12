@@ -47,6 +47,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWallet = () => {
   const ctx = useContext(WalletContext);
   if (!ctx) throw new Error("useWallet must be used within WalletProvider");

@@ -549,6 +549,7 @@ const ConnectedProvider: React.FC<{
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useVault = () => {
   const ctx = useContext(VaultContext);
   if (!ctx) throw new Error("useVault must be used within VaultProvider");
