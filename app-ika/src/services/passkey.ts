@@ -236,7 +236,7 @@ export async function signHeartbeat(
       allowCredentials[0].id.byteLength
     );
   } else {
-    log("allowCredentials omitted — browser will show all available passkeys.");
+    log("allowCredentials omitted — browser will show all available passkeys");
   }
 
   const publicKey: PublicKeyCredentialRequestOptions = {
