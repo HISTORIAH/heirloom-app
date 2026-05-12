@@ -29,7 +29,7 @@ mod heirloom_ika_program {
     #[instruction(discriminator = 0)]
     pub fn initialize(
         ctx: Ctx<Initialize>,
-        estate_id: Address,
+        // estate_id: Address,
         dwallet_pda: Address,
         public_key: [u8; 33],
         public_key_len: u8,
@@ -46,7 +46,7 @@ mod heirloom_ika_program {
         log("ix: initialize");
         Initialize::initialize_handler(
             &mut ctx,
-            estate_id,
+            // estate_id,
             dwallet_pda,
             public_key,
             public_key_len,
@@ -55,10 +55,10 @@ mod heirloom_ika_program {
             heartbeat_interval,
             grace_period,
             pause_duration,
+            passkey_pubkey,
             heir_address,
             label,
             owner_address,
-            passkey_pubkey,
         )
     }
 

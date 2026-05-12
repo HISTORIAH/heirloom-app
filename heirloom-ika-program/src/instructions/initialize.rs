@@ -11,8 +11,10 @@ pub struct Initialize {
     #[account(mut)]
     pub relayer: Signer,
 
+    pub estate_id: UncheckedAccount,
+
     /// Estate PDA: seeds = [b"ika_estate", estate_id]
-    #[account(mut, init, payer = relayer)]
+    #[account(mut, init, payer = relayer, address = Estate::seeds(estate_id.address()))]
     pub estate: Account<Estate>,
 
     pub clock: Sysvar<Clock>,
@@ -27,7 +29,6 @@ impl Initialize {
     #[inline(always)]
     pub fn initialize_handler(
         ctx: &mut Ctx<Initialize>,
-        estate_id: Address,
         dwallet_pda: Address,
         public_key: [u8; 33],
         public_key_len: u8,
@@ -36,10 +37,10 @@ impl Initialize {
         heartbeat_interval: i64,
         grace_period: i64,
         pause_duration: i64,
+        passkey_pubkey: [u8; 33],
         heir_address: &str,
         label: &str,
         owner_address: &str,
-        passkey_pubkey: [u8; 33],
     ) -> Result<(), ProgramError> {
         ctx.accounts.validate(
             public_key_len,
@@ -50,7 +51,9 @@ impl Initialize {
             owner_address,
         )?;
 
-        let seeds: &[&[u8]] = &[b"ika_estate", estate_id.as_ref()];
+        let estate_id_address = ctx.accounts.estate_id.address();
+
+        let seeds: &[&[u8]] = &[b"ika_estate", estate_id_address.as_ref()];
         let (expected_pda, estate_bump) =
             quasar_lang::pda::based_try_find_program_address(seeds, &crate::ID)?;
         if *ctx.accounts.estate.address() != expected_pda {
@@ -61,7 +64,7 @@ impl Initialize {
 
         ctx.accounts.estate.set_inner(
             EstateInner {
-                estate_id,
+                estate_id: *estate_id_address,
                 dwallet_pda,
                 public_key,
                 public_key_len,
