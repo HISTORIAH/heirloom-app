@@ -1,6 +1,6 @@
 {
-  "name": "heirloom-app",
-  "compatibility_date": "2026-04-18",
+  "name": "heirloom-ika-app",
+  "compatibility_date": "2026-05-12",
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
@@ -10,7 +10,7 @@
   },
   "env": {
     "preview": {
-      "name": "heirloom-app-preview"
+      "name": "heirloom-ika-app-preview"
     }
   }
 }

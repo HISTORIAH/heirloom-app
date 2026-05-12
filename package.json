@@ -3,16 +3,22 @@
   "private": true,
   "workspaces": [
     "app",
+    "app-ika",
+    "packages/*",
     "clients/*",
-    "tests",
-    "blog"
+    "clients-ika/*",
+    "tests"
   ],
   "scripts": {
     "dev:ui": "turbo run dev --filter=app",
+    "dev:ika": "turbo run dev --filter=app-ika",
     "build:ui": "turbo run build --filter=app",
     "build": "turbo run build",
     "convert-idl": "bun run scripts/convert-idl.ts",
+    "convert-idl:ika": "bun run scripts/convert-idl-ika.ts",
     "generate:clients": "bun convert-idl && bunx codama run --all",
+    "generate:ika-clients": "bun convert-idl:ika && bunx codama run --all",
+    "generate:all-clients": "bun generate:clients && bun generate:ika-clients",
     "deploy": "bash scripts/deploy.sh",
     "test": "turbo run test",
     "airdrop": "bash scripts/airdrop.sh"
