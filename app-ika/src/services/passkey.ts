@@ -3,6 +3,14 @@
 // Registration: called once during vault creation to bind a P-256 device key.
 // Signing:      called for each heartbeat to prove the device is present.
 
+const DEBUG = true;
+function log(...args: unknown[]) {
+  if (DEBUG) console.log("[passkey]", ...args);
+}
+function logError(...args: unknown[]) {
+  if (DEBUG) console.error("[passkey]", ...args);
+}
+
 /** base64url encode without padding (matching the WebAuthn spec). */
 function b64url(buf: ArrayBuffer | Uint8Array): string {
   const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
@@ -20,11 +28,28 @@ function b64urlDecode(s: string): Uint8Array {
   return bytes;
 }
 
+/** Hex-encode bytes. */
+function hexEncode(bytes: Uint8Array): string {
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export interface PasskeyRegistration {
   /** 33-byte compressed P-256 public key, hex-encoded (66 chars, no 0x). */
   pubkeyHex: string;
   /** Credential ID, base64url encoded (for storage). */
   credentialId: string;
+}
+
+function checkWebAuthnSupport(): void {
+  if (typeof window === "undefined") throw new Error("Not in a browser environment");
+  if (!window.isSecureContext) {
+    throw new Error(
+      `WebAuthn requires a secure context (HTTPS or localhost). Current origin: ${window.location.origin}. ` +
+      "If you're on a local network IP (e.g. 192.168.x.x), browsers block WebAuthn. Use localhost instead."
+    );
+  }
+  if (!navigator.credentials) throw new Error("navigator.credentials not available — browser may be too old or in a restricted mode.");
+  if (!window.PublicKeyCredential) throw new Error("PublicKeyCredential not available — browser does not support WebAuthn.");
 }
 
 /**
@@ -37,39 +62,132 @@ export async function registerPasskey(
   userId: string,
   displayName: string = "Heirloom Vault"
 ): Promise<PasskeyRegistration> {
-  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  log("registerPasskey called", { userId, displayName, hostname: window.location.hostname, origin: window.location.origin });
 
-  const cred = await navigator.credentials.create({
-    publicKey: {
-      challenge,
-      rp: { name: "Heirloom", id: window.location.hostname },
-      user: {
-        id: new TextEncoder().encode(userId),
-        name: userId,
-        displayName,
-      },
-      pubKeyCredParams: [
-        { alg: -7, type: "public-key" }, // ES256 = ECDSA P-256
-      ],
-      authenticatorSelection: {
-        authenticatorAttachment: "platform",
-        userVerification: "required",
-        residentKey: "preferred",
-      },
-      timeout: 60_000,
-      attestation: "none",
+  try {
+    checkWebAuthnSupport();
+  } catch (e) {
+    logError("WebAuthn support check failed:", e);
+    throw e;
+  }
+
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  log("challenge generated:", hexEncode(challenge));
+
+  const userIdBytes = new TextEncoder().encode(userId);
+  log("user.id bytes length:", userIdBytes.length, "(must be <= 64)");
+  if (userIdBytes.length > 64) {
+    throw new Error(`userId too long: ${userIdBytes.length} bytes (max 64)`);
+  }
+
+  const pubKeyCredParams = [{ alg: -7, type: "public-key" as const }];
+
+  // Check whether a platform authenticator (TouchID, Windows Hello, etc.) is available.
+  // If not, we omit authenticatorAttachment so the user can use a security key (cross-platform).
+  let platformAvailable = false;
+  try {
+    platformAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    log("isUserVerifyingPlatformAuthenticatorAvailable:", platformAvailable);
+  } catch (e) {
+    logError("isUserVerifyingPlatformAuthenticatorAvailable threw:", e);
+  }
+
+  const authenticatorSelection: AuthenticatorSelectionCriteria = platformAvailable
+    ? { authenticatorAttachment: "platform", userVerification: "required", residentKey: "preferred" }
+    : { userVerification: "required", residentKey: "preferred" };
+
+  if (!platformAvailable) {
+    log("No platform authenticator detected. Falling back to any authenticator (security keys allowed).");
+  }
+
+  const publicKey: PublicKeyCredentialCreationOptions = {
+    challenge,
+    rp: { name: "Heirloom", id: window.location.hostname },
+    user: {
+      id: userIdBytes,
+      name: userId,
+      displayName,
     },
-  }) as PublicKeyCredential;
+    pubKeyCredParams,
+    authenticatorSelection,
+    timeout: 60_000,
+    attestation: "none",
+  };
+
+  log("navigator.credentials.create options:", JSON.stringify({
+    rp: publicKey.rp,
+    pubKeyCredParams: publicKey.pubKeyCredParams,
+    authenticatorSelection: publicKey.authenticatorSelection,
+    attestation: publicKey.attestation,
+    timeout: publicKey.timeout,
+  }));
+
+  log("About to call navigator.credentials.create() — if no prompt appears within 5s, your browser/OS has no available authenticator.");
+
+  let cred: PublicKeyCredential;
+  try {
+    cred = await navigator.credentials.create({ publicKey }) as PublicKeyCredential;
+  } catch (e) {
+    logError("navigator.credentials.create threw:", e);
+    if (e instanceof DOMException) {
+      const hints: Record<string, string> = {
+        NotAllowedError: "The user cancelled or the browser blocked the prompt. Check: (1) Are you on HTTPS/localhost? (2) Is a password-manager extension interfering? (3) Are Brave Shields / privacy modes active? (4) Is a platform authenticator (TouchID/Windows Hello) enrolled?",
+        SecurityError: "The origin is not allowed to use WebAuthn. Check rp.id matches the origin.",
+        InvalidStateError: "An authenticator with this credential already exists.",
+        NotSupportedError: "No authenticator supports the requested algorithm (-7 / ES256). Try plugging in a security key.",
+      };
+      const hint = hints[e.name] || "";
+      throw new Error(`WebAuthn registration failed: ${e.name}: ${e.message}. ${hint}`);
+    }
+    throw new Error(`WebAuthn registration failed: ${e}`);
+  }
+
+  if (!cred) {
+    throw new Error("navigator.credentials.create returned null/undefined");
+  }
+
+  log("credential created:", {
+    id: cred.id,
+    rawIdLength: cred.rawId.byteLength,
+    type: cred.type,
+  });
 
   const response = cred.response as AuthenticatorAttestationResponse;
+  log("attestation response keys:", Object.keys(response));
 
-  // Extract the COSE public key from attestationObject → authData → credentialPublicKey
-  const pubkeyHex = await extractCompressedP256Key(response);
+  // Log attestationObject for debugging
+  if (response.attestationObject) {
+    const attObjBytes = new Uint8Array(response.attestationObject);
+    log("attestationObject length:", attObjBytes.length);
+    log("attestationObject first 32 bytes:", hexEncode(attObjBytes.slice(0, 32)));
+  }
 
-  return {
-    pubkeyHex,
-    credentialId: b64url(cred.rawId),
-  };
+  // Try getPublicKey() first (WebAuthn L3)
+  if (typeof response.getPublicKey === "function") {
+    try {
+      const spki = response.getPublicKey();
+      if (spki) {
+        log("getPublicKey() returned SPKI, length:", spki.byteLength);
+        const pubkeyHex = parseSpkiP256(new Uint8Array(spki));
+        log("extracted pubkey from SPKI:", pubkeyHex);
+        return { pubkeyHex, credentialId: b64url(cred.rawId) };
+      }
+    } catch (e) {
+      logError("getPublicKey() failed, falling back to attestationObject parse:", e);
+    }
+  } else {
+    log("getPublicKey() not available, using attestationObject fallback");
+  }
+
+  // Fallback: parse attestationObject manually
+  try {
+    const pubkeyHex = extractCompressedP256KeyFromAttestation(response);
+    log("extracted pubkey from attestationObject:", pubkeyHex);
+    return { pubkeyHex, credentialId: b64url(cred.rawId) };
+  } catch (e) {
+    logError("attestationObject parse failed:", e);
+    throw new Error(`Could not extract P-256 public key from attestation: ${e}`);
+  }
 }
 
 export interface PasskeyAssertion {
@@ -91,24 +209,76 @@ export async function signHeartbeat(
   challengeB64: string,
   credentialId: string
 ): Promise<PasskeyAssertion> {
-  const challengeBytes = Uint8Array.from(b64urlDecode(challengeB64));
+  log("signHeartbeat called", { challengeB64, credentialId: credentialId ? "<present>" : "<empty>", hostname: window.location.hostname });
 
-  const assertion = await navigator.credentials.get({
-    publicKey: {
-      challenge: challengeBytes,
-      rpId: window.location.hostname,
-      allowCredentials: credentialId
-        ? [{ type: "public-key", id: b64urlDecode(credentialId) }]
-        : [],
-      userVerification: "required",
-      timeout: 60_000,
-    },
-  }) as PublicKeyCredential;
+  try {
+    checkWebAuthnSupport();
+  } catch (e) {
+    logError("WebAuthn support check failed:", e);
+    throw e;
+  }
+
+  const challengeBytes = b64urlDecode(challengeB64);
+  log("challenge decoded, length:", challengeBytes.length);
+
+  const allowCredentials = credentialId
+    ? [{ type: "public-key" as const, id: b64urlDecode(credentialId) }]
+    : undefined;
+
+  if (allowCredentials) {
+    log("allowCredentials set, credentialId length:", allowCredentials[0].id.length);
+  } else {
+    log("allowCredentials omitted — browser will show all available passkeys");
+  }
+
+  const publicKey: PublicKeyCredentialRequestOptions = {
+    challenge: challengeBytes,
+    rpId: window.location.hostname,
+    allowCredentials,
+    userVerification: "required",
+    timeout: 60_000,
+  };
+
+  log("navigator.credentials.get options:", JSON.stringify({
+    rpId: publicKey.rpId,
+    allowCredentialsCount: allowCredentials?.length ?? 0,
+    userVerification: publicKey.userVerification,
+  }));
+
+  let assertion: PublicKeyCredential;
+  try {
+    assertion = await navigator.credentials.get({ publicKey }) as PublicKeyCredential;
+  } catch (e) {
+    logError("navigator.credentials.get threw:", e);
+    if (e instanceof DOMException) {
+      const hints: Record<string, string> = {
+        NotAllowedError: "The user cancelled or the browser blocked the prompt. If no prompt appeared: (1) Check HTTPS/localhost. (2) Disable Brave Shields / privacy extensions. (3) Check if a password manager extension is intercepting.",
+        SecurityError: "Origin does not match rpId.",
+        InvalidStateError: "No matching credential found. The passkey may have been deleted from the authenticator.",
+      };
+      const hint = hints[e.name] || "";
+      throw new Error(`WebAuthn sign failed: ${e.name}: ${e.message}. ${hint}`);
+    }
+    throw new Error(`WebAuthn sign failed: ${e}`);
+  }
+
+  if (!assertion) {
+    throw new Error("navigator.credentials.get returned null/undefined");
+  }
+
+  log("assertion received:", {
+    id: assertion.id,
+    rawIdLength: assertion.rawId.byteLength,
+  });
 
   const response = assertion.response as AuthenticatorAssertionResponse;
+  log("assertion response keys:", Object.keys(response));
+  log("authenticatorData length:", response.authenticatorData.byteLength);
+  log("signature length:", response.signature.byteLength);
 
   // Convert DER-encoded signature to raw r||s (64 bytes)
   const rawSig = derToRawSig(new Uint8Array(response.signature));
+  log("DER signature converted to raw r||s, length:", rawSig.length);
 
   return {
     signatureB64: b64url(rawSig),
@@ -117,94 +287,260 @@ export async function signHeartbeat(
   };
 }
 
-// ── Internal helpers ──────────────────────────────────────────────────────────
+// ── SPKI parser (reliable) ──────────────────────────────────────────────────
 
 /**
- * Extract the 33-byte compressed P-256 public key from an attestation response.
- * Parses: attestationObject → CBOR → authData → credentialPublicKey (COSE).
+ * Parse an SPKI (SubjectPublicKeyInfo) encoded P-256 EC public key and return
+ * the 33-byte compressed public key as a hex string.
+ *
+ * SPKI format for P-256:
+ *   30 59                           SEQUENCE
+ *     30 13                         SEQUENCE
+ *       06 07 2a 86 48 ce 3d 02 01   OID ecPublicKey
+ *       06 08 2a 86 48 ce 3d 03 01 07 OID prime256v1
+ *     03 42 00                      BIT STRING (66 bytes, 0 unused bits)
+ *       04 <x:32> <y:32>            uncompressed point
  */
-async function extractCompressedP256Key(
-  response: AuthenticatorAttestationResponse
-): Promise<string> {
-  // getPublicKey() is available in modern browsers (Level 3)
-  if (typeof response.getPublicKey === "function") {
-    const spki = response.getPublicKey();
-    if (spki) {
-      // SPKI format: the last 65 bytes are the uncompressed public key (0x04 || x || y)
-      const spkiBytes = new Uint8Array(spki);
-      const uncompressed = spkiBytes.slice(spkiBytes.length - 65);
-      if (uncompressed[0] !== 0x04) throw new Error("Expected uncompressed P-256 key");
-      return compressP256(uncompressed.slice(1, 33), uncompressed.slice(33, 65));
-    }
+function parseSpkiP256(spki: Uint8Array): string {
+  log("parseSpkiP256 called, SPKI length:", spki.length);
+
+  // Expected SPKI for P-256 uncompressed point: 91 bytes
+  // But parse it properly rather than assuming.
+  let i = 0;
+
+  // SEQUENCE
+  if (spki[i++] !== 0x30) throw new Error("SPKI: expected SEQUENCE");
+  const spkiLen = readAsn1Length(spki, i);
+  i += spkiLen.bytesRead;
+  if (spkiLen.value + i !== spki.length) {
+    log("SPKI length mismatch, continuing anyway...");
   }
 
-  // Fallback: parse the CBOR attestationObject manually
+  // AlgorithmIdentifier SEQUENCE
+  if (spki[i++] !== 0x30) throw new Error("SPKI: expected AlgorithmIdentifier SEQUENCE");
+  const algIdLen = readAsn1Length(spki, i);
+  i += algIdLen.bytesRead + algIdLen.value;
+
+  // BIT STRING
+  if (spki[i++] !== 0x03) throw new Error("SPKI: expected BIT STRING");
+  const bitStrLen = readAsn1Length(spki, i);
+  i += bitStrLen.bytesRead;
+  const unusedBits = spki[i++];
+  if (unusedBits !== 0) throw new Error(`SPKI: expected 0 unused bits, got ${unusedBits}`);
+
+  // Uncompressed EC point
+  if (spki[i++] !== 0x04) throw new Error("SPKI: expected uncompressed EC point (0x04)");
+  if (spki.length - i !== 64) throw new Error(`SPKI: expected 64 bytes for x||y, got ${spki.length - i}`);
+
+  const x = spki.slice(i, i + 32);
+  const y = spki.slice(i + 32, i + 64);
+  return compressP256(x, y);
+}
+
+function readAsn1Length(buf: Uint8Array, offset: number): { value: number; bytesRead: number } {
+  let b = buf[offset];
+  if ((b & 0x80) === 0) {
+    return { value: b, bytesRead: 1 };
+  }
+  const numBytes = b & 0x7f;
+  let value = 0;
+  for (let j = 0; j < numBytes; j++) {
+    value = (value << 8) | buf[offset + 1 + j];
+  }
+  return { value, bytesRead: 1 + numBytes };
+}
+
+// ── Attestation-object fallback (more robust CBOR scan) ─────────────────────
+
+function extractCompressedP256KeyFromAttestation(
+  response: AuthenticatorAttestationResponse
+): string {
   const attObj = new Uint8Array(response.attestationObject);
-  // authData starts at a fixed offset in the CBOR for "none" attestation
-  // Format: fmt(4 bytes) + attStmt(1 byte empty map) + authData(rest after CBOR map header)
-  // For "none" attestation CBOR is: a3 63 fmt 64 6e6f6e65 67 61747453746d74 a0 68 61757468 44617461 <len> <authData>
-  // Simplest: use getPublicKeyAlgorithm and look for the COSE key in authData
-  const authData = extractAuthData(attObj);
-  if (!authData) throw new Error("Could not extract authData from attestationObject");
+  log("extractCompressedP256KeyFromAttestation, attObj length:", attObj.length);
+
+  // Parse CBOR map to find "authData" key
+  const authData = extractCborByteString(attObj, "authData");
+  if (!authData) throw new Error("authData not found in attestationObject");
+  log("authData extracted, length:", authData.length);
 
   // authData layout:
   // [0..32]: rpIdHash
   // [32]:    flags
   // [33..36]: signCount (u32 BE)
-  // [37..52]: aaguid (16 bytes) — only if AT flag set
-  // [53..54]: credIdLen (u16 BE)
-  // [55..55+credIdLen]: credentialId
-  // then: COSE public key (CBOR map)
-  const view = new DataView(authData.buffer, authData.byteOffset);
+  // if AT flag (0x40): aaguid(16) + credIdLen(u16 BE) + credentialId + COSE key
   const flags = authData[32];
-  if (!(flags & 0x40)) throw new Error("AT flag not set in authData");
+  log("authData flags:", flags.toString(2).padStart(8, "0"), "AT=", !!(flags & 0x40), "ED=", !!(flags & 0x80));
 
-  let offset = 55;
-  const credIdLen = view.getUint16(37 + 16, false); // after rpIdHash(32) + flags(1) + signCount(4) + aaguid(16)
-  offset = 37 + 16 + 2 + credIdLen; // skip to COSE key
+  if (!(flags & 0x40)) throw new Error("AT flag not set in authData — no credential public key present");
 
-  // COSE key: map with keys -2 (x) and -3 (y), both 32 bytes
-  const { x, y } = parseCoseKey(authData.slice(offset));
+  let offset = 37; // after rpIdHash(32) + flags(1) + signCount(4)
+  offset += 16; // skip aaguid
+
+  const credIdLen = (authData[offset] << 8) | authData[offset + 1];
+  offset += 2;
+  log("credentialId length:", credIdLen);
+  offset += credIdLen; // skip credentialId
+
+  // Now offset points to the COSE credentialPublicKey
+  const coseKey = authData.slice(offset);
+  log("COSE key remaining bytes:", coseKey.length);
+
+  const { x, y } = parseCoseKey(coseKey);
   return compressP256(x, y);
 }
 
-function compressP256(x: Uint8Array, y: Uint8Array): string {
-  const prefix = y[31] % 2 === 0 ? 0x02 : 0x03;
-  const compressed = new Uint8Array(33);
-  compressed[0] = prefix;
-  compressed.set(x, 1);
-  return Array.from(compressed).map((b) => b.toString(16).padStart(2, "0")).join("");
+/**
+ * Scan a CBOR-encoded map for a specific text key and return the associated
+ * byte-string value.
+ */
+function extractCborByteString(cbor: Uint8Array, key: string): Uint8Array | null {
+  const keyBytes = new TextEncoder().encode(key);
+  let i = 0;
+
+  // Expect a CBOR map
+  const b = cbor[i++];
+  const major = b >> 5;
+  const info = b & 0x1f;
+  if (major !== 5) throw new Error(`Expected CBOR map (major 5), got major ${major}`);
+
+  let numEntries: number;
+  if (info < 24) {
+    numEntries = info;
+  } else if (info === 24) {
+    numEntries = cbor[i++];
+  } else if (info === 25) {
+    numEntries = (cbor[i] << 8) | cbor[i + 1];
+    i += 2;
+  } else if (info === 26) {
+    numEntries = (cbor[i] << 24) | (cbor[i + 1] << 16) | (cbor[i + 2] << 8) | cbor[i + 3];
+    i += 4;
+  } else if (info === 31) {
+    throw new Error("Indefinite-length CBOR maps not supported");
+  } else {
+    throw new Error(`Unsupported CBOR map length info: ${info}`);
+  }
+
+  log("CBOR map has", numEntries, "entries");
+
+  for (let entry = 0; entry < numEntries; entry++) {
+    // Read key (expect text string)
+    const keyResult = readCborTextString(cbor, i);
+    if (!keyResult) return null;
+    i += keyResult.bytesRead;
+
+    if (keyResult.text === key) {
+      // Read value (expect byte string)
+      const valResult = readCborByteString(cbor, i);
+      if (!valResult) throw new Error(`Value for "${key}" is not a byte string`);
+      return valResult.bytes;
+    } else {
+      // Skip value
+      const skip = skipCborValue(cbor, i);
+      i += skip;
+    }
+  }
+
+  return null;
+}
+
+function readCborTextString(buf: Uint8Array, i: number): { text: string; bytesRead: number } | null {
+  const b = buf[i];
+  const major = b >> 5;
+  const info = b & 0x1f;
+  if (major !== 3) return null;
+
+  let len: number;
+  let headerLen: number;
+  if (info < 24) {
+    len = info;
+    headerLen = 1;
+  } else if (info === 24) {
+    len = buf[i + 1];
+    headerLen = 2;
+  } else if (info === 25) {
+    len = (buf[i + 1] << 8) | buf[i + 2];
+    headerLen = 3;
+  } else {
+    throw new Error(`Unsupported CBOR text string length info: ${info}`);
+  }
+
+  const text = new TextDecoder().decode(buf.slice(i + headerLen, i + headerLen + len));
+  return { text, bytesRead: headerLen + len };
+}
+
+function readCborByteString(buf: Uint8Array, i: number): { bytes: Uint8Array; bytesRead: number } | null {
+  const b = buf[i];
+  const major = b >> 5;
+  const info = b & 0x1f;
+  if (major !== 2) return null;
+
+  let len: number;
+  let headerLen: number;
+  if (info < 24) {
+    len = info;
+    headerLen = 1;
+  } else if (info === 24) {
+    len = buf[i + 1];
+    headerLen = 2;
+  } else if (info === 25) {
+    len = (buf[i + 1] << 8) | buf[i + 2];
+    headerLen = 3;
+  } else {
+    throw new Error(`Unsupported CBOR byte string length info: ${info}`);
+  }
+
+  return { bytes: buf.slice(i + headerLen, i + headerLen + len), bytesRead: headerLen + len };
 }
 
 function parseCoseKey(cbor: Uint8Array): { x: Uint8Array; y: Uint8Array } {
-  // Minimal CBOR parser for COSE EC2 key (enough for P-256 attestation)
-  // Expects: a5 01 02 03 26 20 01 21 58 20 <x:32> 22 58 20 <y:32>
-  // or similar structure. We scan for -2 (0x21) and -3 (0x22) keys.
+  // COSE EC2 key is a CBOR map with keys:
+  //   1 (kty) = 2 (EC2)
+  //  -1 (crv) = 1 (P-256)
+  //  -2 (x)   = byte string
+  //  -3 (y)   = byte string
   let i = 0;
+  const b = cbor[i++];
+  const major = b >> 5;
+  const info = b & 0x1f;
+  if (major !== 5) throw new Error(`Expected COSE key to be a map, got major ${major}`);
+
+  let numEntries: number;
+  if (info < 24) {
+    numEntries = info;
+  } else if (info === 24) {
+    numEntries = cbor[i++];
+  } else if (info === 25) {
+    numEntries = (cbor[i] << 8) | cbor[i + 1];
+    i += 2;
+  } else {
+    throw new Error(`Unsupported COSE map length info: ${info}`);
+  }
+
   let x: Uint8Array | null = null;
   let y: Uint8Array | null = null;
 
-  // Skip map header (first byte)
-  i++;
+  for (let entry = 0; entry < numEntries; entry++) {
+    const keyResult = readCborInt(cbor, i);
+    i += keyResult.bytesRead;
 
-  while (i < cbor.length && (!x || !y)) {
-    const key = readCborInt(cbor, i);
-    i += key.bytesRead;
-    if (key.value === -2) {
-      const val = readCborBytes(cbor, i);
-      i += val.bytesRead;
+    if (keyResult.value === -2) {
+      const val = readCborByteString(cbor, i);
+      if (!val) throw new Error("Expected byte string for x coordinate");
       x = val.bytes;
-    } else if (key.value === -3) {
-      const val = readCborBytes(cbor, i);
       i += val.bytesRead;
+    } else if (keyResult.value === -3) {
+      const val = readCborByteString(cbor, i);
+      if (!val) throw new Error("Expected byte string for y coordinate");
       y = val.bytes;
+      i += val.bytesRead;
     } else {
-      // Skip value
       i += skipCborValue(cbor, i);
     }
   }
 
-  if (!x || !y) throw new Error("P-256 key not found in COSE map");
+  if (!x || !y) throw new Error(`P-256 key not found in COSE map (x=${!!x}, y=${!!y})`);
+  if (x.length !== 32) throw new Error(`Expected x=32 bytes, got ${x.length}`);
+  if (y.length !== 32) throw new Error(`Expected y=32 bytes, got ${y.length}`);
   return { x, y };
 }
 
@@ -212,62 +548,136 @@ function readCborInt(buf: Uint8Array, i: number): { value: number; bytesRead: nu
   const b = buf[i];
   const major = b >> 5;
   const info = b & 0x1f;
-  if (major === 0) return { value: info < 24 ? info : buf[i + 1], bytesRead: info < 24 ? 1 : 2 };
-  if (major === 1) {
-    const raw = info < 24 ? info : buf[i + 1];
-    return { value: -(raw + 1), bytesRead: info < 24 ? 1 : 2 };
-  }
-  return { value: 0, bytesRead: 1 };
-}
 
-function readCborBytes(buf: Uint8Array, i: number): { bytes: Uint8Array; bytesRead: number } {
-  const b = buf[i];
-  const info = b & 0x1f;
-  if (info < 24) return { bytes: buf.slice(i + 1, i + 1 + info), bytesRead: 1 + info };
-  if (info === 24) {
-    const len = buf[i + 1];
-    return { bytes: buf.slice(i + 2, i + 2 + len), bytesRead: 2 + len };
+  if (major === 0) {
+    // Unsigned
+    if (info < 24) return { value: info, bytesRead: 1 };
+    if (info === 24) return { value: buf[i + 1], bytesRead: 2 };
+    if (info === 25) return { value: (buf[i + 1] << 8) | buf[i + 2], bytesRead: 3 };
+    throw new Error("Unsupported unsigned int length");
   }
-  throw new Error("Unexpected CBOR byte string length");
+
+  if (major === 1) {
+    // Negative: value = -1 - raw
+    let raw: number;
+    if (info < 24) raw = info;
+    else if (info === 24) raw = buf[i + 1];
+    else if (info === 25) raw = (buf[i + 1] << 8) | buf[i + 2];
+    else throw new Error("Unsupported negative int length");
+    return { value: -(raw + 1), bytesRead: info < 24 ? 1 : info === 24 ? 2 : 3 };
+  }
+
+  throw new Error(`Expected integer at offset ${i}, got major type ${major}`);
 }
 
 function skipCborValue(buf: Uint8Array, i: number): number {
   const b = buf[i];
   const major = b >> 5;
   const info = b & 0x1f;
-  if (major <= 1) return info < 24 ? 1 : 2;
-  if (major === 2 || major === 3) {
-    if (info < 24) return 1 + info;
-    if (info === 24) return 2 + buf[i + 1];
+
+  if (major === 0 || major === 1) {
+    if (info < 24) return 1;
+    if (info === 24) return 2;
+    if (info === 25) return 3;
+    if (info === 26) return 5;
+    throw new Error("Unsupported integer skip length");
   }
-  return 1;
+
+  if (major === 2 || major === 3) {
+    // Byte string or text string
+    let len: number;
+    let header: number;
+    if (info < 24) {
+      len = info;
+      header = 1;
+    } else if (info === 24) {
+      len = buf[i + 1];
+      header = 2;
+    } else if (info === 25) {
+      len = (buf[i + 1] << 8) | buf[i + 2];
+      header = 3;
+    } else {
+      throw new Error("Unsupported string skip length");
+    }
+    return header + len;
+  }
+
+  if (major === 4) {
+    // Array
+    let len: number;
+    let header: number;
+    if (info < 24) {
+      len = info;
+      header = 1;
+    } else if (info === 24) {
+      len = buf[i + 1];
+      header = 2;
+    } else if (info === 25) {
+      len = (buf[i + 1] << 8) | buf[i + 2];
+      header = 3;
+    } else {
+      throw new Error("Unsupported array skip length");
+    }
+    let total = header;
+    for (let j = 0; j < len; j++) {
+      total += skipCborValue(buf, i + total);
+    }
+    return total;
+  }
+
+  if (major === 5) {
+    // Map
+    let len: number;
+    let header: number;
+    if (info < 24) {
+      len = info;
+      header = 1;
+    } else if (info === 24) {
+      len = buf[i + 1];
+      header = 2;
+    } else if (info === 25) {
+      len = (buf[i + 1] << 8) | buf[i + 2];
+      header = 3;
+    } else {
+      throw new Error("Unsupported map skip length");
+    }
+    let total = header;
+    for (let j = 0; j < len; j++) {
+      total += skipCborValue(buf, i + total); // key
+      total += skipCborValue(buf, i + total); // value
+    }
+    return total;
+  }
+
+  if (major === 6) {
+    // Tag
+    if (info < 24) return 1;
+    if (info === 24) return 2;
+    if (info === 25) return 3;
+    throw new Error("Unsupported tag skip length");
+  }
+
+  if (major === 7) {
+    // Simple/float
+    if (info < 24) return 1;
+    if (info === 24) return 2;
+    if (info === 25) return 3;
+    if (info === 26) return 5;
+    if (info === 27) return 9;
+    return 1;
+  }
+
+  throw new Error(`Unknown CBOR major type ${major}`);
 }
 
-function extractAuthData(attObj: Uint8Array): Uint8Array | null {
-  // Search for "authData" CBOR text key followed by bytes
-  const needle = new TextEncoder().encode("authData");
-  for (let i = 0; i < attObj.length - needle.length - 3; i++) {
-    if (attObj[i + 1] === needle.length) {
-      let match = true;
-      for (let j = 0; j < needle.length; j++) {
-        if (attObj[i + 2 + j] !== needle[j]) { match = false; break; }
-      }
-      if (match) {
-        const after = i + 2 + needle.length;
-        const lenByte = attObj[after] & 0x1f;
-        if (lenByte < 24) return attObj.slice(after + 1, after + 1 + lenByte);
-        if (lenByte === 24) {
-          const len = attObj[after + 1];
-          return attObj.slice(after + 2, after + 2 + len);
-        }
-        if (lenByte === 25) {
-          const len = (attObj[after + 1] << 8) | attObj[after + 2];
-          return attObj.slice(after + 3, after + 3 + len);
-        }
-      }
-    }
-  }
-  return null;
+function compressP256(x: Uint8Array, y: Uint8Array): string {
+  if (x.length !== 32) throw new Error(`compressP256: x must be 32 bytes, got ${x.length}`);
+  if (y.length !== 32) throw new Error(`compressP256: y must be 32 bytes, got ${y.length}`);
+  const prefix = y[31] % 2 === 0 ? 0x02 : 0x03;
+  const compressed = new Uint8Array(33);
+  compressed[0] = prefix;
+  compressed.set(x, 1);
+  return hexEncode(compressed);
 }
 
 /**
@@ -275,17 +685,23 @@ function extractAuthData(attObj: Uint8Array): Uint8Array | null {
  * WebAuthn authenticators return DER; the secp256r1 precompile expects raw.
  */
 function derToRawSig(der: Uint8Array): Uint8Array {
-  // DER: 30 <len> 02 <rlen> <r> 02 <slen> <s>
-  let i = 2; // skip 30 <len>
-  i++; // skip 02
+  log("derToRawSig called, DER length:", der.length);
+  if (der.length < 8) throw new Error(`DER signature too short: ${der.length}`);
+
+  // DER: 30 <total-len> 02 <r-len> <r> 02 <s-len> <s>
+  if (der[0] !== 0x30) throw new Error(`DER: expected 0x30, got 0x${der[0].toString(16)}`);
+
+  let i = 2; // skip 30 <total-len>
+  if (der[i++] !== 0x02) throw new Error(`DER: expected 0x02 before r`);
+
   const rLen = der[i++];
   const r = der.slice(i, i + rLen);
   i += rLen;
-  i++; // skip 02
+
+  if (der[i++] !== 0x02) throw new Error(`DER: expected 0x02 before s`);
   const sLen = der[i++];
   const s = der.slice(i, i + sLen);
 
-  // Strip leading zero padding and left-pad to 32 bytes
   const padTo32 = (buf: Uint8Array): Uint8Array => {
     const trimmed = buf[0] === 0 ? buf.slice(1) : buf;
     const out = new Uint8Array(32);
@@ -296,5 +712,6 @@ function derToRawSig(der: Uint8Array): Uint8Array {
   const raw = new Uint8Array(64);
   raw.set(padTo32(r), 0);
   raw.set(padTo32(s), 32);
+  log("derToRawSig output length:", raw.length);
   return raw;
 }
