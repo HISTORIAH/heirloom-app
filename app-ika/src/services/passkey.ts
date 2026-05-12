@@ -221,18 +221,26 @@ export async function signHeartbeat(
   const challengeBytes = b64urlDecode(challengeB64);
   log("challenge decoded, length:", challengeBytes.length);
 
-  const allowCredentials = credentialId
-    ? [{ type: "public-key" as const, id: b64urlDecode(credentialId) }]
+  const allowCredentials: PublicKeyCredentialDescriptor[] | undefined = credentialId
+    ? [
+        {
+          type: "public-key",
+          id: new Uint8Array(b64urlDecode(credentialId)),
+        },
+      ]
     : undefined;
 
   if (allowCredentials) {
-    log("allowCredentials set, credentialId length:", allowCredentials[0].id.length);
+    log(
+      "allowCredentials set, credentialId length:",
+      allowCredentials[0].id.byteLength
+    );
   } else {
     log("allowCredentials omitted — browser will show all available passkeys");
   }
 
   const publicKey: PublicKeyCredentialRequestOptions = {
-    challenge: challengeBytes,
+    challenge: new Uint8Array(challengeBytes),
     rpId: window.location.hostname,
     allowCredentials,
     userVerification: "required",
@@ -394,7 +402,6 @@ function extractCompressedP256KeyFromAttestation(
  * byte-string value.
  */
 function extractCborByteString(cbor: Uint8Array, key: string): Uint8Array | null {
-  const keyBytes = new TextEncoder().encode(key);
   let i = 0;
 
   // Expect a CBOR map
