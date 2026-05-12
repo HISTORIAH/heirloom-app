@@ -8,9 +8,6 @@ mod ika_cpi;
 mod instructions;
 mod state;
 
-// NOTE: The CPI authority PDA is derived from this program ID:
-//   PDA([b"__ika_cpi_authority"], this_program_id)
-// The dWallet authority must be transferred to this PDA before initialize.
 declare_id!("GmUKHL8q1htYdKHT5YQho8zA6hdqqo8QNqfnTHyWzpwa");
 
 #[program]
@@ -41,6 +38,8 @@ mod heirloom_ika_program {
         heartbeat_interval: i64,
         grace_period: i64,
         pause_duration: i64,
+        passkey_pubkey: [u8; 33],
+        owner_address: String<64>,
         heir_address: String<64>,
         label: String<32>,
     ) -> Result<(), ProgramError> {
@@ -58,6 +57,8 @@ mod heirloom_ika_program {
             pause_duration,
             heir_address,
             label,
+            owner_address,
+            passkey_pubkey,
         )
     }
 

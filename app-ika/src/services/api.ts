@@ -1,6 +1,9 @@
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:3040/v1/ika";
+// Base is just the host + /v1/ika — no trailing slash.
+// The env var should be e.g. "http://localhost:3040" (no path).
+const BASE_HOST = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3040").replace(/\/$/, "");
+const API_BASE = `${BASE_HOST}/v1/ika`;
 
-async function post(path: string, body: unknown) {
+async function post<T = unknown>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -8,71 +11,129 @@ async function post(path: string, body: unknown) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.message || `${res.status} ${res.statusText}`);
-  return { data, status: res.status };
+  return (data.data ?? data) as T;
 }
 
-async function get(path: string) {
+async function get<T = unknown>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.message || `${res.status} ${res.statusText}`);
-  return { data, status: res.status };
+  return (data.data ?? data) as T;
 }
 
-export async function getHealth() {
-  const { data } = await get("/health");
-  return data as { backend: string; ika_grpc: string };
+// ── Health ────────────────────────────────────────────────────────────────────
+
+export async function getHealth(): Promise<{ backend: string; ika_grpc: string }> {
+  return get("/health");
 }
 
-export async function createVault(body: {
-  estate_id: string;
-  authority_pubkey: string;
+// ── Vault creation ────────────────────────────────────────────────────────────
+
+export interface CreateVaultPayload {
   heir_eth_address: string;
-  chain_id: number;
-}) {
+  owner_address: string;
+  passkey_pubkey_hex: string;
+  network_id: number;
+  heartbeat_interval_secs?: number;
+  grace_period_secs?: number;
+  pause_duration_secs?: number;
+  label?: string;
+}
+
+export interface CreateVaultResult {
+  estate_id: string;
+  estate_pda: string;
+  eth_deposit_address: string;
+  dwallet_solana_address: string;
+}
+
+export async function createVault(body: CreateVaultPayload): Promise<CreateVaultResult> {
   return post("/create-vault", body);
 }
 
-export async function getChallenge(estate_id: string) {
-  return get(`/challenge/${estate_id}`) as Promise<{ data: { challenge: string; nonce: number }; status: number }>;
+// ── Heartbeat ─────────────────────────────────────────────────────────────────
+
+export interface HeartbeatChallenge {
+  estate_id: string;
+  challenge_b64: string;
 }
 
-export async function claimVault(body: {
+export async function getHeartbeatChallenge(estateId: string): Promise<HeartbeatChallenge> {
+  return get(`/heartbeat/${estateId}`);
+}
+
+export async function postHeartbeat(body: {
+  estate_id: string;
+  signature_b64: string;
+  authenticator_data_b64: string;
+  client_data_json: string;
+}): Promise<{ solana_tx: string }> {
+  return post("/heartbeat", body);
+}
+
+// ── Claim (heir flow) ─────────────────────────────────────────────────────────
+
+export interface ClaimTxInfo {
+  estate_id: string;
+  eth_from: string;
+  amount_wei: string;
+  message_hash_hex: string;
+}
+
+export async function getClaimTx(estateId: string): Promise<ClaimTxInfo> {
+  return get(`/claim-tx/${estateId}`);
+}
+
+export async function postClaim(body: {
   estate_id: string;
   heir_eth_address: string;
   eth_signature: string;
-  challenge: string;
-}) {
+}): Promise<{ solana_tx: string; eth_tx: string }> {
   return post("/claim", body);
 }
 
-export async function withdrawVault(body: {
+// ── Withdraw (owner emergency exit) ──────────────────────────────────────────
+
+export interface WithdrawTxInfo {
+  estate_id: string;
+  eth_from: string;
+  eth_to: string;
+  amount_wei: string;
+  message_hash_hex: string;
+}
+
+export async function getWithdrawTx(
+  estateId: string,
+  destinationEth: string
+): Promise<WithdrawTxInfo> {
+  return get(`/withdraw-tx/${estateId}?destination_eth=${encodeURIComponent(destinationEth)}`);
+}
+
+export async function postWithdraw(body: {
   estate_id: string;
   destination_eth: string;
-  authority_signature: string;
-  challenge: string;
-}) {
+  owner_address: string;
+  owner_signature: string;
+}): Promise<{ solana_tx: string; eth_tx: string }> {
   return post("/withdraw", body);
 }
 
-export async function personalSign(message: string): Promise<string> {
-  const provider = (window as any).ethereum;
-  if (!provider) throw new Error("MetaMask not installed. Please install MetaMask.");
+// ── Ethereum wallet helpers ───────────────────────────────────────────────────
 
-  const accounts: string[] = await provider.request({ method: "eth_requestAccounts" });
-  if (!accounts?.[0]) throw new Error("No accounts found in MetaMask.");
-
-  return provider.request({
-    method: "personal_sign",
-    params: [message, accounts[0]],
-  });
-}
-
-export async function connectEthWallet(): Promise<{ address: string }> {
+/**
+ * Sign a 32-byte message hash with MetaMask personal_sign.
+ *
+ * MetaMask applies the EIP-191 prefix: keccak256("\x19Ethereum Signed Message:\n32" + hash).
+ * The backend accounts for this prefix when building the secp256k1 precompile instruction.
+ *
+ * `messageHashHex` — 32 bytes as hex string WITHOUT 0x prefix.
+ * `ethAddress`     — the Ethereum address to sign with (MetaMask must control it).
+ */
+export async function signMessageHash(messageHashHex: string, ethAddress: string): Promise<string> {
   const provider = (window as any).ethereum;
   if (!provider) throw new Error("MetaMask not installed.");
-
-  const accounts: string[] = await provider.request({ method: "eth_requestAccounts" });
-  if (!accounts?.[0]) throw new Error("No accounts found.");
-
-  return { address: accounts[0] };
+  return provider.request({
+    method: "personal_sign",
+    params: [`0x${messageHashHex}`, ethAddress],
+  });
 }

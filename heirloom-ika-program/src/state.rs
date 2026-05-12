@@ -55,9 +55,18 @@ pub struct Estate {
     /// Bump
     pub bump: u8,
 
+    /// Passkey public key (P-256 compressed, always 33 bytes)
+    pub passkey_pubkey: [u8; 33],
+
+    /// Monotonic counter incremented on each heartbeat — prevents replay attacks
+    pub heartbeat_nonce: u64,
+
     /// Heir address on the target chain (e.g., ETH 20-byte address, BTC bech32)
     pub heir_address: String<64>,
 
     /// Label for the estate
     pub label: String<32>,
+
+    /// Owner's address on the target chain (hex string, e.g. "0x..." for ETH)
+    pub owner_address: String<64>,
 }

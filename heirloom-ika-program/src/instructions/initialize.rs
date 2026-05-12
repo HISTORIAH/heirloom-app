@@ -38,9 +38,17 @@ impl Initialize {
         pause_duration: i64,
         heir_address: &str,
         label: &str,
+        owner_address: &str,
+        passkey_pubkey: [u8; 33],
     ) -> Result<(), ProgramError> {
-        ctx.accounts
-            .validate(public_key_len, curve, signature_scheme, heir_address, label)?;
+        ctx.accounts.validate(
+            public_key_len,
+            curve,
+            signature_scheme,
+            heir_address,
+            label,
+            owner_address,
+        )?;
 
         let seeds: &[&[u8]] = &[b"ika_estate", estate_id.as_ref()];
         let (expected_pda, estate_bump) =
@@ -69,6 +77,9 @@ impl Initialize {
                 is_deferred: false.into(),
                 heir_address,
                 label,
+                owner_address,
+                passkey_pubkey,
+                heartbeat_nonce: 0,
                 bump: estate_bump,
             },
             ctx.accounts.relayer.to_account_view(),
@@ -87,6 +98,7 @@ impl Initialize {
         _signature_scheme: u16,
         heir_address: &str,
         label: &str,
+        owner_address: &str,
     ) -> Result<(), ProgramError> {
         require!(
             public_key_len == 32 || public_key_len == 33,
@@ -101,8 +113,10 @@ impl Initialize {
             !label.is_empty() && label.len() <= 32,
             HeirloomIkaError::InvalidHeirAddress
         );
-
-        // Verify estate PDA is uninitialised (should be since we use init)
+        require!(
+            !owner_address.is_empty() && owner_address.len() <= 64,
+            HeirloomIkaError::InvalidHeirAddress
+        );
         Ok(())
     }
 }

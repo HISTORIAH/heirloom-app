@@ -4,8 +4,8 @@
 //! dwallet-labs/ika-pre-alpha repository.
 
 extern crate alloc;
-use alloc::vec;
-use alloc::vec::Vec;
+// use alloc::vec;
+// use alloc::vec::Vec;
 
 use quasar_lang::{
     cpi::{CpiAccount, InstructionAccount, InstructionView, Seed, Signer},
@@ -150,33 +150,33 @@ impl<'a> DWalletContext<'a> {
     }
 }
 
-/// Derive dWallet PDA seeds from curve and public key.
-///
-/// Mirrors `ika_dwallet_program::state::dwallet::DWalletPdaSeeds::new`:
-/// concatenate `curve_u16_le || public_key` into a single buffer and split
-/// it into 32-byte chunks (Solana's MAX_SEED_LEN).
-pub fn dwallet_pda_seeds(curve: u16, public_key: &[u8]) -> Vec<Vec<u8>> {
-    let mut payload = Vec::with_capacity(2 + public_key.len());
-    payload.extend_from_slice(&curve.to_le_bytes());
-    payload.extend_from_slice(public_key);
+// /// Derive dWallet PDA seeds from curve and public key.
+// ///
+// /// Mirrors `ika_dwallet_program::state::dwallet::DWalletPdaSeeds::new`:
+// /// concatenate `curve_u16_le || public_key` into a single buffer and split
+// /// it into 32-byte chunks (Solana's MAX_SEED_LEN).
+// pub fn dwallet_pda_seeds(curve: u16, public_key: &[u8]) -> Vec<Vec<u8>> {
+//     let mut payload = Vec::with_capacity(2 + public_key.len());
+//     payload.extend_from_slice(&curve.to_le_bytes());
+//     payload.extend_from_slice(public_key);
 
-    let mut seeds: Vec<Vec<u8>> = vec![b"dwallet".to_vec()];
-    for chunk in payload.chunks(32) {
-        seeds.push(chunk.to_vec());
-    }
-    seeds
-}
+//     let mut seeds: Vec<Vec<u8>> = vec![b"dwallet".to_vec()];
+//     for chunk in payload.chunks(32) {
+//         seeds.push(chunk.to_vec());
+//     }
+//     seeds
+// }
 
-/// Derive MessageApproval PDA seeds.
-pub fn message_approval_pda_seeds(
-    curve: u16,
-    public_key: &[u8],
-    signature_scheme: u16,
-    message_hash: &[u8; 32],
-) -> Vec<Vec<u8>> {
-    let mut seeds = dwallet_pda_seeds(curve, public_key);
-    seeds.push(b"message_approval".to_vec());
-    seeds.push(signature_scheme.to_le_bytes().to_vec());
-    seeds.push(message_hash.to_vec());
-    seeds
-}
+// /// Derive MessageApproval PDA seeds.
+// pub fn message_approval_pda_seeds(
+//     curve: u16,
+//     public_key: &[u8],
+//     signature_scheme: u16,
+//     message_hash: &[u8; 32],
+// ) -> Vec<Vec<u8>> {
+//     let mut seeds = dwallet_pda_seeds(curve, public_key);
+//     seeds.push(b"message_approval".to_vec());
+//     seeds.push(signature_scheme.to_le_bytes().to_vec());
+//     seeds.push(message_hash.to_vec());
+//     seeds
+// }

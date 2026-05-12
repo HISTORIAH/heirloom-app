@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@historiah/ui";
-import { Plus, Heart, Clock, AlertTriangle, Shield, Wallet, Activity } from "lucide-react";
-import { getHealth, connectEthWallet } from "@/services/api";
+import { Plus, Heart, Clock, AlertTriangle, Shield, Activity, Loader2 } from "lucide-react";
+import { getHealth, getHeartbeatChallenge, postHeartbeat } from "@/services/api";
+import { signHeartbeat } from "@/services/passkey";
 
 interface Vault {
   estateId: string;
   label: string;
   ethDepositAddress: string;
-  balanceEth: string;
+  balanceEth?: string;
   heartbeatInterval: number;
   gracePeriod: number;
   lastHeartbeat: number;
@@ -34,9 +35,10 @@ export default function Dashboard() {
   const [backendHealthy, setBackendHealthy] = useState(false);
   const [ikaHealthy, setIkaHealthy] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [ethAddress, setEthAddress] = useState<string | null>(null);
   const [vaults, setVaults] = useState<Vault[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [heartbeating, setHeartbeating] = useState<string | null>(null);
+  const [heartbeatError, setHeartbeatError] = useState<string | null>(null);
 
   useEffect(() => {
     getHealth()
@@ -44,26 +46,40 @@ export default function Dashboard() {
         setBackendHealthy(h.backend === "ok");
         setIkaHealthy(h.ika_grpc === "ok");
       })
-      .catch(() => {
-        setBackendHealthy(false);
-        setIkaHealthy(false);
-      })
+      .catch(() => { setBackendHealthy(false); setIkaHealthy(false); })
       .finally(() => setChecking(false));
-
-    const saved = localStorage.getItem("heirloom_eth_address");
-    if (saved) setEthAddress(saved);
 
     const vs = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
     setVaults(vs);
   }, []);
 
-  const handleConnect = async () => {
+  const handleHeartbeat = async (vault: Vault) => {
+    setHeartbeating(vault.estateId);
+    setHeartbeatError(null);
+
     try {
-      const wallet = await connectEthWallet();
-      setEthAddress(wallet.address);
-      localStorage.setItem("heirloom_eth_address", wallet.address);
+      const { challenge_b64 } = await getHeartbeatChallenge(vault.estateId);
+      // Empty credentialId lets the browser prompt the user to pick from available passkeys
+      const assertion = await signHeartbeat(challenge_b64, "");
+
+      await postHeartbeat({
+        estate_id: vault.estateId,
+        signature_b64: assertion.signatureB64,
+        authenticator_data_b64: assertion.authenticatorDataB64,
+        client_data_json: assertion.clientDataJson,
+      });
+
+      const vs: Vault[] = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
+      const idx = vs.findIndex((v) => v.estateId === vault.estateId);
+      if (idx >= 0) {
+        vs[idx].lastHeartbeat = Math.floor(Date.now() / 1000);
+        localStorage.setItem("heirloom_vaults", JSON.stringify(vs));
+        setVaults([...vs]);
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
+      setHeartbeatError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setHeartbeating(null);
     }
   };
 
@@ -81,43 +97,29 @@ export default function Dashboard() {
                 {backendHealthy && ikaHealthy && <span className="neo-badge bg-accent-lime text-[10px]">Live</span>}
               </>
             )}
-            {ethAddress ? (
-              <span className="neo-badge bg-accent-cyan text-[10px] font-mono">
-                {ethAddress.slice(0, 6)}...{ethAddress.slice(-4)}
-              </span>
-            ) : (
-              <Button variant="lime" size="sm" onClick={handleConnect}>
-                <Wallet className="h-4 w-4 mr-1" /> Connect
-              </Button>
-            )}
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {!ethAddress && (
-          <div className="text-center py-16 neo-border rounded-2xl bg-card neo-shadow-lg">
-            <Wallet className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-black mb-2">Connect Your Wallet</h2>
-            <p className="text-muted-foreground mb-6">Connect MetaMask to view and manage your vaults.</p>
-            <Button variant="lime" size="lg" onClick={handleConnect}>
-              <Wallet className="h-4 w-4 mr-2" /> Connect MetaMask
-            </Button>
+        {heartbeatError && (
+          <div className="neo-border bg-accent-red/20 rounded-xl p-4 mb-4">
+            <p className="font-bold text-sm">Heartbeat failed: {heartbeatError}</p>
           </div>
         )}
 
-        {ethAddress && vaults.length === 0 && (
+        {vaults.length === 0 && (
           <div className="text-center py-16 neo-border rounded-2xl bg-card neo-shadow-lg">
             <Heart className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-xl font-black mb-2">No Vaults Yet</h2>
-            <p className="text-muted-foreground mb-6">Create your first ETH vault. No Solana needed.</p>
+            <p className="text-muted-foreground mb-6">Create your first ETH vault. No Solana wallet needed.</p>
             <Button variant="lime" size="lg" onClick={() => navigate("/create")}>
               <Plus className="h-4 w-4 mr-2" /> Create Vault
             </Button>
           </div>
         )}
 
-        {ethAddress && vaults.length > 0 && (
+        {vaults.length > 0 && (
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black">Your Vaults</h2>
@@ -130,9 +132,13 @@ export default function Dashboard() {
               {vaults.map((vault) => {
                 const status = getStatus(vault);
                 const isOpen = expanded === vault.estateId;
+                const isBeating = heartbeating === vault.estateId;
                 return (
                   <div key={vault.estateId} className="neo-border rounded-2xl bg-card overflow-hidden neo-shadow-lg">
-                    <div className="p-4 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => setExpanded(isOpen ? null : vault.estateId)}>
+                    <div
+                      className="p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+                      onClick={() => setExpanded(isOpen ? null : vault.estateId)}
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-black text-lg">{vault.label}</span>
                         <span className={`px-2 py-0.5 text-xs font-bold neo-border rounded ${status.bg} ${status.text}`}>
@@ -149,21 +155,25 @@ export default function Dashboard() {
                         <span className="font-mono text-xs">{vault.balanceEth || "0.00"} ETH</span>
                       </div>
                     </div>
+
                     {isOpen && (
                       <div className="border-t-4 border-foreground px-4 py-3 flex gap-3 flex-wrap">
-                        <Button variant="outline" size="sm" onClick={() => {
-                          // TODO: wire to POST /heartbeat when backend exposes it
-                          const vs = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
-                          const idx = vs.findIndex((v: Vault) => v.estateId === vault.estateId);
-                          if (idx >= 0) { vs[idx].lastHeartbeat = Math.floor(Date.now() / 1000); localStorage.setItem("heirloom_vaults", JSON.stringify(vs)); setVaults([...vs]); }
-                        }}>
-                          <Activity className="h-4 w-4 mr-1" /> Check In
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isBeating}
+                          onClick={() => handleHeartbeat(vault)}
+                        >
+                          {isBeating
+                            ? <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            : <Activity className="h-4 w-4 mr-1" />}
+                          {isBeating ? "Checking In…" : "Check In"}
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/withdraw")}>
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/withdraw?estate=${vault.estateId}`)}>
                           <Shield className="h-4 w-4 mr-1" /> Withdraw
                         </Button>
                         {status.label === "Claimable" && (
-                          <Button variant="lime" size="sm" onClick={() => navigate("/claim")}>
+                          <Button variant="lime" size="sm" onClick={() => navigate(`/claim?estate=${vault.estateId}`)}>
                             <AlertTriangle className="h-4 w-4 mr-1" /> Claim
                           </Button>
                         )}

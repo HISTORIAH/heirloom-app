@@ -1,9 +1,7 @@
 use quasar_lang::prelude::*;
 
 use crate::{
-    constants::IKA_DWALLET_PROGRAM_ID,
-    errors::HeirloomIkaError,
-    ika_cpi::{message_approval_pda_seeds, DWalletContext, CPI_AUTHORITY_SEED},
+    constants::IKA_DWALLET_PROGRAM_ID, errors::HeirloomIkaError, ika_cpi::DWalletContext,
     state::Estate,
 };
 
@@ -13,12 +11,10 @@ pub struct Claim {
     #[account(mut)]
     pub relayer: Signer,
 
-    // #[account(mut, address = Estate::seeds(&estate.estate_id))]
     #[account(mut)]
     pub estate: Account<Estate>,
 
-    /// Ika DWalletCoordinator PDA (readonly)
-    #[account(address = coordinator_pda(IKA_DWALLET_PROGRAM_ID))]
+    /// Ika DWalletCoordinator PDA (readonly) — address verified in validate()
     pub coordinator: UncheckedAccount,
 
     /// MessageApproval PDA to be created by Ika program (writable)
@@ -33,17 +29,18 @@ pub struct Claim {
     #[account(address = crate::ID)]
     pub caller_program: UncheckedAccount,
 
-    /// CPI authority PDA: seeds = [b"__ika_cpi_authority"]
-    #[account(address = cpi_authority_pda())]
+    /// CPI authority PDA — address verified in validate()
     pub cpi_authority: UncheckedAccount,
 
-    /// Ika dWallet program
-    #[account(address = IKA_DWALLET_PROGRAM_ID)]
+    /// Ika dWallet program — address verified in validate()
     pub ika_program: UncheckedAccount,
 
     pub system_program: Program<SystemProgram>,
 
     pub clock: Sysvar<Clock>,
+
+    /// Instructions sysvar — used to read the secp256k1 precompile instruction
+    pub instructions: UncheckedAccount,
 }
 
 impl Claim {
@@ -53,18 +50,22 @@ impl Claim {
         message_hash: [u8; 32],
         message_approval_bump: u8,
     ) -> Result<(), ProgramError> {
-        ctx.accounts.validate()?;
+        ctx.accounts.validate(&message_hash)?;
 
-        // Build Ika CPI context
-        let cpi_bump = ctx.bumps.cpi_authority;
+        // Verify secp256k1 precompile at ix[0]: recovered address == heir_address
+        verify_eth_sig_precompile(
+            ctx.accounts.instructions.to_account_view(),
+            &message_hash,
+            ctx.accounts.estate.heir_address().as_bytes(),
+        )?;
+
         let ika_ctx = DWalletContext {
             dwallet_program: ctx.accounts.ika_program.to_account_view(),
             cpi_authority: ctx.accounts.cpi_authority.to_account_view(),
             caller_program: ctx.accounts.caller_program.to_account_view(),
-            cpi_authority_bump: cpi_bump,
+            cpi_authority_bump: super::cpi_authority_pda().1,
         };
 
-        // Extract public key slice (respected length)
         let pk_len = ctx.accounts.estate.public_key_len as usize;
         let mut user_pubkey = [0u8; 32];
         if pk_len == 33 {
@@ -73,7 +74,6 @@ impl Claim {
             user_pubkey.copy_from_slice(&ctx.accounts.estate.public_key[0..32]);
         }
 
-        // CPI call Ika approve_message
         ika_ctx.approve_message(
             ctx.accounts.coordinator.to_account_view(),
             ctx.accounts.message_approval.to_account_view(),
@@ -81,26 +81,24 @@ impl Claim {
             ctx.accounts.relayer.to_account_view(),
             ctx.accounts.system_program.to_account_view(),
             message_hash,
-            [0u8; 32], // message_metadata_digest — simple transfers have no metadata
+            [0u8; 32],
             user_pubkey,
             ctx.accounts.estate.signature_scheme.get(),
             message_approval_bump,
         )?;
 
-        // Mark estate as claimed
         ctx.accounts.estate.is_claimed = true.into();
 
         Ok(())
     }
 
     #[inline(always)]
-    pub fn validate(&self) -> Result<(), ProgramError> {
+    pub fn validate(&self, _message_hash: &[u8; 32]) -> Result<(), ProgramError> {
         require!(
             !self.estate.is_claimed.get(),
             HeirloomIkaError::EstateAlreadyClaimed
         );
 
-        // Verify claim window is open
         let now = self.clock.unix_timestamp.get();
         let claimable_at = self
             .estate
@@ -113,51 +111,79 @@ impl Claim {
             return Err(HeirloomIkaError::NotYetClaimable.into());
         }
 
-        // If deferred, claim is blocked
         require!(
             !self.estate.is_deferred.get(),
             HeirloomIkaError::EstatePaused
         );
 
-        // Verify message_approval PDA is correctly derived
-        let pk_len = self.estate.public_key_len as usize;
-        let public_key = &self.estate.public_key[..pk_len];
-        let _expected_seeds = message_approval_pda_seeds(
-            self.estate.curve.get(),
-            public_key,
-            self.estate.signature_scheme.get(),
-            // We can't verify message_hash here since it's instruction data,
-            // but the Ika program will verify it during CPI.
-            &[0u8; 32],
-        );
-        // We verify that the passed message_approval account is uninitialized
-        // (it will be created by the Ika program during CPI)
         require!(
             self.message_approval.to_account_view().is_data_empty(),
             HeirloomIkaError::InvalidTxPayload
+        );
+
+        require!(
+            *self.instructions.address()
+                == solana_address::address!("Sysvar1nstructions1111111111111111111111111"),
+            HeirloomIkaError::InvalidProgram
+        );
+
+        require!(
+            *self.coordinator.address() == super::coordinator_pda(),
+            HeirloomIkaError::InvalidProgram
+        );
+
+        require!(
+            *self.cpi_authority.address() == super::cpi_authority_pda().0,
+            HeirloomIkaError::InvalidProgram
+        );
+
+        require!(
+            *self.ika_program.address() == IKA_DWALLET_PROGRAM_ID,
+            HeirloomIkaError::InvalidProgram
         );
 
         Ok(())
     }
 }
 
-/// Derive the Ika coordinator PDA.
-#[inline(always)]
-fn coordinator_pda(ika_program: Address) -> Address {
-    // Coordinator seeds: [b"dwallet_coordinator"]
-    let seeds: &[&[u8]] = &[b"dwallet_coordinator"];
-    match quasar_lang::pda::based_try_find_program_address(seeds, &ika_program) {
-        Ok((addr, _)) => addr,
-        Err(_) => ika_program, // fallback — should never happen
-    }
-}
+/// Verify that ix[0] is a secp256k1 precompile where the recovered ETH address
+/// matches the estate's `heir_address` (stored as a hex string).
+///
+/// The heir signs with MetaMask personal_sign (EIP-191 prefix applied by the wallet).
+/// We verify only the recovered address; message binding comes from the MessageApproval PDA.
+fn verify_eth_sig_precompile(
+    instructions_sysvar: &AccountView,
+    _message_hash: &[u8; 32],
+    heir_address_hex: &[u8],
+) -> Result<(), ProgramError> {
+    // Safety: instructions sysvar is read-only and not writable in this tx.
+    let sysvar_data = unsafe { instructions_sysvar.borrow_unchecked() };
+    let ix_data = super::load_ix_data(sysvar_data, 0)?;
 
-/// Derive this program's CPI authority PDA.
-#[inline(always)]
-fn cpi_authority_pda() -> Address {
-    let seeds: &[&[u8]] = &[CPI_AUTHORITY_SEED];
-    match quasar_lang::pda::based_try_find_program_address(seeds, &crate::ID) {
-        Ok((addr, _)) => addr,
-        Err(_) => crate::ID, // fallback — should never happen
+    // Secp256k1 precompile data layout:
+    //   [0]:      num_signatures (must be 1)
+    //   [1..3]:   sig_offset (u16 LE)
+    //   [3]:      sig_ix_index
+    //   [4..6]:   eth_address_offset (u16 LE)
+    //   [6]:      eth_address_ix_index
+    //   [7..9]:   msg_offset (u16 LE)
+    //   [9..11]:  msg_size (u16 LE)
+    //   [11]:     msg_ix_index
+    //   [12..]:   packed data
+    if ix_data.len() < 12 || ix_data[0] != 1 {
+        return Err(HeirloomIkaError::InvalidTxPayload.into());
     }
+
+    let eth_addr_offset = u16::from_le_bytes([ix_data[4], ix_data[5]]) as usize;
+    if ix_data.len() < eth_addr_offset + 20 {
+        return Err(HeirloomIkaError::InvalidTxPayload.into());
+    }
+
+    let recovered_addr = &ix_data[eth_addr_offset..eth_addr_offset + 20];
+    let heir_eth = super::parse_eth_address_str(heir_address_hex)?;
+    if recovered_addr != heir_eth.as_ref() {
+        return Err(HeirloomIkaError::Unauthorized.into());
+    }
+
+    Ok(())
 }
