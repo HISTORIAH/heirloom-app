@@ -8,7 +8,6 @@
     "clients/*",
     "clients-ika/*",
     "tests"
-    "blog"
   ],
   "scripts": {
     "dev:ui": "turbo run dev --filter=app",
