@@ -132,6 +132,16 @@ export async function postWithdraw(body: {
 export async function signMessageHash(messageHashHex: string, ethAddress: string): Promise<string> {
   const provider = (window as any).ethereum;
   if (!provider) throw new Error("MetaMask not installed.");
+
+  // Authorize the account with MetaMask before signing (required on first visit / new domain).
+  const accounts: string[] = await provider.request({ method: "eth_requestAccounts" });
+  const normalized = ethAddress.toLowerCase();
+  if (!accounts.some((a) => a.toLowerCase() === normalized)) {
+    throw new Error(
+      `Address ${ethAddress} is not connected in MetaMask. Switch to that account and try again.`
+    );
+  }
+
   return provider.request({
     method: "personal_sign",
     params: [`0x${messageHashHex}`, ethAddress],
