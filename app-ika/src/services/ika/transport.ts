@@ -12,8 +12,8 @@ export async function isIkaAvailable(): Promise<boolean> {
 /**
  * HTTP transport that proxies to the Rust backend.
  *
- * The backend forwards to the Ika gRPC network. The browser never speaks
- * raw gRPC — it sends hex-encoded BCS bytes over HTTP POST.
+ * The backend forwards to the Ika gRPC network because the
+ * browser can't translate raw gRPC
  */
 export function createHttpTransport(baseUrl: string = IKA_GRPC_URL): IkaGrpcTransport {
   return {
