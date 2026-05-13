@@ -1,6 +1,6 @@
 use quasar_lang::prelude::*;
 
-use crate::{errors::HeirloomIkaError, state::Estate};
+use crate::{constants::SECP256R1_PROGRAM_ADDRESS, errors::HeirloomIkaError, state::Estate};
 
 #[derive(Accounts)]
 pub struct Heartbeat {
@@ -46,10 +46,6 @@ impl Heartbeat {
         );
 
         let now = self.clock.unix_timestamp.get();
-        let last = self.estate.last_heartbeat.get();
-        if now < last + 60 {
-            return Err(HeirloomIkaError::HeartbeatTooSoon.into());
-        }
 
         if now < self.estate.paused_until.get() {
             return Err(HeirloomIkaError::EstatePaused.into());
@@ -57,9 +53,7 @@ impl Heartbeat {
 
         require!(
             *self.instructions.address()
-                == solana_address::address!(
-                    "Sysvar1nstructions1111111111111111111111111"
-                ),
+                == solana_address::address!("Sysvar1nstructions1111111111111111111111111"),
             HeirloomIkaError::InvalidProgram
         );
 
@@ -77,26 +71,26 @@ fn verify_heartbeat_precompile(
     let sysvar_data = unsafe { instructions_sysvar.borrow_unchecked() };
     let (program_id, ix_data) = super::load_instruction_at(sysvar_data, 0)?;
 
-    let secp256r1 = solana_address::address!("Secp256r1SigVerify1111111111111111111111111");
-    if program_id != secp256r1.as_ref() {
+    if program_id != SECP256R1_PROGRAM_ADDRESS.as_ref() {
         return Err(HeirloomIkaError::InvalidProgram.into());
     }
 
-    // secp256r1 precompile data layout (SIMD-0075):
-    //   [0]:      num_signatures (must be 1)
-    //   [1..3]:   sig_offset (u16 LE)
-    //   [3]:      sig_instruction_index
-    //   [4..6]:   pubkey_offset (u16 LE)
-    //   [6]:      pubkey_instruction_index
-    //   [7..9]:   msg_offset (u16 LE)
-    //   [9..11]:  msg_size (u16 LE)
-    //   [11]:     msg_instruction_index
-    //   [12..]:   packed data
-    if ix_data.len() < 12 || ix_data[0] != 1 {
+    // secp256r1 precompile data layout (SIMD-0075, matches solana-secp256r1-program):
+    //   [0]:       num_signatures (must be 1)
+    //   [1]:       padding
+    //   [2..4]:    signature_offset (u16 LE)
+    //   [4..6]:    signature_instruction_index (u16 LE)
+    //   [6..8]:    public_key_offset (u16 LE)
+    //   [8..10]:   public_key_instruction_index (u16 LE)
+    //   [10..12]:  message_data_offset (u16 LE)
+    //   [12..14]:  message_data_size (u16 LE)
+    //   [14..16]:  message_instruction_index (u16 LE)
+    //   [16..]:    packed data (pubkey first, then signature, then message)
+    if ix_data.len() < 16 || ix_data[0] != 1 {
         return Err(HeirloomIkaError::InvalidTxPayload.into());
     }
 
-    let pubkey_offset = u16::from_le_bytes([ix_data[4], ix_data[5]]) as usize;
+    let pubkey_offset = u16::from_le_bytes([ix_data[6], ix_data[7]]) as usize;
     if ix_data.len() < pubkey_offset + 33 {
         return Err(HeirloomIkaError::InvalidTxPayload.into());
     }

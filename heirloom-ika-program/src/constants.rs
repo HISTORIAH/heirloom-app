@@ -13,3 +13,6 @@ pub const LABEL_MAX_LEN: usize = 32;
 /// Maximum heir address length (sufficient for BTC bech32)
 #[allow(dead_code)]
 pub const HEIR_ADDR_MAX_LEN: usize = 64;
+
+pub const SECP256R1_PROGRAM_ADDRESS: solana_address::Address =
+    solana_address::address!("Secp256r1SigVerify1111111111111111111111111");

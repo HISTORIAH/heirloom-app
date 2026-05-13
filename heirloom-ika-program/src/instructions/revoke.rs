@@ -1,4 +1,4 @@
-use quasar_lang::prelude::*;
+use quasar_lang::{log, prelude::*};
 
 use crate::{
     constants::IKA_DWALLET_PROGRAM_ID, errors::HeirloomIkaError, ika_cpi::DWalletContext,
@@ -95,10 +95,10 @@ impl Revoke {
 
     #[inline(always)]
     pub fn validate(&self, _message_hash: &[u8; 32]) -> Result<(), ProgramError> {
-        require!(
-            !self.estate.is_claimed.get(),
-            HeirloomIkaError::EstateAlreadyClaimed
-        );
+        // require!(
+        //     !self.estate.is_claimed.get(),
+        //     HeirloomIkaError::EstateAlreadyClaimed
+        // );
 
         let now = self.clock.unix_timestamp.get();
         let claimable_at = self
@@ -108,6 +108,7 @@ impl Revoke {
             .and_then(|t| t.checked_add(self.estate.grace_period))
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
+        // ? should we allow this
         // Revoke must happen before claim window opens
         if now >= claimable_at.max(self.estate.paused_until) {
             return Err(HeirloomIkaError::NotYetClaimable.into());
