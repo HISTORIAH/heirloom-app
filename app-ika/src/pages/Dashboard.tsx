@@ -443,8 +443,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-20">
           <div className="flex items-center gap-2 text-lg font-black">
             <Heart className="h-5 w-5" strokeWidth={3} />
-            Heirloom
-            <span className="neo-badge bg-accent-cyan ml-2 text-[10px]">IKA</span>
+            Heirloom • IKA
           </div>
           <span className="hidden md:inline text-2xl font-black">Vault Dashboard</span>
           <div className="flex items-center gap-3">
@@ -455,13 +454,22 @@ export default function Dashboard() {
             ) : (
               <>
                 {!backendHealthy && (
-                  <span className="neo-badge bg-accent-red text-[10px]">Backend Off</span>
+                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                    <span className="h-2.5 w-2.5 rounded-full bg-accent-red" />
+                    Backend Off
+                  </span>
                 )}
                 {backendHealthy && ikaHealthy && (
-                  <span className="neo-badge bg-accent-lime text-[10px]">Live</span>
+                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                    <span className="h-2.5 w-2.5 rounded-full bg-accent-lime" />
+                    Live
+                  </span>
                 )}
                 {backendHealthy && !ikaHealthy && (
-                  <span className="neo-badge bg-accent-yellow text-[10px]">IKA Off</span>
+                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                    <span className="h-2.5 w-2.5 rounded-full bg-accent-yellow" />
+                    IKA Off
+                  </span>
                 )}
               </>
             )}

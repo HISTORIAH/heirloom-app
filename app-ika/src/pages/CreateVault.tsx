@@ -263,7 +263,7 @@ export default function CreateVault() {
               Back
             </button>
             <span className="text-2xl font-black">Create ETH Vault</span>
-            <span className="neo-badge bg-accent-cyan text-[10px]">IKA</span>
+            <span className="text-lg font-black">IKA</span>
           </div>
         </div>
 
