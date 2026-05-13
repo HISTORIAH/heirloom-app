@@ -178,6 +178,14 @@ heirloom-app/
 └── README.md                 You are here
 ```
 
+## Cross-chain (IKA) variant
+
+The repo also ships a separate cross-chain frontend, `app-ika/`, which extends Heirloom beyond Solana-native assets to EVM chains and Bitcoin via the [Ika](https://ika.xyz) threshold-MPC network and the companion `heirloom-ika-program` Solana program.
+
+For detailed info on IKA integration, the dWallet lifecycle, passkey heartbeats, MetaMask claim flow, the CPI into Ika's `approve_message`, the full account set on `claim` / `revoke`, and end-to-end flows, read:
+
+- [app-ika/README.md](./app-ika/README.md) - frontend integration and `heirloom-ika-program` interaction reference
+
 ## Tools and Technologies
 
 **On-chain**
