@@ -3,7 +3,7 @@
 // Registration: called once during vault creation to bind a P-256 device key.
 // Signing:      called for each heartbeat to prove the device is present.
 
-const DEBUG = true;
+const DEBUG = import.meta.env.DEV;
 function log(...args: unknown[]) {
   if (DEBUG) console.log("[passkey]", ...args);
 }

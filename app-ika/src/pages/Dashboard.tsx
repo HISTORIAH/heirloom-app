@@ -17,21 +17,8 @@ import {
 } from "lucide-react";
 import { getHealth, getHeartbeatChallenge, postHeartbeat } from "@/services/api";
 import { signHeartbeat } from "@/services/passkey";
-
-interface Vault {
-  estateId: string;
-  estatePda?: string;
-  label: string;
-  ethDepositAddress: string;
-  dwalletSolana?: string;
-  balanceEth?: string;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  lastHeartbeat: number;
-  isClaimed: boolean;
-}
-
-type UiState = "active" | "grace" | "claimable" | "distributed";
+import type { Vault, UiState, CountdownParts } from "@/types";
+import { formatDuration } from "@/lib/utils";
 
 const statusConfig: Record<UiState, { bg: string; label: string; description: string }> = {
   active: {
@@ -55,21 +42,6 @@ const statusConfig: Record<UiState, { bg: string; label: string; description: st
     description: "Vault has been claimed and closed.",
   },
 };
-
-function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "0s";
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86400)}d`;
-}
-
-interface CountdownParts {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
 
 function computeTick(vault: Vault): { state: UiState; label: string; countdown: CountdownParts } {
   if (vault.isClaimed) {

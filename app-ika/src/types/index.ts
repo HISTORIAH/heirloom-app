@@ -20,3 +20,27 @@ export interface SignResult {
 export interface IkaGrpcTransport {
   submitTransaction(userSignature: Uint8Array, signedRequestData: Uint8Array): Promise<Uint8Array>;
 }
+
+// ── App domain types ──────────────────────────────────────────────────────────
+
+export interface Vault {
+  estateId: string;
+  estatePda?: string;
+  label: string;
+  ethDepositAddress: string;
+  dwalletSolana?: string;
+  balanceEth?: string;
+  heartbeatInterval: number;
+  gracePeriod: number;
+  lastHeartbeat: number;
+  isClaimed: boolean;
+}
+
+export type UiState = "active" | "grace" | "claimable" | "distributed";
+
+export interface CountdownParts {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}

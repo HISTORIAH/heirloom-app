@@ -18,17 +18,10 @@ import {
 import { createVault } from "@/services/api";
 import { registerPasskey } from "@/services/passkey";
 import { QRCodeSVG } from "qrcode.react";
+import { formatDuration, isValidEthAddress } from "@/lib/utils";
 
 const STEPS = ["Heartbeat", "Owner", "Heir", "Review"];
 const LABEL_MAX_LEN = 32;
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  const d = Math.round(seconds / 86400);
-  return `${d} day${d !== 1 ? "s" : ""}`;
-}
 
 const HEARTBEAT_PRESETS = [
   { label: "7d", days: 7 },
@@ -74,10 +67,9 @@ export default function CreateVault() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const isValidEth = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
   const labelValid = label.trim().length > 0 && label.length <= LABEL_MAX_LEN;
-  const ownerValid = isValidEth(ownerAddress);
-  const heirValid = isValidEth(heirEthAddress);
+  const ownerValid = isValidEthAddress(ownerAddress);
+  const heirValid = isValidEthAddress(heirEthAddress);
 
   const canProceed = () => {
     if (step === 0) return heartbeatDays > 0 && graceDays > 0 && labelValid;
