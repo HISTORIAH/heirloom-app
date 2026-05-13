@@ -1,6 +1,6 @@
 use quasar_lang::prelude::*;
 
-use crate::{errors::HeirloomIkaError, state::Estate};
+use crate::{constants::SECP256R1_PROGRAM_ADDRESS, errors::HeirloomIkaError, state::Estate};
 
 #[derive(Accounts)]
 pub struct Heartbeat {
@@ -71,8 +71,7 @@ fn verify_heartbeat_precompile(
     let sysvar_data = unsafe { instructions_sysvar.borrow_unchecked() };
     let (program_id, ix_data) = super::load_instruction_at(sysvar_data, 0)?;
 
-    let secp256r1 = solana_address::address!("Secp256r1SigVerify1111111111111111111111111");
-    if program_id != secp256r1.as_ref() {
+    if program_id != SECP256R1_PROGRAM_ADDRESS.as_ref() {
         return Err(HeirloomIkaError::InvalidProgram.into());
     }
 

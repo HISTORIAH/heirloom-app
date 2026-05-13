@@ -1,4 +1,4 @@
-import { IKA_GRPC_URL } from "@/config/constants";
+import { IKA_GRPC_URL } from "@/config";
 import type { IkaGrpcTransport } from "@/types";
 
 /**

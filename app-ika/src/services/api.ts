@@ -1,7 +1,7 @@
-// Base is just the host + /v1/ika — no trailing slash.
+import { BACKEND_URL } from "@/config";
+
 // The env var should be e.g. "http://localhost:3040" (no path).
-const BASE_HOST = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3040").replace(/\/$/, "");
-const API_BASE = `${BASE_HOST}/v1/ika`;
+const API_BASE = `${BACKEND_URL}/v1/ika`;
 
 async function post<T = unknown>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
