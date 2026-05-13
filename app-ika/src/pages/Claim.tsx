@@ -352,7 +352,7 @@ export default function Claim() {
                     />
                   </div>
                   <p className="text-xs font-medium text-muted-foreground">
-                    MetaMask will ask you to sign the transaction hash. This authorizes the on-chain
+                    Your wallet provider will ask you to sign the transaction hash. This authorizes the on-chain
                     claim instruction.
                   </p>
                 </div>

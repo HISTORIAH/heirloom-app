@@ -282,7 +282,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
           prev.map((i) => (i.ownerAddress === inh.ownerAddress ? updated : i)),
         );
       } else {
-        // Estate was closed on-chain — mark as distributed
+        // Estate was closed on-chain —> mark as distributed
         setInheritances((prev) =>
           prev.map((i) =>
             i.ownerAddress === inh.ownerAddress
