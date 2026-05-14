@@ -10,8 +10,9 @@ import {
   Coins,
   User,
 } from "lucide-react";
-import { getClaimTx, postClaim, signMessageHash } from "@/services/api";
-import type { ClaimTxInfo } from "@/services/api";
+import { getClaimTx, postClaim } from "@/services/api/claim";
+import type { ClaimTxInfo } from "@/types/api";
+import { signMessageHash } from "@/services/ethereum";
 import type { Vault } from "@/types";
 import { formatWei, isValidEthAddress } from "@/lib/utils";
 import { VaultList } from "@/components/VaultList";

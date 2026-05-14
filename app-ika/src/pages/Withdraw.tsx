@@ -11,8 +11,9 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { getWithdrawTx, postWithdraw, signMessageHash } from "@/services/api";
-import type { WithdrawTxInfo } from "@/services/api";
+import { getWithdrawTx, postWithdraw } from "@/services/api/withdraw";
+import type { WithdrawTxInfo } from "@/types/api";
+import { signMessageHash } from "@/services/ethereum";
 import type { Vault } from "@/types";
 import { formatWei, isValidEthAddress } from "@/lib/utils";
 import { VaultList } from "@/components/VaultList";
@@ -74,6 +75,14 @@ export default function Withdraw() {
       });
 
       setResult({ solana_tx: resp.solana_tx, eth_tx: resp.eth_tx });
+
+      const vs = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
+      const idx = vs.findIndex((v: { estateId: string }) => v.estateId === txInfo.estate_id);
+      if (idx >= 0) {
+        vs[idx].isClaimed = true;
+        localStorage.setItem("heirloom_vaults", JSON.stringify(vs));
+      }
+
       setStep("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

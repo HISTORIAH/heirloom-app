@@ -15,10 +15,11 @@ import {
   Globe,
   LogOut,
 } from "lucide-react";
-import { getHealth, getHeartbeatChallenge, postHeartbeat } from "@/services/api";
+import { getHealth, getVaultBalance } from "@/services/api/vault";
+import { getHeartbeatChallenge, postHeartbeat } from "@/services/api/heartbeat";
 import { signHeartbeat } from "@/services/passkey";
 import type { Vault, UiState, CountdownParts } from "@/types";
-import { formatDuration } from "@/lib/utils";
+import { formatDuration, formatWei } from "@/lib/utils";
 
 const statusConfig: Record<UiState, { bg: string; label: string; description: string }> = {
   active: {
@@ -90,10 +91,12 @@ const VaultCard = ({
   vault,
   onHeartbeat,
   heartbeating,
+  balanceWei,
 }: {
   vault: Vault;
   onHeartbeat: (v: Vault) => Promise<void>;
   heartbeating: boolean;
+  balanceWei?: string;
 }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
@@ -216,7 +219,9 @@ const VaultCard = ({
             </div>
             <h3 className="font-black">ETH Balance</h3>
           </div>
-          <p className="text-3xl md:text-4xl font-black tabular-nums">{vault.balanceEth || "0.00"}</p>
+          <p className="text-3xl md:text-4xl font-black tabular-nums">
+            {balanceWei != null ? formatWei(balanceWei) : "—"}
+          </p>
           <p className="text-sm font-bold text-muted-foreground">ETH locked in vault</p>
         </div>
 
@@ -290,8 +295,8 @@ const VaultCard = ({
         </div>
       </div>
 
-      {/* Withdraw action */}
-      {computedState !== "distributed" && (
+      {/* Withdraw action — only available before claim window opens */}
+      {(computedState === "active" || computedState === "grace") && (
         <div className="neo-card-static">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -354,6 +359,7 @@ export default function Dashboard() {
   const [heartbeating, setHeartbeating] = useState<string | null>(null);
   const [heartbeatError, setHeartbeatError] = useState<string | null>(null);
   const [lastHeartbeatOk, setLastHeartbeatOk] = useState<string | null>(null);
+  const [balances, setBalances] = useState<Record<string, string>>({});
 
   useEffect(() => {
     getHealth()
@@ -367,8 +373,15 @@ export default function Dashboard() {
       })
       .finally(() => setChecking(false));
 
-    const vs = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
+    const vs: Vault[] = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
     setVaults(vs);
+
+    // Fetch ETH balances for all vaults in the background.
+    vs.forEach((v) => {
+      getVaultBalance(v.estateId)
+        .then((b) => setBalances((prev) => ({ ...prev, [v.estateId]: b.balance_wei })))
+        .catch(() => {/* balance stays undefined — backend may be down */});
+    });
   }, []);
 
   const handleHeartbeat = async (vault: Vault) => {
@@ -527,6 +540,7 @@ export default function Dashboard() {
             vault={v}
             onHeartbeat={handleHeartbeat}
             heartbeating={heartbeating === v.estateId}
+            balanceWei={balances[v.estateId]}
           />
         ))}
       </div>

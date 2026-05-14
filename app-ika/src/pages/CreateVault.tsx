@@ -15,7 +15,7 @@ import {
   Shield,
   Check,
 } from "lucide-react";
-import { createVault } from "@/services/api";
+import { createVault } from "@/services/api/vault";
 import { registerPasskey } from "@/services/passkey";
 import { QRCodeSVG } from "qrcode.react";
 import { formatDuration, isValidEthAddress } from "@/lib/utils";
