@@ -27,7 +27,7 @@ const reasons = [
   },
   {
     icon: Layers,
-    title: "SPL Token Standard",
+    title: "SPL Token Standard ",
     description: "Standard token interface for composable, programmable inheritance of any SPL token pair.",
     badge: "SPL",
     badgeColor: "bg-accent-pink",
