@@ -136,7 +136,6 @@ export async function fetchVaultClaimableLamports(
  * Estate layout: discriminator(1) | authority(32) | heir(32) | ...
  * Filter: discriminator == 1 (estate) AND authority == wallet address.
  */
- // TODO: GENERATED PROGRAMS PROVIDE A WAY TO FETCH ACCOUNTS
 export async function fetchEstatesByAuthority(
   rpc: AppRpc,
   authority: Address,

@@ -18,7 +18,6 @@ import {
   type Address,
   type TransactionSigner,
 } from "@solana/kit";
-import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import {
   ArrowLeft,
   Search,
@@ -30,6 +29,7 @@ import {
   Heart,
   Clock,
 } from "lucide-react";
+import { RequireWallet } from "@/components/RequireWallet";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -301,29 +301,10 @@ const HeartbeatPageInner: React.FC<{
   );
 };
 
-const HeartbeatPage = () => {
-  const walletUi = useWalletUi() as unknown as { account?: { address: string } | null };
-  const account = walletUi?.account ?? null;
-
-  if (!account) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-2xl font-black mb-3">Connect Wallet</h2>
-          <p className="text-muted-foreground font-medium">Connect your wallet to send heartbeats.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <HeartbeatPageConnected account={account} />;
-};
-
-const HeartbeatPageConnected: React.FC<{ account: { address: string } }> = ({ account }) => {
-  const signer = useWalletUiSigner() as unknown as TransactionSigner;
-  const walletAddress = toAddress(account.address);
-  return <HeartbeatPageInner signer={signer} walletAddress={walletAddress} />;
-};
+const HeartbeatPage = () => (
+  <RequireWallet message="Connect your wallet to send heartbeats.">
+    {({ signer, address }) => <HeartbeatPageInner signer={signer} walletAddress={address} />}
+  </RequireWallet>
+);
 
 export default HeartbeatPage;

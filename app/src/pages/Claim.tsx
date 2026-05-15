@@ -22,13 +22,13 @@ import {
   type TransactionSigner,
 } from "@solana/kit";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
-import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
   AlertTriangle, Coins, Gift,
 } from "lucide-react";
 import TokenAvatar from "@/components/TokenAvatar";
 import WalletPill from "@/components/WalletPill";
+import { RequireWallet } from "@/components/RequireWallet";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
 const stateColors: Record<string, string> = {
@@ -455,29 +455,10 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   );
 };
 
-const ClaimPage = () => {
-  const walletUi = useWalletUi() as unknown as { account?: { address: string } | null };
-  const account = walletUi?.account ?? null;
-
-  if (!account) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-2xl font-black mb-3">Connect Wallet</h2>
-          <p className="text-muted-foreground font-medium">Connect your wallet to look up inheritances.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <ClaimPageConnected account={account} />;
-};
-
-const ClaimPageConnected: React.FC<{ account: { address: string } }> = ({ account }) => {
-  const signer = useWalletUiSigner() as unknown as TransactionSigner;
-  const heirAddress = toAddress(account.address);
-  return <ClaimPageInner signer={signer} heirAddress={heirAddress} />;
-};
+const ClaimPage = () => (
+  <RequireWallet message="Connect your wallet to look up inheritances.">
+    {({ signer, address }) => <ClaimPageInner signer={signer} heirAddress={address} />}
+  </RequireWallet>
+);
 
 export default ClaimPage;

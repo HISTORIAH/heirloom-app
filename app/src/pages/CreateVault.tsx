@@ -804,7 +804,6 @@ const CreateVaultPage = () => {
                                 <div className="text-right shrink-0">
                                   {isActive && (
                                     <p className="text-xs font-black uppercase tracking-widest text-foreground">
-                                      {/*+{amount.toLocaleString(undefined, { maximumFractionDigits: dec })}*/}
                                       {formatUiAmount(amount)}
                                     </p>
                                   )}
@@ -924,11 +923,9 @@ const CreateVaultPage = () => {
                   {selectedTokenEntries.map(([mint, amt]) => {
                     const tok = (tokens ?? []).find((t) => t.mint === mint);
                     const tokLabel = tok?.label ?? mint.slice(0, 8);
-                    // const dec = tok?.decimals ?? 9;
                     return (
                       <div key={mint} className="flex justify-between mb-2">
                         <span className="font-bold">{tokLabel}</span>
-                        {/*<span className="font-black text-xl">{amt.toFixed(Math.min(6, dec))}</span>*/}
                         <span className="font-black text-xl">{formatUiAmount(amt)}</span>
                       </div>
                     );

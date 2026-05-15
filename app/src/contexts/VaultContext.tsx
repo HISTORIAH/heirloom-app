@@ -441,6 +441,10 @@ const VaultProviderInner: React.FC<{
   return <VaultContext.Provider value={value}>{children}</VaultContext.Provider>;
 };
 
+const notConnected = async (): Promise<never> => {
+  throw new Error("Wallet not connected");
+};
+
 const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const stubValue: VaultState = {
     estates: [],
@@ -449,27 +453,13 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     pendingTxId: null,
     pendingCreate: false,
     fetchEstates: async () => { },
-    createEstateOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    registerAssetOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    registerSolOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    sendHeartbeatOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    updateEstateFieldsOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    revokeEstateOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
-    updateHeirOnChain: async () => {
-      throw new Error("Wallet not connected");
-    },
+    createEstateOnChain: notConnected,
+    registerAssetOnChain: notConnected,
+    registerSolOnChain: notConnected,
+    sendHeartbeatOnChain: notConnected,
+    updateEstateFieldsOnChain: notConnected,
+    revokeEstateOnChain: notConnected,
+    updateHeirOnChain: notConnected,
     clearVault: () => { },
   };
   return <VaultContext.Provider value={stubValue}>{children}</VaultContext.Provider>;

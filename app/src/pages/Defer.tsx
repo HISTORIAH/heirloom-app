@@ -18,11 +18,12 @@ import {
   type Address,
   type TransactionSigner,
 } from "@solana/kit";
-import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
   AlertTriangle, Coins, Shield, Clock,
 } from "lucide-react";
+import { RequireWallet } from "@/components/RequireWallet";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -48,6 +49,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [deferring, setDeferring] = useState(false);
   const [deferTxId, setDeferTxId] = useState<string | null>(null);
+  const [deferConfirmOpen, setDeferConfirmOpen] = useState(false);
 
   const handleLookup = async () => {
     const a = authorityInput.trim();
@@ -74,7 +76,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
     setLooking(false);
   };
 
-  const handleDefer = async () => {
+  const requestDefer = () => {
     if (!estate) return;
     if (estate.isDeferred) {
       toast({
@@ -84,7 +86,11 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
       });
       return;
     }
-    if (!confirm(`Extend claim window by ${formatDuration(estate.pauseDuration)}?`)) return;
+    setDeferConfirmOpen(true);
+  };
+
+  const performDefer = async () => {
+    if (!estate) return;
     setDeferring(true);
     try {
       const tx = await sendDelegateDefer(client, {
@@ -93,6 +99,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
         heir: toAddress(estate.heir),
       });
       setDeferTxId(tx);
+      setDeferConfirmOpen(false);
       toast({ title: "Defer submitted", description: "Claim window extended." });
       const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
@@ -272,7 +279,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
                       variant="default"
                       size="xl"
                       className="w-full"
-                      onClick={handleDefer}
+                      onClick={requestDefer}
                       disabled={!canDefer || deferring}
                     >
                       {deferring ? (
@@ -296,33 +303,34 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deferConfirmOpen}
+        title="Extend Claim Window?"
+        description={
+          estate
+            ? `Extend the claim window by ${formatDuration(estate.pauseDuration)}. This guardian pause can only be used once per estate.`
+            : undefined
+        }
+        confirmLabel="Defer"
+        cancelLabel="Cancel"
+        variant="default"
+        loading={deferring}
+        icon={<Shield className="h-6 w-6" strokeWidth={2.5} />}
+        accent="bg-accent-purple/20"
+        onConfirm={performDefer}
+        onCancel={() => {
+          if (!deferring) setDeferConfirmOpen(false);
+        }}
+      />
     </div>
   );
 };
 
-const DeferPage = () => {
-  const walletUi = useWalletUi() as unknown as { account?: { address: string } | null };
-  const account = walletUi?.account ?? null;
-
-  if (!account) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-2xl font-black mb-3">Connect Wallet</h2>
-          <p className="text-muted-foreground font-medium">Connect your wallet to act as guardian.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <DeferPageConnected account={account} />;
-};
-
-const DeferPageConnected: React.FC<{ account: { address: string } }> = ({ account }) => {
-  const signer = useWalletUiSigner() as unknown as TransactionSigner;
-  const delegateAddress = toAddress(account.address);
-  return <DeferPageInner signer={signer} delegateAddress={delegateAddress} />;
-};
+const DeferPage = () => (
+  <RequireWallet message="Connect your wallet to act as guardian.">
+    {({ signer, address }) => <DeferPageInner signer={signer} delegateAddress={address} />}
+  </RequireWallet>
+);
 
 export default DeferPage;
