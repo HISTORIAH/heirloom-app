@@ -1,8 +1,34 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { SOL_DECIMALS, SECONDS_PER_MINUTE, SECONDS_PER_HOUR, SECONDS_PER_DAY } from "@/config/constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Compact duration: "30s", "5m", "2h", "30d". Long form pluralizes day(s).
+ */
+export function formatDuration(seconds: number, opts?: { long?: boolean }): string {
+  if (seconds <= 0) return "0s";
+  if (seconds < SECONDS_PER_MINUTE) return `${seconds}s`;
+  if (seconds < SECONDS_PER_HOUR) return `${Math.floor(seconds / SECONDS_PER_MINUTE)}m`;
+  if (seconds < SECONDS_PER_DAY) return `${Math.floor(seconds / SECONDS_PER_HOUR)}h`;
+  const d = Math.round(seconds / SECONDS_PER_DAY);
+  if (opts?.long) return `${d} day${d !== 1 ? "s" : ""}`;
+  return `${d}d`;
+}
+
+export function errMsg(e: unknown, fallback = "Transaction rejected"): string {
+  return e instanceof Error ? e.message : fallback;
+}
+
+export function formatSol(lamports: number, fractionDigits = 4): string {
+  return (lamports / Math.pow(10, SOL_DECIMALS)).toFixed(fractionDigits);
+}
+
+export function formatTokenAmount(rawAmount: bigint | number, decimals: number): string {
+  return (Number(rawAmount) / Math.pow(10, decimals)).toFixed(Math.min(6, decimals));
 }
 
 /**

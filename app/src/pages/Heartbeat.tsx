@@ -3,20 +3,21 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
+import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
 import {
-  fetchEstateByPair,
-  fetchVaultClaimableLamports,
-  getVaultAddress,
   sendUpdate,
   type Client,
 } from "@/lib/contracts";
+import {
+  lookupEstateSnapshot,
+  type EstateSnapshot,
+} from "@/lib/estateLookup";
+import { formatDuration, formatSol, errMsg } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
   type TransactionSigner,
 } from "@solana/kit";
-import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import {
   ArrowLeft,
   Search,
@@ -28,22 +29,7 @@ import {
   Heart,
   Clock,
 } from "lucide-react";
-
-interface EstateLookup {
-  authorityAddress: string;
-  heirAddress: string;
-  hbSigner: string | null;
-  label: string;
-  isClaimed: boolean;
-  vaultState: "active" | "grace" | "claimable" | "distributed";
-  solBalance: number;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  lastHeartbeat: number;
-  createdAt: number;
-  pausedUntil: number;
-  claimableAssets: number;
-}
+import { RequireWallet } from "@/components/RequireWallet";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -51,88 +37,6 @@ const stateColors: Record<string, string> = {
   claimable: "bg-accent-red/20",
   distributed: "bg-secondary",
 };
-
-function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "0s";
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86400)}d`;
-}
-
-function computeState(
-  lastHeartbeat: number,
-  heartbeatInterval: number,
-  gracePeriod: number,
-  pausedUntil: number,
-  isClaimed: boolean,
-  createdAt: number,
-  vaultEmpty: boolean,
-): EstateLookup["vaultState"] {
-  if (isClaimed || vaultEmpty) return "distributed";
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
-  const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + heartbeatInterval;
-  const claimableAt = Math.max(graceDeadline + gracePeriod, pausedUntil);
-  if (now >= claimableAt) return "claimable";
-  if (now >= graceDeadline) return "grace";
-  return "active";
-}
-
-async function lookupEstate(
-  client: Client,
-  authorityStr: string,
-  heirStr: string,
-): Promise<EstateLookup | null> {
-  try {
-    const authority = toAddress(authorityStr);
-    const heir = toAddress(heirStr);
-    const maybe = await fetchEstateByPair(client.rpc, authority, heir);
-    if (!maybe.exists) return null;
-    const vaultPda = await getVaultAddress(authority, heir);
-    const lamports = await fetchVaultClaimableLamports(client.rpc, vaultPda);
-    const lastHeartbeat = Number(maybe.data.lastHeartbeat);
-    const heartbeatInterval = Number(maybe.data.heartbeatInterval);
-    const gracePeriod = Number(maybe.data.gracePeriod);
-    const pausedUntil = Number(maybe.data.pausedUntil);
-    const createdAt = Number(maybe.data.createdAt);
-    const claimableAssets = maybe.data.claimableAssets;
-    const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0;
-
-    let hbSignerAddr: string | null = null;
-    const hbs = maybe.data.hbSigner;
-    if (hbs && typeof hbs === "object" && "__option" in hbs) {
-      const opt = hbs as { __option: "Some" | "None"; value?: string };
-      if (opt.__option === "Some" && opt.value) hbSignerAddr = opt.value;
-    }
-
-    return {
-      authorityAddress: authorityStr,
-      heirAddress: heirStr,
-      hbSigner: hbSignerAddr,
-      label: maybe.data.label,
-      isClaimed: maybe.data.isClaimed,
-      vaultState: computeState(
-        lastHeartbeat,
-        heartbeatInterval,
-        gracePeriod,
-        pausedUntil,
-        maybe.data.isClaimed,
-        createdAt,
-        vaultEmpty,
-      ),
-      solBalance: Number(lamports),
-      heartbeatInterval,
-      gracePeriod,
-      lastHeartbeat,
-      createdAt,
-      pausedUntil,
-      claimableAssets,
-    };
-  } catch {
-    return null;
-  }
-}
 
 const HeartbeatPageInner: React.FC<{
   signer: TransactionSigner;
@@ -147,7 +51,7 @@ const HeartbeatPageInner: React.FC<{
   const [authorityInput, setAuthorityInput] = useState("");
   const [heirInput, setHeirInput] = useState("");
   const [looking, setLooking] = useState(false);
-  const [estate, setEstate] = useState<EstateLookup | null>(null);
+  const [estate, setEstate] = useState<EstateSnapshot | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [hbTxId, setHbTxId] = useState<string | null>(null);
@@ -160,7 +64,7 @@ const HeartbeatPageInner: React.FC<{
     setLookupError(null);
     setEstate(null);
     setHbTxId(null);
-    const result = await lookupEstate(client, a, h);
+    const result = await lookupEstateSnapshot(client, a, h);
     if (!result) {
       setLookupError("Estate not found for this authority + heir pair.");
     } else if (!result.hbSigner) {
@@ -183,17 +87,17 @@ const HeartbeatPageInner: React.FC<{
     try {
       const tx = await sendUpdate(client, {
         authority: signer,
-        authorityAddress: toAddress(estate.authorityAddress),
-        heir: toAddress(estate.heirAddress),
+        authorityAddress: toAddress(estate.authority),
+        heir: toAddress(estate.heir),
       });
       setHbTxId(tx);
       toast({ title: "Heartbeat sent", description: "Vault timer reset." });
-      const updated = await lookupEstate(client, estate.authorityAddress, estate.heirAddress);
+      const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
     } catch (err: unknown) {
       toast({
         title: "Heartbeat failed",
-        description: err instanceof Error ? err.message : "Rejected",
+        description: errMsg(err, "Rejected"),
         variant: "destructive",
       });
     } finally {
@@ -324,7 +228,7 @@ const HeartbeatPageInner: React.FC<{
                     <div className="flex items-center gap-1">
                       <Coins className="h-4 w-4" />
                       <p className="text-lg font-black">
-                        {(estate.solBalance / Math.pow(10, SOL_DECIMALS)).toFixed(4)}
+                        {formatSol(estate.solBalance)}
                       </p>
                     </div>
                   </div>
@@ -397,29 +301,10 @@ const HeartbeatPageInner: React.FC<{
   );
 };
 
-const HeartbeatPage = () => {
-  const walletUi = useWalletUi() as unknown as { account?: { address: string } | null };
-  const account = walletUi?.account ?? null;
-
-  if (!account) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-2xl font-black mb-3">Connect Wallet</h2>
-          <p className="text-muted-foreground font-medium">Connect your wallet to send heartbeats.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <HeartbeatPageConnected account={account} />;
-};
-
-const HeartbeatPageConnected: React.FC<{ account: { address: string } }> = ({ account }) => {
-  const signer = useWalletUiSigner() as unknown as TransactionSigner;
-  const walletAddress = toAddress(account.address);
-  return <HeartbeatPageInner signer={signer} walletAddress={walletAddress} />;
-};
+const HeartbeatPage = () => (
+  <RequireWallet message="Connect your wallet to send heartbeats.">
+    {({ signer, address }) => <HeartbeatPageInner signer={signer} walletAddress={address} />}
+  </RequireWallet>
+);
 
 export default HeartbeatPage;
