@@ -115,7 +115,7 @@ The generated client is the load-bearing boundary. When the on-chain program cha
 
 ```
 heirloom-app/
-├── heirloom-program/         Rust smart contract (Quasar / Solana)
+├── heirloom-program/         Solana-native Rust smart contract (Quasar)
 │   ├── src/
 │   │   ├── lib.rs            Program entrypoint, instruction dispatch
 │   │   ├── state.rs          Estate + Vault account definitions
@@ -133,8 +133,10 @@ heirloom-app/
 │   ├── Cargo.toml
 │   └── Quasar.toml           Toolchain + test framework config
 │
-├── clients/                  IDL-generated client libraries
-│   ├── js/                   @historiah/heirloom, consumed by the app
+├── heirloom-ika-program/     See app-ika/README.md
+│
+├── clients/                  IDL-generated clients for heirloom-program
+│   ├── js/                   @historiah/heirloom, consumed by app/
 │   │   └── src/
 │   │       ├── generated/    Codama output (do not edit by hand)
 │   │       ├── overrides/    Manual codec patches (estate, initialize,
@@ -144,20 +146,43 @@ heirloom-app/
 │   └── rust/                 heirloom-program-client, consumed by tests
 │       └── src/generated/
 │
-├── app/                      React + Vite frontend (see app/README.md)
+├── clients-ika/              See app-ika/README.md
+│
+├── packages/
+│   └── ui/                   @historiah/ui — shared React primitives
+│       └── src/
+│           ├── components/   button, …
+│           ├── lib/utils.ts  cn() + class helpers
+│           └── index.ts
+│
+├── app/                      Solana-native SPA (React + Vite)
 │   ├── src/
 │   │   ├── pages/            Index, CreateVault, Dashboard, Claim,
 │   │   │                     Defer, Heartbeat, NotFound
-│   │   ├── components/       Landing sections + reusable UI
-│   │   │                     (TokenAvatar, WalletPill, ConfirmDialog, …)
+│   │   ├── components/       Landing sections (Hero, HowItWorks,
+│   │   │   │                 VaultLifecycle, WhySolana, Comparison,
+│   │   │   │                 FAQ, CTA, Footer, NavBar) + reusable UI
+│   │   │   │                 (TokenAvatar, WalletPill, ConfirmDialog,
+│   │   │   │                 WalletConnectDialog, RequireWallet,
+│   │   │   │                 ErrorBoundary, …)
+│   │   │   ├── create-vault/ Wizard steps: Heir, Heartbeat, Deposit, Review
+│   │   │   ├── dashboard/    AddAsset, EditSettings, EmergencyWithdraw,
+│   │   │   │                 ReassignHeir sections
+│   │   │   └── ui/           Radix-based primitives
 │   │   ├── contexts/         WalletContext, VaultContext
-│   │   ├── hooks/            Token balances, token metadata, UI hooks
+│   │   ├── hooks/            useTokenBalances, useTokenMetadata,
+│   │   │                     useWalletSplTokens, use-mobile, use-toast
 │   │   ├── lib/
 │   │   │   ├── contracts.ts  Single gateway to the generated client
-│   │   │   └── heliusDas.ts  Helius DAS API client for token enrichment
-│   │   └── config/           RPC URLs, program ID, mints, Helius keys
+│   │   │   ├── anchor.ts     Anchor-compat helpers
+│   │   │   ├── estateLookup.ts, estateState.ts  Discovery + state math
+│   │   │   ├── heliusDas.ts  Helius DAS API client for token enrichment
+│   │   │   └── utils.ts
+│   │   └── config/constants.ts  RPC URLs, program ID, mints, Helius keys
 │   ├── vite.config.ts
 │   └── tailwind.config.ts
+│
+├── app-ika/                  See app-ika/README.md
 │
 ├── tests/                    Integration test suite (Bun + quasar-svm)
 │   ├── initialize.test.ts
@@ -170,21 +195,19 @@ heirloom-app/
 │   └── setup.ts
 │
 ├── scripts/
-│   └── convert-idl.ts        Adapts Quasar IDL to Codama-ingestible shape
+│   ├── convert-idl.ts        Adapts heirloom-program IDL for Codama
+│   ├── deploy.sh             Program deploy helper
+│   └── airdrop.sh            Devnet airdrop helper
 │
-├── codama.json               Codama config: IDL path + renderer targets
+├── codama.json               Codama config for heirloom-program
 ├── turbo.json                Turborepo pipeline
-├── package.json              Monorepo root (yarn workspaces)
+├── package.json              Monorepo root (Bun workspaces)
 └── README.md                 You are here
 ```
 
 ## Cross-chain (IKA) variant
 
-The repo also ships a separate cross-chain frontend, `app-ika/`, which extends Heirloom beyond Solana-native assets to EVM chains via the [Ika X Heirloom](https://ika.heirlm.xyz) threshold-MPC network and the companion `heirloom-ika-program` Solana program.
-
-For detailed info on IKA integration, the dWallet lifecycle, passkey heartbeats, MetaMask claim flow, the CPI into Ika's `approve_message`, the full account set on `claim` / `revoke`, and end-to-end flows, read:
-
-- [app-ika/README.md](./app-ika/README.md) - frontend integration and `heirloom-ika-program` interaction reference
+See [app-ika/README.md](./app-ika/README.md).
 
 ## Tools and Technologies
 
@@ -211,6 +234,7 @@ For detailed info on IKA integration, the dWallet lifecycle, passkey heartbeats,
 - `react-router-dom` v6
 - `@tanstack/react-query` for async state
 - `sonner` for transient toasts
+- `@historiah/ui` workspace package for shared React primitives
 
 **Solana integration**
 
@@ -300,8 +324,11 @@ The test suite exercises every instruction (including multi-asset register, revo
 ### Deploy
 
 ```bash
-bun deploy
+bun deploy     # runs scripts/deploy.sh
+bun airdrop    # devnet airdrop helper (scripts/airdrop.sh)
 ```
+
+`app/` builds via `bun build:ui`.
 
 ## Networks
 
