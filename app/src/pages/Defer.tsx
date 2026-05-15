@@ -3,16 +3,16 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
+import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
 import {
-  discoverVaultTokenAccounts,
-  fetchEstateByPair,
-  fetchVaultClaimableLamports,
-  getVaultAddress,
   sendDelegateDefer,
   type Client,
-  type VaultTokenInfo,
 } from "@/lib/contracts";
+import {
+  lookupEstateSnapshot,
+  type EstateSnapshot,
+} from "@/lib/estateLookup";
+import { formatDuration, formatSol, errMsg } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
@@ -24,119 +24,12 @@ import {
   AlertTriangle, Coins, Shield, Clock,
 } from "lucide-react";
 
-interface EstateLookup {
-  authorityAddress: string;
-  heirAddress: string;
-  delegate: string | null;
-  label: string;
-  isClaimed: boolean;
-  isDeferred: boolean;
-  vaultState: "active" | "grace" | "claimable" | "distributed";
-  solBalance: number;
-  claimableAssets: number;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  pauseDuration: number;
-  lastHeartbeat: number;
-  createdAt: number;
-  pausedUntil: number;
-  vaultTokens: VaultTokenInfo[];
-}
-
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
   grace: "bg-accent-yellow/20",
   claimable: "bg-accent-red/20",
   distributed: "bg-secondary",
 };
-
-function computeState(
-  lastHeartbeat: number,
-  heartbeatInterval: number,
-  gracePeriod: number,
-  pausedUntil: number,
-  isClaimed: boolean,
-  createdAt: number,
-  vaultEmpty: boolean,
-): EstateLookup["vaultState"] {
-  if (isClaimed || vaultEmpty) return "distributed";
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
-  const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + heartbeatInterval;
-  const claimableAt = Math.max(graceDeadline + gracePeriod, pausedUntil);
-  if (now >= claimableAt) return "claimable";
-  if (now >= graceDeadline) return "grace";
-  return "active";
-}
-
-function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "0s";
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86400)}d`;
-}
-
-async function lookupEstate(
-  client: Client,
-  authorityStr: string,
-  heirStr: string,
-): Promise<EstateLookup | null> {
-  try {
-    const authority = toAddress(authorityStr);
-    const heir = toAddress(heirStr);
-    const maybe = await fetchEstateByPair(client.rpc, authority, heir);
-    if (!maybe.exists) return null;
-    const vaultPda = await getVaultAddress(authority, heir);
-    const [lamports, vaultTokens] = await Promise.all([
-      fetchVaultClaimableLamports(client.rpc, vaultPda),
-      discoverVaultTokenAccounts(client.rpc, vaultPda),
-    ]);
-    const lastHeartbeat = Number(maybe.data.lastHeartbeat);
-    const heartbeatInterval = Number(maybe.data.heartbeatInterval);
-    const gracePeriod = Number(maybe.data.gracePeriod);
-    const pausedUntil = Number(maybe.data.pausedUntil);
-    const createdAt = Number(maybe.data.createdAt);
-    const claimableAssets = maybe.data.claimableAssets;
-    const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0;
-
-    let delegateAddr: string | null = null;
-    const del = maybe.data.delegate;
-    if (del && typeof del === "object" && "__option" in del) {
-      const opt = del as { __option: "Some" | "None"; value?: string };
-      if (opt.__option === "Some" && opt.value) delegateAddr = opt.value;
-    }
-
-    return {
-      authorityAddress: authorityStr,
-      heirAddress: heirStr,
-      delegate: delegateAddr,
-      label: maybe.data.label,
-      isClaimed: maybe.data.isClaimed,
-      isDeferred: maybe.data.isDeferred,
-      vaultState: computeState(
-        lastHeartbeat,
-        heartbeatInterval,
-        gracePeriod,
-        pausedUntil,
-        maybe.data.isClaimed,
-        createdAt,
-        vaultEmpty,
-      ),
-      solBalance: Number(lamports),
-      claimableAssets,
-      heartbeatInterval,
-      gracePeriod,
-      pauseDuration: Number(maybe.data.pauseDuration),
-      lastHeartbeat,
-      createdAt,
-      pausedUntil,
-      vaultTokens,
-    };
-  } catch {
-    return null;
-  }
-}
 
 const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Address }> = ({
   signer,
@@ -151,7 +44,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
   const [authorityInput, setAuthorityInput] = useState("");
   const [heirInput, setHeirInput] = useState("");
   const [looking, setLooking] = useState(false);
-  const [estate, setEstate] = useState<EstateLookup | null>(null);
+  const [estate, setEstate] = useState<EstateSnapshot | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [deferring, setDeferring] = useState(false);
   const [deferTxId, setDeferTxId] = useState<string | null>(null);
@@ -164,7 +57,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
     setLookupError(null);
     setEstate(null);
     setDeferTxId(null);
-    const result = await lookupEstate(client, a, h);
+    const result = await lookupEstateSnapshot(client, a, h);
     if (!result) {
       setLookupError("Estate not found for this authority + heir pair.");
     } else if (!result.delegate) {
@@ -196,17 +89,17 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
     try {
       const tx = await sendDelegateDefer(client, {
         delegate: signer,
-        authority: toAddress(estate.authorityAddress),
-        heir: toAddress(estate.heirAddress),
+        authority: toAddress(estate.authority),
+        heir: toAddress(estate.heir),
       });
       setDeferTxId(tx);
       toast({ title: "Defer submitted", description: "Claim window extended." });
-      const updated = await lookupEstate(client, estate.authorityAddress, estate.heirAddress);
+      const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
     } catch (err: unknown) {
       toast({
         title: "Defer failed",
-        description: err instanceof Error ? err.message : "Rejected",
+        description: errMsg(err, "Rejected"),
         variant: "destructive",
       });
     } finally {
@@ -334,7 +227,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
                     <div className="flex items-center gap-1">
                       <Coins className="h-4 w-4" />
                       <p className="text-lg font-black">
-                        {(estate.solBalance / Math.pow(10, SOL_DECIMALS)).toFixed(4)}
+                        {formatSol(estate.solBalance)}
                       </p>
                     </div>
                   </div>

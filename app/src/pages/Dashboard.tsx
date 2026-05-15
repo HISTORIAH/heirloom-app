@@ -15,6 +15,8 @@ import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import TokenAvatar from "@/components/TokenAvatar";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { formatDuration, formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
+import { computeEstateState } from "@/lib/estateState";
 import {
   Heart,
   Clock,
@@ -59,14 +61,6 @@ const statusConfig: Record<UiState, { bg: string; label: string; description: st
   },
 };
 
-function formatDuration(seconds: number): string {
-  if (seconds <= 0) return "0s";
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86400)}d`;
-}
-
 interface CountdownParts {
   days: number;
   hours: number;
@@ -80,46 +74,32 @@ interface TickResult {
   countdown: CountdownParts;
 }
 
+const LABELS: Record<UiState, string> = {
+  distributed: "Vault Distributed",
+  claimable: "Vault Is Claimable",
+  grace: "Time Until Claimable",
+  active: "Next Heartbeat Due In",
+};
+
 function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
-  if (estate.isClaimed || vaultEmpty) {
-    return {
-      state: "distributed",
-      label: "Vault Distributed",
-      countdown: { days: 0, hours: 0, minutes: 0, seconds: 0 },
-    };
-  }
-  // Program sets last_heartbeat = clock.unix_timestamp on init (same as created_at).
-  // Fallback to created_at only as a defensive measure.
-  const anchor = estate.lastHeartbeat > 0 ? estate.lastHeartbeat : estate.createdAt;
-  const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + estate.heartbeatInterval;
-  const claimableDeadline = Math.max(
-    graceDeadline + estate.gracePeriod,
-    estate.pausedUntil,
-  );
+  const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
+    lastHeartbeat: estate.lastHeartbeat,
+    heartbeatInterval: estate.heartbeatInterval,
+    gracePeriod: estate.gracePeriod,
+    pausedUntil: estate.pausedUntil,
+    isClaimed: estate.isClaimed,
+    createdAt: estate.createdAt,
+    vaultEmpty,
+  });
 
-  let remaining: number;
-  let state: UiState;
-  let label: string;
+  const remaining =
+    state === "active" ? secondsUntilGrace :
+    state === "grace" ? secondsUntilClaimable :
+    0;
 
-  if (now >= claimableDeadline) {
-    remaining = 0;
-    state = "claimable";
-    label = "Vault Is Claimable";
-  } else if (now >= graceDeadline) {
-    remaining = claimableDeadline - now;
-    state = "grace";
-    label = "Time Until Claimable";
-  } else {
-    remaining = graceDeadline - now;
-    state = "active";
-    label = "Next Heartbeat Due In";
-  }
-
-  remaining = Math.max(0, remaining);
   return {
     state,
-    label,
+    label: LABELS[state],
     countdown: {
       days: Math.floor(remaining / 86400),
       hours: Math.floor((remaining % 86400) / 3600),
@@ -232,7 +212,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } catch (err: unknown) {
       toast({
         title: "Heartbeat Failed",
-        description: err instanceof Error ? err.message : "Transaction rejected",
+        description: errMsg(err),
         variant: "destructive",
       });
     } finally {
@@ -250,7 +230,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } catch (err: unknown) {
       toast({
         title: "Withdraw Failed",
-        description: err instanceof Error ? err.message : "Transaction rejected",
+        description: errMsg(err),
         variant: "destructive",
       });
     } finally {
@@ -293,7 +273,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } catch (err: unknown) {
       toast({
         title: "Update Failed",
-        description: err instanceof Error ? err.message : "Transaction rejected",
+        description: errMsg(err),
         variant: "destructive",
       });
     } finally {
@@ -338,7 +318,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } catch (err: unknown) {
       toast({
         title: "Update failed",
-        description: err instanceof Error ? err.message : "Transaction rejected",
+        description: errMsg(err),
         variant: "destructive",
       });
     } finally {
@@ -376,7 +356,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } catch (err: unknown) {
       toast({
         title: "Add asset failed",
-        description: err instanceof Error ? err.message : "Transaction rejected",
+        description: errMsg(err),
         variant: "destructive",
       });
     } finally {
@@ -385,7 +365,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   };
 
   const config = statusConfig[computedState];
-  const solDisplay = (estate.solBalance / Math.pow(10, SOL_DECIMALS)).toFixed(4);
+  const solDisplay = formatSol(estate.solBalance);
   const tokenIcon = <Coins className="h-6 w-6" strokeWidth={2.5} />;
   const totalWindow = estate.heartbeatInterval + estate.gracePeriod;
 
@@ -576,7 +556,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                     )}
                   </div>
                   <span className="font-black text-lg tabular-nums shrink-0">
-                    {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(Math.min(6, vt.decimals))}
+                    {formatTokenAmount(vt.amount, vt.decimals)}
                   </span>
                 </div>
               );

@@ -3,18 +3,19 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, SOL_LABEL, SOL_DECIMALS } from "@/config/constants";
+import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
 import {
-  discoverVaultTokenAccounts,
-  fetchEstateByPair,
   fetchEstatesByHeir,
-  fetchVaultClaimableLamports,
   getAtaAddress,
-  getVaultAddress,
   sendClaimAll,
   type Client,
-  type VaultTokenInfo,
 } from "@/lib/contracts";
+import {
+  buildSnapshotFromEstate,
+  lookupEstateSnapshot,
+  type EstateSnapshot,
+} from "@/lib/estateLookup";
+import { formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
@@ -30,21 +31,6 @@ import TokenAvatar from "@/components/TokenAvatar";
 import WalletPill from "@/components/WalletPill";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
-interface InheritanceInfo {
-  ownerAddress: string;
-  vaultState: "active" | "grace" | "claimable" | "distributed";
-  solBalance: number;
-  label: string;
-  isClaimed: boolean;
-  claimableAssets: number;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  lastHeartbeat: number;
-  createdAt: number;
-  pausedUntil: number;
-  vaultTokens: VaultTokenInfo[];
-}
-
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
   grace: "bg-accent-yellow/20",
@@ -52,110 +38,26 @@ const stateColors: Record<string, string> = {
   distributed: "bg-secondary",
 };
 
-function computeState(
-  lastHeartbeat: number,
-  heartbeatInterval: number,
-  gracePeriod: number,
-  pausedUntil: number,
-  isClaimed: boolean,
-  createdAt: number,
-  vaultEmpty: boolean,
-): InheritanceInfo["vaultState"] {
-  if (isClaimed || vaultEmpty) return "distributed";
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
-  const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + heartbeatInterval;
-  const claimableAt = Math.max(graceDeadline + gracePeriod, pausedUntil);
-  if (now >= claimableAt) return "claimable";
-  if (now >= graceDeadline) return "grace";
-  return "active";
-}
-
-type EstateLike = {
-  lastHeartbeat: bigint | number;
-  heartbeatInterval: bigint | number;
-  gracePeriod: bigint | number;
-  pausedUntil: bigint | number;
-  createdAt: bigint | number;
-  isClaimed: boolean;
-  claimableAssets: number;
-  label: string;
-};
-
-async function buildInheritance(
-  client: Client,
-  authorityStr: string,
-  heir: Address,
-  estateData: EstateLike,
-): Promise<InheritanceInfo> {
-  const authority = toAddress(authorityStr);
-  const vaultPda = await getVaultAddress(authority, heir);
-  const [lamports, vaultTokens] = await Promise.all([
-    fetchVaultClaimableLamports(client.rpc, vaultPda),
-    discoverVaultTokenAccounts(client.rpc, vaultPda),
-  ]);
-  const lastHeartbeat = Number(estateData.lastHeartbeat);
-  const heartbeatInterval = Number(estateData.heartbeatInterval);
-  const gracePeriod = Number(estateData.gracePeriod);
-  const pausedUntil = Number(estateData.pausedUntil);
-  const createdAt = Number(estateData.createdAt);
-  const claimableAssets = estateData.claimableAssets;
-  const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0 && vaultTokens.length === 0;
-  return {
-    ownerAddress: authorityStr,
-    vaultState: computeState(
-      lastHeartbeat,
-      heartbeatInterval,
-      gracePeriod,
-      pausedUntil,
-      estateData.isClaimed,
-      createdAt,
-      vaultEmpty,
-    ),
-    solBalance: Number(lamports),
-    label: estateData.label,
-    isClaimed: estateData.isClaimed,
-    claimableAssets,
-    heartbeatInterval,
-    gracePeriod,
-    lastHeartbeat,
-    createdAt,
-    pausedUntil,
-    vaultTokens,
-  };
-}
-
-async function lookupEstate(
-  client: Client,
-  authorityStr: string,
-  heirStr: string,
-): Promise<InheritanceInfo | null> {
-  try {
-    const authority = toAddress(authorityStr);
-    const heir = toAddress(heirStr);
-    const maybe = await fetchEstateByPair(client.rpc, authority, heir);
-    if (!maybe.exists) return null;
-    return buildInheritance(client, authorityStr, heir, maybe.data);
-  } catch {
-    return null;
-  }
-}
-
 async function autoFetchInheritances(
   client: Client,
   heirAddress: Address,
-): Promise<InheritanceInfo[]> {
+): Promise<EstateSnapshot[]> {
   const estates = await fetchEstatesByHeir(client.rpc, heirAddress);
   const results = await Promise.all(
     estates.map(async (e) => {
       try {
-        return await buildInheritance(client, e.data.authority, heirAddress, e.data);
+        return await buildSnapshotFromEstate(
+          client,
+          e.data.authority,
+          heirAddress.toString(),
+          e.data,
+        );
       } catch {
         return null;
       }
     }),
   );
-  return results.filter((r): r is InheritanceInfo => r !== null);
+  return results.filter((r): r is EstateSnapshot => r !== null);
 }
 
 const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address }> = ({
@@ -172,7 +74,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   const [searching, setSearching] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
   const [autoFetchFailed, setAutoFetchFailed] = useState(false);
-  const [inheritances, setInheritances] = useState<InheritanceInfo[]>([]);
+  const [inheritances, setInheritances] = useState<EstateSnapshot[]>([]);
   const [claimingOwner, setClaimingOwner] = useState<string | null>(null);
   const [claimTxIds, setClaimTxIds] = useState<Record<string, string>>({});
   const [showManual, setShowManual] = useState(false);
@@ -185,8 +87,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
 
   const runLookup = useCallback(
     async (ownerStr: string) => {
-      const result = await lookupEstate(client, ownerStr, heirAddress.toString());
-      return result;
+      return lookupEstateSnapshot(client, ownerStr, heirAddress.toString());
     },
     [client, heirAddress],
   );
@@ -199,10 +100,10 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
     setAutoFetchFailed(false);
 
     (async () => {
-      const merged = new Map<string, InheritanceInfo>();
+      const merged = new Map<string, EstateSnapshot>();
       try {
         const auto = await autoFetchInheritances(client, heirAddress);
-        for (const inh of auto) merged.set(inh.ownerAddress, inh);
+        for (const inh of auto) merged.set(inh.authority, inh);
       } catch (err) {
         console.error("Auto-fetch inheritances failed:", err);
         if (!cancelled) setAutoFetchFailed(true);
@@ -210,7 +111,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
 
       if (ownerParam && !merged.has(ownerParam)) {
         const single = await runLookup(ownerParam);
-        if (single) merged.set(single.ownerAddress, single);
+        if (single) merged.set(single.authority, single);
       }
 
       if (cancelled) return;
@@ -231,9 +132,9 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
     const result = await runLookup(manualAddress.trim());
     if (result) {
       setInheritances((prev) => {
-        const exists = prev.some((i) => i.ownerAddress === result.ownerAddress);
+        const exists = prev.some((i) => i.authority === result.authority);
         return exists
-          ? prev.map((i) => (i.ownerAddress === result.ownerAddress ? result : i))
+          ? prev.map((i) => (i.authority === result.authority ? result : i))
           : [...prev, result];
       });
       setShowManual(false);
@@ -244,10 +145,10 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
     setManualLoading(false);
   };
 
-  const handleClaim = async (inh: InheritanceInfo) => {
-    setClaimingOwner(inh.ownerAddress);
+  const handleClaim = async (inh: EstateSnapshot) => {
+    setClaimingOwner(inh.authority);
     try {
-      const authorityAddr = toAddress(inh.ownerAddress);
+      const authorityAddr = toAddress(inh.authority);
 
       const tokenAssets = await Promise.all(
         inh.vaultTokens.map(async (vt) => {
@@ -273,19 +174,17 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
         inh.solBalance > 0,
       );
 
-      setClaimTxIds((p) => ({ ...p, [inh.ownerAddress]: lastTx }));
+      setClaimTxIds((p) => ({ ...p, [inh.authority]: lastTx }));
 
-      // Refresh inheritance data to show updated state
-      const updated = await lookupEstate(client, inh.ownerAddress, heirAddress.toString());
+      const updated = await lookupEstateSnapshot(client, inh.authority, heirAddress.toString());
       if (updated) {
         setInheritances((prev) =>
-          prev.map((i) => (i.ownerAddress === inh.ownerAddress ? updated : i)),
+          prev.map((i) => (i.authority === inh.authority ? updated : i)),
         );
       } else {
-        // Estate was closed on-chain —> mark as distributed
         setInheritances((prev) =>
           prev.map((i) =>
-            i.ownerAddress === inh.ownerAddress
+            i.authority === inh.authority
               ? { ...i, vaultState: "distributed", solBalance: 0, claimableAssets: 0, vaultTokens: [], isClaimed: true }
               : i,
           ),
@@ -296,7 +195,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
     } catch (err: unknown) {
       toast({
         title: "Claim failed",
-        description: err instanceof Error ? err.message : "Rejected",
+        description: errMsg(err, "Rejected"),
         variant: "destructive",
       });
     } finally {
@@ -380,8 +279,8 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
             {inheritances.length > 0 && (
               <div className="space-y-6">
                 {inheritances.map((inh) => {
-                  const txId = claimTxIds[inh.ownerAddress];
-                  const isClaiming = claimingOwner === inh.ownerAddress;
+                  const txId = claimTxIds[inh.authority];
+                  const isClaiming = claimingOwner === inh.authority;
                   const nothingToClaim =
                     inh.solBalance === 0 &&
                     inh.vaultTokens.length === 0 &&
@@ -392,14 +291,14 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                     !nothingToClaim;
 
                   return (
-                    <div key={inh.ownerAddress} className="neo-card-static space-y-5">
+                    <div key={inh.authority} className="neo-card-static space-y-5">
                       <div className={`neo-border rounded-xl p-5 ${stateColors[inh.vaultState]}`}>
                         <div className="flex items-center justify-between flex-wrap gap-4">
                           <div>
                             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                               Owner
                             </p>
-                            <p className="font-mono text-sm font-bold break-all">{inh.ownerAddress}</p>
+                            <p className="font-mono text-sm font-bold break-all">{inh.authority}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -420,7 +319,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                           <div className="flex items-center gap-1">
                             <Coins className="h-4 w-4" />
                             <p className="text-lg font-black">
-                              {(inh.solBalance / Math.pow(10, SOL_DECIMALS)).toFixed(4)}
+                              {formatSol(inh.solBalance)}
                             </p>
                           </div>
                         </div>
@@ -463,9 +362,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                                   )}
                                 </div>
                                 <span className="font-black text-lg tabular-nums shrink-0">
-                                  {(Number(vt.amount) / Math.pow(10, vt.decimals)).toFixed(
-                                    Math.min(6, vt.decimals),
-                                  )}
+                                  {formatTokenAmount(vt.amount, vt.decimals)}
                                 </span>
                               </div>
                             );

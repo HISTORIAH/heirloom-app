@@ -18,6 +18,9 @@ import {
   sendUpdateHeir,
   type Client,
 } from "@/lib/contracts";
+import { computeEstateState, type EstateUiState } from "@/lib/estateState";
+import { unwrapOption } from "@/lib/anchor";
+import { errMsg } from "@/lib/utils";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
 
 export interface VaultTokenDisplay {
@@ -46,7 +49,7 @@ export interface EstateData {
   vaultPda: string;
   solBalance: number;
   vaultTokens: VaultTokenDisplay[];
-  state: "active" | "grace" | "claimable" | "distributed";
+  state: EstateUiState;
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
 }
@@ -96,47 +99,6 @@ interface VaultState {
 
 const VaultContext = createContext<VaultState | null>(null);
 
-
-function computeState(
-  lastHeartbeat: number,
-  heartbeatInterval: number,
-  gracePeriod: number,
-  pausedUntil: number,
-  isClaimed: boolean,
-  createdAt: number,
-  vaultEmpty: boolean,
-): { state: EstateData["state"]; secondsUntilGrace: number; secondsUntilClaimable: number } {
-  // Empty vault or already claimed → distributed. Program leaves the estate
-  // account on-chain after claim; we treat a drained vault as distributed
-  // from the UI so it cannot be misread as claimable.
-  if (isClaimed || vaultEmpty) {
-    return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
-  }
-  // Program sets last_heartbeat = clock.unix_timestamp on init (same as created_at).
-  // Fallback to created_at only as a defensive measure.
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
-  const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + heartbeatInterval;
-  const baseClaimable = graceDeadline + gracePeriod;
-  const claimableAt = Math.max(baseClaimable, pausedUntil);
-
-  if (now >= claimableAt) {
-    return { state: "claimable", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
-  }
-  if (now >= graceDeadline) {
-    return {
-      state: "grace",
-      secondsUntilGrace: 0,
-      secondsUntilClaimable: claimableAt - now,
-    };
-  }
-  return {
-    state: "active",
-    secondsUntilGrace: graceDeadline - now,
-    secondsUntilClaimable: claimableAt - now,
-  };
-}
-
 type VaultUiShim = { account?: { address: string } | null };
 
 const VaultProviderInner: React.FC<{
@@ -177,30 +139,18 @@ const VaultProviderInner: React.FC<{
           const createdAt = Number(estate.data.createdAt);
           const hasTokenBalance = vaultTokens.length > 0;
           const vaultEmpty = estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
-          const { state, secondsUntilGrace, secondsUntilClaimable } = computeState(
+          const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
             lastHeartbeat,
             heartbeatInterval,
             gracePeriod,
             pausedUntil,
-            estate.data.isClaimed,
+            isClaimed: estate.data.isClaimed,
             createdAt,
             vaultEmpty,
-          );
+          });
 
-          // Extract delegate address from Option
-          let delegateAddr: string | null = null;
-          const del = estate.data.delegate;
-          if (del && typeof del === "object" && "__option" in del) {
-            const opt = del as { __option: "Some" | "None"; value?: string };
-            if (opt.__option === "Some" && opt.value) delegateAddr = opt.value;
-          }
-
-          let hbSignerAddr: string | null = null;
-          const hbs = estate.data.hbSigner;
-          if (hbs && typeof hbs === "object" && "__option" in hbs) {
-            const opt = hbs as { __option: "Some" | "None"; value?: string };
-            if (opt.__option === "Some" && opt.value) hbSignerAddr = opt.value;
-          }
+          const delegateAddr = unwrapOption<string>(estate.data.delegate);
+          const hbSignerAddr = unwrapOption<string>(estate.data.hbSigner);
 
           results.push({
             authority: estate.data.authority,
@@ -231,7 +181,7 @@ const VaultProviderInner: React.FC<{
       }
       setEstates(results);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to fetch estates");
+      setError(errMsg(e, "Failed to fetch estates"));
     } finally {
       setLoading(false);
     }

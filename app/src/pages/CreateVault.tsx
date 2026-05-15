@@ -9,6 +9,7 @@ import {
   SOL_LABEL,
   SOL_DECIMALS,
   LABEL_MAX_LEN,
+  SECONDS_PER_DAY,
 } from "@/config/constants";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -31,44 +32,38 @@ import {
   Pencil,
   ArrowUpDown,
 } from "lucide-react";
-import { formatUiAmount } from "@/lib/utils";
+import { formatUiAmount, formatDuration as fmtDuration, errMsg } from "@/lib/utils";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 
 type SubmitState = "idle" | "creating" | "complete" | "error";
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  const d = Math.round(seconds / 86400);
-  return `${d} day${d !== 1 ? "s" : ""}`;
-}
+const formatDuration = (seconds: number) => fmtDuration(seconds, { long: true });
 
 const HEARTBEAT_PRESETS = [
   { label: "30s", seconds: 30 },
   { label: "1m", seconds: 60 },
-  { label: "30d", seconds: 30 * 86400 },
-  { label: "60d", seconds: 60 * 86400 },
-  { label: "90d", seconds: 90 * 86400 },
-  { label: "180d", seconds: 180 * 86400 },
-  { label: "365d", seconds: 365 * 86400 },
+  { label: "30d", seconds: 30 * SECONDS_PER_DAY },
+  { label: "60d", seconds: 60 * SECONDS_PER_DAY },
+  { label: "90d", seconds: 90 * SECONDS_PER_DAY },
+  { label: "180d", seconds: 180 * SECONDS_PER_DAY },
+  { label: "365d", seconds: 365 * SECONDS_PER_DAY },
 ];
 
 const GRACE_PRESETS = [
   { label: "15s", seconds: 15 },
   { label: "30s", seconds: 30 },
-  { label: "7d", seconds: 7 * 86400 },
-  { label: "14d", seconds: 14 * 86400 },
-  { label: "30d", seconds: 30 * 86400 },
-  { label: "60d", seconds: 60 * 86400 },
-  { label: "90d", seconds: 90 * 86400 },
+  { label: "7d", seconds: 7 * SECONDS_PER_DAY },
+  { label: "14d", seconds: 14 * SECONDS_PER_DAY },
+  { label: "30d", seconds: 30 * SECONDS_PER_DAY },
+  { label: "60d", seconds: 60 * SECONDS_PER_DAY },
+  { label: "90d", seconds: 90 * SECONDS_PER_DAY },
 ];
 
 const PAUSE_PRESETS = [
   { label: "None", seconds: 0 },
-  { label: "7d", seconds: 7 * 86400 },
-  { label: "30d", seconds: 30 * 86400 },
+  { label: "7d", seconds: 7 * SECONDS_PER_DAY },
+  { label: "30d", seconds: 30 * SECONDS_PER_DAY },
 ];
 
 const CreateVaultPage = () => {
@@ -79,8 +74,8 @@ const CreateVaultPage = () => {
 
   const [step, setStep] = useState(0);
 
-  const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * 86400);
-  const [graceSeconds, setGraceSeconds] = useState(30 * 86400);
+  const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * SECONDS_PER_DAY);
+  const [graceSeconds, setGraceSeconds] = useState(30 * SECONDS_PER_DAY);
   const [pauseSeconds, setPauseSeconds] = useState(0);
   const isPauseDisable = pauseSeconds === 0;
 
@@ -240,7 +235,7 @@ const CreateVaultPage = () => {
       setSubmitState("error");
       toast({
         title: "Transaction Failed",
-        description: err instanceof Error ? err.message : "Something went wrong",
+        description: errMsg(err, "Something went wrong"),
         variant: "destructive",
       });
     }
@@ -328,15 +323,15 @@ const CreateVaultPage = () => {
                       min={1}
                       max={365}
                       value={heartbeatSliderDays}
-                      onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * 86400)}
+                      onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
                       className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer accent-accent-pink"
                     />
                     <div className="flex justify-between items-end">
                       <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                        {heartbeatSeconds < 86400 ? "Seconds" : "Days"}
+                        {heartbeatSeconds < SECONDS_PER_DAY ? "Seconds" : "Days"}
                       </span>
                       <span className="text-5xl font-black tabular-nums">
-                        {heartbeatSeconds < 86400 ? heartbeatSeconds : Math.round(heartbeatSeconds / 86400)}
+                        {heartbeatSeconds < SECONDS_PER_DAY ? heartbeatSeconds : Math.round(heartbeatSeconds / SECONDS_PER_DAY)}
                       </span>
                     </div>
                     <div className="flex gap-2 flex-wrap">
@@ -368,15 +363,15 @@ const CreateVaultPage = () => {
                       min={1}
                       max={90}
                       value={graceSliderDays}
-                      onChange={(e) => setGraceSeconds(Number(e.target.value) * 86400)}
+                      onChange={(e) => setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
                       className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer accent-accent-yellow"
                     />
                     <div className="flex justify-between items-end">
                       <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                        {graceSeconds < 86400 ? "Seconds" : "Days"}
+                        {graceSeconds < SECONDS_PER_DAY ? "Seconds" : "Days"}
                       </span>
                       <span className="text-5xl font-black tabular-nums">
-                        {graceSeconds < 86400 ? graceSeconds : Math.round(graceSeconds / 86400)}
+                        {graceSeconds < SECONDS_PER_DAY ? graceSeconds : Math.round(graceSeconds / SECONDS_PER_DAY)}
                       </span>
                     </div>
                     <div className="flex gap-2 flex-wrap">
