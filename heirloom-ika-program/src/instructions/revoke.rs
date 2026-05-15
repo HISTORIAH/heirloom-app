@@ -1,4 +1,4 @@
-use quasar_lang::{log, prelude::*};
+use quasar_lang::prelude::*;
 
 use crate::{
     constants::IKA_DWALLET_PROGRAM_ID, errors::HeirloomIkaError, ika_cpi::DWalletContext,

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@historiah/ui";
 import {
   ArrowLeft,
-  CheckCircle,
   Loader2,
   Shield,
   AlertTriangle,
@@ -11,25 +10,14 @@ import {
   Coins,
   Search,
   User,
-  ExternalLink,
 } from "lucide-react";
-import { getWithdrawTx, postWithdraw, signMessageHash } from "@/services/api";
-import type { WithdrawTxInfo } from "@/services/api";
-
-interface Vault {
-  estateId: string;
-  label: string;
-  ethDepositAddress: string;
-}
-
-function formatWei(wei: string): string {
-  try {
-    const eth = Number(BigInt(wei)) / 1e18;
-    return eth.toFixed(6) + " ETH";
-  } catch {
-    return wei + " wei";
-  }
-}
+import { getWithdrawTx, postWithdraw } from "@/services/api/withdraw";
+import type { WithdrawTxInfo } from "@/types/api";
+import { signMessageHash } from "@/services/ethereum";
+import type { Vault } from "@/types";
+import { formatWei, isValidEthAddress } from "@/lib/utils";
+import { VaultList } from "@/components/VaultList";
+import { TxSuccessPage } from "@/components/TxSuccessPage";
 
 type Step = "select" | "preview" | "signing" | "submitting" | "done";
 
@@ -54,10 +42,8 @@ export default function Withdraw() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isValidEth = (addr: string) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
-
   const handlePreview = async () => {
-    if (!selectedEstateId || !isValidEth(destinationEth)) return;
+    if (!selectedEstateId || !isValidEthAddress(destinationEth)) return;
     setBusy(true);
     setError(null);
     try {
@@ -72,7 +58,7 @@ export default function Withdraw() {
   };
 
   const handleSignAndWithdraw = async () => {
-    if (!txInfo || !isValidEth(ownerAddress)) return;
+    if (!txInfo || !isValidEthAddress(ownerAddress)) return;
     setBusy(true);
     setError(null);
     setStep("signing");
@@ -89,6 +75,14 @@ export default function Withdraw() {
       });
 
       setResult({ solana_tx: resp.solana_tx, eth_tx: resp.eth_tx });
+
+      const vs = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
+      const idx = vs.findIndex((v: { estateId: string }) => v.estateId === txInfo.estate_id);
+      if (idx >= 0) {
+        vs[idx].isClaimed = true;
+        localStorage.setItem("heirloom_vaults", JSON.stringify(vs));
+      }
+
       setStep("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -98,72 +92,18 @@ export default function Withdraw() {
     }
   };
 
-  // === Done ================================================================
   if (step === "done" && result) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-lg font-black hover:underline group"
-            >
-              <ArrowLeft
-                className="h-5 w-5 transition-transform group-hover:-translate-x-1"
-                strokeWidth={3}
-              />
-              Dashboard
-            </button>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5" strokeWidth={3} />
-              <span className="text-2xl font-black">Withdraw</span>
-            </div>
-            <span className="neo-badge bg-accent-lime text-[10px]">Submitted</span>
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-          <div className="neo-section-lime neo-border-thick rounded-2xl p-8 neo-shadow-xl text-center">
-            <div className="bg-background neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
-            </div>
-            <span className="neo-badge bg-background mb-3 inline-block">Withdrawal Submitted</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase">Funds On The Way</h2>
-            <p className="text-sm font-bold text-foreground/70 mt-2 max-w-md mx-auto">
-              The backend relayed the Solana tx and broadcast the ETH transfer.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="neo-card-static">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                Solana Tx
-              </h3>
-              <p className="font-mono text-xs break-all neo-border bg-secondary rounded-lg p-3">
-                {result.solana_tx || "N/A"}
-              </p>
-            </div>
-            <div className="neo-card-static">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                ETH Tx
-              </h3>
-              <p className="font-mono text-xs break-all neo-border bg-secondary rounded-lg p-3">
-                {result.eth_tx || "Pending…"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-8 border-t-4 border-foreground">
-            <Button variant="lime" size="xl" onClick={() => navigate("/")}>
-              Go to Dashboard <ExternalLink className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <TxSuccessPage
+        title="Withdraw"
+        icon={<Shield className="h-5 w-5" strokeWidth={3} />}
+        heroBadge="Withdrawal Submitted"
+        solanaTx={result.solana_tx}
+        ethTx={result.eth_tx}
+      />
     );
   }
 
-  // === Wizard ==============================================================
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
@@ -211,7 +151,6 @@ export default function Withdraw() {
           </div>
         )}
 
-        {/* Step 1 — Select vault + destinations */}
         {step === "select" && (
           <div className="neo-card-static space-y-5">
             <div className="flex items-center gap-3">
@@ -226,49 +165,12 @@ export default function Withdraw() {
               </div>
             </div>
 
-            {vaults.length > 0 ? (
-              <div className="space-y-3">
-                {vaults.map((v) => {
-                  const isActive = selectedEstateId === v.estateId;
-                  return (
-                    <button
-                      key={v.estateId}
-                      onClick={() => setSelectedEstateId(v.estateId)}
-                      className={`w-full text-left neo-border rounded-xl p-4 transition-all duration-150 ${
-                        isActive
-                          ? "bg-accent-lime neo-shadow-sm translate-x-[-1px] translate-y-[-1px]"
-                          : "bg-secondary hover:bg-accent-lime/40"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="min-w-0">
-                          <p className="font-black text-lg truncate">{v.label}</p>
-                          <p className="text-xs font-mono text-muted-foreground break-all">
-                            {v.ethDepositAddress}
-                          </p>
-                        </div>
-                        {isActive && (
-                          <CheckCircle className="h-5 w-5 shrink-0" strokeWidth={3} />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Estate ID
-                </label>
-                <input
-                  type="text"
-                  value={selectedEstateId}
-                  onChange={(e) => setSelectedEstateId(e.target.value)}
-                  className="neo-input font-mono text-sm focus:bg-accent-yellow/20"
-                  placeholder="Paste estate ID..."
-                />
-              </div>
-            )}
+            <VaultList
+              vaults={vaults}
+              selectedEstateId={selectedEstateId}
+              onSelect={setSelectedEstateId}
+              inputAccentClass="focus:bg-accent-yellow/20"
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -302,7 +204,10 @@ export default function Withdraw() {
               size="lg"
               onClick={handlePreview}
               disabled={
-                !selectedEstateId || !isValidEth(destinationEth) || !isValidEth(ownerAddress) || busy
+                !selectedEstateId ||
+                !isValidEthAddress(destinationEth) ||
+                !isValidEthAddress(ownerAddress) ||
+                busy
               }
               className="w-full"
             >
@@ -315,7 +220,6 @@ export default function Withdraw() {
           </div>
         )}
 
-        {/* Step 2 — Preview + sign */}
         {(step === "preview" || step === "signing" || step === "submitting") && (
           <div className="neo-card-static space-y-5">
             <div className="flex items-center gap-3">
@@ -361,7 +265,7 @@ export default function Withdraw() {
                 <Button
                   variant="lime"
                   size="lg"
-                  disabled={busy || !isValidEth(destinationEth) || !isValidEth(ownerAddress)}
+                  disabled={busy || !isValidEthAddress(destinationEth) || !isValidEthAddress(ownerAddress)}
                   onClick={handlePreview}
                   className="w-full"
                 >
