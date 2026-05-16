@@ -1,0 +1,19 @@
+[toolchain]
+package_manager = "bun"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+heirloom = "587K7MjK9Gzs2x3yxcjStUH4Qawx1SwhVgpuDNtudFUB"
+heirloom-ika = "587K7MjK9Gzs2x3yxcjStUH4Qawx1SwhVgpuDNtudFUB"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"
+
+[hooks]
