@@ -6,8 +6,8 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-heirloom = "587K7MjK9Gzs2x3yxcjStUH4Qawx1SwhVgpuDNtudFUB"
-heirloom-ika = "587K7MjK9Gzs2x3yxcjStUH4Qawx1SwhVgpuDNtudFUB"
+heirloom = "5TzknZ8BQbiPzHD3XXFm7GR3VQUSe22CtQTnceePCATV"
+heirloom-ika = "9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf"
 
 [provider]
 cluster = "localnet"
@@ -17,3 +17,6 @@ wallet = "~/.config/solana/id.json"
 test = "cargo test"
 
 [hooks]
+
+[workspace]
+members = ["programs/heirloom", "programs/heirloom-ika"]
