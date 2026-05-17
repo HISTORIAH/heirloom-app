@@ -148,7 +148,7 @@ impl<'info> Initialize<'info> {
         Ok(())
     }
 
-    pub fn init_vault_token_account(&self) -> Result<()> {
+    pub fn init_vault_token_account(&mut self) -> Result<()> {
         let vault_ta = match self.vault_token_account.as_ref() {
             Some(ta) => ta,
             None => return Ok(()),
@@ -168,6 +168,15 @@ impl<'info> Initialize<'info> {
         let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
 
         associated_token::create_idempotent(cpi_context)?;
+
+        // edge case, we always count sol as an asset since we need
+        // to close the vault and estate accounts
+        // hence for token only inits, we need to add 1
+        self.estate.claimable_assets = self
+            .estate
+            .claimable_assets
+            .checked_add(1)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
 
         Ok(())
     }

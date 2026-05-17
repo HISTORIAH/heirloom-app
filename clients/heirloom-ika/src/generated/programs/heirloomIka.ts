@@ -53,7 +53,7 @@ import {
 import { findEstatePda } from "../pdas";
 
 export const HEIRLOOM_IKA_PROGRAM_ADDRESS =
-  "9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf" as Address<"9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf">;
+  "6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys" as Address<"6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys">;
 
 export enum HeirloomIkaAccount {
   Estate,
@@ -142,7 +142,7 @@ export function identifyHeirloomIkaInstruction(
 }
 
 export type ParsedHeirloomIkaInstruction<
-  TProgram extends string = "9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf",
+  TProgram extends string = "6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys",
 > =
   | ({ instructionType: HeirloomIkaInstruction.Claim } & ParsedClaimInstruction<TProgram>)
   | ({ instructionType: HeirloomIkaInstruction.Heartbeat } & ParsedHeartbeatInstruction<TProgram>)

@@ -54,7 +54,7 @@ export type ClaimInstruction<
   TAccountMessageApproval extends string | AccountMeta<string> = string,
   TAccountDwallet extends string | AccountMeta<string> = string,
   TAccountCallerProgram extends string | AccountMeta<string> =
-    "9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf",
+    "6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys",
   TAccountCpiAuthority extends string | AccountMeta<string> = string,
   TAccountIkaProgram extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
@@ -223,7 +223,7 @@ export function getClaimInstruction<
   // Resolve default values.
   if (!accounts.callerProgram.value) {
     accounts.callerProgram.value =
-      "9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf" as Address<"9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf">;
+      "6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys" as Address<"6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys">;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =

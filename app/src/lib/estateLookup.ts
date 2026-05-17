@@ -4,9 +4,9 @@ import {
   fetchEstateByPair,
   fetchVaultClaimableLamports,
   getVaultAddress,
-  type Client,
+  type HeirloomClient,
   type VaultTokenInfo,
-} from "@/lib/contracts";
+} from "@/lib/heirloom";
 import { computeEstateState, type EstateUiState } from "@/lib/estateState";
 import { unwrapOption } from "@/lib/anchor";
 
@@ -48,7 +48,7 @@ export interface EstateLike {
 }
 
 export async function buildSnapshotFromEstate(
-  client: Client,
+  client: HeirloomClient,
   authorityStr: string,
   heirStr: string,
   estateData: EstateLike,
@@ -57,8 +57,8 @@ export async function buildSnapshotFromEstate(
   const heir = toAddress(heirStr);
   const vaultPda = await getVaultAddress(authority, heir);
   const [lamports, vaultTokens] = await Promise.all([
-    fetchVaultClaimableLamports(client.rpc, vaultPda),
-    discoverVaultTokenAccounts(client.rpc, vaultPda),
+    fetchVaultClaimableLamports(client, vaultPda),
+    discoverVaultTokenAccounts(client, vaultPda),
   ]);
 
   const lastHeartbeat = Number(estateData.lastHeartbeat);
@@ -104,14 +104,14 @@ export async function buildSnapshotFromEstate(
 }
 
 export async function lookupEstateSnapshot(
-  client: Client,
+  client: HeirloomClient,
   authorityStr: string,
   heirStr: string,
 ): Promise<EstateSnapshot | null> {
   try {
     const authority = toAddress(authorityStr);
     const heir = toAddress(heirStr);
-    const maybe = await fetchEstateByPair(client.rpc, authority, heir);
+    const maybe = await fetchEstateByPair(client, authority, heir);
     if (!maybe.exists) return null;
     return await buildSnapshotFromEstate(client, authorityStr, heirStr, maybe.data);
   } catch {

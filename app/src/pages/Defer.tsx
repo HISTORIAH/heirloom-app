@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
 import {
-  sendDelegateDefer,
-  type Client,
-} from "@/lib/contracts";
+  delegateDefer,
+} from "@/lib/heirloom";
+import type { HeirloomClient } from "@/lib/heirloom";
 import {
   lookupEstateSnapshot,
   type EstateSnapshot,
@@ -40,7 +40,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const client: Client = { rpc, rpcSubscriptions };
+  const client: HeirloomClient = { rpc, rpcSubscriptions };
 
   const [authorityInput, setAuthorityInput] = useState("");
   const [heirInput, setHeirInput] = useState("");
@@ -93,8 +93,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
     if (!estate) return;
     setDeferring(true);
     try {
-      const tx = await sendDelegateDefer(client, {
-        delegate: signer,
+      const tx = await delegateDefer(client, signer, {
         authority: toAddress(estate.authority),
         heir: toAddress(estate.heir),
       });

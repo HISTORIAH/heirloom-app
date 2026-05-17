@@ -9,5 +9,5 @@ use solana_address::{address, Address};
 
 
   /// `heirloom` program ID.
-  pub const HEIRLOOM_ID: Address = address!("5TzknZ8BQbiPzHD3XXFm7GR3VQUSe22CtQTnceePCATV");
+  pub const HEIRLOOM_ID: Address = address!("FQiUcHRKJxSuShaRJszEPoRBinubDPoPPD75NvGtPRya");
 

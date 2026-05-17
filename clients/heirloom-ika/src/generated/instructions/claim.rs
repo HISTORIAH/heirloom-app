@@ -153,7 +153,7 @@ impl ClaimInstructionArgs {
           ///   2. `[]` coordinator
                 ///   3. `[writable]` message_approval
           ///   4. `[]` dwallet
-                ///   5. `[optional]` caller_program (default to `9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf`)
+                ///   5. `[optional]` caller_program (default to `6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys`)
           ///   6. `[]` cpi_authority
           ///   7. `[]` ika_program
                 ///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -205,7 +205,7 @@ impl ClaimBuilder {
                         self.dwallet = Some(dwallet);
                     self
     }
-            /// `[optional account, default to '9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf']`
+            /// `[optional account, default to '6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys']`
 #[inline(always)]
     pub fn caller_program(&mut self, caller_program: solana_address::Address) -> &mut Self {
                         self.caller_program = Some(caller_program);
@@ -263,7 +263,7 @@ impl ClaimBuilder {
                                         coordinator: self.coordinator.expect("coordinator is not set"),
                                         message_approval: self.message_approval.expect("message_approval is not set"),
                                         dwallet: self.dwallet.expect("dwallet is not set"),
-                                        caller_program: self.caller_program.unwrap_or(solana_address::address!("9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf")),
+                                        caller_program: self.caller_program.unwrap_or(solana_address::address!("6H2DF6MmP51fQDnB1KTUV3AbmCw7AkDDgNM9Cvegn4ys")),
                                         cpi_authority: self.cpi_authority.expect("cpi_authority is not set"),
                                         ika_program: self.ika_program.expect("ika_program is not set"),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),

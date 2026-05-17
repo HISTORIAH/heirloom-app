@@ -7,9 +7,9 @@ import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
 import {
   fetchEstatesByHeir,
   getAtaAddress,
-  sendClaimAll,
-  type Client,
-} from "@/lib/contracts";
+  claimAll,
+  type HeirloomClient,
+} from "@/lib/heirloom";
 import {
   buildSnapshotFromEstate,
   lookupEstateSnapshot,
@@ -39,10 +39,10 @@ const stateColors: Record<string, string> = {
 };
 
 async function autoFetchInheritances(
-  client: Client,
+  client: HeirloomClient,
   heirAddress: Address,
 ): Promise<EstateSnapshot[]> {
-  const estates = await fetchEstatesByHeir(client.rpc, heirAddress);
+  const estates = await fetchEstatesByHeir(client, heirAddress);
   const results = await Promise.all(
     estates.map(async (e) => {
       try {
@@ -69,7 +69,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  const client: Client = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
+  const client: HeirloomClient = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
 
   const [searching, setSearching] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
@@ -153,25 +153,27 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
       const tokenAssets = await Promise.all(
         inh.vaultTokens.map(async (vt) => {
           const mint = toAddress(vt.mint);
+          const tokenProgram = toAddress(vt.tokenProgram);
           const [heirAta, treasuryAta] = await Promise.all([
-            getAtaAddress(heirAddress, mint),
-            getAtaAddress(TREASURY_ADDRESS, mint),
+            getAtaAddress(heirAddress, mint, tokenProgram),
+            getAtaAddress(TREASURY_ADDRESS, mint, tokenProgram),
           ]);
           return {
             mint,
             vaultTokenAccount: toAddress(vt.address),
             heirTokenAccount: heirAta,
             treasuryTokenAccount: treasuryAta,
+            tokenProgram,
           };
         }),
       );
 
-      const lastTx = await sendClaimAll(
+      const lastTx = await claimAll(
         client,
         signer,
         authorityAddr,
         tokenAssets,
-        inh.solBalance > 0,
+        true, // Always claim SOL — closes estate/vault and returns rent
       );
 
       setClaimTxIds((p) => ({ ...p, [inh.authority]: lastTx }));
