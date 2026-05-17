@@ -1,15 +1,15 @@
 {
-  "idl": "target/idl/heirloom_ika_program.anchor.json",
+  "idl": "target/idl/heirloom.json",
   "before": [],
   "scripts": {
     "js": {
       "from": "@codama/renderers-js",
-      "args": ["clients-ika/js"]
+      "args": ["clients/heirloom"]
     },
     "rust": {
       "from": "@codama/renderers-rust",
       "args": [
-        "clients-ika/rust",
+        "clients/heirloom",
         {
           "formatCode": true
         }

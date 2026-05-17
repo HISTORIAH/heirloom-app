@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { generateKeyPairSigner, lamports } from "@solana/kit";
-import { fetchEstate, fetchMaybeEstate, findEstatePda } from "@historiah/heirloom";
+import { fetchEstate, findEstatePda } from "@historiah/heirloom";
 import { createTestContext, sendInitialize, sendUpdateFields } from "./setup";
 
 test("it updates heartbeat interval and grace period", async () => {

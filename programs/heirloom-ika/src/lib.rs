@@ -5,12 +5,23 @@ pub mod instructions;
 pub mod state;
 
 use anchor_lang::prelude::*;
+use solana_security_txt::security_txt;
 
 pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
 declare_id!("9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf");
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "Heirloom Ika Program",
+    project_url: "https://heirlm.xyz/",
+    contacts: "email:info@heirlm.xyz, twitter:@heirloom_app",
+    policy: "https://github.com/HISTORIAH/Heirloom-app",
+    preferred_languages: "en",
+    source_code: "https://github.com/HISTORIAH/Heirloom-app"
+}
 
 #[program]
 pub mod heirloom_ika {

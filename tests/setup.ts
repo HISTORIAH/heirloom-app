@@ -48,11 +48,12 @@ import {
   getClaimInstructionAsync,
   getDelegateDeferInstructionAsync,
   getRegisterAssetInstructionAsync,
+  getUpdateFieldInstruction,
   findEstatePda,
   findVaultPda,
   TREASURY_ADDRESS,
+  HEIRLOOM_PROGRAM_ADDRESS,
 } from "@historiah/heirloom";
-import { getUpdateFieldsInstructionAsync } from "../clients/js/src/overrides/updateFields";
 
 export type Client = {
   rpc: Rpc<SolanaRpcApi>;
@@ -352,7 +353,7 @@ export const sendUpdateFields = async (
     heir: args.heir,
   });
 
-  const ix = await getUpdateFieldsInstructionAsync({
+  const ix = getUpdateFieldInstruction({
     authority: signer,
     heir: args.heir,
     heartbeatInterval: args.heartbeatInterval ?? null,

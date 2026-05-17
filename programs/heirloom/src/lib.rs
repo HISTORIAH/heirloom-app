@@ -5,12 +5,23 @@ pub mod instructions;
 pub mod state;
 
 use anchor_lang::prelude::*;
+use solana_security_txt::security_txt;
 
 pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
 declare_id!("5TzknZ8BQbiPzHD3XXFm7GR3VQUSe22CtQTnceePCATV");
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "Heirloom Program",
+    project_url: "https://heirlm.xyz/",
+    contacts: "email:info@heirlm.xyz, twitter:@heirloom_app",
+    policy: "https://github.com/HISTORIAH/Heirloom-app",
+    preferred_languages: "en",
+    source_code: "https://github.com/HISTORIAH/Heirloom-app"
+}
 
 #[program]
 pub mod heirloom {
@@ -38,8 +49,8 @@ pub mod heirloom {
         Claim::claim_handler(ctx)
     }
 
-    pub fn defer(ctx: Context<Defer>) -> Result<()> {
-        Defer::delegate_defer_handler(ctx)
+    pub fn delegate_defer(ctx: Context<DelegateDefer>) -> Result<()> {
+        DelegateDefer::delegate_defer_handler(ctx)
     }
 
     pub fn register_asset(ctx: Context<RegisterAsset>, amount: u64) -> Result<()> {

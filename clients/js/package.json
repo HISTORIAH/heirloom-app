@@ -1,5 +1,5 @@
 {
-  "name": "@historiah/heirloom",
+  "name": "@historiah/heirloom-legacy",
   "version": "0.0.1",
   "description": "Clients for the heirloom app",
   "main": "src/main.ts",

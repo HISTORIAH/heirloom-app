@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{error::HeirloomError, Estate};
 
 #[derive(Accounts)]
-pub struct Defer<'info> {
+pub struct DelegateDefer<'info> {
     #[account(
         mut,
         address = estate.delegate.ok_or(HeirloomError::Unauthorized)? @ HeirloomError::Unauthorized
@@ -26,8 +26,8 @@ pub struct Defer<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Defer<'info> {
-    pub fn delegate_defer_handler(ctx: Context<Defer>) -> Result<()> {
+impl<'info> DelegateDefer<'info> {
+    pub fn delegate_defer_handler(ctx: Context<DelegateDefer>) -> Result<()> {
         ctx.accounts.validate()?;
 
         let now = Clock::get()?.unix_timestamp;

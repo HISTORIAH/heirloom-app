@@ -8,7 +8,7 @@
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-pub const DELEGATE_DEFER_DISCRIMINATOR: [u8; 1] = [5];
+pub const DELEGATE_DEFER_DISCRIMINATOR: [u8; 8] = [33, 210, 53, 248, 236, 243, 59, 4];
 
 /// Accounts.
 #[derive(Debug)]
@@ -27,9 +27,6 @@ pub struct DelegateDefer {
           pub estate: solana_address::Address,
           
               
-          pub clock: solana_address::Address,
-          
-              
           pub system_program: solana_address::Address,
       }
 
@@ -40,7 +37,7 @@ impl DelegateDefer {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(6+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(5+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.delegate,
             true
@@ -58,10 +55,6 @@ impl DelegateDefer {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.clock,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.system_program,
             false
           ));
@@ -69,7 +62,7 @@ impl DelegateDefer {
     let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
     
     solana_instruction::Instruction {
-      program_id: crate::HEIRLOOM_PROGRAM_ID,
+      program_id: crate::HEIRLOOM_ID,
       accounts,
       data,
     }
@@ -78,13 +71,13 @@ impl DelegateDefer {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
  pub struct DelegateDeferInstructionData {
-            discriminator: [u8; 1],
+            discriminator: [u8; 8],
       }
 
 impl DelegateDeferInstructionData {
   pub fn new() -> Self {
     Self {
-                        discriminator: [5],
+                        discriminator: [33, 210, 53, 248, 236, 243, 59, 4],
                   }
   }
 
@@ -109,15 +102,13 @@ impl Default for DelegateDeferInstructionData {
           ///   1. `[]` authority
           ///   2. `[]` heir
                 ///   3. `[writable]` estate
-                ///   4. `[optional]` clock (default to `SysvarC1ock11111111111111111111111111111111`)
-                ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct DelegateDeferBuilder {
             delegate: Option<solana_address::Address>,
                 authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
-                clock: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
                 __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
@@ -146,12 +137,6 @@ impl DelegateDeferBuilder {
                         self.estate = Some(estate);
                     self
     }
-            /// `[optional account, default to 'SysvarC1ock11111111111111111111111111111111']`
-#[inline(always)]
-    pub fn clock(&mut self, clock: solana_address::Address) -> &mut Self {
-                        self.clock = Some(clock);
-                    self
-    }
             /// `[optional account, default to '11111111111111111111111111111111']`
 #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
@@ -177,7 +162,6 @@ impl DelegateDeferBuilder {
                                         authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
-                                        clock: self.clock.unwrap_or(solana_address::address!("SysvarC1ock11111111111111111111111111111111")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
     
@@ -201,9 +185,6 @@ impl DelegateDeferBuilder {
               pub estate: &'b solana_account_info::AccountInfo<'a>,
                 
                     
-              pub clock: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
               pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
@@ -225,9 +206,6 @@ pub struct DelegateDeferCpi<'a, 'b> {
           pub estate: &'b solana_account_info::AccountInfo<'a>,
           
               
-          pub clock: &'b solana_account_info::AccountInfo<'a>,
-          
-              
           pub system_program: &'b solana_account_info::AccountInfo<'a>,
         }
 
@@ -242,7 +220,6 @@ impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
               authority: accounts.authority,
               heir: accounts.heir,
               estate: accounts.estate,
-              clock: accounts.clock,
               system_program: accounts.system_program,
                 }
   }
@@ -266,7 +243,7 @@ impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(6+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(5+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.delegate.key,
             true
@@ -284,10 +261,6 @@ impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.clock.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false
           ));
@@ -301,17 +274,16 @@ impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
     let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
     
     let instruction = solana_instruction::Instruction {
-      program_id: crate::HEIRLOOM_PROGRAM_ID,
+      program_id: crate::HEIRLOOM_ID,
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.delegate.clone());
                         account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
-                        account_infos.push(self.clock.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
@@ -331,8 +303,7 @@ impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
           ///   1. `[]` authority
           ///   2. `[]` heir
                 ///   3. `[writable]` estate
-          ///   4. `[]` clock
-          ///   5. `[]` system_program
+          ///   4. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct DelegateDeferCpiBuilder<'a, 'b> {
   instruction: Box<DelegateDeferCpiBuilderInstruction<'a, 'b>>,
@@ -346,7 +317,6 @@ impl<'a, 'b> DelegateDeferCpiBuilder<'a, 'b> {
               authority: None,
               heir: None,
               estate: None,
-              clock: None,
               system_program: None,
                                 __remaining_accounts: Vec::new(),
     });
@@ -370,11 +340,6 @@ impl<'a, 'b> DelegateDeferCpiBuilder<'a, 'b> {
       #[inline(always)]
     pub fn estate(&mut self, estate: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.estate = Some(estate);
-                    self
-    }
-      #[inline(always)]
-    pub fn clock(&mut self, clock: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.clock = Some(clock);
                     self
     }
       #[inline(always)]
@@ -415,8 +380,6 @@ impl<'a, 'b> DelegateDeferCpiBuilder<'a, 'b> {
                   
           estate: self.instruction.estate.expect("estate is not set"),
                   
-          clock: self.instruction.clock.expect("clock is not set"),
-                  
           system_program: self.instruction.system_program.expect("system_program is not set"),
                     };
     instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
@@ -430,7 +393,6 @@ struct DelegateDeferCpiBuilderInstruction<'a, 'b> {
                 authority: Option<&'b solana_account_info::AccountInfo<'a>>,
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                clock: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,

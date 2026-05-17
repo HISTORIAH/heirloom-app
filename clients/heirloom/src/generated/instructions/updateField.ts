@@ -48,21 +48,19 @@ import {
   getAccountMetaFactory,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { HEIRLOOM_PROGRAM_PROGRAM_ADDRESS } from "../programs";
+import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 
-export const UPDATE_FIELDS_DISCRIMINATOR = new Uint8Array([3]);
+export const UPDATE_FIELD_DISCRIMINATOR = new Uint8Array([164, 49, 117, 6, 187, 205, 13, 217]);
 
-export function getUpdateFieldsDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 1).encode(UPDATE_FIELDS_DISCRIMINATOR);
+export function getUpdateFieldDiscriminatorBytes() {
+  return fixEncoderSize(getBytesEncoder(), 8).encode(UPDATE_FIELD_DISCRIMINATOR);
 }
 
-export type UpdateFieldsInstruction<
-  TProgram extends string = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+export type UpdateFieldInstruction<
+  TProgram extends string = typeof HEIRLOOM_PROGRAM_ADDRESS,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
-  TAccountClock extends string | AccountMeta<string> =
-    "SysvarC1ock11111111111111111111111111111111",
   TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -74,7 +72,6 @@ export type UpdateFieldsInstruction<
         : TAccountAuthority,
       TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
       TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
-      TAccountClock extends string ? ReadonlyAccount<TAccountClock> : TAccountClock,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -82,7 +79,7 @@ export type UpdateFieldsInstruction<
     ]
   >;
 
-export type UpdateFieldsInstructionData = {
+export type UpdateFieldInstructionData = {
   discriminator: ReadonlyUint8Array;
   heartbeatInterval: Option<bigint>;
   gracePeriod: Option<bigint>;
@@ -90,29 +87,29 @@ export type UpdateFieldsInstructionData = {
   label: Option<string>;
 };
 
-export type UpdateFieldsInstructionDataArgs = {
+export type UpdateFieldInstructionDataArgs = {
   heartbeatInterval: OptionOrNullable<number | bigint>;
   gracePeriod: OptionOrNullable<number | bigint>;
   pauseDuration: OptionOrNullable<number | bigint>;
   label: OptionOrNullable<string>;
 };
 
-export function getUpdateFieldsInstructionDataEncoder(): Encoder<UpdateFieldsInstructionDataArgs> {
+export function getUpdateFieldInstructionDataEncoder(): Encoder<UpdateFieldInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", fixEncoderSize(getBytesEncoder(), 1)],
+      ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["heartbeatInterval", getOptionEncoder(getI64Encoder())],
       ["gracePeriod", getOptionEncoder(getI64Encoder())],
       ["pauseDuration", getOptionEncoder(getI64Encoder())],
       ["label", getOptionEncoder(addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()))],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_FIELDS_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPDATE_FIELD_DISCRIMINATOR }),
   );
 }
 
-export function getUpdateFieldsInstructionDataDecoder(): Decoder<UpdateFieldsInstructionData> {
+export function getUpdateFieldInstructionDataDecoder(): Decoder<UpdateFieldInstructionData> {
   return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
+    ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["heartbeatInterval", getOptionDecoder(getI64Decoder())],
     ["gracePeriod", getOptionDecoder(getI64Decoder())],
     ["pauseDuration", getOptionDecoder(getI64Decoder())],
@@ -120,67 +117,56 @@ export function getUpdateFieldsInstructionDataDecoder(): Decoder<UpdateFieldsIns
   ]);
 }
 
-export function getUpdateFieldsInstructionDataCodec(): Codec<
-  UpdateFieldsInstructionDataArgs,
-  UpdateFieldsInstructionData
+export function getUpdateFieldInstructionDataCodec(): Codec<
+  UpdateFieldInstructionDataArgs,
+  UpdateFieldInstructionData
 > {
   return combineCodec(
-    getUpdateFieldsInstructionDataEncoder(),
-    getUpdateFieldsInstructionDataDecoder(),
+    getUpdateFieldInstructionDataEncoder(),
+    getUpdateFieldInstructionDataDecoder(),
   );
 }
 
-export type UpdateFieldsInput<
+export type UpdateFieldInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
-  TAccountClock extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
-  clock?: Address<TAccountClock>;
   systemProgram?: Address<TAccountSystemProgram>;
-  heartbeatInterval: UpdateFieldsInstructionDataArgs["heartbeatInterval"];
-  gracePeriod: UpdateFieldsInstructionDataArgs["gracePeriod"];
-  pauseDuration: UpdateFieldsInstructionDataArgs["pauseDuration"];
-  label: UpdateFieldsInstructionDataArgs["label"];
+  heartbeatInterval: UpdateFieldInstructionDataArgs["heartbeatInterval"];
+  gracePeriod: UpdateFieldInstructionDataArgs["gracePeriod"];
+  pauseDuration: UpdateFieldInstructionDataArgs["pauseDuration"];
+  label: UpdateFieldInstructionDataArgs["label"];
 };
 
-export function getUpdateFieldsInstruction<
+export function getUpdateFieldInstruction<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
-  TAccountClock extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
-  input: UpdateFieldsInput<
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountClock,
-    TAccountSystemProgram
-  >,
+  input: UpdateFieldInput<TAccountAuthority, TAccountHeir, TAccountEstate, TAccountSystemProgram>,
   config?: { programAddress?: TProgramAddress },
-): UpdateFieldsInstruction<
+): UpdateFieldInstruction<
   TProgramAddress,
   TAccountAuthority,
   TAccountHeir,
   TAccountEstate,
-  TAccountClock,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
     authority: { value: input.authority ?? null, isWritable: true },
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
-    clock: { value: input.clock ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -192,10 +178,6 @@ export function getUpdateFieldsInstruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.clock.value) {
-    accounts.clock.value =
-      "SysvarC1ock11111111111111111111111111111111" as Address<"SysvarC1ock11111111111111111111111111111111">;
-  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -207,23 +189,21 @@ export function getUpdateFieldsInstruction<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
-      getAccountMeta("clock", accounts.clock),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getUpdateFieldsInstructionDataEncoder().encode(args as UpdateFieldsInstructionDataArgs),
+    data: getUpdateFieldInstructionDataEncoder().encode(args as UpdateFieldInstructionDataArgs),
     programAddress,
-  } as UpdateFieldsInstruction<
+  } as UpdateFieldInstruction<
     TProgramAddress,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
-    TAccountClock,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedUpdateFieldsInstruction<
-  TProgram extends string = typeof HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+export type ParsedUpdateFieldInstruction<
+  TProgram extends string = typeof HEIRLOOM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
@@ -231,24 +211,23 @@ export type ParsedUpdateFieldsInstruction<
     authority: TAccountMetas[0];
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
-    clock: TAccountMetas[3];
-    systemProgram: TAccountMetas[4];
+    systemProgram: TAccountMetas[3];
   };
-  data: UpdateFieldsInstructionData;
+  data: UpdateFieldInstructionData;
 };
 
-export function parseUpdateFieldsInstruction<
+export function parseUpdateFieldInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
-): ParsedUpdateFieldsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+): ParsedUpdateFieldInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 4) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 5,
+      expectedAccountMetas: 4,
     });
   }
   let accountIndex = 0;
@@ -263,9 +242,8 @@ export function parseUpdateFieldsInstruction<
       authority: getNextAccount(),
       heir: getNextAccount(),
       estate: getNextAccount(),
-      clock: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getUpdateFieldsInstructionDataDecoder().decode(instruction.data),
+    data: getUpdateFieldInstructionDataDecoder().decode(instruction.data),
   };
 }

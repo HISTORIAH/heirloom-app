@@ -22,9 +22,9 @@ import {
   getInitializeInstructionAsync,
   getRegisterAssetInstructionAsync,
   getRevokeInstructionAsync,
-  getUpdateFieldsInstructionAsync,
+  getUpdateFieldInstruction,
   getUpdateHeirInstructionAsync,
-  HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+  HEIRLOOM_PROGRAM_ADDRESS,
   TREASURY_ADDRESS,
   type Estate,
 } from "@historiah/heirloom";
@@ -159,7 +159,7 @@ async function fetchEstatesByMemcmp(
   match: { offset: bigint; addr: Address },
 ): Promise<Array<{ address: Address; data: Estate }>> {
   const accounts = await rpc
-    .getProgramAccounts(HEIRLOOM_PROGRAM_PROGRAM_ADDRESS, {
+    .getProgramAccounts(HEIRLOOM_PROGRAM_ADDRESS, {
       encoding: "base64",
       filters: [
         // Estate discriminator = [1] → base64 "AQ=="
@@ -198,7 +198,7 @@ async function fetchEstatesByMemcmp(
         executable: item.account.executable,
         lamports: item.account.lamports,
         space: BigInt(raw.length),
-        programAddress: HEIRLOOM_PROGRAM_PROGRAM_ADDRESS,
+        programAddress: HEIRLOOM_PROGRAM_ADDRESS,
       });
       out.push({ address: item.pubkey as Address, data: decoded.data });
     } catch (err) {
@@ -285,7 +285,7 @@ export async function sendUpdate(
   const authorityAddr = args.authorityAddress ?? args.authority.address;
   const estate = await getEstateAddress(authorityAddr, args.heir);
 
-  const ix = await getUpdateFieldsInstructionAsync({
+  const ix = getUpdateFieldInstruction({
     authority: args.authority,
     heir: args.heir,
     heartbeatInterval: args.heartbeatInterval ?? null,

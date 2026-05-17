@@ -104,8 +104,28 @@
       "name": "@historiah/blog",
       "version": "0.0.1",
     },
-    "clients/js": {
+    "clients/heirloom": {
       "name": "@historiah/heirloom",
+      "version": "0.0.1",
+      "dependencies": {
+        "@solana/program-client-core": "^6.1.0",
+      },
+      "peerDependencies": {
+        "@solana/kit": "^6.1.0",
+      },
+    },
+    "clients/heirloom-ika": {
+      "name": "@historiah/heirloom-ika",
+      "version": "0.0.1",
+      "dependencies": {
+        "@solana/program-client-core": "^6.1.0",
+      },
+      "peerDependencies": {
+        "@solana/kit": "^6.1.0",
+      },
+    },
+    "clients/js": {
+      "name": "@historiah/heirloom-legacy",
       "version": "0.0.1",
       "dependencies": {
         "@solana/program-client-core": "^6.1.0",
@@ -297,7 +317,11 @@
 
     "@historiah/blog": ["@historiah/blog@workspace:blog"],
 
-    "@historiah/heirloom": ["@historiah/heirloom@workspace:clients/js"],
+    "@historiah/heirloom": ["@historiah/heirloom@workspace:clients/heirloom"],
+
+    "@historiah/heirloom-ika": ["@historiah/heirloom-ika@workspace:clients/heirloom-ika"],
+
+    "@historiah/heirloom-legacy": ["@historiah/heirloom-legacy@workspace:clients/js"],
 
     "@historiah/ui": ["@historiah/ui@workspace:packages/ui"],
 
