@@ -7,20 +7,31 @@
  */
 
 import {
+  getAddressEncoder,
   getBytesEncoder,
   getProgramDerivedAddress,
   type Address,
   type ProgramDerivedAddress,
 } from "@solana/kit";
 
+export type EstateSeeds = {
+  authority: Address;
+  heir: Address;
+};
+
 export async function findEstatePda(
+  seeds: EstateSeeds,
   config: { programAddress?: Address | undefined } = {},
 ): Promise<ProgramDerivedAddress> {
   const {
-    programAddress = "JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN" as Address<"JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN">,
+    programAddress = "5TzknZ8BQbiPzHD3XXFm7GR3VQUSe22CtQTnceePCATV" as Address<"5TzknZ8BQbiPzHD3XXFm7GR3VQUSe22CtQTnceePCATV">,
   } = config;
   return await getProgramDerivedAddress({
     programAddress,
-    seeds: [getBytesEncoder().encode(new Uint8Array([101, 115, 116, 97, 116, 101]))],
+    seeds: [
+      getBytesEncoder().encode(new Uint8Array([101, 115, 116, 97, 116, 101])),
+      getAddressEncoder().encode(seeds.authority),
+      getAddressEncoder().encode(seeds.heir),
+    ],
   });
 }

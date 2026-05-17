@@ -1,0 +1,19 @@
+{
+  "idl": "target/idl/heirloom.json",
+  "before": [],
+  "scripts": {
+    "js": {
+      "from": "@codama/renderers-js",
+      "args": ["clients/heirloom"]
+    },
+    "rust": {
+      "from": "@codama/renderers-rust",
+      "args": [
+        "clients/heirloom",
+        {
+          "formatCode": true
+        }
+      ]
+    }
+  }
+}

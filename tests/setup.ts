@@ -48,11 +48,11 @@ import {
   getClaimInstructionAsync,
   getDelegateDeferInstructionAsync,
   getRegisterAssetInstructionAsync,
+  getUpdateFieldInstruction,
   findEstatePda,
   findVaultPda,
   TREASURY_ADDRESS,
 } from "@historiah/heirloom";
-import { getUpdateFieldsInstructionAsync } from "../clients/js/src/overrides/updateFields";
 
 export type Client = {
   rpc: Rpc<SolanaRpcApi>;
@@ -352,7 +352,7 @@ export const sendUpdateFields = async (
     heir: args.heir,
   });
 
-  const ix = await getUpdateFieldsInstructionAsync({
+  const ix = getUpdateFieldInstruction({
     authority: signer,
     heir: args.heir,
     heartbeatInterval: args.heartbeatInterval ?? null,
@@ -375,7 +375,7 @@ export const sendUpdateHeir = async (
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
   },
-): Promise<{ authority: Address }> => {
+): Promise<{ authority: Address, newEstate: Address, newVault: Address }> => {
   const authority = await loadDefaultKeypair();
   const { newHeir, oldHeir, tokenProgram, mint } = args;
 
@@ -406,7 +406,7 @@ export const sendUpdateHeir = async (
   });
 
   await sendInstruction(client, authority, ix);
-  return { authority: authority.address };
+  return { authority: authority.address, newEstate, newVault };
 };
 
 export const sendRevoke = async (
@@ -520,6 +520,7 @@ export const sendRegisterAsset = async (
     amount: bigint;
     mint?: Address;
     vaultTokenAccount?: Address;
+    authorityTokenAccount?: Address;
     tokenProgram?: Address;
   },
 ): Promise<{ authority: Address }> => {
@@ -539,6 +540,7 @@ export const sendRegisterAsset = async (
     estate: estate[0],
     vaultTokenAccount: args.vaultTokenAccount,
     tokenProgram: args.tokenProgram,
+    authorityTokenAccount: args.authorityTokenAccount
   });
 
   await sendInstruction(client, authority, ix);

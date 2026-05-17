@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
 import {
-  sendUpdate,
-  type Client,
-} from "@/lib/contracts";
+  updateFields,
+} from "@/lib/heirloom";
+import type { HeirloomClient } from "@/lib/heirloom";
 import {
   lookupEstateSnapshot,
   type EstateSnapshot,
@@ -46,7 +46,7 @@ const HeartbeatPageInner: React.FC<{
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const client: Client = { rpc, rpcSubscriptions };
+  const client: HeirloomClient = { rpc, rpcSubscriptions };
 
   const [authorityInput, setAuthorityInput] = useState("");
   const [heirInput, setHeirInput] = useState("");
@@ -85,8 +85,7 @@ const HeartbeatPageInner: React.FC<{
     if (!estate) return;
     setSigning(true);
     try {
-      const tx = await sendUpdate(client, {
-        authority: signer,
+      const tx = await updateFields(client, signer, {
         authorityAddress: toAddress(estate.authority),
         heir: toAddress(estate.heir),
       });

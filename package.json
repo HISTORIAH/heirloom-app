@@ -15,15 +15,10 @@
     "dev:ika": "turbo run dev --filter=app-ika",
     "build:ui": "turbo run build --filter=app",
     "build:ika": "turbo run build --filter=app-ika",
-    "build": "turbo run build",
-    "convert-idl": "bun run scripts/convert-idl.ts",
-    "convert-idl:ika": "bun run scripts/convert-idl-ika.ts",
-    "generate:clients": "bun convert-idl && bunx codama run --all",
-    "generate:ika-clients": "bun convert-idl:ika && bunx codama run --all",
-    "generate:all-clients": "bun generate:clients && bun generate:ika-clients",
-    "deploy": "bash scripts/deploy.sh",
-    "test": "turbo run test",
-    "airdrop": "bash scripts/airdrop.sh"
+    "generate:heirloom": "bunx codama run --all -c heirloom.codama.json",
+    "generate:heirloom-ika": "bunx codama run --all -c heirloom-ika.codama.json",
+    "generate": "bun run generate:heirloom && bun run generate:heirloom-ika",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "@codama/nodes-from-anchor": "^1.4.0",

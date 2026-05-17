@@ -1,5 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
-import { address as toAddress, type Address, type TransactionSigner, } from "@solana/kit";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
 import {
@@ -10,25 +10,24 @@ import {
   getAtaAddress,
   getEstateAddress,
   getVaultAddress,
-  sendInitializeWithTokens,
-  sendRegisterAndDeposit,
-  sendRegisterSolDeposit,
-  sendRevokeAll,
-  sendUpdate,
-  sendUpdateHeir,
-  type Client,
-} from "@/lib/contracts";
+  initializeWithTokens,
+  registerAsset,
+  registerSolDeposit,
+  revokeAll,
+  updateFields,
+  updateHeirAll,
+  type HeirloomClient,
+  type VaultTokenInfo,
+} from "@/lib/heirloom";
 import { computeEstateState, type EstateUiState } from "@/lib/estateState";
 import { unwrapOption } from "@/lib/anchor";
 import { errMsg } from "@/lib/utils";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
 
-export interface VaultTokenDisplay {
-  mint: string;
-  address: string;
-  amount: bigint;
-  decimals: number;
-}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface EstateData {
   authority: string;
@@ -48,7 +47,7 @@ export interface EstateData {
   estatePda: string;
   vaultPda: string;
   solBalance: number;
-  vaultTokens: VaultTokenDisplay[];
+  vaultTokens: VaultTokenInfo[];
   state: EstateUiState;
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
@@ -97,6 +96,10 @@ interface VaultState {
   clearVault: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
 const VaultContext = createContext<VaultState | null>(null);
 
 type VaultUiShim = { account?: { address: string } | null };
@@ -114,14 +117,17 @@ const VaultProviderInner: React.FC<{
   const [pendingCreate, setPendingCreate] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const client: Client = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
+  const client: HeirloomClient = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
+
+  // -------------------------------------------------------------------------
+  // Data fetching
+  // -------------------------------------------------------------------------
 
   const fetchEstates = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Discover all estates on-chain where this wallet is authority.
-      const onChainEstates = await fetchEstatesByAuthority(rpc, authority);
+      const onChainEstates = await fetchEstatesByAuthority(client, authority);
 
       const results: EstateData[] = [];
       for (const estate of onChainEstates) {
@@ -129,9 +135,10 @@ const VaultProviderInner: React.FC<{
           const heir = toAddress(estate.data.heir);
           const vaultPda = await getVaultAddress(authority, heir);
           const [lamports, vaultTokens] = await Promise.all([
-            fetchVaultClaimableLamports(rpc, vaultPda),
-            discoverVaultTokenAccounts(rpc, vaultPda),
+            fetchVaultClaimableLamports(client, vaultPda),
+            discoverVaultTokenAccounts(client, vaultPda),
           ]);
+
           const lastHeartbeat = Number(estate.data.lastHeartbeat);
           const heartbeatInterval = Number(estate.data.heartbeatInterval);
           const gracePeriod = Number(estate.data.gracePeriod);
@@ -139,6 +146,7 @@ const VaultProviderInner: React.FC<{
           const createdAt = Number(estate.data.createdAt);
           const hasTokenBalance = vaultTokens.length > 0;
           const vaultEmpty = estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
+
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
             lastHeartbeat,
             heartbeatInterval,
@@ -148,9 +156,6 @@ const VaultProviderInner: React.FC<{
             createdAt,
             vaultEmpty,
           });
-
-          const delegateAddr = unwrapOption<string>(estate.data.delegate);
-          const hbSignerAddr = unwrapOption<string>(estate.data.hbSigner);
 
           results.push({
             authority: estate.data.authority,
@@ -164,8 +169,8 @@ const VaultProviderInner: React.FC<{
             createdAt,
             isClaimed: estate.data.isClaimed,
             isDeferred: estate.data.isDeferred,
-            delegate: delegateAddr,
-            hbSigner: hbSignerAddr,
+            delegate: unwrapOption<string>(estate.data.delegate),
+            hbSigner: unwrapOption<string>(estate.data.hbSigner),
             claimableAssets: estate.data.claimableAssets,
             estatePda: estate.address,
             vaultPda,
@@ -185,7 +190,7 @@ const VaultProviderInner: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, [authority, rpc]);
+  }, [authority, client]);
 
   useEffect(() => {
     if (estates.length > 0) setPendingCreate(false);
@@ -200,15 +205,24 @@ const VaultProviderInner: React.FC<{
     };
   }, [fetchEstates, pendingCreate]);
 
+  // -------------------------------------------------------------------------
+  // Transaction helpers
+  // -------------------------------------------------------------------------
+
+  const trackTx = useCallback((txId: string) => {
+    setPendingTxId(txId);
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // On-chain operations
+  // -------------------------------------------------------------------------
+
   const createEstateOnChain = useCallback(
     async (input: CreateEstateInput): Promise<string> => {
       const heirAddress = toAddress(input.heir);
       const estatePda = await getEstateAddress(authority, heirAddress);
       const vaultPda = await getVaultAddress(authority, heirAddress);
 
-      // Raw account check — fetchMaybeEstate decodes as Estate; we need the
-      // underlying account because post-claim/revoke PDAs can linger briefly
-      // with 0 lamports before runtime GC propagates to the RPC node.
       const rawAccountExists = async (pda: Address): Promise<boolean> => {
         try {
           const res = await rpc.getAccountInfo(pda, { commitment: "confirmed" }).send();
@@ -218,24 +232,16 @@ const VaultProviderInner: React.FC<{
         }
       };
 
-      // Preflight: reject if an active estate already exists for this heir.
-      const existing = await fetchEstateByPair(rpc, authority, heirAddress);
+      const existing = await fetchEstateByPair(client, authority, heirAddress);
       if (existing.exists) {
         throw new Error(
-          "An active estate already exists for this heir. " +
-          "Revoke or claim all assets first, then try again.",
+          "An active estate already exists for this heir. Revoke or claim all assets first, then try again.",
         );
       }
 
-      // Wait for both PDAs to be fully reaped. Runtime GCs 0-lamport accounts
-      // at tx-end, but RPC snapshots may lag — init will fail with
-      // "account already borrowed" if it runs against stale state.
       const deadline = Date.now() + 20000;
       while (Date.now() < deadline) {
-        const [e, v] = await Promise.all([
-          rawAccountExists(estatePda),
-          rawAccountExists(vaultPda),
-        ]);
+        const [e, v] = await Promise.all([rawAccountExists(estatePda), rawAccountExists(vaultPda)]);
         if (!e && !v) break;
         await new Promise((r) => setTimeout(r, 750));
       }
@@ -244,19 +250,16 @@ const VaultProviderInner: React.FC<{
         rawAccountExists(vaultPda),
       ]);
       if (stillEstate || stillVault) {
-        throw new Error(
-          "Prior estate/vault PDAs not yet cleared on-chain. Wait a few seconds and retry.",
-        );
+        throw new Error("Prior estate/vault PDAs not yet cleared on-chain. Wait a few seconds and retry.");
       }
 
       const validTokens = (input.tokens ?? []).filter((tok) => tok.amount > 0n);
 
-      let initArgs: Parameters<typeof sendInitializeWithTokens>[1];
-      let extraTokens: Parameters<typeof sendInitializeWithTokens>[2];
+      let initArgs: Parameters<typeof initializeWithTokens>[2];
+      let extraTokens: Parameters<typeof initializeWithTokens>[3];
 
       if (input.amountLamports > 0n) {
         initArgs = {
-          authority: signer,
           heir: heirAddress,
           amount: input.amountLamports,
           label: input.label,
@@ -284,8 +287,8 @@ const VaultProviderInner: React.FC<{
         const authorityTokenAccount = tokenProgram
           ? await getAtaAddress(authority, mintAddr, tokenProgram)
           : await getAtaAddress(authority, mintAddr);
+
         initArgs = {
-          authority: signer,
           heir: heirAddress,
           amount: primaryToken.amount,
           label: input.label,
@@ -306,7 +309,7 @@ const VaultProviderInner: React.FC<{
         }));
       }
 
-      const txId = await sendInitializeWithTokens(client, initArgs, extraTokens);
+      const txId = await initializeWithTokens(client, signer, initArgs, extraTokens);
       setPendingTxId(txId);
       setPendingCreate(true);
       return txId;
@@ -316,8 +319,7 @@ const VaultProviderInner: React.FC<{
 
   const registerAssetOnChain = useCallback(
     async (heir: string, token: TokenDeposit): Promise<string> => {
-      const txId = await sendRegisterAndDeposit(client, {
-        authority: signer,
+      const txId = await registerAsset(client, signer, {
         heir: toAddress(heir),
         mint: toAddress(token.mint),
         amount: token.amount,
@@ -331,8 +333,7 @@ const VaultProviderInner: React.FC<{
 
   const registerSolOnChain = useCallback(
     async (heir: string, lamports: bigint): Promise<string> => {
-      const txId = await sendRegisterSolDeposit(client, {
-        authority: signer,
+      const txId = await registerSolDeposit(client, signer, {
         heir: toAddress(heir),
         amount: lamports,
       });
@@ -344,10 +345,7 @@ const VaultProviderInner: React.FC<{
 
   const sendHeartbeatOnChain = useCallback(
     async (heir: string): Promise<string> => {
-      const txId = await sendUpdate(client, {
-        authority: signer,
-        heir: toAddress(heir),
-      });
+      const txId = await updateFields(client, signer, { heir: toAddress(heir) });
       setPendingTxId(txId);
       return txId;
     },
@@ -356,8 +354,7 @@ const VaultProviderInner: React.FC<{
 
   const updateEstateFieldsOnChain = useCallback(
     async (heir: string, fields: UpdateEstateFields): Promise<string> => {
-      const txId = await sendUpdate(client, {
-        authority: signer,
+      const txId = await updateFields(client, signer, {
         heir: toAddress(heir),
         heartbeatInterval: fields.heartbeatInterval,
         gracePeriod: fields.gracePeriod,
@@ -375,43 +372,46 @@ const VaultProviderInner: React.FC<{
       const heirAddr = toAddress(heir);
       const vaultPda = await getVaultAddress(authority, heirAddr);
 
-      const [vaultTokens, solBalance] = await Promise.all([
-        discoverVaultTokenAccounts(rpc, vaultPda),
-        fetchVaultClaimableLamports(rpc, vaultPda),
-      ]);
+      const vaultTokens = await discoverVaultTokenAccounts(client, vaultPda);
 
       const tokenAssets = await Promise.all(
         vaultTokens.map(async (vt) => {
           const mintAddr = toAddress(vt.mint);
-          const authorityAta = await getAtaAddress(authority, mintAddr);
-          const treasuryAta = await getAtaAddress(TREASURY_ADDRESS, mintAddr);
+          const tokenProgram = toAddress(vt.tokenProgram);
+          const [authorityAta, treasuryAta] = await Promise.all([
+            getAtaAddress(authority, mintAddr, tokenProgram),
+            getAtaAddress(TREASURY_ADDRESS, mintAddr, tokenProgram),
+          ]);
           return {
             mint: mintAddr,
             vaultTokenAccount: toAddress(vt.address),
             authorityTokenAccount: authorityAta,
             treasuryTokenAccount: treasuryAta,
+            tokenProgram,
           };
         }),
       );
 
-      const txId = await sendRevokeAll(client, signer, heirAddr, tokenAssets, solBalance > 0n);
+      const txId = await revokeAll(client, signer, heirAddr, tokenAssets, true);
       setPendingTxId(txId);
       return txId;
     },
-    [client, rpc, signer, authority],
+    [client, authority, signer],
   );
 
   const updateHeirOnChain = useCallback(
     async (heir: string, newHeir: string): Promise<string> => {
-      const txId = await sendUpdateHeir(client, {
-        authority: signer,
-        heir: toAddress(heir),
-        newHeir: toAddress(newHeir),
-      });
-      setPendingTxId(txId);
-      return txId;
+      const finalTxId = await updateHeirAll(
+        client,
+        signer,
+        toAddress(heir),
+        toAddress(newHeir),
+        trackTx,
+      );
+      setPendingTxId(finalTxId);
+      return finalTxId;
     },
-    [client, signer],
+    [client, signer, trackTx],
   );
 
   const clearVault = useCallback(() => {
@@ -441,6 +441,10 @@ const VaultProviderInner: React.FC<{
   return <VaultContext.Provider value={value}>{children}</VaultContext.Provider>;
 };
 
+// ---------------------------------------------------------------------------
+// Disconnected stub
+// ---------------------------------------------------------------------------
+
 const notConnected = async (): Promise<never> => {
   throw new Error("Wallet not connected");
 };
@@ -452,7 +456,7 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     error: null,
     pendingTxId: null,
     pendingCreate: false,
-    fetchEstates: async () => { },
+    fetchEstates: async () => {},
     createEstateOnChain: notConnected,
     registerAssetOnChain: notConnected,
     registerSolOnChain: notConnected,
@@ -460,10 +464,14 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     updateEstateFieldsOnChain: notConnected,
     revokeEstateOnChain: notConnected,
     updateHeirOnChain: notConnected,
-    clearVault: () => { },
+    clearVault: () => {},
   };
   return <VaultContext.Provider value={stubValue}>{children}</VaultContext.Provider>;
 };
+
+// ---------------------------------------------------------------------------
+// Public provider
+// ---------------------------------------------------------------------------
 
 export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const walletUi = useWalletUi() as unknown as VaultUiShim;

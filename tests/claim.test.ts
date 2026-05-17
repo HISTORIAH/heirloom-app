@@ -1,5 +1,4 @@
 import { test } from "bun:test";
-import { generateKeyPairSigner } from "@solana/kit";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
   createTestContext,
