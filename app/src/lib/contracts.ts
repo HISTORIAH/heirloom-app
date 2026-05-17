@@ -133,25 +133,25 @@ export async function fetchVaultClaimableLamports(
  * Fetch all Estate accounts where the given address is the authority,
  * directly from the chain using getProgramAccounts with memcmp filters.
  *
- * Estate layout: discriminator(1) | authority(32) | heir(32) | ...
- * Filter: discriminator == 1 (estate) AND authority == wallet address.
+ * Estate layout: discriminator(8) | authority(32) | heir(32) | ...
+ * Filter: discriminator == ESTATE_DISCRIMINATOR AND authority == wallet address.
  */
 export async function fetchEstatesByAuthority(
   rpc: AppRpc,
   authority: Address,
 ): Promise<Array<{ address: Address; data: Estate }>> {
-  return fetchEstatesByMemcmp(rpc, { offset: 1n, addr: authority });
+  return fetchEstatesByMemcmp(rpc, { offset: 8n, addr: authority });
 }
 
 /**
  * Fetch all Estate accounts where the given address is the heir.
- * Heir is at offset 33 (1 discriminator + 32 authority).
+ * Heir is at offset 40 (8 discriminator + 32 authority).
  */
 export async function fetchEstatesByHeir(
   rpc: AppRpc,
   heir: Address,
 ): Promise<Array<{ address: Address; data: Estate }>> {
-  return fetchEstatesByMemcmp(rpc, { offset: 33n, addr: heir });
+  return fetchEstatesByMemcmp(rpc, { offset: 40n, addr: heir });
 }
 
 async function fetchEstatesByMemcmp(
@@ -162,11 +162,11 @@ async function fetchEstatesByMemcmp(
     .getProgramAccounts(HEIRLOOM_PROGRAM_ADDRESS, {
       encoding: "base64",
       filters: [
-        // Estate discriminator = [1] → base64 "AQ=="
+        // Estate discriminator = [193,23,206,61,104,225,211,221] → base64 "wRfOPWjh090="
         {
           memcmp: {
             offset: 0n,
-            bytes: "AQ==" as unknown as Base64EncodedBytes,
+            bytes: "wRfOPWjh090=" as unknown as Base64EncodedBytes,
             encoding: "base64",
           },
         },

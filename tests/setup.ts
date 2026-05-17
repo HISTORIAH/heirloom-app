@@ -52,7 +52,6 @@ import {
   findEstatePda,
   findVaultPda,
   TREASURY_ADDRESS,
-  HEIRLOOM_PROGRAM_ADDRESS,
 } from "@historiah/heirloom";
 
 export type Client = {
