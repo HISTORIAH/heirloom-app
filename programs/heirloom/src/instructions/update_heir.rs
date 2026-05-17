@@ -26,7 +26,7 @@ pub struct UpdateHeir<'info> {
     pub estate: Account<'info, Estate>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = authority,
         space = Estate::LEN,
         seeds = [Estate::SEED, authority.key().as_ref(), new_heir.key().as_ref()],
@@ -42,7 +42,7 @@ pub struct UpdateHeir<'info> {
     pub vault: Account<'info, Vault>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = authority,
         space = Vault::LEN,
         seeds = [Vault::SEED, authority.key().as_ref(), new_heir.key().as_ref()],
@@ -69,30 +69,53 @@ impl<'info> UpdateHeir<'info> {
     pub fn update_heir_handler(ctx: Context<UpdateHeir>) -> Result<()> {
         ctx.accounts.validate_inputs()?;
 
-        ctx.accounts
-            .set_new_account_data(ctx.bumps.new_estate, ctx.bumps.new_vault)?;
+        let is_first_call = ctx.accounts.new_estate.authority == Pubkey::default();
 
-        ctx.accounts.migrate_assets()?;
+        if is_first_call {
+            ctx.accounts
+                .set_new_account_data(ctx.bumps.new_estate, ctx.bumps.new_vault)?;
+        }
 
-        let authority_info = ctx.accounts.authority.to_account_info();
-        close_pda(
-            ctx.accounts.estate.to_account_info(),
-            authority_info.clone(),
-        )?;
-        close_pda(ctx.accounts.vault.to_account_info(), authority_info)?;
+        ctx.accounts.migrate_token()?;
+
+        // claimable_assets = (number of token ATAs) + 1 for the SOL deposit.
+        // Tokens are fully migrated when the caller passes no vault_ta (nothing left to transfer)
+        // and the counter is at most 1 (only the SOL entry remains).
+        // Closing the vault moves all SOL to new_vault.
+        let all_tokens_migrated =
+            ctx.accounts.vault_token_account.is_none() && ctx.accounts.estate.claimable_assets <= 1;
+
+        if all_tokens_migrated {
+            ctx.accounts.new_estate.is_deferred = false;
+
+            let authority_info = ctx.accounts.authority.to_account_info();
+            let new_vault_info = ctx.accounts.new_vault.to_account_info();
+
+            close_pda(ctx.accounts.estate.to_account_info(), authority_info)?;
+            close_pda(ctx.accounts.vault.to_account_info(), new_vault_info)?;
+        }
 
         Ok(())
     }
 
     pub fn validate_inputs(&self) -> Result<()> {
         require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
-        require!(
-            self.estate.claimable_assets <= 1,
-            HeirloomError::TooManyClaimableAssets
-        );
 
         let now = Clock::get()?.unix_timestamp;
         require!(now >= self.estate.paused_until, HeirloomError::EstatePaused);
+
+        let is_first_call = self.new_estate.authority == Pubkey::default();
+
+        if !is_first_call {
+            // Subsequent calls: ensure new_estate belongs to this authority and is
+            // mid-migration (is_deferred), not an unrelated live estate.
+            require_keys_eq!(
+                self.new_estate.authority,
+                self.authority.key(),
+                HeirloomError::Unauthorized
+            );
+            require!(self.new_estate.is_deferred, HeirloomError::InvalidAccount);
+        }
 
         if let Some(mint_acc) = self.mint.as_ref() {
             let vault_ta = self
@@ -133,7 +156,8 @@ impl<'info> UpdateHeir<'info> {
         self.new_estate.label = self.estate.label.clone();
         self.new_estate.pause_duration = self.estate.pause_duration;
         self.new_estate.paused_until = 0;
-        self.new_estate.is_deferred = false;
+        // Block claim on new estate until migration is complete.
+        self.new_estate.is_deferred = true;
 
         self.new_vault.estate = self.new_estate.key();
         self.new_vault.bump = new_vault_bump;
@@ -141,7 +165,13 @@ impl<'info> UpdateHeir<'info> {
         Ok(())
     }
 
-    pub fn migrate_assets(&self) -> Result<()> {
+    pub fn migrate_token(&mut self) -> Result<()> {
+        let Some(vault_ta) = self.vault_token_account.as_ref() else {
+            // No token to migrate on this call — final SOL move is handled
+            // by closing old_vault to new_vault in the handler.
+            return Ok(());
+        };
+
         let vault_seeds: &[&[u8]] = &[
             b"vault",
             self.authority.key.as_ref(),
@@ -150,57 +180,52 @@ impl<'info> UpdateHeir<'info> {
         ];
         let signer_seeds = &[vault_seeds];
 
-        if let Some(vault_ta) = self.vault_token_account.as_ref() {
-            let new_vault_ta = self.new_vault_token_account.as_ref().unwrap();
-            let token_program_addr = self.token_program.key();
-            let mint = self.mint.as_ref().unwrap();
-            let amount = vault_ta.amount;
+        let new_vault_ta = self.new_vault_token_account.as_ref().unwrap();
+        let token_program_addr = self.token_program.key();
+        let mint = self.mint.as_ref().unwrap();
+        let amount = vault_ta.amount;
+        require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
-            let cpi_accounts = associated_token::Create {
-                payer: self.authority.to_account_info(),
-                associated_token: new_vault_ta.to_account_info(),
-                authority: self.new_vault.to_account_info(),
-                mint: mint.to_account_info(),
-                system_program: self.system_program.to_account_info(),
-                token_program: self.token_program.to_account_info(),
-            };
+        // Create new vault ATA idempotently.
+        let cpi_accounts = associated_token::Create {
+            payer: self.authority.to_account_info(),
+            associated_token: new_vault_ta.to_account_info(),
+            authority: self.new_vault.to_account_info(),
+            mint: mint.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+            token_program: self.token_program.to_account_info(),
+        };
+        associated_token::create_idempotent(CpiContext::new(
+            self.associated_token_program.key(),
+            cpi_accounts,
+        ))?;
 
-            let associated_program_addr = self.associated_token_program.key();
-            let create_idempotent_ctx = CpiContext::new(associated_program_addr, cpi_accounts);
-
-            associated_token::create_idempotent(create_idempotent_ctx)?;
-
-            // transfer
-            let cpi_accounts = TransferChecked {
+        // Transfer tokens to new vault ATA.
+        let transfer_ctx = CpiContext::new_with_signer(
+            token_program_addr,
+            TransferChecked {
                 from: vault_ta.to_account_info(),
                 mint: mint.to_account_info(),
                 to: new_vault_ta.to_account_info(),
                 authority: self.vault.to_account_info(),
-            };
+            },
+            signer_seeds,
+        );
+        token_interface::transfer_checked(transfer_ctx, amount, mint.decimals)?;
 
-            let transfer_ctx =
-                CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-            token_interface::transfer_checked(transfer_ctx, amount, mint.decimals)?;
-
-            // close account
-            let close_cpi_accounts = token_interface::CloseAccount {
+        // Close old ATA; rent goes back to authority.
+        let close_ctx = CpiContext::new_with_signer(
+            token_program_addr,
+            token_interface::CloseAccount {
                 account: vault_ta.to_account_info(),
                 destination: self.authority.to_account_info(),
                 authority: self.vault.to_account_info(),
-            };
-            let close_ctx =
-                CpiContext::new_with_signer(token_program_addr, close_cpi_accounts, signer_seeds);
+            },
+            signer_seeds,
+        );
+        token_interface::close_account(close_ctx)?;
 
-            token_interface::close_account(close_ctx)?;
-        } else {
-            let old_vault_info = self.vault.to_account_info();
-            let new_vault_info = self.new_vault.to_account_info();
-            let amount = old_vault_info.lamports();
-
-            old_vault_info.sub_lamports(amount)?;
-            new_vault_info.add_lamports(amount)?;
-        }
+        self.estate.claimable_assets -= 1;
 
         Ok(())
     }

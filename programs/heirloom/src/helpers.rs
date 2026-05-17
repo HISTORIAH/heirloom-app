@@ -22,11 +22,10 @@ pub fn close_account<'info>(
     destination: AccountInfo<'info>,
 ) -> Result<()> {
     let lamports = account.lamports();
-    **account.try_borrow_mut_lamports()? = 0;
-    **destination.try_borrow_mut_lamports()? = destination
-        .lamports()
-        .checked_add(lamports)
-        .ok_or(HeirloomError::MathOverflow)?;
+    msg!("lamport balance of {} {}", account.key(), lamports);
+
+    account.sub_lamports(lamports)?;
+    destination.add_lamports(lamports)?;
 
     let mut data = account.try_borrow_mut_data()?;
     for byte in data.iter_mut() {
