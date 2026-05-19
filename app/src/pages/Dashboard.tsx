@@ -493,43 +493,27 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
       )}
 
-      {/* Heirs */}
+      {/* Heir */}
       <div className="neo-card-static">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="bg-accent-yellow neo-border rounded-xl p-3">
               <Users className="h-6 w-6" strokeWidth={2.5} />
             </div>
-            <h3 className="text-xl font-black">Heirs</h3>
+            <h3 className="text-xl font-black">Heir</h3>
           </div>
-          <span className="neo-badge bg-secondary text-xs">
-            {estate.isClaimed ? "1 claimed" : "0 claimed"}
-          </span>
+          {estate.isClaimed && (
+            <span className="neo-badge bg-accent-lime text-xs">Claimed</span>
+          )}
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between neo-border rounded-lg p-4 bg-secondary hover:bg-secondary/70 transition-colors flex-wrap gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="bg-foreground text-background neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-black shrink-0">
-                1
-              </span>
-              <div className="min-w-0">
-                <p className="font-black text-lg truncate">{estate.label}</p>
-                <p className="text-xs font-mono text-muted-foreground truncate">
-                  {estate.heir.slice(0, 12)}...{estate.heir.slice(-6)}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-black text-2xl">100%</p>
-              <p className="text-xs font-bold text-muted-foreground">
-                {solDisplay} {SOL_LABEL}
-              </p>
-              {estate.isClaimed && (
-                <span className="neo-badge bg-accent-lime text-xs mt-1 inline-block">Claimed</span>
-              )}
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={handleCopyHeir}
+          className="w-full neo-border rounded-lg p-4 bg-secondary hover:bg-secondary/70 transition-colors flex items-center justify-between gap-3 text-left"
+          title="Copy heir address"
+        >
+          <span className="font-mono text-sm break-all">{estate.heir}</span>
+          {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
+        </button>
       </div>
 
       {/* Guardian */}

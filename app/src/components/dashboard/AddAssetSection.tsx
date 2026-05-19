@@ -5,9 +5,16 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
-import { errMsg } from "@/lib/utils";
+import { SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
+import { cn, errMsg } from "@/lib/utils";
 import { Loader2, Plus } from "lucide-react";
+
+const PCTS = [
+  { pct: 25,  label: "25%",  bg: "bg-accent-yellow" },
+  { pct: 50,  label: "50%",  bg: "bg-accent-cyan"   },
+  { pct: 75,  label: "75%",  bg: "bg-accent-orange" },
+  { pct: 100, label: "Max",  bg: "bg-accent-lime"   },
+] as const;
 
 interface Props {
   estate: EstateData;
@@ -44,6 +51,15 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
     () => (walletSplTokens ?? []).find((t) => t.mint === addAssetMint),
     [walletSplTokens, addAssetMint],
   );
+
+  const activeDecimals = addAssetMint === "sol" ? SOL_DECIMALS : (selectedToken?.decimals ?? 9);
+  const activeStep = 1 / Math.pow(10, Math.min(6, activeDecimals));
+  const maxBalance = addAssetMint === "sol" ? walletSolBalance : (selectedToken?.uiAmount ?? 0);
+
+  const applyPct = (pct: number) => {
+    const raw = (maxBalance * pct) / 100;
+    setAddAssetAmount(Math.floor(raw / activeStep) * activeStep);
+  };
 
   const handleAddAsset = async () => {
     if (addAssetAmount <= 0) return;
@@ -136,13 +152,29 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
             <input
               type="number"
               min={0}
-              step={1 / Math.pow(10, addAssetMint === "sol" ? Math.min(6, SOL_DECIMALS) : Math.min(6, selectedToken?.decimals ?? 9))}
+              step={activeStep}
               value={addAssetAmount || ""}
               onChange={(e) => setAddAssetAmount(Math.max(0, Number(e.target.value)))}
               placeholder="0"
               className="neo-input w-full font-black text-2xl text-center"
             />
-            <p className="text-[11px] font-medium text-muted-foreground mt-1">
+            <div className="flex gap-2 mt-3">
+              {PCTS.map(({ pct, label, bg }) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => applyPct(pct)}
+                  disabled={maxBalance <= 0}
+                  className={cn(
+                    "flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0px_0px_hsl(var(--foreground))]",
+                    bg,
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] font-medium text-muted-foreground mt-2">
               {addAssetMint === "sol"
                 ? `Wallet balance: ${walletSolBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${SOL_LABEL}`
                 : selectedToken
