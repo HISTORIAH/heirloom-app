@@ -1,4 +1,4 @@
-import { SECONDS_PER_DAY } from "@/config/constants";
+import { SECONDS_PER_DAY } from "@/lib/constants";
 import { formatDuration as fmtDuration } from "@/lib/utils";
 import { Heart, Clock, Shield } from "lucide-react";
 

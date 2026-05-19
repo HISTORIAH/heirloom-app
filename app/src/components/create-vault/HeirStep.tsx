@@ -1,4 +1,4 @@
-import { LABEL_MAX_LEN } from "@/config/constants";
+import { LABEL_MAX_LEN } from "@/lib/constants";
 import { Heart, Shield, User } from "lucide-react";
 
 interface Props {

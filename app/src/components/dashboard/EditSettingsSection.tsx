@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
-import { LABEL_MAX_LEN } from "@/config/constants";
+import { LABEL_MAX_LEN } from "@/lib/constants";
 import { errMsg, formatDuration } from "@/lib/utils";
 import { Loader2, Pencil, Settings } from "lucide-react";
 

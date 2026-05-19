@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchAssetBatch, pickImage } from "@/lib/heliusDas";
-import { heliusRpcUrl } from "@/config/constants";
+import { SOLANA_RPC_ENDPOINT } from "@/config";
 
 export interface TokenMetadata {
   symbol?: string;
@@ -30,8 +30,7 @@ export function useTokenMetadata(mints: string[]): HookState {
       setState(EMPTY);
       return;
     }
-    const url = heliusRpcUrl();
-    if (!url) {
+    if (!SOLANA_RPC_ENDPOINT) {
       setState(EMPTY);
       return;
     }
@@ -42,7 +41,7 @@ export function useTokenMetadata(mints: string[]): HookState {
 
     (async () => {
       try {
-        const raw = await fetchAssetBatch(url, ids, ac.signal);
+        const raw = await fetchAssetBatch(SOLANA_RPC_ENDPOINT, ids, ac.signal);
         if (cancelled) return;
         const next = new Map<string, TokenMetadata>();
         raw.forEach((asset, mint) => {

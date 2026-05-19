@@ -1,4 +1,4 @@
-import { SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
+import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 import { formatDuration as fmtDuration, formatUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import { Heart, Shield } from "lucide-react";

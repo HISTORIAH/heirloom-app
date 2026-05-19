@@ -4,7 +4,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
+import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
+import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -263,7 +264,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {lastTxId && (
         <div className="neo-card-static bg-accent-cyan/10 !p-5">
           <a
-            href={explorerTxUrl(lastTxId)}
+            href={getSolanaExplorerTxUrl(lastTxId)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 font-bold hover:underline"
@@ -640,7 +641,7 @@ const DashboardPage = () => {
             </div>
             {pendingTxId && (
               <a
-                href={explorerTxUrl(pendingTxId)}
+                href={getSolanaExplorerTxUrl(pendingTxId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-bold text-accent-cyan hover:underline flex items-center gap-1 mt-2"

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import TokenAvatar from "@/components/TokenAvatar";
-import { SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
+import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 import { formatUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import {

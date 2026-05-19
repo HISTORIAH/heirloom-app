@@ -7,7 +7,7 @@ import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import TokenAvatar from "@/components/TokenAvatar";
-import { SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
+import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 import { cn, errMsg } from "@/lib/utils";
 import { Loader2, TrendingUp } from "lucide-react";
 

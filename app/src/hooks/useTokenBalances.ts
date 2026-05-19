@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { address as toAddress } from "@solana/kit";
 import { useWallet } from "@/contexts/WalletContext";
-import { SOL_DECIMALS, USDC_DECIMALS, USDC_MINT } from "@/config/constants";
+import { SOL_DECIMALS, USDC_DECIMALS } from "@/lib/constants";
+import { address } from "@solana/kit";
 
 interface TokenBalances {
   sol: number;
@@ -28,7 +29,7 @@ export function useTokenBalances(addressStr: string | null): TokenBalances {
           rpc
             .getTokenAccountsByOwner(
               owner,
-              { mint: USDC_MINT },
+              { mint: address("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU") },
               { encoding: "jsonParsed" },
             )
             .send(),
