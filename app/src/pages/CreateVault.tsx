@@ -4,12 +4,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import {
-  explorerTxUrl,
-  SOL_DECIMALS,
-  LABEL_MAX_LEN,
-  SECONDS_PER_DAY,
-} from "@/config/constants";
+import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
+import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import WalletPill from "@/components/WalletPill";
@@ -303,7 +299,7 @@ const CreateVaultPage = () => {
           <div className="flex flex-wrap gap-2 justify-center items-center">
             {txId && (
               <a
-                href={explorerTxUrl(txId)}
+                href={getSolanaExplorerTxUrl(txId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"

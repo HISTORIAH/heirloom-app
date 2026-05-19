@@ -1,7 +1,7 @@
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { type Address, address as toAddress } from "@solana/kit";
 import { fetchAssetsByOwner } from "@/lib/heliusDas";
-import { heliusRpcUrl } from "@/config/constants";
+import { SOLANA_RPC_ENDPOINT } from "@/config";
 import type { VaultTokenHolding } from "@/types";
 
 export type { VaultTokenHolding };
@@ -9,10 +9,9 @@ export type { VaultTokenHolding };
 export async function discoverVaultTokenAccounts(
   vaultPda: Address,
 ): Promise<VaultTokenHolding[]> {
-  const heliusUrl = heliusRpcUrl();
-  if (!heliusUrl) return [];
+  if (!SOLANA_RPC_ENDPOINT) return [];
 
-  const assets = await fetchAssetsByOwner(heliusUrl, vaultPda, new AbortController().signal);
+  const assets = await fetchAssetsByOwner(SOLANA_RPC_ENDPOINT, vaultPda, new AbortController().signal);
 
   return Promise.all(
     assets.map(async (asset) => {

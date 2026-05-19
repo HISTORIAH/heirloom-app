@@ -3,7 +3,7 @@ import { fetchAssetsByOwner, pickImage, type DasFungibleAsset } from "@/lib/heli
 import { truncateAddress, toUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { heliusRpcUrl } from "@/config/constants";
+import { SOLANA_RPC_ENDPOINT } from "@/config";
 
 function dasAssetToToken(asset: DasFungibleAsset): SplTokenAsset | null {
   const mint = asset.id;
@@ -31,11 +31,10 @@ function dasAssetToToken(asset: DasFungibleAsset): SplTokenAsset | null {
 }
 
 async function fetchTokens(owner: string): Promise<SplTokenAsset[]> {
-  const heliusUrl = heliusRpcUrl();
-  if (!heliusUrl) throw new Error("Helius URL not configured");
+  if (!SOLANA_RPC_ENDPOINT) throw new Error("RPC URL NOT CONFIGURED");
 
   // Fetch from DAS
-  const assets = await fetchAssetsByOwner(heliusUrl, owner, new AbortController().signal);
+  const assets = await fetchAssetsByOwner(SOLANA_RPC_ENDPOINT, owner, new AbortController().signal);
 
   // Map and filter—no extra RPC call needed!
   return assets

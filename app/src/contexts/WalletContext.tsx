@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useWalletUi } from "@wallet-ui/react";
 import { createSolanaRpc, createSolanaRpcSubscriptions, type Address, } from "@solana/kit";
-import { RPC_URL, RPC_WS_URL } from "@/config/constants";
+import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
 
-const rpcSingleton = createSolanaRpc(RPC_URL);
-const rpcSubscriptionsSingleton = createSolanaRpcSubscriptions(RPC_WS_URL);
+const rpcSingleton = createSolanaRpc(SOLANA_RPC_ENDPOINT);
+const rpcSubscriptionsSingleton = createSolanaRpcSubscriptions(SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT);
 
 export type AppRpc = typeof rpcSingleton;
 export type AppRpcSubscriptions = typeof rpcSubscriptionsSingleton;

@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
+import { SOL_LABEL } from "@/lib/constants";
+import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import {
   updateFields,
 } from "@/lib/heirloom";
@@ -261,7 +262,7 @@ const HeartbeatPageInner: React.FC<{
                       <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
                       <p className="font-black mb-2">Heartbeat sent</p>
                       <a
-                        href={explorerTxUrl(hbTxId)}
+                        href={getSolanaExplorerTxUrl(hbTxId)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"

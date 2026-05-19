@@ -5,7 +5,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import { SOL_LABEL, USDC_LABEL } from "@/config/constants";
+import { SOL_LABEL, USDC_LABEL } from "@/lib/constants";
 
 const NavBar = () => {
   const [open, setOpen] = useState(false);

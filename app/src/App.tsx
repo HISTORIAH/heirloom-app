@@ -21,7 +21,7 @@ import Claim from "@/pages/Claim";
 import Defer from "@/pages/Defer";
 import Heartbeat from "@/pages/Heartbeat";
 import NotFound from "@/pages/NotFound";
-import { NETWORK } from "@/config/constants";
+import { SOLANA_RPC_ENDPOINT } from "@/config";
 import Blog from "./pages/blog";
 
 const queryClient = new QueryClient();
@@ -33,12 +33,14 @@ if (typeof document !== "undefined" && !document.getElementById("wallet-ui-css")
   document.head.appendChild(style);
 }
 
-const clusters =
-  NETWORK === "mainnet-beta"
-    ? [createSolanaMainnet(), createSolanaDevnet(), createSolanaLocalnet()]
-    : NETWORK === "localnet"
-      ? [createSolanaLocalnet(), createSolanaDevnet(), createSolanaMainnet()]
-      : [createSolanaDevnet(), createSolanaLocalnet(), createSolanaMainnet()];
+const isMainnet = SOLANA_RPC_ENDPOINT.includes("mainnet");
+const isLocalnet = SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1");
+
+const clusters = isMainnet
+  ? [createSolanaMainnet(), createSolanaDevnet(), createSolanaLocalnet()]
+  : isLocalnet
+    ? [createSolanaLocalnet(), createSolanaDevnet(), createSolanaMainnet()]
+    : [createSolanaDevnet(), createSolanaLocalnet(), createSolanaMainnet()];
 
 const walletUiConfig = createWalletUiConfig({ clusters });
 

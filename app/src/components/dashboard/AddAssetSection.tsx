@@ -5,9 +5,9 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import { SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
 import { cn, errMsg } from "@/lib/utils";
 import { Loader2, Plus } from "lucide-react";
+import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 
 const PCTS = [
   { pct: 25,  label: "25%",  bg: "bg-accent-yellow" },
