@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@historiah/ui";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Loader2,

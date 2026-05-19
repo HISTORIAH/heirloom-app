@@ -5,8 +5,8 @@ import {
   fetchVaultClaimableLamports,
   getVaultAddress,
   type HeirloomClient,
-  type VaultTokenInfo,
 } from "@/lib/heirloom";
+import type { VaultTokenHolding } from "@/types";
 import { computeEstateState, type EstateUiState } from "@/lib/estateState";
 import { unwrapOption } from "@/lib/anchor";
 
@@ -26,7 +26,7 @@ export interface EstateSnapshot {
   pausedUntil: number;
   claimableAssets: number;
   solBalance: number;
-  vaultTokens: VaultTokenInfo[];
+  vaultTokens: VaultTokenHolding[];
   vaultState: EstateUiState;
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
@@ -58,7 +58,7 @@ export async function buildSnapshotFromEstate(
   const vaultPda = await getVaultAddress(authority, heir);
   const [lamports, vaultTokens] = await Promise.all([
     fetchVaultClaimableLamports(client, vaultPda),
-    discoverVaultTokenAccounts(client, vaultPda),
+    discoverVaultTokenAccounts(vaultPda),
   ]);
 
   const lastHeartbeat = Number(estateData.lastHeartbeat);

@@ -3,6 +3,8 @@ import { address as toAddress, type Address, type TransactionSigner } from "@sol
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
 import {
+  depositSol,
+  depositToken,
   discoverVaultTokenAccounts,
   fetchEstateByPair,
   fetchEstatesByAuthority,
@@ -17,8 +19,8 @@ import {
   updateFields,
   updateHeirAll,
   type HeirloomClient,
-  type VaultTokenInfo,
 } from "@/lib/heirloom";
+import type { VaultTokenHolding } from "@/types";
 import { computeEstateState, type EstateUiState } from "@/lib/estateState";
 import { unwrapOption } from "@/lib/anchor";
 import { errMsg } from "@/lib/utils";
@@ -47,7 +49,7 @@ export interface EstateData {
   estatePda: string;
   vaultPda: string;
   solBalance: number;
-  vaultTokens: VaultTokenInfo[];
+  vaultTokens: VaultTokenHolding[];
   state: EstateUiState;
   secondsUntilGrace: number;
   secondsUntilClaimable: number;
@@ -89,6 +91,8 @@ interface VaultState {
   createEstateOnChain: (input: CreateEstateInput) => Promise<string>;
   registerAssetOnChain: (heir: string, token: TokenDeposit) => Promise<string>;
   registerSolOnChain: (heir: string, lamports: bigint) => Promise<string>;
+  depositSolOnChain: (vaultPda: string, lamports: bigint) => Promise<string>;
+  depositTokenOnChain: (holding: VaultTokenHolding, amount: bigint) => Promise<string>;
   sendHeartbeatOnChain: (heir: string) => Promise<string>;
   updateEstateFieldsOnChain: (heir: string, fields: UpdateEstateFields) => Promise<string>;
   revokeEstateOnChain: (heir: string) => Promise<string>;
@@ -136,7 +140,7 @@ const VaultProviderInner: React.FC<{
           const vaultPda = await getVaultAddress(authority, heir);
           const [lamports, vaultTokens] = await Promise.all([
             fetchVaultClaimableLamports(client, vaultPda),
-            discoverVaultTokenAccounts(client, vaultPda),
+            discoverVaultTokenAccounts(vaultPda),
           ]);
 
           const lastHeartbeat = Number(estate.data.lastHeartbeat);
@@ -343,6 +347,24 @@ const VaultProviderInner: React.FC<{
     [client, signer],
   );
 
+  const depositSolOnChain = useCallback(
+    async (vaultPda: string, lamports: bigint): Promise<string> => {
+      const txId = await depositSol(client, signer, toAddress(vaultPda), lamports);
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
+  );
+
+  const depositTokenOnChain = useCallback(
+    async (holding: VaultTokenHolding, amount: bigint): Promise<string> => {
+      const txId = await depositToken(client, signer, holding, amount);
+      setPendingTxId(txId);
+      return txId;
+    },
+    [client, signer],
+  );
+
   const sendHeartbeatOnChain = useCallback(
     async (heir: string): Promise<string> => {
       const txId = await updateFields(client, signer, { heir: toAddress(heir) });
@@ -372,7 +394,7 @@ const VaultProviderInner: React.FC<{
       const heirAddr = toAddress(heir);
       const vaultPda = await getVaultAddress(authority, heirAddr);
 
-      const vaultTokens = await discoverVaultTokenAccounts(client, vaultPda);
+      const vaultTokens = await discoverVaultTokenAccounts(vaultPda);
 
       const tokenAssets = await Promise.all(
         vaultTokens.map(async (vt) => {
@@ -384,7 +406,7 @@ const VaultProviderInner: React.FC<{
           ]);
           return {
             mint: mintAddr,
-            vaultTokenAccount: toAddress(vt.address),
+            vaultTokenAccount: toAddress(vt.ata),
             authorityTokenAccount: authorityAta,
             treasuryTokenAccount: treasuryAta,
             tokenProgram,
@@ -431,6 +453,8 @@ const VaultProviderInner: React.FC<{
     createEstateOnChain,
     registerAssetOnChain,
     registerSolOnChain,
+    depositSolOnChain,
+    depositTokenOnChain,
     sendHeartbeatOnChain,
     updateEstateFieldsOnChain,
     revokeEstateOnChain,
@@ -460,6 +484,8 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
     createEstateOnChain: notConnected,
     registerAssetOnChain: notConnected,
     registerSolOnChain: notConnected,
+    depositSolOnChain: notConnected,
+    depositTokenOnChain: notConnected,
     sendHeartbeatOnChain: notConnected,
     updateEstateFieldsOnChain: notConnected,
     revokeEstateOnChain: notConnected,

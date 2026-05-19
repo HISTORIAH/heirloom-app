@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@historiah/ui";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   ArrowRight,

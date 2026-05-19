@@ -1,72 +1,31 @@
-import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { type Address } from "@solana/kit";
-import type { HeirloomClient } from "./client";
+import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { type Address, address as toAddress } from "@solana/kit";
+import { fetchAssetsByOwner } from "@/lib/heliusDas";
+import { heliusRpcUrl } from "@/config/constants";
+import type { VaultTokenHolding } from "@/types";
 
-const TOKEN_2022_PROGRAM_ADDRESS =
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" as Address;
+export type { VaultTokenHolding };
 
-export interface VaultTokenInfo {
-  mint: string;
-  address: string;
-  amount: bigint;
-  decimals: number;
-  tokenProgram: string;
-}
-
-/**
- * Discover all token accounts owned by a vault PDA.
- * Queries both legacy Token Program and Token-2022.
- */
 export async function discoverVaultTokenAccounts(
-  client: HeirloomClient,
   vaultPda: Address,
-): Promise<VaultTokenInfo[]> {
-  const [legacyResult, token2022Result] = await Promise.all([
-    client.rpc
-      .getTokenAccountsByOwner(vaultPda, { programId: TOKEN_PROGRAM_ADDRESS }, { encoding: "jsonParsed" })
-      .send(),
-    client.rpc
-      .getTokenAccountsByOwner(
-        vaultPda,
-        { programId: TOKEN_2022_PROGRAM_ADDRESS },
-        { encoding: "jsonParsed" },
-      )
-      .send(),
-  ]);
+): Promise<VaultTokenHolding[]> {
+  const heliusUrl = heliusRpcUrl();
+  if (!heliusUrl) return [];
 
-  const tokens: VaultTokenInfo[] = [];
+  const assets = await fetchAssetsByOwner(heliusUrl, vaultPda, new AbortController().signal);
 
-  for (const item of legacyResult.value) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parsed = (item.account.data as any)?.parsed;
-    if (!parsed?.info) continue;
-    const info = parsed.info;
-    const rawAmount = info.tokenAmount?.amount;
-    if (!rawAmount || rawAmount === "0") continue;
-    tokens.push({
-      mint: info.mint,
-      address: item.pubkey,
-      amount: BigInt(rawAmount),
-      decimals: info.tokenAmount?.decimals ?? 0,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-  }
-
-  for (const item of token2022Result.value) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parsed = (item.account.data as any)?.parsed;
-    if (!parsed?.info) continue;
-    const info = parsed.info;
-    const rawAmount = info.tokenAmount?.amount;
-    if (!rawAmount || rawAmount === "0") continue;
-    tokens.push({
-      mint: info.mint,
-      address: item.pubkey,
-      amount: BigInt(rawAmount),
-      decimals: info.tokenAmount?.decimals ?? 0,
-      tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
-    });
-  }
-
-  return tokens;
+  return Promise.all(
+    assets.map(async (asset) => {
+      const mint = toAddress(asset.id);
+      const tokenProgram = toAddress(asset.token_info?.token_program ?? TOKEN_PROGRAM_ADDRESS);
+      const [ata] = await findAssociatedTokenPda({ owner: vaultPda, mint, tokenProgram });
+      return {
+        mint: asset.id,
+        ata: ata as string,
+        rawAmount: BigInt(asset.token_info?.balance ?? 0),
+        decimals: asset.token_info?.decimals ?? 0,
+        tokenProgram: asset.token_info?.token_program ?? TOKEN_PROGRAM_ADDRESS,
+      };
+    }),
+  );
 }

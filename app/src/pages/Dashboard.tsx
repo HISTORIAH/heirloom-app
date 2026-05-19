@@ -4,14 +4,16 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { explorerTxUrl, SOL_LABEL } from "@/config/constants";
+import { explorerTxUrl, SOL_DECIMALS, SOL_LABEL } from "@/config/constants";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
+import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
+import { useTokenBalances } from "@/hooks/useTokenBalances";
 import TokenAvatar from "@/components/TokenAvatar";
 import ReassignHeirSection from "@/components/dashboard/ReassignHeirSection";
 import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
-import { formatDuration, formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
+import { cn, formatDuration, formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
 import { computeEstateState } from "@/lib/estateState";
 import {
   Heart,
@@ -27,6 +29,7 @@ import {
   Copy,
   Check,
   Plus,
+  TrendingUp,
 } from "lucide-react";
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
@@ -102,12 +105,66 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
   };
 }
 
+const PCTS = [
+  { pct: 25,  label: "25%",  bg: "bg-accent-yellow" },
+  { pct: 50,  label: "50%",  bg: "bg-accent-cyan"   },
+  { pct: 75,  label: "75%",  bg: "bg-accent-orange" },
+  { pct: 100, label: "Max",  bg: "bg-accent-lime"   },
+] as const;
+
 const EstateCard = ({ estate }: { estate: EstateData }) => {
-  const { sendHeartbeatOnChain } = useVault();
+  const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
+  const { publicKey, isConnected } = useWallet();
   const { toast } = useToast();
   const [sendingHeartbeat, setSendingHeartbeat] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const [topUpOpen, setTopUpOpen] = useState<"sol" | string | null>(null);
+  const [topUpAmount, setTopUpAmount] = useState(0);
+  const [topUpLoading, setTopUpLoading] = useState(false);
+
+  const { data: walletSplTokens } = useWalletSplTokens(topUpOpen !== null && isConnected ? publicKey : null);
+  const { sol: walletSolBalance } = useTokenBalances(topUpOpen !== null && isConnected ? publicKey : null);
+
+  const openTopUp = (key: "sol" | string) => {
+    setTopUpOpen((prev) => (prev === key ? null : key));
+    setTopUpAmount(0);
+  };
+
+  const walletTokenBalance = walletSplTokens?.find((t) => t.mint === topUpOpen);
+  const maxBalance = topUpOpen === "sol" ? walletSolBalance : (walletTokenBalance?.uiAmount ?? 0);
+  const activeHolding = estate.vaultTokens.find((vt) => vt.mint === topUpOpen);
+  const activeDecimals = topUpOpen === "sol" ? SOL_DECIMALS : (activeHolding?.decimals ?? 0);
+  const activeStep = 1 / Math.pow(10, Math.min(6, activeDecimals));
+
+  const applyPct = (pct: number) => {
+    const raw = (maxBalance * pct) / 100;
+    setTopUpAmount(Math.floor(raw / activeStep) * activeStep);
+  };
+
+  const handleTopUp = async () => {
+    if (topUpAmount <= 0 || !topUpOpen) return;
+    setTopUpLoading(true);
+    try {
+      let tx: string;
+      if (topUpOpen === "sol") {
+        tx = await depositSolOnChain(estate.vaultPda, BigInt(Math.round(topUpAmount * Math.pow(10, SOL_DECIMALS))));
+      } else {
+        if (!activeHolding) throw new Error("Token not found in vault");
+        tx = await depositTokenOnChain(activeHolding, BigInt(Math.round(topUpAmount * Math.pow(10, activeHolding.decimals))));
+      }
+      setLastTxId(tx);
+      setTopUpOpen(null);
+      setTopUpAmount(0);
+      toast({ title: "Top-up sent", description: "Funds added to the vault." });
+      await fetchEstates();
+    } catch (err: unknown) {
+      toast({ title: "Top-up failed", description: errMsg(err), variant: "destructive" });
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
 
   const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
   const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
@@ -259,17 +316,60 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-accent-orange neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]">
-              {tokenIcon}
+        <div className="neo-card-static">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-accent-orange neo-border rounded-xl p-3">
+                {tokenIcon}
+              </div>
+              <h3 className="font-black">{`${SOL_LABEL} Locked`}</h3>
             </div>
-            <h3 className="font-black">{`${SOL_LABEL} Locked`}</h3>
+            {estate.solBalance > 0 && (
+              <button
+                onClick={() => openTopUp("sol")}
+                className={cn(
+                  "neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors flex items-center gap-1",
+                  topUpOpen === "sol" ? "bg-accent-lime" : "bg-secondary hover:bg-accent-lime",
+                )}
+              >
+                <TrendingUp className="h-3 w-3" /> Top Up
+              </button>
+            )}
           </div>
           <p className="text-3xl md:text-4xl font-black tabular-nums">{solDisplay}</p>
           <p className="text-sm font-bold text-muted-foreground">
             {`${estate.solBalance.toLocaleString()} lamports`}
           </p>
+          {topUpOpen === "sol" && (
+            <div className="mt-4 pt-4 border-t-2 border-foreground/10 space-y-3">
+              <input
+                type="number"
+                min={0}
+                step={activeStep}
+                value={topUpAmount || ""}
+                onChange={(e) => setTopUpAmount(Math.max(0, Number(e.target.value)))}
+                placeholder="0"
+                className="neo-input w-full font-black text-xl text-center"
+              />
+              <div className="flex gap-2">
+                {PCTS.map(({ pct, label, bg }) => (
+                  <button
+                    key={pct}
+                    onClick={() => applyPct(pct)}
+                    className={cn("flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px", bg)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] font-medium text-muted-foreground">
+                Wallet: {walletSolBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {SOL_LABEL}
+              </p>
+              <Button variant="lime" size="lg" onClick={handleTopUp} disabled={topUpLoading || topUpAmount <= 0} className="w-full">
+                {topUpLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <><TrendingUp className="h-4 w-4" /> Top Up</>}
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
@@ -327,34 +427,64 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               const name = meta?.name;
               const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
               const primary = symbol || name || shortMint;
-              const secondary =
-                name && name !== primary
-                  ? name
-                  : symbol
-                    ? shortMint
-                    : null;
+              const secondary = name && name !== primary ? name : symbol ? shortMint : null;
+              const isOpen = topUpOpen === vt.mint;
+              const walletBal = walletSplTokens?.find((t) => t.mint === vt.mint);
               return (
-                <div
-                  key={vt.address}
-                  className="flex items-center gap-4 neo-border rounded-lg p-4 bg-secondary"
-                >
-                  <TokenAvatar
-                    image={meta?.image}
-                    label={primary}
-                    size="md"
-                    accent="bg-accent-cyan"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-lg leading-tight truncate">{primary}</p>
-                    {secondary && (
-                      <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
-                        {secondary}
-                      </p>
-                    )}
+                <div key={vt.ata} className="neo-border rounded-lg bg-secondary overflow-hidden">
+                  <div className="flex items-center gap-4 p-4">
+                    <TokenAvatar image={meta?.image} label={primary} size="md" accent="bg-accent-cyan" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-lg leading-tight truncate">{primary}</p>
+                      {secondary && (
+                        <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">{secondary}</p>
+                      )}
+                    </div>
+                    <span className="font-black text-lg tabular-nums shrink-0">
+                      {formatTokenAmount(vt.rawAmount, vt.decimals)}
+                    </span>
+                    <button
+                      onClick={() => openTopUp(vt.mint)}
+                      className={cn(
+                        "neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
+                        isOpen ? "bg-accent-lime" : "bg-background hover:bg-accent-lime",
+                      )}
+                    >
+                      <TrendingUp className="h-3 w-3" /> Top Up
+                    </button>
                   </div>
-                  <span className="font-black text-lg tabular-nums shrink-0">
-                    {formatTokenAmount(vt.amount, vt.decimals)}
-                  </span>
+                  {isOpen && (
+                    <div className="px-4 pb-4 space-y-3 border-t-2 border-foreground/10 pt-3">
+                      <input
+                        type="number"
+                        min={0}
+                        step={activeStep}
+                        value={topUpAmount || ""}
+                        onChange={(e) => setTopUpAmount(Math.max(0, Number(e.target.value)))}
+                        placeholder="0"
+                        className="neo-input w-full font-black text-xl text-center"
+                      />
+                      <div className="flex gap-2">
+                        {PCTS.map(({ pct, label, bg }) => (
+                          <button
+                            key={pct}
+                            onClick={() => applyPct(pct)}
+                            className={cn("flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px", bg)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {walletBal && (
+                        <p className="text-[11px] font-medium text-muted-foreground">
+                          Wallet: {walletBal.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {walletBal.label}
+                        </p>
+                      )}
+                      <Button variant="lime" size="lg" onClick={handleTopUp} disabled={topUpLoading || topUpAmount <= 0} className="w-full">
+                        {topUpLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <><TrendingUp className="h-4 w-4" /> Top Up</>}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}
