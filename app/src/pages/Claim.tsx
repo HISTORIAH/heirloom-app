@@ -160,7 +160,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
           ]);
           return {
             mint,
-            vaultTokenAccount: toAddress(vt.address),
+            vaultTokenAccount: toAddress(vt.ata),
             heirTokenAccount: heirAta,
             treasuryTokenAccount: treasuryAta,
             tokenProgram,
@@ -346,7 +346,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                               name && name !== primary ? name : symbol ? shortMint : null;
                             return (
                               <div
-                                key={vt.address}
+                                key={vt.ata}
                                 className="flex items-center gap-4 neo-border rounded-lg p-4 bg-secondary"
                               >
                                 <TokenAvatar
@@ -364,7 +364,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                                   )}
                                 </div>
                                 <span className="font-black text-lg tabular-nums shrink-0">
-                                  {formatTokenAmount(vt.amount, vt.decimals)}
+                                  {formatTokenAmount(vt.rawAmount, vt.decimals)}
                                 </span>
                               </div>
                             );

@@ -24,8 +24,18 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
   const [addAssetAmount, setAddAssetAmount] = useState<number>(0);
   const [addingAsset, setAddingAsset] = useState(false);
 
-  const { data: walletSplTokens, isLoading: walletTokensLoading } = useWalletSplTokens(
+  const { data: allWalletSplTokens, isLoading: walletTokensLoading } = useWalletSplTokens(
     isConnected && showAddAsset ? publicKey : null,
+  );
+
+  const vaultMintSet = useMemo(
+    () => new Set(estate.vaultTokens.map((vt) => vt.mint)),
+    [estate.vaultTokens],
+  );
+
+  const walletSplTokens = useMemo(
+    () => (allWalletSplTokens ?? []).filter((t) => !vaultMintSet.has(t.mint)),
+    [allWalletSplTokens, vaultMintSet],
   );
   const { sol: walletSolBalance } = useTokenBalances(
     isConnected && showAddAsset ? publicKey : null,
@@ -84,9 +94,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
             <Plus className="h-6 w-6" strokeWidth={2.5} />
           </div>
           <div className="text-left">
-            <h3 className="font-black text-lg">Add Asset</h3>
+            <h3 className="font-black text-lg">Register New Asset</h3>
             <p className="text-sm font-medium text-muted-foreground">
-              Deposit more SOL or an SPL token into this vault.
+              Add a new token type to this vault.
             </p>
           </div>
         </div>
@@ -154,8 +164,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
             )}
           </Button>
           <p className="text-xs font-medium text-muted-foreground">
-            The asset is added to the existing vault — heirs will be able to claim it
-            under the same heartbeat / grace rules.
+            Registers a new token type in the vault. To add more to an existing asset, use Top Up.
           </p>
         </div>
       )}

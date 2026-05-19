@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@historiah/ui": "workspace:*",
     "@mysten/bcs": "^2.0.5",
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^2.2.0",

@@ -28,7 +28,11 @@ export function formatSol(lamports: number, fractionDigits = 4): string {
 }
 
 export function formatTokenAmount(rawAmount: bigint | number, decimals: number): string {
-  return (Number(rawAmount) / Math.pow(10, decimals)).toFixed(Math.min(6, decimals));
+  const ui = Number(rawAmount) / Math.pow(10, decimals);
+  return ui.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: Math.min(6, decimals),
+  });
 }
 
 /**

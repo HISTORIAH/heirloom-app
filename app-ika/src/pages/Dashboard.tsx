@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@historiah/ui";
+import { Button } from "@/components/ui/button";
 import {
   Plus,
   Heart,

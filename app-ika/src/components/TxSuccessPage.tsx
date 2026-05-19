@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@historiah/ui";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, ExternalLink } from "lucide-react";
 
 interface Props {

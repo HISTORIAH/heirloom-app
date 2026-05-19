@@ -1,4 +1,5 @@
-import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { findAssociatedTokenPda, getTransferCheckedInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { getTransferSolInstruction } from "@solana-program/system";
 import {
   getClaimInstructionAsync,
   getDelegateDeferInstructionAsync,
@@ -10,7 +11,8 @@ import {
   TREASURY_ADDRESS,
   type InitializeAsyncInput,
 } from "@historiah/heirloom";
-import { type Address, type Instruction, type TransactionSigner } from "@solana/kit";
+import { type Address, type Instruction, type TransactionSigner, address as toAddress } from "@solana/kit";
+import type { VaultTokenHolding } from "@/types";
 import type { HeirloomClient } from "./client";
 import { sendTx } from "./client";
 import { getEstateAddress, getVaultAddress } from "./pdas";
@@ -316,7 +318,7 @@ export async function updateHeirAll(
   onTx?: (txId: string) => void,
 ): Promise<string> {
   const vaultPda = await getVaultAddress(authority.address, heir);
-  const vaultTokens = await discoverVaultTokenAccounts(client, vaultPda);
+  const vaultTokens = await discoverVaultTokenAccounts(vaultPda);
 
   const [newEstate, newVault, estate, vault] = await Promise.all([
     getEstateAddress(authority.address, newHeir),
@@ -347,7 +349,7 @@ export async function updateHeirAll(
       vault,
       mint: token.mint as Address,
       tokenProgram: token.tokenProgram as Address,
-      vaultTokenAccount: token.address as Address,
+      vaultTokenAccount: token.ata as Address,
       newVaultTokenAccount,
     });
     ixs.push(ix as Instruction);
@@ -421,4 +423,41 @@ export async function initializeWithTokens(
   );
 
   return sendTx(client, authority, [initIx, ...registerIxs]);
+}
+
+// ---------------------------------------------------------------------------
+// Top-up transfers — plain system/token transfers into an existing vault
+// ---------------------------------------------------------------------------
+
+export async function depositSol(
+  client: HeirloomClient,
+  authority: TransactionSigner,
+  vaultPda: Address,
+  lamports: bigint,
+): Promise<string> {
+  const ix = getTransferSolInstruction({ source: authority, destination: vaultPda, amount: lamports });
+  return sendTx(client, authority, ix);
+}
+
+export async function depositToken(
+  client: HeirloomClient,
+  authority: TransactionSigner,
+  holding: VaultTokenHolding,
+  amount: bigint,
+): Promise<string> {
+  const mint = toAddress(holding.mint);
+  const tokenProgram = toAddress(holding.tokenProgram);
+  const [authorityAta] = await findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram });
+  const ix = getTransferCheckedInstruction(
+    {
+      source: authorityAta,
+      mint,
+      destination: toAddress(holding.ata),
+      authority,
+      amount,
+      decimals: holding.decimals,
+    },
+    { programAddress: tokenProgram },
+  );
+  return sendTx(client, authority, ix);
 }
