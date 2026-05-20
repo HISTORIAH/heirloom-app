@@ -13,17 +13,17 @@ import heroVault from "@/assets/Heirloomapp-hero.png";
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
-  const { seen, start: startTour } = useTour();
+  const { start: startTour } = useTour();
   const navigate = useNavigate();
   const [demoOpen, setDemoOpen] = useState(false);
 
   const handleLaunch = () => {
-    // First-time, unconnected visitors get the no-wallet tour. Everyone else
-    // enters the app directly; the wallet is requested later, at the deposit step.
-    if (!isConnected && !seen) {
-      startTour();
-    } else {
+    // Launch App walks new visitors through the app tour (no wallet needed).
+    // Connected users jump straight to creating a vault.
+    if (isConnected) {
       navigate("/create-vault");
+    } else {
+      startTour();
     }
   };
 

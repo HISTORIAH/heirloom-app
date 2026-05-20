@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw, Compass } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -14,23 +13,11 @@ const NavBar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { isConnected, publicKey, disconnectWallet } = useWallet();
-  const { seen, start: startTour } = useTour();
   const navigate = useNavigate();
   const { sol, usdc, loading: balancesLoading } = useTokenBalances(
     isConnected ? publicKey : null,
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const handleLaunch = () => {
-    // First-time, unconnected visitors get the no-wallet tour. Everyone else
-    // (returning or connected) goes straight into the app — connecting only
-    // happens later at wallet-heavy actions.
-    if (!isConnected && !seen) {
-      startTour();
-    } else {
-      navigate("/create-vault");
-    }
-  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -53,29 +40,28 @@ const NavBar = () => {
           </a>
 
           <div className="hidden md:flex items-center gap-6">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => navigate("/claim")}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+            >
+              <Gift className="h-5 w-5" />
+              Claim Inheritance
+            </button>
+            <button
+              onClick={() => navigate("/heartbeat")}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+            >
+              <Heart className="h-5 w-5" />
+              Heartbeat
+            </button>
             {isConnected ? (
-              <>
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => navigate("/claim")}
-                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  <Gift className="h-5 w-5" />
-                  Claim Inheritance
-                </button>
-                <button
-                  onClick={() => navigate("/heartbeat")}
-                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  <Heart className="h-5 w-5" />
-                  Heartbeat
-                </button>
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -124,16 +110,6 @@ const NavBar = () => {
                         <RefreshCw className="h-4 w-4" />
                         Change wallet
                       </button>
-                      <button
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          startTour();
-                        }}
-                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
-                      >
-                        <Compass className="h-4 w-4" />
-                        Replay tour
-                      </button>
                       <div className="border-t-2 border-foreground" />
                       <button
                         onClick={() => {
@@ -148,19 +124,10 @@ const NavBar = () => {
                     </div>
                   )}
                 </div>
-              </>
             ) : (
-              <>
-                <button
-                  onClick={startTour}
-                  className="text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  Take the tour
-                </button>
-                <Button variant="lime" size="sm" onClick={handleLaunch}>
-                  Launch App
-                </Button>
-              </>
+              <Button variant="lime" size="sm" onClick={() => setWalletDialogOpen(true)}>
+                Connect Wallet
+              </Button>
             )}
           </div>
 
@@ -179,97 +146,84 @@ const NavBar = () => {
           }`}
         >
           <div className="p-6 space-y-4">
-            {isConnected ? (
-              <>
-                <div className="neo-border rounded-lg p-4 bg-background space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
-                    {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
-                  </p>
-                  <div className="flex gap-3">
-                    <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-yellow/20 text-center">
-                      <p className="text-xs font-bold text-muted-foreground">{SOL_LABEL}</p>
-                      <p className="text-sm font-black">
-                        {balancesLoading ? "..." : sol.toFixed(4)}
-                      </p>
-                    </div>
-                    <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-cyan/20 text-center">
-                      <p className="text-xs font-bold text-muted-foreground">{USDC_LABEL}</p>
-                      <p className="text-sm font-black">
-                        {balancesLoading ? "..." : usdc.toFixed(2)}
-                      </p>
-                    </div>
+            {isConnected && (
+              <div className="neo-border rounded-lg p-4 bg-background space-y-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
+                  {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
+                </p>
+                <div className="flex gap-3">
+                  <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-yellow/20 text-center">
+                    <p className="text-xs font-bold text-muted-foreground">{SOL_LABEL}</p>
+                    <p className="text-sm font-black">
+                      {balancesLoading ? "..." : sol.toFixed(4)}
+                    </p>
+                  </div>
+                  <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-cyan/20 text-center">
+                    <p className="text-xs font-bold text-muted-foreground">{USDC_LABEL}</p>
+                    <p className="text-sm font-black">
+                      {balancesLoading ? "..." : usdc.toFixed(2)}
+                    </p>
                   </div>
                 </div>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/dashboard");
-                  }}
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  variant="orange"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/claim");
-                  }}
-                >
-                  Claim Inheritance
-                </Button>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/heartbeat");
-                  }}
-                >
-                  Heartbeat
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    void disconnectWallet();
-                  }}
-                >
-                  Disconnect
-                </Button>
-              </>
+              </div>
+            )}
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                navigate("/dashboard");
+              }}
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant="orange"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                navigate("/claim");
+              }}
+            >
+              Claim Inheritance
+            </Button>
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                navigate("/heartbeat");
+              }}
+            >
+              Heartbeat
+            </Button>
+            {isConnected ? (
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setOpen(false);
+                  void disconnectWallet();
+                }}
+              >
+                Disconnect
+              </Button>
             ) : (
-              <>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    handleLaunch();
-                  }}
-                >
-                  Launch App
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    startTour();
-                  }}
-                >
-                  <Compass className="h-5 w-5" /> Take the tour
-                </Button>
-              </>
+              <Button
+                variant="lime"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setOpen(false);
+                  setWalletDialogOpen(true);
+                }}
+              >
+                Connect Wallet
+              </Button>
             )}
           </div>
         </div>
