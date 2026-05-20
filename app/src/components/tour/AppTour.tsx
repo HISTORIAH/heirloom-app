@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Joyride,
   ACTIONS,
@@ -11,6 +11,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useTour } from "@/contexts/TourContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { buildTourSteps } from "./tourSteps";
 
 const BLACK = "hsl(0, 0%, 0%)";
@@ -74,12 +83,24 @@ const AppTour = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [finishPromptOpen, setFinishPromptOpen] = useState(false);
+  const [connectPromptOpen, setConnectPromptOpen] = useState(false);
+
   const steps = useMemo(
     () => buildTourSteps({ isConnected, hasEstates: estates.length > 0 }),
     [isConnected, estates.length],
   );
 
-  const finish = () => {
+  // Completing the tour closes the loop: land on Create Vault and show a prompt
+  // inviting the user to connect — its button opens the wallet dialog.
+  const completeTour = () => {
+    stop();
+    navigate("/create-vault");
+    if (!isConnected) setFinishPromptOpen(true);
+  };
+
+  // Skipping just exits into the app — no connect prompt.
+  const skipTour = () => {
     stop();
     navigate("/create-vault");
   };
@@ -88,7 +109,7 @@ const AppTour = () => {
   const goToStep = (nextIndex: number) => {
     const next = steps[nextIndex];
     if (!next) {
-      finish();
+      completeTour();
       return;
     }
     if (next.data.route !== location.pathname) {
@@ -103,8 +124,12 @@ const AppTour = () => {
   const handleEvent: EventHandler = (data) => {
     const { action, index, status, type } = data;
 
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      finish();
+    if (status === STATUS.SKIPPED) {
+      skipTour();
+      return;
+    }
+    if (status === STATUS.FINISHED) {
+      completeTour();
       return;
     }
 
@@ -117,6 +142,15 @@ const AppTour = () => {
       goToStep(index + 1);
     }
   };
+
+  // Once the post-tour wallet connects, send the user to build their vault.
+  useEffect(() => {
+    if (connectPromptOpen && isConnected) {
+      setConnectPromptOpen(false);
+      navigate("/create-vault");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectPromptOpen, isConnected]);
 
   // When a tour becomes active, make sure we're on the first step's route.
   useEffect(() => {
@@ -140,30 +174,55 @@ const AppTour = () => {
   }, [location.pathname, active, run]);
 
   return (
-    <Joyride
-      steps={steps}
-      run={run}
-      stepIndex={stepIndex}
-      continuous
-      onEvent={handleEvent}
-      locale={{ skip: "Skip", next: "Next", last: "Finish", back: "Back" }}
-      styles={neoStyles}
-      options={{
-        primaryColor: LIME,
-        backgroundColor: WHITE,
-        textColor: BLACK,
-        arrowColor: WHITE,
-        overlayColor: "rgba(0, 0, 0, 0.55)",
-        spotlightRadius: 8,
-        spotlightPadding: 8,
-        zIndex: 10000,
-        width: 400,
-        skipBeacon: true,
-        buttons: ["skip", "primary"],
-        overlayClickAction: false,
-        targetWaitTimeout: 4000,
-      }}
-    />
+    <>
+      <Joyride
+        steps={steps}
+        run={run}
+        stepIndex={stepIndex}
+        continuous
+        onEvent={handleEvent}
+        locale={{ skip: "Skip", next: "Next", last: "Finish", back: "Back" }}
+        styles={neoStyles}
+        options={{
+          primaryColor: LIME,
+          backgroundColor: WHITE,
+          textColor: BLACK,
+          arrowColor: WHITE,
+          overlayColor: "rgba(0, 0, 0, 0.55)",
+          spotlightRadius: 8,
+          spotlightPadding: 8,
+          zIndex: 10000,
+          width: 400,
+          skipBeacon: true,
+          buttons: ["skip", "primary"],
+          overlayClickAction: false,
+          targetWaitTimeout: 4000,
+        }}
+      />
+      <Dialog open={finishPromptOpen} onOpenChange={setFinishPromptOpen}>
+        <DialogContent className="neo-card-static max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">You're all set</DialogTitle>
+            <DialogDescription className="font-medium">
+              Connect your wallet to create your first vault — we'll take you straight to the builder.
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            variant="lime"
+            size="lg"
+            className="mt-2 w-full"
+            onClick={() => {
+              setFinishPromptOpen(false);
+              setConnectPromptOpen(true);
+            }}
+          >
+            Connect Wallet
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <WalletConnectDialog open={connectPromptOpen} onOpenChange={setConnectPromptOpen} />
+    </>
   );
 };
 

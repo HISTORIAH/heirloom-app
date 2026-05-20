@@ -77,13 +77,13 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
     data: { route: "/heartbeat" },
   });
 
-  // 6. Finish — back on Create Vault, the natural next step.
+  // 6. Finish — clicking Finish prompts the user to connect their wallet.
   steps.push({
     target: "body",
     placement: "center",
     title: "That's Heirloom",
     content:
-      "Ready to protect your assets? Start building your vault — you'll only connect your wallet when it's time to deposit.",
+      "That's the whole app. Click Finish and connect your wallet to create your first vault.",
     data: { route: "/create-vault" },
   });
 

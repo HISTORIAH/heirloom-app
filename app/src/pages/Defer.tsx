@@ -21,7 +21,7 @@ import {
 } from "@solana/kit";
 import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
-  AlertTriangle, Coins, Shield, Clock,
+  AlertTriangle, Coins, Shield, Clock, LogOut, Wallet,
 } from "lucide-react";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -38,7 +38,7 @@ const DeferPageInner: React.FC<{
   signer: TransactionSigner | null;
   delegateAddress: Address | null;
 }> = ({ signer, delegateAddress }) => {
-  const { publicKey, isConnected, rpc, rpcSubscriptions } = useWallet();
+  const { isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -134,15 +134,29 @@ const DeferPageInner: React.FC<{
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-black hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Back
+            Home
           </button>
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5" strokeWidth={3} />
             <span className="text-2xl font-black">Guardian</span>
           </div>
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : "Not connected"}
-          </div>
+          {isConnected ? (
+            <button
+              onClick={() => void disconnectWallet()}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setWalletDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <Wallet className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </button>
+          )}
         </div>
       </div>
 

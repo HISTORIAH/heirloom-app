@@ -14,6 +14,7 @@ import ReassignHeirSection from "@/components/dashboard/ReassignHeirSection";
 import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { cn, formatDuration, formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
 import { computeEstateState } from "@/lib/estateState";
 import {
@@ -31,6 +32,7 @@ import {
   Check,
   Plus,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
@@ -562,9 +564,10 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 };
 
 const DashboardPage = () => {
-  const { publicKey, disconnectWallet } = useWallet();
+  const { publicKey, isConnected, disconnectWallet } = useWallet();
   const { estates, loading, pendingCreate, pendingTxId, clearVault } = useVault();
   const navigate = useNavigate();
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const handleDisconnect = () => {
     clearVault();
@@ -593,13 +596,23 @@ const DashboardPage = () => {
             Home
           </button>
           <span className="text-2xl font-black">Vault Dashboard</span>
-          <button
-            onClick={handleDisconnect}
-            className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-          >
-            <LogOut className="h-4 w-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Disconnect</span>
-          </button>
+          {isConnected ? (
+            <button
+              onClick={handleDisconnect}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setWalletDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <Wallet className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -663,6 +676,8 @@ const DashboardPage = () => {
           </div>
         ))}
       </div>
+
+      <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </div>
   );
 };

@@ -8,7 +8,6 @@ import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import WalletPill from "@/components/WalletPill";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import HeartbeatStep from "@/components/create-vault/HeartbeatStep";
 import HeirStep from "@/components/create-vault/HeirStep";
@@ -20,6 +19,8 @@ import {
   CheckCircle,
   Loader2,
   ExternalLink,
+  LogOut,
+  Wallet,
 } from "lucide-react";
 import { errMsg } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 type SubmitState = "idle" | "creating" | "complete" | "error";
 
 const CreateVaultPage = () => {
-  const { publicKey, isConnected } = useWallet();
+  const { publicKey, isConnected, disconnectWallet } = useWallet();
   const { createEstateOnChain } = useVault();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -137,11 +138,26 @@ const CreateVaultPage = () => {
             className="flex items-center gap-2 text-lg font-black hover:underline group"
           >
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Back
+            Home
           </button>
           <span className="text-2xl font-black">Create Estate</span>
-          <WalletPill />
-
+          {isConnected ? (
+            <button
+              onClick={() => void disconnectWallet()}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setWalletDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <Wallet className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </button>
+          )}
         </div>
       </div>
 
