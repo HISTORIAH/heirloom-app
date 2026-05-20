@@ -7,21 +7,23 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useWallet } from "@/contexts/WalletContext";
+import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
-import WalletConnectDialog from "@/components/WalletConnectDialog";
 import heroVault from "@/assets/Heirloomapp-hero.png";
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
+  const { seen, start: startTour } = useTour();
   const navigate = useNavigate();
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
 
   const handleLaunch = () => {
-    if (isConnected) {
-      navigate("/create-vault");
+    // First-time, unconnected visitors get the no-wallet tour. Everyone else
+    // enters the app directly; the wallet is requested later, at the deposit step.
+    if (!isConnected && !seen) {
+      startTour();
     } else {
-      setDialogOpen(true);
+      navigate("/create-vault");
     }
   };
 
@@ -72,8 +74,6 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-
-      <WalletConnectDialog open={dialogOpen} onOpenChange={setDialogOpen} />
 
       <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
         <DialogContent

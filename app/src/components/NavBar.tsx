@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
+import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw, Compass } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -13,6 +14,7 @@ const NavBar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { isConnected, publicKey, disconnectWallet } = useWallet();
+  const { seen, start: startTour } = useTour();
   const navigate = useNavigate();
   const { sol, usdc, loading: balancesLoading } = useTokenBalances(
     isConnected ? publicKey : null,
@@ -20,10 +22,13 @@ const NavBar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLaunch = () => {
-    if (isConnected) {
-      navigate("/create-vault");
+    // First-time, unconnected visitors get the no-wallet tour. Everyone else
+    // (returning or connected) goes straight into the app — connecting only
+    // happens later at wallet-heavy actions.
+    if (!isConnected && !seen) {
+      startTour();
     } else {
-      setWalletDialogOpen(true);
+      navigate("/create-vault");
     }
   };
 
@@ -119,6 +124,16 @@ const NavBar = () => {
                         <RefreshCw className="h-4 w-4" />
                         Change wallet
                       </button>
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          startTour();
+                        }}
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
+                      >
+                        <Compass className="h-4 w-4" />
+                        Replay tour
+                      </button>
                       <div className="border-t-2 border-foreground" />
                       <button
                         onClick={() => {
@@ -135,9 +150,17 @@ const NavBar = () => {
                 </div>
               </>
             ) : (
-              <Button variant="lime" size="sm" onClick={handleLaunch}>
-                Launch App
-              </Button>
+              <>
+                <button
+                  onClick={startTour}
+                  className="text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+                >
+                  Take the tour
+                </button>
+                <Button variant="lime" size="sm" onClick={handleLaunch}>
+                  Launch App
+                </Button>
+              </>
             )}
           </div>
 
@@ -223,17 +246,30 @@ const NavBar = () => {
                 </Button>
               </>
             ) : (
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full"
-                onClick={() => {
-                  setOpen(false);
-                  handleLaunch();
-                }}
-              >
-                Launch App
-              </Button>
+              <>
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    setOpen(false);
+                    handleLaunch();
+                  }}
+                >
+                  Launch App
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    setOpen(false);
+                    startTour();
+                  }}
+                >
+                  <Compass className="h-5 w-5" /> Take the tour
+                </Button>
+              </>
             )}
           </div>
         </div>

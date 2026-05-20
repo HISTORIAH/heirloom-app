@@ -9,6 +9,7 @@ import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import WalletPill from "@/components/WalletPill";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
 import HeartbeatStep from "@/components/create-vault/HeartbeatStep";
 import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
@@ -53,6 +54,7 @@ const CreateVaultPage = () => {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [txId, setTxId] = useState<string | null>(null);
   const [submitProgress, setSubmitProgress] = useState<string>("");
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const selectedTokenEntries = Object.entries(tokenAmounts).filter(([, v]) => v > 0);
   const hasAnyDeposit = solAmount > 0 || selectedTokenEntries.length > 0;
@@ -67,7 +69,9 @@ const CreateVaultPage = () => {
 
   const handleSubmit = async () => {
     if (!isConnected) {
-      toast({ title: "Connect wallet first", variant: "destructive" });
+      // Just-in-time connect: prompt the wallet at the moment it's actually
+      // needed (depositing & signing), not on app launch.
+      setWalletDialogOpen(true);
       return;
     }
     try {
@@ -141,7 +145,7 @@ const CreateVaultPage = () => {
         </div>
       </div>
 
-      <div className="bg-secondary border-b-4 border-foreground">
+      <div className="bg-secondary border-b-4 border-foreground" data-tour="create-vault-steps">
         <div className="max-w-4xl mx-auto px-6 py-5">
           <div className="flex items-center gap-0">
             {STEPS.map((s, i) => (
@@ -317,6 +321,7 @@ const CreateVaultPage = () => {
         </div>
       </div>
     )}
+    <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </>
   );
 };

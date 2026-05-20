@@ -637,7 +637,7 @@ const DashboardPage = () => {
         )}
 
         {estates.length === 0 && !pendingCreate && (
-          <div className="neo-card-static text-center">
+          <div className="neo-card-static text-center" data-tour="dashboard-actions">
             <div className="bg-accent-yellow neo-border rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <AlertTriangle className="h-10 w-10" strokeWidth={2.5} />
             </div>
@@ -657,8 +657,10 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {estates.map((e) => (
-          <EstateCard key={e.estatePda} estate={e} />
+        {estates.map((e, i) => (
+          <div key={e.estatePda} data-tour={i === 0 ? "dashboard-estate" : undefined}>
+            <EstateCard estate={e} />
+          </div>
         ))}
       </div>
     </div>
