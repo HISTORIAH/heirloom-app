@@ -4,12 +4,12 @@
   "scripts": {
     "js": {
       "from": "@codama/renderers-js",
-      "args": ["clients/heirloom"]
+      "args": ["clients/heirloom/js"]
     },
     "rust": {
       "from": "@codama/renderers-rust",
       "args": [
-        "clients/heirloom",
+        "clients/heirloom/rust",
         {
           "formatCode": true
         }

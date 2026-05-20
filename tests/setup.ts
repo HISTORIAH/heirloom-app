@@ -67,9 +67,7 @@ export const createDefaultSolanaClient = (): Client => {
 
 export const createDevnetSolanaClient = (): Client => {
   const rpc = createSolanaRpc("https://api.devnet.solana.com");
-  const rpcSubscriptions = createSolanaRpcSubscriptions(
-    "wss://api.devnet.solana.com/",
-  );
+  const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com/");
   return { rpc, rpcSubscriptions };
 };
 
@@ -88,13 +86,8 @@ export async function createProgramsClient() {
     .use(systemProgram());
 }
 
-export const createDefaultTransaction = async (
-  client: Client,
-  feePayer: TransactionSigner,
-) => {
-  const { value: latestBlockhash } = await client.rpc
-    .getLatestBlockhash()
-    .send();
+export const createDefaultTransaction = async (client: Client, feePayer: TransactionSigner) => {
+  const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
   return pipe(
     createTransactionMessage({ version: 0 }),
     (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
@@ -107,9 +100,7 @@ export const signAndSendTransaction = async (
   transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
   commitment: Commitment = "confirmed",
 ) => {
-  const signedTransaction = await signTransactionMessageWithSigners(
-    transactionMessage,
-  );
+  const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
   assertIsSendableTransaction(signedTransaction);
 
   const signature = getSignatureFromTransaction(signedTransaction);
@@ -157,15 +148,11 @@ export async function sendInstructions(
 // Keypair helpers
 // ---------------------------------------------------------------------------
 
-export async function loadKeypairFromFile(
-  filePath: string,
-): Promise<KeyPairSigner<string>> {
+export async function loadKeypairFromFile(filePath: string): Promise<KeyPairSigner<string>> {
   const resolvedPath = path.resolve(
     filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath,
   );
-  const loadedKeyBytes = Uint8Array.from(
-    JSON.parse(fs.readFileSync(resolvedPath, "utf8")),
-  );
+  const loadedKeyBytes = Uint8Array.from(JSON.parse(fs.readFileSync(resolvedPath, "utf8")));
   return createKeyPairSignerFromBytes(loadedKeyBytes);
 }
 
@@ -192,9 +179,7 @@ export async function createHeir(
   airdropLamports = 10_000_000n,
 ): Promise<KeyPairSigner<string>> {
   const heir = await generateKeyPairSigner();
-  await client.rpc
-    .requestAirdrop(heir.address, lamports(airdropLamports))
-    .send();
+  await client.rpc.requestAirdrop(heir.address, lamports(airdropLamports)).send();
   return heir;
 }
 
@@ -225,7 +210,6 @@ export async function createAndMintTokens() {
       decimals: 6,
     })
     .sendTransaction();
-
 
   return { mint, TOKEN_PROGRAM_ADDRESS };
 }
@@ -260,10 +244,7 @@ export async function deriveTokenAccounts(
 // PDA helpers
 // ---------------------------------------------------------------------------
 
-export async function deriveEstateVault(
-  authority: Address,
-  heir: Address,
-) {
+export async function deriveEstateVault(authority: Address, heir: Address) {
   const [[estate], [vault]] = await Promise.all([
     findEstatePda({ authority, heir }),
     findVaultPda({ authority, heir }),
@@ -296,9 +277,7 @@ export const sendInitialize = async (
     args.heir ?? generateKeyPairSigner(),
   ]);
 
-  await client.rpc
-    .requestAirdrop(heir.address, lamports(1_000_000_00n))
-    .send();
+  await client.rpc.requestAirdrop(heir.address, lamports(1_000_000_00n)).send();
 
   const { amount, label, gracePeriod, pauseDuration, heartbeatInterval } = args;
 
@@ -344,7 +323,7 @@ export const sendUpdateFields = async (
     authority?: Address;
   },
 ): Promise<{ authority: Address }> => {
-  const signer = args.signer ?? await loadDefaultKeypair();
+  const signer = args.signer ?? (await loadDefaultKeypair());
   const authority = args.authority ?? signer.address;
 
   const [estate] = await findEstatePda({
@@ -375,7 +354,7 @@ export const sendUpdateHeir = async (
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
   },
-): Promise<{ authority: Address, newEstate: Address, newVault: Address }> => {
+): Promise<{ authority: Address; newEstate: Address; newVault: Address }> => {
   const authority = await loadDefaultKeypair();
   const { newHeir, oldHeir, tokenProgram, mint } = args;
 
@@ -479,7 +458,7 @@ export const sendClaim = async (
     estate,
     delegate: args.delegate,
     treasury: TREASURY_ADDRESS,
-    treasuryTokenAccount: args.treasuryTokenAccount
+    treasuryTokenAccount: args.treasuryTokenAccount,
   });
 
   await sendInstruction(client, heir, ix);
@@ -492,10 +471,7 @@ export const sendDelegateDefer = async (
     heir: Address;
   },
 ): Promise<{ delegate: KeyPairSigner }> => {
-  const [authority, delegate] = await Promise.all([
-    loadDefaultKeypair(),
-    generateKeyPairSigner(),
-  ]);
+  const [authority, delegate] = await Promise.all([loadDefaultKeypair(), generateKeyPairSigner()]);
 
   const [estate] = await findEstatePda({
     authority: authority.address,
@@ -540,7 +516,7 @@ export const sendRegisterAsset = async (
     estate: estate[0],
     vaultTokenAccount: args.vaultTokenAccount,
     tokenProgram: args.tokenProgram,
-    authorityTokenAccount: args.authorityTokenAccount
+    authorityTokenAccount: args.authorityTokenAccount,
   });
 
   await sendInstruction(client, authority, ix);
