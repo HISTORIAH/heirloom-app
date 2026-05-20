@@ -19,14 +19,6 @@ const NavBar = () => {
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleLaunch = () => {
-    if (isConnected) {
-      navigate("/create-vault");
-    } else {
-      setWalletDialogOpen(true);
-    }
-  };
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,29 +40,28 @@ const NavBar = () => {
           </a>
 
           <div className="hidden md:flex items-center gap-6">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => navigate("/claim")}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+            >
+              <Gift className="h-5 w-5" />
+              Claim Inheritance
+            </button>
+            <button
+              onClick={() => navigate("/heartbeat")}
+              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+            >
+              <Heart className="h-5 w-5" />
+              Heartbeat
+            </button>
             {isConnected ? (
-              <>
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => navigate("/claim")}
-                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  <Gift className="h-5 w-5" />
-                  Claim Inheritance
-                </button>
-                <button
-                  onClick={() => navigate("/heartbeat")}
-                  className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
-                >
-                  <Heart className="h-5 w-5" />
-                  Heartbeat
-                </button>
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -133,10 +124,9 @@ const NavBar = () => {
                     </div>
                   )}
                 </div>
-              </>
             ) : (
-              <Button variant="lime" size="sm" onClick={handleLaunch}>
-                Launch App
+              <Button variant="lime" size="sm" onClick={() => setWalletDialogOpen(true)}>
+                Connect Wallet
               </Button>
             )}
           </div>
@@ -156,83 +146,83 @@ const NavBar = () => {
           }`}
         >
           <div className="p-6 space-y-4">
-            {isConnected ? (
-              <>
-                <div className="neo-border rounded-lg p-4 bg-background space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
-                    {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
-                  </p>
-                  <div className="flex gap-3">
-                    <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-yellow/20 text-center">
-                      <p className="text-xs font-bold text-muted-foreground">{SOL_LABEL}</p>
-                      <p className="text-sm font-black">
-                        {balancesLoading ? "..." : sol.toFixed(4)}
-                      </p>
-                    </div>
-                    <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-cyan/20 text-center">
-                      <p className="text-xs font-bold text-muted-foreground">{USDC_LABEL}</p>
-                      <p className="text-sm font-black">
-                        {balancesLoading ? "..." : usdc.toFixed(2)}
-                      </p>
-                    </div>
+            {isConnected && (
+              <div className="neo-border rounded-lg p-4 bg-background space-y-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
+                  {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
+                </p>
+                <div className="flex gap-3">
+                  <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-yellow/20 text-center">
+                    <p className="text-xs font-bold text-muted-foreground">{SOL_LABEL}</p>
+                    <p className="text-sm font-black">
+                      {balancesLoading ? "..." : sol.toFixed(4)}
+                    </p>
+                  </div>
+                  <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-cyan/20 text-center">
+                    <p className="text-xs font-bold text-muted-foreground">{USDC_LABEL}</p>
+                    <p className="text-sm font-black">
+                      {balancesLoading ? "..." : usdc.toFixed(2)}
+                    </p>
                   </div>
                 </div>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/dashboard");
-                  }}
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  variant="orange"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/claim");
-                  }}
-                >
-                  Claim Inheritance
-                </Button>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    navigate("/heartbeat");
-                  }}
-                >
-                  Heartbeat
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    void disconnectWallet();
-                  }}
-                >
-                  Disconnect
-                </Button>
-              </>
-            ) : (
+              </div>
+            )}
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                navigate("/dashboard");
+              }}
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant="orange"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                navigate("/claim");
+              }}
+            >
+              Claim Inheritance
+            </Button>
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                navigate("/heartbeat");
+              }}
+            >
+              Heartbeat
+            </Button>
+            {isConnected ? (
               <Button
-                variant="default"
+                variant="ghost"
                 size="lg"
                 className="w-full"
                 onClick={() => {
                   setOpen(false);
-                  handleLaunch();
+                  void disconnectWallet();
                 }}
               >
-                Launch App
+                Disconnect
+              </Button>
+            ) : (
+              <Button
+                variant="lime"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setOpen(false);
+                  setWalletDialogOpen(true);
+                }}
+              >
+                Connect Wallet
               </Button>
             )}
           </div>

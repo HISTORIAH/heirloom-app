@@ -8,7 +8,7 @@ import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import WalletPill from "@/components/WalletPill";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
 import HeartbeatStep from "@/components/create-vault/HeartbeatStep";
 import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
@@ -19,6 +19,8 @@ import {
   CheckCircle,
   Loader2,
   ExternalLink,
+  LogOut,
+  Wallet,
 } from "lucide-react";
 import { errMsg } from "@/lib/utils";
 
@@ -27,7 +29,7 @@ const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 type SubmitState = "idle" | "creating" | "complete" | "error";
 
 const CreateVaultPage = () => {
-  const { publicKey, isConnected } = useWallet();
+  const { publicKey, isConnected, disconnectWallet } = useWallet();
   const { createEstateOnChain } = useVault();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -53,6 +55,7 @@ const CreateVaultPage = () => {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [txId, setTxId] = useState<string | null>(null);
   const [submitProgress, setSubmitProgress] = useState<string>("");
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const selectedTokenEntries = Object.entries(tokenAmounts).filter(([, v]) => v > 0);
   const hasAnyDeposit = solAmount > 0 || selectedTokenEntries.length > 0;
@@ -67,7 +70,9 @@ const CreateVaultPage = () => {
 
   const handleSubmit = async () => {
     if (!isConnected) {
-      toast({ title: "Connect wallet first", variant: "destructive" });
+      // Just-in-time connect: prompt the wallet at the moment it's actually
+      // needed (depositing & signing), not on app launch.
+      setWalletDialogOpen(true);
       return;
     }
     try {
@@ -133,15 +138,30 @@ const CreateVaultPage = () => {
             className="flex items-center gap-2 text-lg font-black hover:underline group"
           >
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Back
+            Home
           </button>
           <span className="text-2xl font-black">Create Estate</span>
-          <WalletPill />
-
+          {isConnected ? (
+            <button
+              onClick={() => void disconnectWallet()}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setWalletDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <Wallet className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="bg-secondary border-b-4 border-foreground">
+      <div className="bg-secondary border-b-4 border-foreground" data-tour="create-vault-steps">
         <div className="max-w-4xl mx-auto px-6 py-5">
           <div className="flex items-center gap-0">
             {STEPS.map((s, i) => (
@@ -317,6 +337,7 @@ const CreateVaultPage = () => {
         </div>
       </div>
     )}
+    <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </>
   );
 };

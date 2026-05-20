@@ -25,11 +25,11 @@ import {
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
 import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
-  AlertTriangle, Coins, Gift,
+  AlertTriangle, Coins, Gift, LogOut, Wallet,
 } from "lucide-react";
 import TokenAvatar from "@/components/TokenAvatar";
-import WalletPill from "@/components/WalletPill";
-import { RequireWallet } from "@/components/RequireWallet";
+import { WithWallet } from "@/components/WithWallet";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
 const stateColors: Record<string, string> = {
@@ -61,11 +61,11 @@ async function autoFetchInheritances(
   return results.filter((r): r is EstateSnapshot => r !== null);
 }
 
-const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address }> = ({
-  signer,
-  heirAddress,
-}) => {
-  const { publicKey, isConnected, rpc, rpcSubscriptions } = useWallet();
+const ClaimPageInner: React.FC<{
+  signer: TransactionSigner | null;
+  heirAddress: Address | null;
+}> = ({ signer, heirAddress }) => {
+  const { publicKey, isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -82,19 +82,21 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   const [manualAddress, setManualAddress] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const allVaultMints = inheritances.flatMap((inh) => inh.vaultTokens.map((vt) => vt.mint));
   const { metadata: tokenMeta } = useTokenMetadata(allVaultMints);
 
   const runLookup = useCallback(
     async (ownerStr: string) => {
+      if (!heirAddress) return null;
       return lookupEstateSnapshot(client, ownerStr, heirAddress.toString());
     },
     [client, heirAddress],
   );
 
   useEffect(() => {
-    if (!publicKey) return;
+    if (!publicKey || !heirAddress) return;
     let cancelled = false;
     const ownerParam = searchParams.get("owner");
     setSearching(true);
@@ -128,6 +130,10 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
 
   const handleManualLookup = async () => {
     if (!manualAddress.trim()) return;
+    if (!heirAddress) {
+      setWalletDialogOpen(true);
+      return;
+    }
     setManualLoading(true);
     setManualError(null);
     const result = await runLookup(manualAddress.trim());
@@ -147,6 +153,10 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
   };
 
   const handleClaim = async (inh: EstateSnapshot) => {
+    if (!signer || !heirAddress) {
+      setWalletDialogOpen(true);
+      return;
+    }
     setClaimingOwner(inh.authority);
     try {
       const authorityAddr = toAddress(inh.authority);
@@ -212,28 +222,33 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-black hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Back
+            Home
           </button>
           <div className="flex items-center gap-2">
             <Gift className="h-5 w-5" strokeWidth={3} />
             <span className="text-2xl font-black">Claim</span>
           </div>
-          <WalletPill />
-
+          {isConnected ? (
+            <button
+              onClick={() => void disconnectWallet()}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setWalletDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <Wallet className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </button>
+          )}
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-        {!isConnected && (
-          <div className="neo-card-static text-center">
-            <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-2xl font-black mb-3">Wallet Not Connected</h2>
-            <p className="text-muted-foreground font-medium">Connect to check for inheritances.</p>
-          </div>
-        )}
-
-        {isConnected && (
-          <>
             <div>
               <span className="neo-badge bg-accent-orange mb-4 inline-block">Heir Portal</span>
               <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
@@ -244,6 +259,19 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                 Enter the owner's Solana address to look up an estate where you're named as heir.
               </p>
             </div>
+
+            {!isConnected && (
+              <div className="neo-card-static text-center" data-tour="claim-connect">
+                <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-black mb-2">Connect to find your inheritance</h3>
+                <p className="text-muted-foreground font-medium mb-4">
+                  Connect your wallet to scan the chain for estates that name you as heir. Browse the page freely first.
+                </p>
+                <Button variant="lime" onClick={() => setWalletDialogOpen(true)}>
+                  Connect Wallet
+                </Button>
+              </div>
+            )}
 
             {searching && (
               <div className="neo-card-static text-center">
@@ -415,7 +443,7 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
               </div>
             )}
 
-            <div className="neo-card-static">
+            <div className="neo-card-static" data-tour="claim-manual">
               <button
                 onClick={() => setShowManual(!showManual)}
                 className="flex items-center justify-between w-full font-bold uppercase tracking-widest text-sm text-muted-foreground"
@@ -451,17 +479,17 @@ const ClaimPageInner: React.FC<{ signer: TransactionSigner; heirAddress: Address
                 </div>
               )}
             </div>
-          </>
-        )}
       </div>
+
+      <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </div>
   );
 };
 
 const ClaimPage = () => (
-  <RequireWallet message="Connect your wallet to look up inheritances.">
-    {({ signer, address }) => <ClaimPageInner signer={signer} heirAddress={address} />}
-  </RequireWallet>
+  <WithWallet>
+    {(ctx) => <ClaimPageInner signer={ctx?.signer ?? null} heirAddress={ctx?.address ?? null} />}
+  </WithWallet>
 );
 
 export default ClaimPage;

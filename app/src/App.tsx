@@ -13,6 +13,8 @@ import {
 import walletUiCss from "@wallet-ui/react/index.css?raw";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { VaultProvider } from "@/contexts/VaultContext";
+import { TourProvider } from "@/contexts/TourContext";
+import AppTour from "@/components/tour/AppTour";
 
 import Index from "@/pages/Index";
 import CreateVault from "@/pages/CreateVault";
@@ -53,7 +55,9 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
+              <TourProvider>
+                <AppTour />
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/create-vault" element={<CreateVault />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -63,7 +67,8 @@ const App = () => (
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<Blog />} />
                 <Route path="*" element={<NotFound />} />
-              </Routes>
+                </Routes>
+              </TourProvider>
             </BrowserRouter>
           </VaultProvider>
         </WalletProvider>

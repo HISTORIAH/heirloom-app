@@ -21,9 +21,10 @@ import {
 } from "@solana/kit";
 import {
   ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
-  AlertTriangle, Coins, Shield, Clock,
+  AlertTriangle, Coins, Shield, Clock, LogOut, Wallet,
 } from "lucide-react";
-import { RequireWallet } from "@/components/RequireWallet";
+import { WithWallet } from "@/components/WithWallet";
+import WalletConnectDialog from "@/components/WalletConnectDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const stateColors: Record<string, string> = {
@@ -33,11 +34,11 @@ const stateColors: Record<string, string> = {
   distributed: "bg-secondary",
 };
 
-const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Address }> = ({
-  signer,
-  delegateAddress,
-}) => {
-  const { publicKey, isConnected, rpc, rpcSubscriptions } = useWallet();
+const DeferPageInner: React.FC<{
+  signer: TransactionSigner | null;
+  delegateAddress: Address | null;
+}> = ({ signer, delegateAddress }) => {
+  const { isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -51,6 +52,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
   const [deferring, setDeferring] = useState(false);
   const [deferTxId, setDeferTxId] = useState<string | null>(null);
   const [deferConfirmOpen, setDeferConfirmOpen] = useState(false);
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const handleLookup = async () => {
     const a = authorityInput.trim();
@@ -66,7 +68,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
     } else if (!result.delegate) {
       setLookupError("Estate has no delegate assigned. Cannot defer.");
       setEstate(result);
-    } else if (result.delegate !== delegateAddress.toString()) {
+    } else if (delegateAddress && result.delegate !== delegateAddress.toString()) {
       setLookupError(
         `You are not the delegate for this estate. Delegate is ${result.delegate.slice(0, 8)}...`,
       );
@@ -79,6 +81,10 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
 
   const requestDefer = () => {
     if (!estate) return;
+    if (!signer) {
+      setWalletDialogOpen(true);
+      return;
+    }
     if (estate.isDeferred) {
       toast({
         title: "Already deferred",
@@ -91,7 +97,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
   };
 
   const performDefer = async () => {
-    if (!estate) return;
+    if (!estate || !signer) return;
     setDeferring(true);
     try {
       const tx = await delegateDefer(client, signer, {
@@ -116,6 +122,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
 
   const canDefer =
     estate !== null &&
+    delegateAddress !== null &&
     estate.delegate === delegateAddress.toString() &&
     !estate.isDeferred &&
     !estate.isClaimed &&
@@ -127,29 +134,33 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-black hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Back
+            Home
           </button>
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5" strokeWidth={3} />
             <span className="text-2xl font-black">Guardian</span>
           </div>
-          <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : "Not connected"}
-          </div>
+          {isConnected ? (
+            <button
+              onClick={() => void disconnectWallet()}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <LogOut className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setWalletDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            >
+              <Wallet className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </button>
+          )}
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-        {!isConnected && (
-          <div className="neo-card-static text-center">
-            <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-2xl font-black mb-3">Wallet Not Connected</h2>
-            <p className="text-muted-foreground font-medium">Connect to act as guardian.</p>
-          </div>
-        )}
-
-        {isConnected && (
-          <>
             <div>
               <span className="neo-badge bg-accent-purple mb-4 inline-block text-white">Guardian Portal</span>
               <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
@@ -274,6 +285,15 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
                         View on Explorer <ExternalLink className="h-4 w-4" />
                       </a>
                     </div>
+                  ) : !isConnected ? (
+                    <Button
+                      variant="lime"
+                      size="xl"
+                      className="w-full"
+                      onClick={() => setWalletDialogOpen(true)}
+                    >
+                      <Shield className="h-5 w-5" /> Connect Wallet to Defer
+                    </Button>
                   ) : (
                     <Button
                       variant="default"
@@ -290,7 +310,7 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
                         <><CheckCircle className="h-5 w-5" /> Already Claimed</>
                       ) : estate.vaultState === "distributed" ? (
                         <>Vault Distributed</>
-                      ) : estate.delegate !== delegateAddress.toString() ? (
+                      ) : estate.delegate !== delegateAddress?.toString() ? (
                         <>Not the Delegate</>
                       ) : (
                         <><Shield className="h-5 w-5" /> Defer Claim Window</>
@@ -300,8 +320,6 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
                 </div>
               </div>
             )}
-          </>
-        )}
       </div>
 
       <ConfirmDialog
@@ -323,14 +341,18 @@ const DeferPageInner: React.FC<{ signer: TransactionSigner; delegateAddress: Add
           if (!deferring) setDeferConfirmOpen(false);
         }}
       />
+
+      <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </div>
   );
 };
 
 const DeferPage = () => (
-  <RequireWallet message="Connect your wallet to act as guardian.">
-    {({ signer, address }) => <DeferPageInner signer={signer} delegateAddress={address} />}
-  </RequireWallet>
+  <WithWallet>
+    {(ctx) => (
+      <DeferPageInner signer={ctx?.signer ?? null} delegateAddress={ctx?.address ?? null} />
+    )}
+  </WithWallet>
 );
 
 export default DeferPage;

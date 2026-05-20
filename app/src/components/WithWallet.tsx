@@ -1,7 +1,6 @@
 import React from "react";
 import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
-import { AlertTriangle } from "lucide-react";
 
 export interface WalletCtx {
   signer: TransactionSigner;
@@ -9,29 +8,23 @@ export interface WalletCtx {
   addressStr: string;
 }
 
-interface RequireWalletProps {
-  message?: string;
-  children: (ctx: WalletCtx) => React.ReactNode;
-}
-
 type WalletUiShim = { account?: { address: string } | null };
 
-export const RequireWallet: React.FC<RequireWalletProps> = ({ message, children }) => {
+/**
+ * Renders children with the connected wallet context, or `null` when no wallet
+ * is connected. Pages stay fully viewable while disconnected — only their
+ * actions are gated, not the whole route. The signer hook is only called once
+ * an account exists (it requires a non-null account), so disconnected renders
+ * are safe.
+ */
+export const WithWallet: React.FC<{
+  children: (ctx: WalletCtx | null) => React.ReactNode;
+}> = ({ children }) => {
   const walletUi = useWalletUi() as unknown as WalletUiShim;
   const account = walletUi?.account ?? null;
 
   if (!account) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-2xl font-black mb-3">Connect Wallet</h2>
-          <p className="text-muted-foreground font-medium">
-            {message ?? "Connect your wallet to continue."}
-          </p>
-        </div>
-      </div>
-    );
+    return <>{children(null)}</>;
   }
 
   return <Connected account={account}>{children}</Connected>;
