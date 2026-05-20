@@ -168,7 +168,7 @@ const HeartbeatPageInner: React.FC<{
               </p>
             </div>
 
-            <div className="neo-card-static space-y-4">
+            <div className="neo-card-static space-y-4" data-tour="heartbeat-lookup">
               <div>
                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
                   Authority (Owner) Address

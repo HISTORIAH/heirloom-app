@@ -57,20 +57,30 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
     });
   }
 
-  // 4. Claim — wallet-gated, describe only.
+  // 4. Claim — spotlight the connect-to-find-inheritance panel.
   steps.push({
-    target: "body",
-    placement: "center",
+    target: '[data-tour="claim-connect"]',
+    placement: "bottom",
     title: "Claim an inheritance",
     content:
       "Heirs come here to look up and claim assets left to them. You'll connect a wallet to claim what's yours.",
     data: { route: "/claim" },
   });
 
-  // 5. Heartbeat — wallet-gated, describe only.
+  // 4b. Claim — manual lookup fallback.
   steps.push({
-    target: "body",
-    placement: "center",
+    target: '[data-tour="claim-manual"]',
+    placement: "top",
+    title: "Look up by owner",
+    content:
+      "If the automatic scan can't find your inheritance, expand this to look up an estate by the vault owner's address.",
+    data: { route: "/claim" },
+  });
+
+  // 5. Heartbeat — spotlight the lookup panel.
+  steps.push({
+    target: '[data-tour="heartbeat-lookup"]',
+    placement: "bottom",
     title: "Heartbeat signer portal",
     content:
       "A trusted signer can refresh a vault's heartbeat here — keeping it active without holding full authority over your assets.",

@@ -261,7 +261,7 @@ const ClaimPageInner: React.FC<{
             </div>
 
             {!isConnected && (
-              <div className="neo-card-static text-center">
+              <div className="neo-card-static text-center" data-tour="claim-connect">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-xl font-black mb-2">Connect to find your inheritance</h3>
                 <p className="text-muted-foreground font-medium mb-4">
@@ -443,7 +443,7 @@ const ClaimPageInner: React.FC<{
               </div>
             )}
 
-            <div className="neo-card-static">
+            <div className="neo-card-static" data-tour="claim-manual">
               <button
                 onClick={() => setShowManual(!showManual)}
                 className="flex items-center justify-between w-full font-bold uppercase tracking-widest text-sm text-muted-foreground"
