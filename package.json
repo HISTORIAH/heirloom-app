@@ -5,10 +5,10 @@
     "app",
     "app-ika",
     "blog",
+    "tests",
     "packages/*",
-    "clients/*",
-    "clients-ika/*",
-    "tests"
+    "clients/heirloom/js",
+    "clients/heirloom-ika/js"
   ],
   "scripts": {
     "dev:ui": "turbo run dev --filter=app",
