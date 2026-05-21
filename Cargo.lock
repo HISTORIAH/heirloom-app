@@ -288,6 +288,262 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "beethoven"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "beethoven-deposit-drift",
+ "beethoven-deposit-jupiter",
+ "beethoven-deposit-kamino",
+ "beethoven-deposit-marginfi",
+ "beethoven-swap-aldrin",
+ "beethoven-swap-aldrin-v2",
+ "beethoven-swap-futarchy",
+ "beethoven-swap-gamma",
+ "beethoven-swap-hadron",
+ "beethoven-swap-heaven",
+ "beethoven-swap-manifest",
+ "beethoven-swap-omnipair",
+ "beethoven-swap-perena",
+ "beethoven-swap-raydium-cpmm",
+ "beethoven-swap-scale-amm",
+ "beethoven-swap-scale-vmm",
+ "beethoven-swap-solfi",
+ "beethoven-swap-solfi-v2",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-core"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "solana-account-view",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-deposit-drift"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-deposit-jupiter"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-deposit-kamino"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-deposit-marginfi"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-aldrin"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-aldrin-v2"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-futarchy"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-gamma"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-hadron"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-heaven"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-manifest"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-omnipair"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-perena"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-raydium-cpmm"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-scale-amm"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-scale-vmm"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-solfi"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
+name = "beethoven-swap-solfi-v2"
+version = "0.0.1"
+source = "git+https://github.com/blueshift-gg/beethoven#59abb049a6dd5954faf8a6cc8bafe1bf84d9fd5f"
+dependencies = [
+ "beethoven-core",
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-instruction-view",
+ "solana-program-error",
+]
+
+[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -666,6 +922,8 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "beethoven",
+ "solana-account-view",
  "solana-security-txt",
 ]
 
@@ -1178,6 +1436,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-account-view"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc141b940560430425ebaadb7645496c45f6a10fad9911d719bd03eab7f4d422"
+dependencies = [
+ "solana-address 2.6.0",
+ "solana-program-error",
+]
+
+[[package]]
 name = "solana-address"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1381,6 +1649,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0b188842592fdf6cb96f55263ae1bf11713ab5114401d1d5a881ed7cc41bef6"
 dependencies = [
  "num-traits",
+ "solana-program-error",
+]
+
+[[package]]
+name = "solana-instruction-view"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ab7a27d0c4214b9f7389c3dd00b68c93093a67f1dcc5b7893aebe299bbcbb47"
+dependencies = [
+ "solana-account-view",
+ "solana-address 2.6.0",
+ "solana-define-syscall 5.1.0",
  "solana-program-error",
 ]
 
