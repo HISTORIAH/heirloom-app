@@ -2,6 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
+  Box,
+  Flex,
+  Text,
+  Grid,
+  VStack,
+
+  Heading,
+} from "@chakra-ui/react";
+import {
   ArrowLeft,
   ArrowRight,
   CheckCircle,
@@ -24,11 +33,9 @@ const STEPS = ["Heartbeat", "Owner", "Heir", "Review"];
 const LABEL_MAX_LEN = 32;
 
 const HEARTBEAT_PRESETS = [
-  { label: "7d", days: 7 },
+  { label: "1d", days: 1 },
   { label: "30d", days: 30 },
-  { label: "60d", days: 60 },
   { label: "90d", days: 90 },
-  { label: "180d", days: 180 },
   { label: "365d", days: 365 },
 ];
 
@@ -36,8 +43,6 @@ const GRACE_PRESETS = [
   { label: "1d", days: 1 },
   { label: "7d", days: 7 },
   { label: "14d", days: 14 },
-  { label: "30d", days: 30 },
-  { label: "60d", days: 60 },
   { label: "90d", days: 90 },
 ];
 
@@ -54,11 +59,9 @@ export default function CreateVault() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-
-  // Form fields (mirror existing IKA functionality 1:1)
   const [label, setLabel] = useState("My ETH Vault");
-  const [heartbeatDays, setHeartbeatDays] = useState(90);
-  const [graceDays, setGraceDays] = useState(30);
+  const [heartbeatDays, setHeartbeatDays] = useState(30);
+  const [graceDays, setGraceDays] = useState(7);
   const [ownerAddress, setOwnerAddress] = useState("");
   const [heirEthAddress, setHeirEthAddress] = useState("");
 
@@ -146,502 +149,500 @@ export default function CreateVault() {
   // === Done state ===========================================================
   if (isDone && result) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-lg font-black hover:underline group"
-            >
-              <ArrowLeft
-                className="h-5 w-5 transition-transform group-hover:-translate-x-1"
-                strokeWidth={3}
-              />
+      <Box minH="100vh" bg="background">
+        <Box borderBottomWidth="8px" borderColor="foreground" bg="background" position="sticky" top={0} zIndex={50}>
+          <Flex maxW="4xl" mx="auto" px={6} align="center" justify="space-between" h="80px">
+            <Box as="button" onClick={() => navigate("/")} display="flex" alignItems="center" gap={2} fontSize="lg" fontWeight="900" _hover={{ textDecoration: "underline" }}>
+              <ArrowLeft className="h-5 w-5" strokeWidth={3} />
               Dashboard
-            </button>
-            <span className="text-2xl font-black">Vault Created</span>
-            <span className="neo-badge bg-accent-lime text-[10px]">Live</span>
-          </div>
-        </div>
+            </Box>
+            <Text fontSize="2xl" fontWeight="900">Vault Created</Text>
+            <Badge bg="accent.lime" fontSize="10px">Live</Badge>
+          </Flex>
+        </Box>
 
-        <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-          <div className="neo-section-lime neo-border-thick rounded-2xl p-8 neo-shadow-xl text-center">
-            <div className="bg-background neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+        <VStack maxW="4xl" mx="auto" px={6} py={12} gap={8} align="stretch" animation="slideUp 0.4s ease-out">
+          <Box bg="accent.lime" borderWidth="6px" borderColor="foreground" borderRadius="2xl" p={8} boxShadow="16px 16px 0px 0px #000" textAlign="center">
+            <Box bg="background" borderWidth="4px" borderColor="foreground" borderRadius="full" p={6} w="80px" h="80px" mx="auto" mb={6} display="flex" alignItems="center" justifyContent="center">
               <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
-            </div>
-            <span className="neo-badge bg-background mb-3 inline-block">Vault Live</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase">{label}</h2>
-            <p className="text-sm font-bold text-foreground/70 mt-2 max-w-md mx-auto">
+            </Box>
+            <Badge bg="background" mb={3}>Vault Live</Badge>
+            <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" textTransform="uppercase">
+              {label}
+            </Heading>
+            <Text fontSize="sm" fontWeight="700" color="foreground" opacity={0.7} mt={2} maxW="md" mx="auto">
               Send ETH to your deposit address to fund the vault. Check in regularly with your passkey.
-            </p>
-          </div>
+            </Text>
+          </Box>
 
-          <div className="neo-card-static">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-accent-orange neo-border rounded-xl p-3">
+          <NeoCard>
+            <Flex align="center" gap={3} mb={4}>
+              <Box bg="accent.orange" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                 <Globe className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <h3 className="text-xl font-black">ETH Deposit Address</h3>
-            </div>
-            <div className="flex flex-col items-center gap-4 mt-2">
-              <div className="neo-border rounded-2xl bg-background p-4">
+              </Box>
+              <Heading as="h3" fontSize="xl" fontWeight="900">ETH Deposit Address</Heading>
+            </Flex>
+            <VStack gap={4} mt={2} align="center">
+              <Box borderWidth="4px" borderColor="foreground" borderRadius="2xl" bg="background" p={4}>
                 <QRCodeSVG value={result.ethDepositAddress} size={180} level="M" />
-              </div>
-              <p className="font-mono text-sm break-all neo-border bg-background rounded-lg p-3 w-full text-center font-bold">
-                {result.ethDepositAddress}
-              </p>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={() => handleCopy(result.ethDepositAddress)}
-              >
+              </Box>
+              <Box borderWidth="4px" borderColor="foreground" bg="background" borderRadius="lg" p={3} w="full" textAlign="center">
+                <Text fontFamily="mono" fontSize="sm" wordBreak="break-all" fontWeight="700">
+                  {result.ethDepositAddress}
+                </Text>
+              </Box>
+              <Button variant="outline" size="default" onClick={() => handleCopy(result.ethDepositAddress)}>
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 {copied ? "Copied" : "Copy Address"}
               </Button>
-            </div>
-          </div>
+            </VStack>
+          </NeoCard>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="neo-card-static bg-accent-cyan/10">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-accent-cyan neo-border rounded-xl p-3">
+          <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
+            <NeoCard bg="rgba(0,240,255,0.1)">
+              <Flex align="center" gap={3} mb={3}>
+                <Box bg="accent.cyan" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                   <Fingerprint className="h-6 w-6" strokeWidth={2.5} />
-                </div>
-                <h3 className="text-lg font-black">Estate ID</h3>
-              </div>
-              <p className="font-mono text-xs break-all text-muted-foreground">{result.estateId}</p>
-            </div>
-            <div className="neo-card-static bg-accent-purple/10">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-accent-purple neo-border rounded-xl p-3">
-                  <Shield className="h-6 w-6 text-white" strokeWidth={2.5} />
-                </div>
-                <h3 className="text-lg font-black">Ika dWallet</h3>
-              </div>
-              <p className="font-mono text-xs break-all text-muted-foreground">
+                </Box>
+                <Heading as="h3" fontSize="lg" fontWeight="900">Estate ID</Heading>
+              </Flex>
+              <Text fontFamily="mono" fontSize="xs" wordBreak="break-all" color="muted-foreground">
+                {result.estateId}
+              </Text>
+            </NeoCard>
+            <NeoCard bg="rgba(139,92,246,0.1)">
+              <Flex align="center" gap={3} mb={3}>
+                <Box bg="accent.purple" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
+                  <Shield className="h-6 w-6" style={{ color: "#fff" }} strokeWidth={2.5} />
+                </Box>
+                <Heading as="h3" fontSize="lg" fontWeight="900">Ika dWallet</Heading>
+              </Flex>
+              <Text fontFamily="mono" fontSize="xs" wordBreak="break-all" color="muted-foreground">
                 {result.dwalletSolana}
-              </p>
-            </div>
-          </div>
+              </Text>
+            </NeoCard>
+          </Grid>
 
-          <div className="flex justify-end pt-8 border-t-4 border-foreground">
+          <Flex justify="flex-end" pt={8} borderTopWidth="4px" borderColor="foreground">
             <Button variant="lime" size="xl" onClick={() => navigate("/")}>
               Go to Dashboard <ArrowRight className="h-5 w-5" />
             </Button>
-          </div>
-        </div>
-      </div>
+          </Flex>
+        </VStack>
+      </Box>
     );
   }
 
   // === Wizard ===============================================================
   return (
     <>
-      <div
-        className="min-h-screen bg-background"
-        aria-hidden={isWorking}
-        style={isWorking ? { pointerEvents: "none" } : undefined}
-      >
-        <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-lg font-black hover:underline group"
-            >
-              <ArrowLeft
-                className="h-5 w-5 transition-transform group-hover:-translate-x-1"
-                strokeWidth={3}
-              />
+      <Box minH="100vh" bg="background" aria-hidden={isWorking} pointerEvents={isWorking ? "none" : "auto"}>
+        <Box borderBottomWidth="8px" borderColor="foreground" bg="background" position="sticky" top={0} zIndex={50}>
+          <Flex maxW="4xl" mx="auto" px={6} align="center" justify="space-between" h="80px">
+            <Box as="button" onClick={() => navigate("/")} display="flex" alignItems="center" gap={2} fontSize="lg" fontWeight="900" _hover={{ textDecoration: "underline" }}>
+              <ArrowLeft className="h-5 w-5" strokeWidth={3} />
               Back
-            </button>
-            <span className="text-2xl font-black">Create ETH Vault</span>
-            <span className="text-lg font-black">IKA</span>
-          </div>
-        </div>
+            </Box>
+            <Text fontSize="2xl" fontWeight="900">Create ETH Vault</Text>
+            <Text fontSize="lg" fontWeight="900">IKA</Text>
+          </Flex>
+        </Box>
 
-        <div className="bg-secondary border-b-4 border-foreground">
-          <div className="max-w-4xl mx-auto px-6 py-5">
-            <div className="flex items-center gap-0">
+        {/* Stepper */}
+        <Box bg="secondary" borderBottomWidth="4px" borderColor="foreground">
+          <Box maxW="4xl" mx="auto" px={6} py={5}>
+            <Flex align="center">
               {STEPS.map((s, i) => (
-                <div key={s} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className={`neo-step-dot ${
-                        i < step ? "complete" : i === step ? "active" : "pending"
-                      }`}
+                <Flex key={s} align="center" flex={1}>
+                  <VStack flex={1} align="center" gap={0}>
+                    <Box
+                      w={{ base: "40px", md: "48px" }}
+                      h={{ base: "40px", md: "48px" }}
+                      borderWidth="4px"
+                      borderColor="foreground"
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontWeight="900"
+                      fontSize={{ base: "sm", md: "base" }}
+                      transition="all 300ms"
+                      bg={i < step ? "accent.lime" : i === step ? "accent.lime" : "secondary"}
+                      transform={i === step ? "scale(1.1)" : "none"}
+                      boxShadow={i === step ? "8px 8px 0px 0px #000" : "none"}
                     >
                       {i < step ? <CheckCircle className="h-5 w-5" strokeWidth={3} /> : i + 1}
-                    </div>
-                    <p
-                      className={`text-xs font-bold uppercase tracking-widest mt-2 text-center ${
-                        i === step ? "text-foreground" : "text-muted-foreground"
-                      }`}
+                    </Box>
+                    <Text
+                      fontSize="xs"
+                      fontWeight="700"
+                      textTransform="uppercase"
+                      letterSpacing="0.1em"
+                      textAlign="center"
+                      mt={2}
+                      color={i === step ? "foreground" : "muted-foreground"}
                     >
                       {s}
-                    </p>
-                  </div>
+                    </Text>
+                  </VStack>
                   {i < STEPS.length - 1 && (
-                    <div
-                      className={`h-1 flex-1 neo-border rounded-full -mt-6 mx-1 ${
-                        i < step ? "bg-accent-lime" : "bg-secondary"
-                      }`}
+                    <Box
+                      h="4px"
+                      flex={1}
+                      borderWidth="4px"
+                      borderColor="foreground"
+                      borderRadius="full"
+                      mt="-24px"
+                      mx={1}
+                      bg={i < step ? "accent.lime" : "secondary"}
                     />
                   )}
-                </div>
+                </Flex>
               ))}
-            </div>
-          </div>
-        </div>
+            </Flex>
+          </Box>
+        </Box>
 
-        <div className="max-w-4xl mx-auto px-6 py-12">
+        <Box maxW="4xl" mx="auto" px={6} py={12}>
           {error && (
-            <div className="neo-card-static bg-accent-red/10 mb-6">
-              <p className="font-bold text-sm">{error}</p>
-            </div>
+            <NeoCard bg="rgba(255,51,51,0.1)" mb={6}>
+              <Text fontWeight="700" fontSize="sm">{error}</Text>
+            </NeoCard>
           )}
 
-          <div className="neo-slide-up" key={step}>
+          <Box animation="slideUp 0.4s ease-out" key={step}>
             {/* Step 0 — Heartbeat + Label */}
             {step === 0 && (
-              <div className="space-y-6">
-                <div>
-                  <span className="neo-badge bg-accent-pink mb-4 inline-block">Step 1</span>
-                  <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+              <VStack gap={6} align="stretch">
+                <Box>
+                  <Badge bg="accent.pink" mb={4}>Step 1</Badge>
+                  <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" lineHeight={0.9}>
                     Set your{" "}
-                    <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">
+                    <Box as="span" bg="accent.pink" px={2} display="inline-block" transform="rotate(-1deg)">
                       heartbeat.
-                    </span>
-                  </h2>
-                  <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
+                    </Box>
+                  </Heading>
+                  <Text fontSize="lg" fontWeight="500" color="muted-foreground" mt={4} maxW="xl">
                     How often will you check in with your passkey? Miss it, grace starts.
-                  </p>
-                </div>
+                  </Text>
+                </Box>
 
-                <div className="neo-card-static">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-accent-yellow neo-border rounded-xl p-3">
+                <NeoCard>
+                  <Flex align="center" gap={3} mb={4}>
+                    <Box bg="accent.yellow" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                       <Heart className="h-6 w-6" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-xl font-black">Label</h3>
-                  </div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                    </Box>
+                    <Heading as="h3" fontSize="xl" fontWeight="900">Label</Heading>
+                  </Flex>
+                  <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
                     Vault name ({LABEL_MAX_LEN} chars max)
-                  </label>
-                  <input
+                  </Text>
+                  <NeoInput
                     type="text"
                     value={label}
                     maxLength={LABEL_MAX_LEN}
                     onChange={(e) => setLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
-                    className="neo-input focus:bg-accent-yellow/20"
                     placeholder="e.g. My ETH Vault"
+                    focusBg="rgba(255,204,0,0.2)"
                   />
-                </div>
+                </NeoCard>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="neo-card-static">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="bg-accent-pink neo-border rounded-xl p-3">
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={8}>
+                  <NeoCard>
+                    <Flex align="center" gap={3} mb={6}>
+                      <Box bg="accent.pink" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                         <Heart className="h-6 w-6" strokeWidth={2.5} />
-                      </div>
-                      <h3 className="text-xl font-black">Heartbeat Interval</h3>
-                    </div>
-                    <div className="space-y-4">
-                      <input
-                        type="range"
+                      </Box>
+                      <Heading as="h3" fontSize="xl" fontWeight="900">Heartbeat Interval</Heading>
+                    </Flex>
+                    <VStack gap={4} align="stretch">
+                      <NeoRange
                         min={1}
                         max={365}
                         value={heartbeatDays}
                         onChange={(e) => setHeartbeatDays(Number(e.target.value))}
-                        className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer accent-accent-pink"
+                        variant="pink"
                       />
-                      <div className="flex justify-between items-end">
-                        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                      <Flex justify="space-between" align="end">
+                        <Text fontSize="sm" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
                           Days
-                        </span>
-                        <span className="text-5xl font-black tabular-nums">{heartbeatDays}</span>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
+                        </Text>
+                        <Text fontSize="5xl" fontWeight="900" fontVariantNumeric="tabular-nums">
+                          {heartbeatDays}
+                        </Text>
+                      </Flex>
+                      <Flex gap={2}>
                         {HEARTBEAT_PRESETS.map((p) => (
-                          <button
+                          <PresetButton
                             key={p.label}
+                            active={heartbeatDays === p.days}
                             onClick={() => setHeartbeatDays(p.days)}
-                            className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${
-                              heartbeatDays === p.days
-                                ? "bg-accent-pink neo-shadow-sm"
-                                : "bg-secondary hover:bg-accent-pink/30"
-                            }`}
+                            activeBg="accent.pink"
                           >
                             {p.label}
-                          </button>
+                          </PresetButton>
                         ))}
-                      </div>
-                    </div>
-                  </div>
+                      </Flex>
+                    </VStack>
+                  </NeoCard>
 
-                  <div className="neo-card-static">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="bg-accent-yellow neo-border rounded-xl p-3">
+                  <NeoCard>
+                    <Flex align="center" gap={3} mb={6}>
+                      <Box bg="accent.yellow" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                         <Clock className="h-6 w-6" strokeWidth={2.5} />
-                      </div>
-                      <h3 className="text-xl font-black">Grace Period</h3>
-                    </div>
-                    <div className="space-y-4">
-                      <input
-                        type="range"
+                      </Box>
+                      <Heading as="h3" fontSize="xl" fontWeight="900">Grace Period</Heading>
+                    </Flex>
+                    <VStack gap={4} align="stretch">
+                      <NeoRange
                         min={1}
                         max={90}
                         value={graceDays}
                         onChange={(e) => setGraceDays(Number(e.target.value))}
-                        className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer accent-accent-yellow"
+                        variant="yellow"
                       />
-                      <div className="flex justify-between items-end">
-                        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                      <Flex justify="space-between" align="end">
+                        <Text fontSize="sm" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
                           Days
-                        </span>
-                        <span className="text-5xl font-black tabular-nums">{graceDays}</span>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
+                        </Text>
+                        <Text fontSize="5xl" fontWeight="900" fontVariantNumeric="tabular-nums">
+                          {graceDays}
+                        </Text>
+                      </Flex>
+                      <Flex gap={2}>
                         {GRACE_PRESETS.map((p) => (
-                          <button
+                          <PresetButton
                             key={p.label}
+                            active={graceDays === p.days}
                             onClick={() => setGraceDays(p.days)}
-                            className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px] ${
-                              graceDays === p.days
-                                ? "bg-accent-yellow neo-shadow-sm"
-                                : "bg-secondary hover:bg-accent-yellow/30"
-                            }`}
+                            activeBg="accent.yellow"
                           >
                             {p.label}
-                          </button>
+                          </PresetButton>
                         ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </Flex>
+                    </VStack>
+                  </NeoCard>
+                </Grid>
 
-                <div className="neo-card-static bg-accent-lime/30 flex items-center gap-4">
-                  <div className="bg-accent-lime neo-border rounded-xl p-3 shrink-0">
-                    <Clock className="h-6 w-6" strokeWidth={2.5} />
-                  </div>
-                  <p className="text-base font-bold leading-snug">
-                    Total protection window:{" "}
-                    <span className="text-xl font-black">
-                      {formatDuration((heartbeatDays + graceDays) * 86400)}
-                    </span>
-                    {" "}— if you don't check in for this long, your heir can claim.
-                  </p>
-                </div>
-              </div>
+                <NeoCard bg="rgba(204,255,0,0.3)">
+                  <Flex align="center" gap={4}>
+                    <Box bg="accent.lime" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3} flexShrink={0}>
+                      <Clock className="h-6 w-6" strokeWidth={2.5} />
+                    </Box>
+                    <Text fontSize="base" fontWeight="700" lineHeight="snug">
+                      Total protection window:{" "}
+                      <Text as="span" fontSize="xl" fontWeight="900">
+                        {formatDuration((heartbeatDays + graceDays) * 86400)}.
+                      </Text>
+                      {" "}If you don't check in for this long, your heir can claim.
+                    </Text>
+                  </Flex>
+                </NeoCard>
+              </VStack>
             )}
 
             {/* Step 1 — Owner */}
             {step === 1 && (
-              <div className="space-y-8">
-                <div>
-                  <span className="neo-badge bg-accent-cyan mb-4 inline-block">Step 2</span>
-                  <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+              <VStack gap={8} align="stretch">
+                <Box>
+                  <Badge bg="accent.cyan" mb={4}>Step 2</Badge>
+                  <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" lineHeight={0.9}>
                     Your{" "}
-                    <span className="bg-accent-cyan px-2 inline-block rotate-[1deg]">
+                    <Box as="span" bg="accent.cyan" px={2} display="inline-block" transform="rotate(1deg)">
                       owner address.
-                    </span>
-                  </h2>
-                  <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                    Your Ethereum address — used for emergency withdrawals and passkey registration.
-                  </p>
-                </div>
+                    </Box>
+                  </Heading>
+                  <Text fontSize="lg" fontWeight="500" color="muted-foreground" mt={4} maxW="xl">
+                    Your Ethereum address that's used for emergency withdrawals and passkey registration.
+                  </Text>
+                </Box>
 
-                <div className="neo-card-static">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-accent-cyan neo-border rounded-xl p-3">
+                <NeoCard>
+                  <Flex align="center" gap={3} mb={4}>
+                    <Box bg="accent.cyan" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                       <Globe className="h-6 w-6" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-xl font-black">Owner ETH Address</h3>
-                  </div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                    </Box>
+                    <Heading as="h3" fontSize="xl" fontWeight="900">Owner ETH Address</Heading>
+                  </Flex>
+                  <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
                     0x address you control
-                  </label>
-                  <input
+                  </Text>
+                  <NeoInput
                     type="text"
                     value={ownerAddress}
                     onChange={(e) => setOwnerAddress(e.target.value)}
                     maxLength={64}
-                    className="neo-input font-mono text-sm focus:bg-accent-cyan/20"
                     placeholder="0x..."
+                    fontFamily="mono"
+                    focusBg="rgba(0,240,255,0.2)"
                   />
-                  <p className="text-xs font-medium text-muted-foreground mt-2">
+                  <Text fontSize="xs" fontWeight="500" color="muted-foreground" mt={2}>
                     You sign with this address in MetaMask if you ever need to pull funds back out.
-                  </p>
-                </div>
+                  </Text>
+                </NeoCard>
 
-                <div className="neo-card-static bg-secondary/50">
-                  <div className="flex items-start gap-3">
-                    <Fingerprint className="h-5 w-5 mt-0.5 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="font-bold text-sm">Passkey required</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                <NeoCard bg="rgba(242,242,242,0.5)">
+                  <Flex align="start" gap={3}>
+                    <Fingerprint className="h-5 w-5" style={{ marginTop: "2px", color: "#666" }} />
+                    <Box>
+                      <Text fontWeight="700" fontSize="sm">Passkey required</Text>
+                      <Text fontSize="xs" color="muted-foreground" mt={1}>
                         On the review step your device will ask for biometric verification to bind a
                         passkey to this vault. No Solana wallet needed.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      </Text>
+                    </Box>
+                  </Flex>
+                </NeoCard>
+              </VStack>
             )}
 
             {/* Step 2 — Heir */}
             {step === 2 && (
-              <div className="space-y-8">
-                <div>
-                  <span className="neo-badge bg-accent-orange mb-4 inline-block">Step 3</span>
-                  <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+              <VStack gap={8} align="stretch">
+                <Box>
+                  <Badge bg="accent.orange" mb={4}>Step 3</Badge>
+                  <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" lineHeight={0.9}>
                     Name your{" "}
-                    <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">heir.</span>
-                  </h2>
-                  <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
+                    <Box as="span" bg="accent.orange" px={2} display="inline-block" transform="rotate(-1deg)">
+                      heir.
+                    </Box>
+                  </Heading>
+                  <Text fontSize="lg" fontWeight="500" color="muted-foreground" mt={4} maxW="xl">
                     The Ethereum address that receives ETH if you stop checking in.
-                  </p>
-                </div>
+                  </Text>
+                </Box>
 
-                <div className="neo-card-static">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-accent-orange neo-border rounded-xl p-3">
+                <NeoCard>
+                  <Flex align="center" gap={3} mb={4}>
+                    <Box bg="accent.orange" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                       <User className="h-6 w-6" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-xl font-black">Heir ETH Address</h3>
-                  </div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                    </Box>
+                    <Heading as="h3" fontSize="xl" fontWeight="900">Heir ETH Address</Heading>
+                  </Flex>
+                  <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
                     Where ETH goes when claimed
-                  </label>
-                  <input
+                  </Text>
+                  <NeoInput
                     type="text"
                     value={heirEthAddress}
                     onChange={(e) => setHeirEthAddress(e.target.value)}
                     maxLength={64}
-                    className="neo-input font-mono text-sm focus:bg-accent-orange/20"
                     placeholder="0x..."
+                    fontFamily="mono"
+                    focusBg="rgba(255,149,0,0.2)"
                   />
-                  <p className="text-xs font-medium text-muted-foreground mt-2">
+                  <Text fontSize="xs" fontWeight="500" color="muted-foreground" mt={2}>
                     One vault, one heir. Create more vaults to cover more beneficiaries.
-                  </p>
-                </div>
-              </div>
+                  </Text>
+                </NeoCard>
+              </VStack>
             )}
 
             {/* Step 3 — Review */}
             {step === 3 && (
-              <div className="space-y-8">
-                <div>
-                  <span className="neo-badge bg-accent-lime mb-4 inline-block">Step 4</span>
-                  <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+              <VStack gap={8} align="stretch">
+                <Box>
+                  <Badge bg="accent.lime" mb={4}>Step 4</Badge>
+                  <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" lineHeight={0.9}>
                     Review &{" "}
-                    <span className="bg-accent-lime px-2 inline-block rotate-[1deg]">confirm.</span>
-                  </h2>
-                </div>
+                    <Box as="span" bg="accent.lime" px={2} display="inline-block" transform="rotate(1deg)">
+                      confirm.
+                    </Box>
+                  </Heading>
+                </Box>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="neo-card-static">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
+                  <NeoCard>
+                    <Text fontSize="sm" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={3}>
                       Timing
-                    </h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="font-bold">Interval</span>
-                        <span className="font-black text-xl">
-                          {formatDuration(heartbeatDays * 86400)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-bold">Grace</span>
-                        <span className="font-black text-xl">
-                          {formatDuration(graceDays * 86400)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-t-4 border-foreground pt-2 mt-2">
-                        <span className="font-bold">Total</span>
-                        <span className="font-black text-xl">
-                          {formatDuration((heartbeatDays + graceDays) * 86400)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    </Text>
+                    <VStack gap={2} align="stretch">
+                      <Flex justify="space-between">
+                        <Text fontWeight="700">Interval</Text>
+                        <Text fontWeight="900" fontSize="xl">{formatDuration(heartbeatDays * 86400)}</Text>
+                      </Flex>
+                      <Flex justify="space-between">
+                        <Text fontWeight="700">Grace</Text>
+                        <Text fontWeight="900" fontSize="xl">{formatDuration(graceDays * 86400)}</Text>
+                      </Flex>
+                      <Flex justify="space-between" borderTopWidth="4px" borderColor="foreground" pt={2} mt={2}>
+                        <Text fontWeight="700">Total</Text>
+                        <Text fontWeight="900" fontSize="xl">{formatDuration((heartbeatDays + graceDays) * 86400)}</Text>
+                      </Flex>
+                    </VStack>
+                  </NeoCard>
 
-                  <div className="neo-card-static">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                  <NeoCard>
+                    <Text fontSize="sm" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={3}>
                       Identity
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    </Text>
+                    <VStack gap={3} align="stretch">
+                      <Box>
+                        <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
                           Label
-                        </p>
-                        <p className="font-black text-lg">{label}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        </Text>
+                        <Text fontWeight="900" fontSize="lg">{label}</Text>
+                      </Box>
+                      <Box>
+                        <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
                           Network
-                        </p>
-                        <p className="font-black text-lg">Ethereum</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                        </Text>
+                        <Text fontWeight="900" fontSize="lg">Ethereum</Text>
+                      </Box>
+                    </VStack>
+                  </NeoCard>
+                </Grid>
 
-                <div className="neo-card-static">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-accent-cyan neo-border rounded-xl p-3">
+                <NeoCard>
+                  <Flex align="center" gap={3} mb={3}>
+                    <Box bg="accent.cyan" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                       <Globe className="h-6 w-6" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-xl font-black">Owner</h3>
-                  </div>
-                  <p className="text-xs font-mono text-muted-foreground break-all">{ownerAddress}</p>
-                </div>
+                    </Box>
+                    <Heading as="h3" fontSize="xl" fontWeight="900">Owner</Heading>
+                  </Flex>
+                  <Text fontSize="xs" fontFamily="mono" color="muted-foreground" wordBreak="break-all">
+                    {ownerAddress}
+                  </Text>
+                </NeoCard>
 
-                <div className="neo-card-static">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-accent-orange neo-border rounded-xl p-3">
+                <NeoCard>
+                  <Flex align="center" gap={3} mb={3}>
+                    <Box bg="accent.orange" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
                       <User className="h-6 w-6" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-xl font-black">Heir</h3>
-                  </div>
-                  <p className="text-xs font-mono text-muted-foreground break-all">
+                    </Box>
+                    <Heading as="h3" fontSize="xl" fontWeight="900">Heir</Heading>
+                  </Flex>
+                  <Text fontSize="xs" fontFamily="mono" color="muted-foreground" wordBreak="break-all">
                     {heirEthAddress}
-                  </p>
-                </div>
+                  </Text>
+                </NeoCard>
 
-                <div className="neo-card-static bg-accent-purple/10">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-accent-purple neo-border rounded-xl p-3 shrink-0">
-                      <Fingerprint className="h-6 w-6 text-white" strokeWidth={2.5} />
-                    </div>
-                    <div>
-                      <p className="font-black">Passkey will be created</p>
-                      <p className="text-sm font-medium text-muted-foreground mt-1">
+                <NeoCard bg="rgba(139,92,246,0.1)">
+                  <Flex align="start" gap={3}>
+                    <Box bg="accent.purple" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3} flexShrink={0}>
+                      <Fingerprint className="h-6 w-6" style={{ color: "#fff" }} strokeWidth={2.5} />
+                    </Box>
+                    <Box>
+                      <Text fontWeight="900">Passkey will be created</Text>
+                      <Text fontSize="sm" fontWeight="500" color="muted-foreground" mt={1}>
                         Your device will prompt for biometric verification. The passkey signs every
-                        heartbeat — no Solana wallet, no seed phrase.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                        heartbeat.
+                      </Text>
+                    </Box>
+                  </Flex>
+                </NeoCard>
+              </VStack>
             )}
-          </div>
+          </Box>
 
-          <div className="flex justify-between items-center mt-12 pt-8 border-t-4 border-foreground">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setStep(step - 1)}
-              disabled={step === 0 || isWorking}
-            >
+          {/* Nav buttons */}
+          <Flex justify="space-between" align="center" mt={12} pt={8} borderTopWidth="4px" borderColor="foreground">
+            <Button variant="outline" size="lg" onClick={() => setStep(step - 1)} disabled={step === 0 || isWorking}>
               <ArrowLeft className="h-5 w-5" /> Back
             </Button>
             {step < 3 ? (
-              <Button
-                variant="lime"
-                size="lg"
-                onClick={() => setStep(step + 1)}
-                disabled={!canProceed() || isWorking}
-              >
+              <Button variant="lime" size="lg" onClick={() => setStep(step + 1)} disabled={!canProceed() || isWorking}>
                 Next <ArrowRight className="h-5 w-5" />
               </Button>
             ) : (
@@ -650,11 +651,11 @@ export default function CreateVault() {
                 size="xl"
                 onClick={handleSubmit}
                 disabled={!labelValid || !ownerValid || !heirValid || isWorking}
-                className="neo-glow-lime"
+                animation="glowLime 2s ease-in-out infinite"
               >
                 {isWorking ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                    <Loader2 className="h-5 w-5" style={{ animation: "spin 1s linear infinite" }} strokeWidth={2.5} />
                     Creating…
                   </>
                 ) : (
@@ -664,42 +665,200 @@ export default function CreateVault() {
                 )}
               </Button>
             )}
-          </div>
-        </div>
-      </div>
+          </Flex>
+        </Box>
+      </Box>
 
+      {/* Overlay */}
       {isWorking && (
-        <div
+        <Box
           role="dialog"
           aria-modal="true"
           aria-live="polite"
-          className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
+          position="fixed"
+          inset={0}
+          zIndex={60}
+          bg="rgba(0,0,0,0.4)"
+          backdropFilter="blur(2px)"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          p={6}
         >
-          <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
+          <Box textAlign="center" maxW="md" w="full" animation="slideUp 0.4s ease-out" bg="card" borderWidth="4px" borderColor="foreground" borderRadius="2xl" p={8} boxShadow="12px 12px 0px 0px #000">
             {submitState === "passkey" ? (
               <>
-                <div className="bg-accent-cyan neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Box bg="accent.cyan" borderWidth="4px" borderColor="foreground" borderRadius="full" p={6} w="80px" h="80px" mx="auto" mb={6} display="flex" alignItems="center" justifyContent="center">
                   <Fingerprint className="h-10 w-10" strokeWidth={2.5} />
-                </div>
-                <h2 className="text-3xl font-black mb-3">Register Passkey</h2>
-                <p className="text-lg font-medium text-muted-foreground mb-4">
+                </Box>
+                <Heading as="h2" fontSize="3xl" fontWeight="900" mb={3}>Register Passkey</Heading>
+                <Text fontSize="lg" fontWeight="500" color="muted-foreground" mb={4}>
                   Use your device biometric or PIN to create the passkey.
-                </p>
+                </Text>
               </>
             ) : (
               <>
-                <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
-                </div>
-                <h2 className="text-3xl font-black mb-3">Creating Vault…</h2>
-                <p className="text-lg font-medium text-muted-foreground mb-4">
+                <Box bg="accent.yellow" borderWidth="4px" borderColor="foreground" borderRadius="full" p={6} w="80px" h="80px" mx="auto" mb={6} display="flex" alignItems="center" justifyContent="center">
+                  <Loader2 className="h-10 w-10" style={{ animation: "spin 1s linear infinite" }} strokeWidth={2.5} />
+                </Box>
+                <Heading as="h2" fontSize="3xl" fontWeight="900" mb={3}>Creating Vault…</Heading>
+                <Text fontSize="lg" fontWeight="500" color="muted-foreground" mb={4}>
                   Running Ika DKG and submitting on-chain. May take 30–60 seconds.
-                </p>
+                </Text>
               </>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
     </>
+  );
+}
+
+/* Reusable components */
+
+function NeoCard({ children, bg, mb, textAlign, maxW }: { children: React.ReactNode; bg?: string; mb?: number; textAlign?: "center" | "left"; maxW?: string }) {
+  return (
+    <Box
+      bg={bg ?? "card"}
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="2xl"
+      p={8}
+      boxShadow="12px 12px 0px 0px #000"
+      mb={mb}
+      textAlign={textAlign}
+      maxW={maxW}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function Badge({ children, bg, fontSize, mb }: { children: React.ReactNode; bg?: string; fontSize?: string; mb?: number }) {
+  return (
+    <Box
+      display="inline-block"
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="full"
+      px={4}
+      py={1}
+      fontSize={fontSize ?? "sm"}
+      fontWeight="700"
+      textTransform="uppercase"
+      letterSpacing="0.1em"
+      bg={bg ?? "background"}
+      boxShadow="4px 4px 0px 0px #000"
+      mb={mb}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function NeoInput({ focusBg, fontFamily, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { focusBg?: string; fontFamily?: string }) {
+  return (
+    <Box
+      as="input"
+      w="full"
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="lg"
+      px={4}
+      py={3}
+      bg="background"
+      fontWeight="700"
+      fontSize="base"
+      boxShadow="4px 4px 0px 0px #000"
+      transition="all 150ms"
+      fontFamily={fontFamily}
+      _focus={{
+        boxShadow: "8px 8px 0px 0px #000",
+        transform: "translate(-2px, -2px)",
+        outline: "none",
+        bg: focusBg,
+      }}
+      {...props}
+    />
+  );
+}
+
+function PresetButton({ children, active, onClick, activeBg }: { children: React.ReactNode; active: boolean; onClick: () => void; activeBg: string }) {
+  return (
+    <Box
+      as="button"
+      onClick={onClick}
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="lg"
+      px={3}
+      py={1}
+      fontSize="sm"
+      fontWeight="700"
+      transition="all 150ms"
+      bg={active ? activeBg : "secondary"}
+      boxShadow={active ? "4px 4px 0px 0px #000" : "none"}
+      _hover={active ? {} : { bg: `${activeBg}4D` }}
+      _active={{ transform: "translate(2px, 2px)", boxShadow: "none" }}
+      flex={1}
+      minW="60px"
+      textAlign="center"
+    >
+      {children}
+    </Box>
+  );
+}
+
+function NeoRange({
+  variant,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { variant: "pink" | "yellow" }) {
+  const color = variant === "pink" ? "#ff52d8" : "#ffcc00";
+  const max = Number(props.max) || 100;
+  const value = Number(props.value) || 0;
+  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+
+  return (
+    <Box position="relative" w="full" h="24px">
+      {/* Background track */}
+      <Box
+        position="absolute"
+        top="4px"
+        left="0"
+        right="0"
+        h="16px"
+        borderWidth="4px"
+        borderColor="foreground"
+        bg="secondary"
+        boxShadow="4px 4px 0px 0px #000"
+        pointerEvents="none"
+      />
+      {/* Fill */}
+      <Box
+        position="absolute"
+        top="8px"
+        left="4px"
+        h="8px"
+        bg={color}
+        pointerEvents="none"
+        style={{ width: `calc(${percentage}% - 8px)` }}
+      />
+      {/* Actual input on top */}
+      <input
+        {...props}
+        type="range"
+        className="neo-range"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "24px",
+          margin: 0,
+          padding: 0,
+          background: "transparent",
+        }}
+      />
+    </Box>
   );
 }

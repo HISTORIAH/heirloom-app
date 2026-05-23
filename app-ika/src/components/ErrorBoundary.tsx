@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { Box, Heading, Text, Button } from "@chakra-ui/react";
 
 interface Props {
   children: ReactNode;
@@ -29,20 +30,30 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="min-h-screen bg-background flex items-center justify-center p-6">
-            <div className="max-w-lg w-full border-2 border-foreground rounded-xl p-6 bg-secondary">
-              <h1 className="text-2xl font-black text-red-500 mb-4">Something went wrong</h1>
-              <p className="text-sm font-mono break-all text-muted-foreground mb-4">
+          <Box minH="100vh" bg="background" display="flex" alignItems="center" justifyContent="center" p={6}>
+            <Box maxW="lg" w="full" borderWidth="2px" borderColor="foreground" borderRadius="xl" p={6} bg="secondary">
+              <Heading as="h1" fontSize="2xl" fontWeight="900" color="red.500" mb={4}>
+                Something went wrong
+              </Heading>
+              <Text fontSize="sm" fontFamily="mono" wordBreak="break-all" color="muted-foreground" mb={4}>
                 {this.state.error?.message ?? "Unknown error"}
-              </p>
-              <button
+              </Text>
+              <Button
                 onClick={() => window.location.reload()}
-                className="border-2 border-foreground bg-lime-400 px-4 py-2 font-bold rounded-lg hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                borderWidth="2px"
+                borderColor="foreground"
+                bg="accent.lime"
+                px={4}
+                py={2}
+                fontWeight="700"
+                borderRadius="lg"
+                _hover={{ boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)" }}
+                transition="box-shadow 150ms"
               >
                 Reload page
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Box>
+          </Box>
         )
       );
     }

@@ -2,6 +2,15 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
+  Box,
+  Flex,
+  Text,
+  Grid,
+  VStack,
+  HStack,
+  Heading,
+} from "@chakra-ui/react";
+import {
   Plus,
   Heart,
   Clock,
@@ -23,22 +32,22 @@ import { formatDuration, formatWei } from "@/lib/utils";
 
 const statusConfig: Record<UiState, { bg: string; label: string; description: string }> = {
   active: {
-    bg: "neo-section-lime",
+    bg: "accent.lime",
     label: "Active",
     description: "Heartbeat timer is running. All good.",
   },
   grace: {
-    bg: "bg-accent-yellow",
+    bg: "accent.yellow",
     label: "Grace Period",
     description: "Heartbeat missed. Check in with your passkey before grace expires!",
   },
   claimable: {
-    bg: "bg-accent-red",
+    bg: "accent.red",
     label: "Claimable",
     description: "Grace expired. Your heir can now claim the ETH.",
   },
   distributed: {
-    bg: "bg-secondary",
+    bg: "secondary",
     label: "Distributed",
     description: "Vault has been claimed and closed.",
   },
@@ -131,34 +140,61 @@ const VaultCard = ({
   const totalWindow = vault.heartbeatInterval + vault.gracePeriod;
 
   return (
-    <div className="space-y-8">
+    <VStack gap={8} align="stretch" w="full">
       {/* Status banner */}
-      <div className={`${config.bg} neo-border-thick rounded-2xl p-8 neo-shadow-xl`}>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="min-w-0">
-            <span className="neo-badge bg-background mb-3 inline-block">Vault Status</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase">{config.label}</h2>
-            <p className="text-sm font-bold text-foreground/60 mt-1">{config.description}</p>
-            <button
+      <Box
+        bg={config.bg}
+        borderWidth="6px"
+        borderColor="foreground"
+        borderRadius="2xl"
+        p={8}
+        boxShadow="16px 16px 0px 0px #000"
+      >
+        <Flex direction={{ base: "column", md: "row" }} align={{ base: "start", md: "center" }} justify="space-between" gap={6}>
+          <Box minW={0}>
+            <Badge bg="background" mb={3}>
+              Vault Status
+            </Badge>
+            <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" textTransform="uppercase">
+              {config.label}
+            </Heading>
+            <Text fontSize="sm" fontWeight="700" color="foreground" opacity={0.6} mt={1}>
+              {config.description}
+            </Text>
+            <Box
+              as="button"
               onClick={handleCopy}
-              className="text-xs font-bold text-foreground/50 mt-2 font-mono flex items-center gap-1 hover:text-foreground/80 transition-colors break-all"
-              title="Copy deposit address"
+              fontSize="xs"
+              fontWeight="700"
+              color="foreground"
+              opacity={0.5}
+              mt={2}
+              fontFamily="mono"
+              display="flex"
+              alignItems="center"
+              gap={1}
+              wordBreak="break-all"
+              _hover={{ opacity: 0.8, cursor: "pointer" }}
+              transition="color 150ms"
             >
-              <span className="break-all">{vault.ethDepositAddress}</span>
+              <Text as="span" wordBreak="break-all">
+                {vault.ethDepositAddress}
+              </Text>
               {copied ? <Check className="h-3 w-3 shrink-0" /> : <Copy className="h-3 w-3 shrink-0" />}
-            </button>
-          </div>
+            </Box>
+          </Box>
           {computedState !== "distributed" && (
             <Button
               variant="default"
               size="xl"
               onClick={() => onHeartbeat(vault)}
               disabled={heartbeating}
-              className={`shrink-0 ${computedState === "grace" ? "neo-shake" : ""}`}
+              flexShrink={0}
+              animation={computedState === "grace" ? "shake 0.4s ease-out" : undefined}
             >
               {heartbeating ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" /> Signing...
+                  <Loader2 className="h-5 w-5" style={{ animation: "spin 1s linear infinite" }} /> Signing...
                 </>
               ) : (
                 <>
@@ -167,149 +203,153 @@ const VaultCard = ({
               )}
             </Button>
           )}
-        </div>
-      </div>
+        </Flex>
+      </Box>
 
       {/* Countdown */}
-      <div className="neo-card-static">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+      <NeoCard>
+        <Flex align="center" justify="space-between" mb={6}>
+          <Text fontSize="sm" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
             {countdownLabel}
-          </h3>
-          <Clock className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
-        </div>
-        <div className="grid grid-cols-4 gap-3 md:gap-4">
+          </Text>
+          <Clock className="h-5 w-5" style={{ color: "#666" }} strokeWidth={2.5} />
+        </Flex>
+        <Grid templateColumns="repeat(4, 1fr)" gap={{ base: 3, md: 4 }}>
           {[
             { label: "Days", value: countdown.days },
             { label: "Hours", value: countdown.hours },
             { label: "Min", value: countdown.minutes },
             { label: "Sec", value: countdown.seconds },
           ].map((unit) => (
-            <div key={unit.label} className="text-center">
-              <div className="neo-border rounded-xl bg-secondary p-4 md:p-6">
-                <span className="text-4xl md:text-6xl font-black tabular-nums">
+            <Box key={unit.label} textAlign="center">
+              <Box borderWidth="4px" borderColor="foreground" borderRadius="xl" bg="secondary" p={{ base: 4, md: 6 }}>
+                <Text fontSize={{ base: "4xl", md: "6xl" }} fontWeight="900" fontVariantNumeric="tabular-nums">
                   {String(unit.value).padStart(2, "0")}
-                </span>
-              </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">
+                </Text>
+              </Box>
+              <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mt={2}>
                 {unit.label}
-              </p>
-            </div>
+              </Text>
+            </Box>
           ))}
-        </div>
-        <div className="flex items-center justify-between mt-4 pt-4 border-t-2 border-foreground/10 flex-wrap gap-2">
-          <p className="text-sm font-bold text-muted-foreground">
+        </Grid>
+        <Flex align="center" justify="space-between" mt={4} pt={4} borderTopWidth="4px" borderColor="foreground" flexWrap="wrap" gap={2}>
+          <Text fontSize="sm" fontWeight="700" color="muted-foreground">
             Last heartbeat:{" "}
             {vault.lastHeartbeat > 0
               ? new Date(vault.lastHeartbeat * 1000).toLocaleString()
               : "N/A"}
-          </p>
+          </Text>
           {computedState === "grace" && (
-            <span className="neo-badge bg-accent-yellow text-xs animate-pulse-slow">Urgent</span>
+            <Box
+              display="inline-block"
+              borderWidth="4px"
+              borderColor="foreground"
+              borderRadius="full"
+              px={4}
+              py={1}
+              fontSize="xs"
+              fontWeight="700"
+              textTransform="uppercase"
+              letterSpacing="0.1em"
+              bg="accent.yellow"
+              boxShadow="4px 4px 0px 0px #000"
+              animation="pulseSlow 3s ease-in-out infinite"
+            >
+              Urgent
+            </Box>
           )}
-        </div>
-      </div>
+        </Flex>
+      </NeoCard>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-accent-orange neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]">
-              <Globe className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <h3 className="font-black">ETH Balance</h3>
-          </div>
-          <p className="text-3xl md:text-4xl font-black tabular-nums">
-            {balanceWei != null ? formatWei(balanceWei) : "—"}
-          </p>
-          <p className="text-sm font-bold text-muted-foreground">ETH locked in vault</p>
-        </div>
-
-        <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-accent-cyan neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]">
-              <Heart className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <h3 className="font-black">Label</h3>
-          </div>
-          <p className="text-3xl md:text-4xl font-black truncate">{vault.label}</p>
-          {vault.estatePda && (
-            <p className="text-sm font-bold text-muted-foreground break-all">
-              {vault.estatePda.slice(0, 8)}...{vault.estatePda.slice(-6)}
-            </p>
-          )}
-        </div>
-
-        <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-accent-pink neo-border rounded-xl p-3 transition-transform group-hover:rotate-[-4deg]">
-              <Clock className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <h3 className="font-black">Parameters</h3>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-bold">Interval</span>
-              <span className="font-black">{formatDuration(vault.heartbeatInterval)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm font-bold">Grace</span>
-              <span className="font-black">{formatDuration(vault.gracePeriod)}</span>
-            </div>
-            <div className="flex justify-between border-t-4 border-foreground pt-2 mt-2">
-              <span className="text-sm font-bold">Total</span>
-              <span className="font-black">{formatDuration(totalWindow)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Grid templateColumns={{ base: "1fr", md: "1fr 1fr 1fr" }} gap={6}>
+        <StatCard
+          icon={<Globe className="h-6 w-6" strokeWidth={2.5} />}
+          iconBg="accent.orange"
+          title="ETH Balance"
+          value={balanceWei != null ? formatWei(balanceWei) : "—"}
+          subtitle="ETH locked in vault"
+        />
+        <StatCard
+          icon={<Heart className="h-6 w-6" strokeWidth={2.5} />}
+          iconBg="accent.cyan"
+          title="Label"
+          value={vault.label}
+          subtitle={vault.estatePda ? `${vault.estatePda.slice(0, 8)}...${vault.estatePda.slice(-6)}` : undefined}
+        />
+        <StatCard
+          icon={<Clock className="h-6 w-6" strokeWidth={2.5} />}
+          iconBg="accent.pink"
+          title="Parameters"
+        >
+          <VStack gap={2} align="stretch">
+            <Flex justify="space-between">
+              <Text fontSize="sm" fontWeight="700">Interval</Text>
+              <Text fontWeight="900">{formatDuration(vault.heartbeatInterval)}</Text>
+            </Flex>
+            <Flex justify="space-between">
+              <Text fontSize="sm" fontWeight="700">Grace</Text>
+              <Text fontWeight="900">{formatDuration(vault.gracePeriod)}</Text>
+            </Flex>
+            <Flex justify="space-between" borderTopWidth="4px" borderColor="foreground" pt={2} mt={2}>
+              <Text fontSize="sm" fontWeight="700">Total</Text>
+              <Text fontWeight="900">{formatDuration(totalWindow)}</Text>
+            </Flex>
+          </VStack>
+        </StatCard>
+      </Grid>
 
       {/* dWallet info */}
       {vault.dwalletSolana && (
-        <div className="neo-card-static bg-accent-purple/10">
-          <div className="flex items-center gap-3">
-            <div className="bg-accent-purple neo-border rounded-xl p-3">
-              <Shield className="h-6 w-6 text-white" strokeWidth={2.5} />
-            </div>
-            <div className="min-w-0">
-              <p className="font-black">Ika dWallet</p>
-              <p className="text-sm font-mono text-muted-foreground break-all">{vault.dwalletSolana}</p>
-              <p className="text-xs font-medium text-muted-foreground mt-1">
+        <NeoCard bg="rgba(139,92,246,0.1)">
+          <Flex align="center" gap={3}>
+            <Box bg="accent.purple" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
+              <Shield className="h-6 w-6" style={{ color: "#fff" }} strokeWidth={2.5} />
+            </Box>
+            <Box minW={0}>
+              <Text fontWeight="900">Ika dWallet</Text>
+              <Text fontSize="sm" fontFamily="mono" color="muted-foreground" wordBreak="break-all">
+                {vault.dwalletSolana}
+              </Text>
+              <Text fontSize="xs" fontWeight="500" color="muted-foreground" mt={1}>
                 MPC-controlled key — only signs when your passkey approves.
-              </p>
-            </div>
-          </div>
-        </div>
+              </Text>
+            </Box>
+          </Flex>
+        </NeoCard>
       )}
 
       {/* Estate ID */}
-      <div className="neo-card-static bg-accent-cyan/10">
-        <div className="flex items-center gap-3">
-          <div className="bg-accent-cyan neo-border rounded-xl p-3">
+      <NeoCard bg="rgba(0,240,255,0.1)">
+        <Flex align="center" gap={3}>
+          <Box bg="accent.cyan" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
             <Fingerprint className="h-6 w-6" strokeWidth={2.5} />
-          </div>
-          <div className="min-w-0">
-            <p className="font-black">Estate ID</p>
-            <p className="text-sm font-mono text-muted-foreground break-all">{vault.estateId}</p>
-          </div>
-        </div>
-      </div>
+          </Box>
+          <Box minW={0}>
+            <Text fontWeight="900">Estate ID</Text>
+            <Text fontSize="sm" fontFamily="mono" color="muted-foreground" wordBreak="break-all">
+              {vault.estateId}
+            </Text>
+          </Box>
+        </Flex>
+      </NeoCard>
 
-      {/* Withdraw action — only available before claim window opens */}
+      {/* Withdraw action */}
       {(computedState === "active" || computedState === "grace") && (
-        <div className="neo-card-static">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-accent-yellow neo-border rounded-xl p-3 shrink-0">
+        <NeoCard>
+          <Flex direction={{ base: "column", sm: "row" }} align={{ base: "start", sm: "center" }} justify="space-between" gap={4}>
+            <Flex align="start" gap={3}>
+              <Box bg="accent.yellow" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3} flexShrink={0}>
                 <Shield className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="font-black text-lg">Owner Withdraw</h3>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Emergency exit — sign with your ETH wallet to pull funds back out.
-                </p>
-              </div>
-            </div>
+              </Box>
+              <Box>
+                <Text fontWeight="900" fontSize="lg">Owner Withdraw</Text>
+                <Text fontSize="sm" fontWeight="500" color="muted-foreground">
+                  Emergency exit, sign with your ETH wallet to pull funds back out.
+                </Text>
+              </Box>
+            </Flex>
             <Button
               variant="outline"
               size="default"
@@ -317,25 +357,25 @@ const VaultCard = ({
             >
               <Shield className="h-4 w-4" /> Withdraw
             </Button>
-          </div>
-        </div>
+          </Flex>
+        </NeoCard>
       )}
 
-      {/* Claim CTA (when claimable) */}
+      {/* Claim CTA */}
       {computedState === "claimable" && !vault.isClaimed && (
-        <div className="neo-card-static border-accent-red bg-accent-red/10">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-accent-red/20 neo-border rounded-xl p-3 shrink-0">
+        <NeoCard borderColor="accent.red" bg="rgba(255,51,51,0.1)">
+          <Flex direction={{ base: "column", sm: "row" }} align={{ base: "start", sm: "center" }} justify="space-between" gap={4}>
+            <Flex align="start" gap={3}>
+              <Box bg="rgba(255,51,51,0.2)" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3} flexShrink={0}>
                 <AlertTriangle className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="font-black text-lg">Heir Claim Available</h3>
-                <p className="text-sm font-medium text-muted-foreground">
+              </Box>
+              <Box>
+                <Text fontWeight="900" fontSize="lg">Heir Claim Available</Text>
+                <Text fontSize="sm" fontWeight="500" color="muted-foreground">
                   Grace expired — the heir can now claim the ETH.
-                </p>
-              </div>
-            </div>
+                </Text>
+              </Box>
+            </Flex>
             <Button
               variant="destructive"
               size="default"
@@ -343,10 +383,10 @@ const VaultCard = ({
             >
               <AlertTriangle className="h-4 w-4" /> Claim
             </Button>
-          </div>
-        </div>
+          </Flex>
+        </NeoCard>
       )}
-    </div>
+    </VStack>
   );
 };
 
@@ -376,11 +416,10 @@ export default function Dashboard() {
     const vs: Vault[] = JSON.parse(localStorage.getItem("heirloom_vaults") || "[]");
     setVaults(vs);
 
-    // Fetch ETH balances for all vaults in the background.
     vs.forEach((v) => {
       getVaultBalance(v.estateId)
         .then((b) => setBalances((prev) => ({ ...prev, [v.estateId]: b.balance_wei })))
-        .catch(() => {/* balance stays undefined — backend may be down */});
+        .catch(() => {/* ignore */});
     });
   }, []);
 
@@ -423,115 +462,144 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-20">
-          <div className="flex items-center gap-2 text-lg font-black">
+    <Box minH="100vh" bg="background">
+      {/* Header */}
+      <Box borderBottomWidth="8px" borderColor="foreground" bg="background" position="sticky" top={0} zIndex={50}>
+        <Flex maxW="6xl" mx="auto" px={6} align="center" justify="space-between" h="80px">
+          <HStack gap={2} fontSize="lg" fontWeight="900">
             <Heart className="h-5 w-5" strokeWidth={3} />
-            Heirloom • IKA
-          </div>
-          <span className="hidden md:inline text-2xl font-black">Vault Dashboard</span>
-          <div className="flex items-center gap-3">
+            <Text>Heirloom • IKA</Text>
+          </HStack>
+          <Text fontSize="2xl" fontWeight="900" display={{ base: "none", md: "inline" }}>
+            Vault Dashboard
+          </Text>
+          <HStack gap={3}>
             {checking ? (
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              <Text fontSize="xs" fontWeight="700" color="muted-foreground" textTransform="uppercase" letterSpacing="0.1em">
                 Checking…
-              </span>
+              </Text>
             ) : (
               <>
                 {!backendHealthy && (
-                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                    <span className="h-2.5 w-2.5 rounded-full bg-accent-red" />
-                    Backend Off
-                  </span>
+                  <HStack gap={2} fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em">
+                    <Box w="2.5" h="2.5" borderRadius="full" bg="accent.red" />
+                    <Text>Backend Off</Text>
+                  </HStack>
                 )}
                 {backendHealthy && ikaHealthy && (
-                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                    <span className="h-2.5 w-2.5 rounded-full bg-accent-lime" />
-                    Live
-                  </span>
+                  <HStack gap={2} fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em">
+                    <Box w="2.5" h="2.5" borderRadius="full" bg="accent.lime" />
+                    <Text>Live</Text>
+                  </HStack>
                 )}
                 {backendHealthy && !ikaHealthy && (
-                  <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                    <span className="h-2.5 w-2.5 rounded-full bg-accent-yellow" />
-                    IKA Off
-                  </span>
+                  <HStack gap={2} fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em">
+                    <Box w="2.5" h="2.5" borderRadius="full" bg="accent.yellow" />
+                    <Text>IKA Off</Text>
+                  </HStack>
                 )}
               </>
             )}
             {vaults.length > 0 && (
-              <button
+              <Box
+                as="button"
                 onClick={handleClear}
-                className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+                display="flex"
+                alignItems="center"
+                gap={2}
+                fontSize="sm"
+                fontWeight="700"
+                textTransform="uppercase"
+                letterSpacing="0.1em"
+                _hover={{ textDecoration: "underline" }}
                 title="Forget local vaults"
               >
                 <LogOut className="h-4 w-4" strokeWidth={2.5} />
-                <span className="hidden sm:inline">Forget</span>
-              </button>
+                <Text display={{ base: "none", sm: "inline" }}>Forget</Text>
+              </Box>
             )}
-          </div>
-        </div>
-      </div>
+          </HStack>
+        </Flex>
+      </Box>
 
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <span className="neo-badge bg-accent-lime mb-2 inline-block">Your ETH Vaults</span>
-            <h2 className="text-4xl font-black">
+      {/* Main */}
+      <VStack maxW="6xl" mx="auto" px={6} py={12} gap={10} align="stretch" animation="slideUp 0.4s ease-out">
+        <Flex align="start" justify="space-between" gap={4} flexWrap="wrap">
+          <Box minW={0}>
+            <Badge bg="accent.lime" mb={2}>
+              Your ETH Vaults
+            </Badge>
+            <Heading as="h2" fontSize="4xl" fontWeight="900">
               {vaults.length} vault{vaults.length !== 1 ? "s" : ""}
-            </h2>
-            <p className="text-sm font-medium text-muted-foreground mt-1">
+            </Heading>
+            <Text fontSize="sm" fontWeight="500" color="muted-foreground" mt={1}>
               Passkey-secured, MPC-backed Ethereum estates.
-            </p>
-          </div>
+            </Text>
+          </Box>
           <Button variant="lime" size="lg" onClick={() => navigate("/create")}>
             <Plus className="h-5 w-5" /> New Vault
           </Button>
-        </div>
+        </Flex>
 
         {heartbeatError && (
-          <div className="neo-card-static bg-accent-red/10">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" strokeWidth={2.5} />
-              <div className="min-w-0">
-                <p className="font-black">Heartbeat failed</p>
-                <p className="text-sm font-medium text-muted-foreground break-words">
+          <NeoCard bg="rgba(255,51,51,0.1)">
+            <Flex align="start" gap={3}>
+              <AlertTriangle className="h-5 w-5" style={{ marginTop: "2px" }} strokeWidth={2.5} />
+              <Box minW={0}>
+                <Text fontWeight="900">Heartbeat failed</Text>
+                <Text fontSize="sm" fontWeight="500" color="muted-foreground" wordBreak="break-word">
                   {heartbeatError}
-                </p>
-              </div>
-            </div>
-          </div>
+                </Text>
+              </Box>
+            </Flex>
+          </NeoCard>
         )}
 
         {lastHeartbeatOk && (
-          <div className="neo-card-static bg-accent-lime/20">
-            <div className="flex items-center gap-3">
+          <NeoCard bg="rgba(204,255,0,0.2)">
+            <Flex align="center" gap={3}>
               <Activity className="h-5 w-5" strokeWidth={2.5} />
-              <p className="font-bold">Heartbeat confirmed on-chain.</p>
-            </div>
-          </div>
+              <Text fontWeight="700">Heartbeat confirmed on-chain.</Text>
+            </Flex>
+          </NeoCard>
         )}
 
         {vaults.length === 0 && (
-          <div className="neo-card-static text-center">
-            <div className="bg-accent-yellow neo-border rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+          <NeoCard textAlign="center">
+            <Box
+              bg="accent.yellow"
+              borderWidth="4px"
+              borderColor="foreground"
+              borderRadius="full"
+              p={4}
+              w="80px"
+              h="80px"
+              mx="auto"
+              mb={6}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
               <Heart className="h-10 w-10" strokeWidth={2.5} />
-            </div>
-            <h2 className="text-2xl font-black mb-3">No Vaults Yet</h2>
-            <p className="text-muted-foreground font-medium mb-6">
+            </Box>
+            <Heading as="h2" fontSize="2xl" fontWeight="900" mb={3}>
+              No Vaults Yet
+            </Heading>
+            <Text color="muted-foreground" fontWeight="500" mb={6}>
               Create your first ETH vault. No Solana wallet needed — only a passkey.
-            </p>
+            </Text>
             <Button variant="lime" onClick={() => navigate("/create")}>
               <Plus className="h-5 w-5" /> Create Vault
             </Button>
-            <div className="border-t-4 border-foreground pt-6 mt-6">
-              <p className="text-sm font-bold text-muted-foreground mb-3">
+            <Box borderTopWidth="4px" borderColor="foreground" pt={6} mt={6}>
+              <Text fontSize="sm" fontWeight="700" color="muted-foreground" mb={3}>
                 Were you named as an heir?
-              </p>
+              </Text>
               <Button variant="orange" onClick={() => navigate("/claim")}>
                 Claim Inheritance
               </Button>
-            </div>
-          </div>
+            </Box>
+          </NeoCard>
         )}
 
         {vaults.map((v) => (
@@ -543,7 +611,102 @@ export default function Dashboard() {
             balanceWei={balances[v.estateId]}
           />
         ))}
-      </div>
-    </div>
+      </VStack>
+    </Box>
+  );
+}
+
+/* Reusable layout components */
+
+function NeoCard({ children, bg, borderColor, textAlign }: { children: React.ReactNode; bg?: string; borderColor?: string; textAlign?: "center" | "left" }) {
+  return (
+    <Box
+      bg={bg ?? "card"}
+      borderWidth="4px"
+      borderColor={borderColor ?? "foreground"}
+      borderRadius="2xl"
+      p={8}
+      boxShadow="12px 12px 0px 0px #000"
+      textAlign={textAlign}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function Badge({ children, bg, mb }: { children: React.ReactNode; bg?: string; mb?: number }) {
+  return (
+    <Box
+      display="inline-block"
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="full"
+      px={4}
+      py={1}
+      fontSize="sm"
+      fontWeight="700"
+      textTransform="uppercase"
+      letterSpacing="0.1em"
+      bg={bg ?? "background"}
+      boxShadow="4px 4px 0px 0px #000"
+      mb={mb}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function StatCard({
+  icon,
+  iconBg,
+  title,
+  value,
+  subtitle,
+  children,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  value?: string;
+  subtitle?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Box
+      bg="card"
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="2xl"
+      p={8}
+      boxShadow="12px 12px 0px 0px #000"
+      _hover={{ transform: "translateY(-2px)" }}
+      transition="transform 150ms"
+    >
+      <Flex align="center" gap={3} mb={4}>
+        <Box
+          bg={iconBg}
+          borderWidth="4px"
+          borderColor="foreground"
+          borderRadius="xl"
+          p={3}
+          _hover={{ transform: "rotate(-4deg)" }}
+          transition="transform 150ms"
+        >
+          {icon}
+        </Box>
+        <Text fontWeight="900">{title}</Text>
+      </Flex>
+      {value && (
+        <Text fontSize={{ base: "3xl", md: "4xl" }} fontWeight="900" fontVariantNumeric="tabular-nums">
+          {value}
+        </Text>
+      )}
+      {subtitle && (
+        <Text fontSize="sm" fontWeight="700" color="muted-foreground">
+          {subtitle}
+        </Text>
+      )}
+      {children}
+    </Box>
   );
 }
