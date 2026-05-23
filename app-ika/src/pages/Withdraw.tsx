@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
+  Box,
+  Flex,
+  Text,
+  Grid,
+  VStack,
+  HStack,
+  Heading,
+} from "@chakra-ui/react";
+import {
   ArrowLeft,
   Loader2,
   Shield,
@@ -105,233 +114,309 @@ export default function Withdraw() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-lg font-black hover:underline group"
-          >
-            <ArrowLeft
-              className="h-5 w-5 transition-transform group-hover:-translate-x-1"
-              strokeWidth={3}
-            />
+    <Box minH="100vh" bg="background">
+      {/* Header */}
+      <Box borderBottomWidth="8px" borderColor="foreground" bg="background" position="sticky" top={0} zIndex={50}>
+        <Flex maxW="4xl" mx="auto" px={6} align="center" justify="space-between" h="80px">
+          <Box as="button" onClick={() => navigate("/")} display="flex" alignItems="center" gap={2} fontSize="lg" fontWeight="900" _hover={{ textDecoration: "underline" }}>
+            <ArrowLeft className="h-5 w-5" strokeWidth={3} />
             Back
-          </button>
-          <div className="flex items-center gap-2">
+          </Box>
+          <HStack gap={2}>
             <Shield className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-black">Withdraw</span>
-          </div>
-          <span className="neo-badge bg-accent-yellow text-[10px]">Owner</span>
-        </div>
-      </div>
+            <Text fontSize="2xl" fontWeight="900">Withdraw</Text>
+          </HStack>
+          <Badge bg="accent.yellow" fontSize="10px">Owner</Badge>
+        </Flex>
+      </Box>
 
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-        <div>
-          <span className="neo-badge bg-accent-yellow mb-4 inline-block">Owner Exit</span>
-          <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+      <VStack maxW="4xl" mx="auto" px={6} py={12} gap={8} align="stretch" animation="slideUp 0.4s ease-out">
+        <Box>
+          <Box mb={4}><Badge bg="accent.yellow">Owner Exit</Badge></Box>
+          <Heading as="h2" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="900" lineHeight={0.9}>
             Pull funds{" "}
-            <span className="bg-accent-yellow px-2 inline-block rotate-[-1deg]">back out.</span>
-          </h2>
-          <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
+            <Box as="span" bg="accent.yellow" px={2} display="inline-block" transform="rotate(-1deg)">
+              back out.
+            </Box>
+          </Heading>
+          <Text fontSize="lg" fontWeight="500" color="muted-foreground" mt={4} maxW="xl">
             Emergency exit as the vault owner. Paste your owner address and destination, then sign
             once with MetaMask.
-          </p>
-        </div>
+          </Text>
+        </Box>
 
         {error && (
-          <div className="neo-card-static bg-accent-red/10">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" strokeWidth={2.5} />
-              <div className="min-w-0">
-                <p className="font-black">Withdraw error</p>
-                <p className="text-sm font-medium text-muted-foreground break-words">{error}</p>
-              </div>
-            </div>
-          </div>
+          <NeoCard bg="rgba(255,51,51,0.1)">
+            <Flex align="start" gap={3}>
+              <AlertTriangle className="h-5 w-5" style={{ marginTop: "2px" }} strokeWidth={2.5} />
+              <Box minW={0}>
+                <Text fontWeight="900">Withdraw error</Text>
+                <Text fontSize="sm" fontWeight="500" color="muted-foreground" wordBreak="break-word">
+                  {error}
+                </Text>
+              </Box>
+            </Flex>
+          </NeoCard>
         )}
 
         {step === "select" && (
-          <div className="neo-card-static space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="bg-accent-cyan neo-border rounded-xl p-3">
-                <Search className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="text-xl font-black">Select Vault</h3>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Pick a vault and enter the destination + owner addresses.
-                </p>
-              </div>
-            </div>
+          <NeoCard>
+            <VStack gap={5} align="stretch">
+              <Flex align="center" gap={3}>
+                <Box bg="accent.cyan" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
+                  <Search className="h-6 w-6" strokeWidth={2.5} />
+                </Box>
+                <Box>
+                  <Heading as="h3" fontSize="xl" fontWeight="900">Select Vault</Heading>
+                  <Text fontSize="sm" fontWeight="500" color="muted-foreground">
+                    Pick a vault and enter the destination + owner addresses.
+                  </Text>
+                </Box>
+              </Flex>
 
-            <VaultList
-              vaults={vaults}
-              selectedEstateId={selectedEstateId}
-              onSelect={setSelectedEstateId}
-              inputAccentClass="focus:bg-accent-yellow/20"
-            />
+              <VaultList
+                vaults={vaults}
+                selectedEstateId={selectedEstateId}
+                onSelect={setSelectedEstateId}
+                inputAccentClass="focus:bg-accent-yellow/20"
+              />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Destination Address
-                </label>
-                <input
-                  type="text"
-                  value={destinationEth}
-                  onChange={(e) => setDestinationEth(e.target.value)}
-                  className="neo-input font-mono text-sm focus:bg-accent-yellow/20"
-                  placeholder="0x… where to send ETH"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Owner Address
-                </label>
-                <input
-                  type="text"
-                  value={ownerAddress}
-                  onChange={(e) => setOwnerAddress(e.target.value)}
-                  className="neo-input font-mono text-sm focus:bg-accent-cyan/20"
-                  placeholder="0x… your signing address"
-                />
-              </div>
-            </div>
+              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={4}>
+                <Box>
+                  <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
+                    Destination Address
+                  </Text>
+                  <NeoInput
+                    type="text"
+                    value={destinationEth}
+                    onChange={(e) => setDestinationEth(e.target.value)}
+                    fontFamily="mono"
+                    focusBg="rgba(255,204,0,0.2)"
+                    placeholder="0x… where to send ETH"
+                  />
+                </Box>
+                <Box>
+                  <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
+                    Owner Address
+                  </Text>
+                  <NeoInput
+                    type="text"
+                    value={ownerAddress}
+                    onChange={(e) => setOwnerAddress(e.target.value)}
+                    fontFamily="mono"
+                    focusBg="rgba(0,240,255,0.2)"
+                    placeholder="0x… your signing address"
+                  />
+                </Box>
+              </Grid>
 
-            <Button
-              variant="lime"
-              size="lg"
-              onClick={handlePreview}
-              disabled={
-                !selectedEstateId ||
-                !isValidEthAddress(destinationEth) ||
-                !isValidEthAddress(ownerAddress) ||
-                busy
-              }
-              className="w-full"
-            >
-              {busy ? (
-                <><Loader2 className="h-5 w-5 animate-spin" /> Loading…</>
-              ) : (
-                <><Search className="h-5 w-5" /> Preview Withdrawal</>
-              )}
-            </Button>
-          </div>
+              <Button
+                variant="lime"
+                size="lg"
+                onClick={handlePreview}
+                disabled={
+                  !selectedEstateId ||
+                  !isValidEthAddress(destinationEth) ||
+                  !isValidEthAddress(ownerAddress) ||
+                  busy
+                }
+                w="full"
+              >
+                {busy ? (
+                  <><Loader2 className="h-5 w-5" style={{ animation: "spin 1s linear infinite" }} /> Loading…</>
+                ) : (
+                  <><Search className="h-5 w-5" /> Preview Withdrawal</>
+                )}
+              </Button>
+            </VStack>
+          </NeoCard>
         )}
 
         {(step === "preview" || step === "signing" || step === "submitting") && (
-          <div className="neo-card-static space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="bg-accent-pink neo-border rounded-xl p-3">
-                <Shield className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="text-xl font-black">Review Withdrawal</h3>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Sign the transaction hash with your owner wallet.
-                </p>
-              </div>
-            </div>
+          <NeoCard>
+            <VStack gap={5} align="stretch">
+              <Flex align="center" gap={3}>
+                <Box bg="accent.pink" borderWidth="4px" borderColor="foreground" borderRadius="xl" p={3}>
+                  <Shield className="h-6 w-6" strokeWidth={2.5} />
+                </Box>
+                <Box>
+                  <Heading as="h3" fontSize="xl" fontWeight="900">Review Withdrawal</Heading>
+                  <Text fontSize="sm" fontWeight="500" color="muted-foreground">
+                    Sign the transaction hash with your owner wallet.
+                  </Text>
+                </Box>
+              </Flex>
 
-            {!txInfo && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                      Destination Address
-                    </label>
-                    <input
-                      type="text"
-                      value={destinationEth}
-                      onChange={(e) => setDestinationEth(e.target.value)}
-                      className="neo-input font-mono text-sm focus:bg-accent-yellow/20"
-                      placeholder="0x…"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                      Owner Address
-                    </label>
-                    <input
-                      type="text"
-                      value={ownerAddress}
-                      onChange={(e) => setOwnerAddress(e.target.value)}
-                      className="neo-input font-mono text-sm focus:bg-accent-cyan/20"
-                      placeholder="0x…"
-                    />
-                  </div>
-                </div>
-                <Button
-                  variant="lime"
-                  size="lg"
-                  disabled={busy || !isValidEthAddress(destinationEth) || !isValidEthAddress(ownerAddress)}
-                  onClick={handlePreview}
-                  className="w-full"
-                >
-                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                  Load Transfer Details
-                </Button>
-              </>
-            )}
+              {!txInfo && (
+                <>
+                  <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={4}>
+                    <Box>
+                      <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
+                        Destination Address
+                      </Text>
+                      <NeoInput
+                        type="text"
+                        value={destinationEth}
+                        onChange={(e) => setDestinationEth(e.target.value)}
+                        fontFamily="mono"
+                        focusBg="rgba(255,204,0,0.2)"
+                        placeholder="0x…"
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
+                        Owner Address
+                      </Text>
+                      <NeoInput
+                        type="text"
+                        value={ownerAddress}
+                        onChange={(e) => setOwnerAddress(e.target.value)}
+                        fontFamily="mono"
+                        focusBg="rgba(0,240,255,0.2)"
+                        placeholder="0x…"
+                      />
+                    </Box>
+                  </Grid>
+                  <Button
+                    variant="lime"
+                    size="lg"
+                    disabled={busy || !isValidEthAddress(destinationEth) || !isValidEthAddress(ownerAddress)}
+                    onClick={handlePreview}
+                    w="full"
+                  >
+                    {busy ? <Loader2 className="h-5 w-5" style={{ animation: "spin 1s linear infinite" }} /> : null}
+                    Load Transfer Details
+                  </Button>
+                </>
+              )}
 
-            {txInfo && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="neo-border rounded-lg p-4 bg-secondary">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                      From (vault)
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <Globe className="h-4 w-4" strokeWidth={2.5} />
-                      <p className="font-mono text-sm font-bold break-all">{txInfo.eth_from}</p>
-                    </div>
-                  </div>
-                  <div className="neo-border rounded-lg p-4 bg-secondary">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                      To (destination)
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" strokeWidth={2.5} />
-                      <p className="font-mono text-sm font-bold break-all">{txInfo.eth_to}</p>
-                    </div>
-                  </div>
-                  <div className="neo-border rounded-lg p-4 bg-accent-lime/30 md:col-span-2">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                      Amount
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <Coins className="h-5 w-5" strokeWidth={2.5} />
-                      <p className="font-black text-2xl">{formatWei(txInfo.amount_wei)}</p>
-                    </div>
-                  </div>
-                </div>
+              {txInfo && (
+                <>
+                  <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={4}>
+                    <Box borderWidth="4px" borderColor="foreground" borderRadius="lg" p={4} bg="secondary">
+                      <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
+                        From (vault)
+                      </Text>
+                      <Flex align="center" gap={1}>
+                        <Globe className="h-4 w-4" strokeWidth={2.5} />
+                        <Text fontFamily="mono" fontSize="sm" fontWeight="700" wordBreak="break-all">
+                          {txInfo.eth_from}
+                        </Text>
+                      </Flex>
+                    </Box>
+                    <Box borderWidth="4px" borderColor="foreground" borderRadius="lg" p={4} bg="secondary">
+                      <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
+                        To (destination)
+                      </Text>
+                      <Flex align="center" gap={1}>
+                        <User className="h-4 w-4" strokeWidth={2.5} />
+                        <Text fontFamily="mono" fontSize="sm" fontWeight="700" wordBreak="break-all">
+                          {txInfo.eth_to}
+                        </Text>
+                      </Flex>
+                    </Box>
+                    <Box borderWidth="4px" borderColor="foreground" borderRadius="lg" p={4} bg="rgba(204,255,0,0.3)" gridColumn={{ md: "span 2" }}>
+                      <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground">
+                        Amount
+                      </Text>
+                      <Flex align="center" gap={1}>
+                        <Coins className="h-5 w-5" strokeWidth={2.5} />
+                        <Text fontWeight="900" fontSize="2xl">{formatWei(txInfo.amount_wei)}</Text>
+                      </Flex>
+                    </Box>
+                  </Grid>
 
-                <p className="text-xs font-medium text-muted-foreground">
-                  MetaMask will ask you to sign the transaction hash with{" "}
-                  <span className="font-mono font-bold">{ownerAddress.slice(0, 10)}…</span>. This
-                  authorizes the on-chain withdraw instruction.
-                </p>
+                  <Text fontSize="xs" fontWeight="500" color="muted-foreground">
+                    MetaMask will ask you to sign the transaction hash with{" "}
+                    <Text as="span" fontFamily="mono" fontWeight="700">
+                      {ownerAddress.slice(0, 10)}…
+                    </Text>. This authorizes the on-chain withdraw instruction.
+                  </Text>
 
-                <Button
-                  variant="lime"
-                  size="xl"
-                  className={`w-full ${step === "preview" ? "neo-glow-lime" : ""}`}
-                  disabled={busy}
-                  onClick={handleSignAndWithdraw}
-                >
-                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                  {step === "signing"
-                    ? "Sign in MetaMask…"
-                    : step === "submitting"
-                      ? "Submitting…"
-                      : "Sign & Withdraw"}
-                </Button>
-              </>
-            )}
-          </div>
+                  <Button
+                    variant="lime"
+                    size="xl"
+                    w="full"
+                    animation={step === "preview" ? "glowLime 2s ease-in-out infinite" : undefined}
+                    disabled={busy}
+                    onClick={handleSignAndWithdraw}
+                  >
+                    {busy ? <Loader2 className="h-5 w-5" style={{ animation: "spin 1s linear infinite" }} /> : null}
+                    {step === "signing"
+                      ? "Sign in MetaMask…"
+                      : step === "submitting"
+                        ? "Submitting…"
+                        : "Sign & Withdraw"}
+                  </Button>
+                </>
+              )}
+            </VStack>
+          </NeoCard>
         )}
-      </div>
-    </div>
+      </VStack>
+    </Box>
+  );
+}
+
+function NeoCard({ children, bg }: { children: React.ReactNode; bg?: string }) {
+  return (
+    <Box
+      bg={bg ?? "card"}
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="2xl"
+      p={8}
+      boxShadow="12px 12px 0px 0px #000"
+    >
+      {children}
+    </Box>
+  );
+}
+
+function Badge({ children, bg, fontSize }: { children: React.ReactNode; bg?: string; fontSize?: string }) {
+  return (
+    <Box
+      display="inline-block"
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="full"
+      px={4}
+      py={1}
+      fontSize={fontSize ?? "sm"}
+      fontWeight="700"
+      textTransform="uppercase"
+      letterSpacing="0.1em"
+      bg={bg ?? "background"}
+      boxShadow="4px 4px 0px 0px #000"
+    >
+      {children}
+    </Box>
+  );
+}
+
+function NeoInput({ focusBg, fontFamily, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { focusBg?: string; fontFamily?: string }) {
+  return (
+    <Box
+      as="input"
+      w="full"
+      borderWidth="4px"
+      borderColor="foreground"
+      borderRadius="lg"
+      px={4}
+      py={3}
+      bg="background"
+      fontWeight="700"
+      fontSize="base"
+      boxShadow="4px 4px 0px 0px #000"
+      transition="all 150ms"
+      fontFamily={fontFamily}
+      _focus={{
+        boxShadow: "8px 8px 0px 0px #000",
+        transform: "translate(-2px, -2px)",
+        outline: "none",
+        bg: focusBg,
+      }}
+      {...props}
+    />
   );
 }

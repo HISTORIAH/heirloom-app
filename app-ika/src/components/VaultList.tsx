@@ -1,3 +1,4 @@
+import { Box, Text, VStack } from "@chakra-ui/react";
 import { CheckCircle } from "lucide-react";
 import type { Vault } from "@/types";
 
@@ -8,50 +9,78 @@ interface Props {
   inputAccentClass?: string;
 }
 
-export function VaultList({ vaults, selectedEstateId, onSelect, inputAccentClass = "focus:bg-accent-lime/20" }: Props) {
+export function VaultList({ vaults, selectedEstateId, onSelect }: Props) {
   if (vaults.length > 0) {
     return (
-      <div className="space-y-3">
+      <VStack gap={3} align="stretch" w="full">
         {vaults.map((v) => {
           const isActive = selectedEstateId === v.estateId;
           return (
-            <button
+            <Box
               key={v.estateId}
+              as="button"
               onClick={() => onSelect(v.estateId)}
-              className={`w-full text-left neo-border rounded-xl p-4 transition-all duration-150 ${
-                isActive
-                  ? "bg-accent-lime neo-shadow-sm translate-x-[-1px] translate-y-[-1px]"
-                  : "bg-secondary hover:bg-accent-lime/40"
-              }`}
+              textAlign="left"
+              w="full"
+              borderWidth="4px"
+              borderColor="foreground"
+              borderRadius="xl"
+              p={4}
+              transition="all 150ms"
+              bg={isActive ? "accent.lime" : "secondary"}
+              boxShadow={isActive ? "4px 4px 0px 0px #000" : "none"}
+              transform={isActive ? "translate(-1px, -1px)" : "none"}
+              _hover={isActive ? {} : { bg: "rgba(204,255,0,0.4)" }}
             >
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="min-w-0">
-                  <p className="font-black text-lg truncate">{v.label}</p>
-                  <p className="text-xs font-mono text-muted-foreground break-all">
+              <Box display="flex" alignItems="center" justifyContent="space-between" gap={3} flexWrap="wrap">
+                <Box minW={0}>
+                  <Text fontWeight="900" fontSize="lg" truncate>
+                    {v.label}
+                  </Text>
+                  <Text fontSize="xs" fontFamily="mono" color="muted-foreground" wordBreak="break-all">
                     {v.ethDepositAddress}
-                  </p>
-                </div>
+                  </Text>
+                </Box>
                 {isActive && <CheckCircle className="h-5 w-5 shrink-0" strokeWidth={3} />}
-              </div>
-            </button>
+              </Box>
+            </Box>
           );
         })}
-      </div>
+      </VStack>
     );
   }
 
   return (
-    <div>
-      <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+    <Box w="full">
+      <Text fontSize="xs" fontWeight="700" textTransform="uppercase" letterSpacing="0.1em" color="muted-foreground" mb={1}>
         Estate ID
-      </label>
+      </Text>
       <input
         type="text"
         value={selectedEstateId}
         onChange={(e) => onSelect(e.target.value)}
-        className={`neo-input font-mono text-sm ${inputAccentClass}`}
+        style={{
+          width: "100%",
+          border: "4px solid #000",
+          borderRadius: "0.5rem",
+          padding: "0.75rem 1rem",
+          backgroundColor: "#fff",
+          fontWeight: 700,
+          fontSize: "0.875rem",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+          boxShadow: "4px 4px 0px 0px #000",
+          transition: "all 150ms",
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.boxShadow = "8px 8px 0px 0px #000";
+          e.currentTarget.style.transform = "translate(-2px, -2px)";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.boxShadow = "4px 4px 0px 0px #000";
+          e.currentTarget.style.transform = "none";
+        }}
         placeholder="Paste estate ID..."
       />
-    </div>
+    </Box>
   );
 }

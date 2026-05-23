@@ -1,54 +1,95 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { Button as ChakraButton } from "@chakra-ui/react";
+import type { ButtonProps as ChakraButtonProps } from "@chakra-ui/react";
+import { forwardRef } from "react";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 ease-out focus-visible:outline-4 focus-visible:outline-foreground focus-visible:outline-offset-4 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0 active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        lime: "bg-accent-lime text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        pink: "bg-accent-pink text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        cyan: "bg-accent-cyan text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        orange: "bg-accent-orange text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        purple: "bg-accent-purple text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        yellow: "bg-accent-yellow text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        outline: "bg-background text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        destructive: "bg-accent-red text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        ghost: "border-transparent hover:bg-secondary",
-        link: "border-transparent text-foreground underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-12 px-6 py-3 text-sm",
-        sm: "h-10 px-4 py-2 text-xs",
-        lg: "h-14 px-10 py-4 text-base",
-        xl: "h-16 px-12 py-5 text-lg",
-        icon: "h-12 w-12",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-);
+export type ButtonVariant =
+  | "default"
+  | "lime"
+  | "pink"
+  | "cyan"
+  | "orange"
+  | "purple"
+  | "yellow"
+  | "outline"
+  | "destructive"
+  | "ghost"
+  | "link";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+export type ButtonSize = "default" | "sm" | "lg" | "xl" | "icon";
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+interface ButtonProps extends Omit<ChakraButtonProps, "size" | "variant" | "colorScheme"> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+}
+
+const variantMap: Record<ButtonVariant, { bg: string; color: string; borderColor?: string }> = {
+  default: { bg: "#000", color: "#fff" },
+  lime: { bg: "accent.lime", color: "#000" },
+  pink: { bg: "accent.pink", color: "#000" },
+  cyan: { bg: "accent.cyan", color: "#000" },
+  orange: { bg: "accent.orange", color: "#000" },
+  purple: { bg: "accent.purple", color: "#fff" },
+  yellow: { bg: "accent.yellow", color: "#000" },
+  outline: { bg: "#fff", color: "#000", borderColor: "#000" },
+  destructive: { bg: "accent.red", color: "#fff" },
+  ghost: { bg: "transparent", color: "#000", borderColor: "transparent" },
+  link: { bg: "transparent", color: "#000", borderColor: "transparent" },
+};
+
+const sizeMap: Record<ButtonSize, { h: string; px: string; py: string; fontSize: string }> = {
+  default: { h: "48px", px: "24px", py: "12px", fontSize: "0.875rem" },
+  sm: { h: "40px", px: "16px", py: "8px", fontSize: "0.75rem" },
+  lg: { h: "56px", px: "40px", py: "16px", fontSize: "1rem" },
+  xl: { h: "64px", px: "48px", py: "20px", fontSize: "1.125rem" },
+  icon: { h: "48px", px: "0", py: "0", fontSize: "0.875rem" },
+};
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "default", size = "default", children, ...props }, ref) => {
+    const v = variantMap[variant];
+    const s = sizeMap[size];
+
     return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
+      <ChakraButton
         ref={ref}
+        bg={v.bg}
+        color={v.color}
+        borderWidth="4px"
+        borderStyle="solid"
+        borderColor={v.borderColor ?? "#000"}
+        borderRadius="0.5rem"
+        fontWeight="700"
+        textTransform="uppercase"
+        letterSpacing="0.05em"
+        h={s.h}
+        px={s.px}
+        py={s.py}
+        fontSize={s.fontSize}
+        boxShadow="8px 8px 0px 0px #000"
+        transition="all 150ms ease-out"
+        _hover={{
+          transform: "translate(-2px, -2px)",
+          boxShadow: "12px 12px 0px 0px #000",
+        }}
+        _active={{
+          transform: "translate(4px, 4px)",
+          boxShadow: "none",
+        }}
+        _disabled={{
+          opacity: 0.5,
+          cursor: "not-allowed",
+          transform: "none",
+          boxShadow: "8px 8px 0px 0px #000",
+        }}
+        _focusVisible={{
+          outline: "4px solid #000",
+          outlineOffset: "2px",
+        }}
         {...props}
-      />
+      >
+        {children}
+      </ChakraButton>
     );
   }
 );
 Button.displayName = "Button";
-
-export { Button, buttonVariants };
