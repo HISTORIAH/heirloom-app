@@ -5,7 +5,7 @@ import { useVault } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
-import { getSolanaExplorerTxUrl } from "@/lib/utils";
+import { getSolanaExplorerTxUrl, toRawTokenAmount } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -77,7 +77,7 @@ const CreateVaultPage = () => {
     }
     try {
       setSubmitState("creating");
-      const lamports = BigInt(Math.round(solAmount * Math.pow(10, SOL_DECIMALS)));
+      const lamports = toRawTokenAmount(solAmount, SOL_DECIMALS);
 
       // Build token deposits list
       const tokenDeposits = selectedTokenEntries.map(([mint, amt]) => {
@@ -85,7 +85,7 @@ const CreateVaultPage = () => {
         const decimals = tok?.decimals ?? 9;
         return {
           mint,
-          amount: BigInt(Math.round(amt * Math.pow(10, decimals))),
+          amount: toRawTokenAmount(amt, decimals),
           decimals,
           tokenProgram: tok?.tokenProgram,
         };

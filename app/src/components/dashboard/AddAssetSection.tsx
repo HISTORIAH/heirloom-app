@@ -5,16 +5,10 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
-import { cn, errMsg } from "@/lib/utils";
+import { cn, errMsg, toRawTokenAmount } from "@/lib/utils";
+import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { Loader2, Plus } from "lucide-react";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
-
-const PCTS = [
-  { pct: 25,  label: "25%",  bg: "bg-accent-yellow" },
-  { pct: 50,  label: "50%",  bg: "bg-accent-cyan"   },
-  { pct: 75,  label: "75%",  bg: "bg-accent-orange" },
-  { pct: 100, label: "Max",  bg: "bg-accent-lime"   },
-] as const;
 
 interface Props {
   estate: EstateData;
@@ -53,12 +47,11 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
   );
 
   const activeDecimals = addAssetMint === "sol" ? SOL_DECIMALS : (selectedToken?.decimals ?? 9);
-  const activeStep = 1 / Math.pow(10, Math.min(6, activeDecimals));
+  const activeStep = amountStep(activeDecimals);
   const maxBalance = addAssetMint === "sol" ? walletSolBalance : (selectedToken?.uiAmount ?? 0);
 
   const applyPct = (pct: number) => {
-    const raw = (maxBalance * pct) / 100;
-    setAddAssetAmount(Math.floor(raw / activeStep) * activeStep);
+    setAddAssetAmount(pctOfMax(maxBalance, pct, activeStep));
   };
 
   const handleAddAsset = async () => {
@@ -67,14 +60,12 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
     try {
       let tx: string;
       if (addAssetMint === "sol") {
-        const lamports = BigInt(Math.round(addAssetAmount * Math.pow(10, SOL_DECIMALS)));
+        const lamports = toRawTokenAmount(addAssetAmount, SOL_DECIMALS);
         if (lamports <= 0n) throw new Error("Amount must be greater than zero");
         tx = await registerSolOnChain(estate.heir, lamports);
       } else {
         if (!selectedToken) throw new Error("Token not found in wallet");
-        const amount = BigInt(
-          Math.round(addAssetAmount * Math.pow(10, selectedToken.decimals)),
-        );
+        const amount = toRawTokenAmount(addAssetAmount, selectedToken.decimals);
         if (amount <= 0n) throw new Error("Amount must be greater than zero");
         tx = await registerAssetOnChain(estate.heir, {
           mint: addAssetMint,
@@ -159,7 +150,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
               className="neo-input w-full font-black text-2xl text-center"
             />
             <div className="flex gap-2 mt-3">
-              {PCTS.map(({ pct, label, bg }) => (
+              {TOPUP_PCTS.map(({ pct, label, bg }) => (
                 <button
                   key={pct}
                   type="button"

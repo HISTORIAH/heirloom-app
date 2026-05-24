@@ -15,7 +15,8 @@ import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
-import { cn, formatDuration, formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
+import { cn, formatDuration, formatSol, formatTokenAmount, errMsg, toRawTokenAmount } from "@/lib/utils";
+import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { computeEstateState } from "@/lib/estateState";
 import {
   Heart,
@@ -108,13 +109,6 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
   };
 }
 
-const PCTS = [
-  { pct: 25,  label: "25%",  bg: "bg-accent-yellow" },
-  { pct: 50,  label: "50%",  bg: "bg-accent-cyan"   },
-  { pct: 75,  label: "75%",  bg: "bg-accent-orange" },
-  { pct: 100, label: "Max",  bg: "bg-accent-lime"   },
-] as const;
-
 const EstateCard = ({ estate }: { estate: EstateData }) => {
   const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
   const { publicKey, isConnected } = useWallet();
@@ -139,11 +133,10 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const maxBalance = topUpOpen === "sol" ? walletSolBalance : (walletTokenBalance?.uiAmount ?? 0);
   const activeHolding = estate.vaultTokens.find((vt) => vt.mint === topUpOpen);
   const activeDecimals = topUpOpen === "sol" ? SOL_DECIMALS : (activeHolding?.decimals ?? 0);
-  const activeStep = 1 / Math.pow(10, Math.min(6, activeDecimals));
+  const activeStep = amountStep(activeDecimals);
 
   const applyPct = (pct: number) => {
-    const raw = (maxBalance * pct) / 100;
-    setTopUpAmount(Math.floor(raw / activeStep) * activeStep);
+    setTopUpAmount(pctOfMax(maxBalance, pct, activeStep));
   };
 
   const handleTopUp = async () => {
@@ -152,10 +145,10 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     try {
       let tx: string;
       if (topUpOpen === "sol") {
-        tx = await depositSolOnChain(estate.vaultPda, BigInt(Math.round(topUpAmount * Math.pow(10, SOL_DECIMALS))));
+        tx = await depositSolOnChain(estate.vaultPda, toRawTokenAmount(topUpAmount, SOL_DECIMALS));
       } else {
         if (!activeHolding) throw new Error("Token not found in vault");
-        tx = await depositTokenOnChain(activeHolding, BigInt(Math.round(topUpAmount * Math.pow(10, activeHolding.decimals))));
+        tx = await depositTokenOnChain(activeHolding, toRawTokenAmount(topUpAmount, activeHolding.decimals));
       }
       setLastTxId(tx);
       setTopUpOpen(null);
@@ -187,16 +180,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [
-    estate.lastHeartbeat,
-    estate.heartbeatInterval,
-    estate.gracePeriod,
-    estate.pausedUntil,
-    estate.createdAt,
-    estate.isClaimed,
-    vaultEmpty,
-    estate,
-  ]);
+  }, [estate, vaultEmpty]);
 
   const handleHeartbeat = async () => {
     setSendingHeartbeat(true);
@@ -355,7 +339,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 className="neo-input w-full font-black text-xl text-center"
               />
               <div className="flex gap-2">
-                {PCTS.map(({ pct, label, bg }) => (
+                {TOPUP_PCTS.map(({ pct, label, bg }) => (
                   <button
                     key={pct}
                     onClick={() => applyPct(pct)}
@@ -468,7 +452,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                         className="neo-input w-full font-black text-xl text-center"
                       />
                       <div className="flex gap-2">
-                        {PCTS.map(({ pct, label, bg }) => (
+                        {TOPUP_PCTS.map(({ pct, label, bg }) => (
                           <button
                             key={pct}
                             onClick={() => applyPct(pct)}

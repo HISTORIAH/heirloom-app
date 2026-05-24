@@ -94,26 +94,3 @@ export function getSolanaExplorerTxUrl(signature: string): string {
   return `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;
 }
 
-/** Solana Explorer URL for an account address. */
-export function getSolanaExplorerAddressUrl(addr: string): string {
-  if (SOLANA_RPC_ENDPOINT.includes("mainnet")) return `https://explorer.solana.com/address/${addr}`;
-  const cluster = SOLANA_RPC_ENDPOINT.includes("devnet") ? "devnet" : "localnet";
-  return `https://explorer.solana.com/address/${addr}?cluster=${cluster}`;
-}
-
-
-/** Returns the CAIP-2 chain identifier for the current RPC endpoint. */
-export function getSolanaChainId() {
-  switch (true) {
-    case SOLANA_RPC_ENDPOINT.includes("mainnet"):
-      return "solana:mainnet";
-    case SOLANA_RPC_ENDPOINT.includes("devnet"):
-      return "solana:devnet";
-    case SOLANA_RPC_ENDPOINT.includes("testnet"):
-      return "solana:testnet";
-    case SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1"):
-      return "solana:localhost";
-    default:
-      return "solana:mainnet";
-  }
-}
