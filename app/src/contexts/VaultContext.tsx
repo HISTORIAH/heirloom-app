@@ -109,8 +109,8 @@ const VaultContext = createContext<VaultState | null>(null);
 type VaultUiShim = { account?: { address: string } | null };
 
 const VaultProviderInner: React.FC<{
-  signer: TransactionSigner;
-  authority: Address;
+  signer: TransactionSigner | null;
+  authority: Address | null;
   children: React.ReactNode;
 }> = ({ signer, authority, children }) => {
   const { rpc, rpcSubscriptions } = useWallet();
@@ -121,7 +121,15 @@ const VaultProviderInner: React.FC<{
   const [pendingCreate, setPendingCreate] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const client: HeirloomClient = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
+  const client: HeirloomClient = useMemo(
+    () => ({ rpc, rpcSubscriptions }),
+    [rpc, rpcSubscriptions],
+  );
+
+  const requireAuth = useCallback((): { signer: TransactionSigner; authority: Address } => {
+    if (!signer || !authority) throw new Error("Wallet not connected");
+    return { signer, authority };
+  }, [signer, authority]);
 
   // -------------------------------------------------------------------------
   // Data fetching
@@ -130,6 +138,11 @@ const VaultProviderInner: React.FC<{
   const fetchEstates = useCallback(async () => {
     setLoading(true);
     setError(null);
+    if (!authority) {
+      setLoading(false);
+
+      return;
+    }
     try {
       const onChainEstates = await fetchEstatesByAuthority(client, authority);
 
@@ -149,7 +162,8 @@ const VaultProviderInner: React.FC<{
           const pausedUntil = Number(estate.data.pausedUntil);
           const createdAt = Number(estate.data.createdAt);
           const hasTokenBalance = vaultTokens.length > 0;
-          const vaultEmpty = estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
+          const vaultEmpty =
+            estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
 
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
             lastHeartbeat,
@@ -223,6 +237,7 @@ const VaultProviderInner: React.FC<{
 
   const createEstateOnChain = useCallback(
     async (input: CreateEstateInput): Promise<string> => {
+      const { signer, authority } = requireAuth();
       const heirAddress = toAddress(input.heir);
       const estatePda = await getEstateAddress(authority, heirAddress);
       const vaultPda = await getVaultAddress(authority, heirAddress);
@@ -254,7 +269,9 @@ const VaultProviderInner: React.FC<{
         rawAccountExists(vaultPda),
       ]);
       if (stillEstate || stillVault) {
-        throw new Error("Prior estate/vault PDAs not yet cleared on-chain. Wait a few seconds and retry.");
+        throw new Error(
+          "Prior estate/vault PDAs not yet cleared on-chain. Wait a few seconds and retry.",
+        );
       }
 
       const validTokens = (input.tokens ?? []).filter((tok) => tok.amount > 0n);
@@ -284,7 +301,9 @@ const VaultProviderInner: React.FC<{
           throw new Error("Select at least one asset (SOL or a token) to create a vault.");
         }
         const mintAddr = toAddress(primaryToken.mint);
-        const tokenProgram = primaryToken.tokenProgram ? toAddress(primaryToken.tokenProgram) : undefined;
+        const tokenProgram = primaryToken.tokenProgram
+          ? toAddress(primaryToken.tokenProgram)
+          : undefined;
         const vaultTokenAccount = tokenProgram
           ? await getAtaAddress(vaultPda, mintAddr, tokenProgram)
           : await getAtaAddress(vaultPda, mintAddr);
@@ -318,11 +337,12 @@ const VaultProviderInner: React.FC<{
       setPendingCreate(true);
       return txId;
     },
-    [client, rpc, signer, authority],
+    [client, rpc, requireAuth],
   );
 
   const registerAssetOnChain = useCallback(
     async (heir: string, token: TokenDeposit): Promise<string> => {
+      const { signer } = requireAuth();
       const txId = await registerAsset(client, signer, {
         heir: toAddress(heir),
         mint: toAddress(token.mint),
@@ -332,11 +352,12 @@ const VaultProviderInner: React.FC<{
       setPendingTxId(txId);
       return txId;
     },
-    [client, signer],
+    [client, requireAuth],
   );
 
   const registerSolOnChain = useCallback(
     async (heir: string, lamports: bigint): Promise<string> => {
+      const { signer } = requireAuth();
       const txId = await registerSolDeposit(client, signer, {
         heir: toAddress(heir),
         amount: lamports,
@@ -344,38 +365,42 @@ const VaultProviderInner: React.FC<{
       setPendingTxId(txId);
       return txId;
     },
-    [client, signer],
+    [client, requireAuth],
   );
 
   const depositSolOnChain = useCallback(
     async (vaultPda: string, lamports: bigint): Promise<string> => {
+      const { signer } = requireAuth();
       const txId = await depositSol(client, signer, toAddress(vaultPda), lamports);
       setPendingTxId(txId);
       return txId;
     },
-    [client, signer],
+    [client, requireAuth],
   );
 
   const depositTokenOnChain = useCallback(
     async (holding: VaultTokenHolding, amount: bigint): Promise<string> => {
+      const { signer } = requireAuth();
       const txId = await depositToken(client, signer, holding, amount);
       setPendingTxId(txId);
       return txId;
     },
-    [client, signer],
+    [client, requireAuth],
   );
 
   const sendHeartbeatOnChain = useCallback(
     async (heir: string): Promise<string> => {
+      const { signer } = requireAuth();
       const txId = await updateFields(client, signer, { heir: toAddress(heir) });
       setPendingTxId(txId);
       return txId;
     },
-    [client, signer],
+    [client, requireAuth],
   );
 
   const updateEstateFieldsOnChain = useCallback(
     async (heir: string, fields: UpdateEstateFields): Promise<string> => {
+      const { signer } = requireAuth();
       const txId = await updateFields(client, signer, {
         heir: toAddress(heir),
         heartbeatInterval: fields.heartbeatInterval,
@@ -386,11 +411,12 @@ const VaultProviderInner: React.FC<{
       setPendingTxId(txId);
       return txId;
     },
-    [client, signer],
+    [client, requireAuth],
   );
 
   const revokeEstateOnChain = useCallback(
     async (heir: string): Promise<string> => {
+      const { signer, authority } = requireAuth();
       const heirAddr = toAddress(heir);
       const vaultPda = await getVaultAddress(authority, heirAddr);
 
@@ -418,11 +444,12 @@ const VaultProviderInner: React.FC<{
       setPendingTxId(txId);
       return txId;
     },
-    [client, authority, signer],
+    [client, requireAuth],
   );
 
   const updateHeirOnChain = useCallback(
     async (heir: string, newHeir: string): Promise<string> => {
+      const { signer } = requireAuth();
       const finalTxId = await updateHeirAll(
         client,
         signer,
@@ -433,7 +460,7 @@ const VaultProviderInner: React.FC<{
       setPendingTxId(finalTxId);
       return finalTxId;
     },
-    [client, signer, trackTx],
+    [client, requireAuth, trackTx],
   );
 
   const clearVault = useCallback(() => {
@@ -465,35 +492,9 @@ const VaultProviderInner: React.FC<{
   return <VaultContext.Provider value={value}>{children}</VaultContext.Provider>;
 };
 
-// ---------------------------------------------------------------------------
-// Disconnected stub
-// ---------------------------------------------------------------------------
 
-const notConnected = async (): Promise<never> => {
-  throw new Error("Wallet not connected");
-};
 
-const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const stubValue: VaultState = {
-    estates: [],
-    loading: false,
-    error: null,
-    pendingTxId: null,
-    pendingCreate: false,
-    fetchEstates: async () => {},
-    createEstateOnChain: notConnected,
-    registerAssetOnChain: notConnected,
-    registerSolOnChain: notConnected,
-    depositSolOnChain: notConnected,
-    depositTokenOnChain: notConnected,
-    sendHeartbeatOnChain: notConnected,
-    updateEstateFieldsOnChain: notConnected,
-    revokeEstateOnChain: notConnected,
-    updateHeirOnChain: notConnected,
-    clearVault: () => {},
-  };
-  return <VaultContext.Provider value={stubValue}>{children}</VaultContext.Provider>;
-};
+
 
 // ---------------------------------------------------------------------------
 // Public provider
@@ -502,27 +503,52 @@ const VaultProviderDisconnected: React.FC<{ children: React.ReactNode }> = ({ ch
 export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const walletUi = useWalletUi() as unknown as VaultUiShim;
   const account = walletUi?.account ?? null;
+  const [signerState, setSignerState] = useState<{
+    signer: TransactionSigner | null;
+    authority: Address | null;
+  }>({ signer: null, authority: null });
 
-  if (!account) {
-    return <VaultProviderDisconnected>{children}</VaultProviderDisconnected>;
-  }
+  const handleCapture = useCallback(
+    (state: { signer: TransactionSigner | null; authority: Address | null }) => {
+      setSignerState(state);
+    },
+    [],
+  );
 
-  return <ConnectedProvider account={account}>{children}</ConnectedProvider>;
-};
-
-const ConnectedProvider: React.FC<{
-  account: { address: string };
-  children: React.ReactNode;
-}> = ({ account, children }) => {
-  const signer = useWalletUiSigner() as unknown as TransactionSigner;
-  const authority = toAddress(account.address);
   return (
-    <VaultProviderInner signer={signer} authority={authority}>
+    <VaultProviderInner signer={signerState.signer} authority={signerState.authority}>
+      {account && <SignerCapture account={account} onCapture={handleCapture} />}
       {children}
     </VaultProviderInner>
   );
 };
 
+const SignerCapture: React.FC<{
+  account: { address: string };
+  onCapture: (state: { signer: TransactionSigner | null; authority: Address | null }) => void;
+}> = ({ account, onCapture }) => {
+  const rawSigner = useWalletUiSigner() as unknown as TransactionSigner;
+  const authority = useMemo(() => toAddress(account.address), [account.address]);
+
+  // Stabilise signer by only updating the ref when the address changes
+  const signerRef = useRef<TransactionSigner | null>(null);
+  if (
+    rawSigner &&
+    (!signerRef.current ||
+      (rawSigner as unknown as { address?: string }).address !==
+        (signerRef.current as unknown as { address?: string }).address)
+  ) {
+    signerRef.current = rawSigner;
+  }
+  const signer = signerRef.current;
+
+  useEffect(() => {
+    onCapture({ signer, authority });
+    return () => onCapture({ signer: null, authority: null });
+  }, [signer, authority, onCapture]);
+
+  return null;
+};
 // eslint-disable-next-line react-refresh/only-export-components
 export const useVault = () => {
   const ctx = useContext(VaultContext);

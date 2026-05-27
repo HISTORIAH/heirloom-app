@@ -40,22 +40,17 @@ const HeroSection = () => {
           <div className="neo-slide-up">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tight mb-6">
               Protect your{" "}
-              <span className="bg-accent-pink px-3 inline-block rotate-[-1deg]">
-                assets.
-              </span>{" "}
-              Pass it on{" "}
-              <span className="bg-accent-lime px-3 inline-block rotate-[1deg]">
-                trustlessly.
-              </span>
+              <span className="bg-accent-pink px-3 inline-block rotate-[-1deg]">assets.</span> Pass
+              it on{" "}
+              <span className="bg-accent-lime px-3 inline-block rotate-[1deg]">trustlessly.</span>
             </h1>
             <p className="text-xl md:text-2xl font-medium leading-relaxed mb-10 max-w-xl">
-              Lock assets into a heartbeat vault on Solana.
-              Check in periodically -- or your heirs inherit automatically.
-              No lawyers. No custodians. No seed phrase sharing.
+              Lock assets into a heartbeat vault on Solana. Check in periodically -- or your heirs
+              inherit automatically. No lawyers. No custodians. No seed phrase sharing.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button variant="lime" size="xl" onClick={handleLaunch}>
-                {isConnected ? "Create Vault" : "Launch App"}
+                {isConnected ? "Create Vault" : "Launch Tutorial"}
               </Button>
               <Button variant="outline" size="xl" onClick={() => setDemoOpen(true)}>
                 View Demo
@@ -63,7 +58,10 @@ const HeroSection = () => {
             </div>
           </div>
 
-          <div className="relative flex justify-center lg:justify-end neo-slide-up" style={{ animationDelay: '0.15s' }}>
+          <div
+            className="relative flex justify-center lg:justify-end neo-slide-up"
+            style={{ animationDelay: "0.15s" }}
+          >
             <div className="neo-card-static rotate-[2deg] max-w-md w-full hover:rotate-[0deg] transition-transform duration-300">
               <img
                 src={heroVault}
@@ -76,9 +74,7 @@ const HeroSection = () => {
       </div>
 
       <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
-        <DialogContent
-          className="w-[calc(100vw-2rem)] max-w-4xl p-0 gap-0 border-4 border-foreground bg-background rounded-none shadow-[8px_8px_0px_0px_hsl(var(--foreground))] sm:shadow-[12px_12px_0px_0px_hsl(var(--foreground))] sm:rounded-none"
-        >
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl p-0 gap-0 border-4 border-foreground bg-background rounded-none shadow-[8px_8px_0px_0px_hsl(var(--foreground))] sm:shadow-[12px_12px_0px_0px_hsl(var(--foreground))] sm:rounded-none">
           <div className="flex items-center justify-between border-b-4 border-foreground bg-accent-yellow px-4 py-3 sm:px-6 sm:py-4">
             <DialogTitle className="text-lg sm:text-2xl font-black uppercase tracking-tight">
               Heirloom Demo
