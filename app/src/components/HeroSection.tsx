@@ -50,7 +50,7 @@ const HeroSection = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button variant="lime" size="xl" onClick={handleLaunch}>
-                {isConnected ? "Create Vault" : "Launch Tutorial"}
+                {isConnected ? "Create Vault" : "Launch Tour"}
               </Button>
               <Button variant="outline" size="xl" onClick={() => setDemoOpen(true)}>
                 View Demo
