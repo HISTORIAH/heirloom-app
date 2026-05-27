@@ -215,6 +215,15 @@ const VaultProviderInner: React.FC<{
   }, [estates.length]);
 
   useEffect(() => {
+    if (!authority) {
+      setEstates([]);
+      setPendingTxId(null);
+      setPendingCreate(false);
+      setError(null);
+    }
+  }, [authority]);
+
+  useEffect(() => {
     fetchEstates();
     const interval = pendingCreate ? 5000 : 15000;
     pollRef.current = setInterval(fetchEstates, interval);
@@ -493,9 +502,6 @@ const VaultProviderInner: React.FC<{
 };
 
 
-
-
-
 // ---------------------------------------------------------------------------
 // Public provider
 // ---------------------------------------------------------------------------
@@ -523,6 +529,9 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
+const signerAddress = (s: TransactionSigner | null): string | undefined =>
+  (s as { address?: string } | null)?.address;
+
 const SignerCapture: React.FC<{
   account: { address: string };
   onCapture: (state: { signer: TransactionSigner | null; authority: Address | null }) => void;
@@ -530,22 +539,23 @@ const SignerCapture: React.FC<{
   const rawSigner = useWalletUiSigner() as unknown as TransactionSigner;
   const authority = useMemo(() => toAddress(account.address), [account.address]);
 
-  // Stabilise signer by only updating the ref when the address changes
-  const signerRef = useRef<TransactionSigner | null>(null);
-  if (
-    rawSigner &&
-    (!signerRef.current ||
-      (rawSigner as unknown as { address?: string }).address !==
-        (signerRef.current as unknown as { address?: string }).address)
-  ) {
-    signerRef.current = rawSigner;
-  }
-  const signer = signerRef.current;
+  // Stabilise signer reference across renders — only swap when address changes
+  const [signer, setSigner] = useState<TransactionSigner | null>(rawSigner ?? null);
+  useEffect(() => {
+    setSigner((prev) => {
+      if (!rawSigner) return null;
+      if (prev && signerAddress(prev) === signerAddress(rawSigner)) return prev;
+      return rawSigner;
+    });
+  }, [rawSigner]);
 
   useEffect(() => {
     onCapture({ signer, authority });
-    return () => onCapture({ signer: null, authority: null });
   }, [signer, authority, onCapture]);
+
+  useEffect(() => {
+    return () => onCapture({ signer: null, authority: null });
+  }, [onCapture]);
 
   return null;
 };
