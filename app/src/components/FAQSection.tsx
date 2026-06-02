@@ -40,7 +40,7 @@ const faqs = [
   {
     question: "Is this a legal will?",
     answer:
-      "No. Heirloom is a programmable self-custody continuity tool, not a legal document. It operates entirely on-chain through q quasar program on Solana. It does not interact with any legal system or jurisdiction. Consider it a complement to -- not a replacement for -- traditional estate planning.",
+      "No. Heirloom is a programmable self-custody continuity tool, not a legal document. It operates entirely on-chain through an Anchor program on Solana. It does not interact with any legal system or jurisdiction. Consider it a complement to -- not a replacement for -- traditional estate planning.",
   },
   {
     question: "Can I get my assets back after creating a vault?",
