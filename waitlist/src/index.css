@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent-pink: 313 100% 65%;
+    --accent-lime: 72 100% 50%;
+    --accent-cyan: 189 100% 50%;
+    --accent-orange: 29 100% 50%;
+    --accent-purple: 249 100% 69%;
+    --accent-yellow: 50 100% 50%;
+    --accent-red: 0 100% 61%;
+
+    --accent: 72 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 61%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+
+    --radius: 0.75rem;
+
+    --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
+    --shadow-md: 8px 8px 0px 0px hsl(0 0% 0%);
+    --shadow-lg: 12px 12px 0px 0px hsl(0 0% 0%);
+    --shadow-xl: 16px 16px 0px 0px hsl(0 0% 0%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent-lime));
+    color: hsl(var(--foreground));
+  }
+
+  input:focus-visible,
+  button:focus-visible {
+    outline: 4px solid hsl(var(--foreground));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .neo-shadow-sm { box-shadow: var(--shadow-sm); }
+  .neo-shadow-md { box-shadow: var(--shadow-md); }
+  .neo-shadow-lg { box-shadow: var(--shadow-lg); }
+  .neo-shadow-xl { box-shadow: var(--shadow-xl); }
+  .neo-border { @apply border-4 border-foreground; }
+  .neo-border-thick { @apply border-[6px] border-foreground; }
+
+  .neo-card-static {
+    @apply bg-card neo-border rounded-2xl p-8;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .neo-badge {
+    @apply inline-block neo-border rounded-full px-4 py-1 text-sm font-bold uppercase tracking-widest;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .neo-section-pink { background-color: hsl(var(--accent-pink)); }
+  .neo-section-lime { background-color: hsl(var(--accent-lime)); }
+  .neo-section-cyan { background-color: hsl(var(--accent-cyan)); }
+  .neo-section-orange { background-color: hsl(var(--accent-orange)); }
+  .neo-section-yellow { background-color: hsl(var(--accent-yellow)); }
+  .neo-section-purple { background-color: hsl(var(--accent-purple)); }
+
+  .neo-input {
+    @apply w-full neo-border rounded-lg px-4 py-3 bg-background font-bold text-base transition-all duration-150;
+    box-shadow: var(--shadow-sm);
+  }
+  .neo-input:focus {
+    box-shadow: var(--shadow-md);
+    transform: translate(-2px, -2px);
+    outline: none;
+  }
+
+  .neo-btn {
+    @apply neo-border rounded-lg px-6 py-3 bg-foreground text-primary-foreground font-bold uppercase tracking-wide transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed;
+    box-shadow: var(--shadow-md);
+  }
+  .neo-btn:not(:disabled):hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .neo-btn:not(:disabled):active {
+    transform: translate(2px, 2px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .neo-slide-up { animation: slideUp 0.4s ease-out; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .neo-shake { animation: shake 0.4s ease-out; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+    75% { transform: translateX(-4px); }
+  }
+}
