@@ -4,6 +4,7 @@
   "workspaces": [
     "app",
     "app-ika",
+    "waitlist",
     "blog",
     "tests",
     "packages/*",
@@ -15,6 +16,8 @@
     "dev:ika": "turbo run dev --filter=app-ika",
     "build:ui": "turbo run build --filter=app",
     "build:ika": "turbo run build --filter=app-ika",
+    "dev:waitlist": "turbo run dev --filter=waitlist",
+    "build:waitlist": "turbo run build --filter=waitlist",
     "generate:heirloom": "bunx codama run --all -c heirloom.codama.json",
     "generate:heirloom-ika": "bunx codama run --all -c heirloom-ika.codama.json",
     "generate": "bun run generate:heirloom && bun run generate:heirloom-ika",
