@@ -9,6 +9,7 @@ import { cn, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { Loader2, Plus } from "lucide-react";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
+import { useAnalytics } from "@/lib/analytics";
 
 interface Props {
   estate: EstateData;
@@ -19,6 +20,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
   const { registerAssetOnChain, registerSolOnChain, fetchEstates } = useVault();
   const { publicKey, isConnected } = useWallet();
   const { toast } = useToast();
+  const { track } = useAnalytics();
 
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [addAssetMint, setAddAssetMint] = useState<"sol" | string>("sol");
@@ -77,9 +79,11 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
       onTx(tx);
       setShowAddAsset(false);
       setAddAssetAmount(0);
+      track("asset_added", { asset_type: addAssetMint === "sol" ? "sol" : "token" });
       toast({ title: "Asset added", description: "Funds deposited into the vault." });
       await fetchEstates();
     } catch (err: unknown) {
+      track("asset_add_failed", { asset_type: addAssetMint === "sol" ? "sol" : "token" });
       toast({
         title: "Add asset failed",
         description: errMsg(err),

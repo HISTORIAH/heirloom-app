@@ -4,6 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAnalytics } from "@/lib/analytics";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
@@ -113,6 +114,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
   const { publicKey, isConnected } = useWallet();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const [sendingHeartbeat, setSendingHeartbeat] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -153,9 +155,11 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       setLastTxId(tx);
       setTopUpOpen(null);
       setTopUpAmount(0);
+      track("vault_top_up_succeeded", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
       toast({ title: "Top-up sent", description: "Funds added to the vault." });
       await fetchEstates();
     } catch (err: unknown) {
+      track("vault_top_up_failed", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
       toast({ title: "Top-up failed", description: errMsg(err), variant: "destructive" });
     } finally {
       setTopUpLoading(false);
@@ -187,8 +191,10 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     try {
       const tx = await sendHeartbeatOnChain(estate.heir);
       setLastTxId(tx);
+      track("heartbeat_succeeded", { source: "dashboard" });
       toast({ title: "Heartbeat Sent!", description: "Your vault timer has been reset." });
     } catch (err: unknown) {
+      track("heartbeat_failed", { source: "dashboard" });
       toast({
         title: "Heartbeat Failed",
         description: errMsg(err),

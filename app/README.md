@@ -214,6 +214,19 @@ USDC_MINT       = import.meta.env.VITE_USDC_MINT       || devnet USDC faucet min
 
 `explorerTxUrl(signature)` and `explorerAddressUrl(addr)` append the right `?cluster=` suffix based on `NETWORK`.
 
+### Product analytics: PostHog
+
+PostHog is optional and initializes only when `VITE_POSTHOG_PROJECT_TOKEN` is set. Configure these variables in the deployment environment:
+
+```env
+VITE_POSTHOG_PROJECT_TOKEN=
+VITE_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+Restart the Vite/Turbo development server after changing these values; Vite reads `.env` when the server starts.
+
+The integration records SPA page views, clicks on links and buttons, and coarse product events for the wallet, vault, heartbeat, claim, defer, and dashboard flows. It deliberately does not identify wallet owners or send wallet addresses, heir addresses, transaction signatures, asset amounts, form values, or error messages. Autocaptured text is masked and session recording is disabled.
+
 ## Alice, Concretely
 
 The base README introduces Alice, who wants her daughter Mia to inherit her SOL. Here is exactly what her fingers do in this app:

@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { useAnalytics } from "@/lib/analytics";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -49,6 +50,7 @@ const HeartbeatPageInner: React.FC<{
   const { isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { track } = useAnalytics();
 
   const client: HeirloomClient = { rpc, rpcSubscriptions };
 
@@ -99,10 +101,12 @@ const HeartbeatPageInner: React.FC<{
         heir: toAddress(estate.heir),
       });
       setHbTxId(tx);
+      track("heartbeat_succeeded", { source: "heartbeat_signer_page" });
       toast({ title: "Heartbeat sent", description: "Vault timer reset." });
       const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
     } catch (err: unknown) {
+      track("heartbeat_failed", { source: "heartbeat_signer_page" });
       toast({
         title: "Heartbeat failed",
         description: errMsg(err, "Rejected"),
