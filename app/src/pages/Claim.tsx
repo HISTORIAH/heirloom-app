@@ -30,6 +30,7 @@ import {
 import TokenAvatar from "@/components/TokenAvatar";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { useAnalytics } from "@/lib/analytics";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
 const stateColors: Record<string, string> = {
@@ -68,6 +69,7 @@ const ClaimPageInner: React.FC<{
   const { publicKey, isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const [searchParams] = useSearchParams();
 
   const client: HeirloomClient = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
@@ -205,7 +207,12 @@ const ClaimPageInner: React.FC<{
       }
 
       toast({ title: "Claim submitted", description: "Assets transferred to your wallet." });
+      track("claim_succeeded", {
+        asset_type_count: tokenAssets.length + 1,
+        token_count: tokenAssets.length,
+      });
     } catch (err: unknown) {
+      track("claim_failed", { stage: "transaction" });
       toast({
         title: "Claim failed",
         description: errMsg(err, "Rejected"),

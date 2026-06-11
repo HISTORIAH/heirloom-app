@@ -10,19 +10,23 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import heroVault from "@/assets/Heirloomapp-hero.png";
+import { useAnalytics } from "@/lib/analytics";
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
   const { start: startTour } = useTour();
   const navigate = useNavigate();
+  const { track } = useAnalytics();
   const [demoOpen, setDemoOpen] = useState(false);
 
   const handleLaunch = () => {
+    track("launch_app_clicked", { connected: isConnected });
     // Launch App walks new visitors through the app tour (no wallet needed).
     // Connected users jump straight to creating a vault.
     if (isConnected) {
       navigate("/create-vault");
     } else {
+      track("tour_started", { source: "hero" });
       startTour();
     }
   };
@@ -52,7 +56,14 @@ const HeroSection = () => {
               <Button variant="lime" size="xl" onClick={handleLaunch}>
                 {isConnected ? "Create Vault" : "Launch Tour"}
               </Button>
-              <Button variant="outline" size="xl" onClick={() => setDemoOpen(true)}>
+              <Button
+                variant="outline"
+                size="xl"
+                onClick={() => {
+                  track("demo_opened", { source: "hero" });
+                  setDemoOpen(true);
+                }}
+              >
                 View Demo
               </Button>
             </div>

@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAnalytics } from "@/lib/analytics";
 
 const CTASection = () => {
   const navigate = useNavigate();
+  const { track } = useAnalytics();
 
   const handleCreate = () => {
+    track("launch_app_clicked", { source: "landing_cta" });
     navigate("/create-vault");
   };
 
@@ -37,6 +40,7 @@ const CTASection = () => {
             href="https://docs.heirlm.xyz/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track("docs_link_clicked", { source: "landing_cta" })}
           >
             <Button variant="outline" size="xl">
               Read the docs

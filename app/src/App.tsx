@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -25,6 +27,7 @@ import Heartbeat from "@/pages/Heartbeat";
 import NotFound from "@/pages/NotFound";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import Blog from "./pages/blog";
+import { useAnalytics } from "@/lib/analytics";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,17 @@ const clusters = isMainnet
 
 const walletUiConfig = createWalletUiConfig({ clusters });
 
+const RouteAnalytics = () => {
+  const location = useLocation();
+  const { trackPageView } = useAnalytics();
+
+  useEffect(() => {
+    trackPageView(`${location.pathname}${location.search}`);
+  }, [location.pathname, location.search, trackPageView]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -55,6 +69,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <RouteAnalytics />
               <TourProvider>
                 <AppTour />
                 <Routes>

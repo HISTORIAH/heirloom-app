@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAnalytics } from "@/lib/analytics";
 
 interface WalletConnectDialogProps {
   open: boolean;
@@ -21,15 +22,21 @@ interface WalletRowProps {
 
 const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
   const { connect, isConnecting } = useWalletUiWallet({ wallet });
+  const { track } = useAnalytics();
   return (
     <button
       type="button"
       disabled={isConnecting}
       onClick={async () => {
+        track("wallet_connect_attempted", { wallet_provider: wallet.name });
         try {
           const accounts = await connect();
-          if (accounts.length > 0) onConnected();
+          if (accounts.length > 0) {
+            track("wallet_connected", { wallet_provider: wallet.name });
+            onConnected();
+          }
         } catch (err) {
+          track("wallet_connect_failed", { wallet_provider: wallet.name });
           console.error("wallet connect failed", err);
         }
       }}

@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildTourSteps } from "./tourSteps";
+import { useAnalytics } from "@/lib/analytics";
 
 const BLACK = "hsl(0, 0%, 0%)";
 const WHITE = "hsl(0, 0%, 100%)";
@@ -82,6 +83,7 @@ const AppTour = () => {
   const { estates } = useVault();
   const navigate = useNavigate();
   const location = useLocation();
+  const { track } = useAnalytics();
 
   const [finishPromptOpen, setFinishPromptOpen] = useState(false);
   const [connectPromptOpen, setConnectPromptOpen] = useState(false);
@@ -94,6 +96,7 @@ const AppTour = () => {
   // Completing the tour closes the loop: land on Create Vault and show a prompt
   // inviting the user to connect — its button opens the wallet dialog.
   const completeTour = () => {
+    track("tour_completed", { connected: isConnected });
     stop();
     navigate("/create-vault");
     if (!isConnected) setFinishPromptOpen(true);
@@ -101,6 +104,7 @@ const AppTour = () => {
 
   // Skipping just exits into the app — no connect prompt.
   const skipTour = () => {
+    track("tour_skipped", { step_index: stepIndex });
     stop();
     navigate("/create-vault");
   };

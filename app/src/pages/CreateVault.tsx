@@ -23,6 +23,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { errMsg } from "@/lib/utils";
+import { useAnalytics } from "@/lib/analytics";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 
@@ -33,6 +34,7 @@ const CreateVaultPage = () => {
   const { createEstateOnChain } = useVault();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { track } = useAnalytics();
 
   const [step, setStep] = useState(0);
 
@@ -76,6 +78,11 @@ const CreateVaultPage = () => {
       return;
     }
     try {
+      track("vault_creation_started", {
+        has_delegate: Boolean(delegate.trim()),
+        has_heartbeat_signer: Boolean(hbSigner.trim()),
+        token_count: selectedTokenEntries.length,
+      });
       setSubmitState("creating");
       const lamports = toRawTokenAmount(solAmount, SOL_DECIMALS);
 
@@ -110,10 +117,16 @@ const CreateVaultPage = () => {
       });
       setTxId(createTxId);
       setSubmitState("complete");
+      track("vault_created", {
+        has_delegate: Boolean(delegate.trim()),
+        has_heartbeat_signer: Boolean(hbSigner.trim()),
+        token_count: tokenDeposits.length,
+      });
       toast({ title: "Estate Created!", description: "Your heartbeat vault is live on-chain." });
       setTimeout(() => navigate("/dashboard"), 3000);
     } catch (err: unknown) {
       setSubmitState("error");
+      track("vault_creation_failed", { stage: "transaction" });
       toast({
         title: "Transaction Failed",
         description: errMsg(err, "Something went wrong"),

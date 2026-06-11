@@ -5,6 +5,7 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
 import { Loader2, UserPlus } from "lucide-react";
+import { useAnalytics } from "@/lib/analytics";
 
 interface Props {
   estate: EstateData;
@@ -14,6 +15,7 @@ interface Props {
 const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
   const { updateHeirOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const [showUpdateHeir, setShowUpdateHeir] = useState(false);
   const [newHeirAddress, setNewHeirAddress] = useState("");
   const [updatingHeir, setUpdatingHeir] = useState(false);
@@ -46,9 +48,11 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       setNewHeirAddress("");
       setShowUpdateHeir(false);
       setReassignConfirm({ open: false, next: "" });
+      track("heir_reassigned");
       toast({ title: "Heir Updated", description: "Estate reassigned to new heir." });
       await fetchEstates();
     } catch (err: unknown) {
+      track("heir_reassign_failed", { stage: "transaction" });
       toast({
         title: "Update Failed",
         description: errMsg(err),

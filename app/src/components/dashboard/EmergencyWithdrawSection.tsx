@@ -5,6 +5,7 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { useAnalytics } from "@/lib/analytics";
 
 interface Props {
   estate: EstateData;
@@ -14,6 +15,7 @@ interface Props {
 const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
   const { revokeEstateOnChain } = useVault();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
 
@@ -23,8 +25,10 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       const tx = await revokeEstateOnChain(estate.heir);
       onTx(tx);
       setWithdrawConfirmOpen(false);
+      track("emergency_withdraw_succeeded");
       toast({ title: "Emergency Withdraw", description: "Assets returned to your wallet." });
     } catch (err: unknown) {
+      track("emergency_withdraw_failed", { stage: "transaction" });
       toast({
         title: "Withdraw Failed",
         description: errMsg(err),

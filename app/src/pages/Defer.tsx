@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { useAnalytics } from "@/lib/analytics";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const stateColors: Record<string, string> = {
@@ -41,6 +42,7 @@ const DeferPageInner: React.FC<{
   const { isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { track } = useAnalytics();
 
   const client: HeirloomClient = { rpc, rpcSubscriptions };
 
@@ -106,10 +108,12 @@ const DeferPageInner: React.FC<{
       });
       setDeferTxId(tx);
       setDeferConfirmOpen(false);
+      track("defer_succeeded");
       toast({ title: "Defer submitted", description: "Claim window extended." });
       const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
     } catch (err: unknown) {
+      track("defer_failed", { stage: "transaction" });
       toast({
         title: "Defer failed",
         description: errMsg(err, "Rejected"),
