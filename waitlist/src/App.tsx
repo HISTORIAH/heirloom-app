@@ -60,10 +60,6 @@ export default function App() {
           </span>
           <span>heirloom</span>
         </a>
-        <div className="status-pill">
-          <span className="status-dot" />
-          2026
-        </div>
       </header>
 
       <section className="hero-layout">
