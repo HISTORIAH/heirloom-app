@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",

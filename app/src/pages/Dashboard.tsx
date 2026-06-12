@@ -4,7 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";

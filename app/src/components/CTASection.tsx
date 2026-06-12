@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const CTASection = () => {
   const navigate = useNavigate();

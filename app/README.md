@@ -219,13 +219,13 @@ USDC_MINT       = import.meta.env.VITE_USDC_MINT       || devnet USDC faucet min
 PostHog is optional and initializes only when `VITE_POSTHOG_PROJECT_TOKEN` is set. Configure these variables in the deployment environment:
 
 ```env
+VITE_ANALYTICS_ENABLED=false
 VITE_POSTHOG_PROJECT_TOKEN=
-VITE_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-Restart the Vite/Turbo development server after changing these values; Vite reads `.env` when the server starts.
+Analytics is dormant by default and initializes only when `VITE_ANALYTICS_ENABLED` is exactly `true` and a project token is present. Keep the flag disabled in production until the required privacy and consent controls are in place.
 
-The integration records SPA page views, clicks on links and buttons, and coarse product events for the wallet, vault, heartbeat, claim, defer, and dashboard flows. It deliberately does not identify wallet owners or send wallet addresses, heir addresses, transaction signatures, asset amounts, form values, or error messages. Autocaptured text is masked and session recording is disabled.
+The PostHog ingestion host is a fixed application constant in `src/lib/constants.ts`. The integration records SPA page views, clicks on links and buttons, and coarse product events for the wallet, vault, heartbeat, claim, defer, and dashboard flows. It deliberately does not identify wallet owners or send wallet addresses, heir addresses, transaction signatures, asset amounts, form values, or error messages. Autocaptured text is masked and session recording is disabled.
 
 ## Alice, Concretely
 

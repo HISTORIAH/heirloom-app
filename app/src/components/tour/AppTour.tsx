@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildTourSteps } from "./tourSteps";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const BLACK = "hsl(0, 0%, 0%)";
 const WHITE = "hsl(0, 0%, 100%)";

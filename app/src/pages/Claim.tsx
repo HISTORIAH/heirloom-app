@@ -30,7 +30,7 @@ import {
 import TokenAvatar from "@/components/TokenAvatar";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 
 const stateColors: Record<string, string> = {

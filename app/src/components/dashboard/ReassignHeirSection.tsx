@@ -5,7 +5,7 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
 import { Loader2, UserPlus } from "lucide-react";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 interface Props {
   estate: EstateData;

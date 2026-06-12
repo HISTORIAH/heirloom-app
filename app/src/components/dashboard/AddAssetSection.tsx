@@ -9,7 +9,7 @@ import { cn, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { Loader2, Plus } from "lucide-react";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 interface Props {
   estate: EstateData;

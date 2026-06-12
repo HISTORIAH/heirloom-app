@@ -9,3 +9,5 @@ export const LABEL_MAX_LEN = 32;
 export const SECONDS_PER_MINUTE = 60;
 export const SECONDS_PER_HOUR = 3600;
 export const SECONDS_PER_DAY = 86400;
+
+export const POSTHOG_HOST = "https://us.i.posthog.com";
