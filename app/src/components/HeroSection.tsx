@@ -10,7 +10,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import heroVault from "@/assets/Heirloomapp-hero.png";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const HeroSection = () => {
   const { isConnected } = useWallet();

@@ -27,7 +27,7 @@ import Heartbeat from "@/pages/Heartbeat";
 import NotFound from "@/pages/NotFound";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import Blog from "./pages/blog";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const queryClient = new QueryClient();
 
@@ -54,8 +54,8 @@ const RouteAnalytics = () => {
   const { trackPageView } = useAnalytics();
 
   useEffect(() => {
-    trackPageView(`${location.pathname}${location.search}`);
-  }, [location.pathname, location.search, trackPageView]);
+    trackPageView(location.pathname);
+  }, [location.pathname, trackPageView]);
 
   return null;
 };

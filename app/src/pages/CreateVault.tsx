@@ -23,7 +23,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { errMsg } from "@/lib/utils";
-import { useAnalytics } from "@/lib/analytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
 
