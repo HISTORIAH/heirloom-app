@@ -16,6 +16,19 @@ import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import {
+  InlineTokenYield,
+  SolStakingIndicator,
+  LuloEnableDialog,
+  RecallConfirmDialog,
+  StrategyProgressOverlay,
+} from "@/components/dashboard/StrategyWidgets";
+import {
+  type Strategy,
+  type StrategyProgressStep,
+  makePlaceholderLuloStrategy,
+  makePlaceholderStakingStrategy,
+} from "@/lib/strategies";
 import { cn, formatDuration, formatSol, formatTokenAmount, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { computeEstateState } from "@/lib/estateState";
@@ -119,6 +132,16 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [luloTargetMint, setLuloTargetMint] = useState<string | null>(null);
+  const [luloDialogOpen, setLuloDialogOpen] = useState(false);
+  const [recallDialogOpen, setRecallDialogOpen] = useState(false);
+  const [recallTarget, setRecallTarget] = useState<"lulo" | "staking" | null>(null);
+  const [strategyProgress, setStrategyProgress] = useState<StrategyProgressStep>("idle");
+  const [showProgressOverlay, setShowProgressOverlay] = useState(false);
+
+  // Placeholder strategies — per-estate local state (replace with real data later)
+  const [luloStrategy, setLuloStrategy] = useState<Strategy | null>(null);
+  const [stakingStrategy, setStakingStrategy] = useState<Strategy | null>(null);
   const [topUpOpen, setTopUpOpen] = useState<"sol" | string | null>(null);
   const [topUpAmount, setTopUpAmount] = useState(0);
   const [topUpLoading, setTopUpLoading] = useState(false);
@@ -203,6 +226,108 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } finally {
       setSendingHeartbeat(false);
     }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Strategy handlers (placeholder flows)
+  // ---------------------------------------------------------------------------
+
+  const activeLuloHolding = luloTargetMint
+    ? estate.vaultTokens.find((vt) => vt.mint === luloTargetMint)
+    : null;
+  const luloTokenMeta = activeLuloHolding ? tokenMeta.get(activeLuloHolding.mint) : undefined;
+  const luloSymbol = luloTokenMeta?.symbol;
+  const luloVaultBalance = activeLuloHolding
+    ? Number(activeLuloHolding.rawAmount) / 10 ** activeLuloHolding.decimals
+    : 0;
+
+  const solVaultBalance = Number(estate.solBalance) / 10 ** SOL_DECIMALS;
+
+  const handleConfirmLulo = async (opts: { protected: boolean }) => {
+    if (!luloTargetMint) return;
+    const targetHolding = estate.vaultTokens.find((vt) => vt.mint === luloTargetMint);
+    if (!targetHolding) return;
+    setLuloDialogOpen(false);
+    setShowProgressOverlay(true);
+    setStrategyProgress("withdrawing");
+
+    // Step 1: simulate vault withdrawal
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("depositing");
+
+    // Step 2: simulate Lulo deposit
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("complete");
+
+    // Activate placeholder strategy
+    setLuloStrategy(
+      makePlaceholderLuloStrategy(targetHolding.mint, targetHolding.decimals, {
+        protected: opts.protected,
+        amount: Number(targetHolding.rawAmount) / 10 ** targetHolding.decimals,
+        apy: opts.protected ? 6.2 : 8.5,
+      }),
+    );
+
+    await new Promise((r) => setTimeout(r, 800));
+    setShowProgressOverlay(false);
+    setStrategyProgress("idle");
+    setLuloTargetMint(null);
+    toast({ title: "Lulo yield enabled", description: "Funds are now earning yield." });
+  };
+
+  const handleRecallLulo = () => {
+    setRecallTarget("lulo");
+    setRecallDialogOpen(true);
+  };
+
+  const handleRecallStaking = () => {
+    setRecallTarget("staking");
+    setRecallDialogOpen(true);
+  };
+
+  const handleConfirmRecall = async () => {
+    setRecallDialogOpen(false);
+    setShowProgressOverlay(true);
+    setStrategyProgress("recalling");
+
+    // Step 1: simulate Lulo/staking withdrawal
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("returning");
+
+    // Step 2: simulate return to vault
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("complete");
+
+    // Deactivate strategy
+    if (recallTarget === "lulo") setLuloStrategy(null);
+    if (recallTarget === "staking") setStakingStrategy(null);
+
+    await new Promise((r) => setTimeout(r, 800));
+    setShowProgressOverlay(false);
+    setStrategyProgress("idle");
+    setRecallTarget(null);
+    toast({ title: "Funds recalled", description: "Assets returned to your vault." });
+  };
+
+  const handleEnableStaking = () => {
+    // Simulate staking enable flow (no dialog for now, single-step placeholder)
+    setShowProgressOverlay(true);
+    setStrategyProgress("withdrawing");
+
+    // Step 1
+    setTimeout(() => {
+      setStrategyProgress("depositing");
+      // Step 2
+      setTimeout(() => {
+        setStrategyProgress("complete");
+        setStakingStrategy(makePlaceholderStakingStrategy({ amount: solVaultBalance }));
+        setTimeout(() => {
+          setShowProgressOverlay(false);
+          setStrategyProgress("idle");
+          toast({ title: "Staking enabled", description: "SOL is now delegated." });
+        }, 800);
+      }, 1500);
+    }, 1500);
   };
 
   const handleCopyHeir = () => {
@@ -333,6 +458,16 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           <p className="text-sm font-bold text-muted-foreground">
             {`${estate.solBalance.toLocaleString()} lamports`}
           </p>
+          <SolStakingIndicator
+            solBalance={solVaultBalance}
+            strategy={stakingStrategy}
+            onEnable={handleEnableStaking}
+            onRecall={handleRecallStaking}
+            loading={showProgressOverlay && recallTarget === "staking" && strategyProgress !== "idle"}
+            progressStep={
+              showProgressOverlay && recallTarget === "staking" ? strategyProgress : "idle"
+            }
+          />
           {topUpOpen === "sol" && (
             <div className="mt-4 pt-4 border-t-2 border-foreground/10 space-y-3">
               <input
@@ -478,12 +613,75 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                       </Button>
                     </div>
                   )}
+                  <InlineTokenYield
+                    mint={vt.mint}
+                    symbol={symbol || "tokens"}
+                    decimals={vt.decimals}
+                    vaultBalance={Number(vt.rawAmount) / 10 ** vt.decimals}
+                    strategy={luloStrategy?.type === "lulo" && luloStrategy.mint === vt.mint ? luloStrategy : null}
+                    onEnable={() => {
+                      setLuloTargetMint(vt.mint);
+                      setLuloDialogOpen(true);
+                    }}
+                    onRecall={handleRecallLulo}
+                    loading={showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint && strategyProgress !== "idle"}
+                    progressStep={
+                      showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint
+                        ? strategyProgress
+                        : "idle"
+                    }
+                  />
                 </div>
               );
             })}
           </div>
         </div>
       )}
+
+      {/* Lulo enable dialog */}
+      {activeLuloHolding && (
+        <LuloEnableDialog
+          open={luloDialogOpen}
+          tokenSymbol={luloSymbol || "tokens"}
+          tokenMint={activeLuloHolding.mint}
+          vaultBalance={luloVaultBalance}
+          onConfirm={handleConfirmLulo}
+          onCancel={() => {
+            setLuloDialogOpen(false);
+            setLuloTargetMint(null);
+          }}
+          loading={showProgressOverlay}
+        />
+      )}
+
+      {/* Recall confirmation dialog */}
+      <RecallConfirmDialog
+        open={recallDialogOpen}
+        strategyType={recallTarget === "staking" ? "staking" : "lulo"}
+        tokenSymbol={recallTarget === "lulo" ? luloSymbol : undefined}
+        routedAmount={
+          recallTarget === "lulo" && luloStrategy?.type === "lulo"
+            ? luloStrategy.amount
+            : recallTarget === "staking" && stakingStrategy?.type === "staking"
+              ? stakingStrategy.amount
+              : 0
+        }
+        onConfirm={handleConfirmRecall}
+        onCancel={() => {
+          if (!showProgressOverlay) {
+            setRecallDialogOpen(false);
+            setRecallTarget(null);
+          }
+        }}
+        loading={showProgressOverlay}
+      />
+
+      {/* Progress overlay for two-step flows */}
+      <StrategyProgressOverlay
+        open={showProgressOverlay}
+        strategyType={recallTarget === "staking" ? "staking" : "lulo"}
+        step={strategyProgress}
+      />
 
       {/* Heir */}
       <div className="neo-card-static">
