@@ -94,3 +94,21 @@ export function getSolanaExplorerTxUrl(signature: string): string {
   return `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;
 }
 
+/**
+ * Returns chains config to send a transaction
+ */
+export function getClusterFromEndpoint() {
+  switch (true) {
+    case SOLANA_RPC_ENDPOINT.includes("mainnet"):
+      return "solana:mainnet";
+    case SOLANA_RPC_ENDPOINT.includes("devnet"):
+      return "solana:devnet";
+    case SOLANA_RPC_ENDPOINT.includes("testnet"):
+      return "solana:testnet";
+    case SOLANA_RPC_ENDPOINT.includes("localhost"):
+      return "solana:localhost";
+
+    default:
+      return "solana:mainnet";
+  }
+}

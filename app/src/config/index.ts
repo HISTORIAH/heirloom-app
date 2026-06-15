@@ -9,3 +9,7 @@ export const POSTHOG_PROJECT_TOKEN =
 
 export const ANALYTICS_ENABLED =
   import.meta.env.VITE_ANALYTICS_ENABLED?.trim().toLowerCase() === "true";
+
+// TEMP: Raw env flag for yield/staking feature on local testing
+export const ENABLE_YIELD_STAKING_UI =
+  import.meta.env.VITE_ENABLE_YIELD_STAKING_UI?.trim().toLowerCase() === "true";

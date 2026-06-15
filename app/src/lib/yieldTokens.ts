@@ -8,7 +8,7 @@
 // before production deployment.
 // ---------------------------------------------------------------------------
 
-import { TEMP_DEVNET_LULO_TEST_MINT } from "./tokens";
+import { USDC_DEVNET_MINT } from "@/lib/constants";
 
 export type Network = "mainnet" | "devnet";
 
@@ -87,12 +87,28 @@ export const YIELD_TOKEN_REGISTRY: YieldTokenConfig[] = [
     name: "USD Coin (Devnet Test)",
     mints: {
       mainnet: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-      devnet: TEMP_DEVNET_LULO_TEST_MINT,
+      devnet: USDC_DEVNET_MINT,
     },
     luloSupported: true,
     apyProtected: 6.2,   // TEMP: placeholder
     apyUnprotected: 8.5, // TEMP: placeholder
     decimals: 6,
+  },
+  // TEMP: Devnet test token for Lulo yield routing
+  // This mint stands in for USDC on devnet — used for testing the Lulo
+  // route-to-yield flow without needing real USDC devnet tokens.
+  // TODO: Remove before mainnet launch — revert devnet mint to canonical USDC.
+  {
+    symbol: "SLGD",
+    name: "Solana Gold (Devnet Test)",
+    mints: {
+      mainnet: "Gjmb8VEEVtMCWHtAnYQjyRPByoQcifnqKS8BALmHc9VF",
+      devnet: "Gjmb8VEEVtMCWHtAnYQjyRPByoQcifnqKS8BALmHc9VF",
+    },
+    luloSupported: true,
+    apyProtected: 6.2,   // TEMP: placeholder
+    apyUnprotected: 8.5, // TEMP: placeholder
+    decimals: 9,
   },
 ];
 
