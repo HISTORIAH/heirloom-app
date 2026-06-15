@@ -1,5 +1,7 @@
 // ---------------------------------------------------------------------------
-// Yield Token Registry
+// TODO: refactor me please
+//
+//  Yield Token Registry
 //
 // Add tokens here to enable Lulo yield routing in the UI.
 // Each entry maps a canonical symbol to per-network mint addresses.

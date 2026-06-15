@@ -23,6 +23,8 @@ security_txt! {
     source_code: "https://github.com/HISTORIAH/Heirloom-app"
 }
 
+declare_program!(lulo_v2);
+
 #[program]
 pub mod heirloom {
     use super::*;
