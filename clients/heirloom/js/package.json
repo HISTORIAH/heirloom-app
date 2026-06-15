@@ -5,17 +5,17 @@
   "main": "src/main.ts",
   "types": "src/main.ts",
   "exports": {
-     ".": "./src/main.ts"
-   },
+    ".": "./src/main.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "peerDependencies": {
-    "@solana/kit": "^6.1.0"
+    "@solana/kit": "^6.9.0"
   },
   "dependencies": {
-    "@solana/program-client-core": "^6.1.0"
+    "@solana/program-client-core": "^6.9.0"
   }
 }
