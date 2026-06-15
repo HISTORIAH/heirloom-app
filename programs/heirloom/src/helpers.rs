@@ -3,15 +3,13 @@ use anchor_lang::prelude::*;
 use crate::error::HeirloomError;
 
 pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
-    let protocol_fee = gross_amount
-        .checked_mul(fee_bps as u64)
-        .ok_or(HeirloomError::MathOverflow)?
-        .checked_div(10_000)
-        .ok_or(HeirloomError::MathOverflow)?;
+    let gross = gross_amount as u128;
+    let fee = fee_bps as u128;
+    let protocol_fee = (gross * fee / 10_000) as u64;
 
     let payout = gross_amount
         .checked_sub(protocol_fee)
-        .ok_or(HeirloomError::MathOverflow)?;
+        .ok_or(HeirloomError::MathUnderflow)?;
 
     Ok((protocol_fee, payout))
 }
@@ -22,7 +20,6 @@ pub fn close_account<'info>(
     destination: AccountInfo<'info>,
 ) -> Result<()> {
     let lamports = account.lamports();
-    msg!("lamport balance of {} {}", account.key(), lamports);
 
     account.sub_lamports(lamports)?;
     destination.add_lamports(lamports)?;

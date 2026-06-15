@@ -38,4 +38,6 @@ pub enum HeirloomError {
     LabelTooLong,
     #[msg("Math overflow")]
     MathOverflow,
+    #[msg("Math underflow")]
+    MathUnderflow,
 }
