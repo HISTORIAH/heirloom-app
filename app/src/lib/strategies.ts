@@ -1,45 +1,17 @@
 // ---------------------------------------------------------------------------
-// Strategy types and runtime state
+// Strategy runtime helpers
 //
-// This file defines the shape of active yield/staking strategies.
+// Types are in types/strategy-ui.ts.
 // For the canonical token registry, see lib/yieldTokens.ts.
-// For the devnet test mint, see lib/tokens.ts.
+// For the devnet test mint, see lib/constants.ts (TEMP_DEVNET_LULO_TEST_MINT).
 // ---------------------------------------------------------------------------
 
-export type StrategyType = "lulo" | "staking";
-
-export interface LuloStrategy {
-  type: "lulo";
-  active: boolean;
-  mint: string;
-  amount: number; // ui units
-  decimals: number;
-  protected: boolean;
-  apy: number;
-}
-
-export interface StakingStrategy {
-  type: "staking";
-  active: boolean;
-  amount: number; // ui units (SOL)
-  validatorName: string;
-  apy: number;
-}
-
-export type Strategy = LuloStrategy | StakingStrategy;
-
-// ---------------------------------------------------------------------------
-// Progress state for two-step flows (vault ↔ external protocol)
-// ---------------------------------------------------------------------------
-
-export type StrategyProgressStep =
-  | "idle"
-  | "withdrawing"
-  | "depositing"
-  | "recalling"
-  | "returning"
-  | "complete"
-  | "error";
+import {
+  type StrategyType,
+  type StrategyProgressStep,
+  type LuloStrategy,
+  type StakingStrategy,
+} from "@/types/strategy-ui";
 
 export function getProgressMessage(step: StrategyProgressStep, strategy: StrategyType): string {
   switch (step) {

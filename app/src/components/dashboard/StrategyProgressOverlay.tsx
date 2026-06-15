@@ -1,8 +1,8 @@
 import {
   type StrategyType,
   type StrategyProgressStep,
-  getProgressMessage,
-} from "@/lib/strategies";
+} from "@/types/strategy-ui";
+import { getProgressMessage } from "@/lib/strategies";
 import { cn } from "@/lib/utils";
 import {
   Loader2,
@@ -11,13 +11,7 @@ import {
   Sprout,
   Timer,
 } from "lucide-react";
-
-interface StrategyProgressOverlayProps {
-  open: boolean;
-  strategyType: StrategyType;
-  step: StrategyProgressStep;
-  title?: string;
-}
+import { type StrategyProgressOverlayProps } from "@/types/strategy-ui";
 
 export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = ({
   open,

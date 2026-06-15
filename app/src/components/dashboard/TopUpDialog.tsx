@@ -3,17 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { Loader2, TrendingUp, X, Coins } from "lucide-react";
-
-interface TopUpDialogProps {
-  open: boolean;
-  symbol: string;
-  decimals: number;
-  vaultBalance: number; // ui units
-  walletBalance: number; // ui units
-  onConfirm: (amount: number) => void;
-  onCancel: () => void;
-  loading?: boolean;
-}
+import { type TopUpDialogProps } from "@/types/strategy-ui";
 
 export const TopUpDialog: React.FC<TopUpDialogProps> = ({
   open,

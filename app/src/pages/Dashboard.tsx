@@ -26,6 +26,8 @@ import { StakingEnableDialog } from "@/components/dashboard/StakingEnableDialog"
 import {
   type Strategy,
   type StrategyProgressStep,
+} from "@/types/strategy-ui";
+import {
   makePlaceholderLuloStrategy,
   makePlaceholderStakingStrategy,
 } from "@/lib/strategies";

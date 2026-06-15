@@ -11,15 +11,7 @@ import {
   Timer,
 } from "lucide-react";
 
-interface ValidatorOption {
-  id: string;
-  name: string;
-  apy: number;
-  commission: number; // percent
-  icon: React.ReactNode;
-  accent: string;
-  description: string;
-}
+import { type ValidatorOption, type StakingEnableDialogProps } from "@/types/strategy-ui";
 
 // TEMP: placeholder validator list — replace with live API before launch
 const VALIDATOR_OPTIONS: ValidatorOption[] = [
@@ -42,14 +34,6 @@ const VALIDATOR_OPTIONS: ValidatorOption[] = [
     description: "Liquid staking with mSOL — stay liquid while earning.",
   },
 ];
-
-interface StakingEnableDialogProps {
-  open: boolean;
-  solBalance: number;
-  onConfirm: (validatorId: string) => void;
-  onCancel: () => void;
-  loading?: boolean;
-}
 
 export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
   open,

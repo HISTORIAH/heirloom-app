@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import {
   type Strategy,
-} from "@/lib/strategies";
+} from "@/types/strategy-ui";
 import { cn } from "@/lib/utils";
 import {
   Landmark,
@@ -9,15 +9,7 @@ import {
   Loader2,
   Zap,
 } from "lucide-react";
-
-interface PreflightRecallDialogProps {
-  open: boolean;
-  strategies: Strategy[];
-  actionName: string; // "Claim" or "Emergency Withdraw"
-  onConfirm: () => void;
-  onCancel: () => void;
-  loading?: boolean;
-}
+import { type PreflightRecallDialogProps } from "@/types/strategy-ui";
 
 export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
   open,

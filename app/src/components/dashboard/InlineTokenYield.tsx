@@ -1,8 +1,8 @@
 import {
   type Strategy,
   type StrategyProgressStep,
-  getProgressMessage,
-} from "@/lib/strategies";
+} from "@/types/strategy-ui";
+import { getProgressMessage } from "@/lib/strategies";
 import { getYieldConfigByMint } from "@/lib/yieldTokens";
 import { formatTokenAmount, cn } from "@/lib/utils";
 import {
@@ -14,18 +14,7 @@ import {
   Zap,
   TrendingUp,
 } from "lucide-react";
-
-interface InlineTokenYieldProps {
-  mint: string;
-  symbol: string;
-  decimals: number;
-  vaultBalance: number; // ui units
-  strategy: Strategy | null;
-  onEnable: () => void;
-  onRecall: () => void;
-  loading?: boolean;
-  progressStep?: StrategyProgressStep;
-}
+import { type InlineTokenYieldProps } from "@/types/strategy-ui";
 
 export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
   mint,

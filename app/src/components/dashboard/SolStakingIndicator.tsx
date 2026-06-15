@@ -1,8 +1,8 @@
 import {
   type Strategy,
   type StrategyProgressStep,
-  getProgressMessage,
-} from "@/lib/strategies";
+} from "@/types/strategy-ui";
+import { getProgressMessage } from "@/lib/strategies";
 import { cn } from "@/lib/utils";
 import {
   Sprout,
@@ -11,15 +11,7 @@ import {
   CheckCircle2,
   Timer,
 } from "lucide-react";
-
-interface SolStakingIndicatorProps {
-  solBalance: number; // ui units (lamports / 1e9)
-  strategy: Strategy | null;
-  onEnable: () => void;
-  onRecall: () => void;
-  loading?: boolean;
-  progressStep?: StrategyProgressStep;
-}
+import { type SolStakingIndicatorProps } from "@/types/strategy-ui";
 
 export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
   solBalance,

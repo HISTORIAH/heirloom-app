@@ -14,7 +14,7 @@ import { USDC_DEVNET_MINT } from "@/lib/constants";
 
 export type Network = "mainnet" | "devnet";
 
-export interface YieldTokenConfig {
+export type YieldTokenConfig = {
   symbol: string;
   name: string;
   /** Mint address per network. Empty string means not deployed on that network yet. */

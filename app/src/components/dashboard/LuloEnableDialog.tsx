@@ -10,16 +10,7 @@ import {
   Zap,
   X,
 } from "lucide-react";
-
-interface LuloEnableDialogProps {
-  open: boolean;
-  tokenSymbol: string;
-  tokenMint: string;
-  vaultBalance: number;
-  onConfirm: (opts: { protected: boolean }) => void;
-  onCancel: () => void;
-  loading?: boolean;
-}
+import { type LuloEnableDialogProps } from "@/types/strategy-ui";
 
 export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
   open,

@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import {
+  type Strategy,
   type StrategyType,
-} from "@/lib/strategies";
+} from "@/types/strategy-ui";
 import { cn } from "@/lib/utils";
 import {
   Landmark,
@@ -10,16 +11,7 @@ import {
   ArrowLeftRight,
   X,
 } from "lucide-react";
-
-interface RecallConfirmDialogProps {
-  open: boolean;
-  strategyType: StrategyType;
-  tokenSymbol?: string;
-  routedAmount: number;
-  onConfirm: () => void;
-  onCancel: () => void;
-  loading?: boolean;
-}
+import { type RecallConfirmDialogProps } from "@/types/strategy-ui";
 
 export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
   open,
