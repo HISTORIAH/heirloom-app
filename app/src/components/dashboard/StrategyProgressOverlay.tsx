@@ -8,6 +8,8 @@ import {
   Loader2,
   CheckCircle2,
   Landmark,
+  Sprout,
+  Timer,
 } from "lucide-react";
 
 interface StrategyProgressOverlayProps {
@@ -28,9 +30,18 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
   const isComplete = step === "complete";
   const isError = step === "error";
   const isRecallFlow = step === "recalling" || step === "returning";
+  const isStaking = strategyType === "staking";
 
   const firstDone = isComplete || (isRecallFlow ? step === "returning" : step === "depositing");
   const secondDone = isComplete;
+
+  // Step labels — staking never mentions Lulo
+  const firstStepLabel = isRecallFlow
+    ? (isStaking ? "Undelegate" : "Lulo Withdraw")
+    : "Vault Withdraw";
+  const secondStepLabel = isRecallFlow
+    ? "Return to Vault"
+    : (isStaking ? "Delegate" : "Lulo Deposit");
 
   return (
     <div className="fixed inset-0 z-[80] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6">
@@ -39,13 +50,17 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
           <div
             className={cn(
               "neo-border rounded-full p-4 w-16 h-16 flex items-center justify-center",
-              isComplete ? "bg-accent-lime" : isError ? "bg-accent-red" : "bg-accent-purple",
+              isComplete ? "bg-accent-lime" : isError ? "bg-accent-red" : isStaking ? "bg-accent-lime" : "bg-accent-purple",
             )}
           >
             {isComplete ? (
               <CheckCircle2 className="h-8 w-8" strokeWidth={2.5} />
             ) : isError ? (
-              <Landmark className="h-8 w-8" strokeWidth={2.5} />
+              isStaking ? (
+                <Sprout className="h-8 w-8" strokeWidth={2.5} />
+              ) : (
+                <Landmark className="h-8 w-8" strokeWidth={2.5} />
+              )
             ) : (
               <Loader2 className="h-8 w-8 animate-spin" strokeWidth={2.5} />
             )}
@@ -59,6 +74,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
           {getProgressMessage(step, strategyType)}
         </p>
 
+        {/* Two-step progress */}
         <div className="flex items-center justify-center gap-3">
           <div className="flex flex-col items-center gap-2">
             <div
@@ -74,7 +90,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
               )}
             </div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {isRecallFlow ? (strategyType === "lulo" ? "Lulo Withdraw" : "Undelegate") : "Vault Withdraw"}
+              {firstStepLabel}
             </span>
           </div>
 
@@ -96,10 +112,23 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
               )}
             </div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {isRecallFlow ? "Return to Vault" : strategyType === "lulo" ? "Lulo Deposit" : "Stake"}
+              {secondStepLabel}
             </span>
           </div>
         </div>
+
+        {/* Epoch notice for staking */}
+        {isStaking && isComplete && (
+          <div className="mt-6 neo-border rounded-xl p-4 bg-accent-yellow/10 flex items-start gap-3">
+            <Timer className="h-5 w-5 shrink-0 mt-0.5 text-accent-yellow" strokeWidth={2.5} />
+            <div className="text-left">
+              <p className="text-sm font-bold">Delegation takes effect next epoch</p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                Staking rewards begin accruing after the next epoch boundary (~2–3 days). You can undelegate anytime, but rewards earned during the current epoch will be credited at epoch end.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

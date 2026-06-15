@@ -9,6 +9,7 @@ import {
   Loader2,
   ArrowLeftRight,
   CheckCircle2,
+  Timer,
 } from "lucide-react";
 
 interface SolStakingIndicatorProps {
@@ -69,6 +70,12 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
             Done
           </span>
         )}
+
+        {/* Epoch notice — always visible when staking is active */}
+        <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
+          <Timer className="h-3 w-3" />
+          Rewards accrue per epoch (~2–3 days)
+        </span>
       </div>
     );
   }

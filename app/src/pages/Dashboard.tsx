@@ -22,6 +22,7 @@ import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
 import { RecallConfirmDialog } from "@/components/dashboard/RecallConfirmDialog";
 import { StrategyProgressOverlay } from "@/components/dashboard/StrategyProgressOverlay";
 import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
+import { StakingEnableDialog } from "@/components/dashboard/StakingEnableDialog";
 import {
   type Strategy,
   type StrategyProgressStep,
@@ -135,8 +136,11 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [luloDialogOpen, setLuloDialogOpen] = useState(false);
   const [recallDialogOpen, setRecallDialogOpen] = useState(false);
   const [recallTarget, setRecallTarget] = useState<"lulo" | "staking" | null>(null);
+  const [activeStrategyType, setActiveStrategyType] = useState<"lulo" | "staking">("lulo");
   const [strategyProgress, setStrategyProgress] = useState<StrategyProgressStep>("idle");
   const [showProgressOverlay, setShowProgressOverlay] = useState(false);
+
+  const [stakingDialogOpen, setStakingDialogOpen] = useState(false);
 
   // TEMP: network-aware feature toggle for yield/staking.
   // Mainnet: always show. Devnet/local: only show if VITE_ENABLE_YIELD_STAKING_UI=true.
@@ -299,24 +303,29 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   };
 
   const handleEnableStaking = () => {
-    // Simulate staking enable flow (no dialog for now, single-step placeholder)
+    setActiveStrategyType("staking");
+    setStakingDialogOpen(true);
+  };
+
+  const handleConfirmStaking = async (validatorId: string) => {
+    setStakingDialogOpen(false);
     setShowProgressOverlay(true);
     setStrategyProgress("withdrawing");
 
-    // Step 1
-    setTimeout(() => {
-      setStrategyProgress("depositing");
-      // Step 2
-      setTimeout(() => {
-        setStrategyProgress("complete");
-        setStakingStrategy(makePlaceholderStakingStrategy({ amount: solVaultBalance }));
-        setTimeout(() => {
-          setShowProgressOverlay(false);
-          setStrategyProgress("idle");
-          toast({ title: "Staking enabled", description: "SOL is now delegated." });
-        }, 800);
-      }, 1500);
-    }, 1500);
+    // Step 1: simulate vault withdrawal
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("depositing");
+
+    // Step 2: simulate delegation to validator
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("complete");
+
+    setStakingStrategy(makePlaceholderStakingStrategy({ amount: solVaultBalance, validatorName: validatorId }));
+
+    await new Promise((r) => setTimeout(r, 800));
+    setShowProgressOverlay(false);
+    setStrategyProgress("idle");
+    toast({ title: "Staking enabled", description: `SOL delegated to ${validatorId}.` });
   };
 
   const handleCopyHeir = () => {
@@ -553,6 +562,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                           strategy={luloStrategy?.type === "lulo" && luloStrategy.mint === vt.mint ? luloStrategy : null}
                           onEnable={() => {
                             setLuloTargetMint(vt.mint);
+                            setActiveStrategyType("lulo");
                             setLuloDialogOpen(true);
                           }}
                           onRecall={handleRecallLulo}
@@ -610,6 +620,17 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         />
       )}
 
+      {/* Staking enable dialog */}
+      {showYieldStaking && (
+        <StakingEnableDialog
+          open={stakingDialogOpen}
+          solBalance={solVaultBalance}
+          onConfirm={handleConfirmStaking}
+          onCancel={() => setStakingDialogOpen(false)}
+          loading={showProgressOverlay}
+        />
+      )}
+
       {/* Recall confirmation dialog */}
       {showYieldStaking && (
         <RecallConfirmDialog
@@ -638,7 +659,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {showYieldStaking && (
         <StrategyProgressOverlay
           open={showProgressOverlay}
-          strategyType={recallTarget === "staking" ? "staking" : "lulo"}
+          strategyType={activeStrategyType}
           step={strategyProgress}
         />
       )}
