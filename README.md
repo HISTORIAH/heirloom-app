@@ -214,7 +214,7 @@ See [app-ika/README.md](./app-ika/README.md).
 
 - React 18 + TypeScript 5.8
 - Vite 6 (dev server + bundler)
-- Tailwind CSS 3 + `tailwindcss-animate` + `@tailwindcss/typography`
+- Tailwind CSS 3 + `tailwindcss-animate`
 - Radix UI primitives (Dialog, Toast, Tooltip, Slot)
 - `lucide-react` iconography
 - `react-router-dom` v6
