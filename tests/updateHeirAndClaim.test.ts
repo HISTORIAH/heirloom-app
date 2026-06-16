@@ -37,7 +37,7 @@ test("init → update heir → claim SOL with new heir", async () => {
   const { estate, vault } = await deriveEstateVault(authority.address, newHeir.address);
   expect(await accountExists(client, estate)).toBe(false);
   expect(await accountExists(client, vault)).toBe(false);
-}, 15_000);
+});
 
 test("init → update heir → claim token with new heir", async () => {
   const { client, authority } = await createTestContext();
@@ -91,4 +91,4 @@ test("init → update heir → claim token with new heir", async () => {
   });
 
   expect(newHeir.address).toBeTruthy();
-}, 15_000);
+});
