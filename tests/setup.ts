@@ -49,6 +49,7 @@ import {
   getDelegateDeferInstructionAsync,
   getRegisterAssetInstructionAsync,
   getUpdateFieldInstruction,
+  fetchEstate,
   findEstatePda,
   findVaultPda,
   TREASURY_ADDRESS,
@@ -111,7 +112,6 @@ export const signAndSendTransaction = async (
     skipPreflight: true,
   });
 
-  console.log("[DEBUG;] le signature ->", signature, "\n"); // ! debug
   return signature;
 };
 
@@ -250,6 +250,31 @@ export async function deriveEstateVault(authority: Address, heir: Address) {
     findVaultPda({ authority, heir }),
   ]);
   return { estate, vault };
+}
+
+export async function getLamportBalance(client: Client, account: Address): Promise<bigint> {
+  return (await client.rpc.getBalance(account, { commitment: "confirmed" }).send()).value;
+}
+
+export async function getTokenBalance(client: Client, tokenAccount: Address): Promise<bigint> {
+  const balance = await client.rpc
+    .getTokenAccountBalance(tokenAccount, { commitment: "confirmed" })
+    .send();
+  return BigInt(balance.value.amount);
+}
+
+export async function accountExists(client: Client, account: Address): Promise<boolean> {
+  return (
+    (await client.rpc.getAccountInfo(account, { commitment: "confirmed" }).send()).value !== null
+  );
+}
+
+export async function getEstate(client: Client, estate: Address) {
+  return fetchEstate(client.rpc, estate, { commitment: "confirmed" });
+}
+
+export function calculateFee(amount: bigint, basisPoints: bigint): bigint {
+  return (amount * basisPoints) / 10_000n;
 }
 
 // ---------------------------------------------------------------------------
