@@ -26,7 +26,6 @@ import Defer from "@/pages/Defer";
 import Heartbeat from "@/pages/Heartbeat";
 import NotFound from "@/pages/NotFound";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
-import Blog from "./pages/blog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const queryClient = new QueryClient();
@@ -79,8 +78,6 @@ const App = () => (
                 <Route path="/claim" element={<Claim />} />
                 <Route path="/defer" element={<Defer />} />
                 <Route path="/heartbeat" element={<Heartbeat />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<Blog />} />
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </TourProvider>
