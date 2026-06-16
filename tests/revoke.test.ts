@@ -79,7 +79,7 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
   const newHeir = await generateKeyPairSigner();
   const { mint } = await createAndMintTokens();
 
-  const { vault, estate } = await deriveEstateVault(authority.address, heir.address);
+  const { vault } = await deriveEstateVault(authority.address, heir.address);
   const { vaultTokenAccount, authorityTokenAccount, treasuryTokenAccount } =
     await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
 
