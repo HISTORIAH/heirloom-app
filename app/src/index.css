@@ -220,4 +220,76 @@
     0%, 100% { box-shadow: var(--shadow-md); }
     50% { box-shadow: var(--shadow-lg), 0 0 20px hsl(var(--accent-lime) / 0.3); }
   }
+
+  /* --- Heartbeat motif --- */
+  .ecg-track {
+    animation-name: ecgScroll;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes ecgScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .heartbeat-glow {
+    filter: drop-shadow(0 0 4px hsl(var(--accent-lime) / 0.55))
+            drop-shadow(0 0 10px hsl(var(--accent-lime) / 0.25));
+  }
+
+  .alive-dot { animation: aliveBeat 2.4s ease-in-out infinite; }
+  @keyframes aliveBeat {
+    0%, 100% { transform: scale(1); }
+    8% { transform: scale(1.4); }
+    16% { transform: scale(1); }
+    24% { transform: scale(1.25); }
+    32% { transform: scale(1); }
+  }
+
+  .pulse-ring { animation: pulseRing 2.4s ease-out infinite; }
+  @keyframes pulseRing {
+    0% { transform: scale(0.85); opacity: 0.6; }
+    70% { transform: scale(2); opacity: 0; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  .heart-pop { animation: heartPop 0.5s ease-out; }
+  @keyframes heartPop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.45); }
+    60% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+  }
+
+  .grid-fade {
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  /* Dark hairline grid for use on light backgrounds. */
+  .grid-fade-light {
+    background-image:
+      linear-gradient(hsl(0 0% 0% / 0.09) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 0% / 0.09) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .neo-fade-in { animation: fadeIn 0.6s ease-out both; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecg-track,
+  .alive-dot,
+  .pulse-ring,
+  .heart-pop,
+  .neo-slide-up,
+  .neo-fade-in {
+    animation: none !important;
+  }
 }

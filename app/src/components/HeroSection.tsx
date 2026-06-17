@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,11 +6,172 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Heart, Play, Activity } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
-import heroVault from "@/assets/Heirloomapp-hero.png";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import HeartbeatLine from "@/components/HeartbeatLine";
+
+type Phase = "active" | "grace" | "claimable";
+
+const ACTIVE_SECONDS = 30;
+const GRACE_SECONDS = 12;
+
+const PHASE_META: Record<
+  Phase,
+  { label: string; dot: string; line: string; accent: string }
+> = {
+  active: {
+    label: "Active",
+    dot: "bg-accent-lime",
+    line: "hsl(var(--accent-lime))",
+    accent: "text-accent-lime",
+  },
+  grace: {
+    label: "Grace Period",
+    dot: "bg-accent-yellow",
+    line: "hsl(var(--accent-yellow))",
+    accent: "text-accent-yellow",
+  },
+  claimable: {
+    label: "Claimable",
+    dot: "bg-accent-red",
+    line: "hsl(var(--accent-red))",
+    accent: "text-accent-red",
+  },
+};
+
+const fmt = (s: number) => {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+};
+
+// A miniature, interactive demo of the vault's heartbeat mechanic.
+// Let the timer run out to watch a vault flatline -> become claimable,
+// or hit "Send Heartbeat" to reset it. This *is* the product.
+const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
+  const [phase, setPhase] = useState<Phase>("active");
+  const [secs, setSecs] = useState(ACTIVE_SECONDS);
+  const [popKey, setPopKey] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSecs((prev) => {
+        if (prev > 1) return prev - 1;
+        // hit zero — advance phase
+        setPhase((ph) => {
+          if (ph === "active") return "grace";
+          if (ph === "grace") return "claimable";
+          return ph;
+        });
+        return 0;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // When a phase begins, seed its countdown.
+  useEffect(() => {
+    if (phase === "grace") setSecs(GRACE_SECONDS);
+    if (phase === "claimable") {
+      setSecs(0);
+      const t = setTimeout(() => {
+        setPhase("active");
+        setSecs(ACTIVE_SECONDS);
+      }, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  const sendHeartbeat = () => {
+    setPhase("active");
+    setSecs(ACTIVE_SECONDS);
+    setPopKey((k) => k + 1);
+    onBeat();
+  };
+
+  const meta = PHASE_META[phase];
+  const isDead = phase === "claimable";
+
+  return (
+    <div className="neo-card-static w-full max-w-md rounded-2xl border-foreground/15 bg-[hsl(0_0%_8%)] p-0 text-background shadow-none">
+      {/* Monitor header */}
+      <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/50">
+          <Activity className="h-4 w-4" />
+          Vault Monitor
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span
+              className={`absolute inline-flex h-full w-full rounded-full ${meta.dot} pulse-ring`}
+            />
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${meta.dot}`} />
+          </span>
+          <span className={`text-xs font-black uppercase tracking-widest ${meta.accent}`}>
+            {meta.label}
+          </span>
+        </div>
+      </div>
+
+      {/* ECG trace — the same continuous line passes through this window:
+          fades in as it enters on the left, out as it exits on the right. */}
+      <div className="relative h-28 overflow-hidden bg-[hsl(0_0%_5%)]">
+        <HeartbeatLine
+          color={meta.line}
+          glow={!isDead}
+          flat={isDead}
+          speed={phase === "grace" ? 5 : 8}
+          strokeWidth={2}
+          className="absolute inset-0"
+        />
+        {/* entry / exit fades */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-[hsl(0_0%_5%)] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-[hsl(0_0%_5%)] to-transparent" />
+        {isDead && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="bg-accent-red px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-background">
+              Flatline
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Readout */}
+      <div className="space-y-5 px-6 py-6">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+              {isDead ? "Heirs may now claim" : "Next heartbeat due in"}
+            </p>
+            <p className="mt-1 font-display text-4xl font-black tabular-nums tracking-tight">
+              {isDead ? "00:00" : fmt(secs)}
+            </p>
+          </div>
+          <Heart
+            key={popKey}
+            className={`heart-pop h-9 w-9 ${meta.accent}`}
+            fill="currentColor"
+            strokeWidth={0}
+          />
+        </div>
+
+        <Button
+          variant={isDead ? "outline" : "lime"}
+          size="lg"
+          className="w-full"
+          style={isDead ? undefined : { backgroundColor: "#FFD600" }}
+          onClick={sendHeartbeat}
+        >
+          <Heart className="h-5 w-5" fill="currentColor" strokeWidth={0} />
+          {isDead ? "Revive Demo" : "Send Heartbeat"}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
@@ -21,8 +182,6 @@ const HeroSection = () => {
 
   const handleLaunch = () => {
     track("launch_app_clicked", { connected: isConnected });
-    // Launch App walks new visitors through the app tour (no wallet needed).
-    // Connected users jump straight to creating a vault.
     if (isConnected) {
       navigate("/create-vault");
     } else {
@@ -32,54 +191,71 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden py-16 px-6 md:py-24 lg:py-32">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8 flex justify-start">
-          <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em]">
-            Solana Inheritance Protocol
-          </span>
-        </div>
+    <section className="relative overflow-hidden bg-background text-foreground">
+      {/* Ambient layers — tuned for white: dark hairline grid + faint black
+          ECG, both masked so they fade toward the center behind the text. */}
+      <div className="grid-fade-light pointer-events-none absolute inset-0 [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
+      <HeartbeatLine
+        color="hsl(var(--foreground))"
+        speed={9}
+        strokeWidth={1.5}
+        className="pointer-events-none absolute inset-x-0 top-1/2 h-40 -translate-y-1/2 opacity-[0.06] [-webkit-mask-image:linear-gradient(90deg,transparent,black_15%,black_85%,transparent)] [mask-image:linear-gradient(90deg,transparent,black_15%,black_85%,transparent)]"
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="relative mx-auto flex max-w-7xl items-center px-6 py-20 md:py-24 lg:min-h-[60vh] lg:py-24">
+        <div className="grid w-full grid-cols-1 items-center gap-14 lg:grid-cols-2">
           <div className="neo-slide-up">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tight mb-6">
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
+              Solana Inheritance Protocol
+            </span>
+
+            <h1 className="mt-7 font-display text-5xl font-black leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
               Protect your{" "}
-              <span className="bg-accent-pink px-3 inline-block rotate-[-1deg]">assets.</span> Pass
-              it on{" "}
-              <span className="bg-accent-lime px-3 inline-block rotate-[1deg]">trustlessly.</span>
+              <span className="px-3 text-foreground" style={{ backgroundColor: "#FF4FD8" }}>
+                assets.
+              </span>{" "}
+              Pass it on{" "}
+              <span className="px-3 text-foreground" style={{ backgroundColor: "#FF7A00" }}>
+                trustlessly.
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl font-medium leading-relaxed mb-10 max-w-xl">
-              Lock assets into a heartbeat vault on Solana. Check in periodically -- or your heirs
-              inherit automatically. No lawyers. No custodians. No seed phrase sharing.
+
+            <p className="mt-7 max-w-xl text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">
+              Lock assets into a heartbeat vault on Solana. Check in periodically — or
+              your heirs inherit automatically. No lawyers. No custodians. No seed
+              phrase sharing.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Button variant="lime" size="xl" onClick={handleLaunch}>
+
+            <div className="mt-9 flex flex-wrap gap-4">
+              <Button
+                variant="lime"
+                size="xl"
+                style={{ backgroundColor: "#FFD600" }}
+                onClick={handleLaunch}
+              >
                 {isConnected ? "Create Vault" : "Launch Tour"}
               </Button>
               <Button
                 variant="outline"
                 size="xl"
+                className="bg-transparent text-foreground !border-2 !border-foreground/25 !shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 hover:bg-foreground/5 hover:!border-foreground/60 active:!translate-x-0 active:!translate-y-0"
                 onClick={() => {
                   track("demo_opened", { source: "hero" });
                   setDemoOpen(true);
                 }}
               >
+                <Play className="h-5 w-5" fill="currentColor" strokeWidth={0} />
                 View Demo
               </Button>
             </div>
+
           </div>
 
           <div
-            className="relative flex justify-center lg:justify-end neo-slide-up"
+            className="neo-slide-up flex justify-center lg:justify-end"
             style={{ animationDelay: "0.15s" }}
           >
-            <div className="neo-card-static rotate-[2deg] max-w-md w-full hover:rotate-[0deg] transition-transform duration-300">
-              <img
-                src={heroVault}
-                alt="Heirloom Vault with heartbeat pulse"
-                className="w-full h-auto"
-              />
-            </div>
+            <LiveVaultMonitor onBeat={() => track("hero_heartbeat_demo")} />
           </div>
         </div>
       </div>

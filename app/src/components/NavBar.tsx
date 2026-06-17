@@ -125,7 +125,13 @@ const NavBar = () => {
                   )}
                 </div>
             ) : (
-              <Button variant="lime" size="sm" onClick={() => setWalletDialogOpen(true)}>
+              <Button
+                variant="lime"
+                size="sm"
+                style={{ backgroundColor: "#FFD600" }}
+                className="!shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 active:!translate-x-0 active:!translate-y-0 hover:brightness-95"
+                onClick={() => setWalletDialogOpen(true)}
+              >
                 Connect Wallet
               </Button>
             )}
@@ -216,7 +222,8 @@ const NavBar = () => {
               <Button
                 variant="lime"
                 size="lg"
-                className="w-full"
+                style={{ backgroundColor: "#FFD600" }}
+                className="w-full !shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 active:!translate-x-0 active:!translate-y-0 hover:brightness-95"
                 onClick={() => {
                   setOpen(false);
                   setWalletDialogOpen(true);
