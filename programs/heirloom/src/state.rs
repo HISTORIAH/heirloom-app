@@ -70,3 +70,10 @@ impl Vault {
     + 32                             // estate
     + 1; // bump
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, PartialEq, Eq, Copy, Clone)]
+#[borsh(use_discriminant = true)]
+pub enum DepositType {
+    Protected = 0,
+    Boosted = 1,
+}

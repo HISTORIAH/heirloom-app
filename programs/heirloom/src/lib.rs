@@ -82,4 +82,12 @@ pub mod heirloom {
     pub fn update_heir(ctx: Context<UpdateHeir>) -> Result<()> {
         UpdateHeir::update_heir_handler(ctx)
     }
+
+    pub fn deploy_yield<'info>(
+        ctx: Context<'info, DeployYield<'info>>,
+        amount: u64,
+        deposit_type: DepositType,
+    ) -> Result<()> {
+        DeployYield::deploy_yield_handler(ctx, amount, deposit_type)
+    }
 }
