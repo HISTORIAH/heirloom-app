@@ -17,6 +17,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { VaultProvider } from "@/contexts/VaultContext";
 import { TourProvider } from "@/contexts/TourContext";
 import AppTour from "@/components/tour/AppTour";
+import Seo from "@/components/Seo";
 
 import Index from "@/pages/Index";
 import CreateVault from "@/pages/CreateVault";
@@ -59,6 +60,34 @@ const RouteAnalytics = () => {
   return null;
 };
 
+// Per-route head tags. Only the marketing homepage is indexable; every other
+// route is wallet-gated and per-user, so it carries a noindex directive.
+const ROUTE_SEO: Record<string, { title: string; description?: string; noindex?: boolean }> = {
+  "/": {
+    title: "Heirloom — Solana Inheritance Protocol & Crypto Vault",
+    description:
+      "A Solana inheritance protocol for self-custody continuity. Lock SOL & SPL tokens in a heartbeat vault, check in to prove life, or your heirs inherit on-chain — trustless, non-custodial.",
+  },
+  "/create-vault": { title: "Create a Vault | Heirloom", noindex: true },
+  "/dashboard": { title: "Vault Dashboard | Heirloom", noindex: true },
+  "/claim": { title: "Claim Inheritance | Heirloom", noindex: true },
+  "/defer": { title: "Defer Vault | Heirloom", noindex: true },
+  "/heartbeat": { title: "Send a Heartbeat | Heirloom", noindex: true },
+};
+
+const RouteSeo = () => {
+  const { pathname } = useLocation();
+  const meta = ROUTE_SEO[pathname] ?? { title: "Page Not Found | Heirloom", noindex: true };
+  return (
+    <Seo
+      title={meta.title}
+      description={meta.description}
+      path={pathname}
+      noindex={meta.noindex}
+    />
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -69,6 +98,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <RouteAnalytics />
+              <RouteSeo />
               <TourProvider>
                 <AppTour />
                 <Routes>

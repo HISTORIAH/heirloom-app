@@ -4,23 +4,150 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="https://heirlm.xyz/" />
     <title>Heirloom - Digital Asset Inheritance on Solana</title>
-    <meta name="description" content="Protect your SOL and tokens. Pass them on trustlessly. Heartbeat-based inheritance vaults on Solana." />
+    <meta name="description" content="A Solana inheritance protocol for self-custody continuity. Lock Digital assets & SPL tokens in a heartbeat vault, check in to prove life, or your heirs inherit on-chain — trustless, non-custodial." />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Heirloom" />
     <meta property="og:url" content="https://heirlm.xyz/" />
-    <meta property="og:title" content="Heirloom - Digital Asset Inheritance on Solana" />
-    <meta property="og:description" content="Your wallet should outlive you — even if your seed phrase doesn't. Heartbeat-based inheritance vaults on Solana." />
+    <title>Heirloom - Digital Asset Inheritance on Solana</title>
+    <meta property="og:description" content="Trustless, heartbeat-based crypto inheritance estates on Solana." />
     <meta property="og:image" content="https://heirlm.xyz/og-image.png" />
     <meta property="og:image:width" content="2373" />
     <meta property="og:image:height" content="1326" />
     <meta property="og:image:alt" content="Heirloom — your wallet should outlive you, even if your seed phrase doesn't." />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Heirloom - Digital Asset Inheritance on Solana" />
-    <meta name="twitter:description" content="Your wallet should outlive you — even if your seed phrase doesn't. Heartbeat-based inheritance vaults on Solana." />
+    <meta name="twitter:title" content="Heirloom — Solana Inheritance Protocol & Crypto Vault" />
+    <meta name="twitter:description" content="Your wallet should outlive you — even if your seed phrase doesn't. Trustless, heartbeat-based crypto inheritance vaults on Solana." />
     <meta name="twitter:image" content="https://heirlm.xyz/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://heirlm.xyz/#organization",
+            "name": "Heirloom",
+            "url": "https://heirlm.xyz/",
+            "logo": "https://heirlm.xyz/favicon.png",
+            "description": "Heirloom is a Solana-native inheritance protocol. Lock assets into a heartbeat vault, check in periodically, or your heirs inherit automatically — no custodians, no seed-phrase sharing.",
+            "sameAs": [
+              "https://x.com/heirloom_app",
+              "https://github.com/HISTORIAH/Heirloom-app",
+              "https://docs.heirlm.xyz/"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://heirlm.xyz/#website",
+            "url": "https://heirlm.xyz/",
+            "name": "Heirloom",
+            "description": "Heartbeat-based digital asset inheritance vaults on Solana.",
+            "publisher": { "@id": "https://heirlm.xyz/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://heirlm.xyz/#app",
+            "name": "Heirloom",
+            "url": "https://heirlm.xyz/",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web, Solana",
+            "description": "A trustless, on-chain inheritance protocol on Solana for self-custody continuity. Lock SOL and SPL tokens into a heartbeat vault with proof-of-life check-ins, a grace period, and optional guardian recovery; if you stop checking in, your designated heirs inherit their on-chain beneficiary splits automatically — non-custodial, with no seed-phrase sharing.",
+            "keywords": "Solana inheritance protocol, digital asset inheritance, crypto inheritance vault, on-chain inheritance, trustless inheritance, heartbeat vault, self-custody continuity, crypto estate planning, SOL inheritance, SPL token inheritance, proof-of-life check-in, guardian recovery wallet, programmable inheritance, non-custodial inheritance",
+            "publisher": { "@id": "https://heirlm.xyz/#organization" },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free to create a vault and send heartbeats; standard Solana network fees apply. Inheritance claims incur a 0.75% protocol fee and emergency withdrawals a 0.5% fee."
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://heirlm.xyz/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What happens if I lose access to my wallet?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "If you cannot send heartbeats, the vault will naturally transition through the grace period and become claimable by your heirs. This is the intended behavior -- the vault interprets prolonged silence as incapacitation. If you have a guardian set, they can extend the grace period by 30 days to give you more time to recover access."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I change my heirs after creating a vault?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. As the vault owner, you can call update-heirs at any time while the vault is active. You can change addresses, adjust percentage splits, add or remove beneficiaries -- as long as the new splits sum to exactly 100%."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What does a heartbeat cost?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A heartbeat costs only the standard Solana network transaction fee (typically a fraction of a cent). There is no protocol fee for sending heartbeats."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What are the protocol fees?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Inheritance claims incur a 0.75% protocol fee, and emergency withdrawals incur a 0.5% fee. These fees are deducted automatically from the vault assets and sent to the protocol treasury. Heartbeats and vault creation have no protocol fee."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can my heirs claim early?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The claim function enforces that the full heartbeat interval plus the grace period must have elapsed. Until that deadline passes, the contract will reject any claim attempt. The vault state is computed from on-chain timestamps, so it cannot be spoofed."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the guardian role?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A guardian is an optional trusted address you can designate when creating your vault. If your vault enters the grace period, the guardian can trigger a one-time pause that extends the deadline by 30 days. The guardian cannot withdraw funds, change heirs, or interact with the vault in any other way."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What tokens can I deposit?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Heirloom supports any two SPL tokens configured at vault creation. Each heir receives their percentage share of both tokens when they claim."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is this a legal will?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Heirloom is a programmable self-custody continuity tool, not a legal document. It operates entirely on-chain through an Anchor program on Solana. It does not interact with any legal system or jurisdiction. Consider it a complement to -- not a replacement for -- traditional estate planning."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I get my assets back after creating a vault?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, at any time before the vault is fully distributed. The emergency-withdraw function returns all tokens to your wallet and permanently closes the vault. You retain full control for as long as the vault is active."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

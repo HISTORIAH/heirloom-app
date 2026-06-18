@@ -1,0 +1,12 @@
+# https://heirlm.xyz
+User-agent: *
+Allow: /
+
+# Wallet-gated, per-user app routes — no public/indexable content
+Disallow: /dashboard
+Disallow: /create-vault
+Disallow: /claim
+Disallow: /defer
+Disallow: /heartbeat
+
+Sitemap: https://heirlm.xyz/sitemap.xml
