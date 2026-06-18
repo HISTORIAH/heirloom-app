@@ -144,7 +144,8 @@ heirloom-app/
 │   ├── src/
 │   │   ├── pages/            Index, CreateVault, Dashboard, Claim,
 │   │   │                     Defer, Heartbeat, NotFound
-│   │   ├── components/       Landing sections (Hero, HowItWorks,
+│   │   ├── components/       Landing sections (Hero with live vault
+│   │   │   │                 demo + HeartbeatLine, HowItWorks,
 │   │   │   │                 VaultLifecycle, WhySolana, Comparison, FAQ,
 │   │   │   │                 CTA, Footer, NavBar) + reusable UI
 │   │   │   │                 (TokenAvatar, WalletPill, ConfirmDialog,
@@ -154,7 +155,8 @@ heirloom-app/
 │   │   │   │                 ReassignHeir sections
 │   │   │   ├── tour/         Guided onboarding tour (react-joyride)
 │   │   │   └── ui/           Radix-based primitives
-│   │   ├── contexts/         WalletContext, VaultContext, TourContext
+│   │   ├── contexts/         WalletContext, VaultContext, TourContext,
+│   │   │                     AnalyticsContext
 │   │   ├── hooks/            useTokenBalances, useTokenMetadata,
 │   │   │                     useWalletSplTokens, use-mobile, use-toast
 │   │   ├── lib/
@@ -163,12 +165,16 @@ heirloom-app/
 │   │   │   ├── ix.ts, anchor.ts, amountInput.ts  Tx + input helpers
 │   │   │   ├── estateLookup.ts, estateState.ts  Discovery + state math
 │   │   │   ├── heliusDas.ts  Helius DAS API client for token enrichment
+│   │   │   ├── analytics.ts  PostHog product analytics wrapper
 │   │   │   └── utils.ts
-│   │   └── config/index.ts   RPC endpoint configuration
+│   │   └── config/index.ts   RPC + analytics configuration
 │   ├── vite.config.ts
 │   └── tailwind.config.ts
 │
 ├── app-ika/                  Cross-chain IKA frontend (see app-ika/README.md)
+│
+├── waitlist/                 Marketing + waitlist landing site (deployed
+│                             to Cloudflare Pages via Wrangler)
 │
 ├── packages/                 Shared workspace packages
 │
@@ -221,6 +227,7 @@ See [app-ika/README.md](./app-ika/README.md).
 - `@tanstack/react-query` for async state
 - `sonner` for transient toasts
 - `react-joyride` for the guided onboarding tour
+- `posthog-js` + `@posthog/react` for opt-in product analytics
 
 **Solana integration**
 
@@ -235,6 +242,7 @@ See [app-ika/README.md](./app-ika/README.md).
 - Bun (root package manager and test runner for the TypeScript integration suite)
 - Anchor CLI (program build, IDL emission, deploy, localnet)
 - Turborepo (monorepo task pipeline)
+- Wrangler (Cloudflare Pages deploy for the waitlist site)
 
 ## On-Chain Instructions
 
