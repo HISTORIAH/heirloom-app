@@ -293,8 +293,9 @@ bun generate:heirloom   # heirloom only
 ### Run the frontend
 
 ```bash
-bun dev:ui     # heirloom app
-bun dev:ika    # IKA app
+bun dev:ui        # heirloom app
+bun dev:ika       # IKA app
+bun dev:waitlist  # marketing + waitlist site
 ```
 
 Vite serves the app on `http://localhost:5173`. By default the app talks to a local validator; override the RPC endpoints with environment variables:
@@ -305,6 +306,13 @@ VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT=ws://127.0.0.1:8900
 ```
 
 Point these at a devnet (or Helius) RPC to run against devnet. The program ID and treasury address are baked into the generated client, not the app's environment.
+
+Product analytics are opt-in and disabled by default. To enable PostHog, set:
+
+```bash
+VITE_ANALYTICS_ENABLED=true
+VITE_POSTHOG_PROJECT_TOKEN=<your-project-token>
+```
 
 ### Run the tests
 
@@ -321,10 +329,11 @@ bun test
 ### Build and deploy
 
 ```bash
-bun build:ui      # build the heirloom app
-bun build:ika     # build the IKA app
+bun build:ui        # build the heirloom app
+bun build:ika       # build the IKA app
+bun build:waitlist  # build the waitlist site
 
-anchor deploy     # deploy the program to the configured cluster
+anchor deploy       # deploy the program to the configured cluster
 ```
 
 The default Anchor cluster is `localnet` (see `Anchor.toml`); switch the `[provider] cluster` or pass `--provider.cluster devnet` to deploy elsewhere.
