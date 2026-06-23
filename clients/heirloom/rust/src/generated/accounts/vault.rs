@@ -43,7 +43,7 @@ impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for Vault {
 
 #[cfg(feature = "fetch")]
 pub fn fetch_vault(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   address: &solana_address::Address,
 ) -> Result<crate::shared::DecodedAccount<Vault>, std::io::Error> {
   let accounts = fetch_all_vault(rpc, &[*address])?;
@@ -52,7 +52,7 @@ pub fn fetch_vault(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_all_vault(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   addresses: &[solana_address::Address],
 ) -> Result<Vec<crate::shared::DecodedAccount<Vault>>, std::io::Error> {
     let accounts = rpc.get_multiple_accounts(addresses)
@@ -70,7 +70,7 @@ pub fn fetch_all_vault(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_maybe_vault(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   address: &solana_address::Address,
 ) -> Result<crate::shared::MaybeAccount<Vault>, std::io::Error> {
     let accounts = fetch_all_maybe_vault(rpc, &[*address])?;
@@ -79,7 +79,7 @@ pub fn fetch_maybe_vault(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_all_maybe_vault(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   addresses: &[solana_address::Address],
 ) -> Result<Vec<crate::shared::MaybeAccount<Vault>>, std::io::Error> {
     let accounts = rpc.get_multiple_accounts(addresses)

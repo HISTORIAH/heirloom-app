@@ -51,9 +51,11 @@ import {
   type ReadonlyUint8Array,
 } from "@solana/kit";
 
-export const ESTATE_DISCRIMINATOR = new Uint8Array([193, 23, 206, 61, 104, 225, 211, 221]);
+export const ESTATE_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  193, 23, 206, 61, 104, 225, 211, 221,
+]);
 
-export function getEstateDiscriminatorBytes() {
+export function getEstateDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(ESTATE_DISCRIMINATOR);
 }
 

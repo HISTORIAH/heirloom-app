@@ -83,11 +83,33 @@ pub mod heirloom {
         UpdateHeir::update_heir_handler(ctx)
     }
 
-    pub fn deploy_yield<'info>(
-        ctx: Context<'info, DeployYield<'info>>,
+    pub fn deposit_lulo<'info>(
+        ctx: Context<'info, DepositLulo<'info>>,
         amount: u64,
         deposit_type: DepositType,
     ) -> Result<()> {
-        DeployYield::deploy_yield_handler(ctx, amount, deposit_type)
+        DepositLulo::deploy_yield_handler(ctx, amount, deposit_type)
+    }
+
+    pub fn withdraw_protected_lulo<'info>(
+        ctx: Context<'info, WithdrawProtected<'info>>,
+        amount: u64,
+    ) -> Result<()> {
+        WithdrawProtected::withdraw_protected_handler(ctx, amount)
+    }
+
+    pub fn init_withdraw_regular_lulo<'info>(
+        ctx: Context<'info, InitWithdrawRegular<'info>>,
+        withdrawal_id: u16,
+        amount: u64,
+    ) -> Result<()> {
+        InitWithdrawRegular::init_withdraw_regular_handler(ctx, withdrawal_id, amount)
+    }
+
+    pub fn complete_withdraw_regular_lulo<'info>(
+        ctx: Context<'info, CompleteWithdrawRegular<'info>>,
+        withdrawal_id: u16,
+    ) -> Result<()> {
+        CompleteWithdrawRegular::complete_regular_withdraw_handler(ctx, withdrawal_id)
     }
 }

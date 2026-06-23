@@ -42,9 +42,11 @@ import {
 import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 
-export const REGISTER_ASSET_DISCRIMINATOR = new Uint8Array([21, 80, 155, 149, 117, 207, 235, 16]);
+export const REGISTER_ASSET_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  21, 80, 155, 149, 117, 207, 235, 16,
+]);
 
-export function getRegisterAssetDiscriminatorBytes() {
+export function getRegisterAssetDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(REGISTER_ASSET_DISCRIMINATOR);
 }
 
@@ -61,6 +63,7 @@ export type RegisterAssetInstruction<
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
     "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+  TAccountRent extends string | AccountMeta<string> = "SysvarRent111111111111111111111111111111111",
   TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -86,6 +89,7 @@ export type RegisterAssetInstruction<
       TAccountAssociatedTokenProgram extends string
         ? ReadonlyAccount<TAccountAssociatedTokenProgram>
         : TAccountAssociatedTokenProgram,
+      TAccountRent extends string ? ReadonlyAccount<TAccountRent> : TAccountRent,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -134,6 +138,7 @@ export type RegisterAssetAsyncInput<
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
+  TAccountRent extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
@@ -145,6 +150,7 @@ export type RegisterAssetAsyncInput<
   mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  rent?: Address<TAccountRent>;
   systemProgram?: Address<TAccountSystemProgram>;
   amount: RegisterAssetInstructionDataArgs["amount"];
 };
@@ -159,6 +165,7 @@ export async function getRegisterAssetInstructionAsync<
   TAccountMint extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
+  TAccountRent extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
@@ -172,6 +179,7 @@ export async function getRegisterAssetInstructionAsync<
     TAccountMint,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
+    TAccountRent,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -187,6 +195,7 @@ export async function getRegisterAssetInstructionAsync<
     TAccountMint,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
+    TAccountRent,
     TAccountSystemProgram
   >
 > {
@@ -204,6 +213,7 @@ export async function getRegisterAssetInstructionAsync<
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
+    rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -235,6 +245,10 @@ export async function getRegisterAssetInstructionAsync<
     accounts.associatedTokenProgram.value =
       "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
   }
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -252,6 +266,7 @@ export async function getRegisterAssetInstructionAsync<
       getAccountMeta("mint", accounts.mint),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
+      getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getRegisterAssetInstructionDataEncoder().encode(args as RegisterAssetInstructionDataArgs),
@@ -267,6 +282,7 @@ export async function getRegisterAssetInstructionAsync<
     TAccountMint,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
+    TAccountRent,
     TAccountSystemProgram
   >);
 }
@@ -281,6 +297,7 @@ export type RegisterAssetInput<
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
+  TAccountRent extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
@@ -292,6 +309,7 @@ export type RegisterAssetInput<
   mint?: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  rent?: Address<TAccountRent>;
   systemProgram?: Address<TAccountSystemProgram>;
   amount: RegisterAssetInstructionDataArgs["amount"];
 };
@@ -306,6 +324,7 @@ export function getRegisterAssetInstruction<
   TAccountMint extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
+  TAccountRent extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
@@ -319,6 +338,7 @@ export function getRegisterAssetInstruction<
     TAccountMint,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
+    TAccountRent,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -333,6 +353,7 @@ export function getRegisterAssetInstruction<
   TAccountMint,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
+  TAccountRent,
   TAccountSystemProgram
 > {
   // Program address.
@@ -349,6 +370,7 @@ export function getRegisterAssetInstruction<
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
+    rent: { value: input.rent ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -368,6 +390,10 @@ export function getRegisterAssetInstruction<
     accounts.associatedTokenProgram.value =
       "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">;
   }
+  if (!accounts.rent.value) {
+    accounts.rent.value =
+      "SysvarRent111111111111111111111111111111111" as Address<"SysvarRent111111111111111111111111111111111">;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -385,6 +411,7 @@ export function getRegisterAssetInstruction<
       getAccountMeta("mint", accounts.mint),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
+      getAccountMeta("rent", accounts.rent),
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getRegisterAssetInstructionDataEncoder().encode(args as RegisterAssetInstructionDataArgs),
@@ -400,6 +427,7 @@ export function getRegisterAssetInstruction<
     TAccountMint,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
+    TAccountRent,
     TAccountSystemProgram
   >);
 }
@@ -419,7 +447,8 @@ export type ParsedRegisterAssetInstruction<
     mint?: TAccountMetas[6] | undefined;
     tokenProgram: TAccountMetas[7];
     associatedTokenProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
+    rent: TAccountMetas[9];
+    systemProgram: TAccountMetas[10];
   };
   data: RegisterAssetInstructionData;
 };
@@ -432,10 +461,10 @@ export function parseRegisterAssetInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRegisterAssetInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 11) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 10,
+      expectedAccountMetas: 11,
     });
   }
   let accountIndex = 0;
@@ -460,6 +489,7 @@ export function parseRegisterAssetInstruction<
       mint: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
+      rent: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getRegisterAssetInstructionDataDecoder().decode(instruction.data),

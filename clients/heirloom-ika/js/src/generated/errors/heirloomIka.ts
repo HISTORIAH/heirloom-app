@@ -66,7 +66,7 @@ export type HeirloomIkaError =
   | typeof HEIRLOOM_IKA_ERROR__UNAUTHORIZED;
 
 let heirloomIkaErrorMessages: Record<HeirloomIkaError, string> | undefined;
-if (process.env.NODE_ENV !== "production") {
+if (process.env["NODE_ENV"] !== "production") {
   heirloomIkaErrorMessages = {
     [HEIRLOOM_IKA_ERROR__D_WALLET_NOT_OWNED_BY_IKA]: `dWallet not owned by Ika`,
     [HEIRLOOM_IKA_ERROR__ESTATE_ALREADY_CLAIMED]: `Estate already claimed`,
@@ -88,7 +88,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export function getHeirloomIkaErrorMessage(code: HeirloomIkaError): string {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env["NODE_ENV"] !== "production") {
     return (heirloomIkaErrorMessages as Record<HeirloomIkaError, string>)[code];
   }
 

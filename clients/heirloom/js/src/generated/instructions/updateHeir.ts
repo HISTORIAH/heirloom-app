@@ -40,9 +40,11 @@ import {
 import { findEstatePda, findNewEstatePda, findNewVaultPda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 
-export const UPDATE_HEIR_DISCRIMINATOR = new Uint8Array([191, 56, 217, 86, 255, 50, 93, 128]);
+export const UPDATE_HEIR_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  191, 56, 217, 86, 255, 50, 93, 128,
+]);
 
-export function getUpdateHeirDiscriminatorBytes() {
+export function getUpdateHeirDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(UPDATE_HEIR_DISCRIMINATOR);
 }
 

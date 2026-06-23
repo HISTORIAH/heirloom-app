@@ -1,10 +1,20 @@
 use anchor_lang::prelude::*;
 
 pub const CLAIM_FEE_BPS: u16 = 75;
+
 pub const EMERGENCY_EXIT_FEE_BPS: u16 = 50;
 
 // TEMP! for testing
 pub const TREASURY: Pubkey = pubkey!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q");
 
-// from: https://github.com/lulo-labs/lulo-v2-cpi/blob/8a5ef7fa489f44572f27aa2715b4bd706bd27c81/programs/defi_program/src/accts.rs#L6-L7
-pub const LULO_MAIN_POOL_ADDRESS: Pubkey = pubkey!("A2qdjcuacp6gMVi8TxmEb2vsMZsHqCjM9CGjFeJ2bb2z");
+pub const KAMINO_PROGRAM_ID: Pubkey = pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD");
+
+pub const KAMINO_FARMS_PROGRAM_ID: Pubkey = pubkey!("FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr");
+
+pub const SCOPE_PRICES_PROGRAM_ID: Pubkey = pubkey!("HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ");
+
+pub const KAMINO_PROTOCOL_AUTHORITY: Pubkey =
+    pubkey!("4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR");
+
+pub const KAMINO_PROTOCOL_TOKEN_ACCOUNT: Pubkey =
+    pubkey!("mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx");

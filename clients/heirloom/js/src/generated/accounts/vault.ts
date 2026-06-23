@@ -37,9 +37,11 @@ import {
   type ReadonlyUint8Array,
 } from "@solana/kit";
 
-export const VAULT_DISCRIMINATOR = new Uint8Array([211, 8, 232, 43, 2, 152, 117, 119]);
+export const VAULT_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  211, 8, 232, 43, 2, 152, 117, 119,
+]);
 
-export function getVaultDiscriminatorBytes() {
+export function getVaultDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(VAULT_DISCRIMINATOR);
 }
 

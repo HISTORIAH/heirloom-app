@@ -43,6 +43,7 @@ pub struct RegisterAsset<'info> {
 
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
 
@@ -85,6 +86,13 @@ impl<'info> RegisterAsset<'info> {
                 let cpi_context = CpiContext::new(token_program_addr, cpi_accounts);
 
                 token_interface::transfer_checked(cpi_context, amount, mint.decimals)?;
+
+                ctx.accounts.estate.claimable_assets = ctx
+                    .accounts
+                    .estate
+                    .claimable_assets
+                    .checked_add(1)
+                    .ok_or(ProgramError::ArithmeticOverflow)?;
             }
             None => {
                 let cpi_accounts = system_program::Transfer {
@@ -98,13 +106,6 @@ impl<'info> RegisterAsset<'info> {
                 system_program::transfer(cpi_context, amount)?;
             }
         }
-
-        ctx.accounts.estate.claimable_assets = ctx
-            .accounts
-            .estate
-            .claimable_assets
-            .checked_add(1)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
 
         Ok(())
     }
@@ -129,6 +130,15 @@ impl<'info> RegisterAsset<'info> {
                 if self.vault_token_account.is_some() || self.authority_token_account.is_some() {
                     return err!(HeirloomError::MissingTokenAccounts);
                 }
+
+                let vault_sol_bal = self.vault.get_lamports();
+                let vault_rent_bal = self
+                    .rent
+                    .minimum_balance(self.vault.to_account_info().data_len());
+                require!(
+                    vault_sol_bal <= vault_rent_bal,
+                    HeirloomError::InvalidAccount
+                );
             }
         }
 

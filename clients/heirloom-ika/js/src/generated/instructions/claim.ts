@@ -40,9 +40,11 @@ import {
 } from "@solana/program-client-core";
 import { HEIRLOOM_IKA_PROGRAM_ADDRESS } from "../programs";
 
-export const CLAIM_DISCRIMINATOR = new Uint8Array([62, 198, 214, 193, 213, 159, 108, 210]);
+export const CLAIM_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  62, 198, 214, 193, 213, 159, 108, 210,
+]);
 
-export function getClaimDiscriminatorBytes() {
+export function getClaimDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(CLAIM_DISCRIMINATOR);
 }
 

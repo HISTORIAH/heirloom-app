@@ -57,7 +57,7 @@ impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for Estate {
 
 #[cfg(feature = "fetch")]
 pub fn fetch_estate(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   address: &solana_address::Address,
 ) -> Result<crate::shared::DecodedAccount<Estate>, std::io::Error> {
   let accounts = fetch_all_estate(rpc, &[*address])?;
@@ -66,7 +66,7 @@ pub fn fetch_estate(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_all_estate(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   addresses: &[solana_address::Address],
 ) -> Result<Vec<crate::shared::DecodedAccount<Estate>>, std::io::Error> {
     let accounts = rpc.get_multiple_accounts(addresses)
@@ -84,7 +84,7 @@ pub fn fetch_all_estate(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_maybe_estate(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   address: &solana_address::Address,
 ) -> Result<crate::shared::MaybeAccount<Estate>, std::io::Error> {
     let accounts = fetch_all_maybe_estate(rpc, &[*address])?;
@@ -93,7 +93,7 @@ pub fn fetch_maybe_estate(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_all_maybe_estate(
-  rpc: &solana_client::rpc_client::RpcClient,
+  rpc: &solana_rpc_client::rpc_client::RpcClient,
   addresses: &[solana_address::Address],
 ) -> Result<Vec<crate::shared::MaybeAccount<Estate>>, std::io::Error> {
     let accounts = rpc.get_multiple_accounts(addresses)

@@ -23,8 +23,7 @@ custom-panic = []
 anchor-lang = { version = "1.0.2", features = ["init-if-needed"] }
 anchor-spl = "1.0.2"
 solana-security-txt = "1.1.3"
-beethoven = { git = "https://github.com/blueshift-gg/beethoven", features = ["deposit"] }
-solana-account-view = "2.0.0"
+solana-instructions-sysvar = "3.0.1"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

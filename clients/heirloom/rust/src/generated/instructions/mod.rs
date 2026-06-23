@@ -6,18 +6,26 @@
 //!
 
   pub(crate) mod r#claim;
+  pub(crate) mod r#complete_withdraw_regular_lulo;
   pub(crate) mod r#delegate_defer;
+  pub(crate) mod r#deposit_lulo;
   pub(crate) mod r#initialize;
+  pub(crate) mod r#init_withdraw_regular_lulo;
   pub(crate) mod r#register_asset;
   pub(crate) mod r#revoke;
   pub(crate) mod r#update_field;
   pub(crate) mod r#update_heir;
+  pub(crate) mod r#withdraw_protected_lulo;
 
   pub use self::r#claim::*;
+  pub use self::r#complete_withdraw_regular_lulo::*;
   pub use self::r#delegate_defer::*;
+  pub use self::r#deposit_lulo::*;
   pub use self::r#initialize::*;
+  pub use self::r#init_withdraw_regular_lulo::*;
   pub use self::r#register_asset::*;
   pub use self::r#revoke::*;
   pub use self::r#update_field::*;
   pub use self::r#update_heir::*;
+  pub use self::r#withdraw_protected_lulo::*;
 

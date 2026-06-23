@@ -1,21 +1,15 @@
-use crate::{lulo_v2, DepositType, Vault};
+use crate::{helpers::*, lulo_v2, DepositType, Vault};
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
-};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccount};
 
 #[derive(Accounts)]
-pub struct DeployYield<'info> {
+pub struct DepositLulo<'info> {
     // TODO: address constraint this to the estate auth
     #[account(mut)]
     pub authority: Signer<'info>,
 
     /// CHECK: heir pubkey, stored in estate
     pub heir: UncheckedAccount<'info>,
-
-    #[account(mut)]
-    pub authority_token_account: Option<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -42,18 +36,20 @@ pub struct DeployYield<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> DeployYield<'info> {
+impl<'info> DepositLulo<'info> {
     pub fn deploy_yield_handler(
-        ctx: Context<'info, DeployYield<'info>>,
+        ctx: Context<'info, DepositLulo<'info>>,
         amount: u64,
         deposit_type: DepositType,
     ) -> Result<()> {
+        ctx.accounts.validate()?;
+
         let vault_bump = ctx.accounts.vault.bump;
         let authority_key = ctx.accounts.authority.key();
         let heir_key = ctx.accounts.heir.key();
         let lulo_cpi_program_addr = ctx.accounts.lulo_accounts.program_id.key();
 
-        let DeployYield { lulo_accounts, .. } = ctx.accounts;
+        let DepositLulo { lulo_accounts, .. } = ctx.accounts;
 
         let vault_seeds: &[&[u8]] = &[
             Vault::SEED,
@@ -149,52 +145,8 @@ impl<'info> DeployYield<'info> {
         Ok(())
     }
 
-    pub fn validate() -> Result<()> {
+    // TODO
+    pub fn validate(&self) -> Result<()> {
         Ok(())
     }
-}
-
-#[derive(Accounts)]
-pub struct LuloAccounts<'info> {
-    /// CHECK: Lulo position pda
-    #[account(mut)]
-    pub pool_user: UncheckedAccount<'info>,
-
-    /// CHECK: pool user input-mint ATA. intermediate hop.
-    #[account(mut)]
-    pub pool_user_token_account: UncheckedAccount<'info>,
-
-    /// CHECK: the pool_user's LP-receipt ATA. created by deposit ix if missing.
-    #[account(mut)]
-    pub pool_user_lp_token_account: UncheckedAccount<'info>,
-
-    /// CHECK: referrer's pool_user, must be owned by this program
-    #[account(mut, constraint = referrer_pool_user.owner.key() == program_id.key())]
-    pub referrer_pool_user: UncheckedAccount<'info>,
-
-    pub input_mint: Box<InterfaceAccount<'info, Mint>>,
-
-    /// pool's reserve token account (authority = pool_account).
-    #[account(
-        mut,
-        token::mint = input_mint,
-        token::authority = pool_account,
-        token::token_program = input_mint_token_program,
-    )]
-    pub pool_reserve_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    /// the pool's LP/share mint (token22)
-    #[account(mut)]
-    pub lp_mint: Box<InterfaceAccount<'info, Mint>>,
-
-    /// CHECK: Lulo pool state
-    #[account(mut)]
-    pub pool_account: UncheckedAccount<'info>,
-
-    /// CHECK: Lulo program
-    #[account(mut, address = lulo_v2::ID)]
-    pub program_id: UncheckedAccount<'info>,
-
-    pub input_mint_token_program: Interface<'info, TokenInterface>,
-    pub lp_mint_token_program: Interface<'info, TokenInterface>,
 }

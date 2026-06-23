@@ -50,9 +50,11 @@ import {
 } from "@solana/program-client-core";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 
-export const UPDATE_FIELD_DISCRIMINATOR = new Uint8Array([164, 49, 117, 6, 187, 205, 13, 217]);
+export const UPDATE_FIELD_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  164, 49, 117, 6, 187, 205, 13, 217,
+]);
 
-export function getUpdateFieldDiscriminatorBytes() {
+export function getUpdateFieldDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(UPDATE_FIELD_DISCRIMINATOR);
 }
 
