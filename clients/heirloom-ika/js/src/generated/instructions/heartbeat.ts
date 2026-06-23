@@ -38,9 +38,11 @@ import {
 } from "@solana/program-client-core";
 import { HEIRLOOM_IKA_PROGRAM_ADDRESS } from "../programs";
 
-export const HEARTBEAT_DISCRIMINATOR = new Uint8Array([202, 104, 56, 6, 240, 170, 63, 134]);
+export const HEARTBEAT_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
+  202, 104, 56, 6, 240, 170, 63, 134,
+]);
 
-export function getHeartbeatDiscriminatorBytes() {
+export function getHeartbeatDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(HEARTBEAT_DISCRIMINATOR);
 }
 

@@ -9,6 +9,7 @@
 import {
   assertIsInstructionWithAccounts,
   containsBytes,
+  extendClient,
   fixEncoderSize,
   getBytesEncoder,
   SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
@@ -41,33 +42,49 @@ import {
 } from "../accounts";
 import {
   getClaimInstructionAsync,
+  getCompleteWithdrawRegularLuloInstructionAsync,
   getDelegateDeferInstructionAsync,
+  getDepositLuloInstructionAsync,
   getInitializeInstructionAsync,
+  getInitWithdrawRegularLuloInstructionAsync,
   getRegisterAssetInstructionAsync,
   getRevokeInstructionAsync,
   getUpdateFieldInstruction,
   getUpdateHeirInstructionAsync,
+  getWithdrawProtectedLuloInstructionAsync,
   parseClaimInstruction,
+  parseCompleteWithdrawRegularLuloInstruction,
   parseDelegateDeferInstruction,
+  parseDepositLuloInstruction,
   parseInitializeInstruction,
+  parseInitWithdrawRegularLuloInstruction,
   parseRegisterAssetInstruction,
   parseRevokeInstruction,
   parseUpdateFieldInstruction,
   parseUpdateHeirInstruction,
+  parseWithdrawProtectedLuloInstruction,
   type ClaimAsyncInput,
+  type CompleteWithdrawRegularLuloAsyncInput,
   type DelegateDeferAsyncInput,
+  type DepositLuloAsyncInput,
   type InitializeAsyncInput,
+  type InitWithdrawRegularLuloAsyncInput,
   type ParsedClaimInstruction,
+  type ParsedCompleteWithdrawRegularLuloInstruction,
   type ParsedDelegateDeferInstruction,
+  type ParsedDepositLuloInstruction,
   type ParsedInitializeInstruction,
+  type ParsedInitWithdrawRegularLuloInstruction,
   type ParsedRegisterAssetInstruction,
   type ParsedRevokeInstruction,
   type ParsedUpdateFieldInstruction,
   type ParsedUpdateHeirInstruction,
+  type ParsedWithdrawProtectedLuloInstruction,
   type RegisterAssetAsyncInput,
   type RevokeAsyncInput,
   type UpdateFieldInput,
   type UpdateHeirAsyncInput,
+  type WithdrawProtectedLuloAsyncInput,
 } from "../instructions";
 import { findEstatePda, findNewEstatePda, findNewVaultPda, findVaultPda } from "../pdas";
 
@@ -113,12 +130,16 @@ export function identifyHeirloomAccount(
 
 export enum HeirloomInstruction {
   Claim,
+  CompleteWithdrawRegularLulo,
   DelegateDefer,
+  DepositLulo,
+  InitWithdrawRegularLulo,
   Initialize,
   RegisterAsset,
   Revoke,
   UpdateField,
   UpdateHeir,
+  WithdrawProtectedLulo,
 }
 
 export function identifyHeirloomInstruction(
@@ -140,12 +161,45 @@ export function identifyHeirloomInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([188, 91, 182, 22, 144, 113, 15, 204]),
+      ),
+      0,
+    )
+  ) {
+    return HeirloomInstruction.CompleteWithdrawRegularLulo;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([33, 210, 53, 248, 236, 243, 59, 4]),
       ),
       0,
     )
   ) {
     return HeirloomInstruction.DelegateDefer;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([184, 165, 19, 242, 164, 110, 164, 151]),
+      ),
+      0,
+    )
+  ) {
+    return HeirloomInstruction.DepositLulo;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([245, 234, 177, 203, 132, 160, 17, 151]),
+      ),
+      0,
+    )
+  ) {
+    return HeirloomInstruction.InitWithdrawRegularLulo;
   }
   if (
     containsBytes(
@@ -202,6 +256,17 @@ export function identifyHeirloomInstruction(
   ) {
     return HeirloomInstruction.UpdateHeir;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([93, 69, 192, 66, 225, 80, 141, 174]),
+      ),
+      0,
+    )
+  ) {
+    return HeirloomInstruction.WithdrawProtectedLulo;
+  }
   throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
     instructionData: data,
     programName: "heirloom",
@@ -213,15 +278,25 @@ export type ParsedHeirloomInstruction<
 > =
   | ({ instructionType: HeirloomInstruction.Claim } & ParsedClaimInstruction<TProgram>)
   | ({
+      instructionType: HeirloomInstruction.CompleteWithdrawRegularLulo;
+    } & ParsedCompleteWithdrawRegularLuloInstruction<TProgram>)
+  | ({
       instructionType: HeirloomInstruction.DelegateDefer;
     } & ParsedDelegateDeferInstruction<TProgram>)
+  | ({ instructionType: HeirloomInstruction.DepositLulo } & ParsedDepositLuloInstruction<TProgram>)
+  | ({
+      instructionType: HeirloomInstruction.InitWithdrawRegularLulo;
+    } & ParsedInitWithdrawRegularLuloInstruction<TProgram>)
   | ({ instructionType: HeirloomInstruction.Initialize } & ParsedInitializeInstruction<TProgram>)
   | ({
       instructionType: HeirloomInstruction.RegisterAsset;
     } & ParsedRegisterAssetInstruction<TProgram>)
   | ({ instructionType: HeirloomInstruction.Revoke } & ParsedRevokeInstruction<TProgram>)
   | ({ instructionType: HeirloomInstruction.UpdateField } & ParsedUpdateFieldInstruction<TProgram>)
-  | ({ instructionType: HeirloomInstruction.UpdateHeir } & ParsedUpdateHeirInstruction<TProgram>);
+  | ({ instructionType: HeirloomInstruction.UpdateHeir } & ParsedUpdateHeirInstruction<TProgram>)
+  | ({
+      instructionType: HeirloomInstruction.WithdrawProtectedLulo;
+    } & ParsedWithdrawProtectedLuloInstruction<TProgram>);
 
 export function parseHeirloomInstruction<TProgram extends string>(
   instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -232,11 +307,32 @@ export function parseHeirloomInstruction<TProgram extends string>(
       assertIsInstructionWithAccounts(instruction);
       return { instructionType: HeirloomInstruction.Claim, ...parseClaimInstruction(instruction) };
     }
+    case HeirloomInstruction.CompleteWithdrawRegularLulo: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomInstruction.CompleteWithdrawRegularLulo,
+        ...parseCompleteWithdrawRegularLuloInstruction(instruction),
+      };
+    }
     case HeirloomInstruction.DelegateDefer: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: HeirloomInstruction.DelegateDefer,
         ...parseDelegateDeferInstruction(instruction),
+      };
+    }
+    case HeirloomInstruction.DepositLulo: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomInstruction.DepositLulo,
+        ...parseDepositLuloInstruction(instruction),
+      };
+    }
+    case HeirloomInstruction.InitWithdrawRegularLulo: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomInstruction.InitWithdrawRegularLulo,
+        ...parseInitWithdrawRegularLuloInstruction(instruction),
       };
     }
     case HeirloomInstruction.Initialize: {
@@ -274,6 +370,13 @@ export function parseHeirloomInstruction<TProgram extends string>(
         ...parseUpdateHeirInstruction(instruction),
       };
     }
+    case HeirloomInstruction.WithdrawProtectedLulo: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: HeirloomInstruction.WithdrawProtectedLulo,
+        ...parseWithdrawProtectedLuloInstruction(instruction),
+      };
+    }
     default:
       throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
         instructionType: instructionType as string,
@@ -297,9 +400,18 @@ export type HeirloomPluginInstructions = {
   claim: (
     input: ClaimAsyncInput,
   ) => ReturnType<typeof getClaimInstructionAsync> & SelfPlanAndSendFunctions;
+  completeWithdrawRegularLulo: (
+    input: CompleteWithdrawRegularLuloAsyncInput,
+  ) => ReturnType<typeof getCompleteWithdrawRegularLuloInstructionAsync> & SelfPlanAndSendFunctions;
   delegateDefer: (
     input: DelegateDeferAsyncInput,
   ) => ReturnType<typeof getDelegateDeferInstructionAsync> & SelfPlanAndSendFunctions;
+  depositLulo: (
+    input: DepositLuloAsyncInput,
+  ) => ReturnType<typeof getDepositLuloInstructionAsync> & SelfPlanAndSendFunctions;
+  initWithdrawRegularLulo: (
+    input: InitWithdrawRegularLuloAsyncInput,
+  ) => ReturnType<typeof getInitWithdrawRegularLuloInstructionAsync> & SelfPlanAndSendFunctions;
   initialize: (
     input: InitializeAsyncInput,
   ) => ReturnType<typeof getInitializeInstructionAsync> & SelfPlanAndSendFunctions;
@@ -315,6 +427,9 @@ export type HeirloomPluginInstructions = {
   updateHeir: (
     input: UpdateHeirAsyncInput,
   ) => ReturnType<typeof getUpdateHeirInstructionAsync> & SelfPlanAndSendFunctions;
+  withdrawProtectedLulo: (
+    input: WithdrawProtectedLuloAsyncInput,
+  ) => ReturnType<typeof getWithdrawProtectedLuloInstructionAsync> & SelfPlanAndSendFunctions;
 };
 
 export type HeirloomPluginPdas = {
@@ -329,9 +444,10 @@ export type HeirloomPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMu
   ClientWithTransactionSending;
 
 export function heirloomProgram() {
-  return <T extends HeirloomPluginRequirements>(client: T) => {
-    return {
-      ...client,
+  return <T extends HeirloomPluginRequirements>(
+    client: T,
+  ): Omit<T, "heirloom"> & { heirloom: HeirloomPlugin } => {
+    return extendClient(client, {
       heirloom: <HeirloomPlugin>{
         accounts: {
           estate: addSelfFetchFunctions(client, getEstateCodec()),
@@ -339,8 +455,17 @@ export function heirloomProgram() {
         },
         instructions: {
           claim: (input) => addSelfPlanAndSendFunctions(client, getClaimInstructionAsync(input)),
+          completeWithdrawRegularLulo: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCompleteWithdrawRegularLuloInstructionAsync(input),
+            ),
           delegateDefer: (input) =>
             addSelfPlanAndSendFunctions(client, getDelegateDeferInstructionAsync(input)),
+          depositLulo: (input) =>
+            addSelfPlanAndSendFunctions(client, getDepositLuloInstructionAsync(input)),
+          initWithdrawRegularLulo: (input) =>
+            addSelfPlanAndSendFunctions(client, getInitWithdrawRegularLuloInstructionAsync(input)),
           initialize: (input) =>
             addSelfPlanAndSendFunctions(client, getInitializeInstructionAsync(input)),
           registerAsset: (input) =>
@@ -350,6 +475,8 @@ export function heirloomProgram() {
             addSelfPlanAndSendFunctions(client, getUpdateFieldInstruction(input)),
           updateHeir: (input) =>
             addSelfPlanAndSendFunctions(client, getUpdateHeirInstructionAsync(input)),
+          withdrawProtectedLulo: (input) =>
+            addSelfPlanAndSendFunctions(client, getWithdrawProtectedLuloInstructionAsync(input)),
         },
         pdas: {
           estate: findEstatePda,
@@ -358,6 +485,6 @@ export function heirloomProgram() {
           newVault: findNewVaultPda,
         },
       },
-    };
+    });
   };
 }

@@ -42,6 +42,9 @@ pub struct RegisterAsset {
           pub associated_token_program: solana_address::Address,
           
               
+          pub rent: solana_address::Address,
+          
+              
           pub system_program: solana_address::Address,
       }
 
@@ -52,7 +55,7 @@ impl RegisterAsset {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: RegisterAssetInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(10+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(11+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -108,6 +111,10 @@ impl RegisterAsset {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.associated_token_program,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.rent,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
@@ -175,7 +182,8 @@ impl RegisterAssetInstructionArgs {
                 ///   6. `[optional]` mint
                 ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
                 ///   8. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   9. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   10. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct RegisterAssetBuilder {
             authority: Option<solana_address::Address>,
@@ -187,6 +195,7 @@ pub struct RegisterAssetBuilder {
                 mint: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
                 associated_token_program: Option<solana_address::Address>,
+                rent: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
                         amount: Option<u64>,
         __remaining_accounts: Vec<solana_instruction::AccountMeta>,
@@ -246,6 +255,12 @@ impl RegisterAssetBuilder {
                         self.associated_token_program = Some(associated_token_program);
                     self
     }
+            /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
+#[inline(always)]
+    pub fn rent(&mut self, rent: solana_address::Address) -> &mut Self {
+                        self.rent = Some(rent);
+                    self
+    }
             /// `[optional account, default to '11111111111111111111111111111111']`
 #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
@@ -281,6 +296,7 @@ impl RegisterAssetBuilder {
                                         mint: self.mint,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         associated_token_program: self.associated_token_program.unwrap_or(solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")),
+                                        rent: self.rent.unwrap_or(solana_address::address!("SysvarRent111111111111111111111111111111111")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
           let args = RegisterAssetInstructionArgs {
@@ -322,6 +338,9 @@ impl RegisterAssetBuilder {
               pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
                 
                     
+              pub rent: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
               pub system_program: &'b solana_account_info::AccountInfo<'a>,
             }
 
@@ -358,6 +377,9 @@ pub struct RegisterAssetCpi<'a, 'b> {
           pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
           
               
+          pub rent: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub system_program: &'b solana_account_info::AccountInfo<'a>,
             /// The arguments for the instruction.
     pub __args: RegisterAssetInstructionArgs,
@@ -380,6 +402,7 @@ impl<'a, 'b> RegisterAssetCpi<'a, 'b> {
               mint: accounts.mint,
               token_program: accounts.token_program,
               associated_token_program: accounts.associated_token_program,
+              rent: accounts.rent,
               system_program: accounts.system_program,
                     __args: args,
           }
@@ -404,7 +427,7 @@ impl<'a, 'b> RegisterAssetCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(10+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(11+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -463,6 +486,10 @@ impl<'a, 'b> RegisterAssetCpi<'a, 'b> {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.rent.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false
           ));
@@ -482,7 +509,7 @@ impl<'a, 'b> RegisterAssetCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(11 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(12 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
@@ -499,6 +526,7 @@ impl<'a, 'b> RegisterAssetCpi<'a, 'b> {
         }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.associated_token_program.clone());
+                        account_infos.push(self.rent.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
@@ -523,7 +551,8 @@ impl<'a, 'b> RegisterAssetCpi<'a, 'b> {
                 ///   6. `[optional]` mint
           ///   7. `[]` token_program
           ///   8. `[]` associated_token_program
-          ///   9. `[]` system_program
+          ///   9. `[]` rent
+          ///   10. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct RegisterAssetCpiBuilder<'a, 'b> {
   instruction: Box<RegisterAssetCpiBuilderInstruction<'a, 'b>>,
@@ -542,6 +571,7 @@ impl<'a, 'b> RegisterAssetCpiBuilder<'a, 'b> {
               mint: None,
               token_program: None,
               associated_token_program: None,
+              rent: None,
               system_program: None,
                                             amount: None,
                     __remaining_accounts: Vec::new(),
@@ -594,6 +624,11 @@ impl<'a, 'b> RegisterAssetCpiBuilder<'a, 'b> {
       #[inline(always)]
     pub fn associated_token_program(&mut self, associated_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.associated_token_program = Some(associated_token_program);
+                    self
+    }
+      #[inline(always)]
+    pub fn rent(&mut self, rent: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.rent = Some(rent);
                     self
     }
       #[inline(always)]
@@ -652,6 +687,8 @@ impl<'a, 'b> RegisterAssetCpiBuilder<'a, 'b> {
                   
           associated_token_program: self.instruction.associated_token_program.expect("associated_token_program is not set"),
                   
+          rent: self.instruction.rent.expect("rent is not set"),
+                  
           system_program: self.instruction.system_program.expect("system_program is not set"),
                           __args: args,
             };
@@ -671,6 +708,7 @@ struct RegisterAssetCpiBuilderInstruction<'a, 'b> {
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+                rent: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                         amount: Option<u64>,
         /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

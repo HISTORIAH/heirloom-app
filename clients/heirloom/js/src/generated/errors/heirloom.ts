@@ -50,6 +50,8 @@ export const HEIRLOOM_ERROR__TOO_MANY_CLAIMABLE_ASSETS = 0x177f; // 6015
 export const HEIRLOOM_ERROR__LABEL_TOO_LONG = 0x1780; // 6016
 /** MathOverflow: Math overflow */
 export const HEIRLOOM_ERROR__MATH_OVERFLOW = 0x1781; // 6017
+/** MathUnderflow: Math underflow */
+export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x1782; // 6018
 
 export type HeirloomError =
   | typeof HEIRLOOM_ERROR__ALREADY_CLAIMED
@@ -62,6 +64,7 @@ export type HeirloomError =
   | typeof HEIRLOOM_ERROR__INVALID_ACCOUNT
   | typeof HEIRLOOM_ERROR__LABEL_TOO_LONG
   | typeof HEIRLOOM_ERROR__MATH_OVERFLOW
+  | typeof HEIRLOOM_ERROR__MATH_UNDERFLOW
   | typeof HEIRLOOM_ERROR__MINT_MISMATCH
   | typeof HEIRLOOM_ERROR__MISMATCHED_ADDRESS
   | typeof HEIRLOOM_ERROR__MISSING_ACCOUNT
@@ -72,7 +75,7 @@ export type HeirloomError =
   | typeof HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT;
 
 let heirloomErrorMessages: Record<HeirloomError, string> | undefined;
-if (process.env.NODE_ENV !== "production") {
+if (process.env["NODE_ENV"] !== "production") {
   heirloomErrorMessages = {
     [HEIRLOOM_ERROR__ALREADY_CLAIMED]: `Estate already claimed`,
     [HEIRLOOM_ERROR__ALREADY_DEFERRED]: `Estate already deferred`,
@@ -84,6 +87,7 @@ if (process.env.NODE_ENV !== "production") {
     [HEIRLOOM_ERROR__INVALID_ACCOUNT]: `Invalid account`,
     [HEIRLOOM_ERROR__LABEL_TOO_LONG]: `Label too long`,
     [HEIRLOOM_ERROR__MATH_OVERFLOW]: `Math overflow`,
+    [HEIRLOOM_ERROR__MATH_UNDERFLOW]: `Math underflow`,
     [HEIRLOOM_ERROR__MINT_MISMATCH]: `Mint mismatch`,
     [HEIRLOOM_ERROR__MISMATCHED_ADDRESS]: `Mismatched address`,
     [HEIRLOOM_ERROR__MISSING_ACCOUNT]: `Missing account`,
@@ -96,7 +100,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export function getHeirloomErrorMessage(code: HeirloomError): string {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env["NODE_ENV"] !== "production") {
     return (heirloomErrorMessages as Record<HeirloomError, string>)[code];
   }
 

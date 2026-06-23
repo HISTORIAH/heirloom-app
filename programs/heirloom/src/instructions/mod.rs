@@ -1,19 +1,19 @@
 pub mod claim;
 pub mod defer;
-pub mod deploy_yield;
+pub mod deposit_lulo;
 pub mod initialize;
-pub mod recall_yield;
 pub mod register_asset;
 pub mod revoke;
 pub mod update_field;
 pub mod update_heir;
+pub mod withdraw_lulo;
 
 pub use claim::*;
 pub use defer::*;
-pub use deploy_yield::*;
+pub use deposit_lulo::*;
 pub use initialize::*;
-pub use recall_yield::*;
 pub use register_asset::*;
 pub use revoke::*;
 pub use update_field::*;
 pub use update_heir::*;
+pub use withdraw_lulo::*;

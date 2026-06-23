@@ -64,6 +64,9 @@ pub enum HeirloomError {
     /// 6017 - Math overflow
     #[error("Math overflow")]
     MathOverflow = 0x1781,
+    /// 6018 - Math underflow
+    #[error("Math underflow")]
+    MathUnderflow = 0x1782,
 }
 
 impl From<HeirloomError> for solana_program_error::ProgramError {

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
-import { getSolanaExplorerTxUrl } from "@/lib/utils";
+import { getSolanaExplorerTxUrl, getClusterFromEndpoint } from "@/lib/utils";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -16,8 +16,23 @@ import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { InlineTokenYield } from "@/components/dashboard/InlineTokenYield";
+import { SolStakingIndicator } from "@/components/dashboard/SolStakingIndicator";
+import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
+import { RecallConfirmDialog } from "@/components/dashboard/RecallConfirmDialog";
+import { StrategyProgressOverlay } from "@/components/dashboard/StrategyProgressOverlay";
+import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
+import { StakingEnableDialog } from "@/components/dashboard/StakingEnableDialog";
+import {
+  type Strategy,
+  type StrategyProgressStep,
+} from "@/types/strategy-ui";
+import {
+  makePlaceholderLuloStrategy,
+  makePlaceholderStakingStrategy,
+} from "@/lib/strategies";
+import { ENABLE_YIELD_STAKING_UI } from "@/config";
 import { cn, formatDuration, formatSol, formatTokenAmount, errMsg, toRawTokenAmount } from "@/lib/utils";
-import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
 import { computeEstateState } from "@/lib/estateState";
 import {
   Heart,
@@ -119,42 +134,45 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [luloTargetMint, setLuloTargetMint] = useState<string | null>(null);
+  const [luloDialogOpen, setLuloDialogOpen] = useState(false);
+  const [recallDialogOpen, setRecallDialogOpen] = useState(false);
+  const [recallTarget, setRecallTarget] = useState<"lulo" | "staking" | null>(null);
+  const [activeStrategyType, setActiveStrategyType] = useState<"lulo" | "staking">("lulo");
+  const [strategyProgress, setStrategyProgress] = useState<StrategyProgressStep>("idle");
+  const [showProgressOverlay, setShowProgressOverlay] = useState(false);
+
+  const [stakingDialogOpen, setStakingDialogOpen] = useState(false);
+
+  // TEMP: network-aware feature toggle for yield/staking.
+  // Mainnet: always show. Devnet/local: only show if VITE_ENABLE_YIELD_STAKING_UI=true.
+  // TODO: Remove once feature ships to all networks.
+  const cluster = getClusterFromEndpoint();
+  const showYieldStaking = cluster === "solana:mainnet" || ENABLE_YIELD_STAKING_UI;
+
+  // Placeholder strategies — per-estate local state (replace with real data later)
+  const [luloStrategy, setLuloStrategy] = useState<Strategy | null>(null);
+  const [stakingStrategy, setStakingStrategy] = useState<Strategy | null>(null);
   const [topUpOpen, setTopUpOpen] = useState<"sol" | string | null>(null);
-  const [topUpAmount, setTopUpAmount] = useState(0);
   const [topUpLoading, setTopUpLoading] = useState(false);
 
   const { data: walletSplTokens } = useWalletSplTokens(topUpOpen !== null && isConnected ? publicKey : null);
   const { sol: walletSolBalance } = useTokenBalances(topUpOpen !== null && isConnected ? publicKey : null);
 
-  const openTopUp = (key: "sol" | string) => {
-    setTopUpOpen((prev) => (prev === key ? null : key));
-    setTopUpAmount(0);
-  };
-
-  const walletTokenBalance = walletSplTokens?.find((t) => t.mint === topUpOpen);
-  const maxBalance = topUpOpen === "sol" ? walletSolBalance : (walletTokenBalance?.uiAmount ?? 0);
-  const activeHolding = estate.vaultTokens.find((vt) => vt.mint === topUpOpen);
-  const activeDecimals = topUpOpen === "sol" ? SOL_DECIMALS : (activeHolding?.decimals ?? 0);
-  const activeStep = amountStep(activeDecimals);
-
-  const applyPct = (pct: number) => {
-    setTopUpAmount(pctOfMax(maxBalance, pct, activeStep));
-  };
-
-  const handleTopUp = async () => {
-    if (topUpAmount <= 0 || !topUpOpen) return;
+  const handleTopUp = async (amount: number) => {
+    if (amount <= 0 || !topUpOpen) return;
     setTopUpLoading(true);
     try {
       let tx: string;
       if (topUpOpen === "sol") {
-        tx = await depositSolOnChain(estate.vaultPda, toRawTokenAmount(topUpAmount, SOL_DECIMALS));
+        tx = await depositSolOnChain(estate.vaultPda, toRawTokenAmount(amount, SOL_DECIMALS));
       } else {
-        if (!activeHolding) throw new Error("Token not found in vault");
-        tx = await depositTokenOnChain(activeHolding, toRawTokenAmount(topUpAmount, activeHolding.decimals));
+        const holding = estate.vaultTokens.find((vt) => vt.mint === topUpOpen);
+        if (!holding) throw new Error("Token not found in vault");
+        tx = await depositTokenOnChain(holding, toRawTokenAmount(amount, holding.decimals));
       }
       setLastTxId(tx);
       setTopUpOpen(null);
-      setTopUpAmount(0);
       track("vault_top_up_succeeded", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
       toast({ title: "Top-up sent", description: "Funds added to the vault." });
       await fetchEstates();
@@ -203,6 +221,113 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
     } finally {
       setSendingHeartbeat(false);
     }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Strategy handlers (placeholder flows)
+  // ---------------------------------------------------------------------------
+
+  const activeLuloHolding = luloTargetMint
+    ? estate.vaultTokens.find((vt) => vt.mint === luloTargetMint)
+    : null;
+  const luloTokenMeta = activeLuloHolding ? tokenMeta.get(activeLuloHolding.mint) : undefined;
+  const luloSymbol = luloTokenMeta?.symbol;
+  const luloVaultBalance = activeLuloHolding
+    ? Number(activeLuloHolding.rawAmount) / 10 ** activeLuloHolding.decimals
+    : 0;
+
+  const solVaultBalance = Number(estate.solBalance) / 10 ** SOL_DECIMALS;
+
+  const handleConfirmLulo = async (opts: { protected: boolean }) => {
+    if (!luloTargetMint) return;
+    const targetHolding = estate.vaultTokens.find((vt) => vt.mint === luloTargetMint);
+    if (!targetHolding) return;
+    setLuloDialogOpen(false);
+    setShowProgressOverlay(true);
+    setStrategyProgress("withdrawing");
+
+    // Step 1: simulate vault withdrawal
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("depositing");
+
+    // Step 2: simulate Lulo deposit
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("complete");
+
+    // Activate placeholder strategy
+    setLuloStrategy(
+      makePlaceholderLuloStrategy(targetHolding.mint, targetHolding.decimals, {
+        protected: opts.protected,
+        amount: Number(targetHolding.rawAmount) / 10 ** targetHolding.decimals,
+        apy: opts.protected ? 6.2 : 8.5,
+      }),
+    );
+
+    await new Promise((r) => setTimeout(r, 800));
+    setShowProgressOverlay(false);
+    setStrategyProgress("idle");
+    setLuloTargetMint(null);
+    toast({ title: "Lulo yield enabled", description: "Funds are now earning yield." });
+  };
+
+  const handleRecallLulo = () => {
+    setRecallTarget("lulo");
+    setRecallDialogOpen(true);
+  };
+
+  const handleRecallStaking = () => {
+    setRecallTarget("staking");
+    setRecallDialogOpen(true);
+  };
+
+  const handleConfirmRecall = async () => {
+    setRecallDialogOpen(false);
+    setShowProgressOverlay(true);
+    setStrategyProgress("recalling");
+
+    // Step 1: simulate Lulo/staking withdrawal
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("returning");
+
+    // Step 2: simulate return to vault
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("complete");
+
+    // Deactivate strategy
+    if (recallTarget === "lulo") setLuloStrategy(null);
+    if (recallTarget === "staking") setStakingStrategy(null);
+
+    await new Promise((r) => setTimeout(r, 800));
+    setShowProgressOverlay(false);
+    setStrategyProgress("idle");
+    setRecallTarget(null);
+    toast({ title: "Funds recalled", description: "Assets returned to your vault." });
+  };
+
+  const handleEnableStaking = () => {
+    setActiveStrategyType("staking");
+    setStakingDialogOpen(true);
+  };
+
+  const handleConfirmStaking = async (validatorId: string) => {
+    setStakingDialogOpen(false);
+    setShowProgressOverlay(true);
+    setStrategyProgress("withdrawing");
+
+    // Step 1: simulate vault withdrawal
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("depositing");
+
+    // Step 2: simulate delegation to validator
+    await new Promise((r) => setTimeout(r, 1500));
+    setStrategyProgress("complete");
+
+    setStakingStrategy(makePlaceholderStakingStrategy({ amount: solVaultBalance, validatorName: validatorId }));
+
+    await new Promise((r) => setTimeout(r, 800));
+    setShowProgressOverlay(false);
+    setStrategyProgress("idle");
+    toast({ title: "Staking enabled", description: `SOL delegated to ${validatorId}.` });
   };
 
   const handleCopyHeir = () => {
@@ -319,10 +444,10 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             </div>
             {estate.solBalance > 0 && (
               <button
-                onClick={() => openTopUp("sol")}
+                onClick={() => setTopUpOpen("sol")}
                 className={cn(
                   "neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors flex items-center gap-1",
-                  topUpOpen === "sol" ? "bg-accent-lime" : "bg-secondary hover:bg-accent-lime",
+                  "bg-secondary hover:bg-accent-lime",
                 )}
               >
                 <TrendingUp className="h-3 w-3" /> Top Up
@@ -333,36 +458,30 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           <p className="text-sm font-bold text-muted-foreground">
             {`${estate.solBalance.toLocaleString()} lamports`}
           </p>
-          {topUpOpen === "sol" && (
-            <div className="mt-4 pt-4 border-t-2 border-foreground/10 space-y-3">
-              <input
-                type="number"
-                min={0}
-                step={activeStep}
-                value={topUpAmount || ""}
-                onChange={(e) => setTopUpAmount(Math.max(0, Number(e.target.value)))}
-                placeholder="0"
-                className="neo-input w-full font-black text-xl text-center"
-              />
-              <div className="flex gap-2">
-                {TOPUP_PCTS.map(({ pct, label, bg }) => (
-                  <button
-                    key={pct}
-                    onClick={() => applyPct(pct)}
-                    className={cn("flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px", bg)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] font-medium text-muted-foreground">
-                Wallet: {walletSolBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {SOL_LABEL}
-              </p>
-              <Button variant="lime" size="lg" onClick={handleTopUp} disabled={topUpLoading || topUpAmount <= 0} className="w-full">
-                {topUpLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <><TrendingUp className="h-4 w-4" /> Top Up</>}
-              </Button>
-            </div>
+          {showYieldStaking && (
+            <SolStakingIndicator
+              solBalance={solVaultBalance}
+              strategy={stakingStrategy}
+              onEnable={handleEnableStaking}
+              onRecall={handleRecallStaking}
+              loading={showProgressOverlay && recallTarget === "staking" && strategyProgress !== "idle"}
+              progressStep={
+                showProgressOverlay && recallTarget === "staking" ? strategyProgress : "idle"
+              }
+            />
           )}
+
+          {/* SOL Top Up Dialog */}
+          <TopUpDialog
+            open={topUpOpen === "sol"}
+            symbol={SOL_LABEL}
+            decimals={SOL_DECIMALS}
+            vaultBalance={solVaultBalance}
+            walletBalance={walletSolBalance}
+            onConfirm={handleTopUp}
+            onCancel={() => setTopUpOpen(null)}
+            loading={topUpLoading}
+          />
         </div>
 
         <div className="neo-card-static group hover:translate-y-[-2px] transition-transform duration-150">
@@ -421,7 +540,6 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
               const primary = symbol || name || shortMint;
               const secondary = name && name !== primary ? name : symbol ? shortMint : null;
-              const isOpen = topUpOpen === vt.mint;
               const walletBal = walletSplTokens?.find((t) => t.mint === vt.mint);
               return (
                 <div key={vt.ata} className="neo-border rounded-lg bg-secondary overflow-hidden">
@@ -433,56 +551,119 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                         <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">{secondary}</p>
                       )}
                     </div>
-                    <span className="font-black text-lg tabular-nums shrink-0">
-                      {formatTokenAmount(vt.rawAmount, vt.decimals)}
-                    </span>
-                    <button
-                      onClick={() => openTopUp(vt.mint)}
-                      className={cn(
-                        "neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
-                        isOpen ? "bg-accent-lime" : "bg-background hover:bg-accent-lime",
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      <span className="font-black text-lg tabular-nums">
+                        {formatTokenAmount(vt.rawAmount, vt.decimals)}
+                      </span>
+                      {showYieldStaking && (
+                        <InlineTokenYield
+                          mint={vt.mint}
+                          symbol={symbol || "tokens"}
+                          decimals={vt.decimals}
+                          vaultBalance={Number(vt.rawAmount) / 10 ** vt.decimals}
+                          strategy={luloStrategy?.type === "lulo" && luloStrategy.mint === vt.mint ? luloStrategy : null}
+                          onEnable={() => {
+                            setLuloTargetMint(vt.mint);
+                            setActiveStrategyType("lulo");
+                            setLuloDialogOpen(true);
+                          }}
+                          onRecall={handleRecallLulo}
+                          loading={showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint && strategyProgress !== "idle"}
+                          progressStep={
+                            showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint
+                              ? strategyProgress
+                              : "idle"
+                          }
+                        />
                       )}
-                    >
-                      <TrendingUp className="h-3 w-3" /> Top Up
-                    </button>
-                  </div>
-                  {isOpen && (
-                    <div className="px-4 pb-4 space-y-3 border-t-2 border-foreground/10 pt-3">
-                      <input
-                        type="number"
-                        min={0}
-                        step={activeStep}
-                        value={topUpAmount || ""}
-                        onChange={(e) => setTopUpAmount(Math.max(0, Number(e.target.value)))}
-                        placeholder="0"
-                        className="neo-input w-full font-black text-xl text-center"
-                      />
-                      <div className="flex gap-2">
-                        {TOPUP_PCTS.map(({ pct, label, bg }) => (
-                          <button
-                            key={pct}
-                            onClick={() => applyPct(pct)}
-                            className={cn("flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px", bg)}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                      {walletBal && (
-                        <p className="text-[11px] font-medium text-muted-foreground">
-                          Wallet: {walletBal.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {walletBal.label}
-                        </p>
-                      )}
-                      <Button variant="lime" size="lg" onClick={handleTopUp} disabled={topUpLoading || topUpAmount <= 0} className="w-full">
-                        {topUpLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <><TrendingUp className="h-4 w-4" /> Top Up</>}
-                      </Button>
+                      <button
+                        onClick={() => setTopUpOpen(vt.mint)}
+                        className={cn(
+                          "neo-border rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
+                          "bg-background hover:bg-accent-lime",
+                        )}
+                      >
+                        <TrendingUp className="h-3 w-3" /> Top Up
+                      </button>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Token Top Up Dialog */}
+                  <TopUpDialog
+                    open={topUpOpen === vt.mint}
+                    symbol={symbol || "tokens"}
+                    decimals={vt.decimals}
+                    vaultBalance={Number(vt.rawAmount) / 10 ** vt.decimals}
+                    walletBalance={walletBal?.uiAmount ?? 0}
+                    onConfirm={handleTopUp}
+                    onCancel={() => setTopUpOpen(null)}
+                    loading={topUpLoading}
+                  />
                 </div>
               );
             })}
           </div>
         </div>
+      )}
+
+      {/* Lulo enable dialog */}
+      {showYieldStaking && activeLuloHolding && (
+        <LuloEnableDialog
+          open={luloDialogOpen}
+          tokenSymbol={luloSymbol || "tokens"}
+          tokenMint={activeLuloHolding.mint}
+          vaultBalance={luloVaultBalance}
+          onConfirm={handleConfirmLulo}
+          onCancel={() => {
+            setLuloDialogOpen(false);
+            setLuloTargetMint(null);
+          }}
+          loading={showProgressOverlay}
+        />
+      )}
+
+      {/* Staking enable dialog */}
+      {showYieldStaking && (
+        <StakingEnableDialog
+          open={stakingDialogOpen}
+          solBalance={solVaultBalance}
+          onConfirm={handleConfirmStaking}
+          onCancel={() => setStakingDialogOpen(false)}
+          loading={showProgressOverlay}
+        />
+      )}
+
+      {/* Recall confirmation dialog */}
+      {showYieldStaking && (
+        <RecallConfirmDialog
+          open={recallDialogOpen}
+          strategyType={recallTarget === "staking" ? "staking" : "lulo"}
+          tokenSymbol={recallTarget === "lulo" ? luloSymbol : undefined}
+          routedAmount={
+            recallTarget === "lulo" && luloStrategy?.type === "lulo"
+              ? luloStrategy.amount
+              : recallTarget === "staking" && stakingStrategy?.type === "staking"
+                ? stakingStrategy.amount
+                : 0
+          }
+          onConfirm={handleConfirmRecall}
+          onCancel={() => {
+            if (!showProgressOverlay) {
+              setRecallDialogOpen(false);
+              setRecallTarget(null);
+            }
+          }}
+          loading={showProgressOverlay}
+        />
+      )}
+
+      {/* Progress overlay for two-step flows */}
+      {showYieldStaking && (
+        <StrategyProgressOverlay
+          open={showProgressOverlay}
+          strategyType={activeStrategyType}
+          step={strategyProgress}
+        />
       )}
 
       {/* Heir */}

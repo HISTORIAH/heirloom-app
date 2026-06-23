@@ -9,6 +9,7 @@
 import {
   assertIsInstructionWithAccounts,
   containsBytes,
+  extendClient,
   fixEncoderSize,
   getBytesEncoder,
   SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
@@ -222,9 +223,10 @@ export type HeirloomIkaPluginRequirements = ClientWithRpc<
   ClientWithTransactionSending;
 
 export function heirloomIkaProgram() {
-  return <T extends HeirloomIkaPluginRequirements>(client: T) => {
-    return {
-      ...client,
+  return <T extends HeirloomIkaPluginRequirements>(
+    client: T,
+  ): Omit<T, "heirloomIka"> & { heirloomIka: HeirloomIkaPlugin } => {
+    return extendClient(client, {
       heirloomIka: <HeirloomIkaPlugin>{
         accounts: { estate: addSelfFetchFunctions(client, getEstateCodec()) },
         instructions: {
@@ -236,6 +238,6 @@ export function heirloomIkaProgram() {
         },
         pdas: { estate: findEstatePda },
       },
-    };
+    });
   };
 }
