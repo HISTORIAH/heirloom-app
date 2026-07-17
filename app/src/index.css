@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -25,14 +25,14 @@
     --muted-foreground: 0 0% 40%;
 
     --accent-pink: 313 100% 65%;
-    --accent-lime: 72 100% 50%;
+    --accent-lime: 83 78% 55%;
     --accent-cyan: 189 100% 50%;
     --accent-orange: 29 100% 50%;
     --accent-purple: 249 100% 69%;
     --accent-yellow: 50 100% 50%;
     --accent-red: 0 100% 61%;
 
-    --accent: 72 100% 50%;
+    --accent: 83 78% 55%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 100% 61%;
@@ -53,7 +53,7 @@
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 0%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 72 100% 50%;
+    --sidebar-accent: 83 78% 55%;
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 0 0% 0%;
     --sidebar-ring: 0 0% 0%;

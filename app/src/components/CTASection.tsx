@@ -34,7 +34,7 @@ const CTASection = () => {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Button variant="default" size="xl" onClick={handleCreate}>
-            Create Your Vault
+            Create Vault
           </Button>
           <a
             href="https://docs.heirlm.xyz/"

@@ -25,7 +25,7 @@ import {
 import { errMsg } from "@/lib/utils";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 
-const STEPS = ["Heartbeat", "Heir", "Deposit", "Review"];
+const STEPS = ["Heir", "Deposit", "Heartbeat", "Review"];
 
 type SubmitState = "idle" | "creating" | "complete" | "error";
 
@@ -64,9 +64,9 @@ const CreateVaultPage = () => {
 
   const isHeirValid = heirAddress.trim().length > 0 && label.trim().length > 0 && label.length <= LABEL_MAX_LEN;
   const canProceed = () => {
-    if (step === 0) return heartbeatSeconds > 0 && graceSeconds > 0;
-    if (step === 1) return isHeirValid;
-    if (step === 2) return hasAnyDeposit;
+    if (step === 0) return isHeirValid;
+    if (step === 1) return hasAnyDeposit;
+    if (step === 2) return heartbeatSeconds > 0 && graceSeconds > 0;
     return true;
   };
 
@@ -207,17 +207,6 @@ const CreateVaultPage = () => {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="neo-slide-up" key={step}>
           {step === 0 && (
-            <HeartbeatStep
-              heartbeatSeconds={heartbeatSeconds}
-              setHeartbeatSeconds={setHeartbeatSeconds}
-              graceSeconds={graceSeconds}
-              setGraceSeconds={setGraceSeconds}
-              pauseSeconds={pauseSeconds}
-              setPauseSeconds={setPauseSeconds}
-            />
-          )}
-
-          {step === 1 && (
             <HeirStep
               heirAddress={heirAddress}
               setHeirAddress={setHeirAddress}
@@ -231,7 +220,7 @@ const CreateVaultPage = () => {
             />
           )}
 
-          {step === 2 && (
+          {step === 1 && (
             <DepositStep
               solAmount={solAmount}
               setSolAmount={setSolAmount}
@@ -242,6 +231,17 @@ const CreateVaultPage = () => {
               solBalance={solBalance}
               solLoading={solLoading}
               isConnected={isConnected}
+            />
+          )}
+
+          {step === 2 && (
+            <HeartbeatStep
+              heartbeatSeconds={heartbeatSeconds}
+              setHeartbeatSeconds={setHeartbeatSeconds}
+              graceSeconds={graceSeconds}
+              setGraceSeconds={setGraceSeconds}
+              pauseSeconds={pauseSeconds}
+              setPauseSeconds={setPauseSeconds}
             />
           )}
 

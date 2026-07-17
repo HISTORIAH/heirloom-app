@@ -5,7 +5,7 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { LABEL_MAX_LEN } from "@/lib/constants";
 import { errMsg, formatDuration } from "@/lib/utils";
-import { Loader2, Pencil, Settings } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 
 interface Props {
   estate: EstateData;
@@ -16,7 +16,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
   const { updateEstateFieldsOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
 
-  const [showEditSettings, setShowEditSettings] = useState(false);
+  const [open, setOpen] = useState(false);
   const [editIntervalSec, setEditIntervalSec] = useState(estate.heartbeatInterval);
   const [editGraceSec, setEditGraceSec] = useState(estate.gracePeriod);
   const [editPauseSec, setEditPauseSec] = useState(estate.pauseDuration);
@@ -25,14 +25,14 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
   const [settingsConfirmOpen, setSettingsConfirmOpen] = useState(false);
 
   useEffect(() => {
-    if (!showEditSettings) {
+    if (!open) {
       setEditIntervalSec(estate.heartbeatInterval);
       setEditGraceSec(estate.gracePeriod);
       setEditPauseSec(estate.pauseDuration);
       setEditLabel(estate.label);
     }
   }, [
-    showEditSettings,
+    open,
     estate.heartbeatInterval,
     estate.gracePeriod,
     estate.pauseDuration,
@@ -70,7 +70,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       });
       onTx(tx);
       setSettingsConfirmOpen(false);
-      setShowEditSettings(false);
+      setOpen(false);
       toast({ title: "Settings updated", description: "Estate config saved on-chain." });
       await fetchEstates();
     } catch (err: unknown) {
@@ -86,121 +86,143 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
 
   return (
     <>
-      <div className="neo-card-static">
-        <button
-          onClick={() => setShowEditSettings(!showEditSettings)}
-          className="flex items-center justify-between w-full"
+      <button
+        onClick={() => setOpen(true)}
+        className="neo-border rounded-xl px-4 py-3 bg-accent-cyan text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
+      >
+        Update Estate
+      </button>
+
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 overflow-y-auto"
+          onClick={() => {
+            if (!savingSettings) setOpen(false);
+          }}
         >
-          <div className="flex items-center gap-3">
-            <div className="bg-accent-yellow neo-border rounded-xl p-3">
-              <Settings className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-black text-lg">Edit Settings</h3>
-              <p className="text-sm font-medium text-muted-foreground">
-                Update interval, grace, pause, or label.
-              </p>
-            </div>
-          </div>
-          <span className="text-2xl font-black">{showEditSettings ? "−" : "+"}</span>
-        </button>
-        {showEditSettings && (
-          <div className="space-y-4 mt-4 pt-4 border-t-2 border-foreground/10">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                Label ({LABEL_MAX_LEN} chars max)
-              </label>
-              <div className="relative">
-                <Pencil className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" strokeWidth={3} />
-                <input
-                  type="text"
-                  value={editLabel}
-                  onChange={(e) => setEditLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
-                  maxLength={LABEL_MAX_LEN}
-                  className="neo-input w-full !pl-10 focus:bg-accent-yellow/20"
-                  placeholder="Estate label"
-                />
+          <div className="neo-card-static max-w-md w-full neo-slide-up my-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-accent-cyan neo-border rounded-xl p-3 shrink-0">
+                  <Pencil className="h-6 w-6" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black leading-tight">Update Estate</h3>
+                  <p className="text-sm font-medium text-muted-foreground mt-1">
+                    Adjust your check-in schedule, grace period, or estate label.
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => setOpen(false)}
+                disabled={savingSettings}
+                className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
+              >
+                <X className="h-4 w-4" strokeWidth={2.5} />
+              </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+            <div className="space-y-4 mt-4">
               <div>
                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Interval (sec)
+                  Label ({LABEL_MAX_LEN} chars max)
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={editIntervalSec}
-                  onChange={(e) => setEditIntervalSec(Math.max(1, Number(e.target.value)))}
-                  className="neo-input w-full focus:bg-accent-yellow/20"
-                />
-                <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                  {formatDuration(editIntervalSec)}
-                </p>
+                <div className="relative">
+                  <Pencil className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" strokeWidth={3} />
+                  <input
+                    type="text"
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
+                    maxLength={LABEL_MAX_LEN}
+                    className="neo-input w-full !pl-10 focus:bg-accent-cyan/20"
+                    placeholder="Estate label"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Grace (sec)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={editGraceSec}
-                  onChange={(e) => setEditGraceSec(Math.max(1, Number(e.target.value)))}
-                  className="neo-input w-full focus:bg-accent-yellow/20"
-                />
-                <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                  {formatDuration(editGraceSec)}
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                    Interval (sec)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editIntervalSec}
+                    onChange={(e) => setEditIntervalSec(Math.max(1, Number(e.target.value)))}
+                    className="neo-input w-full focus:bg-accent-cyan/20"
+                  />
+                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
+                    {formatDuration(editIntervalSec)}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                    Grace (sec)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editGraceSec}
+                    onChange={(e) => setEditGraceSec(Math.max(1, Number(e.target.value)))}
+                    className="neo-input w-full focus:bg-accent-cyan/20"
+                  />
+                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
+                    {formatDuration(editGraceSec)}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                    Pause (sec)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editPauseSec}
+                    onChange={(e) => setEditPauseSec(Math.max(0, Number(e.target.value)))}
+                    className="neo-input w-full focus:bg-accent-cyan/20"
+                  />
+                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
+                    {formatDuration(editPauseSec)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Pause (sec)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={editPauseSec}
-                  onChange={(e) => setEditPauseSec(Math.max(0, Number(e.target.value)))}
-                  className="neo-input w-full focus:bg-accent-yellow/20"
-                />
-                <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                  {formatDuration(editPauseSec)}
+              {!labelValid && (
+                <p className="text-xs font-bold text-accent-red">
+                  Label must be 1–{LABEL_MAX_LEN} characters.
                 </p>
-              </div>
-            </div>
-            <Button
-              variant="default"
-              size="default"
-              onClick={requestSaveSettings}
-              disabled={savingSettings || !settingsDirty || !settingsValid}
-              className="w-full"
-            >
-              {savingSettings ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
-              ) : (
-                <><Settings className="h-4 w-4" /> Save Changes</>
               )}
-            </Button>
-            {!labelValid && (
-              <p className="text-xs font-bold text-accent-red">
-                Label must be 1–{LABEL_MAX_LEN} characters.
-              </p>
-            )}
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
+              <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
+                Cancel
+              </Button>
+              <Button
+                variant="cyan"
+                size="default"
+                onClick={requestSaveSettings}
+                disabled={!settingsDirty || !settingsValid}
+                className="sm:w-auto w-full"
+              >
+                <Pencil className="h-4 w-4" /> Save Changes
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={settingsConfirmOpen}
-        title="Save Settings?"
+        title="Update Estate?"
         description="Changing interval, grace, or pause shifts the heartbeat deadline. Make sure heirs are aware before saving."
         confirmLabel="Save"
         cancelLabel="Cancel"
         variant="default"
         loading={savingSettings}
-        icon={<Settings className="h-6 w-6" strokeWidth={2.5} />}
-        accent="bg-accent-yellow/20"
+        icon={<Pencil className="h-6 w-6" strokeWidth={2.5} />}
+        accent="bg-accent-cyan/20"
         onConfirm={performSaveSettings}
         onCancel={() => {
           if (!savingSettings) setSettingsConfirmOpen(false);

@@ -214,10 +214,7 @@ const HeroSection = () => {
               <span className="px-3 text-foreground" style={{ backgroundColor: "#FF4FD8" }}>
                 assets.
               </span>{" "}
-              Pass it on{" "}
-              <span className="px-3 text-foreground" style={{ backgroundColor: "#FF7A00" }}>
-                trustlessly.
-              </span>
+              Pass it on trustlessly.
             </h1>
 
             <p className="mt-7 max-w-xl text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">

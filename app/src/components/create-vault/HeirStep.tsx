@@ -26,7 +26,7 @@ const HeirStep: React.FC<Props> = ({
 }) => (
   <div className="space-y-8">
     <div>
-      <span className="neo-badge bg-accent-cyan mb-4 inline-block">Step 2</span>
+      <span className="neo-badge bg-accent-cyan mb-4 inline-block">Step 1</span>
       <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
         Name your <span className="bg-accent-cyan px-2 inline-block rotate-[1deg]">heir.</span>
       </h2>

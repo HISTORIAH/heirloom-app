@@ -1,8 +1,4 @@
 import { Button } from "@/components/ui/button";
-import {
-  type Strategy,
-  type StrategyType,
-} from "@/types/strategy-ui";
 import { cn } from "@/lib/utils";
 import {
   Landmark,

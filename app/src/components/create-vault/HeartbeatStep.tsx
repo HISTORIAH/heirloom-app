@@ -53,7 +53,7 @@ const HeartbeatStep: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       <div>
-        <span className="neo-badge bg-accent-pink mb-4 inline-block">Step 1</span>
+        <span className="neo-badge bg-accent-pink mb-4 inline-block">Step 3</span>
         <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
           Set your <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">heartbeat.</span>
         </h2>

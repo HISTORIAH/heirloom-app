@@ -1,7 +1,3 @@
-import {
-  type StrategyType,
-  type StrategyProgressStep,
-} from "@/types/strategy-ui";
 import { getProgressMessage } from "@/lib/strategies";
 import { cn } from "@/lib/utils";
 import {

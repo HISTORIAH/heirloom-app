@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +25,7 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       onTx(tx);
       setWithdrawConfirmOpen(false);
       track("emergency_withdraw_succeeded");
-      toast({ title: "Emergency Withdraw", description: "Assets returned to your wallet." });
+      toast({ title: "Vault Closed", description: "Assets returned to your wallet." });
     } catch (err: unknown) {
       track("emergency_withdraw_failed", { stage: "transaction" });
       toast({
@@ -41,37 +40,21 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
 
   return (
     <>
-      <div className="neo-card-static border-accent-red">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="bg-accent-red/20 neo-border rounded-xl p-3 shrink-0">
-              <AlertTriangle className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h3 className="font-black text-lg">Emergency Withdraw</h3>
-              <p className="text-sm font-medium text-muted-foreground">
-                Reclaim all assets and cancel the vault permanently.
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="destructive"
-            size="default"
-            onClick={() => setWithdrawConfirmOpen(true)}
-            disabled={withdrawing}
-          >
-            {withdrawing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Withdrawing...</>
-            ) : (
-              <><AlertTriangle className="h-4 w-4" /> Emergency Withdraw</>
-            )}
-          </Button>
-        </div>
-      </div>
+      <button
+        onClick={() => setWithdrawConfirmOpen(true)}
+        disabled={withdrawing}
+        className="w-full neo-border rounded-xl h-12 bg-accent-red text-primary-foreground font-bold text-sm uppercase tracking-wide shadow-[4px_4px_0_0_hsl(var(--foreground))] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_hsl(var(--foreground))] disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {withdrawing ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Withdrawing...</>
+        ) : (
+          <><AlertTriangle className="h-4 w-4" /> Close Vault & Withdraw</>
+        )}
+      </button>
 
       <ConfirmDialog
         open={withdrawConfirmOpen}
-        title="Emergency Withdraw?"
+        title="Close Vault & Withdraw?"
         description="This returns all SOL and tokens to your wallet and permanently cancels the vault. Heirs will no longer be able to claim."
         confirmLabel="Withdraw & Cancel"
         cancelLabel="Keep Vault"
