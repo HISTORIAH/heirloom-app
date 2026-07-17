@@ -74,7 +74,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {resolvedIcon}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 id="confirm-dialog-title" className="text-xl font-black leading-tight">
+            <h3 id="confirm-dialog-title" className="text-xl font-black leading-tight text-foreground">
               {title}
             </h3>
             {description && (

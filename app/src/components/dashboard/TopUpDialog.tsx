@@ -49,7 +49,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
               <Coins className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-black leading-tight">Top Up {symbol}</h3>
+              <h3 className="text-xl font-black leading-tight text-foreground">Top Up {symbol}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Add {symbol} from your wallet to the vault.
               </p>

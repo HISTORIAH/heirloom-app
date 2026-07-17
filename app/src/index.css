@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -138,6 +138,34 @@
   button:focus-visible {
     outline: 4px solid hsl(var(--foreground));
     outline-offset: 2px;
+  }
+
+  /* Placeholder text - make it clearly visible */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* Webkit placeholder (older browsers) */
+  input::-webkit-input-placeholder,
+  textarea::-webkit-input-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* Firefox placeholder */
+  input::-moz-placeholder,
+  textarea::-moz-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* MS placeholder */
+  input:-ms-input-placeholder,
+  textarea:-ms-input-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
   }
 }
 

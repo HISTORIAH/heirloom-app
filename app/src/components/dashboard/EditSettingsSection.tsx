@@ -109,7 +109,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                   <Pencil className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black leading-tight">Update Estate</h3>
+                  <h3 className="text-xl font-black leading-tight text-foreground">Update Estate</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
                     Adjust your check-in schedule, grace period, or estate label.
                   </p>

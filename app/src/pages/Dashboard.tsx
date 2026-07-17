@@ -347,7 +347,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="min-w-0">
             <span className="neo-badge bg-background mb-3 inline-block">Vault Status</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase">{config.label}</h2>
+            <h2 className="text-4xl md:text-5xl font-black uppercase font-display">{config.label}</h2>
             <p className="text-sm font-bold text-foreground/60 mt-1">{config.description}</p>
           </div>
           {computedState !== "distributed" && (
@@ -402,7 +402,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               <div className="neo-border rounded-xl bg-secondary p-4 md:p-6">
                 <span
                   className={cn(
-                    "text-4xl md:text-6xl font-black tabular-nums",
+                    "text-4xl md:text-6xl font-black tabular-nums font-display",
                     unit.label === "Sec" && "text-accent-lime",
                   )}
                 >
@@ -674,15 +674,8 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 
           <div className="mb-4">
             <p className="text-xs font-bold uppercase tracking-widest text-background/30 mb-2">Assets</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <AddAssetSection estate={estate} onTx={setLastTxId} />
-              <button
-                onClick={() => setTopUpOpen("sol")}
-                disabled={estate.solBalance === 0}
-                className="neo-border rounded-xl px-4 py-3 bg-accent-lime text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-40"
-              >
-                Add More SOL
-              </button>
             </div>
           </div>
 
@@ -752,13 +745,10 @@ const DashboardPage = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <span className="neo-badge bg-accent-lime mb-2 inline-block">Your Estates</span>
-            <h2 className="text-4xl font-black">
-              {estates.length} estate{estates.length !== 1 ? "s" : ""}
-            </h2>
-          </div>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h1 className="text-[44px] font-black tracking-tight font-display">
+            Your estates <span className="text-muted-foreground">({estates.length})</span>
+          </h1>
           <Button variant="lime" size="lg" onClick={() => navigate("/create-vault")}>
             <Plus className="h-5 w-5" /> New Estate
           </Button>
