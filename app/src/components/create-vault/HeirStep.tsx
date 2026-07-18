@@ -1,5 +1,5 @@
+import { Users } from "lucide-react";
 import { LABEL_MAX_LEN } from "@/lib/constants";
-import { Heart, Shield, User } from "lucide-react";
 
 interface Props {
   heirAddress: string;
@@ -10,7 +10,6 @@ interface Props {
   setDelegate: (s: string) => void;
   hbSigner: string;
   setHbSigner: (s: string) => void;
-  isPauseDisable: boolean;
 }
 
 const HeirStep: React.FC<Props> = ({
@@ -22,97 +21,87 @@ const HeirStep: React.FC<Props> = ({
   setDelegate,
   hbSigner,
   setHbSigner,
-  isPauseDisable,
 }) => (
-  <div className="space-y-8">
-    <div>
-      <span className="neo-badge bg-accent-cyan mb-4 inline-block">Step 2</span>
-      <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
-        Name your <span className="bg-accent-cyan px-2 inline-block rotate-[1deg]">heir.</span>
-      </h2>
-      <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-        One estate, one heir. Create more estates later to cover more people.
-      </p>
-    </div>
-
-    <div className="neo-card-static">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="bg-accent-cyan neo-border rounded-xl p-3">
-          <User className="h-6 w-6" strokeWidth={2.5} />
-        </div>
-        <h3 className="text-xl font-black">Heir</h3>
+  <div>
+    {/* Step header */}
+    <div className="flex items-center gap-4 mb-5">
+      <div
+        className="bg-accent-pink border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+      >
+        <Users className="h-5 w-5" strokeWidth={2} />
       </div>
-      <div className="space-y-3">
-        <div>
-          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-            Label ({LABEL_MAX_LEN} chars max)
-          </label>
-          <input
-            type="text"
-            value={label}
-            onChange={(e) => setLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
-            maxLength={LABEL_MAX_LEN}
-            className="neo-input focus:bg-accent-cyan/20"
-            placeholder="e.g. son"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-            Heir Solana Address
-          </label>
-          <input
-            type="text"
-            value={heirAddress}
-            onChange={(e) => setHeirAddress(e.target.value)}
-            maxLength={128}
-            className="neo-input font-mono text-sm focus:bg-accent-cyan/20"
-            placeholder="Enter Solana wallet address..."
-          />
-        </div>
+      <div>
+        <div className="text-xs font-bold uppercase tracking-[3px] text-accent-pink">STEP 1</div>
+        <h3 className="text-2xl font-display">Who inherits?</h3>
       </div>
     </div>
 
-    {!isPauseDisable && (
-      <div className="neo-card-static">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="bg-accent-purple neo-border rounded-xl p-3">
-            <Shield className="h-6 w-6" strokeWidth={2.5} />
-          </div>
-          <h3 className="text-xl font-black">Guardian (Optional)</h3>
+    <div className="space-y-5">
+      <div>
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          LABEL (E.G. &quot;SON&quot;, &quot;SPOUSE&quot;)
+        </label>
+        <input
+          type="text"
+          value={label}
+          onChange={(e) => setLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
+          maxLength={LABEL_MAX_LEN}
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-bold text-base transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="e.g. spouse"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          HEIR SOLANA ADDRESS
+        </label>
+        <input
+          type="text"
+          value={heirAddress}
+          onChange={(e) => setHeirAddress(e.target.value)}
+          maxLength={128}
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="Enter Solana wallet address…"
+        />
+        <div className="text-xs text-muted-foreground mt-2">
+          Single heir by default — they receive 100%. Multi-heir splits come later.
         </div>
-        <p className="text-sm font-medium text-muted-foreground mb-3">
-          A trusted address that can pause the claim window once.
-        </p>
+      </div>
+
+      {/* Optional divider */}
+      <div className="flex items-center gap-3.5 my-7">
+        <div className="flex-1 h-0.5 bg-gray-200" />
+        <span className="text-[11px] font-bold uppercase tracking-[2px] text-muted-foreground">OPTIONAL</span>
+        <div className="flex-1 h-0.5 bg-gray-200" />
+      </div>
+
+      <div>
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          GUARDIAN (CAN PAUSE ONCE)
+        </label>
         <input
           type="text"
           value={delegate}
           onChange={(e) => setDelegate(e.target.value)}
           maxLength={128}
-          className="neo-input font-mono text-sm focus:bg-accent-purple/20"
-          placeholder="Solana address (leave empty for no guardian)"
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="Solana address (optional)"
         />
       </div>
-    )}
 
-    <div className="neo-card-static">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="bg-accent-pink neo-border rounded-xl p-3">
-          <Heart className="h-6 w-6" strokeWidth={2.5} />
-        </div>
-        <h3 className="text-xl font-black">Heartbeat Signer (Optional)</h3>
+      <div>
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          HEARTBEAT SIGNER (HOT WALLET)
+        </label>
+        <input
+          type="text"
+          value={hbSigner}
+          onChange={(e) => setHbSigner(e.target.value)}
+          maxLength={128}
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="Solana address (optional)"
+        />
       </div>
-      <p className="text-sm font-medium text-muted-foreground mb-3">
-        A hot wallet that can refresh the heartbeat for you. It cannot
-        change settings, revoke, or reassign — only ping.
-      </p>
-      <input
-        type="text"
-        value={hbSigner}
-        onChange={(e) => setHbSigner(e.target.value)}
-        maxLength={128}
-        className="neo-input font-mono text-sm focus:bg-accent-pink/20"
-        placeholder="Solana address (leave empty to keep heartbeats authority-only)"
-      />
     </div>
   </div>
 );

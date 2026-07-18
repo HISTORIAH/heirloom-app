@@ -14,9 +14,9 @@ const NotFound = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="text-center neo-slide-up">
         <div className="neo-card-static inline-block rotate-[-2deg] mb-8">
-          <h1 className="text-[120px] md:text-[180px] font-black leading-none">404</h1>
+          <h1 className="text-[120px] md:text-[180px] font-normal leading-none">404</h1>
         </div>
-        <h2 className="text-3xl md:text-4xl font-black mb-4">
+        <h2 className="text-3xl md:text-4xl font-normal mb-4">
           Page not{" "}
           <span className="bg-accent-pink px-2 inline-block rotate-[1deg]">found.</span>
         </h2>

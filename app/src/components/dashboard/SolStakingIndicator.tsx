@@ -1,7 +1,3 @@
-import {
-  type Strategy,
-  type StrategyProgressStep,
-} from "@/types/strategy-ui";
 import { getProgressMessage } from "@/lib/strategies";
 import { cn } from "@/lib/utils";
 import {
@@ -28,7 +24,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
     const staked = strategy;
     return (
       <div className="flex items-center gap-2 flex-wrap mt-3">
-        <span className="inline-flex items-center gap-1 neo-border rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide bg-accent-lime/10 border-accent-lime/40">
+        <span className="inline-flex items-center gap-1 neo-border rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide bg-accent-lime/10 border-accent-lime/40">
           <Sprout className="h-3 w-3 text-accent-lime" />
           {staked.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL
           <span className="text-accent-lime">@ {staked.apy.toFixed(1)}%</span>
@@ -37,7 +33,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
           onClick={onRecall}
           disabled={isWorking}
           className={cn(
-            "neo-border rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-colors shrink-0",
+            "neo-border rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors shrink-0",
             isWorking
               ? "bg-secondary opacity-50"
               : "bg-accent-lime hover:bg-accent-lime/90",
@@ -79,7 +75,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
         onClick={onEnable}
         disabled={isWorking || solBalance <= 0}
         className={cn(
-          "neo-border rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
+          "neo-border rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
           isWorking || solBalance <= 0
             ? "bg-secondary opacity-50"
             : "bg-accent-lime hover:bg-accent-lime/90",

@@ -68,7 +68,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
               <Sprout className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-black leading-tight">Stake SOL</h3>
+              <h3 className="text-xl font-normal leading-tight">Stake SOL</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Delegate {solBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL to earn network rewards.
               </p>
@@ -85,7 +85,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
 
         {/* Validator list */}
         <div className="mt-6 space-y-3">
-          <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Choose a validator
           </p>
 
@@ -112,7 +112,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-black">{validator.name}</span>
+                    <span className="font-bold">{validator.name}</span>
                     <span className="neo-badge text-[10px] px-2 py-0.5 bg-accent-lime">
                       {validator.apy.toFixed(1)}% APY
                     </span>
@@ -134,10 +134,10 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
 
         {/* Summary */}
         <div className="mt-4 neo-border rounded-xl p-4 bg-secondary flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Selected
           </span>
-          <span className="font-black text-sm">
+          <span className="font-bold text-sm">
             {selected.name} @ {selected.apy.toFixed(1)}% APY
           </span>
         </div>

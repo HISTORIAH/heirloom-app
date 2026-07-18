@@ -14,7 +14,7 @@ const VaultLifecycleSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-16 text-center">
           <span className="neo-badge bg-accent-orange mb-6 inline-block">Vault Lifecycle</span>
-          <h2 className="text-4xl md:text-6xl font-black leading-[0.9]">
+          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
             From heartbeat to{" "}
             <span className="bg-accent-cyan px-3 inline-block rotate-[1deg]">inheritance.</span>
           </h2>
@@ -38,7 +38,7 @@ const VaultLifecycleSection = () => {
                     )}
                   </div>
                   <div className="pr-4">
-                    <h3 className="text-lg font-black mb-1">{state.name}</h3>
+                    <h3 className="text-lg font-normal mb-1">{state.name}</h3>
                     <p className="text-sm font-medium text-muted-foreground leading-snug">{state.description}</p>
                   </div>
                 </div>
@@ -58,7 +58,7 @@ const VaultLifecycleSection = () => {
                     <state.icon className="h-5 w-5" strokeWidth={2.5} />
                   </div>
                   <div className="pt-1">
-                    <h3 className="text-lg font-black leading-tight">{state.name}</h3>
+                    <h3 className="text-lg font-normal leading-tight">{state.name}</h3>
                     <p className="text-sm font-medium text-muted-foreground mt-0.5">{state.description}</p>
                   </div>
                   <span className="ml-auto text-xs font-bold text-muted-foreground/40 pt-1.5 shrink-0 tabular-nums">

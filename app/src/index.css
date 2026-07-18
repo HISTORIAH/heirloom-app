@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -25,14 +25,14 @@
     --muted-foreground: 0 0% 40%;
 
     --accent-pink: 313 100% 65%;
-    --accent-lime: 72 100% 50%;
+    --accent-lime: 83 78% 55%;
     --accent-cyan: 189 100% 50%;
     --accent-orange: 29 100% 50%;
     --accent-purple: 249 100% 69%;
     --accent-yellow: 50 100% 50%;
     --accent-red: 0 100% 61%;
 
-    --accent: 72 100% 50%;
+    --accent: 83 78% 55%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 100% 61%;
@@ -53,7 +53,7 @@
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 0%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 72 100% 50%;
+    --sidebar-accent: 83 78% 55%;
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 0 0% 0%;
     --sidebar-ring: 0 0% 0%;
@@ -139,6 +139,34 @@
     outline: 4px solid hsl(var(--foreground));
     outline-offset: 2px;
   }
+
+  /* Placeholder text - make it clearly visible */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* Webkit placeholder (older browsers) */
+  input::-webkit-input-placeholder,
+  textarea::-webkit-input-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* Firefox placeholder */
+  input::-moz-placeholder,
+  textarea::-moz-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* MS placeholder */
+  input:-ms-input-placeholder,
+  textarea:-ms-input-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
 }
 
 @layer components {
@@ -146,6 +174,14 @@
   .neo-shadow-md { box-shadow: var(--shadow-md); }
   .neo-shadow-lg { box-shadow: var(--shadow-lg); }
   .neo-shadow-xl { box-shadow: var(--shadow-xl); }
+  /* Color-matched card shadows (shadow color mirrors the card's accent). */
+  .neo-shadow-pink { box-shadow: 12px 12px 0px 0px hsl(var(--accent-pink)); }
+  .neo-shadow-lime { box-shadow: 12px 12px 0px 0px hsl(var(--accent-lime)); }
+  .neo-shadow-cyan { box-shadow: 12px 12px 0px 0px hsl(var(--accent-cyan)); }
+  .neo-shadow-orange { box-shadow: 12px 12px 0px 0px hsl(var(--accent-orange)); }
+  .neo-shadow-yellow { box-shadow: 12px 12px 0px 0px hsl(var(--accent-yellow)); }
+  .neo-shadow-purple { box-shadow: 12px 12px 0px 0px hsl(var(--accent-purple)); }
+  .neo-shadow-red { box-shadow: 12px 12px 0px 0px hsl(var(--accent-red)); }
   .neo-border { @apply border-4 border-foreground; }
   .neo-border-thick { @apply border-[6px] border-foreground; }
   .neo-card {
@@ -157,7 +193,7 @@
     box-shadow: var(--shadow-xl);
   }
   .neo-card-static {
-    @apply bg-card neo-border rounded-2xl p-8;
+    @apply bg-card neo-border rounded-2xl p-6;
     box-shadow: var(--shadow-lg);
   }
   .neo-badge {

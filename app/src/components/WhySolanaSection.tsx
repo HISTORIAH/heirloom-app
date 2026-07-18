@@ -57,7 +57,7 @@ const WhySolanaSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-16 text-center">
           <span className="neo-badge bg-background mb-6 inline-block">Why Solana</span>
-          <h2 className="text-4xl md:text-6xl font-black leading-[0.9]">
+          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
             Built where speed{" "}
             <span className="bg-foreground text-accent-cyan px-3 inline-block rotate-[1deg]">
               meets safety.
@@ -74,7 +74,7 @@ const WhySolanaSection = () => {
               <div className={`${r.badgeColor} neo-border rounded-xl p-3 inline-block mb-4`}>
                 <r.icon className="h-8 w-8" strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl font-black mb-2">{r.title}</h3>
+              <h3 className="text-xl font-normal mb-2">{r.title}</h3>
               <p className="text-base font-medium leading-relaxed">{r.description}</p>
             </div>
           ))}

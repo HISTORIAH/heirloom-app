@@ -32,7 +32,7 @@ const WalletPill: React.FC<WalletPillProps> = ({ onDisconnect }) => {
 
   if (!publicKey) {
     return (
-      <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+      <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Not connected
       </div>
     );
@@ -70,7 +70,7 @@ const WalletPill: React.FC<WalletPillProps> = ({ onDisconnect }) => {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
       >
         {short}
       </button>

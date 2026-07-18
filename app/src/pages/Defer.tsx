@@ -136,13 +136,13 @@ const DeferPageInner: React.FC<{
     <div className="min-h-screen bg-background">
       <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-black hover:underline group">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-semibold hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
             Home
           </button>
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-black">Guardian</span>
+            <span className="text-2xl font-bold">Guardian</span>
           </div>
           {isConnected ? (
             <button
@@ -167,7 +167,7 @@ const DeferPageInner: React.FC<{
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
               <span className="neo-badge bg-accent-purple mb-4 inline-block text-white">Guardian Portal</span>
-              <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+              <h2 className="text-4xl md:text-5xl font-normal leading-[0.9]">
                 Extend the{" "}
                 <span className="bg-accent-purple text-white px-2 inline-block rotate-[-1deg]">claim window.</span>
               </h2>
@@ -178,7 +178,7 @@ const DeferPageInner: React.FC<{
 
             <div className="neo-card-static space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
+                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
                   Authority (Owner) Address
                 </label>
                 <input
@@ -191,7 +191,7 @@ const DeferPageInner: React.FC<{
                 />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
+                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
                   Heir Address
                 </label>
                 <input
@@ -229,16 +229,16 @@ const DeferPageInner: React.FC<{
                 <div className={`neo-border rounded-xl p-5 ${stateColors[estate.vaultState]}`}>
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                         Label
                       </p>
-                      <p className="text-2xl font-black truncate">{estate.label}</p>
+                      <p className="text-2xl font-bold truncate">{estate.label}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                         State
                       </p>
-                      <p className="text-2xl font-black uppercase">{estate.vaultState}</p>
+                      <p className="text-2xl font-bold uppercase">{estate.vaultState}</p>
                     </div>
                   </div>
                 </div>
@@ -248,7 +248,7 @@ const DeferPageInner: React.FC<{
                     <p className="text-xs font-bold text-muted-foreground uppercase">{SOL_LABEL}</p>
                     <div className="flex items-center gap-1">
                       <Coins className="h-4 w-4" />
-                      <p className="text-lg font-black">
+                      <p className="text-lg font-bold">
                         {formatSol(estate.solBalance)}
                       </p>
                     </div>
@@ -257,17 +257,17 @@ const DeferPageInner: React.FC<{
                     <p className="text-xs font-bold text-muted-foreground uppercase">Pause Duration</p>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      <p className="text-lg font-black">{formatDuration(estate.pauseDuration)}</p>
+                      <p className="text-lg font-bold">{formatDuration(estate.pauseDuration)}</p>
                     </div>
                   </div>
                   <div className="neo-border rounded-lg p-3 bg-secondary">
                     <p className="text-xs font-bold text-muted-foreground uppercase">Pause Used</p>
-                    <p className="text-lg font-black">{estate.isDeferred ? "Yes" : "No"}</p>
+                    <p className="text-lg font-bold">{estate.isDeferred ? "Yes" : "No"}</p>
                   </div>
                 </div>
 
                 <div className="neo-border rounded-lg p-3 bg-accent-purple/10">
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Delegate
                   </p>
                   <p className="font-mono text-xs break-all">
@@ -279,7 +279,7 @@ const DeferPageInner: React.FC<{
                   {deferTxId ? (
                     <div className="text-center">
                       <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                      <p className="font-black mb-2">Defer submitted</p>
+                      <p className="font-bold mb-2">Defer submitted</p>
                       <a
                         href={getSolanaExplorerTxUrl(deferTxId)}
                         target="_blank"

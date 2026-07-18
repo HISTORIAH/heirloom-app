@@ -110,7 +110,7 @@ const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
             />
             <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${meta.dot}`} />
           </span>
-          <span className={`text-xs font-black uppercase tracking-widest ${meta.accent}`}>
+          <span className={`text-xs font-semibold uppercase tracking-widest ${meta.accent}`}>
             {meta.label}
           </span>
         </div>
@@ -132,7 +132,7 @@ const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-[hsl(0_0%_5%)] to-transparent" />
         {isDead && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="bg-accent-red px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-background">
+            <span className="bg-accent-red px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-background">
               Flatline
             </span>
           </div>
@@ -143,10 +143,10 @@ const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
       <div className="space-y-5 px-6 py-6">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
               {isDead ? "Heirs may now claim" : "Next heartbeat due in"}
             </p>
-            <p className="mt-1 font-display text-4xl font-black tabular-nums tracking-tight">
+            <p className="mt-1 font-display text-4xl font-normal tabular-nums tracking-tight">
               {isDead ? "00:00" : fmt(secs)}
             </p>
           </div>
@@ -162,10 +162,9 @@ const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
           variant={isDead ? "outline" : "lime"}
           size="lg"
           className="w-full"
-          style={isDead ? undefined : { backgroundColor: "#FFD600" }}
           onClick={sendHeartbeat}
         >
-          <Heart className="h-5 w-5" fill="currentColor" strokeWidth={0} />
+          <Heart className="h-5 w-5" />
           {isDead ? "Revive Demo" : "Send Heartbeat"}
         </Button>
       </div>
@@ -209,15 +208,12 @@ const HeroSection = () => {
               Solana Inheritance Protocol
             </span>
 
-            <h1 className="mt-7 font-display text-5xl font-black leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
+            <h1 className="mt-7 font-display text-5xl font-normal leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
               Protect your{" "}
               <span className="px-3 text-foreground" style={{ backgroundColor: "#FF4FD8" }}>
                 assets.
               </span>{" "}
-              Pass it on{" "}
-              <span className="px-3 text-foreground" style={{ backgroundColor: "#FF7A00" }}>
-                trustlessly.
-              </span>
+              Pass it on trustlessly.
             </h1>
 
             <p className="mt-7 max-w-xl text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">

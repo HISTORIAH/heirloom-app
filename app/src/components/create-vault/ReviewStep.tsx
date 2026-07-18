@@ -1,131 +1,173 @@
-import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
-import { formatDuration as fmtDuration, formatUiAmount } from "@/lib/utils";
+import { CheckCircle } from "lucide-react";
+import { SOL_DECIMALS, SECONDS_PER_DAY } from "@/lib/constants";
+import { formatUiAmount, truncateAddress } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
-import { Heart, Shield } from "lucide-react";
-
-const formatDuration = (s: number) => fmtDuration(s, { long: true });
+import type { TokenSelection } from "@/pages/CreateVault";
 
 interface Props {
   heartbeatSeconds: number;
   graceSeconds: number;
-  pauseSeconds: number;
   heirAddress: string;
   label: string;
   delegate: string;
   hbSigner: string;
   solAmount: number;
-  tokenAmounts: Record<string, number>;
+  tokenSelections: Record<string, TokenSelection>;
   tokens: SplTokenAsset[] | undefined;
+  acknowledged: boolean;
+  setAcknowledged: (v: boolean) => void;
+  onEdit: (stepIndex: number) => void;
 }
 
 const ReviewStep: React.FC<Props> = ({
   heartbeatSeconds,
   graceSeconds,
-  pauseSeconds,
   heirAddress,
   label,
   delegate,
   hbSigner,
   solAmount,
-  tokenAmounts,
+  tokenSelections,
   tokens,
+  acknowledged,
+  setAcknowledged,
+  onEdit,
 }) => {
-  const selectedTokenEntries = Object.entries(tokenAmounts).filter(([, v]) => v > 0);
+  const selectedTokenEntries = Object.entries(tokenSelections).filter(([, v]) => v.amount > 0);
+  const totalAssets = selectedTokenEntries.length + (solAmount > 0 ? 1 : 0);
+
+  const heartbeatDays = Math.round(heartbeatSeconds / SECONDS_PER_DAY);
+  const graceDays = Math.round(graceSeconds / SECONDS_PER_DAY);
+  const totalDays = heartbeatDays + graceDays;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <span className="neo-badge bg-accent-lime mb-4 inline-block">Step 4</span>
-        <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
-          Review & <span className="bg-accent-lime px-2 inline-block rotate-[1deg]">confirm.</span>
-        </h2>
+    <div>
+      {/* Step header */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className="bg-accent-lime border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
+          <CheckCircle className="h-5 w-5" strokeWidth={2} />
+        </div>
+        <div>
+          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-lime">STEP 4</div>
+          <h3 className="text-2xl font-display">Review & confirm</h3>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="neo-card-static">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-            Timing
-          </h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="font-bold">Interval</span>
-              <span className="font-black text-xl">{formatDuration(heartbeatSeconds)}</span>
+      {/* Two-column grid: Timing + Deposits */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Timing */}
+        <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">TIMING</span>
+            <button
+              onClick={() => onEdit(2)}
+              className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
+            >
+              EDIT
+            </button>
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm py-1">
+              <span className="text-muted-foreground">Interval</span>
+              <span className="font-bold">{heartbeatDays} days</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-bold">Grace</span>
-              <span className="font-black text-xl">{formatDuration(graceSeconds)}</span>
+            <div className="flex justify-between text-sm py-1">
+              <span className="text-muted-foreground">Grace</span>
+              <span className="font-bold">{graceDays} days</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-bold">Pause</span>
-              <span className="font-black text-xl">{formatDuration(pauseSeconds)}</span>
-            </div>
-            <div className="flex justify-between border-t-4 border-foreground pt-2 mt-2">
-              <span className="font-bold">Total</span>
-              <span className="font-black text-xl">
-                {formatDuration(heartbeatSeconds + graceSeconds)}
-              </span>
+            <div className="flex justify-between text-sm py-2 border-t-2 border-foreground mt-2">
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-bold">{totalDays} days</span>
             </div>
           </div>
         </div>
 
-        <div className="neo-card-static">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-            Deposits
-          </h3>
+        {/* Deposits */}
+        <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">DEPOSITS</span>
+            <button
+              onClick={() => onEdit(1)}
+              className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
+            >
+              EDIT
+            </button>
+          </div>
           {solAmount > 0 && (
-            <div className="flex justify-between mb-2">
-              <span className="font-bold">{SOL_LABEL}</span>
-              <span className="font-black text-xl">{solAmount.toFixed(Math.min(6, SOL_DECIMALS))}</span>
+            <div className="flex justify-between text-sm py-1">
+              <span className="text-muted-foreground">SOL</span>
+              <span className="font-bold">
+                {solAmount.toFixed(Math.min(6, SOL_DECIMALS))}
+              </span>
             </div>
           )}
-          {selectedTokenEntries.map(([mint, amt]) => {
+          {selectedTokenEntries.map(([mint, sel]) => {
             const tok = (tokens ?? []).find((t) => t.mint === mint);
-            const tokLabel = tok?.label ?? mint.slice(0, 8);
+            const tokLabel = tok?.symbol || tok?.label || mint.slice(0, 8);
             return (
-              <div key={mint} className="flex justify-between mb-2">
-                <span className="font-bold">{tokLabel}</span>
-                <span className="font-black text-xl">{formatUiAmount(amt)}</span>
+              <div key={mint} className="flex justify-between text-sm py-1">
+                <span className="text-muted-foreground">
+                  {tokLabel} <span className="text-xs">({truncateAddress(mint, 4)})</span>
+                </span>
+                <span className="font-bold">{formatUiAmount(sel.amount)}</span>
               </div>
             );
           })}
-          {selectedTokenEntries.length > 0 && (
-            <p className="text-xs text-muted-foreground font-medium mt-2 border-t-2 border-foreground/10 pt-2">
-              {selectedTokenEntries.length + (solAmount > 0 ? 1 : 0)} asset(s) total
-              {selectedTokenEntries.length > 0 && " — tokens require separate transactions"}
-            </p>
+          {totalAssets === 0 && (
+            <div className="text-sm text-muted-foreground">
+              No deposits — empty estate, fund it later
+            </div>
           )}
+          <p className="text-xs text-muted-foreground mt-2 border-t-2 border-dashed border-gray-200 pt-2">
+            {totalAssets} asset{totalAssets !== 1 ? "s" : ""} total
+          </p>
         </div>
       </div>
 
-      <div className="neo-card-static">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-3">
-          Heir
-        </h3>
-        <p className="font-black text-lg">{label}</p>
-        <p className="text-xs font-mono text-muted-foreground break-all">{heirAddress}</p>
+      {/* Heir */}
+      <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40 mb-5">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">HEIR</span>
+          <button
+            onClick={() => onEdit(0)}
+            className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
+          >
+            EDIT
+          </button>
+        </div>
+        <p className="font-bold text-base">
+          {label} · {truncateAddress(heirAddress, 4)}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          100% allocation
+          {delegate && ` · guardian ${truncateAddress(delegate, 4)}`}
+          {hbSigner && ` · signer ${truncateAddress(hbSigner, 4)}`}
+        </p>
       </div>
 
-      {delegate && (
-        <div className="neo-card-static bg-accent-purple/10">
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5" strokeWidth={2.5} />
-            <p className="font-bold">
-              Guardian: <span className="font-mono text-sm break-all">{delegate}</span>
-            </p>
-          </div>
+      {/* Acknowledgment */}
+      <button
+        onClick={() => setAcknowledged(!acknowledged)}
+        className={`w-full flex items-start gap-3.5 border-4 border-foreground rounded-xl p-4 cursor-pointer transition-colors ${
+          acknowledged ? "bg-accent-lime/10" : "bg-background"
+        }`}
+      >
+        <div
+          className={`w-6 h-6 shrink-0 border-4 border-foreground rounded-lg flex items-center justify-center font-bold text-sm transition-colors ${
+            acknowledged ? "bg-accent-lime" : "bg-background"
+          }`}
+        >
+          {acknowledged && "✓"}
         </div>
-      )}
+        <span className="text-sm leading-relaxed text-left">
+          I understand that if I don&apos;t check in for <strong>{totalDays} days</strong> ({heartbeatDays}-day
+          interval + {graceDays}-day grace), my heir can claim these assets on-chain.
+        </span>
+      </button>
 
-      {hbSigner && (
-        <div className="neo-card-static bg-accent-pink/10">
-          <div className="flex items-center gap-3">
-            <Heart className="h-5 w-5" strokeWidth={2.5} />
-            <p className="font-bold">
-              Heartbeat Signer: <span className="font-mono text-sm break-all">{hbSigner}</span>
-            </p>
-          </div>
-        </div>
-      )}
+      <p className="text-xs text-muted-foreground text-right mt-2">
+        Estimated network fee: ~0.002 SOL
+      </p>
     </div>
   );
 };

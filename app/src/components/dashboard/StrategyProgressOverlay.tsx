@@ -1,7 +1,3 @@
-import {
-  type StrategyType,
-  type StrategyProgressStep,
-} from "@/types/strategy-ui";
 import { getProgressMessage } from "@/lib/strategies";
 import { cn } from "@/lib/utils";
 import {
@@ -61,7 +57,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
           </div>
         </div>
 
-        <h2 className="text-2xl font-black mb-2">
+        <h2 className="text-2xl font-normal mb-2">
           {title || (isComplete ? "Done!" : isError ? "Failed" : "Processing...")}
         </h2>
         <p className="text-sm font-medium text-muted-foreground mb-6">
@@ -83,7 +79,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
                 <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
               )}
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               {firstStepLabel}
             </span>
           </div>
@@ -105,7 +101,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
                 <div className="w-3 h-3 rounded-full bg-muted-foreground/30" />
               )}
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               {secondStepLabel}
             </span>
           </div>

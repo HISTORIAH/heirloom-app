@@ -49,7 +49,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
               <Coins className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-black leading-tight">Top Up {symbol}</h3>
+              <h3 className="text-xl font-normal leading-tight text-foreground">Top Up {symbol}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Add {symbol} from your wallet to the vault.
               </p>
@@ -66,10 +66,10 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
 
         {/* Vault balance */}
         <div className="mt-4 neo-border rounded-xl p-3 bg-secondary flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Current Vault Balance
           </span>
-          <span className="font-black text-sm">
+          <span className="font-bold text-sm">
             {vaultBalance.toLocaleString(undefined, { maximumFractionDigits: decimals })} {symbol}
           </span>
         </div>
@@ -92,7 +92,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
                 key={pct}
                 onClick={() => applyPct(pct)}
                 className={cn(
-                  "flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px",
+                  "flex-1 neo-border rounded-lg py-3 text-xs font-bold uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px",
                   bg,
                 )}
               >
