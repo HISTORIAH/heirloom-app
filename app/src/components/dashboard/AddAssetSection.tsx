@@ -15,7 +15,7 @@ interface Props {
 }
 
 const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
-  const { registerAssetOnChain, registerSolOnChain, fetchEstates } = useVault();
+  const { registerAssetOnChain, fetchEstates } = useVault();
   const { publicKey, isConnected } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
@@ -103,7 +103,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 overflow-y-auto"
+          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 overflow-y-auto text-foreground"
           onClick={() => {
             if (!addingAsset) setOpen(false);
           }}

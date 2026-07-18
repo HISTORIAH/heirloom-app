@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heirloom — Refined Brutalist Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Space Grotesk', 'Inter', 'sans-serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            ink: '#0a0a0a',
+            paper: '#fafafa',
+            'c-pink': '#FF4FD8',
+            'c-lime': '#a3e635',
+            'c-cyan': '#22d3ee',
+            'c-yellow': '#facc15',
+            'c-orange': '#fb923c',
+            'c-purple': '#c084fc',
+            'c-red': '#f87171',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --ink: #0a0a0a;
+      --paper: #fafafa;
+      --c-pink: #FF4FD8;
+      --c-lime: #a3e635;
+      --c-cyan: #22d3ee;
+      --c-yellow: #facc15;
+      --c-orange: #fb923c;
+      --c-purple: #c084fc;
+      --c-red: #f87171;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--ink); }
+    h1, h2, h3, h4, h5, h6 { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+    /* ─── Neo-brutalist primitives ─── */
+    .neo-border { border: 4px solid var(--ink); }
+    .neo-border-thick { border: 6px solid var(--ink); }
+    .neo-shadow-sm { box-shadow: 4px 4px 0 0 var(--ink); }
+    .neo-shadow-md { box-shadow: 8px 8px 0 0 var(--ink); }
+    .neo-shadow-lg { box-shadow: 12px 12px 0 0 var(--ink); }
+    .neo-shadow-xl { box-shadow: 16px 16px 0 0 var(--ink); }
+    .neo-shadow-pink { box-shadow: 8px 8px 0 0 var(--c-pink); }
+    .neo-shadow-lime { box-shadow: 8px 8px 0 0 var(--c-lime); }
+    .neo-shadow-cyan { box-shadow: 8px 8px 0 0 var(--c-cyan); }
+    .neo-shadow-yellow { box-shadow: 8px 8px 0 0 var(--c-yellow); }
+    .neo-shadow-orange { box-shadow: 8px 8px 0 0 var(--c-orange); }
+    .neo-shadow-purple { box-shadow: 8px 8px 0 0 var(--c-purple); }
+    .neo-shadow-red { box-shadow: 8px 8px 0 0 var(--c-red); }
+
+    .neo-card {
+      background: white;
+      border: 4px solid var(--ink);
+      border-radius: 1rem;
+      padding: 2rem;
+      transition: all 0.15s ease-out;
+      box-shadow: 12px 12px 0 0 var(--ink);
+    }
+    .neo-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 16px 16px 0 0 var(--ink);
+    }
+    .neo-card-static {
+      background: white;
+      border: 4px solid var(--ink);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 12px 12px 0 0 var(--ink);
+    }
+
+    .neo-badge {
+      display: inline-block;
+      border: 4px solid var(--ink);
+      border-radius: 9999px;
+      padding: 0.25rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      box-shadow: 4px 4px 0 0 var(--ink);
+    }
+
+    .neo-input {
+      width: 100%;
+      border: 4px solid var(--ink);
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: white;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all 0.15s ease;
+      box-shadow: 4px 4px 0 0 var(--ink);
+    }
+    .neo-input:focus {
+      box-shadow: 8px 8px 0 0 var(--ink);
+      transform: translate(-2px, -2px);
+      outline: none;
+    }
+
+    .btn-pink {
+      background: var(--c-pink); color: var(--ink); border: 4px solid var(--ink);
+      font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      box-shadow: 4px 4px 0 0 var(--ink); transition: all 0.15s ease;
+    }
+    .btn-pink:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--ink); }
+    .btn-lime {
+      background: var(--c-lime); color: var(--ink); border: 4px solid var(--ink);
+      font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      box-shadow: 4px 4px 0 0 var(--ink); transition: all 0.15s ease;
+    }
+    .btn-lime:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--ink); }
+    .btn-outline {
+      background: transparent; color: var(--ink); border: 4px solid var(--ink);
+      font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      transition: all 0.15s ease;
+    }
+    .btn-outline:hover { background: var(--ink); color: white; }
+    .btn-red {
+      background: var(--c-red); color: white; border: 4px solid var(--ink);
+      font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      box-shadow: 4px 4px 0 0 var(--ink); transition: all 0.15s ease;
+    }
+    .btn-red:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--ink); }
+
+    .slide-up { opacity: 0; transform: translateY(24px); animation: slideUp 0.5s ease-out forwards; }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+
+    .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(163, 230, 53, 0); } }
+
+    .countdown-digit { font-family: 'Space Grotesk', sans-serif; font-size: 3.5rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+
+    .grid-pattern { background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); background-size: 44px 44px; }
+
+    ::selection { background: var(--c-lime); color: var(--ink); }
+
+    ::-webkit-scrollbar { width: 12px; }
+    ::-webkit-scrollbar-track { background: #f5f5f5; border-left: 4px solid var(--ink); }
+    ::-webkit-scrollbar-thumb { background: var(--ink); border: 2px solid #f5f5f5; }
+
+    .tab-active { background: var(--c-pink); border: 4px solid var(--ink); box-shadow: 4px 4px 0 0 var(--ink); }
+
+    .step-dot { width: 3rem; height: 3rem; border: 4px solid var(--ink); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; transition: all 0.3s ease; }
+    .step-dot.active { background: var(--c-lime); transform: scale(1.1); box-shadow: 4px 4px 0 0 var(--ink); }
+    .step-dot.complete { background: var(--c-lime); }
+    .step-dot.pending { background: #f5f5f5; }
+    .step-connector { height: 4px; border-radius: 2px; background: var(--ink); flex: 1; margin-top: -2px; }
+    .step-connector.complete { background: var(--c-lime); }
+
+    /* Token row in list */
+    .token-row { transition: all 0.15s ease; }
+    .token-row:hover { background: rgba(34, 211, 238, 0.1); }
+    .token-row.selected { background: rgba(163, 230, 53, 0.15); }
+  </style>
+</head>
+<body class="font-body antialiased">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NAVIGATION
+       ═══════════════════════════════════════════════════════════ -->
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm neo-border" style="border-bottom-width: 6px; border-top: none; border-left: none; border-right: none;">
+    <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+      <a href="#" class="font-display text-2xl font-black tracking-tight">Heirloom</a>
+      <div class="hidden md:flex items-center gap-6">
+        <a href="#how" class="text-sm font-bold uppercase tracking-widest hover:underline">How it works</a>
+        <a href="#create" class="text-sm font-bold uppercase tracking-widest hover:underline">Create</a>
+        <a href="#dashboard" class="text-sm font-bold uppercase tracking-widest hover:underline">Dashboard</a>
+        <a href="#claim" class="text-sm font-bold uppercase tracking-widest hover:underline">Claim</a>
+      </div>
+      <!-- No CTA in nav - user is already on the page -->
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO — Fixed button sizing, single pink highlight
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="relative overflow-hidden grid-pattern">
+    <div class="relative max-w-6xl mx-auto px-6 py-20 md:py-28">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div class="slide-up">
+          <span class="neo-badge bg-white mb-6">Solana Inheritance Protocol</span>
+          <h1 class="font-display text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight">
+            Protect your<br>
+            <span class="inline-block bg-c-pink px-3 rotate-[-1deg] neo-border">assets.</span><br>
+            Pass it on<br>
+            trustlessly.
+          </h1>
+          <p class="mt-8 text-lg font-medium leading-relaxed text-gray-600 max-w-lg">
+            Lock assets in a heartbeat vault on Solana. Check in periodically — or your heirs inherit automatically. No lawyers. No custodians. No seed phrase sharing.
+          </p>
+          <!-- FIXED: Equal length buttons. Both short. Visual weight from fill vs outline, not size. -->
+          <div class="mt-10 flex flex-wrap items-center gap-4">
+            <button class="btn-pink h-14 px-8 rounded-xl text-base">Create Vault</button>
+            <button class="btn-outline h-14 px-8 rounded-xl text-sm flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              View Demo
+            </button>
+          </div>
+        </div>
+        <div class="slide-up delay-2">
+          <div class="neo-card-static bg-ink text-white neo-shadow-lime">
+            <div class="flex items-center justify-between border-b-2 border-white/10 pb-4 mb-6">
+              <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/50">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Vault Status
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="relative inline-flex h-2.5 w-2.5">
+                  <span class="absolute inline-flex h-full w-full rounded-full bg-c-lime pulse-glow"></span>
+                  <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-c-lime"></span>
+                </span>
+                <span class="text-xs font-black uppercase tracking-widest text-c-lime">Active</span>
+              </div>
+            </div>
+            <div class="text-center py-4">
+              <p class="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">Next heartbeat due in</p>
+              <div class="grid grid-cols-4 gap-3">
+                <div class="neo-border rounded-xl bg-white/5 p-3">
+                  <div class="countdown-digit text-white">25</div>
+                  <div class="text-xs font-bold uppercase tracking-widest text-white/40 mt-1">Days</div>
+                </div>
+                <div class="neo-border rounded-xl bg-white/5 p-3">
+                  <div class="countdown-digit text-white">14</div>
+                  <div class="text-xs font-bold uppercase tracking-widest text-white/40 mt-1">Hrs</div>
+                </div>
+                <div class="neo-border rounded-xl bg-white/5 p-3">
+                  <div class="countdown-digit text-white">32</div>
+                  <div class="text-xs font-bold uppercase tracking-widest text-white/40 mt-1">Min</div>
+                </div>
+                <div class="neo-border rounded-xl bg-white/5 p-3">
+                  <div class="countdown-digit text-c-lime">08</div>
+                  <div class="text-xs font-bold uppercase tracking-widest text-white/40 mt-1">Sec</div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6">
+              <button class="w-full btn-lime h-14 rounded-xl flex items-center justify-center gap-2 text-base">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                Check In Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NO ESTATES — Empty state when wallet connected but no vault
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="no-estates" class="py-20 md:py-32 bg-gray-50">
+    <div class="max-w-xl mx-auto px-6 text-center">
+      <!-- Big illustration -->
+      <div class="relative inline-block mb-8">
+        <div class="w-32 h-32 rounded-3xl neo-border bg-white flex items-center justify-center" style="box-shadow: 8px 8px 0 0 var(--ink);">
+          <svg class="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-16L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+        <div class="absolute -top-2 -right-2 w-10 h-10 rounded-xl bg-c-pink neo-border flex items-center justify-center" style="box-shadow: 4px 4px 0 0 var(--ink);">
+          <span class="text-lg">✦</span>
+        </div>
+      </div>
+
+      <h2 class="font-display text-3xl md:text-4xl font-black mb-3">No vault yet</h2>
+      <p class="text-gray-500 font-bold mb-8 max-w-sm mx-auto">Connect your wallet and create your first estate to protect your assets for the future.</p>
+
+      <div class="flex flex-col items-center gap-3">
+        <button class="btn-pink h-14 px-10 rounded-xl text-base">Create Your Vault</button>
+        <button class="text-sm font-bold underline underline-offset-4 hover:text-c-pink transition-colors">Learn how it works</button>
+      </div>
+
+      <!-- Stats teaser -->
+      <div class="mt-12 grid grid-cols-3 gap-4">
+        <div class="neo-border rounded-xl p-4 bg-white">
+          <p class="text-2xl font-black text-c-pink">$2.4M</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mt-1">Protected</p>
+        </div>
+        <div class="neo-border rounded-xl p-4 bg-white">
+          <p class="text-2xl font-black text-c-cyan">847</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mt-1">Vaults</p>
+        </div>
+        <div class="neo-border rounded-xl p-4 bg-white">
+          <p class="text-2xl font-black text-c-lime">0</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-400 mt-1">Claims</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HOW IT WORKS — White background, colored cards with matching shadows
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="how" class="py-20 md:py-28 border-y-8 border-ink">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16 slide-up">
+        <span class="neo-badge bg-c-lime mb-6">How It Works</span>
+        <h2 class="font-display text-4xl md:text-6xl font-black leading-[0.9]">
+          Four steps to<br>
+          <span class="inline-block bg-ink text-white px-3 rotate-[-1deg] mt-2">immortal assets.</span>
+        </h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Step 1: Create — PINK -->
+        <div class="neo-card slide-up delay-1" style="box-shadow: 12px 12px 0 0 var(--c-pink);">
+          <div class="flex items-start gap-6">
+            <div class="relative shrink-0">
+              <div class="bg-c-pink neo-border rounded-2xl p-4" style="box-shadow: 4px 4px 0 0 var(--ink);">
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <span class="absolute -top-3 -left-3 bg-ink text-white neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-black">1</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Step 1</div>
+              <h3 class="text-2xl font-black mb-2">Create Your Vault</h3>
+              <p class="text-lg font-medium leading-relaxed text-gray-600">Connect your wallet, deposit tokens, define your heirs and their percentage splits.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Step 2: Heartbeat — LIME -->
+        <div class="neo-card slide-up delay-2" style="box-shadow: 12px 12px 0 0 var(--c-lime);">
+          <div class="flex items-start gap-6">
+            <div class="relative shrink-0">
+              <div class="bg-c-lime neo-border rounded-2xl p-4" style="box-shadow: 4px 4px 0 0 var(--ink);">
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              </div>
+              <span class="absolute -top-3 -left-3 bg-ink text-white neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-black">2</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Step 2</div>
+              <h3 class="text-2xl font-black mb-2">Send Heartbeats</h3>
+              <p class="text-lg font-medium leading-relaxed text-gray-600">Periodically sign a simple transaction. One click proves you're alive. Timer resets.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Step 3: Grace — CYAN -->
+        <div class="neo-card slide-up delay-3" style="box-shadow: 12px 12px 0 0 var(--c-cyan);">
+          <div class="flex items-start gap-6">
+            <div class="relative shrink-0">
+              <div class="bg-c-cyan neo-border rounded-2xl p-4" style="box-shadow: 4px 4px 0 0 var(--ink);">
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <span class="absolute -top-3 -left-3 bg-ink text-white neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-black">3</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Step 3</div>
+              <h3 class="text-2xl font-black mb-2">Grace Period</h3>
+              <p class="text-lg font-medium leading-relaxed text-gray-600">Miss a heartbeat? A configurable grace period gives you time to recover. Your guardian can pause.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Step 4: Heirs Claim — YELLOW -->
+        <div class="neo-card slide-up delay-3" style="box-shadow: 12px 12px 0 0 var(--c-yellow);">
+          <div class="flex items-start gap-6">
+            <div class="relative shrink-0">
+              <div class="bg-c-yellow neo-border rounded-2xl p-4" style="box-shadow: 4px 4px 0 0 var(--ink);">
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              </div>
+              <span class="absolute -top-3 -left-3 bg-ink text-white neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-black">4</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Step 4</div>
+              <h3 class="text-2xl font-black mb-2">Heirs Claim</h3>
+              <p class="text-lg font-medium leading-relaxed text-gray-600">If your heartbeat stays silent, heirs claim their share with one click. Automatic. Trustless.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CREATE VAULT FLOW — Reordered: Heir → Deposit → Heartbeat → Review
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="create" class="py-20 md:py-28 bg-gray-50 border-y-8 border-ink">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12 slide-up">
+        <span class="neo-badge bg-c-pink mb-6">Create Vault</span>
+        <h2 class="font-display text-4xl md:text-5xl font-black leading-[0.9]">
+          Reordered for clarity.<br>
+          <span class="inline-block bg-ink text-white px-3 rotate-[1deg]">Heir first.</span>
+        </h2>
+        <p class="mt-4 text-lg font-medium text-gray-600 max-w-2xl mx-auto">
+          <strong class="text-gray-400">Before:</strong> Heartbeat → Heir → Deposit → Review<br>
+          <strong>After:</strong> Heir → Deposit → Heartbeat → Review
+        </p>
+      </div>
+
+      <!-- Stepper -->
+      <div class="flex items-center gap-0 mb-10 slide-up">
+        <div class="step-dot active">1</div>
+        <div class="step-connector complete"></div>
+        <div class="step-dot pending">2</div>
+        <div class="step-connector"></div>
+        <div class="step-dot pending">3</div>
+        <div class="step-connector"></div>
+        <div class="step-dot pending">4</div>
+      </div>
+
+      <!-- Step 1: Heir (PINK) -->
+      <div class="neo-card-static mb-6" style="box-shadow: 12px 12px 0 0 var(--c-pink);">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="bg-c-pink neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-pink">Step 1</span>
+            <h3 class="text-2xl font-black">Who inherits?</h3>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-bold uppercase tracking-widest text-gray-500 block mb-1">Label (e.g. "son", "spouse")</label>
+            <input type="text" class="neo-input" placeholder="e.g. son" value="son" />
+          </div>
+          <div>
+            <label class="text-xs font-bold uppercase tracking-widest text-gray-500 block mb-1">Heir Solana Address</label>
+            <input type="text" class="neo-input font-mono text-sm" placeholder="Enter Solana wallet address..." />
+          </div>
+          <div class="pt-4 border-t-4 border-ink/10">
+            <p class="text-sm font-bold text-gray-500 mb-2">Optional</p>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs font-bold uppercase tracking-widest text-gray-500 block mb-1">Guardian (can pause once)</label>
+                <input type="text" class="neo-input font-mono text-sm" placeholder="Solana address (optional)" />
+              </div>
+              <div>
+                <label class="text-xs font-bold uppercase tracking-widest text-gray-500 block mb-1">Heartbeat Signer (hot wallet)</label>
+                <input type="text" class="neo-input font-mono text-sm" placeholder="Solana address (optional)" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Deposit (ORANGE) — Tabs for SOL / Tokens -->
+      <div class="neo-card-static mb-6" style="box-shadow: 12px 12px 0 0 var(--c-orange);">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="bg-c-orange neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-orange">Step 2</span>
+            <h3 class="text-2xl font-black">What are you protecting?</h3>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6">
+          <button class="tab-active px-4 py-2 rounded-lg text-sm font-black uppercase">Deposit SOL</button>
+          <button class="neo-border px-4 py-2 rounded-lg text-sm font-black uppercase bg-gray-100 hover:bg-gray-200 transition-colors">Deposit Tokens</button>
+        </div>
+
+        <!-- SOL Tab Content -->
+        <div class="space-y-4">
+          <input type="number" class="neo-input font-black text-3xl text-center !py-4" placeholder="0" value="1.5" />
+          <div class="flex gap-2 flex-wrap">
+            <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-pink/40 transition-all">Skip</button>
+            <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-pink/40 transition-all">25%</button>
+            <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-pink/40 transition-all">50%</button>
+            <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-pink/40 transition-all">75%</button>
+            <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-c-pink neo-shadow-sm transition-all">Max</button>
+          </div>
+          <p class="text-sm font-bold text-gray-500">Balance: 4.23 SOL</p>
+        </div>
+
+        <!-- Token Tab Content (hidden by default, shown for preview) -->
+        <div class="mt-6 pt-6 border-t-4 border-ink/10">
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Token Tab Preview</p>
+          <div class="neo-border rounded-xl overflow-hidden">
+            <!-- Search + filters -->
+            <div class="p-4 bg-gray-50 border-b-4 border-ink">
+              <div class="flex gap-3 mb-3">
+                <div class="relative flex-1">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <input type="text" class="neo-input !pl-10 !py-2 text-sm" placeholder="Search tokens..." />
+                </div>
+                <button class="neo-border rounded-lg px-3 py-2 text-xs font-black uppercase bg-white hover:bg-gray-100">Sort: Bal ▼</button>
+                <button class="neo-border rounded-lg px-3 py-2 text-xs font-black uppercase bg-white hover:bg-gray-100">Hide dust ✓</button>
+              </div>
+              <p class="text-xs font-medium text-gray-500">Showing 50 of 1,247 tokens</p>
+            </div>
+            <!-- Token list -->
+            <div class="max-h-64 overflow-y-auto">
+              <div class="token-row flex items-center gap-4 px-4 py-3 border-b-2 border-ink/5">
+                <div class="w-10 h-10 rounded-lg bg-c-cyan neo-border flex items-center justify-center text-xs font-black">USDC</div>
+                <div class="flex-1">
+                  <p class="font-black text-sm">USDC</p>
+                  <p class="text-xs text-gray-500">USD Coin</p>
+                </div>
+                <p class="font-black text-sm tabular-nums">1,500.50</p>
+                <button class="neo-border rounded-lg px-3 py-1 text-xs font-bold bg-gray-100 hover:bg-c-lime transition-colors">Select</button>
+              </div>
+              <div class="token-row flex items-center gap-4 px-4 py-3 border-b-2 border-ink/5">
+                <div class="w-10 h-10 rounded-lg bg-c-yellow neo-border flex items-center justify-center text-xs font-black">BONK</div>
+                <div class="flex-1">
+                  <p class="font-black text-sm">BONK</p>
+                  <p class="text-xs text-gray-500">Bonk</p>
+                </div>
+                <p class="font-black text-sm tabular-nums">250,000.00</p>
+                <button class="neo-border rounded-lg px-3 py-1 text-xs font-bold bg-gray-100 hover:bg-c-lime transition-colors">Select</button>
+              </div>
+              <div class="token-row flex items-center gap-4 px-4 py-3 border-b-2 border-ink/5">
+                <div class="w-10 h-10 rounded-lg bg-c-orange neo-border flex items-center justify-center text-xs font-black">RAY</div>
+                <div class="flex-1">
+                  <p class="font-black text-sm">RAY</p>
+                  <p class="text-xs text-gray-500">Raydium</p>
+                </div>
+                <p class="font-black text-sm tabular-nums">45.00</p>
+                <button class="neo-border rounded-lg px-3 py-1 text-xs font-bold bg-gray-100 hover:bg-c-lime transition-colors">Select</button>
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 border-t-4 border-ink text-center">
+              <button class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-ink transition-colors">Show All 1,247 Tokens →</button>
+            </div>
+          </div>
+          <!-- Selected tokens -->
+          <div class="mt-4 p-4 bg-c-lime/10 neo-border rounded-xl">
+            <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Selected</p>
+            <div class="flex items-center gap-2">
+              <span class="neo-badge bg-c-cyan !py-1 !px-2 text-xs">USDC: 500.00 ✕</span>
+              <span class="neo-badge bg-c-yellow !py-1 !px-2 text-xs">BONK: 100,000 ✕</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Heartbeat (CYAN) -->
+      <div class="neo-card-static mb-6" style="box-shadow: 12px 12px 0 0 var(--c-cyan);">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="bg-c-cyan neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-cyan">Step 3</span>
+            <h3 class="text-2xl font-black">How often do you check in?</h3>
+          </div>
+        </div>
+        <p class="text-sm font-medium text-gray-600 mb-4">You have <strong>1.5 SOL</strong> and <strong>1 heir</strong> in this vault. Choose how often you need to prove you're alive.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <label class="text-xs font-bold uppercase tracking-widest text-gray-500">Heartbeat Interval</label>
+            <input type="range" class="w-full" min="1" max="365" value="90" />
+            <div class="flex justify-between items-end">
+              <span class="text-sm font-bold uppercase tracking-widest text-gray-500">Days</span>
+              <span class="text-5xl font-black tabular-nums">90</span>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-c-cyan neo-shadow-sm">30d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">60d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">90d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">180d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">365d</button>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <label class="text-xs font-bold uppercase tracking-widest text-gray-500">Grace Period</label>
+            <input type="range" class="w-full" min="1" max="90" value="30" />
+            <div class="flex justify-between items-end">
+              <span class="text-sm font-bold uppercase tracking-widest text-gray-500">Days</span>
+              <span class="text-5xl font-black tabular-nums">30</span>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">7d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-c-cyan neo-shadow-sm">30d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">60d</button>
+              <button class="neo-border rounded-lg px-3 py-1 text-sm font-bold bg-gray-100 hover:bg-c-cyan/40 transition-all">90d</button>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 p-4 bg-c-lime/20 neo-border rounded-xl">
+          <p class="text-base font-bold">Total deadline: <span class="text-xl font-black">120 days</span> — if you don't check in for this long, your heirs can claim.</p>
+        </div>
+      </div>
+
+      <!-- Step 4: Review (LIME) -->
+      <div class="neo-card-static" style="box-shadow: 12px 12px 0 0 var(--c-lime);">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="bg-c-lime neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-lime">Step 4</span>
+            <h3 class="text-2xl font-black">Review & confirm</h3>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="neo-border rounded-xl p-4 bg-gray-50">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Timing</h4>
+            <div class="space-y-2">
+              <div class="flex justify-between"><span class="font-bold">Interval</span><span class="font-black text-xl">90 days</span></div>
+              <div class="flex justify-between"><span class="font-bold">Grace</span><span class="font-black text-xl">30 days</span></div>
+              <div class="flex justify-between border-t-4 border-ink pt-2 mt-2"><span class="font-bold">Total</span><span class="font-black text-xl">120 days</span></div>
+            </div>
+          </div>
+          <div class="neo-border rounded-xl p-4 bg-gray-50">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Deposits</h4>
+            <div class="flex justify-between mb-2"><span class="font-bold">SOL</span><span class="font-black text-xl">1.500000</span></div>
+            <div class="flex justify-between mb-2"><span class="font-bold">USDC</span><span class="font-black text-xl">500.00</span></div>
+            <div class="flex justify-between mb-2"><span class="font-bold">BONK</span><span class="font-black text-xl">100,000</span></div>
+            <p class="text-xs text-gray-500 font-medium mt-2 border-t-2 border-ink/10 pt-2">3 assets total</p>
+          </div>
+        </div>
+        <div class="neo-border rounded-xl p-4 bg-gray-50 mb-6">
+          <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Heir</h4>
+          <p class="font-black text-lg">son</p>
+          <p class="text-xs font-mono text-gray-500 break-all">7xKX...3mP2</p>
+        </div>
+        <button class="w-full btn-lime h-14 rounded-xl text-lg">Create Estate</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DASHBOARD — Status + Countdown + Assets + Yield + Actions
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="dashboard" class="py-20 md:py-28 border-y-8 border-ink">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-12 slide-up">
+        <span class="neo-badge bg-c-lime mb-6">Dashboard</span>
+        <h2 class="font-display text-4xl md:text-5xl font-black leading-[0.9]">
+          Your vault.<br>
+          <span class="inline-block bg-ink text-white px-3 rotate-[-1deg]">Everything at a glance.</span>
+        </h2>
+      </div>
+
+      <!-- Status Banner — LIME (active) -->
+      <div class="bg-c-lime neo-border-thick rounded-2xl p-8 neo-shadow-xl mb-6">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <span class="neo-badge bg-white mb-3 inline-block">Vault Status</span>
+            <h2 class="text-4xl md:text-5xl font-black uppercase">Active</h2>
+            <p class="text-sm font-bold text-ink/60 mt-1">Heartbeat timer is running. All good.</p>
+          </div>
+          <button class="btn-lime h-14 px-6 rounded-xl flex items-center gap-2 shrink-0 text-base">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            Check In
+          </button>
+        </div>
+      </div>
+
+      <!-- Countdown -->
+      <div class="neo-card-static mb-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-sm font-bold uppercase tracking-widest text-gray-500">Next Check-In Due In</h3>
+          <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="grid grid-cols-4 gap-3 md:gap-4">
+          <div class="text-center">
+            <div class="neo-border rounded-xl bg-gray-100 p-4 md:p-6">
+              <span class="text-4xl md:text-6xl font-black tabular-nums">25</span>
+            </div>
+            <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mt-2">Days</p>
+          </div>
+          <div class="text-center">
+            <div class="neo-border rounded-xl bg-gray-100 p-4 md:p-6">
+              <span class="text-4xl md:text-6xl font-black tabular-nums">14</span>
+            </div>
+            <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mt-2">Hours</p>
+          </div>
+          <div class="text-center">
+            <div class="neo-border rounded-xl bg-gray-100 p-4 md:p-6">
+              <span class="text-4xl md:text-6xl font-black tabular-nums">32</span>
+            </div>
+            <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mt-2">Min</p>
+          </div>
+          <div class="text-center">
+            <div class="neo-border rounded-xl bg-gray-100 p-4 md:p-6">
+              <span class="text-4xl md:text-6xl font-black tabular-nums text-c-lime">08</span>
+            </div>
+            <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mt-2">Sec</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assets — Tabs for SOL / Tokens -->
+      <div class="neo-card-static mb-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-black">Assets</h3>
+          <span class="neo-badge bg-c-lime !px-3 !py-0.5 !text-xs">3 assets</span>
+        </div>
+        <div class="flex gap-2 mb-4">
+          <button class="tab-active-lime px-4 py-2 rounded-lg text-sm font-black uppercase" style="background: var(--c-lime); border: 4px solid var(--ink); box-shadow: 4px 4px 0 0 var(--ink);">SOL</button>
+          <button class="neo-border px-4 py-2 rounded-lg text-sm font-black uppercase bg-gray-100 hover:bg-gray-200 transition-colors">Tokens (2)</button>
+        </div>
+
+        <!-- SOL Card -->
+        <div class="neo-card-static mb-4" style="box-shadow: 8px 8px 0 0 var(--c-lime);">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="bg-c-orange neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+              <p class="font-black text-lg">SOL</p>
+              <p class="text-xs font-bold text-gray-500">1.500000000</p>
+            </div>
+          </div>
+          <p class="text-4xl font-black tabular-nums mb-4">1.500000</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="btn-lime h-10 rounded-lg text-sm">Add More</button>
+            <button class="btn-outline h-10 rounded-lg text-sm">Earn Yield</button>
+          </div>
+        </div>
+
+        <!-- Token List (horizontal rows, single action per token) -->
+        <div class="space-y-4">
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Token Preview</p>
+
+          <!-- USDC with Lulo yield active -->
+          <div class="neo-card-static flex items-center gap-5 py-5 px-5" style="box-shadow: 6px 6px 0 0 var(--c-cyan); border-left: 4px solid var(--c-cyan);">
+            <div class="w-12 h-12 rounded-xl bg-c-cyan neo-border flex items-center justify-center text-xs font-black shrink-0">USDC</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="font-black text-base">USDC</p>
+                <span class="neo-badge bg-c-cyan !py-0.5 !px-2 text-[10px]">6.2% APY</span>
+              </div>
+              <p class="text-xs font-bold text-gray-500">USD Coin</p>
+            </div>
+            <p class="text-xl font-black tabular-nums shrink-0 mr-2">1,500.50</p>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="btn-lime h-9 px-4 rounded-lg text-xs">Recall</button>
+              <button class="btn-outline h-9 px-4 rounded-lg text-xs">Add</button>
+            </div>
+          </div>
+
+          <!-- BONK idle, no yield available -->
+          <div class="neo-card-static flex items-center gap-5 py-5 px-5">
+            <div class="w-12 h-12 rounded-xl bg-c-yellow neo-border flex items-center justify-center text-xs font-black shrink-0">BONK</div>
+            <div class="flex-1 min-w-0">
+              <p class="font-black text-base mb-0.5">BONK</p>
+              <p class="text-xs font-bold text-gray-500">Bonk</p>
+            </div>
+            <p class="text-xl font-black tabular-nums shrink-0 mr-2">250,000.00</p>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="btn-outline h-9 px-4 rounded-lg text-xs">Add</button>
+            </div>
+          </div>
+
+          <!-- JUP idle, yield available -->
+          <div class="neo-card-static flex items-center gap-5 py-5 px-5">
+            <div class="w-12 h-12 rounded-xl bg-c-purple neo-border flex items-center justify-center text-xs font-black shrink-0">JUP</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="font-black text-base">JUP</p>
+                <span class="neo-badge bg-gray-200 !py-0.5 !px-2 text-[10px] text-gray-600">Yield avail.</span>
+              </div>
+              <p class="text-xs font-bold text-gray-500">Jupiter</p>
+            </div>
+            <p class="text-xl font-black tabular-nums shrink-0 mr-2">420.00</p>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="btn-cyan h-9 px-4 rounded-lg text-xs" style="background: var(--c-cyan); border: 2px solid var(--ink); font-weight: 800; box-shadow: 2px 2px 0 0 var(--ink);">Earn</button>
+              <button class="btn-outline h-9 px-4 rounded-lg text-xs">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details — Collapsible accordion -->
+      <div class="neo-card-static mb-6">
+        <details class="group">
+          <summary class="flex items-center justify-between cursor-pointer list-none">
+            <div class="flex items-center gap-3">
+              <div class="bg-c-yellow neo-border rounded-xl p-2" style="box-shadow: 4px 4px 0 0 var(--ink);">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              </div>
+              <h3 class="text-xl font-black">Heir & Details</h3>
+            </div>
+            <svg class="h-5 w-5 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="mt-4 space-y-3 pt-4 border-t-4 border-ink/10">
+            <div class="neo-border rounded-lg p-3 bg-gray-50">
+              <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Heir</p>
+              <p class="font-black">son</p>
+              <p class="text-xs font-mono text-gray-500 break-all">7xKX...3mP2</p>
+            </div>
+            <div class="neo-border rounded-lg p-3 bg-c-purple/10">
+              <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Guardian</p>
+              <p class="font-mono text-xs break-all">Not set</p>
+            </div>
+            <div class="neo-border rounded-lg p-3 bg-c-pink/10">
+              <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Heartbeat Signer</p>
+              <p class="font-mono text-xs break-all">Not set</p>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Actions — Grouped -->
+      <div class="neo-card-static bg-ink text-white">
+        <h3 class="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">Manage Estate</h3>
+
+        <div class="mb-4">
+          <p class="text-xs font-bold uppercase tracking-widest text-white/30 mb-2">Heir & Timing</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="neo-border rounded-xl px-4 py-3 bg-c-pink text-ink font-bold text-sm text-center hover:opacity-90 transition-opacity">Change Heir</button>
+            <button class="neo-border rounded-xl px-4 py-3 bg-c-cyan text-ink font-bold text-sm text-center hover:opacity-90 transition-opacity">Update Estate</button>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-xs font-bold uppercase tracking-widest text-white/30 mb-2">Assets</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="neo-border rounded-xl px-4 py-3 bg-c-orange text-ink font-bold text-sm text-center hover:opacity-90 transition-opacity">Add Asset</button>
+            <button class="neo-border rounded-xl px-4 py-3 bg-c-lime text-ink font-bold text-sm text-center hover:opacity-90 transition-opacity">Add More SOL</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs font-bold uppercase tracking-widest text-white/30 mb-2">Danger Zone</p>
+          <button class="w-full btn-red h-12 rounded-xl text-sm">Close Vault & Withdraw</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CLAIM / HEARTBEAT / DEFER — Auto-scan flows
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="claim" class="py-20 md:py-28 bg-gray-50 border-y-8 border-ink">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-12 slide-up">
+        <span class="neo-badge bg-c-orange mb-6">Claim / Signer / Guardian</span>
+        <h2 class="font-display text-4xl md:text-5xl font-black leading-[0.9]">
+          No manual lookup.<br>
+          <span class="inline-block bg-ink text-white px-3 rotate-[1deg]">Wallet is the key.</span>
+        </h2>
+      </div>
+
+      <!-- Claim Flow -->
+      <div class="neo-card-static mb-6" style="box-shadow: 12px 12px 0 0 var(--c-orange);">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="bg-c-orange neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a4 4 0 00-4-4H5.52a2 2 0 00-1.98 1.73l-.43 3.02a2 2 0 001.98 2.27h13.82a2 2 0 001.98-2.27l-.43-3.02A2 2 0 0018.48 2H16a4 4 0 00-4 4v2zm0 0h4m-4 0H8"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-orange">Claim Inheritance</span>
+            <h3 class="text-2xl font-black">For Heirs</h3>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 bg-c-lime/20 neo-border rounded-xl">
+            <p class="text-sm font-bold">✓ Auto-scan: Connect your wallet to find estates naming you as heir.</p>
+          </div>
+          <div class="p-4 bg-c-yellow/20 neo-border rounded-xl">
+            <p class="text-sm font-bold">✓ Silent by design: No notification from protocol. Heir finds out through will, family, or dead man's switch.</p>
+          </div>
+          <div class="p-4 bg-gray-100 neo-border rounded-xl">
+            <p class="text-sm font-bold text-gray-500">Fallback: Manual lookup by owner address (for edge cases).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claim Found Example -->
+      <div class="neo-card-static mb-6" style="box-shadow: 12px 12px 0 0 var(--c-yellow);">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-black">Found 1 Estate</h3>
+          <span class="neo-badge bg-c-orange text-xs">Claimable</span>
+        </div>
+        <div class="neo-border rounded-xl p-4 bg-gray-50 mb-4">
+          <div class="space-y-2">
+            <div class="flex justify-between"><span class="text-xs font-bold uppercase text-gray-500">From</span><span class="font-mono text-xs">7xKX...3mP2</span></div>
+            <div class="flex justify-between"><span class="text-xs font-bold uppercase text-gray-500">Label</span><span class="font-black">"son"</span></div>
+            <div class="flex justify-between"><span class="text-xs font-bold uppercase text-gray-500">Status</span><span class="font-black text-c-orange">Claimable</span></div>
+          </div>
+        </div>
+        <div class="neo-border rounded-xl p-4 bg-gray-50 mb-4">
+          <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Assets</p>
+          <div class="space-y-1">
+            <div class="flex justify-between"><span class="font-bold">SOL</span><span class="font-black">1.500000</span></div>
+            <div class="flex justify-between"><span class="font-bold">USDC</span><span class="font-black">1,500.50</span></div>
+            <div class="flex justify-between"><span class="font-bold">BONK</span><span class="font-black">250,000.00</span></div>
+          </div>
+        </div>
+        <button class="w-full btn-lime h-14 rounded-xl text-lg">Claim Inheritance</button>
+        <p class="text-xs text-center text-gray-500 mt-2">0.75% protocol fee</p>
+      </div>
+
+      <!-- Heartbeat Signer -->
+      <div class="neo-card-static mb-6" style="box-shadow: 12px 12px 0 0 var(--c-pink);">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="bg-c-pink neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-pink">Heartbeat Signer</span>
+            <h3 class="text-2xl font-black">For Signers</h3>
+          </div>
+        </div>
+        <div class="p-4 bg-c-lime/20 neo-border rounded-xl">
+          <p class="text-sm font-bold">✓ Auto-scan: Connect your wallet to see estates where you are the authorized signer.</p>
+        </div>
+      </div>
+
+      <!-- Guardian -->
+      <div class="neo-card-static" style="box-shadow: 12px 12px 0 0 var(--c-purple);">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="bg-c-purple neo-border rounded-xl p-3" style="box-shadow: 4px 4px 0 0 var(--ink);">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-c-purple">Guardian</span>
+            <h3 class="text-2xl font-black">For Guardians</h3>
+          </div>
+        </div>
+        <div class="p-4 bg-c-lime/20 neo-border rounded-xl">
+          <p class="text-sm font-bold">✓ Auto-scan: Connect your wallet to see estates where you are the assigned guardian.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════ -->
+  <footer class="bg-ink text-white py-16 border-t-4 border-c-lime">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+        <div>
+          <h3 class="font-display text-4xl md:text-5xl font-black mb-4">Heirloom</h3>
+          <p class="text-lg font-medium opacity-70 leading-relaxed">Heartbeat inheritance vault built on Solana. Your crypto doesn't die with you.</p>
+        </div>
+        <div>
+          <h4 class="text-xl font-black uppercase tracking-widest mb-6">Protocol</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-lg font-bold hover:underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity">Documentation</a></li>
+            <li><a href="#" class="text-lg font-bold hover:underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity">GitHub</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-xl font-black uppercase tracking-widest mb-6">Community</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-lg font-bold hover:underline underline-offset-4 opacity-70 hover:opacity-100 transition-opacity">Twitter / X</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t-2 border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-sm font-bold uppercase tracking-widest opacity-40">Heirloom is not a legal will. It is programmable self-custody continuity.</p>
+        <p class="text-sm font-bold uppercase tracking-widest opacity-40">Powered by Solana</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DESIGN NOTES SIDEBAR
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="fixed right-6 top-24 w-96 bg-white neo-border neo-shadow-lg rounded-2xl p-5 hidden xl:block z-40 max-h-[85vh] overflow-y-auto">
+    <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Refinements in This Preview</h4>
+    <div class="space-y-4">
+      <div class="flex gap-3">
+        <div class="w-5 h-5 rounded-full bg-c-lime neo-border flex items-center justify-center shrink-0 mt-0.5">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-gray-800 mb-0.5">Full color system preserved</p>
+          <p class="text-xs text-gray-400">Pink (create), Lime (active), Cyan (time), Yellow (heirs), Orange (claimable/urgent), Purple (guardian), Red (emergency).</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="w-5 h-5 rounded-full bg-c-lime neo-border flex items-center justify-center shrink-0 mt-0.5">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-gray-800 mb-0.5">Color shadows match cards</p>
+          <p class="text-xs text-gray-400">Pink card → pink shadow. Cyan card → cyan shadow. Reinforces the color language.</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="w-5 h-5 rounded-full bg-c-lime neo-border flex items-center justify-center shrink-0 mt-0.5">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-gray-800 mb-0.5">Fixed button sizing</p>
+          <p class="text-xs text-gray-400">Both hero buttons are h-14 (56px) with equal padding. Visual weight difference comes from fill vs outline, not size.</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="w-5 h-5 rounded-full bg-c-lime neo-border flex items-center justify-center shrink-0 mt-0.5">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-gray-800 mb-0.5">Single hero highlight</p>
+          <p class="text-xs text-gray-400">Only "assets" is pink. "Pass it on trustlessly" is plain black. No color competition.</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="w-5 h-5 rounded-full bg-c-lime neo-border flex items-center justify-center shrink-0 mt-0.5">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-black text-gray-800 mb-0.5">Countdown, not ECG</p>
+          <p class="text-xs text-gray-400">Clean digits. "Vault Status" not "Vault Monitor". "Check In" not "Send Heartbeat".</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t-2 border-gray-200 pt-4 mt-4">
+      <h5 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Flow Fixes</h5>
+      <div class="space-y-3">
+        <div class="flex gap-3">
+          <div class="w-5 h-5 rounded-full bg-c-pink neo-border flex items-center justify-center shrink-0 mt-0.5"><span class="text-[10px] font-black">1</span></div>
+          <div>
+            <p class="text-xs font-black text-gray-800 mb-0.5">Create vault: Heir → Deposit → Heartbeat → Review</p>
+            <p class="text-xs text-gray-400">Emotional anchor first, then tangible, then technical.</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-5 h-5 rounded-full bg-c-orange neo-border flex items-center justify-center shrink-0 mt-0.5"><span class="text-[10px] font-black">2</span></div>
+          <div>
+            <p class="text-xs font-black text-gray-800 mb-0.5">Deposit step: Tabs for SOL / Tokens</p>
+            <p class="text-xs text-gray-400">Token list with search, sort, dust filter, virtual scroll for 1k+ tokens.</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-5 h-5 rounded-full bg-c-cyan neo-border flex items-center justify-center shrink-0 mt-0.5"><span class="text-[10px] font-black">3</span></div>
+          <div>
+            <p class="text-xs font-black text-gray-800 mb-0.5">Dashboard: Status + Countdown king</p>
+            <p class="text-xs text-gray-400">Assets in tabs. Heir/Details collapsible. Actions grouped.</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-5 h-5 rounded-full bg-c-purple neo-border flex items-center justify-center shrink-0 mt-0.5"><span class="text-[10px] font-black">4</span></div>
+          <div>
+            <p class="text-xs font-black text-gray-800 mb-0.5">Claim/Signer/Defer: Auto-scan</p>
+            <p class="text-xs text-gray-400">No manual address typing. Wallet is the lookup key. Silent inheritance preserved.</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-5 h-5 rounded-full bg-c-yellow neo-border flex items-center justify-center shrink-0 mt-0.5"><span class="text-[10px] font-black">5</span></div>
+          <div>
+            <p class="text-xs font-black text-gray-800 mb-0.5">Yield strategies: Lulo + Staking</p>
+            <p class="text-xs text-gray-400">Cyan border for Lulo yield. Lime border for staking. "Earn" / "Recall" actions. Only shown when yield is available for that token.</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-5 h-5 rounded-full bg-c-red neo-border flex items-center justify-center shrink-0 mt-0.5"><span class="text-[10px] font-black">6</span></div>
+          <div>
+            <p class="text-xs font-black text-gray-800 mb-0.5">"Edit Settings" → "Update Estate"</p>
+            <p class="text-xs text-gray-400">Accurate name. Pencil icon, not gear. Covers interval, grace, pause, and label.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

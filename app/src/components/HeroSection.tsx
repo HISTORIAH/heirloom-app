@@ -162,10 +162,9 @@ const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
           variant={isDead ? "outline" : "lime"}
           size="lg"
           className="w-full"
-          style={isDead ? undefined : { backgroundColor: "#FFD600" }}
           onClick={sendHeartbeat}
         >
-          <Heart className="h-5 w-5" fill="currentColor" strokeWidth={0} />
+          <Heart className="h-5 w-5" />
           {isDead ? "Revive Demo" : "Send Heartbeat"}
         </Button>
       </div>

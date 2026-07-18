@@ -20,6 +20,8 @@ const buttonVariants = cva(
         destructive: "bg-accent-red text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
         ghost: "border-transparent hover:bg-secondary",
         link: "border-transparent text-foreground underline-offset-4 hover:underline",
+        pill: "rounded-xl bg-transparent text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
+        "pill-dark": "rounded-xl bg-foreground text-background border-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
       },
       size: {
         default: "h-12 px-6 py-3 text-sm",

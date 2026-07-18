@@ -60,7 +60,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
       aria-describedby={description ? "confirm-dialog-desc" : undefined}
-      className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
+      className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-foreground"
       onClick={() => {
         if (!loading) onCancel();
       }}

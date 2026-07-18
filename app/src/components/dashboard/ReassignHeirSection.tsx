@@ -76,7 +76,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
+          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-foreground"
           onClick={() => {
             if (!updatingHeir) setOpen(false);
           }}

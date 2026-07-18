@@ -351,19 +351,26 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <p className="text-sm font-bold text-foreground/60 mt-1">{config.description}</p>
           </div>
           {computedState !== "distributed" && (
-            <Button
-              variant={computedState === "grace" ? "yellow" : computedState === "active" ? "lime" : "outline"}
-              size="xl"
-              onClick={handleHeartbeat}
-              disabled={sendingHeartbeat}
-              className={`shrink-0 ${computedState === "grace" ? "neo-shake" : ""}`}
-            >
-              {sendingHeartbeat ? (
-                <><Loader2 className="h-5 w-5 animate-spin" /> Signing...</>
-              ) : (
-                <><Heart className="h-5 w-5" /> Check In</>
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <Button
+                variant={computedState === "claimable" ? "pill-dark" : "pill"}
+                size="xl"
+                onClick={handleHeartbeat}
+                disabled={sendingHeartbeat}
+                className={computedState === "grace" ? "neo-shake" : ""}
+              >
+                {sendingHeartbeat ? (
+                  <><Loader2 className="h-5 w-5 animate-spin" /> Signing...</>
+                ) : computedState === "claimable" ? (
+                  <><Heart className="h-5 w-5" fill="currentColor" /> I'm Alive — Reclaim</>
+                ) : (
+                  <><Heart className="h-5 w-5" fill="currentColor" /> Check In</>
+                )}
+              </Button>
+              {computedState === "claimable" && !sendingHeartbeat && (
+                <p className="text-xs font-bold text-foreground/60">Restarts your 60-day timer</p>
               )}
-            </Button>
+            </div>
           )}
         </div>
       </div>
