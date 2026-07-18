@@ -49,7 +49,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       <div className="max-w-[1180px] mx-auto px-6 flex items-center justify-between h-20">
         <button
           onClick={() => navigate(backTo)}
-          className="flex items-center gap-2 text-lg font-bold hover:underline group"
+          className="flex items-center gap-2 text-lg font-semibold hover:underline group"
         >
           <ArrowLeft
             className="h-5 w-5 transition-transform group-hover:-translate-x-1"
@@ -57,7 +57,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           />
           {backLabel}
         </button>
-        <span className="text-2xl font-bold font-display">{title}</span>
+        <span className="text-2xl font-normal font-display">{title}</span>
         {isConnected ? (
           <div className="relative" ref={walletDropdownRef}>
             <button
@@ -88,7 +88,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                       setCopied(false);
                     }
                   }}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
                 >
                   {copied ? (
                     <>
@@ -103,7 +103,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 <div className="border-t-2 border-foreground" />
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
                 >
                   <LogOut className="h-4 w-4" /> Disconnect wallet
                 </button>

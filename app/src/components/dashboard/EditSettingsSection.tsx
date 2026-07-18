@@ -109,7 +109,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                   <Pencil className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black leading-tight text-foreground">Update Estate</h3>
+                  <h3 className="text-xl font-normal leading-tight text-foreground">Update Estate</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
                     Adjust your check-in schedule, grace period, or estate label.
                   </p>
@@ -126,7 +126,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
 
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
                   Label ({LABEL_MAX_LEN} chars max)
                 </label>
                 <div className="relative">
@@ -143,7 +143,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
                     Interval (sec)
                   </label>
                   <input
@@ -158,7 +158,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
                     Grace (sec)
                   </label>
                   <input
@@ -173,7 +173,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
                     Pause (sec)
                   </label>
                   <input
@@ -233,7 +233,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
             <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
               <span className="font-bold">Label</span>
               <span className="font-mono text-xs text-right break-all">
-                {estate.label} → <span className="font-black">{editLabel.trim()}</span>
+                {estate.label} → <span className="font-bold">{editLabel.trim()}</span>
               </span>
             </div>
           )}
@@ -242,7 +242,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
               <span className="font-bold">Interval</span>
               <span className="text-xs text-right">
                 {formatDuration(estate.heartbeatInterval)} →{" "}
-                <span className="font-black">{formatDuration(editIntervalSec)}</span>
+                <span className="font-bold">{formatDuration(editIntervalSec)}</span>
               </span>
             </div>
           )}
@@ -251,7 +251,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
               <span className="font-bold">Grace</span>
               <span className="text-xs text-right">
                 {formatDuration(estate.gracePeriod)} →{" "}
-                <span className="font-black">{formatDuration(editGraceSec)}</span>
+                <span className="font-bold">{formatDuration(editGraceSec)}</span>
               </span>
             </div>
           )}
@@ -260,7 +260,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
               <span className="font-bold">Pause</span>
               <span className="text-xs text-right">
                 {formatDuration(estate.pauseDuration)} →{" "}
-                <span className="font-black">{formatDuration(editPauseSec)}</span>
+                <span className="font-bold">{formatDuration(editPauseSec)}</span>
               </span>
             </div>
           )}

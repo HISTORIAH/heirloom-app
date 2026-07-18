@@ -174,11 +174,11 @@ const EstatePillButton = ({
         selected ? "bg-accent-lime" : "bg-background hover:bg-secondary",
       )}
     >
-      <span className="flex items-center gap-2 text-sm font-bold w-full min-w-0">
+      <span className="flex items-center gap-2 text-sm font-semibold w-full min-w-0">
         <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
         <span className="truncate">{estate.label}</span>
       </span>
-      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground truncate w-full">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground truncate w-full">
         {assetCount} asset{assetCount !== 1 ? "s" : ""} · {timeLabel}
       </span>
     </button>
@@ -408,8 +408,8 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="min-w-0">
             <span className="neo-badge bg-background mb-3 inline-block">Vault Status</span>
-            <h2 className="text-4xl md:text-5xl font-black uppercase font-display">{config.label}</h2>
-            <p className="text-sm font-bold text-foreground/60 mt-1">{config.description}</p>
+            <h2 className="text-4xl md:text-5xl font-normal uppercase font-display">{config.label}</h2>
+            <p className="text-sm font-medium text-foreground/60 mt-1">{config.description}</p>
           </div>
           {computedState !== "distributed" && (
             <div className="flex flex-col items-center gap-2 shrink-0">
@@ -429,7 +429,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 )}
               </Button>
               {computedState === "claimable" && !sendingHeartbeat && (
-                <p className="text-xs font-bold text-foreground/60">Restarts your 60-day timer</p>
+                <p className="text-xs font-medium text-foreground/60">Restarts your 60-day timer</p>
               )}
             </div>
           )}
@@ -443,7 +443,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             href={getSolanaExplorerTxUrl(lastTxId)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 font-bold hover:underline"
+            className="flex items-center gap-2 font-semibold hover:underline"
           >
             <ExternalLink className="h-4 w-4" />
             View latest transaction on Explorer
@@ -454,7 +454,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Countdown */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-sm font-normal uppercase tracking-widest text-muted-foreground">
             {countdownLabel}
           </h3>
           <Clock className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
@@ -470,14 +470,14 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               <div className="neo-border rounded-xl bg-secondary p-4 md:p-6">
                 <span
                   className={cn(
-                    "text-4xl md:text-6xl font-black tabular-nums font-display",
+                    "text-4xl md:text-6xl font-normal tabular-nums font-display",
                     unit.label === "Sec" && "text-accent-lime",
                   )}
                 >
                   {String(unit.value).padStart(2, "0")}
                 </span>
               </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-2">
                 {unit.label}
               </p>
             </div>
@@ -493,7 +493,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Assets — tabs for SOL / Tokens */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-black">Assets</h3>
+          <h3 className="text-xl font-normal">Assets</h3>
           <span className="neo-badge bg-accent-lime !px-3 !py-0.5 !text-xs">
             {1 + estate.vaultTokens.length} asset{1 + estate.vaultTokens.length !== 1 ? "s" : ""}
           </span>
@@ -502,7 +502,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           <button
             onClick={() => setAssetTab("sol")}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-black uppercase neo-border transition-colors",
+              "px-4 py-2 rounded-lg text-sm font-bold uppercase neo-border transition-colors",
               assetTab === "sol" ? "bg-accent-lime" : "bg-secondary hover:bg-secondary/70",
             )}
           >
@@ -511,7 +511,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           <button
             onClick={() => setAssetTab("tokens")}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-black uppercase neo-border transition-colors",
+              "px-4 py-2 rounded-lg text-sm font-bold uppercase neo-border transition-colors",
               assetTab === "tokens" ? "bg-accent-lime" : "bg-secondary hover:bg-secondary/70",
             )}
           >
@@ -526,8 +526,8 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 {tokenIcon}
               </div>
               <div>
-                <p className="font-black text-lg">{SOL_LABEL}</p>
-                <p className="text-xs font-bold text-muted-foreground">
+                <p className="font-bold text-lg">{SOL_LABEL}</p>
+                <p className="text-xs font-medium text-muted-foreground">
                   {`${estate.solBalance.toLocaleString()} lamports`}
                 </p>
               </div>
@@ -584,7 +584,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             )}
           >
             {estate.vaultTokens.length === 0 ? (
-              <p className="text-sm font-bold text-muted-foreground text-center py-8">
+              <p className="text-sm font-medium text-muted-foreground text-center py-8">
                 No tokens in this vault yet.
               </p>
             ) : (
@@ -691,7 +691,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               <div className="bg-accent-yellow neo-border rounded-xl p-2">
                 <Users className="h-5 w-5" strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl font-black">Heir & Details</h3>
+              <h3 className="text-xl font-normal">Heir & Details</h3>
               {estate.isClaimed && (
                 <span className="neo-badge bg-accent-lime text-xs">Claimed</span>
               )}
@@ -705,22 +705,22 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               title="Copy heir address"
             >
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Heir</p>
-                <p className="font-black">{estate.label}</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Heir</p>
+                <p className="font-bold">{estate.label}</p>
                 <p className="text-xs font-mono text-muted-foreground break-all">{estate.heir}</p>
               </div>
               {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
             </button>
 
             <div className="neo-border rounded-lg p-3 bg-accent-purple/10">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Guardian{estate.delegate && estate.isDeferred ? " (Pause Used)" : ""}
               </p>
               <p className="font-mono text-xs break-all">{estate.delegate || "Not set"}</p>
             </div>
 
             <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Heartbeat Signer</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Heartbeat Signer</p>
               <p className="font-mono text-xs break-all">{estate.hbSigner || "Not set"}</p>
             </div>
           </div>
@@ -730,10 +730,10 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (
         <div className="neo-card-static bg-foreground text-background">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-background/40 mb-4">Manage Estate</h3>
+          <h3 className="text-sm font-normal uppercase tracking-widest text-background/40 mb-4">Manage Estate</h3>
 
           <div className="mb-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-background/30 mb-2">Heir & Timing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Heir & Timing</p>
             <div className="grid grid-cols-2 gap-2">
               <ReassignHeirSection estate={estate} onTx={setLastTxId} />
               <EditSettingsSection estate={estate} onTx={setLastTxId} />
@@ -741,14 +741,14 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           </div>
 
           <div className="mb-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-background/30 mb-2">Assets</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Assets</p>
             <div className="grid grid-cols-1 gap-2">
               <AddAssetSection estate={estate} onTx={setLastTxId} />
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-background/30 mb-2">Danger Zone</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Danger Zone</p>
             <EmergencyWithdrawSection estate={estate} onTx={setLastTxId} />
           </div>
         </div>
@@ -791,7 +791,7 @@ const DashboardPage = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="neo-card-static text-center max-w-md neo-slide-up">
           <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-          <h2 className="text-2xl font-black mb-3">Loading Vault...</h2>
+          <h2 className="text-2xl font-normal mb-3">Loading Vault...</h2>
           <p className="text-muted-foreground font-medium">Fetching on-chain data</p>
         </div>
       </div>
@@ -808,7 +808,7 @@ const DashboardPage = () => {
 
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-[44px] font-black tracking-tight font-display">
+          <h1 className="text-[44px] font-normal tracking-tight font-display">
             Your estates <span className="text-muted-foreground">({estates.length})</span>
           </h1>
           <Button variant="lime" size="lg" onClick={() => navigate("/create-vault")}>
@@ -820,14 +820,14 @@ const DashboardPage = () => {
           <div className="neo-card-static bg-accent-yellow/20">
             <div className="flex items-center gap-3">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <p className="font-bold">Estate creation pending — waiting for on-chain confirmation...</p>
+              <p className="font-medium">Estate creation pending — waiting for on-chain confirmation...</p>
             </div>
             {pendingTxId && (
               <a
                 href={getSolanaExplorerTxUrl(pendingTxId)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-bold text-accent-cyan hover:underline flex items-center gap-1 mt-2"
+                className="text-sm font-semibold text-accent-cyan hover:underline flex items-center gap-1 mt-2"
               >
                 View on Explorer <ExternalLink className="h-3 w-3" />
               </a>
@@ -848,10 +848,10 @@ const DashboardPage = () => {
                 <span className="text-lg">✦</span>
               </div>
             </div>
-            <h2 className="font-display text-3xl md:text-4xl font-black mb-3">
+            <h2 className="font-display text-3xl md:text-4xl font-normal mb-3">
               {isConnected ? "No vault yet" : "Connect wallet"}
             </h2>
-            <p className="text-muted-foreground font-bold mb-8 max-w-sm mx-auto">
+            <p className="text-muted-foreground font-medium mb-8 max-w-sm mx-auto">
               {isConnected
                 ? "Create your first estate to protect your assets for the future."
                 : "Connect your wallet to view your estates and manage your vaults."}
@@ -868,7 +868,7 @@ const DashboardPage = () => {
               )}
               <button
                 onClick={() => navigate("/claim")}
-                className="text-sm font-bold underline underline-offset-4 hover:text-accent-pink transition-colors"
+                className="text-sm font-semibold underline underline-offset-4 hover:text-accent-pink transition-colors"
               >
                 Were you named as an heir? Claim inheritance
               </button>
@@ -877,15 +877,15 @@ const DashboardPage = () => {
             <div className="mt-12 grid grid-cols-3 gap-4 max-w-md mx-auto">
               <div className="neo-border rounded-xl p-4 bg-background">
                 <p className="text-2xl font-black text-accent-pink">$2.4M</p>
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Protected</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Protected</p>
               </div>
               <div className="neo-border rounded-xl p-4 bg-background">
                 <p className="text-2xl font-black text-accent-cyan">847</p>
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Vaults</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Vaults</p>
               </div>
               <div className="neo-border rounded-xl p-4 bg-background">
                 <p className="text-2xl font-black text-accent-lime">0</p>
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Claims</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Claims</p>
               </div>
             </div>
           </div>
@@ -907,8 +907,8 @@ const DashboardPage = () => {
                 aria-label={`View all ${estates.length} estates`}
                 className="neo-border border-dashed rounded-xl px-3 py-2 w-44 shrink-0 min-h-[56px] flex flex-col items-start justify-center gap-0.5 bg-accent-purple/10 text-left transition-colors hover:bg-accent-purple/20"
               >
-                <span className="text-sm font-black">+{estates.length - ESTATE_STRIP_CAP} more</span>
-                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                <span className="text-sm font-semibold">+{estates.length - ESTATE_STRIP_CAP} more</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   View all estates
                 </span>
               </button>
@@ -933,7 +933,7 @@ const DashboardPage = () => {
         <DialogContent className="neo-card-static max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black">All Estates</DialogTitle>
-            <DialogDescription className="font-bold">
+            <DialogDescription className="font-medium">
               {estates.length} total · click one to switch
             </DialogDescription>
           </DialogHeader>
@@ -954,7 +954,7 @@ const DashboardPage = () => {
           </div>
           <div className="grid grid-cols-2 gap-2 max-h-[360px] overflow-y-auto pr-1">
             {filteredSwitcherEstates.length === 0 ? (
-              <p className="col-span-2 text-sm font-bold text-muted-foreground text-center py-8">
+              <p className="col-span-2 text-sm font-medium text-muted-foreground text-center py-8">
                 No estates match &ldquo;{switcherQuery}&rdquo;.
               </p>
             ) : (

@@ -23,7 +23,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, o
               <button
                 onClick={() => isClickable && onStepClick(i)}
                 disabled={!isClickable}
-                className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center font-black text-base md:text-lg transition-all duration-300 border-4 border-foreground shrink-0 ${
+                className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 border-4 border-foreground shrink-0 ${
                   isClickable ? "cursor-pointer" : "cursor-default"
                 } ${isActive ? "scale-110" : ""}`}
                 style={

@@ -37,7 +37,7 @@ const HowItWorksSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-16 text-center">
           <span className="neo-badge bg-background mb-6 inline-block">How It Works</span>
-          <h2 className="text-4xl md:text-6xl font-black leading-[0.9]">
+          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
             Four steps to<br />
             <span className="bg-foreground text-background px-3 inline-block rotate-[-1deg] mt-2">
               immortal assets.
@@ -53,15 +53,15 @@ const HowItWorksSection = () => {
                   <div className={`${step.color} neo-border rounded-2xl p-4`}>
                     <step.icon className="h-8 w-8" strokeWidth={2.5} />
                   </div>
-                  <span className="absolute -top-3 -left-3 bg-foreground text-background neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-black">
+                  <span className="absolute -top-3 -left-3 bg-foreground text-background neo-border rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
                     {i + 1}
                   </span>
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">
                     Step {i + 1}
                   </div>
-                  <h3 className="text-2xl font-black mb-2">{step.title}</h3>
+                  <h3 className="text-2xl font-normal mb-2">{step.title}</h3>
                   <p className="text-lg font-medium leading-relaxed">{step.description}</p>
                 </div>
               </div>

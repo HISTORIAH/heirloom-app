@@ -88,7 +88,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
                   <UserPlus className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black leading-tight text-foreground">Change Heir</h3>
+                  <h3 className="text-xl font-normal leading-tight text-foreground">Change Heir</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
                     Transfer estate to a different heir address.
                   </p>
@@ -152,11 +152,11 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       >
         <div className="space-y-2 text-sm">
           <div className="neo-border rounded-lg p-3 bg-secondary">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">From</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">From</p>
             <p className="font-mono text-xs break-all">{estate.heir}</p>
           </div>
           <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">To</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">To</p>
             <p className="font-mono text-xs break-all">{reassignConfirm.next}</p>
           </div>
         </div>

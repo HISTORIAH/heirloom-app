@@ -45,7 +45,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
               <Landmark className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-black leading-tight">Enable Lulo Yield</h3>
+              <h3 className="text-xl font-normal leading-tight">Enable Lulo Yield</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Route {vaultBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
                 {tokenSymbol} from your vault to Lulo.
@@ -62,7 +62,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
         </div>
 
         <div className="mt-6 space-y-3">
-          <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Choose deposit type
           </p>
 
@@ -87,13 +87,13 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-black">Protected</span>
+                  <span className="font-bold">Protected</span>
                   <span className="neo-badge text-[10px] px-2 py-0.5 bg-accent-cyan">Recommended</span>
                 </div>
                 <p className="text-xs font-medium text-muted-foreground mt-0.5">
                   Funds are insured against platform risk. Lower yield, higher safety.
                 </p>
-                <p className="text-sm font-black mt-1">{config.apyProtected.toFixed(1)}% APY</p>
+                <p className="text-sm font-bold mt-1">{config.apyProtected.toFixed(1)}% APY</p>
               </div>
               {selectedMode === "protected" && (
                 <div className="w-4 h-4 rounded-full bg-accent-cyan neo-border shrink-0" />
@@ -121,11 +121,11 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
                 <ShieldOff className="h-5 w-5" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="font-black">Unprotected</span>
+                <span className="font-bold">Unprotected</span>
                 <p className="text-xs font-medium text-muted-foreground mt-0.5">
                   Higher yield with no insurance. Best for risk-tolerant deposits.
                 </p>
-                <p className="text-sm font-black mt-1">{config.apyUnprotected.toFixed(1)}% APY</p>
+                <p className="text-sm font-bold mt-1">{config.apyUnprotected.toFixed(1)}% APY</p>
               </div>
               {selectedMode === "unprotected" && (
                 <div className="w-4 h-4 rounded-full bg-accent-orange neo-border shrink-0" />

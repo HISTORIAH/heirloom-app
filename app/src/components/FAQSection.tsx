@@ -67,7 +67,7 @@ const FAQItem = ({
         isOpen ? "bg-accent-lime/10" : "bg-background hover:bg-secondary/50"
       }`}
     >
-      <span className="text-base md:text-lg font-black leading-tight">{question}</span>
+      <span className="text-base md:text-lg font-bold leading-tight">{question}</span>
       <ChevronDown
         className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         strokeWidth={3}
@@ -93,7 +93,7 @@ const FAQSection = () => {
       <div className="max-w-3xl mx-auto">
         <div className="mb-12 text-center">
           <span className="neo-badge bg-accent-purple mb-6 inline-block">FAQ</span>
-          <h2 className="text-4xl md:text-6xl font-black leading-[0.9]">
+          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
             Common{" "}
             <span className="bg-accent-purple text-background px-3 inline-block rotate-[-1deg]">
               questions.

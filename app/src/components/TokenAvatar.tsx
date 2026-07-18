@@ -36,7 +36,7 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
       aria-hidden="true"
     >
       {initial ? (
-        <span className={`font-black ${fontSize}`}>{initial}</span>
+        <span className={`font-bold ${fontSize}`}>{initial}</span>
       ) : (
         <Coins className={innerIcon} strokeWidth={2.5} />
       )}

@@ -21,7 +21,7 @@ const CTASection = () => {
       </div>
 
       <div className="max-w-4xl mx-auto text-center relative z-10">
-        <h2 className="text-4xl md:text-6xl lg:text-7xl font-black leading-[0.9] mb-8">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-normal leading-[0.9] mb-8">
           Don't let your crypto{" "}
           <span className="bg-accent-red text-background px-3 inline-block rotate-[-2deg] transition-transform hover:rotate-0">
             die

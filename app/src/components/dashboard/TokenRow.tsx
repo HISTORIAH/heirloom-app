@@ -69,7 +69,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
       <TokenAvatar image={meta?.image} label={primary} size="md" accent={fallbackAccent.bg} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-black text-base leading-tight truncate">{primary}</p>
+          <p className="font-bold text-base leading-tight truncate">{primary}</p>
           {isYieldActive && (
             <span
               className="neo-badge !py-0 !px-1.5 text-[10px]"
@@ -83,7 +83,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
           <p className="text-xs font-bold text-muted-foreground truncate mt-0.5">{secondary}</p>
         )}
       </div>
-      <span className="font-black text-lg tabular-nums shrink-0 mr-2">
+      <span className="font-bold text-lg tabular-nums shrink-0 mr-2">
         {formatTokenAmount(vt.rawAmount, vt.decimals)}
       </span>
       <div className="flex items-center gap-2 shrink-0">

@@ -20,7 +20,7 @@ const ComparisonSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-16 text-center">
           <span className="neo-badge bg-accent-pink mb-6 inline-block">Comparison</span>
-          <h2 className="text-4xl md:text-6xl font-black leading-[0.9]">
+          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
             Nothing else{" "}
             <span className="bg-accent-yellow px-3 inline-block rotate-[-1deg]">comes close.</span>
           </h2>
@@ -30,10 +30,10 @@ const ComparisonSection = () => {
           <table className="w-full neo-border-thick rounded-2xl overflow-hidden neo-shadow-lg">
             <thead>
               <tr className="bg-foreground text-background">
-                <th className="text-left p-4 md:p-6 text-lg font-black uppercase tracking-wide border-r-4 border-background">Solution</th>
-                <th className="p-4 md:p-6 text-lg font-black uppercase tracking-wide border-r-4 border-background text-center">Self-Custodial</th>
-                <th className="p-4 md:p-6 text-lg font-black uppercase tracking-wide border-r-4 border-background text-center">Trustless</th>
-                <th className="p-4 md:p-6 text-lg font-black uppercase tracking-wide text-center">On-Chain</th>
+                <th className="text-left p-4 md:p-6 text-lg font-bold uppercase tracking-wide border-r-4 border-background">Solution</th>
+                <th className="p-4 md:p-6 text-lg font-bold uppercase tracking-wide border-r-4 border-background text-center">Self-Custodial</th>
+                <th className="p-4 md:p-6 text-lg font-bold uppercase tracking-wide border-r-4 border-background text-center">Trustless</th>
+                <th className="p-4 md:p-6 text-lg font-bold uppercase tracking-wide text-center">On-Chain</th>
               </tr>
             </thead>
             <tbody>
@@ -41,13 +41,13 @@ const ComparisonSection = () => {
                 <tr
                   key={s.name}
                   className={`${
-                    s.highlight ? "bg-accent-lime font-black" : i % 2 === 0 ? "bg-background" : "bg-secondary"
+                    s.highlight ? "bg-accent-lime font-bold" : i % 2 === 0 ? "bg-background" : "bg-secondary"
                   } border-t-4 border-foreground transition-colors duration-150 ${!s.highlight ? "hover:bg-secondary/80" : ""}`}
                 >
                   <td className="p-4 md:p-6 text-lg font-bold border-r-4 border-foreground">
                     {s.highlight ? (
                       <span className="flex items-center gap-2">
-                        <span className="bg-foreground text-accent-lime rounded-md px-2 py-0.5 text-xs font-black uppercase tracking-wider">Best</span>
+                        <span className="bg-foreground text-accent-lime rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wider">Best</span>
                         {s.name}
                       </span>
                     ) : s.name}

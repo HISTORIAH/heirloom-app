@@ -115,7 +115,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                   <Plus className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black leading-tight text-foreground">Add Asset</h3>
+                  <h3 className="text-xl font-normal leading-tight text-foreground">Add Asset</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
                     Add a new token type to this vault.
                   </p>
@@ -132,7 +132,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
 
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
+                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
                   Asset
                 </label>
                 <select
@@ -162,7 +162,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                 )}
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
+                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
                   Amount
                 </label>
                 <input
@@ -182,7 +182,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                       onClick={() => applyPct(pct)}
                       disabled={maxBalance <= 0}
                       className={cn(
-                        "flex-1 neo-border rounded-lg py-3 text-xs font-black uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0px_0px_hsl(var(--foreground))]",
+                        "flex-1 neo-border rounded-lg py-3 text-xs font-bold uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0px_0px_hsl(var(--foreground))]",
                         bg,
                       )}
                     >

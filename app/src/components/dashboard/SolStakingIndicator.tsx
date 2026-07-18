@@ -24,7 +24,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
     const staked = strategy;
     return (
       <div className="flex items-center gap-2 flex-wrap mt-3">
-        <span className="inline-flex items-center gap-1 neo-border rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide bg-accent-lime/10 border-accent-lime/40">
+        <span className="inline-flex items-center gap-1 neo-border rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide bg-accent-lime/10 border-accent-lime/40">
           <Sprout className="h-3 w-3 text-accent-lime" />
           {staked.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL
           <span className="text-accent-lime">@ {staked.apy.toFixed(1)}%</span>

@@ -346,7 +346,7 @@ const DepositStep: React.FC<Props> = ({
               <div className="p-2 bg-secondary/40 border-t-4 border-foreground text-center">
                 <button
                   onClick={() => setShowAllTokens((v) => !v)}
-                  className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showAllTokens
                     ? `← Show Less`

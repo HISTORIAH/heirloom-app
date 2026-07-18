@@ -227,13 +227,13 @@ const ClaimPageInner: React.FC<{
     <div className="min-h-screen bg-background">
       <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-black hover:underline group">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-semibold hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
             Home
           </button>
           <div className="flex items-center gap-2">
             <Gift className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-black">Claim</span>
+            <span className="text-2xl font-bold">Claim</span>
           </div>
           {isConnected ? (
             <button
@@ -258,7 +258,7 @@ const ClaimPageInner: React.FC<{
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
               <span className="neo-badge bg-accent-orange mb-4 inline-block">Heir Portal</span>
-              <h2 className="text-4xl md:text-5xl font-black leading-[0.9]">
+              <h2 className="text-4xl md:text-5xl font-normal leading-[0.9]">
                 Your inheritance{" "}
                 <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">is waiting.</span>
               </h2>
@@ -270,7 +270,7 @@ const ClaimPageInner: React.FC<{
             {!isConnected && (
               <div className="neo-card-static text-center" data-tour="claim-connect">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-black mb-2">Connect to find your inheritance</h3>
+                <h3 className="text-xl font-normal mb-2">Connect to find your inheritance</h3>
                 <p className="text-muted-foreground font-medium mb-4">
                   Connect your wallet to scan the chain for estates that name you as heir. Browse the page freely first.
                 </p>
@@ -283,7 +283,7 @@ const ClaimPageInner: React.FC<{
             {searching && (
               <div className="neo-card-static text-center">
                 <Loader2 className="h-10 w-10 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-                <h3 className="text-xl font-black">Scanning chain for inheritances...</h3>
+                <h3 className="text-xl font-normal">Scanning chain for inheritances...</h3>
               </div>
             )}
 
@@ -291,7 +291,7 @@ const ClaimPageInner: React.FC<{
               <div className="neo-card-static bg-accent-yellow/20 flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-black">Auto-fetch unavailable</p>
+                  <p className="font-bold">Auto-fetch unavailable</p>
                   <p className="text-sm font-medium text-muted-foreground">
                     RPC rejected the on-chain scan. Use manual lookup below.
                   </p>
@@ -302,7 +302,7 @@ const ClaimPageInner: React.FC<{
             {searchDone && !searching && inheritances.length === 0 && (
               <div className="neo-card-static text-center">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-black mb-2">No Estates Found</h3>
+                <h3 className="text-xl font-normal mb-2">No Estates Found</h3>
                 <p className="text-muted-foreground font-medium mb-4">
                   {autoFetchFailed
                     ? "Look up an estate by the vault owner's Solana address."
@@ -333,16 +333,16 @@ const ClaimPageInner: React.FC<{
                       <div className={`neo-border rounded-xl p-5 ${stateColors[inh.vaultState]}`}>
                         <div className="flex items-center justify-between flex-wrap gap-4">
                           <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                               Owner
                             </p>
                             <p className="font-mono text-sm font-bold break-all">{inh.authority}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                               Status
                             </p>
-                            <p className="text-2xl font-black uppercase">{inh.vaultState}</p>
+                            <p className="text-2xl font-bold uppercase">{inh.vaultState}</p>
                           </div>
                         </div>
                       </div>
@@ -350,26 +350,26 @@ const ClaimPageInner: React.FC<{
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="neo-border rounded-lg p-3 bg-secondary">
                           <p className="text-xs font-bold text-muted-foreground uppercase">Label</p>
-                          <p className="text-lg font-black">{inh.label}</p>
+                          <p className="text-lg font-bold">{inh.label}</p>
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
                           <p className="text-xs font-bold text-muted-foreground uppercase">{SOL_LABEL}</p>
                           <div className="flex items-center gap-1">
                             <Coins className="h-4 w-4" />
-                            <p className="text-lg font-black">
+                            <p className="text-lg font-bold">
                               {formatSol(inh.solBalance)}
                             </p>
                           </div>
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
                           <p className="text-xs font-bold text-muted-foreground uppercase">Tokens</p>
-                          <p className="text-lg font-black">{inh.vaultTokens.length}</p>
+                          <p className="text-lg font-bold">{inh.vaultTokens.length}</p>
                         </div>
                       </div>
 
                       {inh.vaultTokens.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                             Token Balances
                           </p>
                           {inh.vaultTokens.map((vt) => {
@@ -392,14 +392,14 @@ const ClaimPageInner: React.FC<{
                                   accent="bg-accent-cyan"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-black text-lg leading-tight truncate">{primary}</p>
+                                  <p className="font-bold text-lg leading-tight truncate">{primary}</p>
                                   {secondary && (
                                     <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
                                       {secondary}
                                     </p>
                                   )}
                                 </div>
-                                <span className="font-black text-lg tabular-nums shrink-0">
+                                <span className="font-bold text-lg tabular-nums shrink-0">
                                   {formatTokenAmount(vt.rawAmount, vt.decimals)}
                                 </span>
                               </div>
@@ -412,7 +412,7 @@ const ClaimPageInner: React.FC<{
                         {txId ? (
                           <div className="text-center">
                             <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                            <p className="font-black mb-2">Claim submitted</p>
+                            <p className="font-bold mb-2">Claim submitted</p>
                             <a
                               href={getSolanaExplorerTxUrl(txId)}
                               target="_blank"
@@ -453,7 +453,7 @@ const ClaimPageInner: React.FC<{
             <div className="neo-card-static" data-tour="claim-manual">
               <button
                 onClick={() => setShowManual(!showManual)}
-                className="flex items-center justify-between w-full font-bold uppercase tracking-widest text-sm text-muted-foreground"
+                className="flex items-center justify-between w-full font-semibold uppercase tracking-widest text-sm text-muted-foreground"
               >
                 <span>Look up another owner</span>
                 <span>{showManual ? "−" : "+"}</span>

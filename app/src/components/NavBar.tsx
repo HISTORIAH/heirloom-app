@@ -33,30 +33,30 @@ const NavBar = () => {
 
   return (
     <>
-      <nav className="border-b-8 border-foreground bg-background sticky top-0 z-50">
+      <nav className="border-b-4 border-foreground bg-background sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
-          <a href="/" className="text-2xl md:text-3xl font-black tracking-tight font-display">
+          <a href="/" className="text-2xl md:text-3xl font-normal tracking-tight font-display">
             Heirloom
           </a>
 
           <div className="hidden md:flex items-center gap-6">
             <button
               onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
             >
               <LayoutDashboard className="h-5 w-5" />
               Dashboard
             </button>
             <button
               onClick={() => navigate("/claim")}
-              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
             >
               <Gift className="h-5 w-5" />
               Claim Inheritance
             </button>
             <button
               onClick={() => navigate("/heartbeat")}
-              className="flex items-center gap-2 text-sm font-black uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
             >
               <Heart className="h-5 w-5" />
               Heartbeat
@@ -91,7 +91,7 @@ const NavBar = () => {
                             setCopied(false);
                           }
                         }}
-                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
                       >
                         {copied ? (
                           <><Check className="h-4 w-4" /> Copied</>
@@ -105,7 +105,7 @@ const NavBar = () => {
                           await disconnectWallet();
                           setWalletDialogOpen(true);
                         }}
-                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
                       >
                         <RefreshCw className="h-4 w-4" />
                         Change wallet
@@ -116,7 +116,7 @@ const NavBar = () => {
                           setDropdownOpen(false);
                           void disconnectWallet();
                         }}
-                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left"
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
                       >
                         <LogOut className="h-4 w-4" />
                         Disconnect wallet
@@ -154,19 +154,19 @@ const NavBar = () => {
           <div className="p-6 space-y-4">
             {isConnected && (
               <div className="neo-border rounded-lg p-4 bg-background space-y-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-center">
                   {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
                 </p>
                 <div className="flex gap-3">
                   <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-yellow/20 text-center">
-                    <p className="text-xs font-bold text-muted-foreground">{SOL_LABEL}</p>
-                    <p className="text-sm font-black">
+                    <p className="text-xs font-medium text-muted-foreground">{SOL_LABEL}</p>
+                    <p className="text-sm font-bold">
                       {balancesLoading ? "..." : sol.toFixed(4)}
                     </p>
                   </div>
                   <div className="flex-1 neo-border rounded-lg px-3 py-2 bg-accent-cyan/20 text-center">
-                    <p className="text-xs font-bold text-muted-foreground">{USDC_LABEL}</p>
-                    <p className="text-sm font-black">
+                    <p className="text-xs font-medium text-muted-foreground">{USDC_LABEL}</p>
+                    <p className="text-sm font-bold">
                       {balancesLoading ? "..." : usdc.toFixed(2)}
                     </p>
                   </div>
