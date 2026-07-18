@@ -6,7 +6,6 @@ import type { SplTokenAsset } from "@/types";
 import {
   CircleDollarSign,
   Loader2,
-  X,
   Search,
   ChevronDown,
 } from "lucide-react";
@@ -40,11 +39,6 @@ const DepositStep: React.FC<Props> = ({
   const [tokenSort, setTokenSort] = useState<"balance" | "name">("balance");
   const [showAllTokens, setShowAllTokens] = useState(false);
   const [hideDust, setHideDust] = useState(true);
-
-  const selectedTokenEntries = useMemo(
-    () => Object.entries(tokenSelections).filter(([, v]) => v.amount > 0),
-    [tokenSelections]
-  );
 
   const filteredTokens = useMemo(() => {
     const q = tokenSearch.trim().toLowerCase();
@@ -99,13 +93,25 @@ const DepositStep: React.FC<Props> = ({
     });
   };
 
-  const removeSol = () => setSolAmount(0);
-  const removeToken = (mint: string) => {
-    setTokenSelections((prev) => {
-      const next = { ...prev };
-      delete next[mint];
-      return next;
-    });
+  const setTokenByPercent = (mint: string, pct: number) => {
+    const tok = (tokens ?? []).find((t) => t.mint === mint);
+    if (!tok) return;
+    const amount = (tok.uiAmount * pct) / 100;
+    setTokenSelections((prev) => ({
+      ...prev,
+      [mint]: { mint, amount, pct },
+    }));
+  };
+
+  const updateTokenAmount = (mint: string, value: string) => {
+    const tok = (tokens ?? []).find((t) => t.mint === mint);
+    if (!tok) return;
+    const v = Math.max(0, Math.min(tok.uiAmount, Number(value)));
+    const pct = Math.round((v / tok.uiAmount) * 100);
+    setTokenSelections((prev) => ({
+      ...prev,
+      [mint]: { mint, amount: v || 0, pct },
+    }));
   };
 
   return (
@@ -249,7 +255,7 @@ const DepositStep: React.FC<Props> = ({
           </p>
 
           {/* Token list */}
-          <div className={`overflow-y-auto ${showAllTokens ? "max-h-[600px]" : "max-h-72"} border-4 border-foreground rounded-xl`}>
+          <div className={`overflow-y-auto ${showAllTokens ? "max-h-[600px]" : "max-h-96"} border-4 border-foreground rounded-xl`}>
             {displayTokens.length === 0 && (
               <p className="text-sm font-medium text-muted-foreground px-5 py-6 text-center">
                 No tokens match &ldquo;{tokenSearch}&rdquo;.
@@ -257,43 +263,80 @@ const DepositStep: React.FC<Props> = ({
             )}
             {displayTokens.map((t) => {
               const isSelected = tokenSelections[t.mint]?.amount > 0;
+              const sel = tokenSelections[t.mint];
 
               return (
                 <div
                   key={t.mint}
-                  className={`flex items-center gap-3 px-4 py-3 border-b-2 border-foreground/5 transition-all duration-150 ${
+                  className={`border-b-2 border-foreground/5 transition-all duration-150 ${
                     isSelected ? "bg-[#F7FEE7]" : "hover:bg-accent-cyan/10"
                   }`}
                 >
-                  <TokenAvatar
-                    image={t.image}
-                    label={t.label}
-                    size="md"
-                    accent={isSelected ? "bg-accent-lime" : "bg-accent-cyan"}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm leading-tight truncate">
-                      {t.label}
+                  {/* Token row */}
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <TokenAvatar
+                      image={t.image}
+                      label={t.label}
+                      size="md"
+                      accent={isSelected ? "bg-accent-lime" : "bg-accent-cyan"}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm leading-tight truncate">
+                        {t.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {t.name && t.name !== t.label
+                          ? t.name
+                          : `${t.mint.slice(0, 8)}…${t.mint.slice(-4)}`}
+                      </p>
+                    </div>
+                    <p className="font-bold text-sm tabular-nums shrink-0">
+                      {formatUiAmount(t.uiAmount)}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {t.name && t.name !== t.label
-                        ? t.name
-                        : `${t.mint.slice(0, 8)}…${t.mint.slice(-4)}`}
-                    </p>
+                    <button
+                      onClick={() => toggleToken(t.mint)}
+                      className={`border-4 border-foreground rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                        isSelected
+                          ? "bg-accent-lime shadow-[2px_2px_0_0_hsl(var(--foreground))]"
+                          : "bg-secondary hover:bg-accent-lime/60"
+                      }`}
+                    >
+                      {isSelected ? "✓" : "Select"}
+                    </button>
                   </div>
-                  <p className="font-bold text-sm tabular-nums shrink-0">
-                    {formatUiAmount(t.uiAmount)}
-                  </p>
-                  <button
-                    onClick={() => toggleToken(t.mint)}
-                    className={`border-4 border-foreground rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
-                      isSelected
-                        ? "bg-accent-lime shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                        : "bg-secondary hover:bg-accent-lime/60"
-                    }`}
-                  >
-                    {isSelected ? "✓" : "Select"}
-                  </button>
+
+                  {/* Amount editor for selected token */}
+                  {isSelected && (
+                    <div className="px-4 pb-3 pt-0 flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-1">
+                        <span className="text-xs font-bold text-muted-foreground shrink-0">Amount:</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={t.uiAmount}
+                          step={1 / Math.pow(10, Math.min(6, t.decimals))}
+                          value={sel.amount}
+                          onChange={(e) => updateTokenAmount(t.mint, e.target.value)}
+                          className="flex-1 min-w-0 text-sm font-bold border-2 border-foreground rounded-lg px-2 py-0.5 bg-background text-center focus:outline-none focus:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
+                        />
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        {[25, 50, 75, 100].map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setTokenByPercent(t.mint, p)}
+                            className={`font-mono text-[11px] font-bold border-2 border-foreground rounded-full px-2 py-0.5 transition-all ${
+                              sel.pct === p
+                                ? "bg-accent-lime"
+                                : "bg-background hover:bg-secondary"
+                            }`}
+                          >
+                            {p === 100 ? "Max" : `${p}%`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -314,50 +357,6 @@ const DepositStep: React.FC<Props> = ({
           </div>
         </div>
       )}
-
-      {/* Selected chip tray */}
-      <div className="mt-5 border-4 border-foreground rounded-xl bg-[#F7FEE7] p-4">
-        <div className="text-[11px] font-bold uppercase tracking-[2px] text-muted-foreground mb-2.5">
-          SELECTED
-        </div>
-        {solAmount <= 0 && selectedTokenEntries.length === 0 ? (
-          <div className="text-sm text-muted-foreground">
-            Deposit SOL above or pick tokens.
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 flex-wrap">
-            {solAmount > 0 && (
-              <span className="inline-flex items-center gap-2 border-4 border-foreground rounded-full px-3.5 py-1.5 text-xs font-bold bg-accent-cyan shadow-[2px_2px_0_0_hsl(var(--foreground))]">
-                SOL: {solAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}
-                <button
-                  onClick={removeSol}
-                  className="hover:text-accent-pink transition-colors"
-                >
-                  <X className="h-3 w-3" strokeWidth={2.5} />
-                </button>
-              </span>
-            )}
-            {selectedTokenEntries.map(([mint, sel]) => {
-              const tok = (tokens ?? []).find((t) => t.mint === mint);
-              const label = tok?.symbol || tok?.label || `${mint.slice(0, 4)}…${mint.slice(-4)}`;
-              return (
-                <span
-                  key={mint}
-                  className="inline-flex items-center gap-2 border-4 border-foreground rounded-full px-3.5 py-1.5 text-xs font-bold bg-accent-yellow shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                >
-                  {label}: {formatUiAmount(sel.amount)}
-                  <button
-                    onClick={() => removeToken(mint)}
-                    className="hover:text-accent-pink transition-colors"
-                  >
-                    <X className="h-3 w-3" strokeWidth={2.5} />
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
       {tokensLoading && (
         <div className="flex items-center gap-2 mt-3">

@@ -28,7 +28,6 @@ interface SummaryColumnProps {
   totalDays: number;
   delegate: string;
   hbSigner: string;
-  onTokenPctChange: (mint: string, pct: number) => void;
 }
 
 const SummaryColumn: React.FC<SummaryColumnProps> = ({
@@ -43,7 +42,6 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
   totalDays,
   delegate,
   hbSigner,
-  onTokenPctChange,
 }) => {
   const displayLabel = label.trim() || "heir";
   const selectedEntries = Object.entries(tokenSelections).filter(([, v]) => v.amount > 0);
@@ -97,21 +95,6 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
                 <div className="flex justify-between text-sm font-bold">
                   <span>{tok.symbol || tok.label}</span>
                   <span className="font-normal text-muted-foreground">{formatUiAmount(sel.amount)}</span>
-                </div>
-                <div className="flex gap-1.5 mt-2">
-                  {[25, 50, 75, 100].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => onTokenPctChange(mint, p)}
-                      className={`font-mono text-[11px] font-bold border-2 border-foreground rounded-full px-2.5 py-0.5 transition-all ${
-                        sel.pct === p
-                          ? "bg-accent-lime"
-                          : "bg-background hover:bg-secondary"
-                      }`}
-                    >
-                      {p === 100 ? "Max" : `${p}%`}
-                    </button>
-                  ))}
                 </div>
               </div>
             );

@@ -1,3 +1,4 @@
+import PageHeader from "@/components/PageHeader";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
@@ -15,6 +16,13 @@ import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import TokenRow from "@/components/dashboard/TokenRow";
 import { SolStakingIndicator } from "@/components/dashboard/SolStakingIndicator";
 import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
@@ -38,8 +46,6 @@ import {
   Clock,
   Users,
   Coins,
-  LogOut,
-  ArrowLeft,
   Loader2,
   ExternalLink,
   Copy,
@@ -49,7 +55,10 @@ import {
   Wallet,
   ChevronDown,
   Sprout,
+  Search,
 } from "lucide-react";
+
+const ESTATE_STRIP_CAP = 5;
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
 
@@ -123,6 +132,58 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
     },
   };
 }
+
+const STRIP_DOT_COLOR: Record<UiState, string> = {
+  active: "bg-accent-lime",
+  grace: "bg-accent-yellow",
+  claimable: "bg-accent-red",
+  distributed: "bg-secondary",
+};
+
+function getEstateStripMeta(estate: EstateData) {
+  const vaultEmpty =
+    estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
+  const { state, countdown } = computeTick(estate, vaultEmpty);
+  const timeLabel =
+    state === "active" ? `${countdown.days}d left` :
+    state === "grace" ? `Grace · ${countdown.days}d` :
+    state === "claimable" ? "Claimable" :
+    "Distributed";
+  const assetCount = 1 + estate.vaultTokens.length;
+  return { state, dotColor: STRIP_DOT_COLOR[state], timeLabel, assetCount };
+}
+
+const EstatePillButton = ({
+  estate,
+  selected,
+  onClick,
+  fullWidth = false,
+}: {
+  estate: EstateData;
+  selected: boolean;
+  onClick: () => void;
+  fullWidth?: boolean;
+}) => {
+  const { dotColor, timeLabel, assetCount } = getEstateStripMeta(estate);
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "neo-border rounded-xl px-3 py-2 min-h-[56px] flex flex-col items-start justify-center gap-0.5 transition-colors text-left overflow-hidden",
+        fullWidth ? "w-full" : "w-44 shrink-0",
+        selected ? "bg-accent-lime" : "bg-background hover:bg-secondary",
+      )}
+    >
+      <span className="flex items-center gap-2 text-sm font-bold w-full min-w-0">
+        <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
+        <span className="truncate">{estate.label}</span>
+      </span>
+      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground truncate w-full">
+        {assetCount} asset{assetCount !== 1 ? "s" : ""} · {timeLabel}
+      </span>
+    </button>
+  );
+};
 
 const EstateCard = ({ estate }: { estate: EstateData }) => {
   const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
@@ -702,7 +763,22 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [switcherQuery, setSwitcherQuery] = useState("");
   const selectedEstate = estates[selectedIndex] ?? estates[0];
+  const filteredSwitcherEstates = estates
+    .map((estate, index) => ({ estate, index }))
+    .filter(({ estate }) => estate.label.toLowerCase().includes(switcherQuery.trim().toLowerCase()));
+
+  // Visible strip always includes the selected estate, even if it's outside the capped range —
+  // the first CAP-1 slots stay stable, the last slot swaps to the current selection when needed.
+  const stripEntries =
+    selectedIndex >= ESTATE_STRIP_CAP
+      ? [
+          ...estates.slice(0, ESTATE_STRIP_CAP - 1).map((estate, index) => ({ estate, index })),
+          { estate: estates[selectedIndex], index: selectedIndex },
+        ]
+      : estates.slice(0, ESTATE_STRIP_CAP).map((estate, index) => ({ estate, index }));
 
   const handleDisconnect = () => {
     clearVault();
@@ -724,32 +800,11 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-20">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-black hover:underline group">
-            <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Home
-          </button>
-          <span className="text-2xl font-black">Vault Dashboard</span>
-          {isConnected ? (
-            <button
-              onClick={handleDisconnect}
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-            >
-              <LogOut className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Disconnect</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setWalletDialogOpen(true)}
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-            >
-              <Wallet className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Connect Wallet</span>
-            </button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title="Vault Dashboard"
+        onDisconnect={handleDisconnect}
+        onConnectWallet={() => setWalletDialogOpen(true)}
+      />
 
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
         <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -837,41 +892,27 @@ const DashboardPage = () => {
         )}
 
         {estates.length > 1 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            {estates.map((e, i) => {
-              const vaultEmpty = e.claimableAssets === 0 && e.solBalance === 0 && e.vaultTokens.length === 0;
-              const { state, countdown } = computeTick(e, vaultEmpty);
-              const dotColor = {
-                active: "bg-accent-lime",
-                grace: "bg-accent-yellow",
-                claimable: "bg-accent-red",
-                distributed: "bg-secondary",
-              }[state];
-              const timeLabel =
-                state === "active" ? `${countdown.days}d left` :
-                state === "grace" ? `Grace · ${countdown.days}d` :
-                state === "claimable" ? "Claimable" :
-                "Distributed";
-              const assetCount = 1 + e.vaultTokens.length;
-              return (
-                <button
-                  key={e.estatePda}
-                  onClick={() => setSelectedIndex(i)}
-                  className={cn(
-                    "neo-border rounded-xl px-3 py-2 flex flex-col items-start gap-0.5 transition-colors",
-                    i === selectedIndex ? "bg-accent-lime" : "bg-background hover:bg-secondary",
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-sm font-bold">
-                    <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
-                    {e.label}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                    {assetCount} asset{assetCount !== 1 ? "s" : ""} · {timeLabel}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+            {stripEntries.map(({ estate: e, index: i }) => (
+              <EstatePillButton
+                key={e.estatePda}
+                estate={e}
+                selected={i === selectedIndex}
+                onClick={() => setSelectedIndex(i)}
+              />
+            ))}
+            {estates.length > ESTATE_STRIP_CAP && (
+              <button
+                onClick={() => setSwitcherOpen(true)}
+                aria-label={`View all ${estates.length} estates`}
+                className="neo-border border-dashed rounded-xl px-3 py-2 w-44 shrink-0 min-h-[56px] flex flex-col items-start justify-center gap-0.5 bg-accent-purple/10 text-left transition-colors hover:bg-accent-purple/20"
+              >
+                <span className="text-sm font-black">+{estates.length - ESTATE_STRIP_CAP} more</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                  View all estates
+                </span>
+              </button>
+            )}
           </div>
         )}
 
@@ -881,6 +922,59 @@ const DashboardPage = () => {
           </div>
         )}
       </div>
+
+      <Dialog
+        open={switcherOpen}
+        onOpenChange={(open) => {
+          setSwitcherOpen(open);
+          if (!open) setSwitcherQuery("");
+        }}
+      >
+        <DialogContent className="neo-card-static max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">All Estates</DialogTitle>
+            <DialogDescription className="font-bold">
+              {estates.length} total · click one to switch
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+              strokeWidth={2.5}
+            />
+            <input
+              type="text"
+              value={switcherQuery}
+              onChange={(e) => setSwitcherQuery(e.target.value)}
+              placeholder="Search estates…"
+              aria-label="Search estates"
+              autoFocus
+              className="neo-input pl-10"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2 max-h-[360px] overflow-y-auto pr-1">
+            {filteredSwitcherEstates.length === 0 ? (
+              <p className="col-span-2 text-sm font-bold text-muted-foreground text-center py-8">
+                No estates match &ldquo;{switcherQuery}&rdquo;.
+              </p>
+            ) : (
+              filteredSwitcherEstates.map(({ estate: e, index: i }) => (
+                <EstatePillButton
+                  key={e.estatePda}
+                  estate={e}
+                  selected={i === selectedIndex}
+                  fullWidth
+                  onClick={() => {
+                    setSelectedIndex(i);
+                    setSwitcherOpen(false);
+                    setSwitcherQuery("");
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </div>

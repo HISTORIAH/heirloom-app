@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import PageHeader from "@/components/PageHeader";
+import { useState, useMemo } from "react";
 import SubmitOverlay from "@/components/create-vault/SubmitOverlay";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
@@ -13,21 +14,16 @@ import HeartbeatStep from "@/components/create-vault/HeartbeatStep";
 import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
 import ReviewStep from "@/components/create-vault/ReviewStep";
-import SummaryColumn from "@/components/create-vault/SummaryColumn";
-import Stepper from "@/components/create-vault/Stepper";
 import {
-  ArrowLeft,
+    ArrowLeft,
   ArrowRight,
-  Check,
   CheckCircle,
-  ChevronDown,
-  Copy,
   Loader2,
-  LogOut,
-  Wallet,
 } from "lucide-react";
 import { errMsg } from "@/lib/utils";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import Stepper from "@/components/create-vault/Stepper";
+import SummaryColumn from "@/components/create-vault/SummaryColumn";
 
 const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
 const STEP_COLORS = [
@@ -47,7 +43,7 @@ export interface TokenSelection {
 }
 
 const CreateVaultPage = () => {
-  const { publicKey, isConnected, disconnectWallet } = useWallet();
+  const { publicKey, isConnected } = useWallet();
   const { createEstateOnChain } = useVault();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -76,8 +72,6 @@ const CreateVaultPage = () => {
   const [submitProgress, setSubmitProgress] = useState<string>("");
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const selectedTokenEntries = useMemo(
     () => Object.entries(tokenSelections).filter(([, v]) => v.amount > 0),
@@ -93,19 +87,6 @@ const CreateVaultPage = () => {
     if (step === 2) return heartbeatSeconds > 0 && graceSeconds > 0;
     return acknowledged;
   };
-
-  // Close wallet dropdown on click outside
-  const walletDropdownRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!walletDropdownOpen) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (!walletDropdownRef.current?.contains(e.target as Node)) {
-        setWalletDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [walletDropdownOpen]);
 
   const handleSubmit = async () => {
     if (!isConnected) {
@@ -179,36 +160,10 @@ const CreateVaultPage = () => {
     return (
       <>
         <div className="bg-background min-h-screen">
-          {/* Header */}
-          <div className="border-b-4 border-foreground bg-background sticky top-0 z-50">
-            <div className="max-w-[1180px] mx-auto px-6 flex items-center justify-between h-20">
-              <button
-                onClick={() => navigate("/")}
-                className="flex items-center gap-2 text-lg font-bold hover:underline group"
-              >
-                <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={2.5} />
-                Home
-              </button>
-              <span className="text-2xl font-bold font-display">Create Estate</span>
-              {isConnected ? (
-                <button
-                  onClick={() => void disconnectWallet()}
-                  className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-                >
-                  <LogOut className="h-4 w-4" strokeWidth={2.5} />
-                  <span className="hidden sm:inline">Disconnect</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => setWalletDialogOpen(true)}
-                  className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-                >
-                  <Wallet className="h-4 w-4" strokeWidth={2.5} />
-                  <span className="hidden sm:inline">Connect Wallet</span>
-                </button>
-              )}
-            </div>
-          </div>
+          <PageHeader
+            title="Create Estate"
+            onConnectWallet={() => setWalletDialogOpen(true)}
+          />
 
           <main className="max-w-[1180px] mx-auto px-6 py-12">
             <Stepper steps={STEPS} currentStep={4} completedSteps={4} onStepClick={() => {}} accentColor="#A3E635" />
@@ -271,79 +226,10 @@ const CreateVaultPage = () => {
   return (
     <>
       <div className="bg-background min-h-screen" aria-hidden={isSubmitting} style={isSubmitting ? { pointerEvents: "none" } : undefined}>
-        {/* Header */}
-        <div className="border-b-4 border-foreground bg-background sticky top-0 z-50">
-          <div className="max-w-[1180px] mx-auto px-6 flex items-center justify-between h-20">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-lg font-bold hover:underline group"
-            >
-              <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={2.5} />
-              Home
-            </button>
-            <span className="text-2xl font-bold font-display">Create Estate</span>
-            {isConnected ? (
-              <div className="relative" ref={walletDropdownRef}>
-                <button
-                  onClick={() => setWalletDropdownOpen((v) => !v)}
-                  className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-lime font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-                >
-                  {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                      walletDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-
-                {walletDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 border-4 border-foreground rounded-xl bg-background p-3 space-y-2 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50">
-                    <button
-                      onClick={async () => {
-                        if (!publicKey) return;
-                        try {
-                          await navigator.clipboard.writeText(publicKey);
-                          setCopied(true);
-                          setTimeout(() => {
-                            setCopied(false);
-                            setWalletDropdownOpen(false);
-                          }, 1200);
-                        } catch {
-                          setCopied(false);
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold hover:bg-secondary transition-colors text-left"
-                    >
-                      {copied ? (
-                        <><Check className="h-4 w-4" /> Copied</>
-                      ) : (
-                        <><Copy className="h-4 w-4" /> Copy address</>
-                      )}
-                    </button>
-                    <div className="border-t-2 border-foreground" />
-                    <button
-                      onClick={() => {
-                        setWalletDropdownOpen(false);
-                        void disconnectWallet();
-                      }}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left"
-                    >
-                      <LogOut className="h-4 w-4" /> Disconnect wallet
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={() => setWalletDialogOpen(true)}
-                className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-              >
-                <Wallet className="h-4 w-4" strokeWidth={2.5} />
-                <span className="hidden sm:inline">Connect Wallet</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <PageHeader
+          title="Create Estate"
+          onConnectWallet={() => setWalletDialogOpen(true)}
+        />
 
         <main className="max-w-[1180px] mx-auto px-6 pt-12 pb-24">
           {/* Stepper */}
@@ -434,16 +320,6 @@ const CreateVaultPage = () => {
                   totalDays={totalDays}
                   delegate={delegate}
                   hbSigner={hbSigner}
-                  onTokenPctChange={(mint, pct) => {
-                    setTokenSelections((prev) => {
-                      const existing = prev[mint];
-                      if (!existing) return prev;
-                      const tok = (tokens ?? []).find((t) => t.mint === mint);
-                      if (!tok) return prev;
-                      const newAmount = (tok.uiAmount * pct) / 100;
-                      return { ...prev, [mint]: { ...existing, amount: newAmount, pct } };
-                    });
-                  }}
                 />
               </div>
             </div>
@@ -468,7 +344,7 @@ const CreateVaultPage = () => {
                       : "bg-accent-lime text-foreground shadow-[5px_5px_0_0_hsl(var(--foreground))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
                   }`}
                 >
-                  {step === 1 && !hasAnyDeposit ? "SKIP FOR NOW →" : "NEXT →"}
+                  {step === 1 && !hasAnyDeposit ? "SKIP FOR NOW →" : "NEXT"}
                   {step !== 1 && <ArrowRight className="h-4 w-4" strokeWidth={2.5} />}
                 </button>
               ) : (
