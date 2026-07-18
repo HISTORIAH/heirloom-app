@@ -1,5 +1,5 @@
-import { LABEL_MAX_LEN } from "@/lib/constants";
 import { Users } from "lucide-react";
+import { LABEL_MAX_LEN } from "@/lib/constants";
 
 interface Props {
   heirAddress: string;
@@ -22,82 +22,85 @@ const HeirStep: React.FC<Props> = ({
   hbSigner,
   setHbSigner,
 }) => (
-  <div className="neo-card-static p-8" style={{ boxShadow: "12px 12px 0 0 hsl(var(--accent-pink))" }}>
-    {/* Step header inside the card */}
-    <div className="flex items-center gap-3 mb-5">
+  <div>
+    {/* Step header */}
+    <div className="flex items-center gap-4 mb-5">
       <div
-        className="bg-accent-pink neo-border rounded-xl p-3"
-        style={{ boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }}
+        className="bg-accent-pink border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]"
       >
         <Users className="h-5 w-5" strokeWidth={2} />
       </div>
       <div>
-        <span className="text-xs font-bold uppercase tracking-widest text-accent-pink">
-          Step 1
-        </span>
-        <h3 className="text-xl font-semibold font-body">Who inherits?</h3>
+        <div className="text-xs font-bold uppercase tracking-[3px] text-accent-pink">STEP 1</div>
+        <h3 className="text-2xl font-display">Who inherits?</h3>
       </div>
     </div>
 
-    <div className="space-y-3">
+    <div className="space-y-5">
       <div>
-        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-          Label (e.g. &quot;son&quot;, &quot;spouse&quot;)
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          LABEL (E.G. &quot;SON&quot;, &quot;SPOUSE&quot;)
         </label>
         <input
           type="text"
           value={label}
           onChange={(e) => setLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
           maxLength={LABEL_MAX_LEN}
-          className="neo-input font-semibold"
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-bold text-base transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
           placeholder="e.g. spouse"
         />
       </div>
+
       <div>
-        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-          Heir Solana Address
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          HEIR SOLANA ADDRESS
         </label>
         <input
           type="text"
           value={heirAddress}
           onChange={(e) => setHeirAddress(e.target.value)}
           maxLength={128}
-          className="neo-input font-mono text-sm"
-          placeholder="Enter Solana wallet address..."
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="Enter Solana wallet address…"
+        />
+        <div className="text-xs text-muted-foreground mt-2">
+          Single heir by default — they receive 100%. Multi-heir splits come later.
+        </div>
+      </div>
+
+      {/* Optional divider */}
+      <div className="flex items-center gap-3.5 my-7">
+        <div className="flex-1 h-0.5 bg-gray-200" />
+        <span className="text-[11px] font-bold uppercase tracking-[2px] text-muted-foreground">OPTIONAL</span>
+        <div className="flex-1 h-0.5 bg-gray-200" />
+      </div>
+
+      <div>
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          GUARDIAN (CAN PAUSE ONCE)
+        </label>
+        <input
+          type="text"
+          value={delegate}
+          onChange={(e) => setDelegate(e.target.value)}
+          maxLength={128}
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="Solana address (optional)"
         />
       </div>
 
-      {/* Optional section */}
-      <div className="pt-3 border-t-2 border-foreground/10">
-        <p className="text-sm font-medium text-muted-foreground mb-2">Optional</p>
-        <div className="space-y-2">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-              Guardian (can pause once)
-            </label>
-            <input
-              type="text"
-              value={delegate}
-              onChange={(e) => setDelegate(e.target.value)}
-              maxLength={128}
-              className="neo-input font-mono text-sm"
-              placeholder="Solana address (optional)"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1">
-              Heartbeat Signer (hot wallet)
-            </label>
-            <input
-              type="text"
-              value={hbSigner}
-              onChange={(e) => setHbSigner(e.target.value)}
-              maxLength={128}
-              className="neo-input font-mono text-sm"
-              placeholder="Solana address (optional)"
-            />
-          </div>
-        </div>
+      <div>
+        <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
+          HEARTBEAT SIGNER (HOT WALLET)
+        </label>
+        <input
+          type="text"
+          value={hbSigner}
+          onChange={(e) => setHbSigner(e.target.value)}
+          maxLength={128}
+          className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+          placeholder="Solana address (optional)"
+        />
       </div>
     </div>
   </div>

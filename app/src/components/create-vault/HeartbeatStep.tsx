@@ -1,11 +1,12 @@
-import { SECONDS_PER_DAY } from "@/lib/constants";
 import { Clock } from "lucide-react";
+import { SECONDS_PER_DAY } from "@/lib/constants";
 
 interface Props {
   heartbeatSeconds: number;
   setHeartbeatSeconds: (n: number) => void;
   graceSeconds: number;
   setGraceSeconds: (n: number) => void;
+  assetCount: number;
 }
 
 const HeartbeatStep: React.FC<Props> = ({
@@ -13,74 +14,70 @@ const HeartbeatStep: React.FC<Props> = ({
   setHeartbeatSeconds,
   graceSeconds,
   setGraceSeconds,
+  assetCount,
 }) => {
-  const heartbeatDays = Math.max(1, Math.round(heartbeatSeconds / SECONDS_PER_DAY));
-  const graceDays = Math.max(1, Math.round(graceSeconds / SECONDS_PER_DAY));
+  const heartbeatDays = Math.max(30, Math.round(heartbeatSeconds / SECONDS_PER_DAY));
+  const graceDays = Math.max(7, Math.round(graceSeconds / SECONDS_PER_DAY));
   const totalDays = heartbeatDays + graceDays;
 
   const HEARTBEAT_PRESETS = [30, 60, 90, 180, 365];
   const GRACE_PRESETS = [7, 30, 60, 90];
 
+  const futureDate = (days: number) =>
+    new Date(Date.now() + days * 864e5).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
   return (
-    <div className="neo-card-static p-8" style={{ boxShadow: "12px 12px 0 0 hsl(var(--accent-cyan))" }}>
-      {/* Step header inside the card */}
-      <div className="flex items-center gap-3 mb-4">
-        <div
-          className="bg-accent-cyan neo-border rounded-xl p-3"
-          style={{ boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }}
-        >
+    <div>
+      {/* Step header */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className="bg-accent-cyan border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
           <Clock className="h-5 w-5" strokeWidth={2} />
         </div>
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-accent-cyan">
-            Step 3
-          </span>
-          <h3 className="text-xl font-semibold font-body">How often do you check in?</h3>
+          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-cyan">STEP 3</div>
+          <h3 className="text-2xl font-display">How often do you check in?</h3>
         </div>
       </div>
 
-      <p className="text-sm font-medium text-muted-foreground mb-4">
-        You have <strong>1.5 SOL</strong> and <strong>1 heir</strong> in this vault. Choose how often you need to prove you&apos;re alive.
+      <p className="text-sm text-muted-foreground mb-6">
+        You have <strong>{assetCount || "no"} asset{assetCount === 1 ? "" : "s"}</strong> and{" "}
+        <strong>1 heir</strong> in this estate. Choose how often you need to prove you&apos;re alive.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 mb-6">
         {/* Heartbeat Interval */}
-        <div className="space-y-3">
-          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Heartbeat Interval
+        <div>
+          <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-4">
+            HEARTBEAT INTERVAL
           </label>
           <input
             type="range"
-            min={1}
+            min={30}
             max={365}
+            step={5}
             value={heartbeatDays}
-            onChange={(e) =>
-              setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)
-            }
-            className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer"
+            onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
+            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5"
             style={{ accentColor: "hsl(var(--accent-cyan))" }}
           />
-          <div className="flex justify-between items-end">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Days
-            </span>
-            <span className="text-4xl font-semibold tabular-nums">{heartbeatDays}</span>
+          <div className="flex items-baseline gap-2 mb-3.5">
+            <span className="text-5xl font-display leading-none">{heartbeatDays}</span>
+            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">DAYS</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             {HEARTBEAT_PRESETS.map((p) => (
               <button
                 key={p}
                 onClick={() => setHeartbeatSeconds(p * SECONDS_PER_DAY)}
-                className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
+                className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
                   heartbeatDays === p
-                    ? "bg-accent-cyan"
+                    ? "bg-accent-cyan shadow-[2px_2px_0_0_hsl(var(--foreground))]"
                     : "bg-secondary hover:bg-accent-cyan/40"
                 }`}
-                style={
-                  heartbeatDays === p
-                    ? { boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }
-                    : {}
-                }
               >
                 {p}d
               </button>
@@ -89,42 +86,34 @@ const HeartbeatStep: React.FC<Props> = ({
         </div>
 
         {/* Grace Period */}
-        <div className="space-y-3">
-          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Grace Period
+        <div>
+          <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-4">
+            GRACE PERIOD
           </label>
           <input
             type="range"
-            min={1}
+            min={7}
             max={90}
+            step={1}
             value={graceDays}
-            onChange={(e) =>
-              setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)
-            }
-            className="w-full h-3 bg-secondary neo-border rounded-full appearance-none cursor-pointer"
+            onChange={(e) => setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
+            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5"
             style={{ accentColor: "hsl(var(--accent-cyan))" }}
           />
-          <div className="flex justify-between items-end">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Days
-            </span>
-            <span className="text-4xl font-semibold tabular-nums">{graceDays}</span>
+          <div className="flex items-baseline gap-2 mb-3.5">
+            <span className="text-5xl font-display leading-none">{graceDays}</span>
+            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">DAYS</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             {GRACE_PRESETS.map((p) => (
               <button
                 key={p}
                 onClick={() => setGraceSeconds(p * SECONDS_PER_DAY)}
-                className={`neo-border rounded-lg px-3 py-1 text-sm font-bold transition-all duration-150 ${
+                className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
                   graceDays === p
-                    ? "bg-accent-cyan"
+                    ? "bg-accent-cyan shadow-[2px_2px_0_0_hsl(var(--foreground))]"
                     : "bg-secondary hover:bg-accent-cyan/40"
                 }`}
-                style={
-                  graceDays === p
-                    ? { boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }
-                    : {}
-                }
               >
                 {p}d
               </button>
@@ -133,13 +122,19 @@ const HeartbeatStep: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Total deadline summary */}
-      <div className="mt-5 p-3 bg-accent-lime/20 neo-border rounded-xl">
-        <p className="text-sm font-medium">
-          Total deadline:{" "}
-          <span className="text-lg font-semibold">{totalDays} days</span>
-          {" "}— if you don&apos;t check in for this long, your heirs can claim.
-        </p>
+      {/* Deadline box */}
+      <div className="border-4 border-foreground rounded-[14px] bg-[#F7FEE7] p-5 mb-5 text-sm leading-relaxed">
+        <span className="font-bold">Total deadline: {totalDays} days.</span> If you don&apos;t check in for this
+        long, your heir can claim.
+        <span className="block mt-1.5 text-xs text-muted-foreground">
+          → If you never check in, earliest claim date is <strong>{futureDate(totalDays)}</strong>
+        </span>
+      </div>
+
+      {/* Info box */}
+      <div className="border-4 border-foreground rounded-xl bg-secondary p-4 text-sm leading-relaxed">
+        <strong>The grace period is your undo button.</strong> Miss your interval? You can still check in during
+        grace and reset the whole clock. Only after the full {totalDays} days can your heir claim.
       </div>
     </div>
   );
