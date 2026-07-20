@@ -727,11 +727,11 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (
-        <div className="neo-card-static bg-foreground text-background">
-          <h3 className="text-sm font-normal uppercase tracking-widest text-background/40 mb-4">Manage Estate</h3>
+        <div className="neo-card-static">
+          <h3 className="text-sm font-normal uppercase tracking-widest text-muted-foreground mb-4">Manage Estate</h3>
 
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Heir & Timing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Heir & Timing</p>
             <div className="grid grid-cols-2 gap-2">
               <ReassignHeirSection estate={estate} onTx={setLastTxId} />
               <EditSettingsSection estate={estate} onTx={setLastTxId} />
@@ -739,14 +739,14 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           </div>
 
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Assets</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Assets</p>
             <div className="grid grid-cols-1 gap-2">
               <AddAssetSection estate={estate} onTx={setLastTxId} />
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Danger Zone</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Danger Zone</p>
             <EmergencyWithdrawSection estate={estate} onTx={setLastTxId} />
           </div>
         </div>
