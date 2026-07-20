@@ -48,16 +48,16 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
         {withdrawing ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> Withdrawing...</>
         ) : (
-          <><AlertTriangle className="h-4 w-4" /> Close Vault & Withdraw</>
+          <><AlertTriangle className="h-4 w-4" /> Close Estate & Withdraw</>
         )}
       </button>
 
       <ConfirmDialog
         open={withdrawConfirmOpen}
-        title="Close Vault & Withdraw?"
-        description="This returns all SOL and tokens to your wallet and permanently cancels the vault. Heirs will no longer be able to claim."
+        title="Close Estate & Withdraw?"
+        description="This returns all SOL and tokens to your wallet and permanently cancels the vault. Heir will no longer be able to claim."
         confirmLabel="Withdraw & Cancel"
-        cancelLabel="Keep Vault"
+        cancelLabel="Keep Estate"
         variant="destructive"
         loading={withdrawing}
         onConfirm={performEmergencyWithdraw}
