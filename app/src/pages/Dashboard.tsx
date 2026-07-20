@@ -43,7 +43,6 @@ import { cn, formatSol, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { computeEstateState } from "@/lib/estateState";
 import {
   Heart,
-  Clock,
   Users,
   Coins,
   Loader2,
@@ -454,10 +453,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Countdown */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-normal uppercase tracking-widest text-muted-foreground">
-            {countdownLabel}
-          </h3>
-          <Clock className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
+          <h3 className="text-xl font-normal">{countdownLabel}</h3>
         </div>
         <div className="grid grid-cols-4 gap-3 md:gap-4">
           {[
@@ -690,11 +686,13 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 <Users className="h-5 w-5" strokeWidth={2.5} />
               </div>
               <h3 className="text-xl font-normal">Heir & Details</h3>
+            </div>
+            <div className="flex items-center gap-2">
               {estate.isClaimed && (
                 <span className="neo-badge bg-accent-lime text-xs">Claimed</span>
               )}
+              <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
             </div>
-            <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
           </summary>
           <div className="mt-4 space-y-3 pt-4 border-foreground/10">
             <button
@@ -727,8 +725,8 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (
-        <div className="neo-card-static">
-          <h3 className="text-sm font-normal uppercase tracking-widest text-muted-foreground mb-4">Manage Estate</h3>
+        <div className="neo-card-static bg-secondary/30">
+          <h3 className="text-xl font-normal mb-6">Manage Estate</h3>
 
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Heir & Timing</p>
