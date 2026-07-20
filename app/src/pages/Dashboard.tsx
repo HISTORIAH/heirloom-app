@@ -696,7 +696,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             </div>
             <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
           </summary>
-          <div className="mt-4 space-y-3 pt-4 border-t-4 border-foreground/10">
+          <div className="mt-4 space-y-3 pt-4 border-foreground/10">
             <button
               onClick={handleCopyHeir}
               className="w-full neo-border rounded-lg p-3 bg-secondary hover:bg-secondary/70 transition-colors flex items-center justify-between gap-3 text-left"
