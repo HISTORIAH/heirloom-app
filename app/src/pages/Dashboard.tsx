@@ -520,7 +520,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
 
         {assetTab === "sol" ? (
-          <div className="neo-card-static" style={{ boxShadow: "8px 8px 0 0 hsl(var(--accent-lime))" }}>
+          <div className="neo-card-static" style={{ boxShadow: "none" }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-accent-orange neo-border rounded-xl p-3">
                 {tokenIcon}
@@ -535,21 +535,19 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <p className="text-4xl font-black tabular-nums mb-4">{solDisplay}</p>
             <div className={cn("grid gap-2", showYieldStaking && !stakingStrategy?.active ? "grid-cols-2" : "grid-cols-1")}>
               <button
+                onClick={handleEnableStaking}
+                disabled={solVaultBalance <= 0}
+                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-accent-lime hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+              >
+                <Sprout className="h-3.5 w-3.5" /> Stake SOL
+              </button>
+              <button
                 onClick={() => setTopUpOpen("sol")}
                 disabled={estate.solBalance === 0}
-                className="neo-border rounded-lg h-10 text-sm font-bold uppercase tracking-wide bg-accent-lime shadow-[4px_4px_0_0_hsl(var(--foreground))] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_hsl(var(--foreground))] flex items-center justify-center gap-1 disabled:opacity-40"
+                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-transparent hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               >
                 <TrendingUp className="h-3.5 w-3.5" /> Add More
               </button>
-              {showYieldStaking && !stakingStrategy?.active && (
-                <button
-                  onClick={handleEnableStaking}
-                  disabled={solVaultBalance <= 0}
-                  className="neo-border rounded-lg h-10 text-sm font-bold uppercase tracking-wide bg-background hover:bg-foreground hover:text-background transition-colors flex items-center justify-center gap-1 disabled:opacity-40"
-                >
-                  <Sprout className="h-3.5 w-3.5" /> Stake SOL
-                </button>
-              )}
             </div>
             {showYieldStaking && stakingStrategy?.active && (
               <SolStakingIndicator
