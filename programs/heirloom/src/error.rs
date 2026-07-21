@@ -28,12 +28,10 @@ pub enum HeirloomError {
     MissingAccount,
     #[msg("Invalid account")]
     InvalidAccount,
-    #[msg("Claimable assets still remaining")]
-    ClaimableAssetsRemaining,
     #[msg("Zero deposit amount")]
     ZeroDepositAmount,
-    #[msg("Too many claimable assets")]
-    TooManyClaimableAssets,
+    #[msg("Revoke tokens first, then SOL.")]
+    RevokeTokensFirst,
     #[msg("Label too long")]
     LabelTooLong,
     #[msg("Math overflow")]
