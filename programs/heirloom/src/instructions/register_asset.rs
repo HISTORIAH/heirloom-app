@@ -49,7 +49,7 @@ pub struct RegisterAsset<'info> {
 
 impl<'info> RegisterAsset<'info> {
     pub fn register_asset_handler(ctx: Context<RegisterAsset>, amount: u64) -> Result<()> {
-        ctx.accounts.validate()?;
+        ctx.accounts.validate(amount)?;
 
         if ctx.accounts.mint.is_none() {
             require!(amount > 0, HeirloomError::ZeroDepositAmount);
@@ -110,7 +110,8 @@ impl<'info> RegisterAsset<'info> {
         Ok(())
     }
 
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(&self, amount: u64) -> Result<()> {
+        require!(amount > 0, HeirloomError::ZeroDepositAmount);
         require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
 
         match self.mint.as_ref() {
