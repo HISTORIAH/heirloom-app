@@ -18,14 +18,10 @@ pub enum HeirloomError {
     AlreadyDeferred,
     #[msg("Defer window expired")]
     DeferWindowExpired,
-    #[msg("Claim deferred")]
-    ClaimDeferred,
     #[msg("Mismatched address")]
     MismatchedAddress,
     #[msg("Estate paused")]
     EstatePaused,
-    #[msg("Missing account")]
-    MissingAccount,
     #[msg("Invalid account")]
     InvalidAccount,
     #[msg("Zero deposit amount")]
