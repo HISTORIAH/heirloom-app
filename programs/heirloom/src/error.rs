@@ -40,4 +40,6 @@ pub enum HeirloomError {
     MathOverflow,
     #[msg("Math underflow")]
     MathUnderflow,
+    #[msg("Interval exceeds maximum of 365 days.")]
+    IntervalTooLong,
 }
