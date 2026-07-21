@@ -60,10 +60,15 @@ const TokenRow: React.FC<TokenRowProps> = ({
   return (
     <div
       className="neo-card-static flex items-center gap-4 py-4 px-4"
+      // style={
+      //   isYieldActive
+      //     ? { boxShadow: `6px 6px 0 0 ${accentColor}`, borderLeft: `4px solid ${accentColor}` }
+      //     : undefined
+      // }
       style={
         isYieldActive
-          ? { boxShadow: `6px 6px 0 0 ${accentColor}`, borderLeft: `4px solid ${accentColor}` }
-          : undefined
+          ? { boxShadow: "none", borderLeft: `4px solid ${accentColor}` }
+          : { boxShadow: "none" }
       }
     >
       <TokenAvatar image={meta?.image} label={primary} size="md" accent={fallbackAccent.bg} />
@@ -103,8 +108,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
         <button
           onClick={onTopUpOpen}
           className={cn(
-            "neo-border rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
-            "bg-background hover:bg-foreground hover:text-background",
+            "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground bg-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
           )}
         >
           <TrendingUp className="h-3 w-3" /> Add

@@ -43,7 +43,6 @@ import { cn, formatSol, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { computeEstateState } from "@/lib/estateState";
 import {
   Heart,
-  Clock,
   Users,
   Coins,
   Loader2,
@@ -454,10 +453,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Countdown */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-normal uppercase tracking-widest text-muted-foreground">
-            {countdownLabel}
-          </h3>
-          <Clock className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
+          <h3 className="text-xl font-normal">{countdownLabel}</h3>
         </div>
         <div className="grid grid-cols-4 gap-3 md:gap-4">
           {[
@@ -520,7 +516,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         </div>
 
         {assetTab === "sol" ? (
-          <div className="neo-card-static" style={{ boxShadow: "8px 8px 0 0 hsl(var(--accent-lime))" }}>
+          <div className="neo-card-static" style={{ boxShadow: "none" }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-accent-orange neo-border rounded-xl p-3">
                 {tokenIcon}
@@ -535,21 +531,19 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
             <p className="text-4xl font-black tabular-nums mb-4">{solDisplay}</p>
             <div className={cn("grid gap-2", showYieldStaking && !stakingStrategy?.active ? "grid-cols-2" : "grid-cols-1")}>
               <button
+                onClick={handleEnableStaking}
+                disabled={solVaultBalance <= 0}
+                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-accent-lime hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+              >
+                <Sprout className="h-3.5 w-3.5" /> Stake SOL
+              </button>
+              <button
                 onClick={() => setTopUpOpen("sol")}
                 disabled={estate.solBalance === 0}
-                className="neo-border rounded-lg h-10 text-sm font-bold uppercase tracking-wide bg-accent-lime shadow-[4px_4px_0_0_hsl(var(--foreground))] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_hsl(var(--foreground))] flex items-center justify-center gap-1 disabled:opacity-40"
+                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-transparent hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               >
                 <TrendingUp className="h-3.5 w-3.5" /> Add More
               </button>
-              {showYieldStaking && !stakingStrategy?.active && (
-                <button
-                  onClick={handleEnableStaking}
-                  disabled={solVaultBalance <= 0}
-                  className="neo-border rounded-lg h-10 text-sm font-bold uppercase tracking-wide bg-background hover:bg-foreground hover:text-background transition-colors flex items-center justify-center gap-1 disabled:opacity-40"
-                >
-                  <Sprout className="h-3.5 w-3.5" /> Stake SOL
-                </button>
-              )}
             </div>
             {showYieldStaking && stakingStrategy?.active && (
               <SolStakingIndicator
@@ -692,13 +686,15 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 <Users className="h-5 w-5" strokeWidth={2.5} />
               </div>
               <h3 className="text-xl font-normal">Heir & Details</h3>
+            </div>
+            <div className="flex items-center gap-2">
               {estate.isClaimed && (
                 <span className="neo-badge bg-accent-lime text-xs">Claimed</span>
               )}
+              <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
             </div>
-            <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
           </summary>
-          <div className="mt-4 space-y-3 pt-4 border-t-4 border-foreground/10">
+          <div className="mt-4 space-y-3 pt-4 border-foreground/10">
             <button
               onClick={handleCopyHeir}
               className="w-full neo-border rounded-lg p-3 bg-secondary hover:bg-secondary/70 transition-colors flex items-center justify-between gap-3 text-left"
@@ -729,11 +725,11 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
 
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (
-        <div className="neo-card-static bg-foreground text-background">
-          <h3 className="text-sm font-normal uppercase tracking-widest text-background/40 mb-4">Manage Estate</h3>
+        <div className="neo-card-static bg-secondary/30">
+          <h3 className="text-xl font-normal mb-6">Manage Estate</h3>
 
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Heir & Timing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Heir & Timing</p>
             <div className="grid grid-cols-2 gap-2">
               <ReassignHeirSection estate={estate} onTx={setLastTxId} />
               <EditSettingsSection estate={estate} onTx={setLastTxId} />
@@ -741,14 +737,14 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           </div>
 
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Assets</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Assets</p>
             <div className="grid grid-cols-1 gap-2">
               <AddAssetSection estate={estate} onTx={setLastTxId} />
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/30 mb-2">Danger Zone</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Danger Zone</p>
             <EmergencyWithdrawSection estate={estate} onTx={setLastTxId} />
           </div>
         </div>
