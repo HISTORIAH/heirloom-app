@@ -76,8 +76,6 @@ impl<'info> Revoke<'info> {
     }
 
     pub fn validate(&self) -> Result<()> {
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
-
         match self.mint.as_ref() {
             Some(mint) => {
                 let vault_ta = self

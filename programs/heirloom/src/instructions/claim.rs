@@ -79,8 +79,6 @@ impl<'info> Claim<'info> {
     }
 
     pub fn validate(&self) -> Result<()> {
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
-
         if let (Some(stored_delegate), Some(delegate_acc)) =
             (self.estate.delegate, self.delegate.as_ref())
         {

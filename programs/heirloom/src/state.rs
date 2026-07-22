@@ -16,8 +16,6 @@ pub struct Estate {
 
     pub bump: u8,
 
-    pub is_claimed: bool,
-
     pub pause_duration: i64,
 
     pub paused_until: i64,
@@ -46,7 +44,6 @@ impl Estate {
     + 8                              // last heartbeat
     + 8                              // created at
     + 1                              // bump
-    + 1                              // is claimed
     + 8                              // pause duration
     + 8                              // paused until
     + 1                              // is deferred

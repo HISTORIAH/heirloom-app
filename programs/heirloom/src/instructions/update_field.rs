@@ -60,8 +60,6 @@ impl<'info> UpdateField<'info> {
     }
 
     pub fn validate(&self) -> Result<()> {
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
-
         let signer = self.authority.key();
         if signer != self.estate.authority {
             match self.estate.hb_signer {

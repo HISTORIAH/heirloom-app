@@ -133,7 +133,6 @@ impl<'info> Initialize<'info> {
         self.estate.last_heartbeat = now;
         self.estate.created_at = now;
         self.estate.bump = estate_bump;
-        self.estate.is_claimed = false;
         self.estate.delegate = self.delegate.as_ref().map(|a| a.key());
         self.estate.hb_signer = self.hb_signer.as_ref().map(|a| a.key());
         self.estate.claimable_assets = 1;

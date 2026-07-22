@@ -112,7 +112,6 @@ impl<'info> RegisterAsset<'info> {
 
     pub fn validate(&self, amount: u64) -> Result<()> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
 
         match self.mint.as_ref() {
             Some(_) => {

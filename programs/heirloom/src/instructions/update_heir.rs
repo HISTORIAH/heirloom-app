@@ -99,8 +99,6 @@ impl<'info> UpdateHeir<'info> {
     }
 
     pub fn validate_inputs(&self) -> Result<()> {
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
-
         let now = Clock::get()?.unix_timestamp;
         require!(now >= self.estate.paused_until, HeirloomError::EstatePaused);
 
@@ -149,7 +147,6 @@ impl<'info> UpdateHeir<'info> {
         self.new_estate.last_heartbeat = self.estate.last_heartbeat;
         self.new_estate.created_at = self.estate.created_at;
         self.new_estate.bump = new_estate_bump;
-        self.new_estate.is_claimed = false;
         self.new_estate.delegate = self.estate.delegate;
         self.new_estate.hb_signer = self.estate.hb_signer;
         self.new_estate.claimable_assets = self.estate.claimable_assets;
