@@ -4,8 +4,6 @@ use anchor_lang::prelude::*;
 pub enum HeirloomError {
     #[msg("Unauthorized")]
     Unauthorized,
-    #[msg("Estate already claimed")]
-    AlreadyClaimed,
     #[msg("Estate not yet claimable")]
     NotYetClaimable,
     #[msg("Mint mismatch")]
