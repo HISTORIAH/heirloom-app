@@ -4,7 +4,7 @@ use anchor_spl::{
     token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-use crate::{error::HeirloomError, helpers::close_account as close_pda, Estate, Vault};
+use crate::{error::HeirloomError, helpers::close_pda, Estate, Vault};
 
 #[derive(Accounts)]
 pub struct UpdateHeir<'info> {

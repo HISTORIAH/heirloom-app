@@ -19,13 +19,14 @@ pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u
     Ok((protocol_fee, payout))
 }
 
-/// Closes an account by zeroing lamports and marking with Anchor's closed discriminator.
-pub fn close_account<'info>(
+/// Closes a program-owned PDA. Caller must ensure account is validated by Anchor constraints.
+pub fn close_pda<'info>(
     account: AccountInfo<'info>,
     destination: AccountInfo<'info>,
 ) -> Result<()> {
-    let lamports = account.lamports();
+    debug_assert!(account.key() != destination.key(), "cannot close to self");
 
+    let lamports = account.lamports();
     account.sub_lamports(lamports)?;
     destination.add_lamports(lamports)?;
 
@@ -33,6 +34,7 @@ pub fn close_account<'info>(
     for byte in data.iter_mut() {
         *byte = 0;
     }
+
     // Anchor's CLOSED_ACCOUNT_DISCRIMINATOR = [255; 8]
     if data.len() >= 8 {
         data[..8].copy_from_slice(&[255u8; 8]);

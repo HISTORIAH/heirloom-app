@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::{
     constants::{CLAIM_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, close_account as close_pda},
+    helpers::{calculate_distribution, close_pda},
     Estate, Vault,
 };
 

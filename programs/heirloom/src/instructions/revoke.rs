@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::{
     constants::{EMERGENCY_EXIT_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, close_account as close_pda},
+    helpers::{calculate_distribution, close_pda},
     Estate, Vault,
 };
 
@@ -57,19 +57,18 @@ pub struct Revoke<'info> {
 
 impl<'info> Revoke<'info> {
     pub fn revoke_handler(ctx: Context<Revoke>) -> Result<()> {
+        let authority_info = ctx.accounts.authority.to_account_info();
+        let estate = ctx.accounts.estate.clone();
+
         ctx.accounts.validate()?;
 
         ctx.accounts.return_assets()?;
 
-        let authority_info = ctx.accounts.authority.to_account_info();
-        let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
+        let remaining = estate.claimable_assets.saturating_sub(1);
         ctx.accounts.estate.claimable_assets = remaining;
 
         if remaining == 0 {
-            close_pda(
-                ctx.accounts.estate.to_account_info(),
-                authority_info.clone(),
-            )?;
+            close_pda(estate.to_account_info(), authority_info.clone())?;
             close_pda(ctx.accounts.vault.to_account_info(), authority_info)?;
         }
 
