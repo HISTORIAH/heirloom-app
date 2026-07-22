@@ -24,8 +24,8 @@ pub enum HeirloomError {
     InvalidAccount,
     #[msg("Zero deposit amount")]
     ZeroDepositAmount,
-    #[msg("Revoke tokens first, then SOL.")]
-    RevokeTokensFirst,
+    #[msg("Resolve token assets first, then SOL.")]
+    TokensFirst,
     #[msg("Label too long")]
     LabelTooLong,
     #[msg("Math overflow")]

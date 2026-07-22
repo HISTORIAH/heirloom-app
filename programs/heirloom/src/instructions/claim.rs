@@ -123,6 +123,10 @@ impl<'info> Claim<'info> {
             }
             None => {
                 require!(
+                    self.estate.claimable_assets <= 1,
+                    HeirloomError::TokensFirst // new variant, or reuse/rename RevokeTokensFirst
+                );
+                require!(
                     self.vault.to_account_info().lamports() > 0,
                     HeirloomError::InsufficientVaultBalance
                 );
