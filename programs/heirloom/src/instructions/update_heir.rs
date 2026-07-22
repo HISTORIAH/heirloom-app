@@ -225,7 +225,8 @@ impl<'info> UpdateHeir<'info> {
         );
         token_interface::close_account(close_ctx)?;
 
-        self.estate.claimable_assets -= 1;
+        let unclaimed_assets_count = self.estate.claimable_assets.saturating_sub(1);
+        self.estate.claimable_assets = unclaimed_assets_count;
 
         Ok(())
     }
