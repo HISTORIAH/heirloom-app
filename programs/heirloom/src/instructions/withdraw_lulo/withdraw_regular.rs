@@ -6,7 +6,6 @@ use anchor_spl::token_interface::TokenAccount;
 
 #[derive(Accounts)]
 pub struct InitWithdrawRegular<'info> {
-    // TODO: address constraint this to the estate auth
     #[account(mut)]
     pub authority: Signer<'info>,
 

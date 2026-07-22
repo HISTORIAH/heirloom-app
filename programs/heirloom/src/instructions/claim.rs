@@ -120,6 +120,7 @@ impl<'info> Claim<'info> {
                     self.vault.key(),
                     HeirloomError::InvalidAccount
                 );
+
                 require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
             }
             None => {

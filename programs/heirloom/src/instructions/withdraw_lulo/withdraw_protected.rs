@@ -6,7 +6,6 @@ use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccoun
 
 #[derive(Accounts)]
 pub struct WithdrawProtected<'info> {
-    // TODO: address constraint this to the estate auth
     #[account(mut)]
     pub authority: Signer<'info>,
 
