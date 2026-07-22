@@ -4,8 +4,6 @@ use anchor_lang::prelude::*;
 pub enum HeirloomError {
     #[msg("Unauthorized")]
     Unauthorized,
-    #[msg("Estate already claimed")]
-    AlreadyClaimed,
     #[msg("Estate not yet claimable")]
     NotYetClaimable,
     #[msg("Mint mismatch")]
@@ -18,26 +16,22 @@ pub enum HeirloomError {
     AlreadyDeferred,
     #[msg("Defer window expired")]
     DeferWindowExpired,
-    #[msg("Claim deferred")]
-    ClaimDeferred,
     #[msg("Mismatched address")]
     MismatchedAddress,
     #[msg("Estate paused")]
     EstatePaused,
-    #[msg("Missing account")]
-    MissingAccount,
     #[msg("Invalid account")]
     InvalidAccount,
-    #[msg("Claimable assets still remaining")]
-    ClaimableAssetsRemaining,
     #[msg("Zero deposit amount")]
     ZeroDepositAmount,
-    #[msg("Too many claimable assets")]
-    TooManyClaimableAssets,
+    #[msg("Revoke tokens first, then SOL.")]
+    RevokeTokensFirst,
     #[msg("Label too long")]
     LabelTooLong,
     #[msg("Math overflow")]
     MathOverflow,
     #[msg("Math underflow")]
     MathUnderflow,
+    #[msg("Interval exceeds maximum of 365 days.")]
+    IntervalTooLong,
 }

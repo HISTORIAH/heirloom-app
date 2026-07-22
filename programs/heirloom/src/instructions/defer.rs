@@ -40,7 +40,6 @@ impl<'info> DelegateDefer<'info> {
     }
 
     pub fn validate(&self) -> Result<()> {
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
         require!(!self.estate.is_deferred, HeirloomError::AlreadyDeferred);
 
         let now = Clock::get()?.unix_timestamp;

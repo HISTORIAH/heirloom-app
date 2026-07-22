@@ -1,11 +1,11 @@
-use crate::{helpers::*, lulo_v2, DepositType, Vault};
+use crate::{helpers::*, lulo_v2, DepositType, Estate, Vault};
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccount};
 
 #[derive(Accounts)]
 pub struct DepositLulo<'info> {
-    // TODO: address constraint this to the estate auth
-    #[account(mut)]
+    // only authority can authorize this hence the address gate
+    #[account(mut, address = estate.authority)]
     pub authority: Signer<'info>,
 
     /// CHECK: heir pubkey, stored in estate
@@ -26,6 +26,14 @@ pub struct DepositLulo<'info> {
         token::token_program = lulo_accounts.input_mint_token_program,
     )]
     pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    // TODO: remove me if ix size is too large
+    #[account(
+        mut,
+        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        bump = estate.bump,
+    )]
+    pub estate: Account<'info, Estate>,
 
     pub lulo_accounts: LuloAccounts<'info>,
 

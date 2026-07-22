@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::{
     constants::{CLAIM_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, close_account as close_pda},
+    helpers::{calculate_distribution, close_pda},
     Estate, Vault,
 };
 
@@ -79,8 +79,6 @@ impl<'info> Claim<'info> {
     }
 
     pub fn validate(&self) -> Result<()> {
-        require!(!self.estate.is_claimed, HeirloomError::AlreadyClaimed);
-
         if let (Some(stored_delegate), Some(delegate_acc)) =
             (self.estate.delegate, self.delegate.as_ref())
         {
@@ -120,6 +118,7 @@ impl<'info> Claim<'info> {
                     self.vault.key(),
                     HeirloomError::InvalidAccount
                 );
+
                 require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
             }
             None => {

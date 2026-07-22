@@ -108,7 +108,7 @@ test("it inits with a token then registers a SOL asset separately", async () => 
   });
 
   expect((await getLamportBalance(client, vault)) - vaultBalanceBefore).toBe(5_000_000_000n);
-  expect((await getEstate(client, estate)).data.claimableAssets).toBe(3);
+  expect((await getEstate(client, estate)).data.claimableAssets).toBe(2);
 });
 
 test("it registers 4 mints in a single transaction", async () => {
@@ -219,4 +219,53 @@ test("it rejects asset registration from a wallet other than the authority", asy
 
   expect(await getLamportBalance(client, vault)).toBe(vaultBalanceBefore);
   expect((await getEstate(client, estate)).data.authority).toBe(authority);
+});
+
+test("it rejects a zero-value token registration", async () => {
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
+  const { mint } = await createAndMintTokens();
+
+  const { vault, estate } = await deriveEstateVault(authority.address, heir.address);
+  const { vaultTokenAccount, authorityTokenAccount } = await deriveTokenAccounts(
+    vault,
+    authority.address,
+    heir.address,
+    mint.address,
+  );
+
+  const initIx = await getInitializeInstructionAsync({
+    authority,
+    heir: heir.address,
+    heartbeatInterval: 0n,
+    vault,
+    estate,
+    mint: mint.address,
+    vaultTokenAccount,
+    authorityTokenAccount,
+    gracePeriod: 0n,
+    pauseDuration: 0n,
+    label: "test-zero-register-bundled",
+    amount: 100_000n,
+  });
+
+  const { mint: newMint } = await createAndMintTokens();
+  const {
+    vaultTokenAccount: newVaultTokenAccount,
+    authorityTokenAccount: newAuthorityTokenAccount,
+  } = await deriveTokenAccounts(vault, authority.address, heir.address, newMint.address);
+
+  const registerIx = await getRegisterAssetInstructionAsync({
+    authority,
+    heir: heir.address,
+    mint: newMint.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    amount: 0,
+    vaultTokenAccount: newVaultTokenAccount,
+    vault,
+    estate,
+    authorityTokenAccount: newAuthorityTokenAccount,
+  });
+
+  expect(sendInstructions(client, authority, [initIx, registerIx])).rejects.toThrow();
 });

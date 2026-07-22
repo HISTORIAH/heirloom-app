@@ -16,8 +16,6 @@ pub struct Estate {
 
     pub bump: u8,
 
-    pub is_claimed: bool,
-
     pub pause_duration: i64,
 
     pub paused_until: i64,
@@ -38,7 +36,7 @@ pub struct Estate {
 impl Estate {
     pub const SEED: &[u8] = b"estate";
 
-    pub const LEN: usize = 8           // discriminator
+    pub const LEN: usize = 8         // discriminator
     + 32                             // authority
     + 32                             // heir
     + 8                              // heartbeat_interval
@@ -46,14 +44,13 @@ impl Estate {
     + 8                              // last heartbeat
     + 8                              // created at
     + 1                              // bump
-    + 1                              // is claimed
     + 8                              // pause duration
     + 8                              // paused until
-    + 1                              // is deffered
+    + 1                              // is deferred
     + 1 + 32                         // delegate
     + 1 + 32                         // hb signer
     + 1                              // claimable assets
-    + 32; // label
+    + 4 + 32; // label
 }
 
 #[account]
