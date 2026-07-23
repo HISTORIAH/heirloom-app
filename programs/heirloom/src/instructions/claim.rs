@@ -237,6 +237,8 @@ impl<'info> Claim<'info> {
 
                 vault_info.sub_lamports(protocol_fee)?;
                 treasury_info.add_lamports(protocol_fee)?;
+
+                // NOTE: Heir payout happens implicitly via `close_pda` helper
             }
         }
 
