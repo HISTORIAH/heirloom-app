@@ -101,7 +101,7 @@ impl<'info> Revoke<'info> {
             }
             None => {
                 if self.authority_token_account.is_none() && self.estate.claimable_assets > 1 {
-                    return err!(HeirloomError::RevokeTokensFirst);
+                    return err!(HeirloomError::TokensFirst);
                 }
             }
         }
