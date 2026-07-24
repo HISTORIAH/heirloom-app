@@ -25,7 +25,7 @@ export function computeEstateState(args: ComputeEstateStateArgs): EstateStateRes
     vaultEmpty,
   } = args;
 
-  if (isClaimed || vaultEmpty) {
+  if (vaultEmpty) {
     return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
   }
   const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;

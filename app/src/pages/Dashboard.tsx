@@ -110,7 +110,6 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
     heartbeatInterval: estate.heartbeatInterval,
     gracePeriod: estate.gracePeriod,
     pausedUntil: estate.pausedUntil,
-    isClaimed: estate.isClaimed,
     createdAt: estate.createdAt,
     vaultEmpty,
   });
@@ -688,9 +687,6 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               <h3 className="text-xl font-normal">Heir & Details</h3>
             </div>
             <div className="flex items-center gap-2">
-              {estate.isClaimed && (
-                <span className="neo-badge bg-accent-lime text-xs">Claimed</span>
-              )}
               <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
             </div>
           </summary>

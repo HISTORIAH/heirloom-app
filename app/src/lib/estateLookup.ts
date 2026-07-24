@@ -14,7 +14,6 @@ export interface EstateSnapshot {
   authority: string;
   heir: string;
   label: string;
-  isClaimed: boolean;
   isDeferred: boolean;
   delegate: string | null;
   hbSigner: string | null;
@@ -34,7 +33,6 @@ export interface EstateSnapshot {
 
 export interface EstateLike {
   label: string;
-  isClaimed: boolean;
   isDeferred: boolean;
   delegate: unknown;
   hbSigner: unknown;
@@ -75,7 +73,6 @@ export async function buildSnapshotFromEstate(
     heartbeatInterval,
     gracePeriod,
     pausedUntil,
-    isClaimed: estateData.isClaimed,
     createdAt,
     vaultEmpty,
   });
@@ -84,7 +81,6 @@ export async function buildSnapshotFromEstate(
     authority: authorityStr,
     heir: heirStr,
     label: estateData.label,
-    isClaimed: estateData.isClaimed,
     isDeferred: estateData.isDeferred,
     delegate: unwrapOption<string>(estateData.delegate),
     hbSigner: unwrapOption<string>(estateData.hbSigner),

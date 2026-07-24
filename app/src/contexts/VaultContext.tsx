@@ -41,7 +41,6 @@ export interface EstateData {
   pauseDuration: number;
   pausedUntil: number;
   createdAt: number;
-  isClaimed: boolean;
   isDeferred: boolean;
   delegate: string | null;
   hbSigner: string | null;
@@ -145,6 +144,7 @@ const VaultProviderInner: React.FC<{
     }
     try {
       const onChainEstates = await fetchEstatesByAuthority(client, authority);
+      console.log("DEBUG STATEMENT; found estates", onChainEstates) // ! temp get rid of me
 
       const results: EstateData[] = [];
       for (const estate of onChainEstates) {
@@ -170,7 +170,6 @@ const VaultProviderInner: React.FC<{
             heartbeatInterval,
             gracePeriod,
             pausedUntil,
-            isClaimed: estate.data.isClaimed,
             createdAt,
             vaultEmpty,
           });
@@ -185,7 +184,6 @@ const VaultProviderInner: React.FC<{
             pauseDuration: Number(estate.data.pauseDuration),
             pausedUntil,
             createdAt,
-            isClaimed: estate.data.isClaimed,
             isDeferred: estate.data.isDeferred,
             delegate: unwrapOption<string>(estate.data.delegate),
             hbSigner: unwrapOption<string>(estate.data.hbSigner),
