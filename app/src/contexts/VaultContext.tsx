@@ -251,15 +251,17 @@ const VaultProviderInner: React.FC<{
 
       const rawAccountExists = async (pda: Address): Promise<boolean> => {
         try {
-          const res = await rpc.getAccountInfo(pda, { commitment: "confirmed" }).send();
-          return res?.value != null;
+          const res = await rpc
+            .getAccountInfo(pda, { encoding: "base64", commitment: "confirmed" })
+            .send();
+          return res?.value != null && res.value.lamports > 0n;
         } catch {
           return false;
         }
       };
 
       const existing = await fetchEstateByPair(client, authority, heirAddress);
-      if (existing.exists) {
+      if (existing.exists && existing.lamports > 0n) {
         throw new Error(
           "An active estate already exists for this heir. Revoke or claim all assets first, then try again.",
         );
