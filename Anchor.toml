@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-heirloom = "FQiUcHRKJxSuShaRJszEPoRBinubDPoPPD75NvGtPRya"
+heirloom = "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz"
 heirloom-ika = "9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf"
 
 [provider]
