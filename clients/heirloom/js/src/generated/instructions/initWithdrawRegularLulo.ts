@@ -41,7 +41,7 @@ import {
   getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findVaultPda } from "../pdas";
+import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 
 export const INIT_WITHDRAW_REGULAR_LULO_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
@@ -57,6 +57,7 @@ export type InitWithdrawRegularLuloInstruction<
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountVault extends string | AccountMeta<string> = string,
+  TAccountEstate extends string | AccountMeta<string> = string,
   TAccountPendingWithdrawalAccount extends string | AccountMeta<string> = string,
   TAccountPoolUser extends string | AccountMeta<string> = string,
   TAccountPoolUserTokenAccount extends string | AccountMeta<string> = string,
@@ -81,6 +82,7 @@ export type InitWithdrawRegularLuloInstruction<
         : TAccountAuthority,
       TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
       TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
       TAccountPendingWithdrawalAccount extends string
         ? WritableAccount<TAccountPendingWithdrawalAccount>
         : TAccountPendingWithdrawalAccount,
@@ -160,6 +162,7 @@ export type InitWithdrawRegularLuloAsyncInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
+  TAccountEstate extends string = string,
   TAccountPendingWithdrawalAccount extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
@@ -177,6 +180,7 @@ export type InitWithdrawRegularLuloAsyncInput<
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   vault?: Address<TAccountVault>;
+  estate?: Address<TAccountEstate>;
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
@@ -200,6 +204,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountVault extends string,
+  TAccountEstate extends string,
   TAccountPendingWithdrawalAccount extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
@@ -219,6 +224,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
+    TAccountEstate,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -240,6 +246,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
+    TAccountEstate,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -263,6 +270,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     authority: { value: input.authority ?? null, isWritable: true },
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
+    estate: { value: input.estate ?? null, isWritable: true },
     pendingWithdrawalAccount: { value: input.pendingWithdrawalAccount ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
@@ -292,6 +300,12 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
       heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
     });
   }
+  if (!accounts.estate.value) {
+    accounts.estate.value = await findEstatePda({
+      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+    });
+  }
   if (!accounts.programId.value) {
     accounts.programId.value =
       "FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q" as Address<"FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q">;
@@ -307,6 +321,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
+      getAccountMeta("estate", accounts.estate),
       getAccountMeta("pendingWithdrawalAccount", accounts.pendingWithdrawalAccount),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
@@ -330,6 +345,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
+    TAccountEstate,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -350,6 +366,7 @@ export type InitWithdrawRegularLuloInput<
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
+  TAccountEstate extends string = string,
   TAccountPendingWithdrawalAccount extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
@@ -367,6 +384,7 @@ export type InitWithdrawRegularLuloInput<
   authority: TransactionSigner<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   vault: Address<TAccountVault>;
+  estate: Address<TAccountEstate>;
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
@@ -390,6 +408,7 @@ export function getInitWithdrawRegularLuloInstruction<
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountVault extends string,
+  TAccountEstate extends string,
   TAccountPendingWithdrawalAccount extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
@@ -409,6 +428,7 @@ export function getInitWithdrawRegularLuloInstruction<
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
+    TAccountEstate,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -429,6 +449,7 @@ export function getInitWithdrawRegularLuloInstruction<
   TAccountAuthority,
   TAccountHeir,
   TAccountVault,
+  TAccountEstate,
   TAccountPendingWithdrawalAccount,
   TAccountPoolUser,
   TAccountPoolUserTokenAccount,
@@ -451,6 +472,7 @@ export function getInitWithdrawRegularLuloInstruction<
     authority: { value: input.authority ?? null, isWritable: true },
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
+    estate: { value: input.estate ?? null, isWritable: true },
     pendingWithdrawalAccount: { value: input.pendingWithdrawalAccount ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
@@ -489,6 +511,7 @@ export function getInitWithdrawRegularLuloInstruction<
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
+      getAccountMeta("estate", accounts.estate),
       getAccountMeta("pendingWithdrawalAccount", accounts.pendingWithdrawalAccount),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
@@ -512,6 +535,7 @@ export function getInitWithdrawRegularLuloInstruction<
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
+    TAccountEstate,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -537,21 +561,22 @@ export type ParsedInitWithdrawRegularLuloInstruction<
     authority: TAccountMetas[0];
     heir: TAccountMetas[1];
     vault: TAccountMetas[2];
-    pendingWithdrawalAccount: TAccountMetas[3];
-    poolUser: TAccountMetas[4];
-    poolUserTokenAccount: TAccountMetas[5];
-    poolUserLpTokenAccount: TAccountMetas[6];
-    referrerPoolUser: TAccountMetas[7];
-    inputMint: TAccountMetas[8];
+    estate: TAccountMetas[3];
+    pendingWithdrawalAccount: TAccountMetas[4];
+    poolUser: TAccountMetas[5];
+    poolUserTokenAccount: TAccountMetas[6];
+    poolUserLpTokenAccount: TAccountMetas[7];
+    referrerPoolUser: TAccountMetas[8];
+    inputMint: TAccountMetas[9];
     /** pool's reserve token account (authority = pool_account). */
-    poolReserveTokenAccount: TAccountMetas[9];
+    poolReserveTokenAccount: TAccountMetas[10];
     /** the pool's LP/share mint (token22) */
-    lpMint: TAccountMetas[10];
-    poolAccount: TAccountMetas[11];
-    programId: TAccountMetas[12];
-    inputMintTokenProgram: TAccountMetas[13];
-    lpMintTokenProgram: TAccountMetas[14];
-    systemProgram: TAccountMetas[15];
+    lpMint: TAccountMetas[11];
+    poolAccount: TAccountMetas[12];
+    programId: TAccountMetas[13];
+    inputMintTokenProgram: TAccountMetas[14];
+    lpMintTokenProgram: TAccountMetas[15];
+    systemProgram: TAccountMetas[16];
   };
   data: InitWithdrawRegularLuloInstructionData;
 };
@@ -564,10 +589,10 @@ export function parseInitWithdrawRegularLuloInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitWithdrawRegularLuloInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 16) {
+  if (instruction.accounts.length < 17) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 16,
+      expectedAccountMetas: 17,
     });
   }
   let accountIndex = 0;
@@ -582,6 +607,7 @@ export function parseInitWithdrawRegularLuloInstruction<
       authority: getNextAccount(),
       heir: getNextAccount(),
       vault: getNextAccount(),
+      estate: getNextAccount(),
       pendingWithdrawalAccount: getNextAccount(),
       poolUser: getNextAccount(),
       poolUserTokenAccount: getNextAccount(),

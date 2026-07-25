@@ -89,7 +89,7 @@ import {
 import { findEstatePda, findNewEstatePda, findNewVaultPda, findVaultPda } from "../pdas";
 
 export const HEIRLOOM_PROGRAM_ADDRESS =
-  "FQiUcHRKJxSuShaRJszEPoRBinubDPoPPD75NvGtPRya" as Address<"FQiUcHRKJxSuShaRJszEPoRBinubDPoPPD75NvGtPRya">;
+  "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz" as Address<"heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz">;
 
 export enum HeirloomAccount {
   Estate,
@@ -274,7 +274,7 @@ export function identifyHeirloomInstruction(
 }
 
 export type ParsedHeirloomInstruction<
-  TProgram extends string = "FQiUcHRKJxSuShaRJszEPoRBinubDPoPPD75NvGtPRya",
+  TProgram extends string = "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz",
 > =
   | ({ instructionType: HeirloomInstruction.Claim } & ParsedClaimInstruction<TProgram>)
   | ({

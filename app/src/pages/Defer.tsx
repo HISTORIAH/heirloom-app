@@ -129,7 +129,6 @@ const DeferPageInner: React.FC<{
     delegateAddress !== null &&
     estate.delegate === delegateAddress.toString() &&
     !estate.isDeferred &&
-    !estate.isClaimed &&
     estate.vaultState !== "distributed";
 
   return (
@@ -310,8 +309,6 @@ const DeferPageInner: React.FC<{
                         <><Loader2 className="h-5 w-5 animate-spin" /> Deferring...</>
                       ) : estate.isDeferred ? (
                         <><CheckCircle className="h-5 w-5" /> Already Deferred</>
-                      ) : estate.isClaimed ? (
-                        <><CheckCircle className="h-5 w-5" /> Already Claimed</>
                       ) : estate.vaultState === "distributed" ? (
                         <>Vault Distributed</>
                       ) : estate.delegate !== delegateAddress?.toString() ? (

@@ -200,7 +200,7 @@ const ClaimPageInner: React.FC<{
         setInheritances((prev) =>
           prev.map((i) =>
             i.authority === inh.authority
-              ? { ...i, vaultState: "distributed", solBalance: 0, claimableAssets: 0, vaultTokens: [], isClaimed: true }
+              ? { ...i, vaultState: "distributed", solBalance: 0, claimableAssets: 0, vaultTokens: [] }
               : i,
           ),
         );
@@ -325,7 +325,6 @@ const ClaimPageInner: React.FC<{
                     inh.claimableAssets === 0;
                   const canClaim =
                     inh.vaultState === "claimable" &&
-                    !inh.isClaimed &&
                     !nothingToClaim;
 
                   return (
@@ -434,8 +433,6 @@ const ClaimPageInner: React.FC<{
                               <><Loader2 className="h-5 w-5 animate-spin" /> Claiming...</>
                             ) : nothingToClaim ? (
                               <><CheckCircle className="h-5 w-5" /> Nothing to claim</>
-                            ) : inh.isClaimed ? (
-                              <><CheckCircle className="h-5 w-5" /> Already Claimed</>
                             ) : inh.vaultState !== "claimable" ? (
                               <>Not Yet Claimable ({inh.vaultState})</>
                             ) : (

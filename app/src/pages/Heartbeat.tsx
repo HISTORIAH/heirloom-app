@@ -121,7 +121,6 @@ const HeartbeatPageInner: React.FC<{
     estate !== null &&
     walletAddress !== null &&
     estate.hbSigner === walletAddress.toString() &&
-    !estate.isClaimed &&
     estate.vaultState !== "distributed";
 
   return (
@@ -306,8 +305,6 @@ const HeartbeatPageInner: React.FC<{
                     >
                       {signing ? (
                         <><Loader2 className="h-5 w-5 animate-spin" /> Signing...</>
-                      ) : estate.isClaimed ? (
-                        <><CheckCircle className="h-5 w-5" /> Already Claimed</>
                       ) : estate.vaultState === "distributed" ? (
                         <>Vault Distributed</>
                       ) : estate.hbSigner !== walletAddress?.toString() ? (

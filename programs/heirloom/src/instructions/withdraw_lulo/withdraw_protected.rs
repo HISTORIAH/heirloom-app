@@ -1,5 +1,6 @@
 use crate::{
-    helpers::*, lulo_v2, Estate, Vault, KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT,
+    error::HeirloomError, helpers::*, lulo_v2, Estate, Vault, KAMINO_PROTOCOL_AUTHORITY,
+    KAMINO_PROTOCOL_TOKEN_ACCOUNT,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccount};
@@ -184,8 +185,31 @@ impl<'info> WithdrawProtected<'info> {
         Ok(())
     }
 
-    // TODO
     pub fn validate(&self) -> Result<()> {
-        Ok(())
+        // this can be the heir / estate authority
+        let caller = self.authority.key();
+        let now = Clock::get()?.unix_timestamp;
+
+        if caller == self.estate.authority {
+            return Ok(());
+        }
+
+        if caller == self.estate.heir {
+            let claimable_at = self
+                .estate
+                .last_heartbeat
+                .checked_add(self.estate.heartbeat_interval)
+                .and_then(|t| t.checked_add(self.estate.grace_period))
+                .ok_or(ProgramError::ArithmeticOverflow)?;
+
+            require!(
+                now >= claimable_at.max(self.estate.paused_until),
+                HeirloomError::NotYetClaimable
+            );
+
+            return Ok(());
+        }
+
+        err!(HeirloomError::Unauthorized)
     }
 }

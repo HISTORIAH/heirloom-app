@@ -16,84 +16,72 @@ import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 
 /** Unauthorized: Unauthorized */
 export const HEIRLOOM_ERROR__UNAUTHORIZED = 0x1770; // 6000
-/** AlreadyClaimed: Estate already claimed */
-export const HEIRLOOM_ERROR__ALREADY_CLAIMED = 0x1771; // 6001
 /** NotYetClaimable: Estate not yet claimable */
-export const HEIRLOOM_ERROR__NOT_YET_CLAIMABLE = 0x1772; // 6002
+export const HEIRLOOM_ERROR__NOT_YET_CLAIMABLE = 0x1771; // 6001
 /** MintMismatch: Mint mismatch */
-export const HEIRLOOM_ERROR__MINT_MISMATCH = 0x1773; // 6003
+export const HEIRLOOM_ERROR__MINT_MISMATCH = 0x1772; // 6002
 /** MissingTokenAccounts: Missing token accounts */
-export const HEIRLOOM_ERROR__MISSING_TOKEN_ACCOUNTS = 0x1774; // 6004
+export const HEIRLOOM_ERROR__MISSING_TOKEN_ACCOUNTS = 0x1773; // 6003
 /** InsufficientVaultBalance: Insufficient vault balance */
-export const HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE = 0x1775; // 6005
+export const HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE = 0x1774; // 6004
 /** AlreadyDeferred: Estate already deferred */
-export const HEIRLOOM_ERROR__ALREADY_DEFERRED = 0x1776; // 6006
+export const HEIRLOOM_ERROR__ALREADY_DEFERRED = 0x1775; // 6005
 /** DeferWindowExpired: Defer window expired */
-export const HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED = 0x1777; // 6007
-/** ClaimDeferred: Claim deferred */
-export const HEIRLOOM_ERROR__CLAIM_DEFERRED = 0x1778; // 6008
+export const HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED = 0x1776; // 6006
 /** MismatchedAddress: Mismatched address */
-export const HEIRLOOM_ERROR__MISMATCHED_ADDRESS = 0x1779; // 6009
+export const HEIRLOOM_ERROR__MISMATCHED_ADDRESS = 0x1777; // 6007
 /** EstatePaused: Estate paused */
-export const HEIRLOOM_ERROR__ESTATE_PAUSED = 0x177a; // 6010
-/** MissingAccount: Missing account */
-export const HEIRLOOM_ERROR__MISSING_ACCOUNT = 0x177b; // 6011
+export const HEIRLOOM_ERROR__ESTATE_PAUSED = 0x1778; // 6008
 /** InvalidAccount: Invalid account */
-export const HEIRLOOM_ERROR__INVALID_ACCOUNT = 0x177c; // 6012
-/** ClaimableAssetsRemaining: Claimable assets still remaining */
-export const HEIRLOOM_ERROR__CLAIMABLE_ASSETS_REMAINING = 0x177d; // 6013
+export const HEIRLOOM_ERROR__INVALID_ACCOUNT = 0x1779; // 6009
 /** ZeroDepositAmount: Zero deposit amount */
-export const HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT = 0x177e; // 6014
-/** TooManyClaimableAssets: Too many claimable assets */
-export const HEIRLOOM_ERROR__TOO_MANY_CLAIMABLE_ASSETS = 0x177f; // 6015
+export const HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT = 0x177a; // 6010
+/** TokensFirst: Resolve token assets first, then SOL. */
+export const HEIRLOOM_ERROR__TOKENS_FIRST = 0x177b; // 6011
 /** LabelTooLong: Label too long */
-export const HEIRLOOM_ERROR__LABEL_TOO_LONG = 0x1780; // 6016
+export const HEIRLOOM_ERROR__LABEL_TOO_LONG = 0x177c; // 6012
 /** MathOverflow: Math overflow */
-export const HEIRLOOM_ERROR__MATH_OVERFLOW = 0x1781; // 6017
+export const HEIRLOOM_ERROR__MATH_OVERFLOW = 0x177d; // 6013
 /** MathUnderflow: Math underflow */
-export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x1782; // 6018
+export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x177e; // 6014
+/** IntervalTooLong: Interval exceeds maximum of 365 days. */
+export const HEIRLOOM_ERROR__INTERVAL_TOO_LONG = 0x177f; // 6015
 
 export type HeirloomError =
-  | typeof HEIRLOOM_ERROR__ALREADY_CLAIMED
   | typeof HEIRLOOM_ERROR__ALREADY_DEFERRED
-  | typeof HEIRLOOM_ERROR__CLAIMABLE_ASSETS_REMAINING
-  | typeof HEIRLOOM_ERROR__CLAIM_DEFERRED
   | typeof HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED
   | typeof HEIRLOOM_ERROR__ESTATE_PAUSED
   | typeof HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE
+  | typeof HEIRLOOM_ERROR__INTERVAL_TOO_LONG
   | typeof HEIRLOOM_ERROR__INVALID_ACCOUNT
   | typeof HEIRLOOM_ERROR__LABEL_TOO_LONG
   | typeof HEIRLOOM_ERROR__MATH_OVERFLOW
   | typeof HEIRLOOM_ERROR__MATH_UNDERFLOW
   | typeof HEIRLOOM_ERROR__MINT_MISMATCH
   | typeof HEIRLOOM_ERROR__MISMATCHED_ADDRESS
-  | typeof HEIRLOOM_ERROR__MISSING_ACCOUNT
   | typeof HEIRLOOM_ERROR__MISSING_TOKEN_ACCOUNTS
   | typeof HEIRLOOM_ERROR__NOT_YET_CLAIMABLE
-  | typeof HEIRLOOM_ERROR__TOO_MANY_CLAIMABLE_ASSETS
+  | typeof HEIRLOOM_ERROR__TOKENS_FIRST
   | typeof HEIRLOOM_ERROR__UNAUTHORIZED
   | typeof HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT;
 
 let heirloomErrorMessages: Record<HeirloomError, string> | undefined;
 if (process.env["NODE_ENV"] !== "production") {
   heirloomErrorMessages = {
-    [HEIRLOOM_ERROR__ALREADY_CLAIMED]: `Estate already claimed`,
     [HEIRLOOM_ERROR__ALREADY_DEFERRED]: `Estate already deferred`,
-    [HEIRLOOM_ERROR__CLAIMABLE_ASSETS_REMAINING]: `Claimable assets still remaining`,
-    [HEIRLOOM_ERROR__CLAIM_DEFERRED]: `Claim deferred`,
     [HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED]: `Defer window expired`,
     [HEIRLOOM_ERROR__ESTATE_PAUSED]: `Estate paused`,
     [HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE]: `Insufficient vault balance`,
+    [HEIRLOOM_ERROR__INTERVAL_TOO_LONG]: `Interval exceeds maximum of 365 days.`,
     [HEIRLOOM_ERROR__INVALID_ACCOUNT]: `Invalid account`,
     [HEIRLOOM_ERROR__LABEL_TOO_LONG]: `Label too long`,
     [HEIRLOOM_ERROR__MATH_OVERFLOW]: `Math overflow`,
     [HEIRLOOM_ERROR__MATH_UNDERFLOW]: `Math underflow`,
     [HEIRLOOM_ERROR__MINT_MISMATCH]: `Mint mismatch`,
     [HEIRLOOM_ERROR__MISMATCHED_ADDRESS]: `Mismatched address`,
-    [HEIRLOOM_ERROR__MISSING_ACCOUNT]: `Missing account`,
     [HEIRLOOM_ERROR__MISSING_TOKEN_ACCOUNTS]: `Missing token accounts`,
     [HEIRLOOM_ERROR__NOT_YET_CLAIMABLE]: `Estate not yet claimable`,
-    [HEIRLOOM_ERROR__TOO_MANY_CLAIMABLE_ASSETS]: `Too many claimable assets`,
+    [HEIRLOOM_ERROR__TOKENS_FIRST]: `Resolve token assets first, then SOL.`,
     [HEIRLOOM_ERROR__UNAUTHORIZED]: `Unauthorized`,
     [HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT]: `Zero deposit amount`,
   };

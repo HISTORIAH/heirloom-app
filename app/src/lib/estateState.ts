@@ -11,7 +11,6 @@ export interface ComputeEstateStateArgs {
   heartbeatInterval: number;
   gracePeriod: number;
   pausedUntil: number;
-  isClaimed: boolean;
   createdAt: number;
   vaultEmpty: boolean;
 }
@@ -22,12 +21,11 @@ export function computeEstateState(args: ComputeEstateStateArgs): EstateStateRes
     heartbeatInterval,
     gracePeriod,
     pausedUntil,
-    isClaimed,
     createdAt,
     vaultEmpty,
   } = args;
 
-  if (isClaimed || vaultEmpty) {
+  if (vaultEmpty) {
     return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
   }
   const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;

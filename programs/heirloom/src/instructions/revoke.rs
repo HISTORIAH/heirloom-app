@@ -98,11 +98,20 @@ impl<'info> Revoke<'info> {
                 );
                 require_keys_eq!(authority_ta.mint, mint.key(), HeirloomError::MintMismatch);
                 require_keys_eq!(vault_ta.mint, mint.key(), HeirloomError::MintMismatch);
+
+                require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
             }
             None => {
                 if self.authority_token_account.is_none() && self.estate.claimable_assets > 1 {
                     return err!(HeirloomError::TokensFirst);
                 }
+
+                // zero amt check, in the case where the funds are pending a withdrawal
+                // in lulo disallow no-op withdrawals
+                require!(
+                    self.vault.to_account_info().lamports() > 0,
+                    HeirloomError::InsufficientVaultBalance
+                );
             }
         }
 

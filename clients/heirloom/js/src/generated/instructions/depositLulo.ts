@@ -39,7 +39,7 @@ import {
   getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findVaultPda } from "../pdas";
+import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
 import {
   getDepositTypeDecoder,
@@ -62,6 +62,7 @@ export type DepositLuloInstruction<
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountVault extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
+  TAccountEstate extends string | AccountMeta<string> = string,
   TAccountPoolUser extends string | AccountMeta<string> = string,
   TAccountPoolUserTokenAccount extends string | AccountMeta<string> = string,
   TAccountPoolUserLpTokenAccount extends string | AccountMeta<string> = string,
@@ -91,6 +92,7 @@ export type DepositLuloInstruction<
       TAccountVaultTokenAccount extends string
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
+      TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
       TAccountPoolUser extends string ? WritableAccount<TAccountPoolUser> : TAccountPoolUser,
       TAccountPoolUserTokenAccount extends string
         ? WritableAccount<TAccountPoolUserTokenAccount>
@@ -172,6 +174,7 @@ export type DepositLuloAsyncInput<
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
+  TAccountEstate extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
   TAccountPoolUserLpTokenAccount extends string = string,
@@ -191,6 +194,7 @@ export type DepositLuloAsyncInput<
   heir: Address<TAccountHeir>;
   vault?: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
+  estate?: Address<TAccountEstate>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
@@ -216,6 +220,7 @@ export async function getDepositLuloInstructionAsync<
   TAccountHeir extends string,
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
+  TAccountEstate extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
   TAccountPoolUserLpTokenAccount extends string,
@@ -237,6 +242,7 @@ export async function getDepositLuloInstructionAsync<
     TAccountHeir,
     TAccountVault,
     TAccountVaultTokenAccount,
+    TAccountEstate,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -260,6 +266,7 @@ export async function getDepositLuloInstructionAsync<
     TAccountHeir,
     TAccountVault,
     TAccountVaultTokenAccount,
+    TAccountEstate,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -285,6 +292,7 @@ export async function getDepositLuloInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
+    estate: { value: input.estate ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
     poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
@@ -315,6 +323,12 @@ export async function getDepositLuloInstructionAsync<
       heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
     });
   }
+  if (!accounts.estate.value) {
+    accounts.estate.value = await findEstatePda({
+      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+    });
+  }
   if (!accounts.programId.value) {
     accounts.programId.value =
       "FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q" as Address<"FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q">;
@@ -339,6 +353,7 @@ export async function getDepositLuloInstructionAsync<
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
+      getAccountMeta("estate", accounts.estate),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
       getAccountMeta("poolUserLpTokenAccount", accounts.poolUserLpTokenAccount),
@@ -362,6 +377,7 @@ export async function getDepositLuloInstructionAsync<
     TAccountHeir,
     TAccountVault,
     TAccountVaultTokenAccount,
+    TAccountEstate,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -384,6 +400,7 @@ export type DepositLuloInput<
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
+  TAccountEstate extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
   TAccountPoolUserLpTokenAccount extends string = string,
@@ -403,6 +420,7 @@ export type DepositLuloInput<
   heir: Address<TAccountHeir>;
   vault: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
+  estate: Address<TAccountEstate>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
@@ -428,6 +446,7 @@ export function getDepositLuloInstruction<
   TAccountHeir extends string,
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
+  TAccountEstate extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
   TAccountPoolUserLpTokenAccount extends string,
@@ -449,6 +468,7 @@ export function getDepositLuloInstruction<
     TAccountHeir,
     TAccountVault,
     TAccountVaultTokenAccount,
+    TAccountEstate,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -471,6 +491,7 @@ export function getDepositLuloInstruction<
   TAccountHeir,
   TAccountVault,
   TAccountVaultTokenAccount,
+  TAccountEstate,
   TAccountPoolUser,
   TAccountPoolUserTokenAccount,
   TAccountPoolUserLpTokenAccount,
@@ -495,6 +516,7 @@ export function getDepositLuloInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
+    estate: { value: input.estate ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
     poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
@@ -543,6 +565,7 @@ export function getDepositLuloInstruction<
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
+      getAccountMeta("estate", accounts.estate),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
       getAccountMeta("poolUserLpTokenAccount", accounts.poolUserLpTokenAccount),
@@ -566,6 +589,7 @@ export function getDepositLuloInstruction<
     TAccountHeir,
     TAccountVault,
     TAccountVaultTokenAccount,
+    TAccountEstate,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -593,22 +617,23 @@ export type ParsedDepositLuloInstruction<
     heir: TAccountMetas[1];
     vault: TAccountMetas[2];
     vaultTokenAccount: TAccountMetas[3];
-    poolUser: TAccountMetas[4];
-    poolUserTokenAccount: TAccountMetas[5];
-    poolUserLpTokenAccount: TAccountMetas[6];
-    referrerPoolUser: TAccountMetas[7];
-    inputMint: TAccountMetas[8];
+    estate: TAccountMetas[4];
+    poolUser: TAccountMetas[5];
+    poolUserTokenAccount: TAccountMetas[6];
+    poolUserLpTokenAccount: TAccountMetas[7];
+    referrerPoolUser: TAccountMetas[8];
+    inputMint: TAccountMetas[9];
     /** pool's reserve token account (authority = pool_account). */
-    poolReserveTokenAccount: TAccountMetas[9];
+    poolReserveTokenAccount: TAccountMetas[10];
     /** the pool's LP/share mint (token22) */
-    lpMint: TAccountMetas[10];
-    poolAccount: TAccountMetas[11];
-    programId: TAccountMetas[12];
-    inputMintTokenProgram: TAccountMetas[13];
-    lpMintTokenProgram: TAccountMetas[14];
-    associatedTokenProgram: TAccountMetas[15];
-    rent: TAccountMetas[16];
-    systemProgram: TAccountMetas[17];
+    lpMint: TAccountMetas[11];
+    poolAccount: TAccountMetas[12];
+    programId: TAccountMetas[13];
+    inputMintTokenProgram: TAccountMetas[14];
+    lpMintTokenProgram: TAccountMetas[15];
+    associatedTokenProgram: TAccountMetas[16];
+    rent: TAccountMetas[17];
+    systemProgram: TAccountMetas[18];
   };
   data: DepositLuloInstructionData;
 };
@@ -621,10 +646,10 @@ export function parseDepositLuloInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedDepositLuloInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 18) {
+  if (instruction.accounts.length < 19) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 18,
+      expectedAccountMetas: 19,
     });
   }
   let accountIndex = 0;
@@ -640,6 +665,7 @@ export function parseDepositLuloInstruction<
       heir: getNextAccount(),
       vault: getNextAccount(),
       vaultTokenAccount: getNextAccount(),
+      estate: getNextAccount(),
       poolUser: getNextAccount(),
       poolUserTokenAccount: getNextAccount(),
       poolUserLpTokenAccount: getNextAccount(),

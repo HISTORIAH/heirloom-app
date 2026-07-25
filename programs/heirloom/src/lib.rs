@@ -11,7 +11,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("FQiUcHRKJxSuShaRJszEPoRBinubDPoPPD75NvGtPRya");
+declare_id!("heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz");
 
 #[cfg(not(feature = "no-entrypoint"))]
 security_txt! {

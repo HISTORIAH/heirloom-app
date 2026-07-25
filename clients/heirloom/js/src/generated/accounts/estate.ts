@@ -68,7 +68,6 @@ export type Estate = {
   lastHeartbeat: bigint;
   createdAt: bigint;
   bump: number;
-  isClaimed: boolean;
   pauseDuration: bigint;
   pausedUntil: bigint;
   isDeferred: boolean;
@@ -88,7 +87,6 @@ export type EstateArgs = {
   lastHeartbeat: number | bigint;
   createdAt: number | bigint;
   bump: number;
-  isClaimed: boolean;
   pauseDuration: number | bigint;
   pausedUntil: number | bigint;
   isDeferred: boolean;
@@ -112,7 +110,6 @@ export function getEstateEncoder(): Encoder<EstateArgs> {
       ["lastHeartbeat", getI64Encoder()],
       ["createdAt", getI64Encoder()],
       ["bump", getU8Encoder()],
-      ["isClaimed", getBooleanEncoder()],
       ["pauseDuration", getI64Encoder()],
       ["pausedUntil", getI64Encoder()],
       ["isDeferred", getBooleanEncoder()],
@@ -136,7 +133,6 @@ export function getEstateDecoder(): Decoder<Estate> {
     ["lastHeartbeat", getI64Decoder()],
     ["createdAt", getI64Decoder()],
     ["bump", getU8Decoder()],
-    ["isClaimed", getBooleanDecoder()],
     ["pauseDuration", getI64Decoder()],
     ["pausedUntil", getI64Decoder()],
     ["isDeferred", getBooleanDecoder()],

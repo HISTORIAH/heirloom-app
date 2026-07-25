@@ -1,5 +1,6 @@
 use crate::{
-    helpers::*, lulo_v2, Estate, Vault, KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT,
+    error::HeirloomError, helpers::*, lulo_v2, Estate, Vault, KAMINO_PROTOCOL_AUTHORITY,
+    KAMINO_PROTOCOL_TOKEN_ACCOUNT,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::TokenAccount;
@@ -18,6 +19,13 @@ pub struct InitWithdrawRegular<'info> {
         bump = vault.bump,
     )]
     pub vault: Account<'info, Vault>,
+
+    #[account(
+        mut,
+        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        bump = estate.bump,
+    )]
+    pub estate: Account<'info, Estate>,
 
     /// CHECK: Lulo CPI
     #[account(mut)]
@@ -268,8 +276,31 @@ impl<'info> CompleteWithdrawRegular<'info> {
         Ok(())
     }
 
-    // TODO
     pub fn validate(&self) -> Result<()> {
-        Ok(())
+        // this can be the heir / estate authority
+        let caller = self.authority.key();
+        let now = Clock::get()?.unix_timestamp;
+
+        if caller == self.estate.authority {
+            return Ok(());
+        }
+
+        if caller == self.estate.heir {
+            let claimable_at = self
+                .estate
+                .last_heartbeat
+                .checked_add(self.estate.heartbeat_interval)
+                .and_then(|t| t.checked_add(self.estate.grace_period))
+                .ok_or(ProgramError::ArithmeticOverflow)?;
+
+            require!(
+                now >= claimable_at.max(self.estate.paused_until),
+                HeirloomError::NotYetClaimable
+            );
+
+            return Ok(());
+        }
+
+        err!(HeirloomError::Unauthorized)
     }
 }

@@ -86,6 +86,11 @@ async function fetchEstatesByMemcmp(
   const out: Array<{ address: Address; data: Estate }> = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const item of accounts as any[]) {
+    // Closed accounts hit 0 lamports and are purged on-chain, but indexer-backed
+    // RPC providers (e.g. Helius) can serve a stale getProgramAccounts snapshot
+    // for a window after closure — skip anything not actually funded.
+    if (Number(item.account.lamports) <= 0) continue;
+
     const b64: string = Array.isArray(item.account.data)
       ? item.account.data[0]
       : item.account.data;
