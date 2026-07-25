@@ -144,7 +144,6 @@ const VaultProviderInner: React.FC<{
     }
     try {
       const onChainEstates = await fetchEstatesByAuthority(client, authority);
-      console.log("DEBUG STATEMENT; found estates", onChainEstates) // ! temp get rid of me
 
       const results: EstateData[] = [];
       for (const estate of onChainEstates) {
