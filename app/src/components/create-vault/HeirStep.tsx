@@ -36,7 +36,7 @@ const HeirStep: React.FC<Props> = ({
       </div>
     </div>
 
-    <div className="space-y-5">
+    <div className="space-y-7">
       <div>
         <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-2.5">
           LABEL (E.G. &quot;SON&quot;, &quot;SPOUSE&quot;)
@@ -63,9 +63,6 @@ const HeirStep: React.FC<Props> = ({
           className="w-full border-4 border-foreground rounded-xl px-5 py-4 bg-background font-mono text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
           placeholder="Enter Solana wallet address…"
         />
-        <div className="text-xs text-muted-foreground mt-2">
-          Single heir by default — they receive 100%. Multi-heir splits come later.
-        </div>
       </div>
 
       {/* Optional divider */}
