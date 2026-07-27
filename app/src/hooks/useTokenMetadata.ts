@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchAssetBatch, pickImage } from "@/lib/heliusDas";
+import { fetchAssetBatch, pickImage } from "@/services/das";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 
 export interface TokenMetadata {

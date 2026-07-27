@@ -3,26 +3,26 @@ import { address as toAddress, type Address, type TransactionSigner } from "@sol
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
 import {
-  depositSol,
-  depositToken,
-  discoverVaultTokenAccounts,
-  fetchEstateByPair,
-  fetchEstatesByAuthority,
-  fetchVaultClaimableLamports,
   getAtaAddress,
   getEstateAddress,
   getVaultAddress,
+  type HeirloomClient,
+} from "@/lib/heirloom";
+import {
   initializeWithTokens,
   registerAsset,
   registerSolDeposit,
   revokeAll,
   updateFields,
   updateHeirAll,
-  type HeirloomClient,
-} from "@/lib/heirloom";
-import type { VaultTokenHolding } from "@/types";
-import { computeEstateState, type EstateUiState } from "@/lib/estateState";
-import { unwrapOption } from "@/lib/anchor";
+  depositSol,
+  depositToken,
+  discoverVaultTokenAccounts,
+  fetchEstateByPair,
+  fetchEstatesByAuthority,
+  fetchVaultClaimableLamports,
+} from "@/services/heirloom";
+import { computeEstateState, type EstateUiState, type VaultTokenHolding } from "@/services/heirloom";
 import { errMsg } from "@/lib/utils";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
 
@@ -184,8 +184,8 @@ const VaultProviderInner: React.FC<{
             pausedUntil,
             createdAt,
             isDeferred: estate.data.isDeferred,
-            delegate: unwrapOption<string>(estate.data.delegate),
-            hbSigner: unwrapOption<string>(estate.data.hbSigner),
+            delegate: estate.data.delegate ? String(estate.data.delegate) : null,
+            hbSigner: estate.data.hbSigner ? String(estate.data.hbSigner) : null,
             claimableAssets: estate.data.claimableAssets,
             estatePda: estate.address,
             vaultPda,

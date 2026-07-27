@@ -40,7 +40,7 @@ import {
 } from "@/lib/strategies";
 import { ENABLE_YIELD_STAKING_UI } from "@/config";
 import { cn, formatSol, errMsg, toRawTokenAmount } from "@/lib/utils";
-import { computeEstateState } from "@/lib/estateState";
+import { computeEstateState } from "@/services/heirloom";
 import {
   Heart,
   Users,

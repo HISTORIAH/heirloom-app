@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TOPUP_PCTS, amountStep, pctOfMax } from "@/lib/amountInput";
+import { amountStep, pctOfMax } from "@/lib/utils/math";
+
+const TOPUP_PCTS = [
+  { pct: 25,  label: "25%", bg: "bg-accent-yellow" },
+  { pct: 50,  label: "50%", bg: "bg-accent-cyan"   },
+  { pct: 75,  label: "75%", bg: "bg-accent-orange" },
+  { pct: 100, label: "Max", bg: "bg-accent-lime"   },
+] as const;
 import { Loader2, TrendingUp, X, Coins } from "lucide-react";
 import { type TopUpDialogProps } from "@/types/strategy-ui";
 
