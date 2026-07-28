@@ -22,7 +22,7 @@ pub created_at: i64,
 pub bump: u8,
 pub pause_duration: i64,
 pub paused_until: i64,
-pub is_deferred: bool,
+pub is_migrating: bool,
 pub delegate: Option<Address>,
 /// hot signer wallet
 pub hb_signer: Option<Address>,

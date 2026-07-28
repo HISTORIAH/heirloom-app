@@ -34,13 +34,15 @@ impl<'info> DelegateDefer<'info> {
         ctx.accounts.estate.paused_until = now
             .checked_add(ctx.accounts.estate.pause_duration)
             .ok_or(ProgramError::ArithmeticOverflow)?;
-        ctx.accounts.estate.is_deferred = true;
 
         Ok(())
     }
 
     pub fn validate(&self) -> Result<()> {
-        require!(!self.estate.is_deferred, HeirloomError::AlreadyDeferred);
+        require!(
+            self.estate.paused_until == 0,
+            HeirloomError::AlreadyDeferred
+        );
 
         let now = Clock::get()?.unix_timestamp;
         let claimable_at = self

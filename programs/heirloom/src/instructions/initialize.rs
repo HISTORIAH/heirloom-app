@@ -139,7 +139,6 @@ impl<'info> Initialize<'info> {
         self.estate.label = label.to_string();
         self.estate.pause_duration = pause_duration;
         self.estate.paused_until = 0;
-        self.estate.is_deferred = false;
 
         self.vault.estate = self.estate.key();
         self.vault.bump = vault_bump;

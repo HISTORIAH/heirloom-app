@@ -86,7 +86,7 @@ impl<'info> UpdateHeir<'info> {
             ctx.accounts.vault_token_account.is_none() && ctx.accounts.estate.claimable_assets <= 1;
 
         if all_tokens_migrated {
-            ctx.accounts.new_estate.is_deferred = false;
+            ctx.accounts.new_estate.is_migrating = false;
 
             let authority_info = ctx.accounts.authority.to_account_info();
             let new_vault_info = ctx.accounts.new_vault.to_account_info();
@@ -106,13 +106,13 @@ impl<'info> UpdateHeir<'info> {
 
         if !is_first_call {
             // Subsequent calls: ensure new_estate belongs to this authority and is
-            // mid-migration (is_deferred), not an unrelated live estate.
+            // mid-migration (is_migrating), not an unrelated live estate.
             require_keys_eq!(
                 self.new_estate.authority,
                 self.authority.key(),
                 HeirloomError::Unauthorized
             );
-            require!(self.new_estate.is_deferred, HeirloomError::InvalidAccount);
+            require!(self.new_estate.is_migrating, HeirloomError::InvalidAccount);
         }
 
         if let Some(mint_acc) = self.mint.as_ref() {
@@ -154,7 +154,7 @@ impl<'info> UpdateHeir<'info> {
         self.new_estate.pause_duration = self.estate.pause_duration;
         self.new_estate.paused_until = 0;
         // Block claim on new estate until migration is complete.
-        self.new_estate.is_deferred = true;
+        self.new_estate.is_migrating = true;
 
         self.new_vault.estate = self.new_estate.key();
         self.new_vault.bump = new_vault_bump;

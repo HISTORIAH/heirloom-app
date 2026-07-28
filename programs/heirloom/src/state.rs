@@ -20,7 +20,7 @@ pub struct Estate {
 
     pub paused_until: i64,
 
-    pub is_deferred: bool,
+    pub is_migrating: bool,
 
     pub delegate: Option<Pubkey>,
 
@@ -46,7 +46,7 @@ impl Estate {
     + 1                              // bump
     + 8                              // pause duration
     + 8                              // paused until
-    + 1                              // is deferred
+    + 1                              // is migrating
     + 1 + 32                         // delegate
     + 1 + 32                         // hb signer
     + 1                              // claimable assets
