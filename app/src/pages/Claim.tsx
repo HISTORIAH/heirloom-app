@@ -7,15 +7,17 @@ import { SOL_LABEL } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import {
   fetchEstatesByHeir,
+} from "@/services/heirloom";
+import {
   getAtaAddress,
-  claimAll,
   type HeirloomClient,
 } from "@/lib/heirloom";
+import { claimAll } from "@/services/heirloom";
 import {
   buildSnapshotFromEstate,
   lookupEstateSnapshot,
   type EstateSnapshot,
-} from "@/lib/estateLookup";
+} from "@/services/heirloom";
 import { formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
 import {
   address as toAddress,

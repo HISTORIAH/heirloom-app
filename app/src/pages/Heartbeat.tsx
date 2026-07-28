@@ -5,14 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SOL_LABEL } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
-import {
-  updateFields,
-} from "@/lib/heirloom";
+import { updateFields } from "@/services/heirloom";
 import type { HeirloomClient } from "@/lib/heirloom";
 import {
   lookupEstateSnapshot,
   type EstateSnapshot,
-} from "@/lib/estateLookup";
+} from "@/services/heirloom";
 import { formatDuration, formatSol, errMsg } from "@/lib/utils";
 import {
   address as toAddress,

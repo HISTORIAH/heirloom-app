@@ -15,6 +15,15 @@ import ReassignHeirSection from "@/components/dashboard/ReassignHeirSection";
 import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
+import NotificationsCard from "@/components/dashboard/NotificationsCard";
+import NotificationsSignInPanel from "@/components/dashboard/NotificationsSignInPanel";
+import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
+import {
+  type NotificationsCardStatus,
+  type NotificationsConfig,
+  defaultNotificationsConfig,
+  summarizeNotifications,
+} from "@/types/notifications";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import {
   Dialog,
@@ -38,9 +47,9 @@ import {
   makePlaceholderLuloStrategy,
   makePlaceholderStakingStrategy,
 } from "@/lib/strategies";
-import { ENABLE_YIELD_STAKING_UI } from "@/config";
+import { FEATURE_YIELD_STAKING_UI, FEATURE_NOTIFICATIONS_UI } from "@/config";
 import { cn, formatSol, errMsg, toRawTokenAmount } from "@/lib/utils";
-import { computeEstateState } from "@/lib/estateState";
+import { computeEstateState } from "@/services/heirloom";
 import {
   Heart,
   Users,
@@ -204,16 +213,62 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const [assetTab, setAssetTab] = useState<"sol" | "tokens">("sol");
 
   // TEMP: network-aware feature toggle for yield/staking.
-  // Mainnet: always show. Devnet/local: only show if VITE_ENABLE_YIELD_STAKING_UI=true.
+  // Mainnet: always show. Devnet/local: only show if VITE_FEATURE_YIELD_STAKING_UI=true.
   // TODO: Remove once feature ships to all networks.
   const cluster = getClusterFromEndpoint();
-  const showYieldStaking = cluster === "solana:mainnet" || ENABLE_YIELD_STAKING_UI;
+  const showYieldStaking = cluster === "solana:mainnet" || FEATURE_YIELD_STAKING_UI;
 
   // Placeholder strategies — per-estate local state (replace with real data later)
   const [luloStrategy, setLuloStrategy] = useState<Strategy | null>(null);
   const [stakingStrategy, setStakingStrategy] = useState<Strategy | null>(null);
   const [topUpOpen, setTopUpOpen] = useState<"sol" | string | null>(null);
   const [topUpLoading, setTopUpLoading] = useState(false);
+
+  // Placeholder notifications state — per-estate local state (replace with real fetch/sign/save later)
+  const [notifStatus, setNotifStatus] = useState<NotificationsCardStatus>("locked");
+  const [notifSummary, setNotifSummary] = useState<string | undefined>(undefined);
+  const [notifConfig, setNotifConfig] = useState<NotificationsConfig>(defaultNotificationsConfig());
+  const [notifSignInOpen, setNotifSignInOpen] = useState(false);
+  const [notifEditOpen, setNotifEditOpen] = useState(false);
+  const [notifSigning, setNotifSigning] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+
+  const handleNotifAction = () => {
+    if (notifStatus === "authorized") {
+      setNotifEditOpen(true);
+      return;
+    }
+    setNotifSignInOpen(true);
+  };
+
+  // TODO: replace with a real challenge fetch (POST /challenge) + wallet signMessage/signIn + backend verification
+  const handleNotifSign = () => {
+    setNotifSigning(true);
+    setTimeout(() => {
+      setNotifSigning(false);
+      setNotifSignInOpen(false);
+      setNotifStatus("authorized");
+      setNotifEditOpen(true);
+    }, 600);
+  };
+
+  // TODO: replace with a real save call (PUT /estates/:pda/notifications) reusing the active session
+  const handleNotifSave = (next: NotificationsConfig) => {
+    setNotifSaving(true);
+    setTimeout(() => {
+      setNotifSaving(false);
+      setNotifConfig(next);
+      setNotifEditOpen(false);
+      setNotifSummary(summarizeNotifications(next, estate.label));
+    }, 400);
+  };
+
+  const notifSignMessage = `heirlm.xyz wants you to manage notification settings.
+
+Estate:  ${estate.estatePda}
+Wallet:  ${publicKey ?? ""}
+
+This does not cost gas and does not authorize any on-chain transaction.`;
 
   const { data: walletSplTokens } = useWalletSplTokens(topUpOpen !== null && isConnected ? publicKey : null);
   const { sol: walletSolBalance } = useTokenBalances(topUpOpen !== null && isConnected ? publicKey : null);
@@ -718,6 +773,31 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
           </div>
         </details>
       </div>
+
+      {/* Notifications — separate from Manage Estate: off-chain preference, not a vault mutation.
+          Gated behind FEATURE_NOTIFICATIONS_UI: no backend (fetch/sign/save) wired up yet. */}
+      {FEATURE_NOTIFICATIONS_UI && (
+        <>
+          <NotificationsCard status={notifStatus} summary={notifSummary} onAction={handleNotifAction} />
+
+          <NotificationsSignInPanel
+            open={notifSignInOpen}
+            message={notifSignMessage}
+            signing={notifSigning}
+            onClose={() => setNotifSignInOpen(false)}
+            onSign={handleNotifSign}
+          />
+
+          <NotificationsDialog
+            open={notifEditOpen}
+            heirLabel={estate.label}
+            initialConfig={notifConfig}
+            saving={notifSaving}
+            onClose={() => setNotifEditOpen(false)}
+            onSave={handleNotifSave}
+          />
+        </>
+      )}
 
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (

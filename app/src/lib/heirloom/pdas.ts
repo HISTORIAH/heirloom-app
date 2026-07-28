@@ -20,3 +20,12 @@ export async function getAtaAddress(
   const [ata] = await findAssociatedTokenPda({ owner, mint, tokenProgram });
   return ata;
 }
+
+/** Resolve both estate and vault PDAs for a given authority+heir pair. */
+export async function getEstateVaultPair(authority: Address, heir: Address) {
+  const [estate, vault] = await Promise.all([
+    getEstateAddress(authority, heir),
+    getVaultAddress(authority, heir),
+  ]);
+  return { estate, vault };
+}
