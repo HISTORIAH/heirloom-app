@@ -37,6 +37,11 @@ impl<'info> UpdateField<'info> {
 
         estate.last_heartbeat = now;
 
+        // Clear deferred state when the authority returns and sends heartbeat
+        if estate.paused_until > 0 && now >= estate.paused_until {
+            estate.paused_until = 0;
+        }
+
         if authority_key == estate.authority {
             if let Some(hi) = heartbeat_interval {
                 require!(hi <= MAX_INTERVAL_SECONDS, HeirloomError::IntervalTooLong);
