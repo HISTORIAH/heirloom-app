@@ -10,6 +10,13 @@ export const POSTHOG_PROJECT_TOKEN =
 export const ANALYTICS_ENABLED =
   import.meta.env.VITE_ANALYTICS_ENABLED?.trim().toLowerCase() === "true";
 
+// --- Feature flags (temporary — remove once shipped) ---
+
 // TEMP: Raw env flag for yield/staking feature on local testing
-export const ENABLE_YIELD_STAKING_UI =
-  import.meta.env.VITE_ENABLE_YIELD_STAKING_UI?.trim().toLowerCase() === "true";
+export const FEATURE_YIELD_STAKING_UI =
+  import.meta.env.VITE_FEATURE_YIELD_STAKING_UI?.trim().toLowerCase() === "true";
+
+// TEMP: Notifications UI doesn't have backend wired up
+// TODO: Remove this flag once the notifications backend is live.
+export const FEATURE_NOTIFICATIONS_UI =
+  import.meta.env.VITE_FEATURE_NOTIFICATIONS_UI?.trim().toLowerCase() === "true";

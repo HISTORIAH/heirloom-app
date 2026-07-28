@@ -17,10 +17,12 @@ import ReviewStep from "@/components/create-vault/ReviewStep";
 import {
     ArrowLeft,
   ArrowRight,
+  Bell,
   CheckCircle,
   Loader2,
 } from "lucide-react";
 import { errMsg } from "@/lib/utils";
+import { FEATURE_NOTIFICATIONS_UI } from "@/config";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import Stepper from "@/components/create-vault/Stepper";
 import SummaryColumn from "@/components/create-vault/SummaryColumn";
@@ -214,6 +216,12 @@ const CreateVaultPage = () => {
                     CREATE ANOTHER
                   </button>
                 </div>
+                {FEATURE_NOTIFICATIONS_UI && (
+                  <div className="mt-6 pt-6 border-t-2 border-dashed border-foreground/10 flex items-center justify-center gap-2 text-sm font-semibold">
+                    <Bell className="h-4 w-4 text-accent-purple" strokeWidth={2} />
+                    Set up reminders anytime from the dashboard.
+                  </div>
+                )}
               </div>
             </div>
           </main>
