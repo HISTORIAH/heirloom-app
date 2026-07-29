@@ -7,15 +7,17 @@ import {
   createAndMintTokens,
   deriveEstateVault,
   deriveTokenAccounts,
+  getEstate,
+  getLamportBalance,
   sendInitialize,
 } from "./setup";
 
-test("2 + 2", () => {
+test("sanity check: test runner and dependencies are working", () => {
   expect(2 + 2).toBe(4);
 });
 
 test("it initializes a native SOL vault", async () => {
-  const { client } = await createTestContext();
+  const { client, authority } = await createTestContext();
   const heir = await generateKeyPairSigner();
 
   await sendInitialize(client, {
@@ -26,6 +28,16 @@ test("it initializes a native SOL vault", async () => {
     gracePeriod: 0n,
     pauseDuration: 0n,
   });
+
+  const { estate, vault } = await deriveEstateVault(authority.address, heir.address);
+  const [account, vaultBalance] = await Promise.all([
+    getEstate(client, estate),
+    getLamportBalance(client, vault),
+  ]);
+
+  expect(account.data.claimableAssets).toBe(1);
+  expect(account.data.label).toBe("test-sol");
+  expect(vaultBalance >= 1_000_000_000n).toBe(true);
 });
 
 test("it rejects initializing a token-only vault with a zero amount", async () => {

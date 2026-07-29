@@ -70,7 +70,7 @@ export type Estate = {
   bump: number;
   pauseDuration: bigint;
   pausedUntil: bigint;
-  isDeferred: boolean;
+  isMigrating: boolean;
   delegate: Option<Address>;
   /** hot signer wallet */
   hbSigner: Option<Address>;
@@ -89,7 +89,7 @@ export type EstateArgs = {
   bump: number;
   pauseDuration: number | bigint;
   pausedUntil: number | bigint;
-  isDeferred: boolean;
+  isMigrating: boolean;
   delegate: OptionOrNullable<Address>;
   /** hot signer wallet */
   hbSigner: OptionOrNullable<Address>;
@@ -112,7 +112,7 @@ export function getEstateEncoder(): Encoder<EstateArgs> {
       ["bump", getU8Encoder()],
       ["pauseDuration", getI64Encoder()],
       ["pausedUntil", getI64Encoder()],
-      ["isDeferred", getBooleanEncoder()],
+      ["isMigrating", getBooleanEncoder()],
       ["delegate", getOptionEncoder(getAddressEncoder())],
       ["hbSigner", getOptionEncoder(getAddressEncoder())],
       ["claimableAssets", getU8Encoder()],
@@ -135,7 +135,7 @@ export function getEstateDecoder(): Decoder<Estate> {
     ["bump", getU8Decoder()],
     ["pauseDuration", getI64Decoder()],
     ["pausedUntil", getI64Decoder()],
-    ["isDeferred", getBooleanDecoder()],
+    ["isMigrating", getBooleanDecoder()],
     ["delegate", getOptionDecoder(getAddressDecoder())],
     ["hbSigner", getOptionDecoder(getAddressDecoder())],
     ["claimableAssets", getU8Decoder()],

@@ -4,7 +4,7 @@ use anchor_spl::{
     token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-use crate::{error::HeirloomError, Estate, Vault};
+use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -47,6 +47,20 @@ pub struct Initialize<'info> {
 
     pub mint: Option<InterfaceAccount<'info, Mint>>,
 
+    /// Marker PDA proving mint is registered as claimable asset for current estate
+    #[account(
+        init,
+        payer = authority,
+        space = AssetRecord::LEN,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            mint.as_ref().unwrap().key().as_ref(),
+        ],
+        bump,
+    )]
+    pub asset_record: Option<Account<'info, AssetRecord>>,
+
     pub token_program: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -74,7 +88,8 @@ impl<'info> Initialize<'info> {
             ctx.bumps.vault,
         )?;
 
-        ctx.accounts.init_vault_token_account()?;
+        ctx.accounts
+            .init_vault_token_account(ctx.bumps.asset_record)?;
         ctx.accounts.transfer_assets(amount)?;
 
         Ok(())
@@ -94,6 +109,9 @@ impl<'info> Initialize<'info> {
                     .mint
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
+                self.asset_record
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
 
                 require_keys_eq!(authority_ta.mint, mint.key(), HeirloomError::MintMismatch);
                 require!(
@@ -102,7 +120,10 @@ impl<'info> Initialize<'info> {
                 );
             }
             None => {
-                if self.vault_token_account.is_some() || self.mint.is_some() {
+                if self.vault_token_account.is_some()
+                    || self.mint.is_some()
+                    || self.asset_record.is_some()
+                {
                     return err!(HeirloomError::MissingTokenAccounts);
                 }
                 require!(
@@ -139,7 +160,6 @@ impl<'info> Initialize<'info> {
         self.estate.label = label.to_string();
         self.estate.pause_duration = pause_duration;
         self.estate.paused_until = 0;
-        self.estate.is_deferred = false;
 
         self.vault.estate = self.estate.key();
         self.vault.bump = vault_bump;
@@ -147,7 +167,7 @@ impl<'info> Initialize<'info> {
         Ok(())
     }
 
-    pub fn init_vault_token_account(&mut self) -> Result<()> {
+    pub fn init_vault_token_account(&mut self, asset_record_bump: Option<u8>) -> Result<()> {
         let vault_ta = match self.vault_token_account.as_ref() {
             Some(ta) => ta,
             None => return Ok(()),
@@ -167,6 +187,8 @@ impl<'info> Initialize<'info> {
         let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
 
         associated_token::create_idempotent(cpi_context)?;
+
+        self.asset_record.as_mut().unwrap().bump = asset_record_bump.unwrap();
 
         // edge case, we always count sol as an asset since we need
         // to close the vault and estate accounts

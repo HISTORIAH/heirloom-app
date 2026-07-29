@@ -20,7 +20,7 @@ pub struct Estate {
 
     pub paused_until: i64,
 
-    pub is_deferred: bool,
+    pub is_migrating: bool,
 
     pub delegate: Option<Pubkey>,
 
@@ -46,7 +46,7 @@ impl Estate {
     + 1                              // bump
     + 8                              // pause duration
     + 8                              // paused until
-    + 1                              // is deferred
+    + 1                              // is migrating
     + 1 + 32                         // delegate
     + 1 + 32                         // hb signer
     + 1                              // claimable assets
@@ -65,6 +65,22 @@ impl Vault {
 
     pub const LEN: usize = 8           // discriminator
     + 32                             // estate
+    + 1; // bump
+}
+
+/// Marker PDA proving a given mint was registered as a claimable asset for
+/// an estate. Its existence (not the vault ATA's) is the source of truth,
+/// since ATA creation is permissionless and can't be used as a registration
+/// check without allowing front-running / double counting.
+#[account]
+pub struct AssetRecord {
+    pub bump: u8,
+}
+
+impl AssetRecord {
+    pub const SEED: &[u8] = b"asset";
+
+    pub const LEN: usize = 8 // discriminator
     + 1; // bump
 }
 

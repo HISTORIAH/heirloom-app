@@ -11,6 +11,8 @@ import {
   deriveEstateVault,
   deriveTokenAccounts,
   accountExists,
+  getEstate,
+  getTokenBalance,
 } from "./setup";
 
 test("init → update heir → claim SOL with new heir", async () => {
@@ -71,6 +73,18 @@ test("init → update heir → claim token with new heir", async () => {
     vaultTokenAccount: oldVaultTokenAccount,
   });
 
+  // Final SOL-only call completes the migration and closes the old PDAs.
+  const { estate: oldEstate, vault: oldVault2 } = await deriveEstateVault(
+    authority.address,
+    oldHeir.address,
+  );
+  await sendUpdateHeir(client, {
+    newHeir: newHeir.address,
+    oldHeir: oldHeir.address,
+  });
+  expect(await accountExists(client, oldEstate)).toBe(false);
+  expect(await accountExists(client, oldVault2)).toBe(false);
+
   const { vault: newVault, estate: newEstate } = await deriveEstateVault(
     authority.address,
     newHeir.address,
@@ -90,5 +104,9 @@ test("init → update heir → claim token with new heir", async () => {
     treasuryTokenAccount,
   });
 
-  expect(newHeir.address).toBeTruthy();
+  // 1_000_000 at 75bps: 7_500 fee, 992_500 to the new heir.
+  expect(await getTokenBalance(client, heirTokenAccount)).toBe(992_500n);
+  expect(await getTokenBalance(client, treasuryTokenAccount)).toBe(7_500n);
+  expect(await accountExists(client, newVaultTokenAccount)).toBe(false);
+  expect((await getEstate(client, newEstate)).data.claimableAssets).toBe(1);
 });

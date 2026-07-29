@@ -5,9 +5,11 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+  pub(crate) mod r#asset_record;
   pub(crate) mod r#estate;
   pub(crate) mod r#vault;
 
+  pub use self::r#asset_record::*;
   pub use self::r#estate::*;
   pub use self::r#vault::*;
 

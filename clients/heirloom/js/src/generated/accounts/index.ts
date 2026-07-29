@@ -6,5 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from "./assetRecord";
 export * from "./estate";
 export * from "./vault";

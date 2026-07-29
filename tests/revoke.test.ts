@@ -8,6 +8,7 @@ import {
   createTestContext,
   createAndMintTokens,
   createHeir,
+  createProgramsClient,
   deriveEstateVault,
   deriveTokenAccounts,
   getEstate,
@@ -171,4 +172,57 @@ test("it rejects a revoke signed by a wallet other than the authority", async ()
 
   expect(await getLamportBalance(client, vault)).toBe(vaultBalanceBefore);
   expect((await getEstate(client, estate)).data.authority).toBe(authority);
+});
+
+test("it rejects revoking a vault-owned token account that was never registered", async () => {
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
+  const { mint } = await createAndMintTokens();
+
+  await sendInitialize(client, {
+    heir,
+    amount: 1_000_000_000n,
+    label: "test-fake-asset-revoke",
+    heartbeatInterval: 0n,
+    gracePeriod: 0n,
+    pauseDuration: 0n,
+  });
+
+  const { estate, vault } = await deriveEstateVault(authority.address, heir.address);
+  const { vaultTokenAccount, authorityTokenAccount, treasuryTokenAccount } =
+    await deriveTokenAccounts(vault, authority.address, heir.address, mint.address);
+
+  // Fund the vault's ATA directly, bypassing register_asset entirely — no
+  // AssetRecord is ever created for this mint.
+  const programsClient = await createProgramsClient();
+  await programsClient.token.instructions
+    .mintToATA({
+      mint: mint.address,
+      owner: vault,
+      mintAuthority: programsClient.payer,
+      amount: 500_000n,
+      decimals: 6,
+    })
+    .sendTransaction();
+  expect(await getTokenBalance(client, vaultTokenAccount)).toBe(500_000n);
+
+  const vaultBalanceBefore = await getLamportBalance(client, vault);
+
+  await expect(
+    sendRevoke(client, {
+      heir: heir.address,
+      mint: mint.address,
+      vaultTokenAccount,
+      authorityTokenAccount,
+      treasuryTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    }),
+  ).rejects.toThrow();
+
+  // A fabricated token slot must not be able to decrement the counter and
+  // trigger close_pda — the SOL-only estate stays fully intact.
+  expect(await getLamportBalance(client, vault)).toBe(vaultBalanceBefore);
+  expect((await getEstate(client, estate)).data.claimableAssets).toBe(1);
+  expect(await accountExists(client, estate)).toBe(true);
+  expect(await accountExists(client, vault)).toBe(true);
 });

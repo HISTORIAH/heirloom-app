@@ -24,12 +24,30 @@ import {
 } from "@/services/heirloom";
 import { computeEstateState, type EstateUiState, type VaultTokenHolding } from "@/services/heirloom";
 import { errMsg } from "@/lib/utils";
-import { TREASURY_ADDRESS } from "@historiah/heirloom";
+import { TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
 
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+// Ties the on-chain-mirrored fields below to the generated Estate account
+// type. If the on-chain schema drops or renames one of these, this line
+// fails to compile instead of EstateData silently drifting out of sync.
+export type EstateMirroredFields = Pick<
+  Estate,
+  | "label"
+  | "heartbeatInterval"
+  | "gracePeriod"
+  | "lastHeartbeat"
+  | "pauseDuration"
+  | "pausedUntil"
+  | "createdAt"
+  | "isMigrating"
+  | "delegate"
+  | "hbSigner"
+  | "claimableAssets"
+>;
 
 export interface EstateData {
   authority: string;
@@ -41,6 +59,9 @@ export interface EstateData {
   pauseDuration: number;
   pausedUntil: number;
   createdAt: number;
+  isMigrating: boolean;
+  // Derived from pausedUntil, not a stored field — see delegate_defer's
+  // `paused_until == 0` check, which is the on-chain source of truth for this.
   isDeferred: boolean;
   delegate: string | null;
   hbSigner: string | null;
@@ -183,7 +204,8 @@ const VaultProviderInner: React.FC<{
             pauseDuration: Number(estate.data.pauseDuration),
             pausedUntil,
             createdAt,
-            isDeferred: estate.data.isDeferred,
+            isMigrating: estate.data.isMigrating,
+            isDeferred: pausedUntil > 0,
             delegate: estate.data.delegate ? String(estate.data.delegate) : null,
             hbSigner: estate.data.hbSigner ? String(estate.data.hbSigner) : null,
             claimableAssets: estate.data.claimableAssets,

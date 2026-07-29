@@ -58,6 +58,7 @@ export type ClaimInstruction<
   TAccountVault extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
+  TAccountAssetRecord extends string | AccountMeta<string> = string,
   TAccountTreasury extends string | AccountMeta<string> =
     "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q",
   TAccountTreasuryTokenAccount extends string | AccountMeta<string> = string,
@@ -85,6 +86,9 @@ export type ClaimInstruction<
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
       TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
+      TAccountAssetRecord extends string
+        ? WritableAccount<TAccountAssetRecord>
+        : TAccountAssetRecord,
       TAccountTreasury extends string ? WritableAccount<TAccountTreasury> : TAccountTreasury,
       TAccountTreasuryTokenAccount extends string
         ? WritableAccount<TAccountTreasuryTokenAccount>
@@ -133,6 +137,7 @@ export type ClaimAsyncInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountAssetRecord extends string = string,
   TAccountTreasury extends string = string,
   TAccountTreasuryTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
@@ -147,6 +152,11 @@ export type ClaimAsyncInput<
   vault?: Address<TAccountVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  /**
+   * Proves `mint` was actually registered as a claimable asset for this
+   * estate, rather than an arbitrary vault-owned token account.
+   */
+  assetRecord?: Address<TAccountAssetRecord>;
   treasury?: Address<TAccountTreasury>;
   treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -163,6 +173,7 @@ export async function getClaimInstructionAsync<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountAssetRecord extends string,
   TAccountTreasury extends string,
   TAccountTreasuryTokenAccount extends string,
   TAccountTokenProgram extends string,
@@ -179,6 +190,7 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
     TAccountTreasury,
     TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
@@ -197,6 +209,7 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
     TAccountTreasury,
     TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
@@ -217,6 +230,7 @@ export async function getClaimInstructionAsync<
     vault: { value: input.vault ?? null, isWritable: true },
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
     treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -269,6 +283,7 @@ export async function getClaimInstructionAsync<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("assetRecord", accounts.assetRecord),
       getAccountMeta("treasury", accounts.treasury),
       getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
@@ -287,6 +302,7 @@ export async function getClaimInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
     TAccountTreasury,
     TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
@@ -304,6 +320,7 @@ export type ClaimInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountAssetRecord extends string = string,
   TAccountTreasury extends string = string,
   TAccountTreasuryTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
@@ -318,6 +335,11 @@ export type ClaimInput<
   vault: Address<TAccountVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  /**
+   * Proves `mint` was actually registered as a claimable asset for this
+   * estate, rather than an arbitrary vault-owned token account.
+   */
+  assetRecord?: Address<TAccountAssetRecord>;
   treasury?: Address<TAccountTreasury>;
   treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -334,6 +356,7 @@ export function getClaimInstruction<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountAssetRecord extends string,
   TAccountTreasury extends string,
   TAccountTreasuryTokenAccount extends string,
   TAccountTokenProgram extends string,
@@ -350,6 +373,7 @@ export function getClaimInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
     TAccountTreasury,
     TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
@@ -367,6 +391,7 @@ export function getClaimInstruction<
   TAccountVault,
   TAccountVaultTokenAccount,
   TAccountMint,
+  TAccountAssetRecord,
   TAccountTreasury,
   TAccountTreasuryTokenAccount,
   TAccountTokenProgram,
@@ -386,6 +411,7 @@ export function getClaimInstruction<
     vault: { value: input.vault ?? null, isWritable: true },
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
     treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -426,6 +452,7 @@ export function getClaimInstruction<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("assetRecord", accounts.assetRecord),
       getAccountMeta("treasury", accounts.treasury),
       getAccountMeta("treasuryTokenAccount", accounts.treasuryTokenAccount),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
@@ -444,6 +471,7 @@ export function getClaimInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
     TAccountTreasury,
     TAccountTreasuryTokenAccount,
     TAccountTokenProgram,
@@ -466,11 +494,16 @@ export type ParsedClaimInstruction<
     vault: TAccountMetas[5];
     vaultTokenAccount?: TAccountMetas[6] | undefined;
     mint?: TAccountMetas[7] | undefined;
-    treasury: TAccountMetas[8];
-    treasuryTokenAccount?: TAccountMetas[9] | undefined;
-    tokenProgram: TAccountMetas[10];
-    associatedTokenProgram: TAccountMetas[11];
-    systemProgram: TAccountMetas[12];
+    /**
+     * Proves `mint` was actually registered as a claimable asset for this
+     * estate, rather than an arbitrary vault-owned token account.
+     */
+    assetRecord?: TAccountMetas[8] | undefined;
+    treasury: TAccountMetas[9];
+    treasuryTokenAccount?: TAccountMetas[10] | undefined;
+    tokenProgram: TAccountMetas[11];
+    associatedTokenProgram: TAccountMetas[12];
+    systemProgram: TAccountMetas[13];
   };
   data: ClaimInstructionData;
 };
@@ -483,10 +516,10 @@ export function parseClaimInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedClaimInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 14) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 13,
+      expectedAccountMetas: 14,
     });
   }
   let accountIndex = 0;
@@ -510,6 +543,7 @@ export function parseClaimInstruction<
       vault: getNextAccount(),
       vaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
+      assetRecord: getNextOptionalAccount(),
       treasury: getNextAccount(),
       treasuryTokenAccount: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),

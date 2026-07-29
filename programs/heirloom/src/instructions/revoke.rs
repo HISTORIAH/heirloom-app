@@ -8,7 +8,7 @@ use crate::{
     constants::{EMERGENCY_EXIT_FEE_BPS, TREASURY},
     error::HeirloomError,
     helpers::{calculate_distribution, close_pda},
-    Estate, Vault,
+    AssetRecord, Estate, Vault,
 };
 
 #[derive(Accounts)]
@@ -41,6 +41,18 @@ pub struct Revoke<'info> {
 
     #[account(mut)]
     pub mint: Option<InterfaceAccount<'info, Mint>>,
+
+    #[account(
+        mut,
+        close = authority,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            mint.as_ref().unwrap().key().as_ref(),
+        ],
+        bump = asset_record.bump,
+    )]
+    pub asset_record: Option<Account<'info, AssetRecord>>,
 
     /// CHECK: treasury address
     #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
@@ -88,6 +100,10 @@ impl<'info> Revoke<'info> {
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
                 let authority_ta = self
                     .authority_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
+
+                self.asset_record
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 

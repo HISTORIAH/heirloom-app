@@ -4,7 +4,7 @@ use anchor_spl::{
     token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-use crate::{error::HeirloomError, helpers::close_pda, Estate, Vault};
+use crate::{error::HeirloomError, helpers::close_pda, AssetRecord, Estate, Vault};
 
 #[derive(Accounts)]
 pub struct UpdateHeir<'info> {
@@ -51,14 +51,39 @@ pub struct UpdateHeir<'info> {
     pub new_vault: Account<'info, Vault>,
 
     #[account(mut)]
-    pub vault_token_account: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub vault_token_account: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
 
     /// CHECK: new vault ATA, created by this instruction
     #[account(mut)]
     pub new_vault_token_account: Option<UncheckedAccount<'info>>,
 
     #[account(mut)]
-    pub mint: Option<InterfaceAccount<'info, Mint>>,
+    pub mint: Option<Box<InterfaceAccount<'info, Mint>>>,
+
+    #[account(
+        mut,
+        close = authority,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            mint.as_ref().unwrap().key().as_ref(),
+        ],
+        bump = asset_record.bump,
+    )]
+    pub asset_record: Option<Box<Account<'info, AssetRecord>>>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = AssetRecord::LEN,
+        seeds = [
+            AssetRecord::SEED,
+            new_estate.key().as_ref(),
+            mint.as_ref().unwrap().key().as_ref(),
+        ],
+        bump,
+    )]
+    pub new_asset_record: Option<Box<Account<'info, AssetRecord>>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -76,7 +101,7 @@ impl<'info> UpdateHeir<'info> {
                 .set_new_account_data(ctx.bumps.new_estate, ctx.bumps.new_vault)?;
         }
 
-        ctx.accounts.migrate_token()?;
+        ctx.accounts.migrate_token(ctx.bumps.new_asset_record)?;
 
         // claimable_assets = (number of token ATAs) + 1 for the SOL deposit.
         // Tokens are fully migrated when the caller passes no vault_ta (nothing left to transfer)
@@ -86,7 +111,7 @@ impl<'info> UpdateHeir<'info> {
             ctx.accounts.vault_token_account.is_none() && ctx.accounts.estate.claimable_assets <= 1;
 
         if all_tokens_migrated {
-            ctx.accounts.new_estate.is_deferred = false;
+            ctx.accounts.new_estate.is_migrating = false;
 
             let authority_info = ctx.accounts.authority.to_account_info();
             let new_vault_info = ctx.accounts.new_vault.to_account_info();
@@ -106,13 +131,13 @@ impl<'info> UpdateHeir<'info> {
 
         if !is_first_call {
             // Subsequent calls: ensure new_estate belongs to this authority and is
-            // mid-migration (is_deferred), not an unrelated live estate.
+            // mid-migration (is_migrating), not an unrelated live estate.
             require_keys_eq!(
                 self.new_estate.authority,
                 self.authority.key(),
                 HeirloomError::Unauthorized
             );
-            require!(self.new_estate.is_deferred, HeirloomError::InvalidAccount);
+            require!(self.new_estate.is_migrating, HeirloomError::InvalidAccount);
         }
 
         if let Some(mint_acc) = self.mint.as_ref() {
@@ -122,6 +147,12 @@ impl<'info> UpdateHeir<'info> {
                 .ok_or(HeirloomError::MissingTokenAccounts)?;
             let _new_vault_ta = self
                 .new_vault_token_account
+                .as_ref()
+                .ok_or(HeirloomError::MissingTokenAccounts)?;
+            self.asset_record
+                .as_ref()
+                .ok_or(HeirloomError::MissingTokenAccounts)?;
+            self.new_asset_record
                 .as_ref()
                 .ok_or(HeirloomError::MissingTokenAccounts)?;
 
@@ -154,7 +185,7 @@ impl<'info> UpdateHeir<'info> {
         self.new_estate.pause_duration = self.estate.pause_duration;
         self.new_estate.paused_until = 0;
         // Block claim on new estate until migration is complete.
-        self.new_estate.is_deferred = true;
+        self.new_estate.is_migrating = true;
 
         self.new_vault.estate = self.new_estate.key();
         self.new_vault.bump = new_vault_bump;
@@ -162,7 +193,7 @@ impl<'info> UpdateHeir<'info> {
         Ok(())
     }
 
-    pub fn migrate_token(&mut self) -> Result<()> {
+    pub fn migrate_token(&mut self, new_asset_record_bump: Option<u8>) -> Result<()> {
         let Some(vault_ta) = self.vault_token_account.as_ref() else {
             // No token to migrate on this call — final SOL move is handled
             // by closing old_vault to new_vault in the handler.
@@ -221,6 +252,8 @@ impl<'info> UpdateHeir<'info> {
             signer_seeds,
         );
         token_interface::close_account(close_ctx)?;
+
+        self.new_asset_record.as_mut().unwrap().bump = new_asset_record_bump.unwrap();
 
         let unclaimed_assets_count = self.estate.claimable_assets.saturating_sub(1);
         self.estate.claimable_assets = unclaimed_assets_count;

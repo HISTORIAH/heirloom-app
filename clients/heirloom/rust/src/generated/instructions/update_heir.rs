@@ -45,6 +45,12 @@ pub struct UpdateHeir {
           pub mint: Option<solana_address::Address>,
           
               
+          pub asset_record: Option<solana_address::Address>,
+          
+              
+          pub new_asset_record: Option<solana_address::Address>,
+          
+              
           pub token_program: solana_address::Address,
           
               
@@ -61,7 +67,7 @@ impl UpdateHeir {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(15+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -115,6 +121,28 @@ impl UpdateHeir {
                                                                 if let Some(mint) = self.mint {
               accounts.push(solana_instruction::AccountMeta::new(
                 mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(asset_record) = self.asset_record {
+              accounts.push(solana_instruction::AccountMeta::new(
+                asset_record,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(new_asset_record) = self.new_asset_record {
+              accounts.push(solana_instruction::AccountMeta::new(
+                new_asset_record,
                 false,
               ));
             } else {
@@ -185,9 +213,11 @@ impl Default for UpdateHeirInstructionData {
                       ///   7. `[writable, optional]` vault_token_account
                       ///   8. `[writable, optional]` new_vault_token_account
                       ///   9. `[writable, optional]` mint
-                ///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   11. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                      ///   10. `[writable, optional]` asset_record
+                      ///   11. `[writable, optional]` new_asset_record
+                ///   12. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   13. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   14. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct UpdateHeirBuilder {
             authority: Option<solana_address::Address>,
@@ -200,6 +230,8 @@ pub struct UpdateHeirBuilder {
                 vault_token_account: Option<solana_address::Address>,
                 new_vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
+                asset_record: Option<solana_address::Address>,
+                new_asset_record: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
                 associated_token_program: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
@@ -263,6 +295,18 @@ impl UpdateHeirBuilder {
                         self.mint = mint;
                     self
     }
+            /// `[optional account]`
+#[inline(always)]
+    pub fn asset_record(&mut self, asset_record: Option<solana_address::Address>) -> &mut Self {
+                        self.asset_record = asset_record;
+                    self
+    }
+            /// `[optional account]`
+#[inline(always)]
+    pub fn new_asset_record(&mut self, new_asset_record: Option<solana_address::Address>) -> &mut Self {
+                        self.new_asset_record = new_asset_record;
+                    self
+    }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
@@ -306,6 +350,8 @@ impl UpdateHeirBuilder {
                                         vault_token_account: self.vault_token_account,
                                         new_vault_token_account: self.new_vault_token_account,
                                         mint: self.mint,
+                                        asset_record: self.asset_record,
+                                        new_asset_record: self.new_asset_record,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
                                         associated_token_program: self.associated_token_program.unwrap_or(solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
@@ -347,6 +393,12 @@ impl UpdateHeirBuilder {
                 
                     
               pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                
+                    
+              pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+                
+                    
+              pub new_asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
@@ -394,6 +446,12 @@ pub struct UpdateHeirCpi<'a, 'b> {
           pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
+          pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+          
+              
+          pub new_asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+          
+              
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -420,6 +478,8 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
               vault_token_account: accounts.vault_token_account,
               new_vault_token_account: accounts.new_vault_token_account,
               mint: accounts.mint,
+              asset_record: accounts.asset_record,
+              new_asset_record: accounts.new_asset_record,
               token_program: accounts.token_program,
               associated_token_program: accounts.associated_token_program,
               system_program: accounts.system_program,
@@ -445,7 +505,7 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(15+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -507,6 +567,28 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
               false,
             ));
           }
+                                          if let Some(asset_record) = self.asset_record {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *asset_record.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_ID,
+              false,
+            ));
+          }
+                                          if let Some(new_asset_record) = self.new_asset_record {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *new_asset_record.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false
@@ -533,7 +615,7 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(14 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(16 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
@@ -550,6 +632,12 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
         }
                         if let Some(mint) = self.mint {
           account_infos.push(mint.clone());
+        }
+                        if let Some(asset_record) = self.asset_record {
+          account_infos.push(asset_record.clone());
+        }
+                        if let Some(new_asset_record) = self.new_asset_record {
+          account_infos.push(new_asset_record.clone());
         }
                         account_infos.push(self.token_program.clone());
                         account_infos.push(self.associated_token_program.clone());
@@ -578,9 +666,11 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
                       ///   7. `[writable, optional]` vault_token_account
                       ///   8. `[writable, optional]` new_vault_token_account
                       ///   9. `[writable, optional]` mint
-          ///   10. `[]` token_program
-          ///   11. `[]` associated_token_program
-          ///   12. `[]` system_program
+                      ///   10. `[writable, optional]` asset_record
+                      ///   11. `[writable, optional]` new_asset_record
+          ///   12. `[]` token_program
+          ///   13. `[]` associated_token_program
+          ///   14. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct UpdateHeirCpiBuilder<'a, 'b> {
   instruction: Box<UpdateHeirCpiBuilderInstruction<'a, 'b>>,
@@ -600,6 +690,8 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
               vault_token_account: None,
               new_vault_token_account: None,
               mint: None,
+              asset_record: None,
+              new_asset_record: None,
               token_program: None,
               associated_token_program: None,
               system_program: None,
@@ -658,6 +750,18 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.mint = mint;
+                    self
+    }
+      /// `[optional account]`
+#[inline(always)]
+    pub fn asset_record(&mut self, asset_record: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.asset_record = asset_record;
+                    self
+    }
+      /// `[optional account]`
+#[inline(always)]
+    pub fn new_asset_record(&mut self, new_asset_record: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.new_asset_record = new_asset_record;
                     self
     }
       #[inline(always)]
@@ -720,6 +824,10 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
                   
           mint: self.instruction.mint,
                   
+          asset_record: self.instruction.asset_record,
+                  
+          new_asset_record: self.instruction.new_asset_record,
+                  
           token_program: self.instruction.token_program.expect("token_program is not set"),
                   
           associated_token_program: self.instruction.associated_token_program.expect("associated_token_program is not set"),
@@ -743,6 +851,8 @@ struct UpdateHeirCpiBuilderInstruction<'a, 'b> {
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 new_vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+                new_asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
