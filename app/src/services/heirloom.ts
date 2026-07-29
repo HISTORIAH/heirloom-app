@@ -86,10 +86,29 @@ export function computeEstateState(args: ComputeEstateStateArgs): EstateStateRes
 // Estate snapshot builders
 // ---------------------------------------------------------------------------
 
+// Ties EstateLike's mirrored field names to the generated Estate account type.
+// If the on-chain schema drops or renames one of these, this line fails to
+// compile instead of EstateLike silently drifting out of sync.
+export type EstateMirroredFields = Pick<
+  Estate,
+  | "label"
+  | "delegate"
+  | "hbSigner"
+  | "heartbeatInterval"
+  | "gracePeriod"
+  | "pauseDuration"
+  | "lastHeartbeat"
+  | "createdAt"
+  | "pausedUntil"
+  | "claimableAssets"
+>;
+
 export interface EstateSnapshot {
   authority: string;
   heir: string;
   label: string;
+  // Derived from pausedUntil, not a stored field — see delegate_defer's
+  // `paused_until == 0` check, which is the on-chain source of truth for this.
   isDeferred: boolean;
   delegate: string | null;
   hbSigner: string | null;
@@ -109,7 +128,6 @@ export interface EstateSnapshot {
 
 export interface EstateLike {
   label: string;
-  isDeferred: boolean;
   delegate: unknown;
   hbSigner: unknown;
   heartbeatInterval: bigint | number;
@@ -164,7 +182,7 @@ export async function buildSnapshotFromEstate(
     authority: authorityStr,
     heir: heirStr,
     label: estateData.label,
-    isDeferred: estateData.isDeferred,
+    isDeferred: pausedUntil > 0,
     delegate: unwrapOption(estateData.delegate),
     hbSigner: unwrapOption(estateData.hbSigner),
     heartbeatInterval,
