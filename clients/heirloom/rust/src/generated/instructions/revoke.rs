@@ -36,6 +36,9 @@ pub struct Revoke {
           pub mint: Option<solana_address::Address>,
           
               
+          pub asset_record: Option<solana_address::Address>,
+          
+              
           pub treasury: solana_address::Address,
           
               
@@ -58,7 +61,7 @@ impl Revoke {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -100,6 +103,17 @@ impl Revoke {
                                                                 if let Some(mint) = self.mint {
               accounts.push(solana_instruction::AccountMeta::new(
                 mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(asset_record) = self.asset_record {
+              accounts.push(solana_instruction::AccountMeta::new(
+                asset_record,
                 false,
               ));
             } else {
@@ -182,11 +196,12 @@ impl Default for RevokeInstructionData {
                       ///   4. `[writable, optional]` authority_token_account
                       ///   5. `[writable, optional]` vault_token_account
                       ///   6. `[writable, optional]` mint
-                      ///   7. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
-                      ///   8. `[writable, optional]` treasury_token_account
-                ///   9. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   10. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   11. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                      ///   7. `[writable, optional]` asset_record
+                      ///   8. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
+                      ///   9. `[writable, optional]` treasury_token_account
+                ///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   11. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct RevokeBuilder {
             authority: Option<solana_address::Address>,
@@ -196,6 +211,7 @@ pub struct RevokeBuilder {
                 authority_token_account: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
+                asset_record: Option<solana_address::Address>,
                 treasury: Option<solana_address::Address>,
                 treasury_token_account: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
@@ -244,6 +260,12 @@ impl RevokeBuilder {
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
                         self.mint = mint;
+                    self
+    }
+            /// `[optional account]`
+#[inline(always)]
+    pub fn asset_record(&mut self, asset_record: Option<solana_address::Address>) -> &mut Self {
+                        self.asset_record = asset_record;
                     self
     }
             /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
@@ -298,6 +320,7 @@ impl RevokeBuilder {
                                         authority_token_account: self.authority_token_account,
                                         vault_token_account: self.vault_token_account,
                                         mint: self.mint,
+                                        asset_record: self.asset_record,
                                         treasury: self.treasury.unwrap_or(solana_address::address!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q")),
                                         treasury_token_account: self.treasury_token_account,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
@@ -332,6 +355,9 @@ impl RevokeBuilder {
                 
                     
               pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                
+                    
+              pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub treasury: &'b solana_account_info::AccountInfo<'a>,
@@ -376,6 +402,9 @@ pub struct RevokeCpi<'a, 'b> {
           pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
+          pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+          
+              
           pub treasury: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -405,6 +434,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
               authority_token_account: accounts.authority_token_account,
               vault_token_account: accounts.vault_token_account,
               mint: accounts.mint,
+              asset_record: accounts.asset_record,
               treasury: accounts.treasury,
               treasury_token_account: accounts.treasury_token_account,
               token_program: accounts.token_program,
@@ -432,7 +462,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(12+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -482,6 +512,17 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
               false,
             ));
           }
+                                          if let Some(asset_record) = self.asset_record {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *asset_record.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.treasury.key,
             false
@@ -523,7 +564,7 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(13 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(14 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
@@ -537,6 +578,9 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
         }
                         if let Some(mint) = self.mint {
           account_infos.push(mint.clone());
+        }
+                        if let Some(asset_record) = self.asset_record {
+          account_infos.push(asset_record.clone());
         }
                         account_infos.push(self.treasury.clone());
                         if let Some(treasury_token_account) = self.treasury_token_account {
@@ -566,11 +610,12 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
                       ///   4. `[writable, optional]` authority_token_account
                       ///   5. `[writable, optional]` vault_token_account
                       ///   6. `[writable, optional]` mint
-                ///   7. `[writable]` treasury
-                      ///   8. `[writable, optional]` treasury_token_account
-          ///   9. `[]` token_program
-          ///   10. `[]` associated_token_program
-          ///   11. `[]` system_program
+                      ///   7. `[writable, optional]` asset_record
+                ///   8. `[writable]` treasury
+                      ///   9. `[writable, optional]` treasury_token_account
+          ///   10. `[]` token_program
+          ///   11. `[]` associated_token_program
+          ///   12. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct RevokeCpiBuilder<'a, 'b> {
   instruction: Box<RevokeCpiBuilderInstruction<'a, 'b>>,
@@ -587,6 +632,7 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
               authority_token_account: None,
               vault_token_account: None,
               mint: None,
+              asset_record: None,
               treasury: None,
               treasury_token_account: None,
               token_program: None,
@@ -632,6 +678,12 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.mint = mint;
+                    self
+    }
+      /// `[optional account]`
+#[inline(always)]
+    pub fn asset_record(&mut self, asset_record: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.asset_record = asset_record;
                     self
     }
       #[inline(always)]
@@ -699,6 +751,8 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
                   
           mint: self.instruction.mint,
                   
+          asset_record: self.instruction.asset_record,
+                  
           treasury: self.instruction.treasury.expect("treasury is not set"),
                   
           treasury_token_account: self.instruction.treasury_token_account,
@@ -723,6 +777,7 @@ struct RevokeCpiBuilderInstruction<'a, 'b> {
                 authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 treasury: Option<&'b solana_account_info::AccountInfo<'a>>,
                 treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,

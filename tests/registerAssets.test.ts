@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test";
 import { generateKeyPairSigner, lamports } from "@solana/kit";
-import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import {
+  getCreateAssociatedTokenIdempotentInstructionAsync,
+  TOKEN_PROGRAM_ADDRESS,
+} from "@solana-program/token";
 import {
   getInitializeInstructionAsync,
   getRegisterAssetInstructionAsync,
@@ -13,67 +16,13 @@ import {
   sendRegisterAsset,
   deriveEstateVault,
   deriveTokenAccounts,
+  deriveAssetRecord,
   getEstate,
   getLamportBalance,
   getTokenBalance,
   sendInstructions,
   sendInstruction,
 } from "./setup";
-
-test("it bundles init and register token in one transaction", async () => {
-  const { client, authority } = await createTestContext();
-  const heir = await createHeir(client);
-  const { mint } = await createAndMintTokens();
-
-  const { vault, estate } = await deriveEstateVault(authority.address, heir.address);
-  const { vaultTokenAccount, authorityTokenAccount } = await deriveTokenAccounts(
-    vault,
-    authority.address,
-    heir.address,
-    mint.address,
-  );
-
-  const initIx = await getInitializeInstructionAsync({
-    authority,
-    heir: heir.address,
-    heartbeatInterval: 0n,
-    vault,
-    estate,
-    mint: mint.address,
-    vaultTokenAccount,
-    authorityTokenAccount,
-    gracePeriod: 0n,
-    pauseDuration: 0n,
-    label: "test-register",
-    amount: 100_000n,
-  });
-
-  const { mint: newMint } = await createAndMintTokens();
-  const {
-    vaultTokenAccount: newVaultTokenAccount,
-    authorityTokenAccount: newAuthorityTokenAccount,
-  } = await deriveTokenAccounts(vault, authority.address, heir.address, newMint.address);
-
-  const registerIx = await getRegisterAssetInstructionAsync({
-    authority,
-    heir: heir.address,
-    mint: newMint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    amount: 1_000_000,
-    vaultTokenAccount: newVaultTokenAccount,
-    vault,
-    estate,
-    authorityTokenAccount: newAuthorityTokenAccount,
-  });
-
-  await sendInstructions(client, authority, [initIx, registerIx]);
-
-  expect(await getTokenBalance(client, vaultTokenAccount)).toBe(100_000n);
-  expect(await getTokenBalance(client, newVaultTokenAccount)).toBe(1_000_000n);
-  expect(await getTokenBalance(client, authorityTokenAccount)).toBe(999_900_000n);
-  expect(await getTokenBalance(client, newAuthorityTokenAccount)).toBe(999_000_000n);
-  expect((await getEstate(client, estate)).data.claimableAssets).toBe(3);
-});
 
 test("it inits with a token then registers a SOL asset separately", async () => {
   const { client, authority } = await createTestContext();
@@ -147,11 +96,12 @@ test("it registers 4 mints in a single transaction", async () => {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     vaultTokenAccount: tokenAccounts[0]?.vaultTokenAccount,
     authorityTokenAccount: tokenAccounts[0]?.authorityTokenAccount,
+    assetRecord: await deriveAssetRecord(estate, mints[0].mint.address),
   });
 
   // Register the remaining 3 mints
   const registerIxs = await Promise.all(
-    mints.slice(1).map(({ mint }, i) =>
+    mints.slice(1).map(async ({ mint }, i) =>
       getRegisterAssetInstructionAsync({
         authority,
         heir: heir.address,
@@ -162,6 +112,7 @@ test("it registers 4 mints in a single transaction", async () => {
         vault,
         estate,
         authorityTokenAccount: tokenAccounts[i + 1]?.authorityTokenAccount,
+        assetRecord: await deriveAssetRecord(estate, mint.address),
       }),
     ),
   );
@@ -221,12 +172,22 @@ test("it rejects asset registration from a wallet other than the authority", asy
   expect((await getEstate(client, estate)).data.authority).toBe(authority);
 });
 
-test("it rejects a zero-value token registration", async () => {
+test("it lets the authority register a mint whose vault ATA was created by someone else first", async () => {
   const { client, authority } = await createTestContext();
   const heir = await createHeir(client);
   const { mint } = await createAndMintTokens();
 
-  const { vault, estate } = await deriveEstateVault(authority.address, heir.address);
+  const { estate, vault } = await deriveEstateVault(authority.address, heir.address);
+
+  await sendInitialize(client, {
+    heir,
+    heartbeatInterval: 0n,
+    gracePeriod: 0n,
+    pauseDuration: 0n,
+    label: "test-front-run-resistance",
+    amount: 1_000_000_000n,
+  });
+
   const { vaultTokenAccount, authorityTokenAccount } = await deriveTokenAccounts(
     vault,
     authority.address,
@@ -234,38 +195,78 @@ test("it rejects a zero-value token registration", async () => {
     mint.address,
   );
 
-  const initIx = await getInitializeInstructionAsync({
-    authority,
+  // Someone other than the authority pre-creates the vault's ATA before
+  // register_asset is ever called for this mint. ATA creation is
+  // permissionless, so this must not be able to block legitimate registration.
+  const attacker = await generateKeyPairSigner();
+  await client.rpc.requestAirdrop(attacker.address, lamports(10_000_000n)).send();
+  const createAtaIx = await getCreateAssociatedTokenIdempotentInstructionAsync({
+    payer: attacker,
+    owner: vault,
+    mint: mint.address,
+  });
+  await sendInstruction(client, attacker, createAtaIx);
+  expect(await getTokenBalance(client, vaultTokenAccount)).toBe(0n);
+
+  await sendRegisterAsset(client, {
     heir: heir.address,
-    heartbeatInterval: 0n,
-    vault,
-    estate,
+    amount: 250_000n,
     mint: mint.address,
     vaultTokenAccount,
     authorityTokenAccount,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+
+  expect(await getTokenBalance(client, vaultTokenAccount)).toBe(250_000n);
+  expect((await getEstate(client, estate)).data.claimableAssets).toBe(2);
+});
+
+test("it rejects registering the same mint twice", async () => {
+  const { client, authority } = await createTestContext();
+  const heir = await createHeir(client);
+  const { mint } = await createAndMintTokens();
+
+  const { estate, vault } = await deriveEstateVault(authority.address, heir.address);
+
+  await sendInitialize(client, {
+    heir,
+    heartbeatInterval: 0n,
     gracePeriod: 0n,
     pauseDuration: 0n,
-    label: "test-zero-register-bundled",
-    amount: 100_000n,
+    label: "test-no-double-register",
+    amount: 1_000_000_000n,
   });
 
-  const { mint: newMint } = await createAndMintTokens();
-  const {
-    vaultTokenAccount: newVaultTokenAccount,
-    authorityTokenAccount: newAuthorityTokenAccount,
-  } = await deriveTokenAccounts(vault, authority.address, heir.address, newMint.address);
-
-  const registerIx = await getRegisterAssetInstructionAsync({
-    authority,
-    heir: heir.address,
-    mint: newMint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    amount: 0,
-    vaultTokenAccount: newVaultTokenAccount,
+  const { vaultTokenAccount, authorityTokenAccount } = await deriveTokenAccounts(
     vault,
-    estate,
-    authorityTokenAccount: newAuthorityTokenAccount,
-  });
+    authority.address,
+    heir.address,
+    mint.address,
+  );
 
-  expect(sendInstructions(client, authority, [initIx, registerIx])).rejects.toThrow();
+  await sendRegisterAsset(client, {
+    heir: heir.address,
+    amount: 100_000n,
+    mint: mint.address,
+    vaultTokenAccount,
+    authorityTokenAccount,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+  expect((await getEstate(client, estate)).data.claimableAssets).toBe(2);
+
+  // Registering the same mint again must fail — otherwise claimable_assets
+  // could be inflated without a matching real asset behind each increment.
+  await expect(
+    sendRegisterAsset(client, {
+      heir: heir.address,
+      amount: 1n,
+      mint: mint.address,
+      vaultTokenAccount,
+      authorityTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    }),
+  ).rejects.toThrow();
+
+  expect((await getEstate(client, estate)).data.claimableAssets).toBe(2);
+  expect(await getTokenBalance(client, vaultTokenAccount)).toBe(100_000n);
 });

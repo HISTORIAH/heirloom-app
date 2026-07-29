@@ -60,6 +60,8 @@ export type UpdateHeirInstruction<
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountNewVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
+  TAccountAssetRecord extends string | AccountMeta<string> = string,
+  TAccountNewAssetRecord extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
@@ -86,6 +88,12 @@ export type UpdateHeirInstruction<
         ? WritableAccount<TAccountNewVaultTokenAccount>
         : TAccountNewVaultTokenAccount,
       TAccountMint extends string ? WritableAccount<TAccountMint> : TAccountMint,
+      TAccountAssetRecord extends string
+        ? WritableAccount<TAccountAssetRecord>
+        : TAccountAssetRecord,
+      TAccountNewAssetRecord extends string
+        ? WritableAccount<TAccountNewAssetRecord>
+        : TAccountNewAssetRecord,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -132,6 +140,8 @@ export type UpdateHeirAsyncInput<
   TAccountVaultTokenAccount extends string = string,
   TAccountNewVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountAssetRecord extends string = string,
+  TAccountNewAssetRecord extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -146,6 +156,8 @@ export type UpdateHeirAsyncInput<
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   newVaultTokenAccount?: Address<TAccountNewVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  assetRecord?: Address<TAccountAssetRecord>;
+  newAssetRecord?: Address<TAccountNewAssetRecord>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -162,6 +174,8 @@ export async function getUpdateHeirInstructionAsync<
   TAccountVaultTokenAccount extends string,
   TAccountNewVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountAssetRecord extends string,
+  TAccountNewAssetRecord extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -178,6 +192,8 @@ export async function getUpdateHeirInstructionAsync<
     TAccountVaultTokenAccount,
     TAccountNewVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
+    TAccountNewAssetRecord,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram
@@ -196,6 +212,8 @@ export async function getUpdateHeirInstructionAsync<
     TAccountVaultTokenAccount,
     TAccountNewVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
+    TAccountNewAssetRecord,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram
@@ -216,6 +234,8 @@ export async function getUpdateHeirInstructionAsync<
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     newVaultTokenAccount: { value: input.newVaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
+    newAssetRecord: { value: input.newAssetRecord ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -276,6 +296,8 @@ export async function getUpdateHeirInstructionAsync<
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("newVaultTokenAccount", accounts.newVaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("assetRecord", accounts.assetRecord),
+      getAccountMeta("newAssetRecord", accounts.newAssetRecord),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
@@ -294,6 +316,8 @@ export async function getUpdateHeirInstructionAsync<
     TAccountVaultTokenAccount,
     TAccountNewVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
+    TAccountNewAssetRecord,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram
@@ -311,6 +335,8 @@ export type UpdateHeirInput<
   TAccountVaultTokenAccount extends string = string,
   TAccountNewVaultTokenAccount extends string = string,
   TAccountMint extends string = string,
+  TAccountAssetRecord extends string = string,
+  TAccountNewAssetRecord extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -325,6 +351,8 @@ export type UpdateHeirInput<
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   newVaultTokenAccount?: Address<TAccountNewVaultTokenAccount>;
   mint?: Address<TAccountMint>;
+  assetRecord?: Address<TAccountAssetRecord>;
+  newAssetRecord?: Address<TAccountNewAssetRecord>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -341,6 +369,8 @@ export function getUpdateHeirInstruction<
   TAccountVaultTokenAccount extends string,
   TAccountNewVaultTokenAccount extends string,
   TAccountMint extends string,
+  TAccountAssetRecord extends string,
+  TAccountNewAssetRecord extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -357,6 +387,8 @@ export function getUpdateHeirInstruction<
     TAccountVaultTokenAccount,
     TAccountNewVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
+    TAccountNewAssetRecord,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram
@@ -374,6 +406,8 @@ export function getUpdateHeirInstruction<
   TAccountVaultTokenAccount,
   TAccountNewVaultTokenAccount,
   TAccountMint,
+  TAccountAssetRecord,
+  TAccountNewAssetRecord,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram,
   TAccountSystemProgram
@@ -393,6 +427,8 @@ export function getUpdateHeirInstruction<
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     newVaultTokenAccount: { value: input.newVaultTokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
+    newAssetRecord: { value: input.newAssetRecord ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -429,6 +465,8 @@ export function getUpdateHeirInstruction<
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("newVaultTokenAccount", accounts.newVaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
+      getAccountMeta("assetRecord", accounts.assetRecord),
+      getAccountMeta("newAssetRecord", accounts.newAssetRecord),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
@@ -447,6 +485,8 @@ export function getUpdateHeirInstruction<
     TAccountVaultTokenAccount,
     TAccountNewVaultTokenAccount,
     TAccountMint,
+    TAccountAssetRecord,
+    TAccountNewAssetRecord,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountSystemProgram
@@ -469,9 +509,11 @@ export type ParsedUpdateHeirInstruction<
     vaultTokenAccount?: TAccountMetas[7] | undefined;
     newVaultTokenAccount?: TAccountMetas[8] | undefined;
     mint?: TAccountMetas[9] | undefined;
-    tokenProgram: TAccountMetas[10];
-    associatedTokenProgram: TAccountMetas[11];
-    systemProgram: TAccountMetas[12];
+    assetRecord?: TAccountMetas[10] | undefined;
+    newAssetRecord?: TAccountMetas[11] | undefined;
+    tokenProgram: TAccountMetas[12];
+    associatedTokenProgram: TAccountMetas[13];
+    systemProgram: TAccountMetas[14];
   };
   data: UpdateHeirInstructionData;
 };
@@ -484,10 +526,10 @@ export function parseUpdateHeirInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpdateHeirInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 15) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 13,
+      expectedAccountMetas: 15,
     });
   }
   let accountIndex = 0;
@@ -513,6 +555,8 @@ export function parseUpdateHeirInstruction<
       vaultTokenAccount: getNextOptionalAccount(),
       newVaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
+      assetRecord: getNextOptionalAccount(),
+      newAssetRecord: getNextOptionalAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),

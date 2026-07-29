@@ -52,6 +52,7 @@ import {
   fetchEstate,
   findEstatePda,
   findVaultPda,
+  findAssetRecordPda,
   TREASURY_ADDRESS,
 } from "@historiah/heirloom";
 
@@ -252,6 +253,11 @@ export async function deriveEstateVault(authority: Address, heir: Address) {
   return { estate, vault };
 }
 
+export async function deriveAssetRecord(estate: Address, mint: Address): Promise<Address> {
+  const [assetRecord] = await findAssetRecordPda({ estate, mint });
+  return assetRecord;
+}
+
 export async function getLamportBalance(client: Client, account: Address): Promise<bigint> {
   return (await client.rpc.getBalance(account, { commitment: "confirmed" }).send()).value;
 }
@@ -315,6 +321,8 @@ export const sendInitialize = async (
     heir: heir.address,
   });
 
+  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
+
   const ix = await getInitializeInstructionAsync({
     authority,
     heir: heir.address,
@@ -330,6 +338,7 @@ export const sendInitialize = async (
     vaultTokenAccount: args.vaultTokenAccount,
     authorityTokenAccount: args.authorityTokenAccount,
     hbSigner: args.hbSigner,
+    assetRecord,
   });
 
   await sendInstruction(client, authority, ix);
@@ -391,8 +400,14 @@ export const sendUpdateHeir = async (
   ]);
 
   let newVaultTokenAccount: Address | undefined;
+  let assetRecord: Address | undefined;
+  let newAssetRecord: Address | undefined;
   if (mint && tokenProgram) {
     newVaultTokenAccount = await deriveAta(newVault, mint, tokenProgram);
+    [assetRecord, newAssetRecord] = await Promise.all([
+      deriveAssetRecord(estate, mint),
+      deriveAssetRecord(newEstate, mint),
+    ]);
   }
 
   const ix = await getUpdateHeirInstructionAsync({
@@ -405,6 +420,8 @@ export const sendUpdateHeir = async (
     vault,
     estate,
     tokenProgram: args.tokenProgram,
+    assetRecord,
+    newAssetRecord,
     vaultTokenAccount: args.vaultTokenAccount,
     newVaultTokenAccount,
   });
@@ -433,6 +450,8 @@ export const sendRevoke = async (
       ? { vault: args.vault, estate: args.estate }
       : await deriveEstateVault(authority.address, args.heir);
 
+  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
+
   const ix = await getRevokeInstructionAsync({
     authority,
     heir: args.heir,
@@ -444,6 +463,7 @@ export const sendRevoke = async (
     authorityTokenAccount: args.authorityTokenAccount,
     treasuryTokenAccount: args.treasuryTokenAccount,
     treasury: TREASURY_ADDRESS,
+    assetRecord,
   });
 
   await sendInstruction(client, authority, ix);
@@ -472,6 +492,8 @@ export const sendClaim = async (
       ? { vault: args.vault, estate: args.estate }
       : await deriveEstateVault(authority.address, heir.address);
 
+  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
+
   const ix = await getClaimInstructionAsync({
     heir,
     authority: authority.address,
@@ -484,6 +506,7 @@ export const sendClaim = async (
     delegate: args.delegate,
     treasury: TREASURY_ADDRESS,
     treasuryTokenAccount: args.treasuryTokenAccount,
+    assetRecord,
   });
 
   await sendInstruction(client, heir, ix);
@@ -532,6 +555,8 @@ export const sendRegisterAsset = async (
     findEstatePda({ authority: authority.address, heir: args.heir }),
   ]);
 
+  const assetRecord = args.mint ? await deriveAssetRecord(estate[0], args.mint) : undefined;
+
   const ix = await getRegisterAssetInstructionAsync({
     authority,
     heir: args.heir,
@@ -542,6 +567,7 @@ export const sendRegisterAsset = async (
     vaultTokenAccount: args.vaultTokenAccount,
     tokenProgram: args.tokenProgram,
     authorityTokenAccount: args.authorityTokenAccount,
+    assetRecord,
   });
 
   await sendInstruction(client, authority, ix);

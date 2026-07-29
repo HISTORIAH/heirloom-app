@@ -7,7 +7,7 @@ use anchor_spl::{
     token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-use crate::{error::HeirloomError, Estate, Vault};
+use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
 
 #[derive(Accounts)]
 pub struct RegisterAsset<'info> {
@@ -40,6 +40,20 @@ pub struct RegisterAsset<'info> {
     pub vault_token_account: Option<UncheckedAccount<'info>>,
 
     pub mint: Option<InterfaceAccount<'info, Mint>>,
+
+    /// Marker PDA proving mint is registered as claimable asset for current estate
+    #[account(
+        init,
+        payer = authority,
+        space = AssetRecord::LEN,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            mint.as_ref().unwrap().key().as_ref(),
+        ],
+        bump,
+    )]
+    pub asset_record: Option<Account<'info, AssetRecord>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -87,6 +101,8 @@ impl<'info> RegisterAsset<'info> {
 
                 token_interface::transfer_checked(cpi_context, amount, mint.decimals)?;
 
+                ctx.accounts.asset_record.as_mut().unwrap().bump = ctx.bumps.asset_record.unwrap();
+
                 ctx.accounts.estate.claimable_assets = ctx
                     .accounts
                     .estate
@@ -119,12 +135,13 @@ impl<'info> RegisterAsset<'info> {
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-                let vault_ta = self
-                    .vault_token_account
+                self.vault_token_account
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-                require!(vault_ta.data_is_empty(), HeirloomError::InvalidAccount);
+                self.asset_record
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
             }
             None => {
                 if self.vault_token_account.is_some() || self.authority_token_account.is_some() {

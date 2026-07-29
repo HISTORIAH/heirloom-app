@@ -1,6 +1,32 @@
 {
   "idl": "target/idl/heirloom.json",
-  "before": [],
+  "before": [
+    {
+      "from": "@codama/visitors#updateInstructionsVisitor",
+      "args": [
+        {
+          "initialize": {
+            "accounts": { "assetRecord": { "defaultValue": false } }
+          },
+          "registerAsset": {
+            "accounts": { "assetRecord": { "defaultValue": false } }
+          },
+          "claim": {
+            "accounts": { "assetRecord": { "defaultValue": false } }
+          },
+          "revoke": {
+            "accounts": { "assetRecord": { "defaultValue": false } }
+          },
+          "updateHeir": {
+            "accounts": {
+              "assetRecord": { "defaultValue": false },
+              "newAssetRecord": { "defaultValue": false }
+            }
+          }
+        }
+      ]
+    }
+  ],
   "scripts": {
     "js": {
       "from": "@codama/renderers-js",

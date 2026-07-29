@@ -35,6 +35,7 @@ import {
   getEstateAddress,
   getVaultAddress,
   getEstateVaultPair,
+  getAssetRecordAddress,
 } from "@/lib/heirloom/pdas";
 
 // Re-export types used by consumers
@@ -349,7 +350,8 @@ export async function initialize(
   input: Omit<InitializeAsyncInput, "authority" | "estate" | "vault">,
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, input.heir);
-  const ix = await buildInitializeIx(authority, estate, vault, input);
+  const assetRecord = input.mint ? await getAssetRecordAddress(estate, input.mint) : undefined;
+  const ix = await buildInitializeIx(authority, estate, vault, { ...input, assetRecord });
   return sendTx(client, authority, ix);
 }
 
@@ -389,12 +391,14 @@ export async function revoke(
   },
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, input.heir);
+  const assetRecord = input.mint ? await getAssetRecordAddress(estate, input.mint) : undefined;
   const ix = await buildRevokeIx(authority, input.heir, estate, vault, {
     mint: input.mint,
     tokenProgram: input.tokenProgram,
     vaultTokenAccount: input.vaultTokenAccount,
     authorityTokenAccount: input.authorityTokenAccount,
     treasuryTokenAccount: input.treasuryTokenAccount,
+    assetRecord,
   });
   return sendTx(client, authority, ix);
 }
@@ -413,6 +417,7 @@ export async function claim(
   },
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(input.authority, heir.address);
+  const assetRecord = input.mint ? await getAssetRecordAddress(estate, input.mint) : undefined;
   const ix = await buildClaimIx(heir, input.authority, estate, vault, {
     mint: input.mint,
     tokenProgram: input.tokenProgram,
@@ -420,6 +425,7 @@ export async function claim(
     heirTokenAccount: input.heirTokenAccount,
     treasuryTokenAccount: input.treasuryTokenAccount,
     delegate: input.delegate,
+    assetRecord,
   });
   return sendTx(client, heir, ix);
 }
@@ -446,9 +452,10 @@ export async function registerAsset(
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, input.heir);
   const tokenProgram = input.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
-  const [[vaultTokenAccount], [authorityTokenAccount]] = await Promise.all([
+  const [[vaultTokenAccount], [authorityTokenAccount], assetRecord] = await Promise.all([
     findAssociatedTokenPda({ owner: vault, mint: input.mint, tokenProgram }),
     findAssociatedTokenPda({ owner: authority.address, mint: input.mint, tokenProgram }),
+    getAssetRecordAddress(estate, input.mint),
   ]);
   const ix = await buildRegisterAssetIx(
     authority,
@@ -459,6 +466,7 @@ export async function registerAsset(
     input.amount,
     vaultTokenAccount,
     authorityTokenAccount,
+    assetRecord,
     tokenProgram,
   );
   return sendTx(client, authority, ix);
@@ -485,12 +493,14 @@ export async function revokeAll(
   const ixs: Instruction[] = [];
 
   for (const t of tokens) {
+    const assetRecord = await getAssetRecordAddress(estate, t.mint);
     const ix = await buildRevokeIx(authority, heir, estate, vault, {
       mint: t.mint,
       tokenProgram: t.tokenProgram,
       vaultTokenAccount: t.vaultTokenAccount,
       authorityTokenAccount: t.authorityTokenAccount,
       treasuryTokenAccount: t.treasuryTokenAccount,
+      assetRecord,
     });
     ixs.push(ix as Instruction);
   }
@@ -515,6 +525,7 @@ export async function claimAll(
   const ixs: Instruction[] = [];
 
   for (const t of tokens) {
+    const assetRecord = await getAssetRecordAddress(estate, t.mint);
     const ix = await buildClaimIx(heir, authority, estate, vault, {
       mint: t.mint,
       tokenProgram: t.tokenProgram,
@@ -522,6 +533,7 @@ export async function claimAll(
       heirTokenAccount: t.heirTokenAccount,
       treasuryTokenAccount: t.treasuryTokenAccount,
       delegate,
+      assetRecord,
     });
     ixs.push(ix as Instruction);
   }
@@ -562,12 +574,18 @@ export async function updateHeirAll(
         tokenProgram: token.tokenProgram as Address,
       });
     }
+    const [assetRecord, newAssetRecord] = await Promise.all([
+      getAssetRecordAddress(estate, token.mint as Address),
+      getAssetRecordAddress(newEstate, token.mint as Address),
+    ]);
 
     const ix = await buildUpdateHeirIx(authority, heir, newHeir, newEstate, newVault, estate, vault, {
       mint: token.mint as Address,
       tokenProgram: token.tokenProgram as Address,
       vaultTokenAccount: token.ata as Address,
       newVaultTokenAccount,
+      assetRecord,
+      newAssetRecord,
     });
     ixs.push(ix as Instruction);
   }
@@ -588,14 +606,21 @@ export async function initializeWithTokens(
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, initInput.heir);
 
-  const initIx = await buildInitializeIx(authority, estate, vault, initInput);
+  const initAssetRecord = initInput.mint
+    ? await getAssetRecordAddress(estate, initInput.mint)
+    : undefined;
+  const initIx = await buildInitializeIx(authority, estate, vault, {
+    ...initInput,
+    assetRecord: initAssetRecord,
+  });
 
   const registerIxs = await Promise.all(
     extraTokens.map(async (tok) => {
       const tokenProgram = tok.tokenProgram ?? TOKEN_PROGRAM_ADDRESS;
-      const [[vaultTokenAccount], [authorityTokenAccount]] = await Promise.all([
+      const [[vaultTokenAccount], [authorityTokenAccount], assetRecord] = await Promise.all([
         findAssociatedTokenPda({ owner: vault, mint: tok.mint, tokenProgram }),
         findAssociatedTokenPda({ owner: authority.address, mint: tok.mint, tokenProgram }),
+        getAssetRecordAddress(estate, tok.mint),
       ]);
       return buildRegisterAssetIx(
         authority,
@@ -606,6 +631,7 @@ export async function initializeWithTokens(
         tok.amount,
         vaultTokenAccount,
         authorityTokenAccount,
+        assetRecord,
         tokenProgram,
       );
     }),

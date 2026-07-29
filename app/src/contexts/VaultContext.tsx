@@ -41,7 +41,7 @@ export interface EstateData {
   pauseDuration: number;
   pausedUntil: number;
   createdAt: number;
-  isDeferred: boolean;
+  isMigrating: boolean;
   delegate: string | null;
   hbSigner: string | null;
   claimableAssets: number;
@@ -183,7 +183,7 @@ const VaultProviderInner: React.FC<{
             pauseDuration: Number(estate.data.pauseDuration),
             pausedUntil,
             createdAt,
-            isDeferred: estate.data.isDeferred,
+            isMigrating: estate.data.isMigrating,
             delegate: estate.data.delegate ? String(estate.data.delegate) : null,
             hbSigner: estate.data.hbSigner ? String(estate.data.hbSigner) : null,
             claimableAssets: estate.data.claimableAssets,

@@ -1,5 +1,5 @@
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { findEstatePda, findVaultPda } from "@historiah/heirloom";
+import { findAssetRecordPda, findEstatePda, findVaultPda } from "@historiah/heirloom";
 import { type Address } from "@solana/kit";
 
 export async function getEstateAddress(authority: Address, heir: Address): Promise<Address> {
@@ -9,6 +9,11 @@ export async function getEstateAddress(authority: Address, heir: Address): Promi
 
 export async function getVaultAddress(authority: Address, heir: Address): Promise<Address> {
   const [pda] = await findVaultPda({ authority, heir });
+  return pda;
+}
+
+export async function getAssetRecordAddress(estate: Address, mint: Address): Promise<Address> {
+  const [pda] = await findAssetRecordPda({ estate, mint });
   return pda;
 }
 

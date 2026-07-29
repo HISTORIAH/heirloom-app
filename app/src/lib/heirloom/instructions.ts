@@ -65,6 +65,7 @@ export async function buildRevokeIx(
     vaultTokenAccount?: Address;
     authorityTokenAccount?: Address;
     treasuryTokenAccount?: Address;
+    assetRecord?: Address;
   },
 ): Promise<Instruction> {
   return getRevokeInstructionAsync({
@@ -78,6 +79,7 @@ export async function buildRevokeIx(
     vaultTokenAccount: opts?.vaultTokenAccount,
     authorityTokenAccount: opts?.authorityTokenAccount,
     treasuryTokenAccount: opts?.treasuryTokenAccount,
+    assetRecord: opts?.assetRecord,
   });
 }
 
@@ -93,6 +95,7 @@ export async function buildClaimIx(
     heirTokenAccount?: Address;
     treasuryTokenAccount?: Address;
     delegate?: Address;
+    assetRecord?: Address;
   },
 ): Promise<Instruction> {
   return getClaimInstructionAsync({
@@ -107,6 +110,7 @@ export async function buildClaimIx(
     heirTokenAccount: opts?.heirTokenAccount,
     treasuryTokenAccount: opts?.treasuryTokenAccount,
     delegate: opts?.delegate,
+    assetRecord: opts?.assetRecord,
   });
 }
 
@@ -133,6 +137,7 @@ export async function buildRegisterAssetIx(
   amount: bigint,
   vaultTokenAccount: Address,
   authorityTokenAccount: Address,
+  assetRecord?: Address,
   tokenProgram?: Address,
 ): Promise<Instruction> {
   return getRegisterAssetInstructionAsync({
@@ -145,6 +150,7 @@ export async function buildRegisterAssetIx(
     vault,
     vaultTokenAccount,
     authorityTokenAccount,
+    assetRecord,
   });
 }
 
@@ -161,6 +167,8 @@ export async function buildUpdateHeirIx(
     tokenProgram?: Address;
     vaultTokenAccount?: Address;
     newVaultTokenAccount?: Address;
+    assetRecord?: Address;
+    newAssetRecord?: Address;
   },
 ): Promise<Instruction> {
   return getUpdateHeirInstructionAsync({
@@ -175,6 +183,8 @@ export async function buildUpdateHeirIx(
     tokenProgram: opts?.tokenProgram,
     vaultTokenAccount: opts?.vaultTokenAccount,
     newVaultTokenAccount: opts?.newVaultTokenAccount,
+    assetRecord: opts?.assetRecord,
+    newAssetRecord: opts?.newAssetRecord,
   });
 }
 

@@ -37,6 +37,12 @@ pub struct Claim {
           
               
           pub mint: Option<solana_address::Address>,
+                /// Proves `mint` was actually registered as a claimable asset for this
+/// estate, rather than an arbitrary vault-owned token account.
+
+    
+              
+          pub asset_record: Option<solana_address::Address>,
           
               
           pub treasury: solana_address::Address,
@@ -61,7 +67,7 @@ impl Claim {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.heir,
             true
@@ -114,6 +120,17 @@ impl Claim {
                                                                 if let Some(mint) = self.mint {
               accounts.push(solana_instruction::AccountMeta::new(
                 mint,
+                false,
+              ));
+            } else {
+              accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+              ));
+            }
+                                                                if let Some(asset_record) = self.asset_record {
+              accounts.push(solana_instruction::AccountMeta::new(
+                asset_record,
                 false,
               ));
             } else {
@@ -197,11 +214,12 @@ impl Default for ClaimInstructionData {
                 ///   5. `[writable]` vault
                       ///   6. `[writable, optional]` vault_token_account
                       ///   7. `[writable, optional]` mint
-                      ///   8. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
-                      ///   9. `[writable, optional]` treasury_token_account
-                ///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   11. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                      ///   8. `[writable, optional]` asset_record
+                      ///   9. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
+                      ///   10. `[writable, optional]` treasury_token_account
+                ///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+                ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ClaimBuilder {
             heir: Option<solana_address::Address>,
@@ -212,6 +230,7 @@ pub struct ClaimBuilder {
                 vault: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
                 mint: Option<solana_address::Address>,
+                asset_record: Option<solana_address::Address>,
                 treasury: Option<solana_address::Address>,
                 treasury_token_account: Option<solana_address::Address>,
                 token_program: Option<solana_address::Address>,
@@ -268,6 +287,14 @@ impl ClaimBuilder {
                         self.mint = mint;
                     self
     }
+            /// `[optional account]`
+/// Proves `mint` was actually registered as a claimable asset for this
+/// estate, rather than an arbitrary vault-owned token account.
+#[inline(always)]
+    pub fn asset_record(&mut self, asset_record: Option<solana_address::Address>) -> &mut Self {
+                        self.asset_record = asset_record;
+                    self
+    }
             /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
 #[inline(always)]
     pub fn treasury(&mut self, treasury: solana_address::Address) -> &mut Self {
@@ -321,6 +348,7 @@ impl ClaimBuilder {
                                         vault: self.vault.expect("vault is not set"),
                                         vault_token_account: self.vault_token_account,
                                         mint: self.mint,
+                                        asset_record: self.asset_record,
                                         treasury: self.treasury.unwrap_or(solana_address::address!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q")),
                                         treasury_token_account: self.treasury_token_account,
                                         token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
@@ -358,6 +386,12 @@ impl ClaimBuilder {
                 
                     
               pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                        /// Proves `mint` was actually registered as a claimable asset for this
+/// estate, rather than an arbitrary vault-owned token account.
+
+      
+                    
+              pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
                     
               pub treasury: &'b solana_account_info::AccountInfo<'a>,
@@ -403,6 +437,12 @@ pub struct ClaimCpi<'a, 'b> {
           
               
           pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                /// Proves `mint` was actually registered as a claimable asset for this
+/// estate, rather than an arbitrary vault-owned token account.
+
+    
+              
+          pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
           
               
           pub treasury: &'b solana_account_info::AccountInfo<'a>,
@@ -435,6 +475,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
               vault: accounts.vault,
               vault_token_account: accounts.vault_token_account,
               mint: accounts.mint,
+              asset_record: accounts.asset_record,
               treasury: accounts.treasury,
               treasury_token_account: accounts.treasury_token_account,
               token_program: accounts.token_program,
@@ -462,7 +503,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(13+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.heir.key,
             true
@@ -523,6 +564,17 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
               false,
             ));
           }
+                                          if let Some(asset_record) = self.asset_record {
+            accounts.push(solana_instruction::AccountMeta::new(
+              *asset_record.key,
+              false,
+            ));
+          } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+              crate::HEIRLOOM_ID,
+              false,
+            ));
+          }
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.treasury.key,
             false
@@ -564,7 +616,7 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(14 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.heir.clone());
                         account_infos.push(self.authority.clone());
@@ -581,6 +633,9 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
         }
                         if let Some(mint) = self.mint {
           account_infos.push(mint.clone());
+        }
+                        if let Some(asset_record) = self.asset_record {
+          account_infos.push(asset_record.clone());
         }
                         account_infos.push(self.treasury.clone());
                         if let Some(treasury_token_account) = self.treasury_token_account {
@@ -611,11 +666,12 @@ impl<'a, 'b> ClaimCpi<'a, 'b> {
                 ///   5. `[writable]` vault
                       ///   6. `[writable, optional]` vault_token_account
                       ///   7. `[writable, optional]` mint
-                ///   8. `[writable]` treasury
-                      ///   9. `[writable, optional]` treasury_token_account
-          ///   10. `[]` token_program
-          ///   11. `[]` associated_token_program
-          ///   12. `[]` system_program
+                      ///   8. `[writable, optional]` asset_record
+                ///   9. `[writable]` treasury
+                      ///   10. `[writable, optional]` treasury_token_account
+          ///   11. `[]` token_program
+          ///   12. `[]` associated_token_program
+          ///   13. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct ClaimCpiBuilder<'a, 'b> {
   instruction: Box<ClaimCpiBuilderInstruction<'a, 'b>>,
@@ -633,6 +689,7 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
               vault: None,
               vault_token_account: None,
               mint: None,
+              asset_record: None,
               treasury: None,
               treasury_token_account: None,
               token_program: None,
@@ -684,6 +741,14 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
 #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.mint = mint;
+                    self
+    }
+      /// `[optional account]`
+/// Proves `mint` was actually registered as a claimable asset for this
+/// estate, rather than an arbitrary vault-owned token account.
+#[inline(always)]
+    pub fn asset_record(&mut self, asset_record: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
+                        self.instruction.asset_record = asset_record;
                     self
     }
       #[inline(always)]
@@ -753,6 +818,8 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                   
           mint: self.instruction.mint,
                   
+          asset_record: self.instruction.asset_record,
+                  
           treasury: self.instruction.treasury.expect("treasury is not set"),
                   
           treasury_token_account: self.instruction.treasury_token_account,
@@ -778,6 +845,7 @@ struct ClaimCpiBuilderInstruction<'a, 'b> {
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+                asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 treasury: Option<&'b solana_account_info::AccountInfo<'a>>,
                 treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 token_program: Option<&'b solana_account_info::AccountInfo<'a>>,

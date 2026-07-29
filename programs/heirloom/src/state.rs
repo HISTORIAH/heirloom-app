@@ -68,6 +68,22 @@ impl Vault {
     + 1; // bump
 }
 
+/// Marker PDA proving a given mint was registered as a claimable asset for
+/// an estate. Its existence (not the vault ATA's) is the source of truth,
+/// since ATA creation is permissionless and can't be used as a registration
+/// check without allowing front-running / double counting.
+#[account]
+pub struct AssetRecord {
+    pub bump: u8,
+}
+
+impl AssetRecord {
+    pub const SEED: &[u8] = b"asset";
+
+    pub const LEN: usize = 8 // discriminator
+    + 1; // bump
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, PartialEq, Eq, Copy, Clone)]
 #[borsh(use_discriminant = true)]
 pub enum DepositType {

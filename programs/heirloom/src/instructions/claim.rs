@@ -8,7 +8,7 @@ use crate::{
     constants::{CLAIM_FEE_BPS, TREASURY},
     error::HeirloomError,
     helpers::{calculate_distribution, close_pda},
-    Estate, Vault,
+    AssetRecord, Estate, Vault,
 };
 
 #[derive(Accounts)]
@@ -47,6 +47,20 @@ pub struct Claim<'info> {
 
     #[account(mut)]
     pub mint: Option<InterfaceAccount<'info, Mint>>,
+
+    /// Proves `mint` was actually registered as a claimable asset for this
+    /// estate, rather than an arbitrary vault-owned token account.
+    #[account(
+        mut,
+        close = heir,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            mint.as_ref().unwrap().key().as_ref(),
+        ],
+        bump = asset_record.bump,
+    )]
+    pub asset_record: Option<Account<'info, AssetRecord>>,
 
     /// CHECK: treasury address
     #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
@@ -109,6 +123,10 @@ impl<'info> Claim<'info> {
                 }
                 let _treasury_ta = self
                     .treasury_token_account
+                    .as_ref()
+                    .ok_or(HeirloomError::MissingTokenAccounts)?;
+
+                self.asset_record
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 

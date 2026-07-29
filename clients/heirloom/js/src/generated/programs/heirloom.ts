@@ -33,8 +33,11 @@ import {
   type SelfPlanAndSendFunctions,
 } from "@solana/program-client-core";
 import {
+  getAssetRecordCodec,
   getEstateCodec,
   getVaultCodec,
+  type AssetRecord,
+  type AssetRecordArgs,
   type Estate,
   type EstateArgs,
   type Vault,
@@ -86,12 +89,20 @@ import {
   type UpdateHeirAsyncInput,
   type WithdrawProtectedLuloAsyncInput,
 } from "../instructions";
-import { findEstatePda, findNewEstatePda, findNewVaultPda, findVaultPda } from "../pdas";
+import {
+  findAssetRecordPda,
+  findEstatePda,
+  findNewAssetRecordPda,
+  findNewEstatePda,
+  findNewVaultPda,
+  findVaultPda,
+} from "../pdas";
 
 export const HEIRLOOM_PROGRAM_ADDRESS =
   "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz" as Address<"heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz">;
 
 export enum HeirloomAccount {
+  AssetRecord,
   Estate,
   Vault,
 }
@@ -100,6 +111,17 @@ export function identifyHeirloomAccount(
   account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): HeirloomAccount {
   const data = "data" in account ? account.data : account;
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([26, 40, 78, 169, 45, 6, 254, 10]),
+      ),
+      0,
+    )
+  ) {
+    return HeirloomAccount.AssetRecord;
+  }
   if (
     containsBytes(
       data,
@@ -392,6 +414,8 @@ export type HeirloomPlugin = {
 };
 
 export type HeirloomPluginAccounts = {
+  assetRecord: ReturnType<typeof getAssetRecordCodec> &
+    SelfFetchFunctions<AssetRecordArgs, AssetRecord>;
   estate: ReturnType<typeof getEstateCodec> & SelfFetchFunctions<EstateArgs, Estate>;
   vault: ReturnType<typeof getVaultCodec> & SelfFetchFunctions<VaultArgs, Vault>;
 };
@@ -435,8 +459,10 @@ export type HeirloomPluginInstructions = {
 export type HeirloomPluginPdas = {
   estate: typeof findEstatePda;
   vault: typeof findVaultPda;
+  assetRecord: typeof findAssetRecordPda;
   newEstate: typeof findNewEstatePda;
   newVault: typeof findNewVaultPda;
+  newAssetRecord: typeof findNewAssetRecordPda;
 };
 
 export type HeirloomPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
@@ -450,6 +476,7 @@ export function heirloomProgram() {
     return extendClient(client, {
       heirloom: <HeirloomPlugin>{
         accounts: {
+          assetRecord: addSelfFetchFunctions(client, getAssetRecordCodec()),
           estate: addSelfFetchFunctions(client, getEstateCodec()),
           vault: addSelfFetchFunctions(client, getVaultCodec()),
         },
@@ -481,8 +508,10 @@ export function heirloomProgram() {
         pdas: {
           estate: findEstatePda,
           vault: findVaultPda,
+          assetRecord: findAssetRecordPda,
           newEstate: findNewEstatePda,
           newVault: findNewVaultPda,
+          newAssetRecord: findNewAssetRecordPda,
         },
       },
     });
