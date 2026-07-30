@@ -206,7 +206,7 @@ const AppTour = () => {
       <Dialog open={finishPromptOpen} onOpenChange={setFinishPromptOpen}>
         <DialogContent className="neo-card-static max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">You're all set</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">You're all set</DialogTitle>
             <DialogDescription className="font-medium">
               Connect your wallet to create your first vault — we'll take you straight to the builder.
             </DialogDescription>

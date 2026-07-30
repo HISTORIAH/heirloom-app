@@ -115,7 +115,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                   <Plus className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-normal leading-tight text-foreground">Add Asset</h3>
+                  <h3 className="text-xl leading-tight text-foreground">Add Asset</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
                     Add a new token type to this vault.
                   </p>
@@ -172,7 +172,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                   value={addAssetAmount || ""}
                   onChange={(e) => setAddAssetAmount(Math.max(0, Number(e.target.value)))}
                   placeholder="0"
-                  className="neo-input w-full font-black text-2xl text-center"
+                  className="neo-input w-full font-bold text-2xl text-center"
                 />
                 <div className="flex gap-2 mt-3">
                   {TOPUP_PCTS.map(({ pct, label, bg }) => (

@@ -88,7 +88,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
                   <UserPlus className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-normal leading-tight text-foreground">Change Heir</h3>
+                  <h3 className="text-xl leading-tight text-foreground">Change Heir</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
                     Transfer estate to a different heir address.
                   </p>

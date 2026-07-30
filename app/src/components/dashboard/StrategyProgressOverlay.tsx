@@ -57,7 +57,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
           </div>
         </div>
 
-        <h2 className="text-2xl font-normal mb-2">
+        <h2 className="text-2xl mb-2">
           {title || (isComplete ? "Done!" : isError ? "Failed" : "Processing...")}
         </h2>
         <p className="text-sm font-medium text-muted-foreground mb-6">

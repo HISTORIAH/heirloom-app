@@ -35,7 +35,7 @@ const NavBar = () => {
     <>
       <nav className="border-b-4 border-foreground bg-background sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
-          <a href="/" className="text-2xl md:text-3xl font-normal tracking-tight font-display">
+          <a href="/" className="text-2xl md:text-3xl font-bold tracking-tight font-display">
             Heirloom
           </a>
 

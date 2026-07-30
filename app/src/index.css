@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -74,7 +74,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    @apply font-display font-bold;
   }
 
   ::selection {
@@ -228,7 +228,7 @@
   }
 
   .neo-step-dot {
-    @apply w-10 h-10 md:w-12 md:h-12 neo-border rounded-full flex items-center justify-center font-black text-sm md:text-base transition-all duration-300;
+    @apply w-10 h-10 md:w-12 md:h-12 neo-border rounded-full flex items-center justify-center font-bold text-sm md:text-base transition-all duration-300;
   }
   .neo-step-dot.active {
     @apply bg-accent-lime scale-110;

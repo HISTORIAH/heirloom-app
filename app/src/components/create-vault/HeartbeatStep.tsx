@@ -65,7 +65,7 @@ const HeartbeatStep: React.FC<Props> = ({
             style={{ accentColor: "hsl(var(--accent-cyan))" }}
           />
           <div className="flex items-baseline gap-2 mb-3.5">
-            <span className="text-5xl font-display leading-none">{heartbeatDays}</span>
+            <span className="text-5xl font-display font-bold tabular-nums leading-none">{heartbeatDays}</span>
             <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">DAYS</span>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -101,7 +101,7 @@ const HeartbeatStep: React.FC<Props> = ({
             style={{ accentColor: "hsl(var(--accent-cyan))" }}
           />
           <div className="flex items-baseline gap-2 mb-3.5">
-            <span className="text-5xl font-display leading-none">{graceDays}</span>
+            <span className="text-5xl font-display font-bold tabular-nums leading-none">{graceDays}</span>
             <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">DAYS</span>
           </div>
           <div className="flex gap-2 flex-wrap">

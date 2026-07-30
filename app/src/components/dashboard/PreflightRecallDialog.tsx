@@ -41,7 +41,7 @@ export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
             <Zap className="h-6 w-6" strokeWidth={2.5} />
           </div>
           <div>
-            <h3 className="text-xl font-normal leading-tight">
+            <h3 className="text-xl leading-tight">
               Active Strategies Detected
             </h3>
             <p className="text-sm font-medium text-muted-foreground mt-1">

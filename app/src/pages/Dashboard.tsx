@@ -406,7 +406,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="min-w-0">
             <span className="neo-badge bg-background mb-3 inline-block">Vault Status</span>
-            <h2 className="text-4xl md:text-5xl font-normal uppercase font-display">{config.label}</h2>
+            <h2 className="text-4xl md:text-5xl uppercase font-display">{config.label}</h2>
             <p className="text-sm font-medium text-foreground/60 mt-1">{config.description}</p>
           </div>
           {computedState !== "distributed" && (
@@ -452,7 +452,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Countdown */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-normal">{countdownLabel}</h3>
+          <h3 className="text-xl">{countdownLabel}</h3>
         </div>
         <div className="grid grid-cols-4 gap-3 md:gap-4">
           {[
@@ -465,7 +465,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               <div className="neo-border rounded-xl bg-secondary p-4 md:p-6">
                 <span
                   className={cn(
-                    "text-4xl md:text-6xl font-normal tabular-nums font-display",
+                    "text-4xl md:text-6xl font-bold tabular-nums font-display",
                     unit.label === "Sec" && "text-accent-lime",
                   )}
                 >
@@ -488,7 +488,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Assets — tabs for SOL / Tokens */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-normal">Assets</h3>
+          <h3 className="text-xl">Assets</h3>
           <span className="neo-badge bg-accent-lime !px-3 !py-0.5 !text-xs">
             {1 + estate.vaultTokens.length} asset{1 + estate.vaultTokens.length !== 1 ? "s" : ""}
           </span>
@@ -527,7 +527,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
                 </p>
               </div>
             </div>
-            <p className="text-4xl font-black tabular-nums mb-4">{solDisplay}</p>
+            <p className="text-4xl font-bold tabular-nums mb-4">{solDisplay}</p>
             <div className={cn("grid gap-2", showYieldStaking && !stakingStrategy?.active ? "grid-cols-2" : "grid-cols-1")}>
               <button
                 onClick={handleEnableStaking}
@@ -684,7 +684,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
               <div className="bg-accent-yellow neo-border rounded-xl p-2">
                 <Users className="h-5 w-5" strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl font-normal">Heir & Details</h3>
+              <h3 className="text-xl">Heir & Details</h3>
             </div>
             <div className="flex items-center gap-2">
               <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
@@ -722,7 +722,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (
         <div className="neo-card-static bg-secondary/30">
-          <h3 className="text-xl font-normal mb-6">Manage Estate</h3>
+          <h3 className="text-xl mb-6">Manage Estate</h3>
 
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Heir & Timing</p>
@@ -783,7 +783,7 @@ const DashboardPage = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="neo-card-static text-center max-w-md neo-slide-up">
           <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-          <h2 className="text-2xl font-normal mb-3">Loading Vault...</h2>
+          <h2 className="text-2xl mb-3">Loading Vault...</h2>
           <p className="text-muted-foreground font-medium">Fetching on-chain data</p>
         </div>
       </div>
@@ -800,7 +800,7 @@ const DashboardPage = () => {
 
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-[44px] font-normal tracking-tight font-display">
+          <h1 className="text-[44px] tracking-tight font-display">
             Your estates <span className="text-muted-foreground">({estates.length})</span>
           </h1>
           <Button variant="lime" size="lg" onClick={() => navigate("/create-vault")}>
@@ -840,7 +840,7 @@ const DashboardPage = () => {
                 <span className="text-lg">✦</span>
               </div>
             </div>
-            <h2 className="font-display text-3xl md:text-4xl font-normal mb-3">
+            <h2 className="font-display text-3xl md:text-4xl mb-3">
               {isConnected ? "No vault yet" : "Connect wallet"}
             </h2>
             <p className="text-muted-foreground font-medium mb-8 max-w-sm mx-auto">
@@ -868,15 +868,15 @@ const DashboardPage = () => {
             {/* Stats teaser */}
             <div className="mt-12 grid grid-cols-3 gap-4 max-w-md mx-auto">
               <div className="neo-border rounded-xl p-4 bg-background">
-                <p className="text-2xl font-black text-accent-pink">$2.4M</p>
+                <p className="text-2xl font-bold text-accent-pink">$2.4M</p>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Protected</p>
               </div>
               <div className="neo-border rounded-xl p-4 bg-background">
-                <p className="text-2xl font-black text-accent-cyan">847</p>
+                <p className="text-2xl font-bold text-accent-cyan">847</p>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Vaults</p>
               </div>
               <div className="neo-border rounded-xl p-4 bg-background">
-                <p className="text-2xl font-black text-accent-lime">0</p>
+                <p className="text-2xl font-bold text-accent-lime">0</p>
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Claims</p>
               </div>
             </div>
@@ -924,7 +924,7 @@ const DashboardPage = () => {
       >
         <DialogContent className="neo-card-static max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">All Estates</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">All Estates</DialogTitle>
             <DialogDescription className="font-medium">
               {estates.length} total · click one to switch
             </DialogDescription>

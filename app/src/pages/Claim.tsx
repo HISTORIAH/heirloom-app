@@ -258,7 +258,7 @@ const ClaimPageInner: React.FC<{
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
               <span className="neo-badge bg-accent-orange mb-4 inline-block">Heir Portal</span>
-              <h2 className="text-4xl md:text-5xl font-normal leading-[0.9]">
+              <h2 className="text-4xl md:text-5xl leading-[0.9]">
                 Your inheritance{" "}
                 <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">is waiting.</span>
               </h2>
@@ -270,7 +270,7 @@ const ClaimPageInner: React.FC<{
             {!isConnected && (
               <div className="neo-card-static text-center" data-tour="claim-connect">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-normal mb-2">Connect to find your inheritance</h3>
+                <h3 className="text-xl mb-2">Connect to find your inheritance</h3>
                 <p className="text-muted-foreground font-medium mb-4">
                   Connect your wallet to scan the chain for estates that name you as heir. Browse the page freely first.
                 </p>
@@ -283,7 +283,7 @@ const ClaimPageInner: React.FC<{
             {searching && (
               <div className="neo-card-static text-center">
                 <Loader2 className="h-10 w-10 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-                <h3 className="text-xl font-normal">Scanning chain for inheritances...</h3>
+                <h3 className="text-xl">Scanning chain for inheritances...</h3>
               </div>
             )}
 
@@ -302,7 +302,7 @@ const ClaimPageInner: React.FC<{
             {searchDone && !searching && inheritances.length === 0 && (
               <div className="neo-card-static text-center">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-normal mb-2">No Estates Found</h3>
+                <h3 className="text-xl mb-2">No Estates Found</h3>
                 <p className="text-muted-foreground font-medium mb-4">
                   {autoFetchFailed
                     ? "Look up an estate by the vault owner's Solana address."

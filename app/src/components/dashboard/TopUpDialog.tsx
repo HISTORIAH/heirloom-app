@@ -49,7 +49,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
               <Coins className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-normal leading-tight text-foreground">Top Up {symbol}</h3>
+              <h3 className="text-xl leading-tight text-foreground">Top Up {symbol}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Add {symbol} from your wallet to the vault.
               </p>
@@ -83,7 +83,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
             value={amount || ""}
             onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
             placeholder="0"
-            className="neo-input w-full font-black text-2xl text-center"
+            className="neo-input w-full font-bold text-2xl text-center"
           />
 
           <div className="flex gap-2">
