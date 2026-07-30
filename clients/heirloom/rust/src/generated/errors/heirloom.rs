@@ -58,6 +58,9 @@ pub enum HeirloomError {
     /// 6015 - Interval exceeds maximum of 365 days.
     #[error("Interval exceeds maximum of 365 days.")]
     IntervalTooLong = 0x177F,
+    /// 6016 - Interval cannot be less than 0.
+    #[error("Interval cannot be less than 0.")]
+    IntervalNegative = 0x1780,
 }
 
 impl From<HeirloomError> for solana_program_error::ProgramError {
