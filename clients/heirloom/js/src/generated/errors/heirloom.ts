@@ -46,12 +46,15 @@ export const HEIRLOOM_ERROR__MATH_OVERFLOW = 0x177d; // 6013
 export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x177e; // 6014
 /** IntervalTooLong: Interval exceeds maximum of 365 days. */
 export const HEIRLOOM_ERROR__INTERVAL_TOO_LONG = 0x177f; // 6015
+/** IntervalNegative: Interval cannot be less than 0. */
+export const HEIRLOOM_ERROR__INTERVAL_NEGATIVE = 0x1780; // 6016
 
 export type HeirloomError =
   | typeof HEIRLOOM_ERROR__ALREADY_DEFERRED
   | typeof HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED
   | typeof HEIRLOOM_ERROR__ESTATE_PAUSED
   | typeof HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE
+  | typeof HEIRLOOM_ERROR__INTERVAL_NEGATIVE
   | typeof HEIRLOOM_ERROR__INTERVAL_TOO_LONG
   | typeof HEIRLOOM_ERROR__INVALID_ACCOUNT
   | typeof HEIRLOOM_ERROR__LABEL_TOO_LONG
@@ -72,6 +75,7 @@ if (process.env["NODE_ENV"] !== "production") {
     [HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED]: `Defer window expired`,
     [HEIRLOOM_ERROR__ESTATE_PAUSED]: `Estate paused`,
     [HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE]: `Insufficient vault balance`,
+    [HEIRLOOM_ERROR__INTERVAL_NEGATIVE]: `Interval cannot be less than 0.`,
     [HEIRLOOM_ERROR__INTERVAL_TOO_LONG]: `Interval exceeds maximum of 365 days.`,
     [HEIRLOOM_ERROR__INVALID_ACCOUNT]: `Invalid account`,
     [HEIRLOOM_ERROR__LABEL_TOO_LONG]: `Label too long`,

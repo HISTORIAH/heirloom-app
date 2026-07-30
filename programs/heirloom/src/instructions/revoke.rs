@@ -113,7 +113,11 @@ impl<'info> Revoke<'info> {
                     HeirloomError::InvalidAccount
                 );
                 require_keys_eq!(authority_ta.mint, mint.key(), HeirloomError::MintMismatch);
-                require_keys_eq!(vault_ta.mint, mint.key(), HeirloomError::MintMismatch);
+                require_keys_eq!(
+                    authority_ta.owner,
+                    self.authority.key(),
+                    HeirloomError::InvalidAccount
+                );
 
                 require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
             }

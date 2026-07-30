@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{error::HeirloomError, Estate, MAX_INTERVAL_SECONDS};
+use crate::{error::HeirloomError, helpers::validate_interval, Estate};
 
 #[derive(Accounts)]
 pub struct UpdateField<'info> {
@@ -44,15 +44,15 @@ impl<'info> UpdateField<'info> {
 
         if authority_key == estate.authority {
             if let Some(hi) = heartbeat_interval {
-                require!(hi <= MAX_INTERVAL_SECONDS, HeirloomError::IntervalTooLong);
+                validate_interval(hi)?;
                 estate.heartbeat_interval = hi;
             }
             if let Some(gp) = grace_period {
-                require!(gp <= MAX_INTERVAL_SECONDS, HeirloomError::IntervalTooLong);
+                validate_interval(gp)?;
                 estate.grace_period = gp;
             }
             if let Some(pd) = pause_duration {
-                require!(pd <= MAX_INTERVAL_SECONDS, HeirloomError::IntervalTooLong);
+                validate_interval(pd)?;
                 estate.pause_duration = pd;
             }
             if let Some(l) = label {
