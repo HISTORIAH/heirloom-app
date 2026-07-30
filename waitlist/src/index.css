@@ -118,25 +118,12 @@
   .brand-lockup {
     display: inline-flex;
     align-items: center;
-    gap: .65rem;
-    color: #000;
-    font-size: clamp(1.15rem, 2vw, 1.55rem);
-    font-weight: 700;
-    letter-spacing: -.05em;
-    text-decoration: none;
   }
 
-  .brand-icon {
-    display: grid;
-    width: 2.25rem;
-    height: 2.25rem;
-    place-items: center;
-    border: 3px solid #000;
-    border-radius: .65rem;
-    background: #000;
-    color: hsl(var(--accent-lime));
-    font-weight: 700;
-    box-shadow: 3px 3px 0 hsl(var(--accent-lime));
+  /* The wordmark's own H is the mark — no separate icon beside it. */
+  .brand-lockup img {
+    height: clamp(1.75rem, 3vw, 2.25rem);
+    width: auto;
   }
 
   .status-pill {
