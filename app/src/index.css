@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
+/* Space Grotesk is loaded via <link> in index.html — an @import here would
+   delay discovery until this file downloads and parses. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

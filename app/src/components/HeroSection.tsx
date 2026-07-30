@@ -196,9 +196,12 @@ const HeroSection = () => {
 
       <div className="relative mx-auto max-w-7xl px-6 py-14 md:py-20">
         {/* The whole hero is one modular grid: black lines, mixed-color cells. */}
-        <div className="grid grid-cols-1 gap-1 border-4 border-foreground bg-foreground lg:grid-cols-12">
+        {/* The reveal animates this container, not the cells: the cells' opaque
+            fills are the only thing hiding the black scaffold behind them, so
+            fading them individually washes the whole hero grey. */}
+        <div className="neo-slide-up grid grid-cols-1 gap-1 border-4 border-foreground bg-foreground lg:grid-cols-12">
           {/* Headline cell */}
-          <div className="neo-slide-up flex flex-col justify-center bg-background p-8 md:p-12 lg:col-span-8 lg:row-span-2">
+          <div className="flex flex-col justify-center bg-background p-8 md:p-12 lg:col-span-8 lg:row-span-2">
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
               Solana Inheritance Protocol
             </span>
@@ -235,10 +238,7 @@ const HeroSection = () => {
           </div>
 
           {/* Yellow attribute cell — the gist, in three flat facts. */}
-          <div
-            className="neo-slide-up neo-section-yellow flex flex-col justify-center p-8 md:p-10 lg:col-span-4"
-            style={{ animationDelay: "0.1s" }}
-          >
+          <div className="neo-section-yellow flex flex-col justify-center p-8 md:p-10 lg:col-span-4">
             <span className="text-xs font-bold uppercase tracking-[0.25em]">The gist</span>
             <ul className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-4xl">
               <li>Non-custodial.</li>
@@ -248,10 +248,7 @@ const HeroSection = () => {
           </div>
 
           {/* Live monitor cell */}
-          <div
-            className="neo-slide-up flex items-center justify-center bg-secondary p-6 md:p-8 lg:col-span-4"
-            style={{ animationDelay: "0.15s" }}
-          >
+          <div className="flex items-center justify-center bg-secondary p-6 md:p-8 lg:col-span-4">
             <LiveVaultMonitor onBeat={() => track("hero_heartbeat_demo")} />
           </div>
         </div>
