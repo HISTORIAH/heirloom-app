@@ -146,7 +146,7 @@ const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
             <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
               {isDead ? "Heirs may now claim" : "Next heartbeat due in"}
             </p>
-            <p className="mt-1 font-display text-4xl font-normal tabular-nums tracking-tight">
+            <p className="mt-1 font-display text-4xl font-bold tabular-nums tracking-tight">
               {isDead ? "00:00" : fmt(secs)}
             </p>
           </div>
@@ -191,28 +191,21 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden bg-background text-foreground">
-      {/* Ambient layers — tuned for white: dark hairline grid + faint black
-          ECG, both masked so they fade toward the center behind the text. */}
-      <div className="grid-fade-light pointer-events-none absolute inset-0 [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
-      <HeartbeatLine
-        color="hsl(var(--foreground))"
-        speed={9}
-        strokeWidth={1.5}
-        className="pointer-events-none absolute inset-x-0 top-1/2 h-40 -translate-y-1/2 opacity-[0.06] [-webkit-mask-image:linear-gradient(90deg,transparent,black_15%,black_85%,transparent)] [mask-image:linear-gradient(90deg,transparent,black_15%,black_85%,transparent)]"
-      />
+      {/* Faint hairline grid — echoes the modular gridlines the page is built on. */}
+      <div className="grid-fade-light pointer-events-none absolute inset-0 [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)]" />
 
-      <div className="relative mx-auto flex max-w-7xl items-center px-6 py-20 md:py-24 lg:min-h-[60vh] lg:py-24">
-        <div className="grid w-full grid-cols-1 items-center gap-14 lg:grid-cols-2">
-          <div className="neo-slide-up">
+      <div className="relative mx-auto max-w-7xl px-6 py-14 md:py-20">
+        {/* The whole hero is one modular grid: black lines, mixed-color cells. */}
+        <div className="grid grid-cols-1 gap-1 border-4 border-foreground bg-foreground lg:grid-cols-12">
+          {/* Headline cell */}
+          <div className="neo-slide-up flex flex-col justify-center bg-background p-8 md:p-12 lg:col-span-8 lg:row-span-2">
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
               Solana Inheritance Protocol
             </span>
 
-            <h1 className="mt-7 font-display text-5xl font-normal leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
+            <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
               Protect your{" "}
-              <span className="px-3 text-foreground" style={{ backgroundColor: "#FF4FD8" }}>
-                assets.
-              </span>{" "}
+              <span className="bg-accent-pink px-3 text-foreground">assets.</span>{" "}
               Pass it on trustlessly.
             </h1>
 
@@ -223,18 +216,13 @@ const HeroSection = () => {
             </p>
 
             <div className="mt-9 flex flex-wrap gap-4">
-              <Button
-                variant="lime"
-                size="xl"
-                style={{ backgroundColor: "#FFD600" }}
-                onClick={handleLaunch}
-              >
+              <Button variant="yellow" size="xl" onClick={handleLaunch}>
                 {isConnected ? "Create Vault" : "Launch Tour"}
               </Button>
               <Button
                 variant="outline"
                 size="xl"
-                className="bg-transparent text-foreground !border-2 !border-foreground/25 !shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 hover:bg-foreground/5 hover:!border-foreground/60 active:!translate-x-0 active:!translate-y-0"
+                className="!border-2 !border-foreground/25 bg-transparent text-foreground !shadow-none hover:!translate-x-0 hover:!translate-y-0 hover:!border-foreground/60 hover:bg-foreground/5 hover:!shadow-none active:!translate-x-0 active:!translate-y-0"
                 onClick={() => {
                   track("demo_opened", { source: "hero" });
                   setDemoOpen(true);
@@ -244,11 +232,24 @@ const HeroSection = () => {
                 View Demo
               </Button>
             </div>
-
           </div>
 
+          {/* Yellow attribute cell — the gist, in three flat facts. */}
           <div
-            className="neo-slide-up flex justify-center lg:justify-end"
+            className="neo-slide-up neo-section-yellow flex flex-col justify-center p-8 md:p-10 lg:col-span-4"
+            style={{ animationDelay: "0.1s" }}
+          >
+            <span className="text-xs font-bold uppercase tracking-[0.25em]">The gist</span>
+            <ul className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-4xl">
+              <li>Non-custodial.</li>
+              <li>Trustless.</li>
+              <li>On-chain.</li>
+            </ul>
+          </div>
+
+          {/* Live monitor cell */}
+          <div
+            className="neo-slide-up flex items-center justify-center bg-secondary p-6 md:p-8 lg:col-span-4"
             style={{ animationDelay: "0.15s" }}
           >
             <LiveVaultMonitor onBeat={() => track("hero_heartbeat_demo")} />
@@ -257,9 +258,9 @@ const HeroSection = () => {
       </div>
 
       <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl p-0 gap-0 border-4 border-foreground bg-background rounded-none shadow-[8px_8px_0px_0px_hsl(var(--foreground))] sm:shadow-[12px_12px_0px_0px_hsl(var(--foreground))] sm:rounded-none">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl gap-0 rounded-none border-4 border-foreground bg-background p-0 shadow-[8px_8px_0px_0px_hsl(var(--foreground))] sm:rounded-none sm:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]">
           <div className="flex items-center justify-between border-b-4 border-foreground bg-accent-yellow px-4 py-3 sm:px-6 sm:py-4">
-            <DialogTitle className="text-lg sm:text-2xl font-black uppercase tracking-tight">
+            <DialogTitle className="text-lg font-bold uppercase tracking-tight sm:text-2xl">
               Heirloom Demo
             </DialogTitle>
             <DialogDescription className="sr-only">

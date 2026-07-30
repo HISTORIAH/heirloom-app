@@ -1,64 +1,221 @@
-import { Check, X } from "lucide-react";
+import { Check, X, Minus, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 
-const solutions = [
-  { name: "Seed phrase in safe", selfCustodial: false, trustless: false, onChain: false },
-  { name: "Casa inheritance", selfCustodial: "partial" as const, trustless: false, onChain: false },
-  { name: "Sarcophagus (ETH)", selfCustodial: true, trustless: true, onChain: false },
-  { name: "Safe Haven", selfCustodial: "partial" as const, trustless: "partial" as const, onChain: false },
-  { name: "Heirloom", selfCustodial: true, trustless: true, onChain: true, highlight: true },
-];
+type Attr = true | false | "partial";
+type Tone = "dark" | "light" | "highlight";
 
-const Cell = ({ value }: { value: boolean | string }) => {
-  if (value === true) return <Check className="h-7 w-7 mx-auto text-foreground" strokeWidth={3} />;
-  if (value === false) return <X className="h-7 w-7 mx-auto text-muted-foreground/40" strokeWidth={3} />;
-  return <span className="text-sm font-bold uppercase text-muted-foreground">Partial</span>;
+interface Solution {
+  name: string;
+  blurb: string;
+  attrs: { label: string; value: Attr }[];
+  span: string;
+  tone: Tone;
+}
+
+const toneStyles: Record<
+  Tone,
+  {
+    cell: string;
+    label: string;
+    blurb: string;
+    arrow: string;
+    tick: string;
+    attrLabel: string;
+    yes: string;
+    partial: string;
+    no: string;
+  }
+> = {
+  dark: {
+    cell: "border border-white/10 bg-[hsl(0_0%_7%)] text-white hover:border-white/25 hover:bg-[hsl(0_0%_9%)]",
+    label: "text-white/40",
+    blurb: "text-white/45",
+    arrow: "text-white/20 group-hover:text-white/50",
+    tick: "border-white/30",
+    attrLabel: "text-white/50",
+    yes: "text-accent-lime",
+    partial: "text-accent-yellow",
+    no: "text-white/25",
+  },
+  light: {
+    cell: "border border-foreground/15 bg-background text-foreground hover:border-foreground/40 hover:bg-secondary/40",
+    label: "text-muted-foreground",
+    blurb: "text-muted-foreground",
+    arrow: "text-foreground/25 group-hover:text-foreground/60",
+    tick: "border-foreground/30",
+    attrLabel: "text-muted-foreground",
+    yes: "text-foreground",
+    partial: "text-muted-foreground",
+    no: "text-muted-foreground/40",
+  },
+  highlight: {
+    cell: "neo-section-yellow text-foreground hover:brightness-[0.97]",
+    label: "text-foreground/60",
+    blurb: "text-foreground/70",
+    arrow: "text-foreground group-hover:translate-x-1",
+    tick: "border-foreground/40",
+    attrLabel: "text-foreground/70",
+    yes: "text-foreground",
+    partial: "text-foreground/60",
+    no: "text-foreground/40",
+  },
 };
 
+const solutions: Solution[] = [
+  {
+    name: "Seed phrase in a safe",
+    blurb: "A note in a drawer. No custody logic, nothing on-chain, no plan for silence.",
+    attrs: [
+      { label: "Self-custodial", value: false },
+      { label: "Trustless", value: false },
+      { label: "On-chain", value: false },
+    ],
+    span: "md:col-span-1 lg:col-span-2",
+    tone: "dark",
+  },
+  {
+    name: "Casa inheritance",
+    blurb: "Assisted inheritance with a custodial layer of trust.",
+    attrs: [
+      { label: "Self-custodial", value: "partial" },
+      { label: "Trustless", value: false },
+      { label: "On-chain", value: false },
+    ],
+    span: "md:col-span-1 lg:col-span-1",
+    tone: "light",
+  },
+  {
+    name: "Sarcophagus",
+    blurb: "A trustless dead-man's switch — but on Ethereum, not Solana.",
+    attrs: [
+      { label: "Self-custodial", value: true },
+      { label: "Trustless", value: true },
+      { label: "On-chain", value: false },
+    ],
+    span: "md:col-span-1 lg:col-span-1",
+    tone: "dark",
+  },
+  {
+    name: "Safe Haven",
+    blurb: "Inheritance tooling with partial custody and partial trust.",
+    attrs: [
+      { label: "Self-custodial", value: "partial" },
+      { label: "Trustless", value: "partial" },
+      { label: "On-chain", value: false },
+    ],
+    span: "md:col-span-1 lg:col-span-1",
+    tone: "light",
+  },
+  {
+    name: "Heirloom",
+    blurb: "Self-custodial, trustless, and fully on-chain on Solana.",
+    attrs: [
+      { label: "Self-custodial", value: true },
+      { label: "Trustless", value: true },
+      { label: "On-chain", value: true },
+    ],
+    span: "md:col-span-2 lg:col-span-3",
+    tone: "highlight",
+  },
+];
+
+const AttrRow = ({
+  attrs,
+  st,
+}: {
+  attrs: Solution["attrs"];
+  st: (typeof toneStyles)[Tone];
+}) => (
+  <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+    {attrs.map((a) => {
+      const icon =
+        a.value === true ? (
+          <Check className={`h-4 w-4 ${st.yes}`} strokeWidth={3} />
+        ) : a.value === "partial" ? (
+          <Minus className={`h-4 w-4 ${st.partial}`} strokeWidth={3} />
+        ) : (
+          <X className={`h-4 w-4 ${st.no}`} strokeWidth={3} />
+        );
+      return (
+        <span
+          key={a.label}
+          className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide ${st.attrLabel}`}
+        >
+          {icon}
+          {a.label}
+          <span className="sr-only">
+            {a.value === true ? "yes" : a.value === "partial" ? "partial" : "no"}
+          </span>
+        </span>
+      );
+    })}
+  </div>
+);
+
 const ComparisonSection = () => {
+  const navigate = useNavigate();
+  const { track } = useAnalytics();
+
   return (
-    <section className="py-16 px-6 md:py-24 lg:py-32">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-16 text-center">
-          <span className="neo-badge bg-accent-pink mb-6 inline-block">Comparison</span>
-          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
+    <section className="bg-background px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 max-w-2xl">
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
+            Comparison
+          </span>
+          <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
             Nothing else{" "}
-            <span className="bg-accent-yellow px-3 inline-block rotate-[-1deg]">comes close.</span>
+            <span className="bg-accent-yellow px-2 text-foreground">comes close.</span>
           </h2>
         </div>
 
-        <div className="overflow-x-auto -mx-2 px-2">
-          <table className="w-full neo-border-thick rounded-2xl overflow-hidden neo-shadow-lg">
-            <thead>
-              <tr className="bg-foreground text-background">
-                <th className="text-left p-4 md:p-6 text-lg font-bold uppercase tracking-wide border-r-4 border-background">Solution</th>
-                <th className="p-4 md:p-6 text-lg font-bold uppercase tracking-wide border-r-4 border-background text-center">Self-Custodial</th>
-                <th className="p-4 md:p-6 text-lg font-bold uppercase tracking-wide border-r-4 border-background text-center">Trustless</th>
-                <th className="p-4 md:p-6 text-lg font-bold uppercase tracking-wide text-center">On-Chain</th>
-              </tr>
-            </thead>
-            <tbody>
-              {solutions.map((s, i) => (
-                <tr
-                  key={s.name}
-                  className={`${
-                    s.highlight ? "bg-accent-lime font-bold" : i % 2 === 0 ? "bg-background" : "bg-secondary"
-                  } border-t-4 border-foreground transition-colors duration-150 ${!s.highlight ? "hover:bg-secondary/80" : ""}`}
-                >
-                  <td className="p-4 md:p-6 text-lg font-bold border-r-4 border-foreground">
-                    {s.highlight ? (
-                      <span className="flex items-center gap-2">
-                        <span className="bg-foreground text-accent-lime rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wider">Best</span>
-                        {s.name}
-                      </span>
-                    ) : s.name}
-                  </td>
-                  <td className="p-4 md:p-6 text-center border-r-4 border-foreground"><Cell value={s.selfCustodial} /></td>
-                  <td className="p-4 md:p-6 text-center border-r-4 border-foreground"><Cell value={s.trustless} /></td>
-                  <td className="p-4 md:p-6 text-center"><Cell value={s.onChain} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+          {solutions.map((s, i) => {
+            const st = toneStyles[s.tone];
+            const isBest = s.tone === "highlight";
+            const Tag = isBest ? "button" : "div";
+            return (
+              <Tag
+                key={s.name}
+                {...(isBest
+                  ? {
+                      onClick: () => {
+                        track("launch_app_clicked", { source: "comparison" });
+                        navigate("/create-vault");
+                      },
+                    }
+                  : {})}
+                className={`group relative flex min-h-[220px] flex-col justify-between p-6 text-left transition-colors duration-200 md:min-h-[260px] ${s.span} ${st.cell}`}
+              >
+                {/* Corner tick */}
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute left-0 top-0 h-3.5 w-3.5 border-l-2 border-t-2 ${st.tick}`}
+                />
+
+                <div className="flex items-start justify-between">
+                  <span className={`text-xs font-bold uppercase tracking-[0.2em] ${st.label}`}>
+                    {isBest ? "Best · 05" : `0${i + 1}`}
+                  </span>
+                  <ArrowRight
+                    aria-hidden="true"
+                    className={`h-4 w-4 transition-all duration-200 ${st.arrow}`}
+                  />
+                </div>
+
+                <div>
+                  <h3 className="font-display text-3xl leading-none tracking-tight md:text-4xl">
+                    {s.name}
+                  </h3>
+                  <p className={`mt-3 max-w-md text-sm font-medium leading-relaxed ${st.blurb}`}>
+                    {s.blurb}
+                  </p>
+                  <AttrRow attrs={s.attrs} st={st} />
+                </div>
+              </Tag>
+            );
+          })}
         </div>
       </div>
     </section>

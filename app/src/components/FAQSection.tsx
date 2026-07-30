@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 
 const faqs = [
   {
@@ -50,61 +50,93 @@ const faqs = [
 ];
 
 const FAQItem = ({
+  index,
   question,
   answer,
   isOpen,
   onToggle,
 }: {
+  index: number;
   question: string;
   answer: string;
   isOpen: boolean;
   onToggle: () => void;
 }) => (
-  <div className="neo-border rounded-xl overflow-hidden">
+  <div
+    className={`group relative border transition-colors duration-200 ${
+      isOpen
+        ? "border-foreground/40 bg-accent-purple/[0.06]"
+        : "border-foreground/15 hover:border-foreground/40"
+    }`}
+  >
+    {/* Corner tick — echoes the comparison cells. */}
+    <span
+      aria-hidden="true"
+      className={`pointer-events-none absolute left-0 top-0 h-3.5 w-3.5 border-l-2 border-t-2 ${
+        isOpen ? "border-accent-purple/60" : "border-foreground/20"
+      }`}
+    />
+
     <button
       onClick={onToggle}
-      className={`w-full flex items-center justify-between gap-4 p-5 md:p-6 text-left transition-colors duration-150 ${
-        isOpen ? "bg-accent-lime/10" : "bg-background hover:bg-secondary/50"
-      }`}
+      aria-expanded={isOpen}
+      className="flex w-full items-start gap-4 p-5 text-left md:p-6"
     >
-      <span className="text-base md:text-lg font-bold leading-tight">{question}</span>
-      <ChevronDown
-        className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+      <span
+        className={`w-6 shrink-0 pt-0.5 text-xs font-bold tabular-nums tracking-[0.2em] transition-colors ${
+          isOpen ? "text-accent-purple" : "text-muted-foreground/60"
+        }`}
+      >
+        0{index + 1}
+      </span>
+      <span className="flex-1 text-base font-bold leading-snug md:text-lg">{question}</span>
+      <Plus
+        className={`h-6 w-6 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}
         strokeWidth={3}
       />
     </button>
+
+    {/* 0fr → 1fr grid trick expands to the answer's real height, no clipping. */}
     <div
-      className={`overflow-hidden transition-all duration-300 ease-out ${
-        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+      className={`grid transition-all duration-300 ease-out ${
+        isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
       }`}
     >
-      <p className="px-5 md:px-6 pb-5 md:pb-6 text-base font-medium text-muted-foreground leading-relaxed">
-        {answer}
-      </p>
+      <div className="overflow-hidden">
+        <p className="pb-5 pl-[3.75rem] pr-5 text-base font-medium leading-relaxed text-muted-foreground md:pb-6 md:pl-16 md:pr-6">
+          {answer}
+        </p>
+      </div>
     </div>
   </div>
 );
 
 const FAQSection = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-16 px-6 md:py-24 lg:py-32 bg-accent-purple/10 border-y-8 border-foreground">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-12 text-center">
-          <span className="neo-badge bg-accent-purple mb-6 inline-block">FAQ</span>
-          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
+    <section className="bg-background px-6 py-16 md:py-24">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
+        {/* Heading — sits alongside the questions on desktop. */}
+        <div className="lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
+            FAQ
+          </span>
+          <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
             Common{" "}
-            <span className="bg-accent-purple text-background px-3 inline-block rotate-[-1deg]">
-              questions.
-            </span>
+            <span className="bg-accent-purple px-2 text-background">questions.</span>
           </h2>
+          <p className="mt-6 max-w-sm text-lg font-medium leading-relaxed text-muted-foreground">
+            Everything you need to know about heartbeats, heirs, fees, and control.
+          </p>
         </div>
 
-        <div className="space-y-3">
+        {/* Questions */}
+        <div className="space-y-3 lg:col-span-8">
           {faqs.map((faq, i) => (
             <FAQItem
               key={i}
+              index={i}
               question={faq.question}
               answer={faq.answer}
               isOpen={openIndex === i}
