@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,171 +6,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Heart, Play, Activity } from "lucide-react";
+import { Play } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import HeartbeatLine from "@/components/HeartbeatLine";
-
-type Phase = "active" | "grace" | "claimable";
-
-const ACTIVE_SECONDS = 30;
-const GRACE_SECONDS = 12;
-
-const PHASE_META: Record<
-  Phase,
-  { label: string; dot: string; line: string; accent: string }
-> = {
-  active: {
-    label: "Active",
-    dot: "bg-accent-lime",
-    line: "hsl(var(--accent-lime))",
-    accent: "text-accent-lime",
-  },
-  grace: {
-    label: "Grace Period",
-    dot: "bg-accent-yellow",
-    line: "hsl(var(--accent-yellow))",
-    accent: "text-accent-yellow",
-  },
-  claimable: {
-    label: "Claimable",
-    dot: "bg-accent-red",
-    line: "hsl(var(--accent-red))",
-    accent: "text-accent-red",
-  },
-};
-
-const fmt = (s: number) => {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-};
-
-// A miniature, interactive demo of the vault's heartbeat mechanic.
-// Let the timer run out to watch a vault flatline -> become claimable,
-// or hit "Send Heartbeat" to reset it. This *is* the product.
-const LiveVaultMonitor = ({ onBeat }: { onBeat: () => void }) => {
-  const [phase, setPhase] = useState<Phase>("active");
-  const [secs, setSecs] = useState(ACTIVE_SECONDS);
-  const [popKey, setPopKey] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setSecs((prev) => {
-        if (prev > 1) return prev - 1;
-        // hit zero — advance phase
-        setPhase((ph) => {
-          if (ph === "active") return "grace";
-          if (ph === "grace") return "claimable";
-          return ph;
-        });
-        return 0;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  // When a phase begins, seed its countdown.
-  useEffect(() => {
-    if (phase === "grace") setSecs(GRACE_SECONDS);
-    if (phase === "claimable") {
-      setSecs(0);
-      const t = setTimeout(() => {
-        setPhase("active");
-        setSecs(ACTIVE_SECONDS);
-      }, 5000);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
-
-  const sendHeartbeat = () => {
-    setPhase("active");
-    setSecs(ACTIVE_SECONDS);
-    setPopKey((k) => k + 1);
-    onBeat();
-  };
-
-  const meta = PHASE_META[phase];
-  const isDead = phase === "claimable";
-
-  return (
-    <div className="neo-card-static w-full max-w-md rounded-2xl border-foreground/15 bg-[hsl(0_0%_8%)] p-0 text-background shadow-none">
-      {/* Monitor header */}
-      <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-white/50">
-          <Activity className="h-4 w-4" />
-          Vault Monitor
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span
-              className={`absolute inline-flex h-full w-full rounded-full ${meta.dot} pulse-ring`}
-            />
-            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${meta.dot}`} />
-          </span>
-          <span className={`text-xs font-semibold uppercase tracking-widest ${meta.accent}`}>
-            {meta.label}
-          </span>
-        </div>
-      </div>
-
-      {/* ECG trace — the same continuous line passes through this window:
-          fades in as it enters on the left, out as it exits on the right. */}
-      <div className="relative h-28 overflow-hidden bg-[hsl(0_0%_5%)]">
-        <HeartbeatLine
-          color={meta.line}
-          glow={!isDead}
-          flat={isDead}
-          speed={phase === "grace" ? 5 : 8}
-          strokeWidth={2}
-          className="absolute inset-0"
-        />
-        {/* entry / exit fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-[hsl(0_0%_5%)] to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-[hsl(0_0%_5%)] to-transparent" />
-        {isDead && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="bg-accent-red px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-background">
-              Flatline
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Readout */}
-      <div className="space-y-5 px-6 py-6">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
-              {isDead ? "Heirs may now claim" : "Next heartbeat due in"}
-            </p>
-            <p className="mt-1 font-display text-4xl font-bold tabular-nums tracking-tight">
-              {isDead ? "00:00" : fmt(secs)}
-            </p>
-          </div>
-          <Heart
-            key={popKey}
-            className={`heart-pop h-9 w-9 ${meta.accent}`}
-            fill="currentColor"
-            strokeWidth={0}
-          />
-        </div>
-
-        <Button
-          variant={isDead ? "outline" : "lime"}
-          size="lg"
-          className="w-full"
-          onClick={sendHeartbeat}
-        >
-          <Heart className="h-5 w-5" />
-          {isDead ? "Revive Demo" : "Send Heartbeat"}
-        </Button>
-      </div>
-    </div>
-  );
-};
+import HeroWordmark from "@/components/HeroWordmark";
 
 const HeroSection = () => {
   const { isConnected } = useWallet();
@@ -247,9 +88,10 @@ const HeroSection = () => {
             </ul>
           </div>
 
-          {/* Live monitor cell */}
-          <div className="flex items-center justify-center bg-secondary p-6 md:p-8 lg:col-span-4">
-            <LiveVaultMonitor onBeat={() => track("hero_heartbeat_demo")} />
+          {/* Wordmark cell — the name at poster scale, set in the page's own
+              face so it belongs to the type on the left of the grid. */}
+          <div className="flex items-center justify-center overflow-hidden bg-background px-4 py-8 md:px-6 lg:col-span-4">
+            <HeroWordmark className="whitespace-nowrap font-display text-[clamp(3rem,13vw,4.25rem)] font-bold leading-none tracking-[-0.035em] text-foreground lg:text-[min(5.6vw,4.75rem)]" />
           </div>
         </div>
       </div>
