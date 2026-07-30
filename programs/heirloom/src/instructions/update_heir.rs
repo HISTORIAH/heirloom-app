@@ -92,7 +92,7 @@ pub struct UpdateHeir<'info> {
 
 impl<'info> UpdateHeir<'info> {
     pub fn update_heir_handler(ctx: Context<UpdateHeir>) -> Result<()> {
-        ctx.accounts.validate_inputs()?;
+        ctx.accounts.validate()?;
 
         let is_first_call = ctx.accounts.new_estate.authority == Pubkey::default();
 
@@ -123,7 +123,7 @@ impl<'info> UpdateHeir<'info> {
         Ok(())
     }
 
-    pub fn validate_inputs(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         require!(now >= self.estate.paused_until, HeirloomError::EstatePaused);
 

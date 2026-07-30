@@ -4,7 +4,7 @@ use solana_instructions_sysvar::ID as SOLANA_SYSVAR_IX_ID;
 
 use crate::{
     error::HeirloomError, lulo_v2, KAMINO_FARMS_PROGRAM_ID, KAMINO_PROGRAM_ID,
-    SCOPE_PRICES_PROGRAM_ID,
+    MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID,
 };
 
 pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
@@ -43,7 +43,16 @@ pub fn close_pda<'info>(
     Ok(())
 }
 
-// Lulo integration
+pub fn validate_interval(value: i64) -> Result<()> {
+    require!(value >= 0, HeirloomError::IntervalNegative);
+    require!(
+        value <= MAX_INTERVAL_SECONDS,
+        HeirloomError::IntervalTooLong
+    );
+    Ok(())
+}
+
+// ----------------------------------------------------------------- Lulo integration
 #[derive(Accounts)]
 pub struct LuloAccounts<'info> {
     /// CHECK: Lulo position pda

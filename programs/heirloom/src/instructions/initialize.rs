@@ -4,7 +4,7 @@ use anchor_spl::{
     token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
+use crate::{error::HeirloomError, helpers::validate_interval, AssetRecord, Estate, Vault};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -77,7 +77,13 @@ impl<'info> Initialize<'info> {
         amount: u64,
         label: String,
     ) -> Result<()> {
-        ctx.accounts.validate_inputs(amount, &label)?;
+        ctx.accounts.validate(
+            amount,
+            &label,
+            heartbeat_interval,
+            grace_period,
+            pause_duration,
+        )?;
 
         ctx.accounts.set_acc_fields(
             heartbeat_interval,
@@ -95,9 +101,13 @@ impl<'info> Initialize<'info> {
         Ok(())
     }
 
-    pub fn validate_inputs(&self, amount: u64, label: &str) -> Result<()> {
+    pub fn validate(&self, amount: u64, label: &str, hb: i64, gp: i64, pd: i64) -> Result<()> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
         require!(label.len() <= 32, HeirloomError::LabelTooLong);
+
+        validate_interval(hb)?; // heartbeat interval
+        validate_interval(gp)?; // grace period
+        validate_interval(pd)?; // pause duration
 
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
