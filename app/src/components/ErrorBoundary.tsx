@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
         this.props.fallback ?? (
           <div className="min-h-screen bg-background flex items-center justify-center p-6">
             <div className="neo-card-static max-w-lg w-full">
-              <h1 className="text-2xl font-normal text-accent-red mb-4">
+              <h1 className="text-2xl text-accent-red mb-4">
                 Something went wrong
               </h1>
               <p className="text-muted-foreground mb-4 font-mono text-sm break-all">

@@ -21,7 +21,6 @@ export type SplTokenAsset = {
 export type AnalyticsEvent =
   | "launch_app_clicked"
   | "demo_opened"
-  | "hero_heartbeat_demo"
   | "docs_link_clicked"
   | "tour_started"
   | "tour_completed"

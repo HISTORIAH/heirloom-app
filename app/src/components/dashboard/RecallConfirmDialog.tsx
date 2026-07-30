@@ -47,7 +47,7 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
               )}
             </div>
             <div>
-              <h3 className="text-xl font-normal leading-tight">{title}</h3>
+              <h3 className="text-xl leading-tight">{title}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Pull {routedAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
                 {unit} back to your vault.

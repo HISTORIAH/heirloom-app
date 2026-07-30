@@ -54,11 +54,8 @@ export default function App() {
       </div>
 
       <header className="site-header">
-        <a className="brand-lockup" href="/" aria-label="Heirloom home">
-          <span className="brand-icon" aria-hidden="true">
-            H
-          </span>
-          <span>heirloom</span>
+        <a className="brand-lockup" href="/">
+          <img src="/heirloom-wordmark.svg" alt="Heirloom" width={391} height={120} />
         </a>
       </header>
 

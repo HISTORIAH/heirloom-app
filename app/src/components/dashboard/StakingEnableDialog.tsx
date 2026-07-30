@@ -68,7 +68,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
               <Sprout className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-normal leading-tight">Stake SOL</h3>
+              <h3 className="text-xl leading-tight">Stake SOL</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Delegate {solBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL to earn network rewards.
               </p>

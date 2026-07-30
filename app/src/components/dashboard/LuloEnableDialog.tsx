@@ -45,7 +45,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
               <Landmark className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-normal leading-tight">Enable Lulo Yield</h3>
+              <h3 className="text-xl leading-tight">Enable Lulo Yield</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Route {vaultBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
                 {tokenSymbol} from your vault to Lulo.

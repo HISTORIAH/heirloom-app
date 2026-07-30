@@ -1,64 +1,62 @@
+import Logo from "@/components/Logo";
+
+const linkGroups = [
+  {
+    heading: "Protocol",
+    links: [
+      { name: "Documentation", href: "https://docs.heirlm.xyz/" },
+      { name: "GitHub", href: "https://github.com/HISTORIAH/Heirloom-app" },
+    ],
+  },
+  {
+    heading: "Community",
+    links: [{ name: "Twitter / X", href: "https://x.com/heirloom_app" }],
+  },
+];
+
 const FooterSection = () => {
   return (
-    <footer className="bg-foreground text-background py-16 px-6 md:py-24 border-t-8 border-accent-lime">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+    <footer className="bg-foreground px-6 pb-12 pt-16 text-background md:pt-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-3">
           <div>
-            <h3 className="text-4xl md:text-5xl font-normal mb-4">Heirloom</h3>
-            <p className="text-lg font-medium opacity-80 leading-relaxed">
-              Heartbeat inheritance vault built on Solana.
-              Your crypto doesn't die with you.
+            <h3>
+              <Logo tone="paper" className="h-16 md:h-20" />
+            </h3>
+            <p className="mt-4 max-w-sm text-lg font-medium leading-relaxed text-background/70">
+              A heartbeat inheritance vault built on Solana. Your crypto
+              doesn&apos;t die with you.
             </p>
           </div>
 
-          <div>
-            <h4 className="text-xl font-normal uppercase tracking-widest mb-6">Protocol</h4>
-            <ul className="space-y-3">
-              {[
-                { name: "Documentation", href: "https://docs.heirlm.xyz/" },
-                { name: "GitHub", href: "https://github.com/HISTORIAH/Heirloom-app" },
-              ].map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-lg font-bold hover:underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
-                    target={link.href.startsWith("http") ? "_blank" : undefined}
-                    rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-xl font-normal uppercase tracking-widest mb-6">Community</h4>
-            <ul className="space-y-3">
-              {[
-                { name: "Twitter / X", href: "https://x.com/heirloom_app" },
-              ].map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-lg font-bold hover:underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
-                    target={link.href.startsWith("http") ? "_blank" : undefined}
-                    rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-
-          </div>
+          {linkGroups.map((group) => (
+            <div key={group.heading}>
+              <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-background/50">
+                {group.heading}
+              </h4>
+              <ul className="mt-5 space-y-3">
+                {group.links.map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      className="text-lg font-bold underline-offset-4 transition-colors hover:text-accent-yellow hover:underline"
+                      target={link.href.startsWith("http") ? "_blank" : undefined}
+                      rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="border-t-4 border-background/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm font-medium uppercase tracking-widest opacity-60">
-            Heirloom is not a legal will. It is programmable self-custody continuity.
+        <div className="flex flex-col items-start justify-between gap-4 border-t-2 border-background/20 pt-8 md:flex-row md:items-center">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
+            Not a legal will — programmable self-custody continuity.
           </p>
-          <p className="text-sm font-medium uppercase tracking-widest opacity-60">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
             Powered by Solana
           </p>
         </div>

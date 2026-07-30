@@ -3,79 +3,91 @@ import { Shield, Clock, Zap, Lock, FileCode, Layers } from "lucide-react";
 const reasons = [
   {
     icon: Zap,
-    title: "Sub-Second Finality",
-    description: "Solana confirms transactions in ~400ms. Heartbeats resolve instantly, claims settle in seconds.",
+    title: "Sub-second finality",
+    description: "Solana confirms in ~400ms. Heartbeats resolve instantly, claims settle in seconds.",
     badge: "FAST",
-    badgeColor: "bg-accent-lime",
-    rotate: "rotate-[-1deg]",
+    tile: "bg-background",
+    dark: false,
   },
   {
     icon: Lock,
-    title: "Program-Level Security",
-    description: "Anchor ensures type safety, account validation, and constraint checking at compile time.",
+    title: "Program-level security",
+    description: "Anchor enforces type safety, account validation, and constraint checks at compile time.",
     badge: "SAFE",
-    badgeColor: "bg-accent-cyan",
-    rotate: "rotate-[1deg]",
+    tile: "bg-secondary",
+    dark: false,
   },
   {
     icon: Clock,
-    title: "On-Chain Clock",
-    description: "Solana's Clock sysvar provides accurate timestamps for heartbeat intervals and expiry calculations.",
+    title: "On-chain clock",
+    description: "Solana's Clock sysvar gives accurate timestamps for heartbeat intervals and expiry.",
     badge: "PRECISE",
-    badgeColor: "bg-accent-yellow",
-    rotate: "rotate-[-0.5deg]",
-  },
-  {
-    icon: Layers,
-    title: "SPL Token Standard ",
-    description: "Standard token interface for composable, programmable inheritance of any SPL token pair.",
-    badge: "SPL",
-    badgeColor: "bg-accent-pink",
-    rotate: "rotate-[1.5deg]",
+    tile: "bg-background",
+    dark: false,
   },
   {
     icon: Shield,
-    title: "PDA Vaults",
-    description: "Program Derived Addresses ensure only the program controls vault funds. No private key custody.",
+    title: "PDA vaults",
+    description: "Program Derived Addresses mean only the program controls vault funds. No key custody.",
     badge: "TRUSTLESS",
-    badgeColor: "bg-accent-orange",
-    rotate: "rotate-[-1.5deg]",
+    tile: "bg-foreground",
+    dark: true,
+  },
+  {
+    icon: Layers,
+    title: "SPL token standard",
+    description: "A standard token interface for composable, programmable inheritance of any SPL pair.",
+    badge: "SPL",
+    tile: "bg-secondary",
+    dark: false,
   },
   {
     icon: FileCode,
-    title: "Anchor Framework",
-    description: "Battle-tested account validation, constraint macros, and best-in-class developer tooling for fast, safe iteration.",
+    title: "Anchor framework",
+    description: "Battle-tested account validation and constraint macros for fast, safe iteration.",
     badge: "EFFICIENT",
-    badgeColor: "bg-accent-purple",
-    rotate: "rotate-[0.5deg]",
+    tile: "bg-background",
+    dark: false,
   },
 ];
 
 const WhySolanaSection = () => {
   return (
-    <section className="neo-section-cyan py-16 px-6 md:py-24 lg:py-32 border-y-8 border-foreground">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-16 text-center">
-          <span className="neo-badge bg-background mb-6 inline-block">Why Solana</span>
-          <h2 className="text-4xl md:text-6xl font-normal leading-[0.9]">
-            Built where speed{" "}
-            <span className="bg-foreground text-accent-cyan px-3 inline-block rotate-[1deg]">
-              meets safety.
-            </span>
+    <section className="bg-background px-6 py-16 md:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 max-w-2xl">
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
+            Why Solana
+          </span>
+          <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
+            Built where speed meets safety.
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-1 border-4 border-foreground bg-foreground sm:grid-cols-2 lg:grid-cols-3">
           {reasons.map((r) => (
-            <div key={r.title} className={`neo-card relative ${r.rotate}`}>
-              <span className={`absolute -top-3 -right-3 neo-badge ${r.badgeColor} rotate-[6deg] text-xs`}>
-                {r.badge}
-              </span>
-              <div className={`${r.badgeColor} neo-border rounded-xl p-3 inline-block mb-4`}>
+            <div
+              key={r.title}
+              className={`flex flex-col p-7 md:p-8 ${r.tile} ${r.dark ? "text-background" : ""}`}
+            >
+              <div className="flex items-center justify-between">
                 <r.icon className="h-8 w-8" strokeWidth={2.5} />
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-[0.2em] ${
+                    r.dark ? "text-background/50" : "text-muted-foreground/60"
+                  }`}
+                >
+                  {r.badge}
+                </span>
               </div>
-              <h3 className="text-xl font-normal mb-2">{r.title}</h3>
-              <p className="text-base font-medium leading-relaxed">{r.description}</p>
+              <h3 className="mt-8 text-xl">{r.title}</h3>
+              <p
+                className={`mt-2 text-base font-medium leading-relaxed ${
+                  r.dark ? "text-background/70" : "text-muted-foreground"
+                }`}
+              >
+                {r.description}
+              </p>
             </div>
           ))}
         </div>

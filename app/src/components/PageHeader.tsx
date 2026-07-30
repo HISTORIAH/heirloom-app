@@ -57,7 +57,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           />
           {backLabel}
         </button>
-        <span className="text-2xl font-normal font-display">{title}</span>
+        <span className="text-2xl font-bold font-display">{title}</span>
         {isConnected ? (
           <div className="relative" ref={walletDropdownRef}>
             <button

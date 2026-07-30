@@ -64,7 +64,7 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="neo-card-static max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black">Connect Wallet</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">Connect Wallet</DialogTitle>
           <DialogDescription className="font-medium">
             Choose a Solana wallet to continue.
           </DialogDescription>

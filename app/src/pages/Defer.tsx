@@ -164,7 +164,7 @@ const DeferPageInner: React.FC<{
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
               <span className="neo-badge bg-accent-purple mb-4 inline-block text-white">Guardian Portal</span>
-              <h2 className="text-4xl md:text-5xl font-normal leading-[0.9]">
+              <h2 className="text-4xl md:text-5xl leading-[0.9]">
                 Extend the{" "}
                 <span className="bg-accent-purple text-white px-2 inline-block rotate-[-1deg]">claim window.</span>
               </h2>

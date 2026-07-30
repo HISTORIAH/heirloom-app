@@ -26,7 +26,7 @@ const SubmitOverlay: React.FC<SubmitOverlayProps> = ({ submitState, submitProgre
             <div className="bg-accent-lime neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
             </div>
-            <h2 className="text-3xl font-normal mb-3">Estate Created!</h2>
+            <h2 className="text-3xl mb-3">Estate Created!</h2>
             <p className="text-lg font-medium text-muted-foreground mb-4">
               Your heartbeat is live on-chain.
             </p>
@@ -36,7 +36,7 @@ const SubmitOverlay: React.FC<SubmitOverlayProps> = ({ submitState, submitProgre
             <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
             </div>
-            <h2 className="text-3xl font-normal mb-3">Creating Estate…</h2>
+            <h2 className="text-3xl mb-3">Creating Estate…</h2>
             <p className="text-lg font-medium text-muted-foreground mb-4">
               {submitProgress || "Confirm the transaction in your wallet"}
             </p>

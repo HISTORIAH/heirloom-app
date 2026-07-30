@@ -159,7 +159,7 @@ const HeartbeatPageInner: React.FC<{
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
               <span className="neo-badge bg-accent-pink mb-4 inline-block">Hot Signer Portal</span>
-              <h2 className="text-4xl md:text-5xl font-normal leading-[0.9]">
+              <h2 className="text-4xl md:text-5xl leading-[0.9]">
                 Refresh the{" "}
                 <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">heartbeat.</span>
               </h2>
