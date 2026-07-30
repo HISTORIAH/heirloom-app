@@ -160,7 +160,7 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
               <Bell className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-normal leading-tight">Notifications</h3>
+              <h3 className="text-xl leading-tight">Notifications</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Flip on what you want. Nothing here affects the estate itself.
               </p>

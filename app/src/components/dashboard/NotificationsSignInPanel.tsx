@@ -27,7 +27,7 @@ const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onC
               <Lock className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl font-normal leading-tight">Sign in to manage notifications</h3>
+              <h3 className="text-xl leading-tight">Sign in to manage notifications</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
                 Contact details are private to this estate. Prove you own this wallet — nothing more.
               </p>

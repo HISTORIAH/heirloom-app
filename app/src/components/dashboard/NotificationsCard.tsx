@@ -91,7 +91,7 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
             <Icon className="h-5 w-5" strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h3 className="text-xl font-normal leading-tight">Notifications</h3>
+            <h3 className="text-xl leading-tight">Notifications</h3>
             <p className={cn("text-sm truncate mt-0.5", meta.textClass)}>
               {status === "authorized" ? summary : meta.text}
             </p>
