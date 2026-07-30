@@ -1,3 +1,5 @@
+import Logo from "@/components/Logo";
+
 const linkGroups = [
   {
     heading: "Protocol",
@@ -18,7 +20,9 @@ const FooterSection = () => {
       <div className="mx-auto max-w-7xl">
         <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-3">
           <div>
-            <h3 className="font-display text-4xl md:text-5xl">Heirloom</h3>
+            <h3>
+              <Logo tone="paper" className="h-16 md:h-20" />
+            </h3>
             <p className="mt-4 max-w-sm text-lg font-medium leading-relaxed text-background/70">
               A heartbeat inheritance vault built on Solana. Your crypto
               doesn&apos;t die with you.
