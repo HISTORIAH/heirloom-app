@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import { amountStep, pctOfMax } from "@/lib/utils/math";
 
 const TOPUP_PCTS = [
-  { pct: 25,  label: "25%", bg: "bg-accent-yellow" },
+  { pct: 25,  label: "25%", bg: "bg-accent-pink"   },
   { pct: 50,  label: "50%", bg: "bg-accent-cyan"   },
   { pct: 75,  label: "75%", bg: "bg-accent-orange" },
-  { pct: 100, label: "Max", bg: "bg-accent-lime"   },
+  { pct: 100, label: "Max", bg: "bg-accent-yellow" },
 ] as const;
 import { Loader2, TrendingUp, X, Coins } from "lucide-react";
 import { type TopUpDialogProps } from "@/types/strategy-ui";
@@ -52,7 +52,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="bg-accent-lime neo-border rounded-xl p-3 shrink-0">
+            <div className="bg-accent-yellow neo-border rounded-xl p-3 shrink-0">
               <Coins className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
@@ -125,7 +125,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
             Cancel
           </Button>
           <Button
-            variant="lime"
+            variant="yellow"
             size="default"
             onClick={handleConfirm}
             disabled={loading || amount <= 0 || amount > walletBalance}

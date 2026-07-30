@@ -54,8 +54,8 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
 
       {/* Heir preview */}
       <div className="bg-card border-4 border-foreground rounded-[14px] p-5 shadow-[5px_5px_0_0_hsl(var(--foreground))]">
-        <div className="flex items-center gap-3.5 mb-3.5">
-          <div className="w-11 h-11 rounded-[10px] bg-accent-pink border-4 border-foreground flex items-center justify-center font-bold text-lg text-white shrink-0">
+        <div className="flex items-center gap-3.5 mb-2.5">
+          <div className="w-11 h-11 rounded-[10px] bg-[hsl(var(--step-accent))] border-4 border-foreground flex items-center justify-center font-bold text-lg text-foreground shrink-0">
             {displayLabel.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -65,10 +65,7 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
             </div>
           </div>
         </div>
-        <div className="w-full h-4 border-2 border-foreground rounded-full overflow-hidden bg-secondary">
-          <div className="h-full w-full bg-accent-lime" />
-        </div>
-        <div className="text-[11px] text-muted-foreground mt-2">100% allocation · single heir</div>
+        <div className="text-[11px] text-muted-foreground">100% allocation · single heir</div>
       </div>
 
       {/* Assets */}

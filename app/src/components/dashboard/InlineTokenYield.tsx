@@ -37,7 +37,7 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
             "border-2 border-foreground shadow-[2px_2px_0_0_hsl(var(--foreground))]",
             isWorking
               ? "bg-secondary opacity-50"
-              : "bg-accent-lime hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+              : "bg-accent-yellow hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
           )}
         >
           {isWorking ? (
@@ -75,7 +75,7 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
           "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground",
           isWorking || vaultBalance <= 0
             ? "bg-secondary opacity-50"
-            : "bg-accent-lime hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+            : "bg-accent-yellow hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
         )}
       >
 

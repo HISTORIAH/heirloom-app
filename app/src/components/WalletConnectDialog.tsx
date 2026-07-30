@@ -40,7 +40,7 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
           console.error("wallet connect failed", err);
         }
       }}
-      className="w-full neo-border rounded-xl px-4 py-3 bg-secondary hover:bg-accent-lime transition-all duration-150 flex items-center gap-3 font-bold disabled:opacity-60"
+      className="w-full neo-border rounded-xl px-4 py-3 bg-secondary hover:bg-accent-yellow transition-all duration-150 flex items-center gap-3 font-bold disabled:opacity-60"
     >
       {wallet.icon && (
         <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />

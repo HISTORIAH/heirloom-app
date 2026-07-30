@@ -23,7 +23,7 @@ const NotFound = () => {
         <p className="text-lg font-medium text-muted-foreground mb-8 max-w-md mx-auto">
           This route doesn't exist. The vault you're looking for might be elsewhere.
         </p>
-        <Button variant="lime" size="lg" asChild>
+        <Button variant="yellow" size="lg" asChild>
           <a href="/">
             <ArrowLeft className="h-5 w-5" /> Return Home
           </a>

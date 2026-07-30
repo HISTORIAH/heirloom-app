@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
               <button
                 onClick={() => window.location.reload()}
-                className="neo-border bg-accent-lime px-4 py-2 font-bold rounded-lg hover:neo-shadow-sm transition-shadow"
+                className="neo-border bg-accent-yellow px-4 py-2 font-bold rounded-lg hover:neo-shadow-sm transition-shadow"
               >
                 Reload page
               </button>

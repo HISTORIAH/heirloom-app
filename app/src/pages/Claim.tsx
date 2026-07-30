@@ -276,7 +276,7 @@ const ClaimPageInner: React.FC<{
                 <p className="text-muted-foreground font-medium mb-4">
                   Connect your wallet to scan the chain for estates that name you as heir. Browse the page freely first.
                 </p>
-                <Button variant="lime" onClick={() => setWalletDialogOpen(true)}>
+                <Button variant="yellow" onClick={() => setWalletDialogOpen(true)}>
                   Connect Wallet
                 </Button>
               </div>
@@ -425,9 +425,9 @@ const ClaimPageInner: React.FC<{
                           </div>
                         ) : (
                           <Button
-                            variant="lime"
+                            variant="yellow"
                             size="xl"
-                            className={`w-full ${canClaim ? "neo-glow-lime" : ""}`}
+                            className={`w-full ${canClaim ? "neo-glow-yellow" : ""}`}
                             onClick={() => handleClaim(inh)}
                             disabled={!canClaim || isClaiming}
                           >

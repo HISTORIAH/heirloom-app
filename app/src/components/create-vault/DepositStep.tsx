@@ -133,7 +133,7 @@ const DepositStep: React.FC<Props> = ({
           onClick={() => setActiveTab("sol")}
           className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest border-4 border-foreground transition-all duration-150 ${
             activeTab === "sol"
-              ? "bg-accent-orange shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+              ? "bg-[hsl(var(--step-accent))] shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               : "bg-secondary hover:bg-secondary/80"
           }`}
         >
@@ -143,7 +143,7 @@ const DepositStep: React.FC<Props> = ({
           onClick={() => setActiveTab("tokens")}
           className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest border-4 border-foreground transition-all duration-150 ${
             activeTab === "tokens"
-              ? "bg-accent-orange shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+              ? "bg-[hsl(var(--step-accent))] shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               : "bg-secondary hover:bg-secondary/80"
           }`}
         >
@@ -173,8 +173,8 @@ const DepositStep: React.FC<Props> = ({
               onClick={() => setSolAmount(0)}
               className={`border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all duration-150 ${
                 solAmount <= 0
-                  ? "bg-accent-pink shadow-[3px_3px_0_0_hsl(var(--foreground))]"
-                  : "bg-secondary hover:bg-accent-pink/40"
+                  ? "bg-accent-yellow shadow-[3px_3px_0_0_hsl(var(--foreground))]"
+                  : "bg-secondary hover:bg-accent-yellow/40"
               }`}
             >
               Skip
@@ -184,7 +184,7 @@ const DepositStep: React.FC<Props> = ({
                 key={pct}
                 onClick={() => setSolByPercent(pct)}
                 disabled={!isConnected || solBalance <= 0}
-                className="border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold bg-secondary hover:bg-accent-pink/40 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {pct}%
               </button>
@@ -192,7 +192,7 @@ const DepositStep: React.FC<Props> = ({
             <button
               onClick={() => setSolByPercent(100)}
               disabled={!isConnected || solBalance <= 0}
-              className="border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold bg-accent-lime transition-all duration-150 shadow-[3px_3px_0_0_hsl(var(--foreground))] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold bg-[hsl(var(--step-accent))] transition-all duration-150 shadow-[3px_3px_0_0_hsl(var(--foreground))] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Max
             </button>
@@ -241,7 +241,7 @@ const DepositStep: React.FC<Props> = ({
               onClick={() => setHideDust((v) => !v)}
               className={`border-4 border-foreground rounded-xl px-3 py-2 text-xs font-bold uppercase transition-colors flex items-center gap-1 shrink-0 ${
                 hideDust
-                  ? "bg-accent-lime text-foreground"
+                  ? "bg-[hsl(var(--step-accent))] text-foreground"
                   : "bg-background hover:bg-secondary"
               }`}
             >
@@ -269,7 +269,7 @@ const DepositStep: React.FC<Props> = ({
                 <div
                   key={t.mint}
                   className={`border-b-2 border-foreground/5 transition-all duration-150 ${
-                    isSelected ? "bg-[#F7FEE7]" : "hover:bg-accent-cyan/10"
+                    isSelected ? "bg-[hsl(var(--step-accent)/0.1)]" : "hover:bg-accent-cyan/10"
                   }`}
                 >
                   {/* Token row */}
@@ -278,7 +278,7 @@ const DepositStep: React.FC<Props> = ({
                       image={t.image}
                       label={t.label}
                       size="md"
-                      accent={isSelected ? "bg-accent-lime" : "bg-accent-cyan"}
+                      accent={isSelected ? "bg-[hsl(var(--step-accent))]" : "bg-accent-cyan"}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm leading-tight truncate">
@@ -297,8 +297,8 @@ const DepositStep: React.FC<Props> = ({
                       onClick={() => toggleToken(t.mint)}
                       className={`border-4 border-foreground rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
                         isSelected
-                          ? "bg-accent-lime shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                          : "bg-secondary hover:bg-accent-lime/60"
+                          ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
+                          : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.6)]"
                       }`}
                     >
                       {isSelected ? "✓" : "Select"}
@@ -327,7 +327,7 @@ const DepositStep: React.FC<Props> = ({
                             onClick={() => setTokenByPercent(t.mint, p)}
                             className={`font-mono text-[11px] font-bold border-2 border-foreground rounded-full px-2 py-0.5 transition-all ${
                               sel.pct === p
-                                ? "bg-accent-lime"
+                                ? "bg-[hsl(var(--step-accent))]"
                                 : "bg-background hover:bg-secondary"
                             }`}
                           >

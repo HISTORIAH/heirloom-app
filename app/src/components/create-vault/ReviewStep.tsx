@@ -149,12 +149,12 @@ const ReviewStep: React.FC<Props> = ({
       <button
         onClick={() => setAcknowledged(!acknowledged)}
         className={`w-full flex items-start gap-3.5 border-4 border-foreground rounded-xl p-4 cursor-pointer transition-colors ${
-          acknowledged ? "bg-accent-lime/10" : "bg-background"
+          acknowledged ? "bg-[hsl(var(--step-accent)/0.1)]" : "bg-background"
         }`}
       >
         <div
           className={`w-6 h-6 shrink-0 border-4 border-foreground rounded-lg flex items-center justify-center font-bold text-sm transition-colors ${
-            acknowledged ? "bg-accent-lime" : "bg-background"
+            acknowledged ? "bg-[hsl(var(--step-accent))]" : "bg-background"
           }`}
         >
           {acknowledged && "✓"}

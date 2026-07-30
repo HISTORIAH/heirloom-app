@@ -36,7 +36,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
             "neo-border rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors shrink-0",
             isWorking
               ? "bg-secondary opacity-50"
-              : "bg-accent-lime hover:bg-accent-lime/90",
+              : "bg-accent-yellow hover:bg-accent-yellow/90",
           )}
         >
           {isWorking ? (
@@ -78,7 +78,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
           "neo-border rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
           isWorking || solBalance <= 0
             ? "bg-secondary opacity-50"
-            : "bg-accent-lime hover:bg-accent-lime/90",
+            : "bg-accent-yellow hover:bg-accent-yellow/90",
         )}
       >
         {isWorking ? (

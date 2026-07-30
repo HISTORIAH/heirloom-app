@@ -212,7 +212,7 @@ const AppTour = () => {
             </DialogDescription>
           </DialogHeader>
           <Button
-            variant="lime"
+            variant="yellow"
             size="lg"
             className="mt-2 w-full"
             onClick={() => {

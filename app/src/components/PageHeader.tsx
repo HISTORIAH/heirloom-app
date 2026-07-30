@@ -62,7 +62,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           <div className="relative" ref={walletDropdownRef}>
             <button
               onClick={() => setWalletDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-lime font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-yellow font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
             >
               {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
               <ChevronDown

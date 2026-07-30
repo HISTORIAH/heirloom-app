@@ -93,7 +93,7 @@ export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
             Cancel
           </Button>
           <Button
-            variant="lime"
+            variant="yellow"
             size="default"
             onClick={onConfirm}
             disabled={loading}

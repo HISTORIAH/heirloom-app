@@ -62,7 +62,7 @@ const HeartbeatStep: React.FC<Props> = ({
             value={heartbeatDays}
             onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
             className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5"
-            style={{ accentColor: "hsl(var(--accent-cyan))" }}
+            style={{ accentColor: "hsl(var(--step-accent))" }}
           />
           <div className="flex items-baseline gap-2 mb-3.5">
             <span className="text-5xl font-display font-bold tabular-nums leading-none">{heartbeatDays}</span>
@@ -75,8 +75,8 @@ const HeartbeatStep: React.FC<Props> = ({
                 onClick={() => setHeartbeatSeconds(p * SECONDS_PER_DAY)}
                 className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
                   heartbeatDays === p
-                    ? "bg-accent-cyan shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                    : "bg-secondary hover:bg-accent-cyan/40"
+                    ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
+                    : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)]"
                 }`}
               >
                 {p}d
@@ -98,7 +98,7 @@ const HeartbeatStep: React.FC<Props> = ({
             value={graceDays}
             onChange={(e) => setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
             className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5"
-            style={{ accentColor: "hsl(var(--accent-cyan))" }}
+            style={{ accentColor: "hsl(var(--step-accent))" }}
           />
           <div className="flex items-baseline gap-2 mb-3.5">
             <span className="text-5xl font-display font-bold tabular-nums leading-none">{graceDays}</span>
@@ -111,8 +111,8 @@ const HeartbeatStep: React.FC<Props> = ({
                 onClick={() => setGraceSeconds(p * SECONDS_PER_DAY)}
                 className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
                   graceDays === p
-                    ? "bg-accent-cyan shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                    : "bg-secondary hover:bg-accent-cyan/40"
+                    ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
+                    : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)]"
                 }`}
               >
                 {p}d

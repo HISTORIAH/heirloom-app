@@ -23,7 +23,7 @@ const SubmitOverlay: React.FC<SubmitOverlayProps> = ({ submitState, submitProgre
       <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
         {isComplete ? (
           <>
-            <div className="bg-accent-lime neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
             </div>
             <h2 className="text-3xl mb-3">Estate Created!</h2>

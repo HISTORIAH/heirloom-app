@@ -32,7 +32,13 @@
     --accent-yellow: 50 100% 50%;
     --accent-red: 0 100% 61%;
 
-    --accent: 83 78% 55%;
+    /* Yellow is the primary accent. Lime is reserved for live/alive state,
+       success, and editorial highlights. */
+    --accent: 50 100% 50%;
+
+    /* Overridden per wizard step so controls match the card's shadow color;
+       falls back to the primary accent outside those flows. */
+    --step-accent: var(--accent-yellow);
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 100% 61%;
@@ -53,7 +59,7 @@
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 0% 0%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 83 78% 55%;
+    --sidebar-accent: 50 100% 50%;
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 0 0% 0%;
     --sidebar-ring: 0 0% 0%;
@@ -231,10 +237,10 @@
     @apply w-10 h-10 md:w-12 md:h-12 neo-border rounded-full flex items-center justify-center font-bold text-sm md:text-base transition-all duration-300;
   }
   .neo-step-dot.active {
-    @apply bg-accent-lime scale-110;
+    @apply bg-accent-yellow scale-110;
     box-shadow: var(--shadow-md);
   }
-  .neo-step-dot.complete { @apply bg-accent-lime; }
+  .neo-step-dot.complete { @apply bg-accent-yellow; }
   .neo-step-dot.pending { @apply bg-secondary; }
 
   .neo-slide-up { animation: slideUp 0.4s ease-out; }
@@ -251,10 +257,10 @@
     75% { transform: translateX(-4px); }
   }
 
-  .neo-glow-lime { animation: glowLime 2s ease-in-out infinite; }
-  @keyframes glowLime {
+  .neo-glow-yellow { animation: glowYellow 2s ease-in-out infinite; }
+  @keyframes glowYellow {
     0%, 100% { box-shadow: var(--shadow-md); }
-    50% { box-shadow: var(--shadow-lg), 0 0 20px hsl(var(--accent-lime) / 0.3); }
+    50% { box-shadow: var(--shadow-lg), 0 0 20px hsl(var(--accent-yellow) / 0.35); }
   }
 
   /* --- Heartbeat motif --- */

@@ -66,7 +66,7 @@ const NavBar = () => {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-lime font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                    className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-yellow font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                   >
                     {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
                     <ChevronDown
@@ -127,9 +127,8 @@ const NavBar = () => {
                 </div>
             ) : (
               <Button
-                variant="lime"
+                variant="yellow"
                 size="sm"
-                style={{ backgroundColor: "#FFD600" }}
                 className="!shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 active:!translate-x-0 active:!translate-y-0 hover:brightness-95"
                 onClick={() => setWalletDialogOpen(true)}
               >
@@ -148,7 +147,7 @@ const NavBar = () => {
         </div>
 
         <div
-          className={`md:hidden border-t-4 border-foreground bg-accent-lime overflow-hidden transition-all duration-300 ease-out ${
+          className={`md:hidden border-t-4 border-foreground bg-accent-yellow overflow-hidden transition-all duration-300 ease-out ${
             open ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0 border-t-0"
           }`}
         >
@@ -221,9 +220,8 @@ const NavBar = () => {
               </Button>
             ) : (
               <Button
-                variant="lime"
+                variant="yellow"
                 size="lg"
-                style={{ backgroundColor: "#FFD600" }}
                 className="w-full !shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 active:!translate-x-0 active:!translate-y-0 hover:brightness-95"
                 onClick={() => {
                   setOpen(false);

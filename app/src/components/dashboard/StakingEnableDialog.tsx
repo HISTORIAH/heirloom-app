@@ -97,7 +97,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
               className={cn(
                 "w-full text-left neo-border rounded-xl p-4 transition-all duration-150",
                 selectedValidator === validator.id
-                  ? "bg-accent-lime/10 border-foreground shadow-[4px_4px_0px_0px_hsl(var(--foreground))]"
+                  ? "bg-accent-yellow/10 border-foreground shadow-[4px_4px_0px_0px_hsl(var(--foreground))]"
                   : "bg-secondary hover:bg-secondary/70",
               )}
             >
@@ -125,7 +125,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
                   </p>
                 </div>
                 {selectedValidator === validator.id && (
-                  <div className="w-4 h-4 rounded-full bg-accent-lime neo-border shrink-0" />
+                  <div className="w-4 h-4 rounded-full bg-accent-yellow neo-border shrink-0" />
                 )}
               </div>
             </button>
@@ -158,7 +158,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
             Cancel
           </Button>
           <Button
-            variant="lime"
+            variant="yellow"
             size="default"
             onClick={() => onConfirm(selectedValidator)}
             disabled={loading}

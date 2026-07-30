@@ -28,12 +28,10 @@ import Stepper from "@/components/create-vault/Stepper";
 import SummaryColumn from "@/components/create-vault/SummaryColumn";
 
 const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
-const STEP_COLORS = [
-  "hsl(var(--accent-pink))",
-  "hsl(var(--accent-orange))",
-  "hsl(var(--accent-cyan))",
-  "hsl(var(--accent-lime))",
-];
+// Each step owns an accent. It colors the card's shadow, and every button
+// inside the wizard picks it up through the --step-accent custom property, so
+// controls always match the card they sit in.
+const STEP_ACCENT_VARS = ["--accent-pink", "--accent-orange", "--accent-cyan", "--accent-lime"] as const;
 
 type StepIndex = 0 | 1 | 2 | 3;
 type SubmitState = "idle" | "creating" | "complete" | "error";
@@ -152,7 +150,8 @@ const CreateVaultPage = () => {
   };
 
   const isSubmitting = submitState === "creating" || submitState === "complete";
-  const accentColor = STEP_COLORS[step];
+  const accentVar = STEP_ACCENT_VARS[step];
+  const accentColor = `hsl(var(${accentVar}))`;
   const totalDays = Math.round(heartbeatSeconds / SECONDS_PER_DAY) + Math.round(graceSeconds / SECONDS_PER_DAY);
   const intervalDays = Math.round(heartbeatSeconds / SECONDS_PER_DAY);
   const graceDays = Math.round(graceSeconds / SECONDS_PER_DAY);
@@ -168,11 +167,11 @@ const CreateVaultPage = () => {
           />
 
           <main className="max-w-[1180px] mx-auto px-6 py-12">
-            <Stepper steps={STEPS} currentStep={4} completedSteps={4} onStepClick={() => {}} accentColor="#A3E635" />
+            <Stepper steps={STEPS} currentStep={4} completedSteps={4} onStepClick={() => {}} accentColor="hsl(var(--accent-yellow))" />
 
             <div className="mt-8">
-              <div className="bg-card border-4 border-foreground rounded-[20px] p-12 text-center neo-shadow-lime neo-slide-up">
-                <div className="w-24 h-24 rounded-full bg-accent-lime border-4 border-foreground mx-auto mb-8 flex items-center justify-center neo-shadow-md">
+              <div className="bg-card border-4 border-foreground rounded-[20px] p-12 text-center neo-shadow-yellow neo-slide-up">
+                <div className="w-24 h-24 rounded-full bg-accent-yellow border-4 border-foreground mx-auto mb-8 flex items-center justify-center neo-shadow-md">
                   <CheckCircle className="h-12 w-12" strokeWidth={2.5} />
                 </div>
                 <h2 className="text-4xl font-display mb-4">Estate created.</h2>
@@ -191,7 +190,7 @@ const CreateVaultPage = () => {
                 <div className="flex gap-4 justify-center">
                   <button
                     onClick={() => navigate("/dashboard")}
-                    className="inline-flex items-center gap-2 h-12 px-8 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-accent-lime text-foreground transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))]"
+                    className="inline-flex items-center gap-2 h-12 px-8 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-accent-yellow text-foreground transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))]"
                   >
                     GO TO DASHBOARD
                   </button>
@@ -254,7 +253,12 @@ const CreateVaultPage = () => {
           {/* Main card */}
           <div
             className="mt-12 bg-card border-4 border-foreground rounded-[20px] overflow-hidden neo-slide-up"
-            style={{ boxShadow: `10px 10px 0 0 ${accentColor}` }}
+            style={
+              {
+                boxShadow: `10px 10px 0 0 ${accentColor}`,
+                "--step-accent": `var(${accentVar})`,
+              } as React.CSSProperties
+            }
           >
             <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr]">
               {/* Form column */}
@@ -346,11 +350,7 @@ const CreateVaultPage = () => {
                 <button
                   onClick={() => setStep((s) => (s + 1) as StepIndex)}
                   disabled={!canProceed() || isSubmitting}
-                  className={`inline-flex items-center gap-2 h-11 px-7 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 disabled:pointer-events-none disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:border-4 disabled:border-foreground ${
-                    step === 1 && !hasAnyDeposit
-                      ? "bg-background text-muted-foreground shadow-[4px_4px_0_0_hsl(var(--muted-foreground))]"
-                      : "bg-accent-lime text-foreground shadow-[5px_5px_0_0_hsl(var(--foreground))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                  }`}
+                  className="inline-flex items-center gap-2 h-11 px-7 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 disabled:pointer-events-none disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:border-4 disabled:border-foreground bg-[hsl(var(--step-accent))] text-foreground shadow-[5px_5px_0_0_hsl(var(--foreground))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
                 >
                   {step === 1 && !hasAnyDeposit ? "SKIP FOR NOW →" : "NEXT"}
                   {step !== 1 && <ArrowRight className="h-4 w-4" strokeWidth={2.5} />}
@@ -359,7 +359,7 @@ const CreateVaultPage = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={!canProceed() || isSubmitting}
-                  className="inline-flex items-center gap-2 h-11 px-8 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-accent-lime text-foreground shadow-[5px_5px_0_0_hsl(var(--foreground))] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_hsl(var(--foreground))] disabled:pointer-events-none disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:border-4 disabled:border-foreground"
+                  className="inline-flex items-center gap-2 h-11 px-8 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-[hsl(var(--step-accent))] text-foreground shadow-[5px_5px_0_0_hsl(var(--foreground))] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_hsl(var(--foreground))] disabled:pointer-events-none disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:border-4 disabled:border-foreground"
                 >
                   {isSubmitting ? (
                     <>

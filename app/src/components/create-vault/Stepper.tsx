@@ -9,6 +9,10 @@ interface StepperProps {
 }
 
 const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, onStepClick, accentColor }) => {
+  // Completed steps are always yellow; only the active dot takes the step's
+  // own accent.
+  const doneColor = "hsl(var(--accent-yellow))";
+
   return (
     <div className="flex items-start">
       {steps.map((label, i) => {
@@ -30,7 +34,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, o
                   isActive
                     ? { backgroundColor: accentColor, boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }
                     : isDone
-                      ? { backgroundColor: "hsl(var(--accent-lime))" }
+                      ? { backgroundColor: doneColor }
                       : { backgroundColor: "white" }
                 }
               >
@@ -49,7 +53,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, o
                 <div
                   className="h-1 md:h-1.5 w-full"
                   style={{
-                    backgroundColor: isDone ? "hsl(var(--accent-lime))" : "hsl(var(--foreground))",
+                    backgroundColor: isDone ? doneColor : "hsl(var(--foreground))",
                   }}
                 />
               </div>

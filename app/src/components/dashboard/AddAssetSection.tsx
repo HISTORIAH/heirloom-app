@@ -8,10 +8,10 @@ import { cn, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { amountStep, pctOfMax } from "@/lib/utils/math";
 
 const TOPUP_PCTS = [
-  { pct: 25,  label: "25%", bg: "bg-accent-yellow" },
+  { pct: 25,  label: "25%", bg: "bg-accent-pink"   },
   { pct: 50,  label: "50%", bg: "bg-accent-cyan"   },
   { pct: 75,  label: "75%", bg: "bg-accent-orange" },
-  { pct: 100, label: "Max", bg: "bg-accent-lime"   },
+  { pct: 100, label: "Max", bg: "bg-accent-yellow" },
 ] as const;
 import { Loader2, Plus, X } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";

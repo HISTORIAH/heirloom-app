@@ -178,7 +178,7 @@ const EstatePillButton = ({
       className={cn(
         "neo-border rounded-xl px-3 py-2 min-h-[56px] flex flex-col items-start justify-center gap-0.5 transition-colors text-left overflow-hidden",
         fullWidth ? "w-full" : "w-44 shrink-0",
-        selected ? "bg-accent-lime" : "bg-background hover:bg-secondary",
+        selected ? "bg-accent-yellow" : "bg-background hover:bg-secondary",
       )}
     >
       <span className="flex items-center gap-2 text-sm font-semibold w-full min-w-0">
@@ -544,7 +544,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl">Assets</h3>
-          <span className="neo-badge bg-accent-lime !px-3 !py-0.5 !text-xs">
+          <span className="neo-badge bg-secondary !px-3 !py-0.5 !text-xs">
             {1 + estate.vaultTokens.length} asset{1 + estate.vaultTokens.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -553,7 +553,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
             onClick={() => setAssetTab("sol")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-bold uppercase neo-border transition-colors",
-              assetTab === "sol" ? "bg-accent-lime" : "bg-secondary hover:bg-secondary/70",
+              assetTab === "sol" ? "bg-accent-yellow" : "bg-secondary hover:bg-secondary/70",
             )}
           >
             {SOL_LABEL}
@@ -562,7 +562,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
             onClick={() => setAssetTab("tokens")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-bold uppercase neo-border transition-colors",
-              assetTab === "tokens" ? "bg-accent-lime" : "bg-secondary hover:bg-secondary/70",
+              assetTab === "tokens" ? "bg-accent-yellow" : "bg-secondary hover:bg-secondary/70",
             )}
           >
             Tokens ({estate.vaultTokens.length})
@@ -587,7 +587,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
               <button
                 onClick={handleEnableStaking}
                 disabled={solVaultBalance <= 0}
-                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-accent-lime hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-accent-yellow hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               >
                 <Sprout className="h-3.5 w-3.5" /> Stake SOL
               </button>
@@ -883,7 +883,7 @@ const DashboardPage = () => {
           <h1 className="text-[44px] tracking-tight font-display">
             Your estates <span className="text-muted-foreground">({estates.length})</span>
           </h1>
-          <Button variant="lime" size="lg" onClick={() => navigate("/create-vault")}>
+          <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
             <Plus className="h-5 w-5" /> New Estate
           </Button>
         </div>
@@ -930,11 +930,11 @@ const DashboardPage = () => {
             </p>
             <div className="flex flex-col items-center gap-3">
               {isConnected ? (
-                <Button variant="lime" size="lg" onClick={() => navigate("/create-vault")}>
+                <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
                   Create Your Vault
                 </Button>
               ) : (
-                <Button variant="lime" size="lg" onClick={() => setWalletDialogOpen(true)}>
+                <Button variant="yellow" size="lg" onClick={() => setWalletDialogOpen(true)}>
                   <Wallet className="h-5 w-5" /> Connect Wallet
                 </Button>
               )}
@@ -944,21 +944,6 @@ const DashboardPage = () => {
               >
                 Were you named as an heir? Claim inheritance
               </button>
-            </div>
-            {/* Stats teaser */}
-            <div className="mt-12 grid grid-cols-3 gap-4 max-w-md mx-auto">
-              <div className="neo-border rounded-xl p-4 bg-background">
-                <p className="text-2xl font-bold text-accent-pink">$2.4M</p>
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Protected</p>
-              </div>
-              <div className="neo-border rounded-xl p-4 bg-background">
-                <p className="text-2xl font-bold text-accent-cyan">847</p>
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Vaults</p>
-              </div>
-              <div className="neo-border rounded-xl p-4 bg-background">
-                <p className="text-2xl font-bold text-accent-lime">0</p>
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-1">Claims</p>
-              </div>
             </div>
           </div>
         )}

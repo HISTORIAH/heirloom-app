@@ -288,7 +288,7 @@ const DeferPageInner: React.FC<{
                     </div>
                   ) : !isConnected ? (
                     <Button
-                      variant="lime"
+                      variant="yellow"
                       size="xl"
                       className="w-full"
                       onClick={() => setWalletDialogOpen(true)}
