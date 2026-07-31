@@ -16,7 +16,9 @@ pub struct CompleteWithdrawRegularLulo {
       
               
           pub authority: solana_address::Address,
-          
+                /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+
+    
               
           pub heir: solana_address::Address,
           
@@ -28,6 +30,9 @@ pub struct CompleteWithdrawRegularLulo {
           
               
           pub vault_token_account: solana_address::Address,
+          
+              
+          pub asset_record: solana_address::Address,
           
               
           pub pending_withdrawal_account: solana_address::Address,
@@ -118,6 +123,9 @@ pub struct CompleteWithdrawRegularLulo {
           pub protocol_authority: solana_address::Address,
           
               
+          pub treasury_token_account: solana_address::Address,
+          
+              
           pub protocol_authority_token_account: solana_address::Address,
           
               
@@ -131,7 +139,7 @@ impl CompleteWithdrawRegularLulo {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: CompleteWithdrawRegularLuloInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(35+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(37+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -150,6 +158,10 @@ impl CompleteWithdrawRegularLulo {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
             self.vault_token_account,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            self.asset_record,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
@@ -286,6 +298,10 @@ impl CompleteWithdrawRegularLulo {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
+            self.treasury_token_account,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new(
             self.protocol_authority_token_account,
             false
           ));
@@ -350,36 +366,38 @@ impl CompleteWithdrawRegularLuloInstructionArgs {
                 ///   2. `[writable]` estate
                 ///   3. `[writable]` vault
                 ///   4. `[writable]` vault_token_account
-                ///   5. `[writable]` pending_withdrawal_account
-                ///   6. `[writable]` pool_user
-                ///   7. `[writable]` pool_user_token_account
-                ///   8. `[writable]` pool_user_lp_token_account
-                ///   9. `[writable]` referrer_pool_user
-          ///   10. `[]` input_mint
-                ///   11. `[writable]` pool_reserve_token_account
-                ///   12. `[writable]` lp_mint
-                ///   13. `[writable]` pool_account
-                      ///   14. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
-          ///   15. `[]` input_mint_token_program
-          ///   16. `[]` lp_mint_token_program
-                ///   17. `[writable]` market
-                ///   18. `[writable]` obligation
-                ///   19. `[writable]` reserve
-                ///   20. `[writable]` reserve_liquidity_supply
-          ///   21. `[]` lending_market_authority
-                ///   22. `[writable]` collateral_mint
-                ///   23. `[writable]` collateral_token_account
-                ///   24. `[writable]` reserve_collateral_supply
-          ///   25. `[]` collateral_token_program
-                ///   26. `[optional]` instructions_sysvar (default to `Sysvar1nstructions1111111111111111111111111`)
-                ///   27. `[optional]` kamino_program (default to `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`)
-                ///   28. `[optional]` farms_program (default to `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr`)
-                      ///   29. `[writable, optional]` reserve_farm_state
-                      ///   30. `[writable, optional]` obligation_farm_user_state
-                ///   31. `[optional]` scope_prices
-                      ///   32. `[writable, optional]` protocol_authority (default to `4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR`)
-                      ///   33. `[writable, optional]` protocol_authority_token_account (default to `mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx`)
-                ///   34. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   5. `[writable]` asset_record
+                ///   6. `[writable]` pending_withdrawal_account
+                ///   7. `[writable]` pool_user
+                ///   8. `[writable]` pool_user_token_account
+                ///   9. `[writable]` pool_user_lp_token_account
+                ///   10. `[writable]` referrer_pool_user
+          ///   11. `[]` input_mint
+                ///   12. `[writable]` pool_reserve_token_account
+                ///   13. `[writable]` lp_mint
+                ///   14. `[writable]` pool_account
+                      ///   15. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
+          ///   16. `[]` input_mint_token_program
+          ///   17. `[]` lp_mint_token_program
+                ///   18. `[writable]` market
+                ///   19. `[writable]` obligation
+                ///   20. `[writable]` reserve
+                ///   21. `[writable]` reserve_liquidity_supply
+          ///   22. `[]` lending_market_authority
+                ///   23. `[writable]` collateral_mint
+                ///   24. `[writable]` collateral_token_account
+                ///   25. `[writable]` reserve_collateral_supply
+          ///   26. `[]` collateral_token_program
+                ///   27. `[optional]` instructions_sysvar (default to `Sysvar1nstructions1111111111111111111111111`)
+                ///   28. `[optional]` kamino_program (default to `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`)
+                ///   29. `[optional]` farms_program (default to `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr`)
+                      ///   30. `[writable, optional]` reserve_farm_state
+                      ///   31. `[writable, optional]` obligation_farm_user_state
+                ///   32. `[optional]` scope_prices
+                      ///   33. `[writable, optional]` protocol_authority (default to `4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR`)
+                ///   34. `[writable]` treasury_token_account
+                      ///   35. `[writable, optional]` protocol_authority_token_account (default to `mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx`)
+                ///   36. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct CompleteWithdrawRegularLuloBuilder {
             authority: Option<solana_address::Address>,
@@ -387,6 +405,7 @@ pub struct CompleteWithdrawRegularLuloBuilder {
                 estate: Option<solana_address::Address>,
                 vault: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
+                asset_record: Option<solana_address::Address>,
                 pending_withdrawal_account: Option<solana_address::Address>,
                 pool_user: Option<solana_address::Address>,
                 pool_user_token_account: Option<solana_address::Address>,
@@ -415,6 +434,7 @@ pub struct CompleteWithdrawRegularLuloBuilder {
                 obligation_farm_user_state: Option<solana_address::Address>,
                 scope_prices: Option<solana_address::Address>,
                 protocol_authority: Option<solana_address::Address>,
+                treasury_token_account: Option<solana_address::Address>,
                 protocol_authority_token_account: Option<solana_address::Address>,
                 system_program: Option<solana_address::Address>,
                         withdrawal_id: Option<u16>,
@@ -430,7 +450,8 @@ impl CompleteWithdrawRegularLuloBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -448,6 +469,11 @@ impl CompleteWithdrawRegularLuloBuilder {
             #[inline(always)]
     pub fn vault_token_account(&mut self, vault_token_account: solana_address::Address) -> &mut Self {
                         self.vault_token_account = Some(vault_token_account);
+                    self
+    }
+            #[inline(always)]
+    pub fn asset_record(&mut self, asset_record: solana_address::Address) -> &mut Self {
+                        self.asset_record = Some(asset_record);
                     self
     }
             #[inline(always)]
@@ -600,6 +626,11 @@ impl CompleteWithdrawRegularLuloBuilder {
                         self.protocol_authority = Some(protocol_authority);
                     self
     }
+            #[inline(always)]
+    pub fn treasury_token_account(&mut self, treasury_token_account: solana_address::Address) -> &mut Self {
+                        self.treasury_token_account = Some(treasury_token_account);
+                    self
+    }
             /// `[optional account, default to 'mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx']`
 #[inline(always)]
     pub fn protocol_authority_token_account(&mut self, protocol_authority_token_account: solana_address::Address) -> &mut Self {
@@ -637,6 +668,7 @@ impl CompleteWithdrawRegularLuloBuilder {
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
                                         vault_token_account: self.vault_token_account.expect("vault_token_account is not set"),
+                                        asset_record: self.asset_record.expect("asset_record is not set"),
                                         pending_withdrawal_account: self.pending_withdrawal_account.expect("pending_withdrawal_account is not set"),
                                         pool_user: self.pool_user.expect("pool_user is not set"),
                                         pool_user_token_account: self.pool_user_token_account.expect("pool_user_token_account is not set"),
@@ -665,6 +697,7 @@ impl CompleteWithdrawRegularLuloBuilder {
                                         obligation_farm_user_state: self.obligation_farm_user_state,
                                         scope_prices: self.scope_prices,
                                         protocol_authority: self.protocol_authority.unwrap_or(solana_address::address!("4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR")),
+                                        treasury_token_account: self.treasury_token_account.expect("treasury_token_account is not set"),
                                         protocol_authority_token_account: self.protocol_authority_token_account.unwrap_or(solana_address::address!("mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx")),
                                         system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
                       };
@@ -681,7 +714,9 @@ impl CompleteWithdrawRegularLuloBuilder {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -693,6 +728,9 @@ impl CompleteWithdrawRegularLuloBuilder {
                 
                     
               pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
+              pub asset_record: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub pending_withdrawal_account: &'b solana_account_info::AccountInfo<'a>,
@@ -783,6 +821,9 @@ impl CompleteWithdrawRegularLuloBuilder {
               pub protocol_authority: &'b solana_account_info::AccountInfo<'a>,
                 
                     
+              pub treasury_token_account: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
               pub protocol_authority_token_account: &'b solana_account_info::AccountInfo<'a>,
                 
                     
@@ -796,7 +837,9 @@ pub struct CompleteWithdrawRegularLuloCpi<'a, 'b> {
       
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -808,6 +851,9 @@ pub struct CompleteWithdrawRegularLuloCpi<'a, 'b> {
           
               
           pub vault_token_account: &'b solana_account_info::AccountInfo<'a>,
+          
+              
+          pub asset_record: &'b solana_account_info::AccountInfo<'a>,
           
               
           pub pending_withdrawal_account: &'b solana_account_info::AccountInfo<'a>,
@@ -898,6 +944,9 @@ pub struct CompleteWithdrawRegularLuloCpi<'a, 'b> {
           pub protocol_authority: &'b solana_account_info::AccountInfo<'a>,
           
               
+          pub treasury_token_account: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub protocol_authority_token_account: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -919,6 +968,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
               estate: accounts.estate,
               vault: accounts.vault,
               vault_token_account: accounts.vault_token_account,
+              asset_record: accounts.asset_record,
               pending_withdrawal_account: accounts.pending_withdrawal_account,
               pool_user: accounts.pool_user,
               pool_user_token_account: accounts.pool_user_token_account,
@@ -947,6 +997,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
               obligation_farm_user_state: accounts.obligation_farm_user_state,
               scope_prices: accounts.scope_prices,
               protocol_authority: accounts.protocol_authority,
+              treasury_token_account: accounts.treasury_token_account,
               protocol_authority_token_account: accounts.protocol_authority_token_account,
               system_program: accounts.system_program,
                     __args: args,
@@ -972,7 +1023,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(35+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(37+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -991,6 +1042,10 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.vault_token_account.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            *self.asset_record.key,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
@@ -1127,6 +1182,10 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
+            *self.treasury_token_account.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new(
             *self.protocol_authority_token_account.key,
             false
           ));
@@ -1150,13 +1209,14 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(36 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(38 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
                         account_infos.push(self.vault_token_account.clone());
+                        account_infos.push(self.asset_record.clone());
                         account_infos.push(self.pending_withdrawal_account.clone());
                         account_infos.push(self.pool_user.clone());
                         account_infos.push(self.pool_user_token_account.clone());
@@ -1191,6 +1251,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
           account_infos.push(scope_prices.clone());
         }
                         account_infos.push(self.protocol_authority.clone());
+                        account_infos.push(self.treasury_token_account.clone());
                         account_infos.push(self.protocol_authority_token_account.clone());
                         account_infos.push(self.system_program.clone());
               remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -1212,36 +1273,38 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
                 ///   2. `[writable]` estate
                 ///   3. `[writable]` vault
                 ///   4. `[writable]` vault_token_account
-                ///   5. `[writable]` pending_withdrawal_account
-                ///   6. `[writable]` pool_user
-                ///   7. `[writable]` pool_user_token_account
-                ///   8. `[writable]` pool_user_lp_token_account
-                ///   9. `[writable]` referrer_pool_user
-          ///   10. `[]` input_mint
-                ///   11. `[writable]` pool_reserve_token_account
-                ///   12. `[writable]` lp_mint
-                ///   13. `[writable]` pool_account
-                ///   14. `[writable]` program_id
-          ///   15. `[]` input_mint_token_program
-          ///   16. `[]` lp_mint_token_program
-                ///   17. `[writable]` market
-                ///   18. `[writable]` obligation
-                ///   19. `[writable]` reserve
-                ///   20. `[writable]` reserve_liquidity_supply
-          ///   21. `[]` lending_market_authority
-                ///   22. `[writable]` collateral_mint
-                ///   23. `[writable]` collateral_token_account
-                ///   24. `[writable]` reserve_collateral_supply
-          ///   25. `[]` collateral_token_program
-          ///   26. `[]` instructions_sysvar
-          ///   27. `[]` kamino_program
-          ///   28. `[]` farms_program
-                      ///   29. `[writable, optional]` reserve_farm_state
-                      ///   30. `[writable, optional]` obligation_farm_user_state
-                ///   31. `[optional]` scope_prices
-                ///   32. `[writable]` protocol_authority
-                ///   33. `[writable]` protocol_authority_token_account
-          ///   34. `[]` system_program
+                ///   5. `[writable]` asset_record
+                ///   6. `[writable]` pending_withdrawal_account
+                ///   7. `[writable]` pool_user
+                ///   8. `[writable]` pool_user_token_account
+                ///   9. `[writable]` pool_user_lp_token_account
+                ///   10. `[writable]` referrer_pool_user
+          ///   11. `[]` input_mint
+                ///   12. `[writable]` pool_reserve_token_account
+                ///   13. `[writable]` lp_mint
+                ///   14. `[writable]` pool_account
+                ///   15. `[writable]` program_id
+          ///   16. `[]` input_mint_token_program
+          ///   17. `[]` lp_mint_token_program
+                ///   18. `[writable]` market
+                ///   19. `[writable]` obligation
+                ///   20. `[writable]` reserve
+                ///   21. `[writable]` reserve_liquidity_supply
+          ///   22. `[]` lending_market_authority
+                ///   23. `[writable]` collateral_mint
+                ///   24. `[writable]` collateral_token_account
+                ///   25. `[writable]` reserve_collateral_supply
+          ///   26. `[]` collateral_token_program
+          ///   27. `[]` instructions_sysvar
+          ///   28. `[]` kamino_program
+          ///   29. `[]` farms_program
+                      ///   30. `[writable, optional]` reserve_farm_state
+                      ///   31. `[writable, optional]` obligation_farm_user_state
+                ///   32. `[optional]` scope_prices
+                ///   33. `[writable]` protocol_authority
+                ///   34. `[writable]` treasury_token_account
+                ///   35. `[writable]` protocol_authority_token_account
+          ///   36. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
   instruction: Box<CompleteWithdrawRegularLuloCpiBuilderInstruction<'a, 'b>>,
@@ -1256,6 +1319,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
               estate: None,
               vault: None,
               vault_token_account: None,
+              asset_record: None,
               pending_withdrawal_account: None,
               pool_user: None,
               pool_user_token_account: None,
@@ -1284,6 +1348,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
               obligation_farm_user_state: None,
               scope_prices: None,
               protocol_authority: None,
+              treasury_token_account: None,
               protocol_authority_token_account: None,
               system_program: None,
                                             withdrawal_id: None,
@@ -1296,7 +1361,8 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
@@ -1314,6 +1380,11 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
       #[inline(always)]
     pub fn vault_token_account(&mut self, vault_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.vault_token_account = Some(vault_token_account);
+                    self
+    }
+      #[inline(always)]
+    pub fn asset_record(&mut self, asset_record: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.asset_record = Some(asset_record);
                     self
     }
       #[inline(always)]
@@ -1462,6 +1533,11 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
                     self
     }
       #[inline(always)]
+    pub fn treasury_token_account(&mut self, treasury_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.treasury_token_account = Some(treasury_token_account);
+                    self
+    }
+      #[inline(always)]
     pub fn protocol_authority_token_account(&mut self, protocol_authority_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.protocol_authority_token_account = Some(protocol_authority_token_account);
                     self
@@ -1513,6 +1589,8 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
           vault: self.instruction.vault.expect("vault is not set"),
                   
           vault_token_account: self.instruction.vault_token_account.expect("vault_token_account is not set"),
+                  
+          asset_record: self.instruction.asset_record.expect("asset_record is not set"),
                   
           pending_withdrawal_account: self.instruction.pending_withdrawal_account.expect("pending_withdrawal_account is not set"),
                   
@@ -1570,6 +1648,8 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
                   
           protocol_authority: self.instruction.protocol_authority.expect("protocol_authority is not set"),
                   
+          treasury_token_account: self.instruction.treasury_token_account.expect("treasury_token_account is not set"),
+                  
           protocol_authority_token_account: self.instruction.protocol_authority_token_account.expect("protocol_authority_token_account is not set"),
                   
           system_program: self.instruction.system_program.expect("system_program is not set"),
@@ -1587,6 +1667,7 @@ struct CompleteWithdrawRegularLuloCpiBuilderInstruction<'a, 'b> {
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+                asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 pending_withdrawal_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 pool_user: Option<&'b solana_account_info::AccountInfo<'a>>,
                 pool_user_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
@@ -1615,6 +1696,7 @@ struct CompleteWithdrawRegularLuloCpiBuilderInstruction<'a, 'b> {
                 obligation_farm_user_state: Option<&'b solana_account_info::AccountInfo<'a>>,
                 scope_prices: Option<&'b solana_account_info::AccountInfo<'a>>,
                 protocol_authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+                treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 protocol_authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
                         withdrawal_id: Option<u16>,

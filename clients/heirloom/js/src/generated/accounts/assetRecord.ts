@@ -19,6 +19,8 @@ import {
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -43,9 +45,13 @@ export function getAssetRecordDiscriminatorBytes(): ReadonlyUint8Array {
   return fixEncoderSize(getBytesEncoder(), 8).encode(ASSET_RECORD_DISCRIMINATOR);
 }
 
-export type AssetRecord = { discriminator: ReadonlyUint8Array; bump: number };
+export type AssetRecord = {
+  discriminator: ReadonlyUint8Array;
+  bump: number;
+  principalDeployed: bigint;
+};
 
-export type AssetRecordArgs = { bump: number };
+export type AssetRecordArgs = { bump: number; principalDeployed: number | bigint };
 
 /** Gets the encoder for {@link AssetRecordArgs} account data. */
 export function getAssetRecordEncoder(): FixedSizeEncoder<AssetRecordArgs> {
@@ -53,6 +59,7 @@ export function getAssetRecordEncoder(): FixedSizeEncoder<AssetRecordArgs> {
     getStructEncoder([
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["bump", getU8Encoder()],
+      ["principalDeployed", getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: ASSET_RECORD_DISCRIMINATOR }),
   );
@@ -63,6 +70,7 @@ export function getAssetRecordDecoder(): FixedSizeDecoder<AssetRecord> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["bump", getU8Decoder()],
+    ["principalDeployed", getU64Decoder()],
   ]);
 }
 
@@ -122,5 +130,5 @@ export async function fetchAllMaybeAssetRecord(
 }
 
 export function getAssetRecordSize(): number {
-  return 9;
+  return 17;
 }
