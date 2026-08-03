@@ -63,6 +63,7 @@ export type DepositLuloInstruction<
   TAccountVault extends string | AccountMeta<string> = string,
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
+  TAccountAssetRecord extends string | AccountMeta<string> = string,
   TAccountPoolUser extends string | AccountMeta<string> = string,
   TAccountPoolUserTokenAccount extends string | AccountMeta<string> = string,
   TAccountPoolUserLpTokenAccount extends string | AccountMeta<string> = string,
@@ -93,6 +94,9 @@ export type DepositLuloInstruction<
         ? WritableAccount<TAccountVaultTokenAccount>
         : TAccountVaultTokenAccount,
       TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountAssetRecord extends string
+        ? WritableAccount<TAccountAssetRecord>
+        : TAccountAssetRecord,
       TAccountPoolUser extends string ? WritableAccount<TAccountPoolUser> : TAccountPoolUser,
       TAccountPoolUserTokenAccount extends string
         ? WritableAccount<TAccountPoolUserTokenAccount>
@@ -175,6 +179,7 @@ export type DepositLuloAsyncInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountEstate extends string = string,
+  TAccountAssetRecord extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
   TAccountPoolUserLpTokenAccount extends string = string,
@@ -195,6 +200,7 @@ export type DepositLuloAsyncInput<
   vault?: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
   estate?: Address<TAccountEstate>;
+  assetRecord: Address<TAccountAssetRecord>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
@@ -221,6 +227,7 @@ export async function getDepositLuloInstructionAsync<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountEstate extends string,
+  TAccountAssetRecord extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
   TAccountPoolUserLpTokenAccount extends string,
@@ -243,6 +250,7 @@ export async function getDepositLuloInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -267,6 +275,7 @@ export async function getDepositLuloInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -293,6 +302,7 @@ export async function getDepositLuloInstructionAsync<
     vault: { value: input.vault ?? null, isWritable: true },
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
     poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
@@ -354,6 +364,7 @@ export async function getDepositLuloInstructionAsync<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("estate", accounts.estate),
+      getAccountMeta("assetRecord", accounts.assetRecord),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
       getAccountMeta("poolUserLpTokenAccount", accounts.poolUserLpTokenAccount),
@@ -378,6 +389,7 @@ export async function getDepositLuloInstructionAsync<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -401,6 +413,7 @@ export type DepositLuloInput<
   TAccountVault extends string = string,
   TAccountVaultTokenAccount extends string = string,
   TAccountEstate extends string = string,
+  TAccountAssetRecord extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
   TAccountPoolUserLpTokenAccount extends string = string,
@@ -421,6 +434,7 @@ export type DepositLuloInput<
   vault: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
   estate: Address<TAccountEstate>;
+  assetRecord: Address<TAccountAssetRecord>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
@@ -447,6 +461,7 @@ export function getDepositLuloInstruction<
   TAccountVault extends string,
   TAccountVaultTokenAccount extends string,
   TAccountEstate extends string,
+  TAccountAssetRecord extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
   TAccountPoolUserLpTokenAccount extends string,
@@ -469,6 +484,7 @@ export function getDepositLuloInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -492,6 +508,7 @@ export function getDepositLuloInstruction<
   TAccountVault,
   TAccountVaultTokenAccount,
   TAccountEstate,
+  TAccountAssetRecord,
   TAccountPoolUser,
   TAccountPoolUserTokenAccount,
   TAccountPoolUserLpTokenAccount,
@@ -517,6 +534,7 @@ export function getDepositLuloInstruction<
     vault: { value: input.vault ?? null, isWritable: true },
     vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
     poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
@@ -566,6 +584,7 @@ export function getDepositLuloInstruction<
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("estate", accounts.estate),
+      getAccountMeta("assetRecord", accounts.assetRecord),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
       getAccountMeta("poolUserLpTokenAccount", accounts.poolUserLpTokenAccount),
@@ -590,6 +609,7 @@ export function getDepositLuloInstruction<
     TAccountVault,
     TAccountVaultTokenAccount,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
     TAccountPoolUserLpTokenAccount,
@@ -618,22 +638,23 @@ export type ParsedDepositLuloInstruction<
     vault: TAccountMetas[2];
     vaultTokenAccount: TAccountMetas[3];
     estate: TAccountMetas[4];
-    poolUser: TAccountMetas[5];
-    poolUserTokenAccount: TAccountMetas[6];
-    poolUserLpTokenAccount: TAccountMetas[7];
-    referrerPoolUser: TAccountMetas[8];
-    inputMint: TAccountMetas[9];
+    assetRecord: TAccountMetas[5];
+    poolUser: TAccountMetas[6];
+    poolUserTokenAccount: TAccountMetas[7];
+    poolUserLpTokenAccount: TAccountMetas[8];
+    referrerPoolUser: TAccountMetas[9];
+    inputMint: TAccountMetas[10];
     /** pool's reserve token account (authority = pool_account). */
-    poolReserveTokenAccount: TAccountMetas[10];
+    poolReserveTokenAccount: TAccountMetas[11];
     /** the pool's LP/share mint (token22) */
-    lpMint: TAccountMetas[11];
-    poolAccount: TAccountMetas[12];
-    programId: TAccountMetas[13];
-    inputMintTokenProgram: TAccountMetas[14];
-    lpMintTokenProgram: TAccountMetas[15];
-    associatedTokenProgram: TAccountMetas[16];
-    rent: TAccountMetas[17];
-    systemProgram: TAccountMetas[18];
+    lpMint: TAccountMetas[12];
+    poolAccount: TAccountMetas[13];
+    programId: TAccountMetas[14];
+    inputMintTokenProgram: TAccountMetas[15];
+    lpMintTokenProgram: TAccountMetas[16];
+    associatedTokenProgram: TAccountMetas[17];
+    rent: TAccountMetas[18];
+    systemProgram: TAccountMetas[19];
   };
   data: DepositLuloInstructionData;
 };
@@ -646,10 +667,10 @@ export function parseDepositLuloInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedDepositLuloInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 19) {
+  if (instruction.accounts.length < 20) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 19,
+      expectedAccountMetas: 20,
     });
   }
   let accountIndex = 0;
@@ -666,6 +687,7 @@ export function parseDepositLuloInstruction<
       vault: getNextAccount(),
       vaultTokenAccount: getNextAccount(),
       estate: getNextAccount(),
+      assetRecord: getNextAccount(),
       poolUser: getNextAccount(),
       poolUserTokenAccount: getNextAccount(),
       poolUserLpTokenAccount: getNextAccount(),
