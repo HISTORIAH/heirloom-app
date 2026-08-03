@@ -1,5 +1,5 @@
 use crate::{
-    error::HeirloomError, helpers::*, lulo_v2, AssetRecord, Estate, Vault,
+    error::HeirloomError, helpers::*, lulo_v2, AssetRecord, DepositType, Estate, Vault,
     KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT, TREASURY,
 };
 use anchor_lang::prelude::*;
@@ -211,6 +211,18 @@ impl<'info> WithdrawProtected<'info> {
             token_program_addr,
             signer_seeds,
             vault_balance_before,
+        )?;
+
+        // close-safety: refresh from the real Lulo position, not our bookkeeping
+        let lp_ta_info = ctx
+            .accounts
+            .lulo_accounts
+            .pool_user_lp_token_account
+            .to_account_info();
+        refresh_lulo_exposure(
+            &mut ctx.accounts.asset_record,
+            &lp_ta_info,
+            DepositType::Protected,
         )?;
 
         Ok(())

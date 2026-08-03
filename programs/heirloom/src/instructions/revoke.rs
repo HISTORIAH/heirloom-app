@@ -121,8 +121,9 @@ impl<'info> Revoke<'info> {
 
                 require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
 
+                let asset_record = self.asset_record.as_ref().unwrap();
                 require!(
-                    self.asset_record.as_ref().unwrap().principal_deployed == 0,
+                    !asset_record.has_protected_exposure && !asset_record.has_boosted_exposure,
                     HeirloomError::FundsStillDeployed
                 );
             }

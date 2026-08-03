@@ -3,8 +3,8 @@ use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface};
 use solana_instructions_sysvar::ID as SOLANA_SYSVAR_IX_ID;
 
 use crate::{
-    error::HeirloomError, lulo_v2, AssetRecord, KAMINO_FARMS_PROGRAM_ID, KAMINO_PROGRAM_ID,
-    MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
+    error::HeirloomError, lulo_v2, AssetRecord, DepositType, KAMINO_FARMS_PROGRAM_ID,
+    KAMINO_PROGRAM_ID, MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
 };
 
 pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
@@ -82,6 +82,30 @@ pub fn skim_lulo_yield_fee<'info>(
             CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
 
         token_interface::transfer_checked(cpi_context, fee, input_mint.decimals)?;
+    }
+
+    Ok(())
+}
+
+/// Refreshes whether an `AssetRecord` still has an open Lulo position for the
+/// given pool, read from the vault's actual LP-receipt balance
+#[inline(never)]
+pub fn refresh_lulo_exposure<'info>(
+    asset_record: &mut Account<'info, AssetRecord>,
+    pool_user_lp_token_account: &AccountInfo<'info>,
+    deposit_type: DepositType,
+) -> Result<()> {
+    let lp_balance = {
+        let data = pool_user_lp_token_account.try_borrow_data()?;
+        TokenAccount::try_deserialize(&mut &data[..])?.amount
+    };
+
+    match deposit_type {
+        DepositType::Protected => asset_record.has_protected_exposure = lp_balance > 0,
+        DepositType::Boosted => {
+            asset_record.has_boosted_exposure =
+                lp_balance > 0 || asset_record.pending_boosted_withdrawals > 0
+        }
     }
 
     Ok(())

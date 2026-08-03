@@ -15,10 +15,14 @@ import {
   fetchEncodedAccounts,
   fixDecoderSize,
   fixEncoderSize,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -49,9 +53,32 @@ export type AssetRecord = {
   discriminator: ReadonlyUint8Array;
   bump: number;
   principalDeployed: bigint;
+  /**
+   * ground truth for close-safety, refreshed from the actual Lulo LP
+   * balance after each withdrawal — NOT derived from `principal_deployed`,
+   * since a withdrawal larger than the outstanding principal can zero
+   * that out while real value is still sitting in Lulo.
+   */
+  hasProtectedExposure: boolean;
+  hasBoostedExposure: boolean;
+  /** count of in-flight `init_withdraw_regular_lulo` requests not yet completed */
+  pendingBoostedWithdrawals: number;
 };
 
-export type AssetRecordArgs = { bump: number; principalDeployed: number | bigint };
+export type AssetRecordArgs = {
+  bump: number;
+  principalDeployed: number | bigint;
+  /**
+   * ground truth for close-safety, refreshed from the actual Lulo LP
+   * balance after each withdrawal — NOT derived from `principal_deployed`,
+   * since a withdrawal larger than the outstanding principal can zero
+   * that out while real value is still sitting in Lulo.
+   */
+  hasProtectedExposure: boolean;
+  hasBoostedExposure: boolean;
+  /** count of in-flight `init_withdraw_regular_lulo` requests not yet completed */
+  pendingBoostedWithdrawals: number;
+};
 
 /** Gets the encoder for {@link AssetRecordArgs} account data. */
 export function getAssetRecordEncoder(): FixedSizeEncoder<AssetRecordArgs> {
@@ -60,6 +87,9 @@ export function getAssetRecordEncoder(): FixedSizeEncoder<AssetRecordArgs> {
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["bump", getU8Encoder()],
       ["principalDeployed", getU64Encoder()],
+      ["hasProtectedExposure", getBooleanEncoder()],
+      ["hasBoostedExposure", getBooleanEncoder()],
+      ["pendingBoostedWithdrawals", getU16Encoder()],
     ]),
     (value) => ({ ...value, discriminator: ASSET_RECORD_DISCRIMINATOR }),
   );
@@ -71,6 +101,9 @@ export function getAssetRecordDecoder(): FixedSizeDecoder<AssetRecord> {
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["bump", getU8Decoder()],
     ["principalDeployed", getU64Decoder()],
+    ["hasProtectedExposure", getBooleanDecoder()],
+    ["hasBoostedExposure", getBooleanDecoder()],
+    ["pendingBoostedWithdrawals", getU16Decoder()],
   ]);
 }
 
@@ -130,5 +163,5 @@ export async function fetchAllMaybeAssetRecord(
 }
 
 export function getAssetRecordSize(): number {
-  return 17;
+  return 21;
 }

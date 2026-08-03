@@ -77,6 +77,15 @@ pub struct AssetRecord {
     pub bump: u8,
 
     pub principal_deployed: u64,
+
+    /// ground truth for close-safety, refreshed from the actual Lulo LP
+    /// balance after each withdrawal
+    pub has_protected_exposure: bool,
+
+    pub has_boosted_exposure: bool,
+
+    /// count of in-flight `init_withdraw_regular_lulo` requests not yet completed
+    pub pending_boosted_withdrawals: u16,
 }
 
 impl AssetRecord {
@@ -84,7 +93,10 @@ impl AssetRecord {
 
     pub const LEN: usize = 8 // discriminator
     + 1 // bump
-    + 8; // principal deployed
+    + 8 // principal deployed
+    + 1 // has_protected_exposure
+    + 1 // has_boosted_exposure
+    + 2; // pending_boosted_withdrawals
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, PartialEq, Eq, Copy, Clone)]

@@ -14,13 +14,21 @@ pub struct AssetRecord {
 pub discriminator: [u8; 8],
 pub bump: u8,
 pub principal_deployed: u64,
+/// ground truth for close-safety, refreshed from the actual Lulo LP
+/// balance after each withdrawal — NOT derived from `principal_deployed`,
+/// since a withdrawal larger than the outstanding principal can zero
+/// that out while real value is still sitting in Lulo.
+pub has_protected_exposure: bool,
+pub has_boosted_exposure: bool,
+/// count of in-flight `init_withdraw_regular_lulo` requests not yet completed
+pub pending_boosted_withdrawals: u16,
 }
 
 
 pub const ASSET_RECORD_DISCRIMINATOR: [u8; 8] = [26, 40, 78, 169, 45, 6, 254, 10];
 
 impl AssetRecord {
-      pub const LEN: usize = 17;
+      pub const LEN: usize = 21;
   
   
   

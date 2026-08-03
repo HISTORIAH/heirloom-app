@@ -162,6 +162,11 @@ impl<'info> DepositLulo<'info> {
             }
         };
 
+        match deposit_type {
+            DepositType::Protected => asset_record.has_protected_exposure = true,
+            DepositType::Boosted => asset_record.has_boosted_exposure = true,
+        }
+
         // update principal deployed
         asset_record.principal_deployed = asset_record
             .principal_deployed

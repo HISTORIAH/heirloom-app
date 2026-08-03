@@ -1,5 +1,5 @@
 use crate::{
-    error::HeirloomError, helpers::*, lulo_v2, AssetRecord, Estate, Vault,
+    error::HeirloomError, helpers::*, lulo_v2, AssetRecord, DepositType, Estate, Vault,
     KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT, TREASURY,
 };
 use anchor_lang::prelude::*;
@@ -26,6 +26,17 @@ pub struct InitWithdrawRegular<'info> {
         bump = estate.bump,
     )]
     pub estate: Account<'info, Estate>,
+
+    #[account(
+        mut,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            lulo_accounts.input_mint.key().as_ref()
+        ],
+        bump = asset_record.bump,
+    )]
+    pub asset_record: Box<Account<'info, AssetRecord>>,
 
     /// CHECK: Lulo CPI
     #[account(mut)]
@@ -95,6 +106,13 @@ impl<'info> InitWithdrawRegular<'info> {
             withdrawal_id,
             amount,
         )?;
+
+        ctx.accounts.asset_record.pending_boosted_withdrawals = ctx
+            .accounts
+            .asset_record
+            .pending_boosted_withdrawals
+            .checked_add(1)
+            .ok_or(HeirloomError::MathOverflow)?;
 
         Ok(())
     }
@@ -289,6 +307,13 @@ impl<'info> CompleteWithdrawRegular<'info> {
             CpiContext::new_with_signer(lulo_cpi_program_addr, cpi_accounts, signer_seeds);
         lulo_v2::cpi::complete_regular_pool_withdraw(cpi_ctx, withdrawal_id)?;
 
+        ctx.accounts.asset_record.pending_boosted_withdrawals = ctx
+            .accounts
+            .asset_record
+            .pending_boosted_withdrawals
+            .checked_sub(1)
+            .ok_or(HeirloomError::MathUnderflow)?;
+
         // fee calculation
         let token_program_addr = ctx.accounts.lulo_accounts.input_mint_token_program.key();
         let vault_info = ctx.accounts.vault.to_account_info();
@@ -301,6 +326,18 @@ impl<'info> CompleteWithdrawRegular<'info> {
             token_program_addr,
             signer_seeds,
             vault_balance_before,
+        )?;
+
+        // close-safety: refresh from the real Lulo position, not our bookkeeping
+        let lp_ta_info = ctx
+            .accounts
+            .lulo_accounts
+            .pool_user_lp_token_account
+            .to_account_info();
+        refresh_lulo_exposure(
+            &mut ctx.accounts.asset_record,
+            &lp_ta_info,
+            DepositType::Boosted,
         )?;
 
         Ok(())
