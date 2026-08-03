@@ -31,6 +31,9 @@ pub struct DepositLulo {
           pub estate: solana_address::Address,
           
               
+          pub asset_record: solana_address::Address,
+          
+              
           pub pool_user: solana_address::Address,
           
               
@@ -84,7 +87,7 @@ impl DepositLulo {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: DepositLuloInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(19+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(20+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             self.authority,
             true
@@ -103,6 +106,10 @@ impl DepositLulo {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
             self.estate,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            self.asset_record,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
@@ -219,20 +226,21 @@ impl DepositLuloInstructionArgs {
                 ///   2. `[writable]` vault
                 ///   3. `[writable]` vault_token_account
                 ///   4. `[writable]` estate
-                ///   5. `[writable]` pool_user
-                ///   6. `[writable]` pool_user_token_account
-                ///   7. `[writable]` pool_user_lp_token_account
-                ///   8. `[writable]` referrer_pool_user
-          ///   9. `[]` input_mint
-                ///   10. `[writable]` pool_reserve_token_account
-                ///   11. `[writable]` lp_mint
-                ///   12. `[writable]` pool_account
-                      ///   13. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
-          ///   14. `[]` input_mint_token_program
-          ///   15. `[]` lp_mint_token_program
-                ///   16. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   17. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
-                ///   18. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                ///   5. `[writable]` asset_record
+                ///   6. `[writable]` pool_user
+                ///   7. `[writable]` pool_user_token_account
+                ///   8. `[writable]` pool_user_lp_token_account
+                ///   9. `[writable]` referrer_pool_user
+          ///   10. `[]` input_mint
+                ///   11. `[writable]` pool_reserve_token_account
+                ///   12. `[writable]` lp_mint
+                ///   13. `[writable]` pool_account
+                      ///   14. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
+          ///   15. `[]` input_mint_token_program
+          ///   16. `[]` lp_mint_token_program
+                ///   17. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+                ///   18. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+                ///   19. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct DepositLuloBuilder {
             authority: Option<solana_address::Address>,
@@ -240,6 +248,7 @@ pub struct DepositLuloBuilder {
                 vault: Option<solana_address::Address>,
                 vault_token_account: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
+                asset_record: Option<solana_address::Address>,
                 pool_user: Option<solana_address::Address>,
                 pool_user_token_account: Option<solana_address::Address>,
                 pool_user_lp_token_account: Option<solana_address::Address>,
@@ -286,6 +295,11 @@ impl DepositLuloBuilder {
             #[inline(always)]
     pub fn estate(&mut self, estate: solana_address::Address) -> &mut Self {
                         self.estate = Some(estate);
+                    self
+    }
+            #[inline(always)]
+    pub fn asset_record(&mut self, asset_record: solana_address::Address) -> &mut Self {
+                        self.asset_record = Some(asset_record);
                     self
     }
             #[inline(always)]
@@ -394,6 +408,7 @@ impl DepositLuloBuilder {
                                         vault: self.vault.expect("vault is not set"),
                                         vault_token_account: self.vault_token_account.expect("vault_token_account is not set"),
                                         estate: self.estate.expect("estate is not set"),
+                                        asset_record: self.asset_record.expect("asset_record is not set"),
                                         pool_user: self.pool_user.expect("pool_user is not set"),
                                         pool_user_token_account: self.pool_user_token_account.expect("pool_user_token_account is not set"),
                                         pool_user_lp_token_account: self.pool_user_lp_token_account.expect("pool_user_lp_token_account is not set"),
@@ -435,6 +450,9 @@ impl DepositLuloBuilder {
                 
                     
               pub estate: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
+              pub asset_record: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub pool_user: &'b solana_account_info::AccountInfo<'a>,
@@ -504,6 +522,9 @@ pub struct DepositLuloCpi<'a, 'b> {
           pub estate: &'b solana_account_info::AccountInfo<'a>,
           
               
+          pub asset_record: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub pool_user: &'b solana_account_info::AccountInfo<'a>,
           
               
@@ -565,6 +586,7 @@ impl<'a, 'b> DepositLuloCpi<'a, 'b> {
               vault: accounts.vault,
               vault_token_account: accounts.vault_token_account,
               estate: accounts.estate,
+              asset_record: accounts.asset_record,
               pool_user: accounts.pool_user,
               pool_user_token_account: accounts.pool_user_token_account,
               pool_user_lp_token_account: accounts.pool_user_lp_token_account,
@@ -602,7 +624,7 @@ impl<'a, 'b> DepositLuloCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(19+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(20+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true
@@ -621,6 +643,10 @@ impl<'a, 'b> DepositLuloCpi<'a, 'b> {
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
             *self.estate.key,
+            false
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new(
+            *self.asset_record.key,
             false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new(
@@ -695,13 +721,14 @@ impl<'a, 'b> DepositLuloCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(20 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(21 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
                   account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.vault.clone());
                         account_infos.push(self.vault_token_account.clone());
                         account_infos.push(self.estate.clone());
+                        account_infos.push(self.asset_record.clone());
                         account_infos.push(self.pool_user.clone());
                         account_infos.push(self.pool_user_token_account.clone());
                         account_infos.push(self.pool_user_lp_token_account.clone());
@@ -735,20 +762,21 @@ impl<'a, 'b> DepositLuloCpi<'a, 'b> {
                 ///   2. `[writable]` vault
                 ///   3. `[writable]` vault_token_account
                 ///   4. `[writable]` estate
-                ///   5. `[writable]` pool_user
-                ///   6. `[writable]` pool_user_token_account
-                ///   7. `[writable]` pool_user_lp_token_account
-                ///   8. `[writable]` referrer_pool_user
-          ///   9. `[]` input_mint
-                ///   10. `[writable]` pool_reserve_token_account
-                ///   11. `[writable]` lp_mint
-                ///   12. `[writable]` pool_account
-                ///   13. `[writable]` program_id
-          ///   14. `[]` input_mint_token_program
-          ///   15. `[]` lp_mint_token_program
-          ///   16. `[]` associated_token_program
-          ///   17. `[]` rent
-          ///   18. `[]` system_program
+                ///   5. `[writable]` asset_record
+                ///   6. `[writable]` pool_user
+                ///   7. `[writable]` pool_user_token_account
+                ///   8. `[writable]` pool_user_lp_token_account
+                ///   9. `[writable]` referrer_pool_user
+          ///   10. `[]` input_mint
+                ///   11. `[writable]` pool_reserve_token_account
+                ///   12. `[writable]` lp_mint
+                ///   13. `[writable]` pool_account
+                ///   14. `[writable]` program_id
+          ///   15. `[]` input_mint_token_program
+          ///   16. `[]` lp_mint_token_program
+          ///   17. `[]` associated_token_program
+          ///   18. `[]` rent
+          ///   19. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct DepositLuloCpiBuilder<'a, 'b> {
   instruction: Box<DepositLuloCpiBuilderInstruction<'a, 'b>>,
@@ -763,6 +791,7 @@ impl<'a, 'b> DepositLuloCpiBuilder<'a, 'b> {
               vault: None,
               vault_token_account: None,
               estate: None,
+              asset_record: None,
               pool_user: None,
               pool_user_token_account: None,
               pool_user_lp_token_account: None,
@@ -806,6 +835,11 @@ impl<'a, 'b> DepositLuloCpiBuilder<'a, 'b> {
       #[inline(always)]
     pub fn estate(&mut self, estate: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.estate = Some(estate);
+                    self
+    }
+      #[inline(always)]
+    pub fn asset_record(&mut self, asset_record: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.asset_record = Some(asset_record);
                     self
     }
       #[inline(always)]
@@ -929,6 +963,8 @@ impl<'a, 'b> DepositLuloCpiBuilder<'a, 'b> {
                   
           estate: self.instruction.estate.expect("estate is not set"),
                   
+          asset_record: self.instruction.asset_record.expect("asset_record is not set"),
+                  
           pool_user: self.instruction.pool_user.expect("pool_user is not set"),
                   
           pool_user_token_account: self.instruction.pool_user_token_account.expect("pool_user_token_account is not set"),
@@ -970,6 +1006,7 @@ struct DepositLuloCpiBuilderInstruction<'a, 'b> {
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
+                asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
                 pool_user: Option<&'b solana_account_info::AccountInfo<'a>>,
                 pool_user_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 pool_user_lp_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,

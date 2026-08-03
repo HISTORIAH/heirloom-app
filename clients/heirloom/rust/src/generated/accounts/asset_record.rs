@@ -13,13 +13,14 @@ use borsh::BorshDeserialize;
 pub struct AssetRecord {
 pub discriminator: [u8; 8],
 pub bump: u8,
+pub principal_deployed: u64,
 }
 
 
 pub const ASSET_RECORD_DISCRIMINATOR: [u8; 8] = [26, 40, 78, 169, 45, 6, 254, 10];
 
 impl AssetRecord {
-      pub const LEN: usize = 9;
+      pub const LEN: usize = 17;
   
   
   

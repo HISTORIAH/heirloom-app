@@ -138,6 +138,11 @@ impl<'info> Claim<'info> {
                 );
 
                 require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
+
+                require!(
+                    self.asset_record.as_ref().unwrap().principal_deployed == 0,
+                    HeirloomError::FundsStillDeployed
+                );
             }
             None => {
                 require!(

@@ -36,4 +36,6 @@ pub enum HeirloomError {
     IntervalTooLong,
     #[msg("Interval cannot be less than 0.")]
     IntervalNegative,
+    #[msg("Cannot claim/close while funds are still deployed.")]
+    FundsStillDeployed,
 }

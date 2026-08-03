@@ -75,13 +75,16 @@ impl Vault {
 #[account]
 pub struct AssetRecord {
     pub bump: u8,
+
+    pub principal_deployed: u64,
 }
 
 impl AssetRecord {
     pub const SEED: &[u8] = b"asset";
 
     pub const LEN: usize = 8 // discriminator
-    + 1; // bump
+    + 1 // bump
+    + 8; // principal deployed
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, PartialEq, Eq, Copy, Clone)]

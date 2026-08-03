@@ -1,6 +1,6 @@
 use crate::{
-    error::HeirloomError, helpers::*, lulo_v2, Estate, Vault, KAMINO_PROTOCOL_AUTHORITY,
-    KAMINO_PROTOCOL_TOKEN_ACCOUNT,
+    error::HeirloomError, helpers::*, lulo_v2, AssetRecord, Estate, Vault,
+    KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT, TREASURY,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::TokenAccount;
@@ -107,10 +107,10 @@ impl<'info> InitWithdrawRegular<'info> {
 
 #[derive(Accounts)]
 pub struct CompleteWithdrawRegular<'info> {
-    // TODO: address constraint this to the estate auth
     #[account(mut)]
     pub authority: Signer<'info>,
 
+    /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
     /// CHECK: heir pubkey, stored in estate
     pub heir: UncheckedAccount<'info>,
 
@@ -119,14 +119,14 @@ pub struct CompleteWithdrawRegular<'info> {
         seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: Box<Account<'info, Estate>>,
 
     #[account(
         mut,
         seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 
     // We expect this to exist
     #[account(
@@ -136,6 +136,17 @@ pub struct CompleteWithdrawRegular<'info> {
         token::token_program = lulo_accounts.input_mint_token_program,
     )]
     pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            lulo_accounts.input_mint.key().as_ref()
+        ],
+        bump = asset_record.bump,
+    )]
+    pub asset_record: Box<Account<'info, AssetRecord>>,
 
     /// CHECK: Lulo CPI
     #[account(mut, constraint = pending_withdrawal_account.owner.key() == lulo_accounts.program_id.key())]
@@ -148,6 +159,9 @@ pub struct CompleteWithdrawRegular<'info> {
     /// CHECK: Lulo CPI
     #[account(mut, address = KAMINO_PROTOCOL_AUTHORITY)]
     pub protocol_authority: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub treasury_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// CHECK: Lulo CPI
     #[account(mut, address = KAMINO_PROTOCOL_TOKEN_ACCOUNT)]
@@ -163,6 +177,8 @@ impl<'info> CompleteWithdrawRegular<'info> {
     ) -> Result<()> {
         ctx.accounts.validate()?;
 
+        // vault balance before withdrawal
+        let vault_balance_before = ctx.accounts.vault_token_account.amount;
         let vault_bump = ctx.accounts.vault.bump;
         let authority_key = ctx.accounts.authority.key();
         let heir_key = ctx.accounts.heir.key();
@@ -273,10 +289,31 @@ impl<'info> CompleteWithdrawRegular<'info> {
             CpiContext::new_with_signer(lulo_cpi_program_addr, cpi_accounts, signer_seeds);
         lulo_v2::cpi::complete_regular_pool_withdraw(cpi_ctx, withdrawal_id)?;
 
+        // fee calculation
+        let token_program_addr = ctx.accounts.lulo_accounts.input_mint_token_program.key();
+        let vault_info = ctx.accounts.vault.to_account_info();
+        skim_lulo_yield_fee(
+            &mut ctx.accounts.vault_token_account,
+            &mut ctx.accounts.asset_record,
+            &ctx.accounts.lulo_accounts.input_mint,
+            &ctx.accounts.treasury_token_account,
+            vault_info,
+            token_program_addr,
+            signer_seeds,
+            vault_balance_before,
+        )?;
+
         Ok(())
     }
 
     pub fn validate(&self) -> Result<()> {
+        // check treasury token account
+        require_eq!(
+            self.treasury_token_account.owner.key(),
+            TREASURY,
+            HeirloomError::InvalidAccount
+        );
+
         // this can be the heir / estate authority
         let caller = self.authority.key();
         let now = Clock::get()?.unix_timestamp;

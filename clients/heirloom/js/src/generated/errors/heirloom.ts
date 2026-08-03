@@ -48,11 +48,14 @@ export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x177e; // 6014
 export const HEIRLOOM_ERROR__INTERVAL_TOO_LONG = 0x177f; // 6015
 /** IntervalNegative: Interval cannot be less than 0. */
 export const HEIRLOOM_ERROR__INTERVAL_NEGATIVE = 0x1780; // 6016
+/** FundsStillDeployed: Cannot claim/close while funds are still deployed. */
+export const HEIRLOOM_ERROR__FUNDS_STILL_DEPLOYED = 0x1781; // 6017
 
 export type HeirloomError =
   | typeof HEIRLOOM_ERROR__ALREADY_DEFERRED
   | typeof HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED
   | typeof HEIRLOOM_ERROR__ESTATE_PAUSED
+  | typeof HEIRLOOM_ERROR__FUNDS_STILL_DEPLOYED
   | typeof HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE
   | typeof HEIRLOOM_ERROR__INTERVAL_NEGATIVE
   | typeof HEIRLOOM_ERROR__INTERVAL_TOO_LONG
@@ -74,6 +77,7 @@ if (process.env["NODE_ENV"] !== "production") {
     [HEIRLOOM_ERROR__ALREADY_DEFERRED]: `Estate already deferred`,
     [HEIRLOOM_ERROR__DEFER_WINDOW_EXPIRED]: `Defer window expired`,
     [HEIRLOOM_ERROR__ESTATE_PAUSED]: `Estate paused`,
+    [HEIRLOOM_ERROR__FUNDS_STILL_DEPLOYED]: `Cannot claim/close while funds are still deployed.`,
     [HEIRLOOM_ERROR__INSUFFICIENT_VAULT_BALANCE]: `Insufficient vault balance`,
     [HEIRLOOM_ERROR__INTERVAL_NEGATIVE]: `Interval cannot be less than 0.`,
     [HEIRLOOM_ERROR__INTERVAL_TOO_LONG]: `Interval exceeds maximum of 365 days.`,

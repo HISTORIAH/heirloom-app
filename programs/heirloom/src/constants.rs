@@ -4,6 +4,8 @@ pub const CLAIM_FEE_BPS: u16 = 75;
 
 pub const EMERGENCY_EXIT_FEE_BPS: u16 = 50;
 
+pub const YIELD_FEE_BPS: u16 = 1000; // 10%
+
 pub const MAX_INTERVAL_SECONDS: i64 = 31_536_000; // 365 days
 
 // TEMP! for testing

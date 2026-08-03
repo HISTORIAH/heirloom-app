@@ -61,6 +61,9 @@ pub enum HeirloomError {
     /// 6016 - Interval cannot be less than 0.
     #[error("Interval cannot be less than 0.")]
     IntervalNegative = 0x1780,
+    /// 6017 - Cannot claim/close while funds are still deployed.
+    #[error("Cannot claim/close while funds are still deployed.")]
+    FundsStillDeployed = 0x1781,
 }
 
 impl From<HeirloomError> for solana_program_error::ProgramError {
