@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
+use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface};
 use solana_instructions_sysvar::ID as SOLANA_SYSVAR_IX_ID;
 
 use crate::{
-    error::HeirloomError, lulo_v2, KAMINO_FARMS_PROGRAM_ID, KAMINO_PROGRAM_ID,
-    MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID,
+    error::HeirloomError, lulo_v2, AssetRecord, KAMINO_FARMS_PROGRAM_ID, KAMINO_PROGRAM_ID,
+    MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
 };
 
 pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
@@ -38,6 +38,50 @@ pub fn close_pda<'info>(
     // Anchor's CLOSED_ACCOUNT_DISCRIMINATOR = [255; 8]
     if data.len() >= 8 {
         data[..8].copy_from_slice(&[255u8; 8]);
+    }
+
+    Ok(())
+}
+
+/// Splits a Lulo withdrawal's actual returned amount into principal vs. yield
+/// (principal-first: any excess over what's still outstanding is yield) and
+/// skims `YIELD_FEE_BPS` off the yield portion only.
+#[inline(never)]
+pub fn skim_lulo_yield_fee<'info>(
+    vault_token_account: &mut InterfaceAccount<'info, TokenAccount>,
+    asset_record: &mut Account<'info, AssetRecord>,
+    input_mint: &InterfaceAccount<'info, Mint>,
+    treasury_token_account: &InterfaceAccount<'info, TokenAccount>,
+    vault: AccountInfo<'info>,
+    token_program_addr: Pubkey,
+    signer_seeds: &[&[&[u8]]],
+    vault_balance_before: u64,
+) -> Result<()> {
+    vault_token_account.reload()?;
+    let returned = vault_token_account
+        .amount
+        .checked_sub(vault_balance_before)
+        .ok_or(HeirloomError::MathUnderflow)?;
+    let principal_returned = returned.min(asset_record.principal_deployed);
+    let yield_amount = returned
+        .checked_sub(principal_returned)
+        .ok_or(HeirloomError::MathUnderflow)?;
+
+    asset_record.principal_deployed -= principal_returned;
+
+    if yield_amount > 0 {
+        let (fee, _) = calculate_distribution(yield_amount, YIELD_FEE_BPS)?;
+        let cpi_accounts = token_interface::TransferChecked {
+            from: vault_token_account.to_account_info(),
+            mint: input_mint.to_account_info(),
+            to: treasury_token_account.to_account_info(),
+            authority: vault,
+        };
+
+        let cpi_context =
+            CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
+
+        token_interface::transfer_checked(cpi_context, fee, input_mint.decimals)?;
     }
 
     Ok(())

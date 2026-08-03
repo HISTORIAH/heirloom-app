@@ -1,9 +1,9 @@
 use crate::{
     error::HeirloomError, helpers::*, lulo_v2, AssetRecord, Estate, Vault,
-    KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT, TREASURY, YIELD_FEE_BPS,
+    KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT, TREASURY,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{self, TokenAccount, TransferChecked};
+use anchor_spl::token_interface::TokenAccount;
 
 #[derive(Accounts)]
 pub struct InitWithdrawRegular<'info> {
@@ -290,39 +290,18 @@ impl<'info> CompleteWithdrawRegular<'info> {
         lulo_v2::cpi::complete_regular_pool_withdraw(cpi_ctx, withdrawal_id)?;
 
         // fee calculation
-        ctx.accounts.vault_token_account.reload()?;
-        let returned = ctx
-            .accounts
-            .vault_token_account
-            .amount
-            .checked_sub(vault_balance_before)
-            .ok_or(HeirloomError::MathUnderflow)?;
-        let principal_returned = returned.min(ctx.accounts.asset_record.principal_deployed);
-        let yield_amount = returned
-            .checked_sub(principal_returned)
-            .ok_or(HeirloomError::MathUnderflow)?;
-
-        ctx.accounts.asset_record.principal_deployed -= principal_returned;
-
-        if yield_amount > 0 {
-            let (fee, _) = calculate_distribution(yield_amount, YIELD_FEE_BPS)?;
-            let cpi_accounts = TransferChecked {
-                from: ctx.accounts.vault_token_account.to_account_info(),
-                mint: ctx.accounts.lulo_accounts.input_mint.to_account_info(),
-                to: ctx.accounts.treasury_token_account.to_account_info(),
-                authority: ctx.accounts.vault.to_account_info(),
-            };
-
-            let token_program_addr = ctx.accounts.lulo_accounts.input_mint_token_program.key();
-            let cpi_context =
-                CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-            token_interface::transfer_checked(
-                cpi_context,
-                fee,
-                ctx.accounts.lulo_accounts.input_mint.decimals,
-            )?;
-        }
+        let token_program_addr = ctx.accounts.lulo_accounts.input_mint_token_program.key();
+        let vault_info = ctx.accounts.vault.to_account_info();
+        skim_lulo_yield_fee(
+            &mut ctx.accounts.vault_token_account,
+            &mut ctx.accounts.asset_record,
+            &ctx.accounts.lulo_accounts.input_mint,
+            &ctx.accounts.treasury_token_account,
+            vault_info,
+            token_program_addr,
+            signer_seeds,
+            vault_balance_before,
+        )?;
 
         Ok(())
     }
