@@ -1,4 +1,4 @@
-use crate::{helpers::*, lulo_v2, DepositType, Estate, Vault};
+use crate::{error::HeirloomError, helpers::*, lulo_v2, AssetRecord, DepositType, Estate, Vault};
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccount};
 
@@ -27,13 +27,24 @@ pub struct DepositLulo<'info> {
     )]
     pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    // TODO: remove me if ix size is too large
+    // NOTE: remove me if ix size is too large
     #[account(
         mut,
         seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
         bump = estate.bump,
     )]
     pub estate: Account<'info, Estate>,
+
+    #[account(
+        mut,
+        seeds = [
+            AssetRecord::SEED,
+            estate.key().as_ref(),
+            lulo_accounts.input_mint.key().as_ref()
+        ],
+        bump = asset_record.bump,
+    )]
+    pub asset_record: Box<Account<'info, AssetRecord>>,
 
     pub lulo_accounts: LuloAccounts<'info>,
 
@@ -52,6 +63,7 @@ impl<'info> DepositLulo<'info> {
     ) -> Result<()> {
         ctx.accounts.validate()?;
 
+        let asset_record = &mut ctx.accounts.asset_record;
         let vault_bump = ctx.accounts.vault.bump;
         let authority_key = ctx.accounts.authority.key();
         let heir_key = ctx.accounts.heir.key();
@@ -149,6 +161,12 @@ impl<'info> DepositLulo<'info> {
                 )?;
             }
         };
+
+        // update principal deployed
+        asset_record.principal_deployed = asset_record
+            .principal_deployed
+            .checked_add(amount)
+            .ok_or(HeirloomError::MathOverflow)?;
 
         Ok(())
     }
