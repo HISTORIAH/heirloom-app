@@ -58,6 +58,7 @@ export type InitWithdrawRegularLuloInstruction<
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountVault extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
+  TAccountAssetRecord extends string | AccountMeta<string> = string,
   TAccountPendingWithdrawalAccount extends string | AccountMeta<string> = string,
   TAccountPoolUser extends string | AccountMeta<string> = string,
   TAccountPoolUserTokenAccount extends string | AccountMeta<string> = string,
@@ -83,6 +84,9 @@ export type InitWithdrawRegularLuloInstruction<
       TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
       TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
+      TAccountAssetRecord extends string
+        ? WritableAccount<TAccountAssetRecord>
+        : TAccountAssetRecord,
       TAccountPendingWithdrawalAccount extends string
         ? WritableAccount<TAccountPendingWithdrawalAccount>
         : TAccountPendingWithdrawalAccount,
@@ -163,6 +167,7 @@ export type InitWithdrawRegularLuloAsyncInput<
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
   TAccountEstate extends string = string,
+  TAccountAssetRecord extends string = string,
   TAccountPendingWithdrawalAccount extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
@@ -181,6 +186,7 @@ export type InitWithdrawRegularLuloAsyncInput<
   heir: Address<TAccountHeir>;
   vault?: Address<TAccountVault>;
   estate?: Address<TAccountEstate>;
+  assetRecord: Address<TAccountAssetRecord>;
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
@@ -205,6 +211,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
   TAccountHeir extends string,
   TAccountVault extends string,
   TAccountEstate extends string,
+  TAccountAssetRecord extends string,
   TAccountPendingWithdrawalAccount extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
@@ -225,6 +232,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     TAccountHeir,
     TAccountVault,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -247,6 +255,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     TAccountHeir,
     TAccountVault,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -271,6 +280,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
     pendingWithdrawalAccount: { value: input.pendingWithdrawalAccount ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
@@ -322,6 +332,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("estate", accounts.estate),
+      getAccountMeta("assetRecord", accounts.assetRecord),
       getAccountMeta("pendingWithdrawalAccount", accounts.pendingWithdrawalAccount),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
@@ -346,6 +357,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     TAccountHeir,
     TAccountVault,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -367,6 +379,7 @@ export type InitWithdrawRegularLuloInput<
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
   TAccountEstate extends string = string,
+  TAccountAssetRecord extends string = string,
   TAccountPendingWithdrawalAccount extends string = string,
   TAccountPoolUser extends string = string,
   TAccountPoolUserTokenAccount extends string = string,
@@ -385,6 +398,7 @@ export type InitWithdrawRegularLuloInput<
   heir: Address<TAccountHeir>;
   vault: Address<TAccountVault>;
   estate: Address<TAccountEstate>;
+  assetRecord: Address<TAccountAssetRecord>;
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
   poolUser: Address<TAccountPoolUser>;
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
@@ -409,6 +423,7 @@ export function getInitWithdrawRegularLuloInstruction<
   TAccountHeir extends string,
   TAccountVault extends string,
   TAccountEstate extends string,
+  TAccountAssetRecord extends string,
   TAccountPendingWithdrawalAccount extends string,
   TAccountPoolUser extends string,
   TAccountPoolUserTokenAccount extends string,
@@ -429,6 +444,7 @@ export function getInitWithdrawRegularLuloInstruction<
     TAccountHeir,
     TAccountVault,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -450,6 +466,7 @@ export function getInitWithdrawRegularLuloInstruction<
   TAccountHeir,
   TAccountVault,
   TAccountEstate,
+  TAccountAssetRecord,
   TAccountPendingWithdrawalAccount,
   TAccountPoolUser,
   TAccountPoolUserTokenAccount,
@@ -473,6 +490,7 @@ export function getInitWithdrawRegularLuloInstruction<
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
     pendingWithdrawalAccount: { value: input.pendingWithdrawalAccount ?? null, isWritable: true },
     poolUser: { value: input.poolUser ?? null, isWritable: true },
     poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
@@ -512,6 +530,7 @@ export function getInitWithdrawRegularLuloInstruction<
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
       getAccountMeta("estate", accounts.estate),
+      getAccountMeta("assetRecord", accounts.assetRecord),
       getAccountMeta("pendingWithdrawalAccount", accounts.pendingWithdrawalAccount),
       getAccountMeta("poolUser", accounts.poolUser),
       getAccountMeta("poolUserTokenAccount", accounts.poolUserTokenAccount),
@@ -536,6 +555,7 @@ export function getInitWithdrawRegularLuloInstruction<
     TAccountHeir,
     TAccountVault,
     TAccountEstate,
+    TAccountAssetRecord,
     TAccountPendingWithdrawalAccount,
     TAccountPoolUser,
     TAccountPoolUserTokenAccount,
@@ -562,21 +582,22 @@ export type ParsedInitWithdrawRegularLuloInstruction<
     heir: TAccountMetas[1];
     vault: TAccountMetas[2];
     estate: TAccountMetas[3];
-    pendingWithdrawalAccount: TAccountMetas[4];
-    poolUser: TAccountMetas[5];
-    poolUserTokenAccount: TAccountMetas[6];
-    poolUserLpTokenAccount: TAccountMetas[7];
-    referrerPoolUser: TAccountMetas[8];
-    inputMint: TAccountMetas[9];
+    assetRecord: TAccountMetas[4];
+    pendingWithdrawalAccount: TAccountMetas[5];
+    poolUser: TAccountMetas[6];
+    poolUserTokenAccount: TAccountMetas[7];
+    poolUserLpTokenAccount: TAccountMetas[8];
+    referrerPoolUser: TAccountMetas[9];
+    inputMint: TAccountMetas[10];
     /** pool's reserve token account (authority = pool_account). */
-    poolReserveTokenAccount: TAccountMetas[10];
+    poolReserveTokenAccount: TAccountMetas[11];
     /** the pool's LP/share mint (token22) */
-    lpMint: TAccountMetas[11];
-    poolAccount: TAccountMetas[12];
-    programId: TAccountMetas[13];
-    inputMintTokenProgram: TAccountMetas[14];
-    lpMintTokenProgram: TAccountMetas[15];
-    systemProgram: TAccountMetas[16];
+    lpMint: TAccountMetas[12];
+    poolAccount: TAccountMetas[13];
+    programId: TAccountMetas[14];
+    inputMintTokenProgram: TAccountMetas[15];
+    lpMintTokenProgram: TAccountMetas[16];
+    systemProgram: TAccountMetas[17];
   };
   data: InitWithdrawRegularLuloInstructionData;
 };
@@ -589,10 +610,10 @@ export function parseInitWithdrawRegularLuloInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitWithdrawRegularLuloInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 17) {
+  if (instruction.accounts.length < 18) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 17,
+      expectedAccountMetas: 18,
     });
   }
   let accountIndex = 0;
@@ -608,6 +629,7 @@ export function parseInitWithdrawRegularLuloInstruction<
       heir: getNextAccount(),
       vault: getNextAccount(),
       estate: getNextAccount(),
+      assetRecord: getNextAccount(),
       pendingWithdrawalAccount: getNextAccount(),
       poolUser: getNextAccount(),
       poolUserTokenAccount: getNextAccount(),
