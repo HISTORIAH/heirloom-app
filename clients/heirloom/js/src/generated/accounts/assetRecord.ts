@@ -55,9 +55,7 @@ export type AssetRecord = {
   principalDeployed: bigint;
   /**
    * ground truth for close-safety, refreshed from the actual Lulo LP
-   * balance after each withdrawal — NOT derived from `principal_deployed`,
-   * since a withdrawal larger than the outstanding principal can zero
-   * that out while real value is still sitting in Lulo.
+   * balance after each withdrawal
    */
   hasProtectedExposure: boolean;
   hasBoostedExposure: boolean;
@@ -70,9 +68,7 @@ export type AssetRecordArgs = {
   principalDeployed: number | bigint;
   /**
    * ground truth for close-safety, refreshed from the actual Lulo LP
-   * balance after each withdrawal — NOT derived from `principal_deployed`,
-   * since a withdrawal larger than the outstanding principal can zero
-   * that out while real value is still sitting in Lulo.
+   * balance after each withdrawal
    */
   hasProtectedExposure: boolean;
   hasBoostedExposure: boolean;
