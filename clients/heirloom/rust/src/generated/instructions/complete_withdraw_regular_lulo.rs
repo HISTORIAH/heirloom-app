@@ -15,10 +15,11 @@ pub const COMPLETE_WITHDRAW_REGULAR_LULO_DISCRIMINATOR: [u8; 8] = [188, 91, 182,
 pub struct CompleteWithdrawRegularLulo {
       
               
+          pub caller: solana_address::Address,
+          
+              
           pub authority: solana_address::Address,
-                /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
-
-    
+          
               
           pub heir: solana_address::Address,
           
@@ -139,10 +140,14 @@ impl CompleteWithdrawRegularLulo {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: CompleteWithdrawRegularLuloInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(37+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(38+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
-            self.authority,
+            self.caller,
             true
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.authority,
+            false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.heir,
@@ -361,46 +366,48 @@ impl CompleteWithdrawRegularLuloInstructionArgs {
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` authority
-          ///   1. `[]` heir
-                ///   2. `[writable]` estate
-                ///   3. `[writable]` vault
-                ///   4. `[writable]` vault_token_account
-                ///   5. `[writable]` asset_record
-                ///   6. `[writable]` pending_withdrawal_account
-                ///   7. `[writable]` pool_user
-                ///   8. `[writable]` pool_user_token_account
-                ///   9. `[writable]` pool_user_lp_token_account
-                ///   10. `[writable]` referrer_pool_user
-          ///   11. `[]` input_mint
-                ///   12. `[writable]` pool_reserve_token_account
-                ///   13. `[writable]` lp_mint
-                ///   14. `[writable]` pool_account
-                      ///   15. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
-          ///   16. `[]` input_mint_token_program
-          ///   17. `[]` lp_mint_token_program
-                ///   18. `[writable]` market
-                ///   19. `[writable]` obligation
-                ///   20. `[writable]` reserve
-                ///   21. `[writable]` reserve_liquidity_supply
-          ///   22. `[]` lending_market_authority
-                ///   23. `[writable]` collateral_mint
-                ///   24. `[writable]` collateral_token_account
-                ///   25. `[writable]` reserve_collateral_supply
-          ///   26. `[]` collateral_token_program
-                ///   27. `[optional]` instructions_sysvar (default to `Sysvar1nstructions1111111111111111111111111`)
-                ///   28. `[optional]` kamino_program (default to `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`)
-                ///   29. `[optional]` farms_program (default to `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr`)
-                      ///   30. `[writable, optional]` reserve_farm_state
-                      ///   31. `[writable, optional]` obligation_farm_user_state
-                ///   32. `[optional]` scope_prices
-                      ///   33. `[writable, optional]` protocol_authority (default to `4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR`)
-                ///   34. `[writable]` treasury_token_account
-                      ///   35. `[writable, optional]` protocol_authority_token_account (default to `mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx`)
-                ///   36. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                      ///   0. `[writable, signer]` caller
+          ///   1. `[]` authority
+          ///   2. `[]` heir
+                ///   3. `[writable]` estate
+                ///   4. `[writable]` vault
+                ///   5. `[writable]` vault_token_account
+                ///   6. `[writable]` asset_record
+                ///   7. `[writable]` pending_withdrawal_account
+                ///   8. `[writable]` pool_user
+                ///   9. `[writable]` pool_user_token_account
+                ///   10. `[writable]` pool_user_lp_token_account
+                ///   11. `[writable]` referrer_pool_user
+          ///   12. `[]` input_mint
+                ///   13. `[writable]` pool_reserve_token_account
+                ///   14. `[writable]` lp_mint
+                ///   15. `[writable]` pool_account
+                      ///   16. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
+          ///   17. `[]` input_mint_token_program
+          ///   18. `[]` lp_mint_token_program
+                ///   19. `[writable]` market
+                ///   20. `[writable]` obligation
+                ///   21. `[writable]` reserve
+                ///   22. `[writable]` reserve_liquidity_supply
+          ///   23. `[]` lending_market_authority
+                ///   24. `[writable]` collateral_mint
+                ///   25. `[writable]` collateral_token_account
+                ///   26. `[writable]` reserve_collateral_supply
+          ///   27. `[]` collateral_token_program
+                ///   28. `[optional]` instructions_sysvar (default to `Sysvar1nstructions1111111111111111111111111`)
+                ///   29. `[optional]` kamino_program (default to `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`)
+                ///   30. `[optional]` farms_program (default to `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr`)
+                      ///   31. `[writable, optional]` reserve_farm_state
+                      ///   32. `[writable, optional]` obligation_farm_user_state
+                ///   33. `[optional]` scope_prices
+                      ///   34. `[writable, optional]` protocol_authority (default to `4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR`)
+                ///   35. `[writable]` treasury_token_account
+                      ///   36. `[writable, optional]` protocol_authority_token_account (default to `mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx`)
+                ///   37. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct CompleteWithdrawRegularLuloBuilder {
-            authority: Option<solana_address::Address>,
+            caller: Option<solana_address::Address>,
+                authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
                 vault: Option<solana_address::Address>,
@@ -446,12 +453,16 @@ impl CompleteWithdrawRegularLuloBuilder {
     Self::default()
   }
             #[inline(always)]
+    pub fn caller(&mut self, caller: solana_address::Address) -> &mut Self {
+                        self.caller = Some(caller);
+                    self
+    }
+            #[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
                         self.authority = Some(authority);
                     self
     }
-            /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
-#[inline(always)]
+            #[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -663,7 +674,8 @@ impl CompleteWithdrawRegularLuloBuilder {
   #[allow(clippy::clone_on_copy)]
   pub fn instruction(&self) -> solana_instruction::Instruction {
     let accounts = CompleteWithdrawRegularLulo {
-                              authority: self.authority.expect("authority is not set"),
+                              caller: self.caller.expect("caller is not set"),
+                                        authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
                                         estate: self.estate.expect("estate is not set"),
                                         vault: self.vault.expect("vault is not set"),
@@ -713,10 +725,11 @@ impl CompleteWithdrawRegularLuloBuilder {
   pub struct CompleteWithdrawRegularLuloCpiAccounts<'a, 'b> {
           
                     
+              pub caller: &'b solana_account_info::AccountInfo<'a>,
+                
+                    
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                        /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
-
-      
+                
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -836,10 +849,11 @@ pub struct CompleteWithdrawRegularLuloCpi<'a, 'b> {
   pub __program: &'b solana_account_info::AccountInfo<'a>,
       
               
+          pub caller: &'b solana_account_info::AccountInfo<'a>,
+          
+              
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-                /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
-
-    
+          
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -963,6 +977,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
       ) -> Self {
     Self {
       __program: program,
+              caller: accounts.caller,
               authority: accounts.authority,
               heir: accounts.heir,
               estate: accounts.estate,
@@ -1023,10 +1038,14 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(37+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(38+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
-            *self.authority.key,
+            *self.caller.key,
             true
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.authority.key,
+            false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.heir.key,
@@ -1209,9 +1228,10 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(38 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(39 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
-                  account_infos.push(self.authority.clone());
+                  account_infos.push(self.caller.clone());
+                        account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.estate.clone());
                         account_infos.push(self.vault.clone());
@@ -1268,43 +1288,44 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` authority
-          ///   1. `[]` heir
-                ///   2. `[writable]` estate
-                ///   3. `[writable]` vault
-                ///   4. `[writable]` vault_token_account
-                ///   5. `[writable]` asset_record
-                ///   6. `[writable]` pending_withdrawal_account
-                ///   7. `[writable]` pool_user
-                ///   8. `[writable]` pool_user_token_account
-                ///   9. `[writable]` pool_user_lp_token_account
-                ///   10. `[writable]` referrer_pool_user
-          ///   11. `[]` input_mint
-                ///   12. `[writable]` pool_reserve_token_account
-                ///   13. `[writable]` lp_mint
-                ///   14. `[writable]` pool_account
-                ///   15. `[writable]` program_id
-          ///   16. `[]` input_mint_token_program
-          ///   17. `[]` lp_mint_token_program
-                ///   18. `[writable]` market
-                ///   19. `[writable]` obligation
-                ///   20. `[writable]` reserve
-                ///   21. `[writable]` reserve_liquidity_supply
-          ///   22. `[]` lending_market_authority
-                ///   23. `[writable]` collateral_mint
-                ///   24. `[writable]` collateral_token_account
-                ///   25. `[writable]` reserve_collateral_supply
-          ///   26. `[]` collateral_token_program
-          ///   27. `[]` instructions_sysvar
-          ///   28. `[]` kamino_program
-          ///   29. `[]` farms_program
-                      ///   30. `[writable, optional]` reserve_farm_state
-                      ///   31. `[writable, optional]` obligation_farm_user_state
-                ///   32. `[optional]` scope_prices
-                ///   33. `[writable]` protocol_authority
-                ///   34. `[writable]` treasury_token_account
-                ///   35. `[writable]` protocol_authority_token_account
-          ///   36. `[]` system_program
+                      ///   0. `[writable, signer]` caller
+          ///   1. `[]` authority
+          ///   2. `[]` heir
+                ///   3. `[writable]` estate
+                ///   4. `[writable]` vault
+                ///   5. `[writable]` vault_token_account
+                ///   6. `[writable]` asset_record
+                ///   7. `[writable]` pending_withdrawal_account
+                ///   8. `[writable]` pool_user
+                ///   9. `[writable]` pool_user_token_account
+                ///   10. `[writable]` pool_user_lp_token_account
+                ///   11. `[writable]` referrer_pool_user
+          ///   12. `[]` input_mint
+                ///   13. `[writable]` pool_reserve_token_account
+                ///   14. `[writable]` lp_mint
+                ///   15. `[writable]` pool_account
+                ///   16. `[writable]` program_id
+          ///   17. `[]` input_mint_token_program
+          ///   18. `[]` lp_mint_token_program
+                ///   19. `[writable]` market
+                ///   20. `[writable]` obligation
+                ///   21. `[writable]` reserve
+                ///   22. `[writable]` reserve_liquidity_supply
+          ///   23. `[]` lending_market_authority
+                ///   24. `[writable]` collateral_mint
+                ///   25. `[writable]` collateral_token_account
+                ///   26. `[writable]` reserve_collateral_supply
+          ///   27. `[]` collateral_token_program
+          ///   28. `[]` instructions_sysvar
+          ///   29. `[]` kamino_program
+          ///   30. `[]` farms_program
+                      ///   31. `[writable, optional]` reserve_farm_state
+                      ///   32. `[writable, optional]` obligation_farm_user_state
+                ///   33. `[optional]` scope_prices
+                ///   34. `[writable]` protocol_authority
+                ///   35. `[writable]` treasury_token_account
+                ///   36. `[writable]` protocol_authority_token_account
+          ///   37. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
   instruction: Box<CompleteWithdrawRegularLuloCpiBuilderInstruction<'a, 'b>>,
@@ -1314,6 +1335,7 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
   pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
     let instruction = Box::new(CompleteWithdrawRegularLuloCpiBuilderInstruction {
       __program: program,
+              caller: None,
               authority: None,
               heir: None,
               estate: None,
@@ -1357,12 +1379,16 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
     Self { instruction }
   }
       #[inline(always)]
+    pub fn caller(&mut self, caller: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.caller = Some(caller);
+                    self
+    }
+      #[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.authority = Some(authority);
                     self
     }
-      /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
-#[inline(always)]
+      #[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
@@ -1580,6 +1606,8 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
         let instruction = CompleteWithdrawRegularLuloCpi {
         __program: self.instruction.__program,
                   
+          caller: self.instruction.caller.expect("caller is not set"),
+                  
           authority: self.instruction.authority.expect("authority is not set"),
                   
           heir: self.instruction.heir.expect("heir is not set"),
@@ -1662,7 +1690,8 @@ impl<'a, 'b> CompleteWithdrawRegularLuloCpiBuilder<'a, 'b> {
 #[derive(Clone, Debug)]
 struct CompleteWithdrawRegularLuloCpiBuilderInstruction<'a, 'b> {
   __program: &'b solana_account_info::AccountInfo<'a>,
-            authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+            caller: Option<&'b solana_account_info::AccountInfo<'a>>,
+                authority: Option<&'b solana_account_info::AccountInfo<'a>>,
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,

@@ -8,7 +8,10 @@ use anchor_spl::token_interface::TokenAccount;
 #[derive(Accounts)]
 pub struct InitWithdrawRegular<'info> {
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub caller: Signer<'info>,
+
+    /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+    pub authority: UncheckedAccount<'info>,
 
     /// CHECK: heir pubkey, stored in estate
     pub heir: UncheckedAccount<'info>,
@@ -70,7 +73,7 @@ impl<'info> InitWithdrawRegular<'info> {
 
         let cpi_accounts = lulo_v2::cpi::accounts::InitiateRegularPoolWithdraw {
             owner: ctx.accounts.vault.to_account_info(),
-            fee_payer: ctx.accounts.authority.to_account_info(),
+            fee_payer: ctx.accounts.caller.to_account_info(),
             input_mint: ctx.accounts.lulo_accounts.input_mint.to_account_info(),
             pending_withdrawal: ctx.accounts.pending_withdrawal_account.to_account_info(),
             pool: ctx.accounts.lulo_accounts.pool_account.to_account_info(),
@@ -126,9 +129,11 @@ impl<'info> InitWithdrawRegular<'info> {
 #[derive(Accounts)]
 pub struct CompleteWithdrawRegular<'info> {
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub caller: Signer<'info>,
 
-    /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+    /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+    pub authority: UncheckedAccount<'info>,
+
     /// CHECK: heir pubkey, stored in estate
     pub heir: UncheckedAccount<'info>,
 
@@ -212,7 +217,7 @@ impl<'info> CompleteWithdrawRegular<'info> {
 
         let cpi_accounts = lulo_v2::cpi::accounts::CompleteRegularPoolWithdraw {
             owner: ctx.accounts.vault.to_account_info(),
-            fee_payer: ctx.accounts.authority.to_account_info(),
+            fee_payer: ctx.accounts.caller.to_account_info(),
             input_mint: ctx.accounts.lulo_accounts.input_mint.to_account_info(),
             pending_withdrawal: ctx.accounts.pending_withdrawal_account.to_account_info(),
             pool: ctx.accounts.lulo_accounts.pool_account.to_account_info(),
@@ -352,7 +357,7 @@ impl<'info> CompleteWithdrawRegular<'info> {
         );
 
         // this can be the heir / estate authority
-        let caller = self.authority.key();
+        let caller = self.caller.key();
         let now = Clock::get()?.unix_timestamp;
 
         if caller == self.estate.authority {

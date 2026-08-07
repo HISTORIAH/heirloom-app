@@ -15,6 +15,9 @@ pub const INIT_WITHDRAW_REGULAR_LULO_DISCRIMINATOR: [u8; 8] = [245, 234, 177, 20
 pub struct InitWithdrawRegularLulo {
       
               
+          pub caller: solana_address::Address,
+          
+              
           pub authority: solana_address::Address,
           
               
@@ -80,10 +83,14 @@ impl InitWithdrawRegularLulo {
   #[allow(clippy::arithmetic_side_effects)]
   #[allow(clippy::vec_init_then_push)]
   pub fn instruction_with_remaining_accounts(&self, args: InitWithdrawRegularLuloInstructionArgs, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(18+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(19+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
-            self.authority,
+            self.caller,
             true
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.authority,
+            false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.heir,
@@ -206,27 +213,29 @@ impl InitWithdrawRegularLuloInstructionArgs {
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` authority
-          ///   1. `[]` heir
-                ///   2. `[writable]` vault
-                ///   3. `[writable]` estate
-                ///   4. `[writable]` asset_record
-                ///   5. `[writable]` pending_withdrawal_account
-                ///   6. `[writable]` pool_user
-                ///   7. `[writable]` pool_user_token_account
-                ///   8. `[writable]` pool_user_lp_token_account
-                ///   9. `[writable]` referrer_pool_user
-          ///   10. `[]` input_mint
-                ///   11. `[writable]` pool_reserve_token_account
-                ///   12. `[writable]` lp_mint
-                ///   13. `[writable]` pool_account
-                      ///   14. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
-          ///   15. `[]` input_mint_token_program
-          ///   16. `[]` lp_mint_token_program
-                ///   17. `[optional]` system_program (default to `11111111111111111111111111111111`)
+                      ///   0. `[writable, signer]` caller
+          ///   1. `[]` authority
+          ///   2. `[]` heir
+                ///   3. `[writable]` vault
+                ///   4. `[writable]` estate
+                ///   5. `[writable]` asset_record
+                ///   6. `[writable]` pending_withdrawal_account
+                ///   7. `[writable]` pool_user
+                ///   8. `[writable]` pool_user_token_account
+                ///   9. `[writable]` pool_user_lp_token_account
+                ///   10. `[writable]` referrer_pool_user
+          ///   11. `[]` input_mint
+                ///   12. `[writable]` pool_reserve_token_account
+                ///   13. `[writable]` lp_mint
+                ///   14. `[writable]` pool_account
+                      ///   15. `[writable, optional]` program_id (default to `FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q`)
+          ///   16. `[]` input_mint_token_program
+          ///   17. `[]` lp_mint_token_program
+                ///   18. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct InitWithdrawRegularLuloBuilder {
-            authority: Option<solana_address::Address>,
+            caller: Option<solana_address::Address>,
+                authority: Option<solana_address::Address>,
                 heir: Option<solana_address::Address>,
                 vault: Option<solana_address::Address>,
                 estate: Option<solana_address::Address>,
@@ -253,6 +262,11 @@ impl InitWithdrawRegularLuloBuilder {
   pub fn new() -> Self {
     Self::default()
   }
+            #[inline(always)]
+    pub fn caller(&mut self, caller: solana_address::Address) -> &mut Self {
+                        self.caller = Some(caller);
+                    self
+    }
             #[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
                         self.authority = Some(authority);
@@ -372,7 +386,8 @@ impl InitWithdrawRegularLuloBuilder {
   #[allow(clippy::clone_on_copy)]
   pub fn instruction(&self) -> solana_instruction::Instruction {
     let accounts = InitWithdrawRegularLulo {
-                              authority: self.authority.expect("authority is not set"),
+                              caller: self.caller.expect("caller is not set"),
+                                        authority: self.authority.expect("authority is not set"),
                                         heir: self.heir.expect("heir is not set"),
                                         vault: self.vault.expect("vault is not set"),
                                         estate: self.estate.expect("estate is not set"),
@@ -403,6 +418,9 @@ impl InitWithdrawRegularLuloBuilder {
   /// `init_withdraw_regular_lulo` CPI accounts.
   pub struct InitWithdrawRegularLuloCpiAccounts<'a, 'b> {
           
+                    
+              pub caller: &'b solana_account_info::AccountInfo<'a>,
+                
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -467,6 +485,9 @@ pub struct InitWithdrawRegularLuloCpi<'a, 'b> {
   /// The program to invoke.
   pub __program: &'b solana_account_info::AccountInfo<'a>,
       
+              
+          pub caller: &'b solana_account_info::AccountInfo<'a>,
+          
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
           
@@ -536,6 +557,7 @@ impl<'a, 'b> InitWithdrawRegularLuloCpi<'a, 'b> {
       ) -> Self {
     Self {
       __program: program,
+              caller: accounts.caller,
               authority: accounts.authority,
               heir: accounts.heir,
               vault: accounts.vault,
@@ -577,10 +599,14 @@ impl<'a, 'b> InitWithdrawRegularLuloCpi<'a, 'b> {
     signers_seeds: &[&[&[u8]]],
     remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
   ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(18+ remaining_accounts.len());
+    let mut accounts = Vec::with_capacity(19+ remaining_accounts.len());
                             accounts.push(solana_instruction::AccountMeta::new(
-            *self.authority.key,
+            *self.caller.key,
             true
+          ));
+                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.authority.key,
+            false
           ));
                                           accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.heir.key,
@@ -666,9 +692,10 @@ impl<'a, 'b> InitWithdrawRegularLuloCpi<'a, 'b> {
       accounts,
       data,
     };
-    let mut account_infos = Vec::with_capacity(19 + remaining_accounts.len());
+    let mut account_infos = Vec::with_capacity(20 + remaining_accounts.len());
     account_infos.push(self.__program.clone());
-                  account_infos.push(self.authority.clone());
+                  account_infos.push(self.caller.clone());
+                        account_infos.push(self.authority.clone());
                         account_infos.push(self.heir.clone());
                         account_infos.push(self.vault.clone());
                         account_infos.push(self.estate.clone());
@@ -700,24 +727,25 @@ impl<'a, 'b> InitWithdrawRegularLuloCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` authority
-          ///   1. `[]` heir
-                ///   2. `[writable]` vault
-                ///   3. `[writable]` estate
-                ///   4. `[writable]` asset_record
-                ///   5. `[writable]` pending_withdrawal_account
-                ///   6. `[writable]` pool_user
-                ///   7. `[writable]` pool_user_token_account
-                ///   8. `[writable]` pool_user_lp_token_account
-                ///   9. `[writable]` referrer_pool_user
-          ///   10. `[]` input_mint
-                ///   11. `[writable]` pool_reserve_token_account
-                ///   12. `[writable]` lp_mint
-                ///   13. `[writable]` pool_account
-                ///   14. `[writable]` program_id
-          ///   15. `[]` input_mint_token_program
-          ///   16. `[]` lp_mint_token_program
-          ///   17. `[]` system_program
+                      ///   0. `[writable, signer]` caller
+          ///   1. `[]` authority
+          ///   2. `[]` heir
+                ///   3. `[writable]` vault
+                ///   4. `[writable]` estate
+                ///   5. `[writable]` asset_record
+                ///   6. `[writable]` pending_withdrawal_account
+                ///   7. `[writable]` pool_user
+                ///   8. `[writable]` pool_user_token_account
+                ///   9. `[writable]` pool_user_lp_token_account
+                ///   10. `[writable]` referrer_pool_user
+          ///   11. `[]` input_mint
+                ///   12. `[writable]` pool_reserve_token_account
+                ///   13. `[writable]` lp_mint
+                ///   14. `[writable]` pool_account
+                ///   15. `[writable]` program_id
+          ///   16. `[]` input_mint_token_program
+          ///   17. `[]` lp_mint_token_program
+          ///   18. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct InitWithdrawRegularLuloCpiBuilder<'a, 'b> {
   instruction: Box<InitWithdrawRegularLuloCpiBuilderInstruction<'a, 'b>>,
@@ -727,6 +755,7 @@ impl<'a, 'b> InitWithdrawRegularLuloCpiBuilder<'a, 'b> {
   pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
     let instruction = Box::new(InitWithdrawRegularLuloCpiBuilderInstruction {
       __program: program,
+              caller: None,
               authority: None,
               heir: None,
               vault: None,
@@ -751,6 +780,11 @@ impl<'a, 'b> InitWithdrawRegularLuloCpiBuilder<'a, 'b> {
     });
     Self { instruction }
   }
+      #[inline(always)]
+    pub fn caller(&mut self, caller: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+                        self.instruction.caller = Some(caller);
+                    self
+    }
       #[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.authority = Some(authority);
@@ -882,6 +916,8 @@ impl<'a, 'b> InitWithdrawRegularLuloCpiBuilder<'a, 'b> {
         let instruction = InitWithdrawRegularLuloCpi {
         __program: self.instruction.__program,
                   
+          caller: self.instruction.caller.expect("caller is not set"),
+                  
           authority: self.instruction.authority.expect("authority is not set"),
                   
           heir: self.instruction.heir.expect("heir is not set"),
@@ -926,7 +962,8 @@ impl<'a, 'b> InitWithdrawRegularLuloCpiBuilder<'a, 'b> {
 #[derive(Clone, Debug)]
 struct InitWithdrawRegularLuloCpiBuilderInstruction<'a, 'b> {
   __program: &'b solana_account_info::AccountInfo<'a>,
-            authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+            caller: Option<&'b solana_account_info::AccountInfo<'a>>,
+                authority: Option<&'b solana_account_info::AccountInfo<'a>>,
                 heir: Option<&'b solana_account_info::AccountInfo<'a>>,
                 vault: Option<&'b solana_account_info::AccountInfo<'a>>,
                 estate: Option<&'b solana_account_info::AccountInfo<'a>>,

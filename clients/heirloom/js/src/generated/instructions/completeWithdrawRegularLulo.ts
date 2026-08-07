@@ -52,6 +52,7 @@ export function getCompleteWithdrawRegularLuloDiscriminatorBytes(): ReadonlyUint
 
 export type CompleteWithdrawRegularLuloInstruction<
   TProgram extends string = typeof HEIRLOOM_PROGRAM_ADDRESS,
+  TAccountCaller extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountEstate extends string | AccountMeta<string> = string,
@@ -100,9 +101,10 @@ export type CompleteWithdrawRegularLuloInstruction<
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountCaller extends string
+        ? WritableSignerAccount<TAccountCaller> & AccountSignerMeta<TAccountCaller>
+        : TAccountCaller,
+      TAccountAuthority extends string ? ReadonlyAccount<TAccountAuthority> : TAccountAuthority,
       TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
       TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
       TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
@@ -230,6 +232,7 @@ export function getCompleteWithdrawRegularLuloInstructionDataCodec(): FixedSizeC
 }
 
 export type CompleteWithdrawRegularLuloAsyncInput<
+  TAccountCaller extends string = string,
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
@@ -268,8 +271,8 @@ export type CompleteWithdrawRegularLuloAsyncInput<
   TAccountProtocolAuthorityTokenAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
-  /** FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check */
+  caller: TransactionSigner<TAccountCaller>;
+  authority: Address<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
@@ -312,6 +315,7 @@ export type CompleteWithdrawRegularLuloAsyncInput<
 };
 
 export async function getCompleteWithdrawRegularLuloInstructionAsync<
+  TAccountCaller extends string,
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
@@ -352,6 +356,7 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: CompleteWithdrawRegularLuloAsyncInput<
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -394,6 +399,7 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
 ): Promise<
   CompleteWithdrawRegularLuloInstruction<
     TProgramAddress,
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -438,7 +444,8 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
+    caller: { value: input.caller ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
@@ -532,6 +539,7 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
+      getAccountMeta("caller", accounts.caller),
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
@@ -576,6 +584,7 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
     programAddress,
   } as CompleteWithdrawRegularLuloInstruction<
     TProgramAddress,
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -617,6 +626,7 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
 }
 
 export type CompleteWithdrawRegularLuloInput<
+  TAccountCaller extends string = string,
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountEstate extends string = string,
@@ -655,8 +665,8 @@ export type CompleteWithdrawRegularLuloInput<
   TAccountProtocolAuthorityTokenAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
-  /** FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check */
+  caller: TransactionSigner<TAccountCaller>;
+  authority: Address<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
@@ -699,6 +709,7 @@ export type CompleteWithdrawRegularLuloInput<
 };
 
 export function getCompleteWithdrawRegularLuloInstruction<
+  TAccountCaller extends string,
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountEstate extends string,
@@ -739,6 +750,7 @@ export function getCompleteWithdrawRegularLuloInstruction<
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: CompleteWithdrawRegularLuloInput<
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -780,6 +792,7 @@ export function getCompleteWithdrawRegularLuloInstruction<
   config?: { programAddress?: TProgramAddress },
 ): CompleteWithdrawRegularLuloInstruction<
   TProgramAddress,
+  TAccountCaller,
   TAccountAuthority,
   TAccountHeir,
   TAccountEstate,
@@ -823,7 +836,8 @@ export function getCompleteWithdrawRegularLuloInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
+    caller: { value: input.caller ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
     heir: { value: input.heir ?? null, isWritable: false },
     estate: { value: input.estate ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
@@ -905,6 +919,7 @@ export function getCompleteWithdrawRegularLuloInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
+      getAccountMeta("caller", accounts.caller),
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("estate", accounts.estate),
@@ -949,6 +964,7 @@ export function getCompleteWithdrawRegularLuloInstruction<
     programAddress,
   } as CompleteWithdrawRegularLuloInstruction<
     TProgramAddress,
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountEstate,
@@ -995,46 +1011,46 @@ export type ParsedCompleteWithdrawRegularLuloInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    authority: TAccountMetas[0];
-    /** FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check */
-    heir: TAccountMetas[1];
-    estate: TAccountMetas[2];
-    vault: TAccountMetas[3];
-    vaultTokenAccount: TAccountMetas[4];
-    assetRecord: TAccountMetas[5];
-    pendingWithdrawalAccount: TAccountMetas[6];
-    poolUser: TAccountMetas[7];
-    poolUserTokenAccount: TAccountMetas[8];
-    poolUserLpTokenAccount: TAccountMetas[9];
-    referrerPoolUser: TAccountMetas[10];
-    inputMint: TAccountMetas[11];
+    caller: TAccountMetas[0];
+    authority: TAccountMetas[1];
+    heir: TAccountMetas[2];
+    estate: TAccountMetas[3];
+    vault: TAccountMetas[4];
+    vaultTokenAccount: TAccountMetas[5];
+    assetRecord: TAccountMetas[6];
+    pendingWithdrawalAccount: TAccountMetas[7];
+    poolUser: TAccountMetas[8];
+    poolUserTokenAccount: TAccountMetas[9];
+    poolUserLpTokenAccount: TAccountMetas[10];
+    referrerPoolUser: TAccountMetas[11];
+    inputMint: TAccountMetas[12];
     /** pool's reserve token account (authority = pool_account). */
-    poolReserveTokenAccount: TAccountMetas[12];
+    poolReserveTokenAccount: TAccountMetas[13];
     /** the pool's LP/share mint (token22) */
-    lpMint: TAccountMetas[13];
-    poolAccount: TAccountMetas[14];
-    programId: TAccountMetas[15];
-    inputMintTokenProgram: TAccountMetas[16];
-    lpMintTokenProgram: TAccountMetas[17];
-    market: TAccountMetas[18];
-    obligation: TAccountMetas[19];
-    reserve: TAccountMetas[20];
-    reserveLiquiditySupply: TAccountMetas[21];
-    lendingMarketAuthority: TAccountMetas[22];
-    collateralMint: TAccountMetas[23];
-    collateralTokenAccount: TAccountMetas[24];
-    reserveCollateralSupply: TAccountMetas[25];
-    collateralTokenProgram: TAccountMetas[26];
-    instructionsSysvar: TAccountMetas[27];
-    kaminoProgram: TAccountMetas[28];
-    farmsProgram: TAccountMetas[29];
-    reserveFarmState?: TAccountMetas[30] | undefined;
-    obligationFarmUserState?: TAccountMetas[31] | undefined;
-    scopePrices?: TAccountMetas[32] | undefined;
-    protocolAuthority: TAccountMetas[33];
-    treasuryTokenAccount: TAccountMetas[34];
-    protocolAuthorityTokenAccount: TAccountMetas[35];
-    systemProgram: TAccountMetas[36];
+    lpMint: TAccountMetas[14];
+    poolAccount: TAccountMetas[15];
+    programId: TAccountMetas[16];
+    inputMintTokenProgram: TAccountMetas[17];
+    lpMintTokenProgram: TAccountMetas[18];
+    market: TAccountMetas[19];
+    obligation: TAccountMetas[20];
+    reserve: TAccountMetas[21];
+    reserveLiquiditySupply: TAccountMetas[22];
+    lendingMarketAuthority: TAccountMetas[23];
+    collateralMint: TAccountMetas[24];
+    collateralTokenAccount: TAccountMetas[25];
+    reserveCollateralSupply: TAccountMetas[26];
+    collateralTokenProgram: TAccountMetas[27];
+    instructionsSysvar: TAccountMetas[28];
+    kaminoProgram: TAccountMetas[29];
+    farmsProgram: TAccountMetas[30];
+    reserveFarmState?: TAccountMetas[31] | undefined;
+    obligationFarmUserState?: TAccountMetas[32] | undefined;
+    scopePrices?: TAccountMetas[33] | undefined;
+    protocolAuthority: TAccountMetas[34];
+    treasuryTokenAccount: TAccountMetas[35];
+    protocolAuthorityTokenAccount: TAccountMetas[36];
+    systemProgram: TAccountMetas[37];
   };
   data: CompleteWithdrawRegularLuloInstructionData;
 };
@@ -1047,10 +1063,10 @@ export function parseCompleteWithdrawRegularLuloInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCompleteWithdrawRegularLuloInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 37) {
+  if (instruction.accounts.length < 38) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 37,
+      expectedAccountMetas: 38,
     });
   }
   let accountIndex = 0;
@@ -1066,6 +1082,7 @@ export function parseCompleteWithdrawRegularLuloInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      caller: getNextAccount(),
       authority: getNextAccount(),
       heir: getNextAccount(),
       estate: getNextAccount(),

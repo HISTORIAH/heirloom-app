@@ -8,9 +8,11 @@ use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccoun
 #[derive(Accounts)]
 pub struct WithdrawProtected<'info> {
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub caller: Signer<'info>,
 
-    /// FIXME: when heir is calling the ix as authority, this will cause an issue with the dup acc check
+    /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+    pub authority: UncheckedAccount<'info>,
+
     /// CHECK: heir pubkey, stored in estate
     pub heir: UncheckedAccount<'info>,
 
@@ -92,7 +94,7 @@ impl<'info> WithdrawProtected<'info> {
 
         let cpi_accounts = lulo_v2::cpi::accounts::WithdrawProtectedPool {
             owner: ctx.accounts.vault.to_account_info(),
-            fee_payer: ctx.accounts.authority.to_account_info(),
+            fee_payer: ctx.accounts.caller.to_account_info(),
             input_mint: ctx.accounts.lulo_accounts.input_mint.to_account_info(),
             owner_input_token_account: ctx.accounts.vault_token_account.to_account_info(),
             pool: ctx.accounts.lulo_accounts.pool_account.to_account_info(),
@@ -237,7 +239,7 @@ impl<'info> WithdrawProtected<'info> {
         );
 
         // this can be the heir / estate authority
-        let caller = self.authority.key();
+        let caller = self.caller.key();
         let now = Clock::get()?.unix_timestamp;
 
         if caller == self.estate.authority {

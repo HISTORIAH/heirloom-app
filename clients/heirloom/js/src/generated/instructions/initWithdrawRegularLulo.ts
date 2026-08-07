@@ -54,6 +54,7 @@ export function getInitWithdrawRegularLuloDiscriminatorBytes(): ReadonlyUint8Arr
 
 export type InitWithdrawRegularLuloInstruction<
   TProgram extends string = typeof HEIRLOOM_PROGRAM_ADDRESS,
+  TAccountCaller extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountHeir extends string | AccountMeta<string> = string,
   TAccountVault extends string | AccountMeta<string> = string,
@@ -78,9 +79,10 @@ export type InitWithdrawRegularLuloInstruction<
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountAuthority extends string
-        ? WritableSignerAccount<TAccountAuthority> & AccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountCaller extends string
+        ? WritableSignerAccount<TAccountCaller> & AccountSignerMeta<TAccountCaller>
+        : TAccountCaller,
+      TAccountAuthority extends string ? ReadonlyAccount<TAccountAuthority> : TAccountAuthority,
       TAccountHeir extends string ? ReadonlyAccount<TAccountHeir> : TAccountHeir,
       TAccountVault extends string ? WritableAccount<TAccountVault> : TAccountVault,
       TAccountEstate extends string ? WritableAccount<TAccountEstate> : TAccountEstate,
@@ -163,6 +165,7 @@ export function getInitWithdrawRegularLuloInstructionDataCodec(): FixedSizeCodec
 }
 
 export type InitWithdrawRegularLuloAsyncInput<
+  TAccountCaller extends string = string,
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
@@ -182,7 +185,8 @@ export type InitWithdrawRegularLuloAsyncInput<
   TAccountLpMintTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  caller: TransactionSigner<TAccountCaller>;
+  authority: Address<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   vault?: Address<TAccountVault>;
   estate?: Address<TAccountEstate>;
@@ -207,6 +211,7 @@ export type InitWithdrawRegularLuloAsyncInput<
 };
 
 export async function getInitWithdrawRegularLuloInstructionAsync<
+  TAccountCaller extends string,
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountVault extends string,
@@ -228,6 +233,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: InitWithdrawRegularLuloAsyncInput<
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
@@ -251,6 +257,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
 ): Promise<
   InitWithdrawRegularLuloInstruction<
     TProgramAddress,
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
@@ -276,7 +283,8 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
+    caller: { value: input.caller ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
@@ -328,6 +336,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
+      getAccountMeta("caller", accounts.caller),
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
@@ -353,6 +362,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
     programAddress,
   } as InitWithdrawRegularLuloInstruction<
     TProgramAddress,
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
@@ -375,6 +385,7 @@ export async function getInitWithdrawRegularLuloInstructionAsync<
 }
 
 export type InitWithdrawRegularLuloInput<
+  TAccountCaller extends string = string,
   TAccountAuthority extends string = string,
   TAccountHeir extends string = string,
   TAccountVault extends string = string,
@@ -394,7 +405,8 @@ export type InitWithdrawRegularLuloInput<
   TAccountLpMintTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  caller: TransactionSigner<TAccountCaller>;
+  authority: Address<TAccountAuthority>;
   heir: Address<TAccountHeir>;
   vault: Address<TAccountVault>;
   estate: Address<TAccountEstate>;
@@ -419,6 +431,7 @@ export type InitWithdrawRegularLuloInput<
 };
 
 export function getInitWithdrawRegularLuloInstruction<
+  TAccountCaller extends string,
   TAccountAuthority extends string,
   TAccountHeir extends string,
   TAccountVault extends string,
@@ -440,6 +453,7 @@ export function getInitWithdrawRegularLuloInstruction<
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: InitWithdrawRegularLuloInput<
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
@@ -462,6 +476,7 @@ export function getInitWithdrawRegularLuloInstruction<
   config?: { programAddress?: TProgramAddress },
 ): InitWithdrawRegularLuloInstruction<
   TProgramAddress,
+  TAccountCaller,
   TAccountAuthority,
   TAccountHeir,
   TAccountVault,
@@ -486,7 +501,8 @@ export function getInitWithdrawRegularLuloInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
+    caller: { value: input.caller ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
     heir: { value: input.heir ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     estate: { value: input.estate ?? null, isWritable: true },
@@ -526,6 +542,7 @@ export function getInitWithdrawRegularLuloInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
+      getAccountMeta("caller", accounts.caller),
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("heir", accounts.heir),
       getAccountMeta("vault", accounts.vault),
@@ -551,6 +568,7 @@ export function getInitWithdrawRegularLuloInstruction<
     programAddress,
   } as InitWithdrawRegularLuloInstruction<
     TProgramAddress,
+    TAccountCaller,
     TAccountAuthority,
     TAccountHeir,
     TAccountVault,
@@ -578,26 +596,27 @@ export type ParsedInitWithdrawRegularLuloInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    authority: TAccountMetas[0];
-    heir: TAccountMetas[1];
-    vault: TAccountMetas[2];
-    estate: TAccountMetas[3];
-    assetRecord: TAccountMetas[4];
-    pendingWithdrawalAccount: TAccountMetas[5];
-    poolUser: TAccountMetas[6];
-    poolUserTokenAccount: TAccountMetas[7];
-    poolUserLpTokenAccount: TAccountMetas[8];
-    referrerPoolUser: TAccountMetas[9];
-    inputMint: TAccountMetas[10];
+    caller: TAccountMetas[0];
+    authority: TAccountMetas[1];
+    heir: TAccountMetas[2];
+    vault: TAccountMetas[3];
+    estate: TAccountMetas[4];
+    assetRecord: TAccountMetas[5];
+    pendingWithdrawalAccount: TAccountMetas[6];
+    poolUser: TAccountMetas[7];
+    poolUserTokenAccount: TAccountMetas[8];
+    poolUserLpTokenAccount: TAccountMetas[9];
+    referrerPoolUser: TAccountMetas[10];
+    inputMint: TAccountMetas[11];
     /** pool's reserve token account (authority = pool_account). */
-    poolReserveTokenAccount: TAccountMetas[11];
+    poolReserveTokenAccount: TAccountMetas[12];
     /** the pool's LP/share mint (token22) */
-    lpMint: TAccountMetas[12];
-    poolAccount: TAccountMetas[13];
-    programId: TAccountMetas[14];
-    inputMintTokenProgram: TAccountMetas[15];
-    lpMintTokenProgram: TAccountMetas[16];
-    systemProgram: TAccountMetas[17];
+    lpMint: TAccountMetas[13];
+    poolAccount: TAccountMetas[14];
+    programId: TAccountMetas[15];
+    inputMintTokenProgram: TAccountMetas[16];
+    lpMintTokenProgram: TAccountMetas[17];
+    systemProgram: TAccountMetas[18];
   };
   data: InitWithdrawRegularLuloInstructionData;
 };
@@ -610,10 +629,10 @@ export function parseInitWithdrawRegularLuloInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitWithdrawRegularLuloInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 18) {
+  if (instruction.accounts.length < 19) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 18,
+      expectedAccountMetas: 19,
     });
   }
   let accountIndex = 0;
@@ -625,6 +644,7 @@ export function parseInitWithdrawRegularLuloInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      caller: getNextAccount(),
       authority: getNextAccount(),
       heir: getNextAccount(),
       vault: getNextAccount(),
