@@ -1,7 +1,11 @@
-# heirloom
+# Heirloom
 
-Anchor program implementing the Heirloom estate protocol: an authority locks assets into a PDA-owned vault, and a designated heir can claim them if the authority stops checking in within `heartbeat_interval + grace_period`.
+Solana inheritance protocol: lock assets in a PDA vault, and your heir can claim them if you stop checking in.
 
-## Known limitations
+## Caveats
 
-- **Mint freeze authority.** `register_asset` accepts any SPL/Token-2022 mint and does not require its freeze authority to be disabled, since doing so would exclude major regulated assets (e.g. USDC, USDT) that legitimately retain one. If a registered mint's freeze authority freezes the vault's token account after registration, transfers and closes for that asset in `claim`, `revoke`, and heir migration will fail at the token program until the issuer thaws it — the vault PDA cannot thaw its own account. This is inherent to custodying third-party SPL assets and is not something the program can enforce against; it is accepted as an issuer-trust risk rather than a program bug.
+- **Freeze authority.** If a registered mint's issuer (e.g. USDC, USDT) freezes the vault's token account, that asset is stuck until they unfreeze it. Can't fix — trust assumption on the issuer, not a bug.
+
+- **Transfer hooks.** All transfers use plain `transfer_checked`, no hook accounts. A mint that already has an active hook fails immediately at deposit, so it never gets in. Risk is narrow: a mint deposited hook-free whose authority later turns one on — that would then block exits for that asset. Fixable (resolve hook accounts dynamically), just not built yet.
+
+- **Transfer fees.** Not handled, but not a real problem — just means smaller payouts, never a stuck transfer. Depositor's choice of mint.
