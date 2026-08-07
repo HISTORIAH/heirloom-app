@@ -10,7 +10,7 @@ use crate::{
 pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
     let gross = gross_amount as u128;
     let fee = fee_bps as u128;
-    let protocol_fee = (gross * fee / 10_000) as u64;
+    let protocol_fee = ((gross * fee + 9_999) / 10_000) as u64; // ceiling instead of floor
 
     let payout = gross_amount
         .checked_sub(protocol_fee)
