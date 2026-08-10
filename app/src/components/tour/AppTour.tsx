@@ -55,7 +55,7 @@ const neoStyles: Partial<Styles> = {
     backgroundColor: LIME,
     color: BLACK,
     border: `3px solid ${BLACK}`,
-    borderRadius: 0,
+    borderRadius: 12,
     fontWeight: 900,
     textTransform: "uppercase",
     fontSize: 13,
@@ -78,7 +78,7 @@ const neoStyles: Partial<Styles> = {
  * Router and below the Wallet/Vault providers so it can navigate and read state.
  */
 const AppTour = () => {
-  const { active, run, stepIndex, setRun, setStepIndex, stop } = useTour();
+  const { active, run, stepIndex, vaultStep, setRun, setStepIndex, setVaultStep, stop } = useTour();
   const { isConnected } = useWallet();
   const { estates } = useVault();
   const navigate = useNavigate();
@@ -102,11 +102,11 @@ const AppTour = () => {
     if (!isConnected) setFinishPromptOpen(true);
   };
 
-  // Skipping just exits into the app — no connect prompt.
+  // Skipping returns the user to the landing page.
   const skipTour = () => {
     track("tour_skipped", { step_index: stepIndex });
     stop();
-    navigate("/create-vault");
+    navigate("/");
   };
 
   // Advance to a step, navigating first if it lives on another route.
@@ -116,12 +116,16 @@ const AppTour = () => {
       completeTour();
       return;
     }
-    if (next.data.route !== location.pathname) {
+    const nextVaultStep = next.data.vaultStep ?? null;
+    const routeChanged = next.data.route !== location.pathname;
+    const vaultChanged = nextVaultStep !== vaultStep;
+    setStepIndex(nextIndex);
+    setVaultStep(nextVaultStep);
+    if (routeChanged) {
       setRun(false); // pause spotlight until the next page mounts
-      setStepIndex(nextIndex);
       navigate(next.data.route);
-    } else {
-      setStepIndex(nextIndex);
+    } else if (vaultChanged) {
+      setRun(false); // pause briefly so the wizard step can render
     }
   };
 
@@ -163,19 +167,27 @@ const AppTour = () => {
     if (first && first.data.route !== location.pathname) {
       setRun(false);
       setStepIndex(0);
+      setVaultStep(first.data.vaultStep ?? null);
       navigate(first.data.route);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
-  // Resume the spotlight after a route change settles.
+  // Keep the tour pinned to the top of each page as it moves between routes.
+  // (React Router does not reset scroll on navigation, and joyride's own
+  // auto-scrolling would otherwise jump the page to the bottom.)
+  useEffect(() => {
+    if (active) window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [active, location.pathname]);
+
+  // Resume the spotlight after a route change or wizard-step change settles.
   useEffect(() => {
     if (active && !run) {
       const t = window.setTimeout(() => setRun(true), 400);
       return () => window.clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, active, run]);
+  }, [location.pathname, vaultStep, active, run]);
 
   return (
     <>
@@ -201,6 +213,7 @@ const AppTour = () => {
           buttons: ["skip", "primary"],
           overlayClickAction: false,
           targetWaitTimeout: 4000,
+          skipScroll: true,
         }}
       />
       <Dialog open={finishPromptOpen} onOpenChange={setFinishPromptOpen}>
