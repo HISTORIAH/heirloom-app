@@ -13,8 +13,11 @@ interface TourState {
   /** Joyride run prop — toggled off briefly while navigating between routes. */
   run: boolean;
   stepIndex: number;
+  /** The create-vault wizard sub-step the tour is highlighting (0-3), or null. */
+  vaultStep: number | null;
   setRun: (run: boolean) => void;
   setStepIndex: (index: number) => void;
+  setVaultStep: (step: number | null) => void;
   /** Begin (or replay) the tour from the first step. */
   start: () => void;
   /** End the tour. */
@@ -27,9 +30,11 @@ export const TourProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [active, setActive] = useState(false);
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [vaultStep, setVaultStep] = useState<number | null>(null);
 
   const start = useCallback(() => {
     setStepIndex(0);
+    setVaultStep(null);
     setActive(true);
     setRun(true);
   }, []);
@@ -38,11 +43,22 @@ export const TourProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setActive(false);
     setRun(false);
     setStepIndex(0);
+    setVaultStep(null);
   }, []);
 
   const value = useMemo<TourState>(
-    () => ({ active, run, stepIndex, setRun, setStepIndex, start, stop }),
-    [active, run, stepIndex, start, stop],
+    () => ({
+      active,
+      run,
+      stepIndex,
+      vaultStep,
+      setRun,
+      setStepIndex,
+      setVaultStep,
+      start,
+      stop,
+    }),
+    [active, run, stepIndex, vaultStep, setRun, setStepIndex, setVaultStep, start, stop],
   );
 
   return <TourContext.Provider value={value}>{children}</TourContext.Provider>;

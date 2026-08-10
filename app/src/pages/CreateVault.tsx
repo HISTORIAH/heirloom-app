@@ -1,8 +1,9 @@
 import PageHeader from "@/components/PageHeader";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import SubmitOverlay from "@/components/create-vault/SubmitOverlay";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
+import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
@@ -45,11 +46,19 @@ export interface TokenSelection {
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
   const { createEstateOnChain } = useVault();
+  const { vaultStep } = useTour();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
 
   const [step, setStep] = useState<StepIndex>(0);
+
+  // When the onboarding tour highlights a specific wizard step, follow along.
+  useEffect(() => {
+    if (vaultStep != null && vaultStep >= 0 && vaultStep <= STEPS.length - 1) {
+      setStep(vaultStep as StepIndex);
+    }
+  }, [vaultStep]);
 
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * SECONDS_PER_DAY);
   const [graceSeconds, setGraceSeconds] = useState(30 * SECONDS_PER_DAY);
@@ -75,7 +84,7 @@ const CreateVaultPage = () => {
 
   const selectedTokenEntries = useMemo(
     () => Object.entries(tokenSelections).filter(([, v]) => v.amount > 0),
-    [tokenSelections]
+    [tokenSelections],
   );
   const hasAnyDeposit = solAmount > 0 || selectedTokenEntries.length > 0;
 
@@ -264,57 +273,67 @@ const CreateVaultPage = () => {
               {/* Form column */}
               <div className="p-8 lg:p-10">
                 {step === 0 && (
-                  <HeirStep
-                    heirAddress={heirAddress}
-                    setHeirAddress={setHeirAddress}
-                    label={label}
-                    setLabel={setLabel}
-                    delegate={delegate}
-                    setDelegate={setDelegate}
-                    hbSigner={hbSigner}
-                    setHbSigner={setHbSigner}
-                  />
+                  <div data-tour="create-vault-heirs">
+                    <HeirStep
+                      heirAddress={heirAddress}
+                      setHeirAddress={setHeirAddress}
+                      label={label}
+                      setLabel={setLabel}
+                      delegate={delegate}
+                      setDelegate={setDelegate}
+                      hbSigner={hbSigner}
+                      setHbSigner={setHbSigner}
+                    />
+                  </div>
                 )}
 
                 {step === 1 && (
-                  <DepositStep
-                    solAmount={solAmount}
-                    setSolAmount={setSolAmount}
-                    tokenSelections={tokenSelections}
-                    setTokenSelections={setTokenSelections}
-                    tokens={tokens}
-                    tokensLoading={tokensLoading}
-                    solBalance={solBalance}
-                    solLoading={solLoading}
-                    isConnected={isConnected}
-                  />
+                  <div data-tour="create-vault-assets">
+                    <DepositStep
+                      solAmount={solAmount}
+                      setSolAmount={setSolAmount}
+                      tokenSelections={tokenSelections}
+                      setTokenSelections={setTokenSelections}
+                      tokens={tokens}
+                      tokensLoading={tokensLoading}
+                      solBalance={solBalance}
+                      solLoading={solLoading}
+                      isConnected={isConnected}
+                    />
+                  </div>
                 )}
 
                 {step === 2 && (
-                  <HeartbeatStep
-                    heartbeatSeconds={heartbeatSeconds}
-                    setHeartbeatSeconds={setHeartbeatSeconds}
-                    graceSeconds={graceSeconds}
-                    setGraceSeconds={setGraceSeconds}
-                    assetCount={hasAnyDeposit ? selectedTokenEntries.length + (solAmount > 0 ? 1 : 0) : 0}
-                  />
+                  <div data-tour="create-vault-heartbeat">
+                    <HeartbeatStep
+                      heartbeatSeconds={heartbeatSeconds}
+                      setHeartbeatSeconds={setHeartbeatSeconds}
+                      graceSeconds={graceSeconds}
+                      setGraceSeconds={setGraceSeconds}
+                      assetCount={
+                        hasAnyDeposit ? selectedTokenEntries.length + (solAmount > 0 ? 1 : 0) : 0
+                      }
+                    />
+                  </div>
                 )}
 
                 {step === 3 && (
-                  <ReviewStep
-                    heartbeatSeconds={heartbeatSeconds}
-                    graceSeconds={graceSeconds}
-                    heirAddress={heirAddress}
-                    label={label}
-                    delegate={delegate}
-                    hbSigner={hbSigner}
-                    solAmount={solAmount}
-                    tokenSelections={tokenSelections}
-                    tokens={tokens}
-                    acknowledged={acknowledged}
-                    setAcknowledged={setAcknowledged}
-                    onEdit={(targetStep) => setStep(targetStep as StepIndex)}
-                  />
+                  <div data-tour="create-vault-review">
+                    <ReviewStep
+                      heartbeatSeconds={heartbeatSeconds}
+                      graceSeconds={graceSeconds}
+                      heirAddress={heirAddress}
+                      label={label}
+                      delegate={delegate}
+                      hbSigner={hbSigner}
+                      solAmount={solAmount}
+                      tokenSelections={tokenSelections}
+                      tokens={tokens}
+                      acknowledged={acknowledged}
+                      setAcknowledged={setAcknowledged}
+                      onEdit={(targetStep) => setStep(targetStep as StepIndex)}
+                    />
+                  </div>
                 )}
               </div>
 
@@ -339,7 +358,7 @@ const CreateVaultPage = () => {
             {/* Footer */}
             <div className="flex justify-between items-center px-8 lg:px-10 py-5 border-t-4 border-foreground">
               <button
-                onClick={() => setStep((s) => (s > 0 ? (s - 1) as StepIndex : s))}
+                onClick={() => setStep((s) => (s > 0 ? ((s - 1) as StepIndex) : s))}
                 disabled={step === 0 || isSubmitting}
                 className="inline-flex items-center gap-2 h-11 px-6 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-background text-muted-foreground transition-all duration-150 hover:bg-secondary disabled:pointer-events-none disabled:opacity-50"
               >
@@ -387,6 +406,6 @@ const CreateVaultPage = () => {
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </>
   );
-};
+};;
 
 export default CreateVaultPage;

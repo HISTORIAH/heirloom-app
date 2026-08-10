@@ -6,7 +6,7 @@ export interface BuildTourArgs {
 }
 
 /** A tour step that also records which route it belongs to, so the tour can auto-navigate. */
-export type TourStep = Step & { data: { route: string } };
+export type TourStep = Step & { data: { route: string; vaultStep?: number } };
 
 /**
  * Builds the ordered, state-aware tour. Steps anchor only to elements that
@@ -26,14 +26,38 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
     data: { route: "/" },
   });
 
-  // 2. Create Vault wizard — fully usable before connecting.
+  // 2. Create Vault wizard — four sub-steps, each spotlighted in order.
   steps.push({
-    target: '[data-tour="create-vault-steps"]',
-    placement: "bottom",
-    title: "Create a vault",
+    target: '[data-tour="create-vault-heirs"]',
+    placement: "auto",
+    title: "Name your heir",
     content:
-      "Build your heartbeat vault in four steps: set your check-in timer, name your heir, choose assets, then review. You can fill all of this in without a wallet — it's only needed at the final 'Create Estate' step to deposit and sign.",
-    data: { route: "/create-vault" },
+      "Set who inherits: enter their Solana address, give the relationship a label, and optionally assign a delegate or a heartbeat signer.",
+    data: { route: "/create-vault", vaultStep: 0 },
+  });
+  steps.push({
+    target: '[data-tour="create-vault-assets"]',
+    placement: "auto",
+    title: "Choose your assets",
+    content:
+      "Deposit SOL and/or SPL tokens into the vault. You can skip this now and add assets later.",
+    data: { route: "/create-vault", vaultStep: 1 },
+  });
+  steps.push({
+    target: '[data-tour="create-vault-heartbeat"]',
+    placement: "auto",
+    title: "Set your check-in timer",
+    content:
+      "Pick how often you'll confirm you're active, and the grace period heirs wait after you miss a check-in before they can claim.",
+    data: { route: "/create-vault", vaultStep: 2 },
+  });
+  steps.push({
+    target: '[data-tour="create-vault-review"]',
+    placement: "auto",
+    title: "Review & create",
+    content:
+      "Check the full plan — heir, assets, timers — then acknowledge and hit Create Estate. This is where you connect your wallet to deposit and sign.",
+    data: { route: "/create-vault", vaultStep: 3 },
   });
 
   // 3. Dashboard — state-aware.
@@ -49,7 +73,7 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   } else {
     steps.push({
       target: '[data-tour="dashboard-actions"]',
-      placement: "bottom",
+      placement: "auto",
       title: "Your dashboard",
       content:
         "Before any vault exists, the dashboard lets you create a new estate or — if you were named an heir — claim an inheritance.",
@@ -60,7 +84,7 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   // 4. Claim — spotlight the connect-to-find-inheritance panel.
   steps.push({
     target: '[data-tour="claim-connect"]',
-    placement: "bottom",
+    placement: "auto",
     title: "Claim an inheritance",
     content:
       "Heirs come here to look up and claim assets left to them. You'll connect a wallet to claim what's yours.",
@@ -80,7 +104,7 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   // 5. Heartbeat — spotlight the lookup panel.
   steps.push({
     target: '[data-tour="heartbeat-lookup"]',
-    placement: "bottom",
+    placement: "auto",
     title: "Heartbeat signer portal",
     content:
       "A trusted signer can refresh a vault's heartbeat here — keeping it active without holding full authority over your assets.",
