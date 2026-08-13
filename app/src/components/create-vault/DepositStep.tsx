@@ -295,7 +295,7 @@ const DepositStep: React.FC<Props> = ({
                     </p>
                     <button
                       onClick={() => toggleToken(t.mint)}
-                      className={`border-4 border-foreground rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                      className={`border-4 border-foreground rounded-xl px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
                         isSelected
                           ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
                           : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.6)]"
@@ -317,7 +317,7 @@ const DepositStep: React.FC<Props> = ({
                           step={1 / Math.pow(10, Math.min(6, t.decimals))}
                           value={sel.amount}
                           onChange={(e) => updateTokenAmount(t.mint, e.target.value)}
-                          className="flex-1 min-w-0 text-sm font-bold border-2 border-foreground rounded-lg px-2 py-0.5 bg-background text-center focus:outline-none focus:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
+                          className="flex-1 min-w-0 text-sm font-bold border-2 border-foreground rounded-md px-2 py-0.5 bg-background text-center transition-all duration-150 focus:outline-none focus:shadow-[2px_2px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5"
                         />
                       </div>
                       <div className="flex gap-1.5 shrink-0">
@@ -325,7 +325,7 @@ const DepositStep: React.FC<Props> = ({
                           <button
                             key={p}
                             onClick={() => setTokenByPercent(t.mint, p)}
-                            className={`font-mono text-[11px] font-bold border-2 border-foreground rounded-full px-2 py-0.5 transition-all ${
+                            className={`font-mono text-[11px] font-bold border-2 border-foreground rounded-md px-2 py-0.5 transition-all ${
                               sel.pct === p
                                 ? "bg-[hsl(var(--step-accent))]"
                                 : "bg-background hover:bg-secondary"

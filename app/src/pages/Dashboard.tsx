@@ -921,7 +921,7 @@ const DashboardPage = () => {
               </div>
             </div>
             <h2 className="font-display text-3xl md:text-4xl mb-3">
-              {isConnected ? "No vault yet" : "Connect wallet"}
+              {isConnected ? "No estate yet" : "Connect wallet"}
             </h2>
             <p className="text-muted-foreground font-medium mb-8 max-w-sm mx-auto">
               {isConnected
@@ -931,7 +931,7 @@ const DashboardPage = () => {
             <div className="flex flex-col items-center gap-3">
               {isConnected ? (
                 <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
-                  Create Your Vault
+                  Create Your Estate
                 </Button>
               ) : (
                 <Button variant="yellow" size="lg" onClick={() => setWalletDialogOpen(true)}>
