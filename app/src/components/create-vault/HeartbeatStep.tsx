@@ -61,7 +61,7 @@ const HeartbeatStep: React.FC<Props> = ({
             step={5}
             value={heartbeatDays}
             onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
-            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5"
+            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5 focus:outline-none"
             style={{ accentColor: "hsl(var(--step-accent))" }}
           />
           <div className="flex items-baseline gap-2 mb-3.5">
@@ -97,7 +97,7 @@ const HeartbeatStep: React.FC<Props> = ({
             step={1}
             value={graceDays}
             onChange={(e) => setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
-            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5"
+            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5 focus:outline-none"
             style={{ accentColor: "hsl(var(--step-accent))" }}
           />
           <div className="flex items-baseline gap-2 mb-3.5">
