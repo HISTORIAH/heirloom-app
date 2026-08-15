@@ -60,11 +60,12 @@ export default function App() {
           <img src="/heirloom-wordmark.svg" alt="Heirloom" width={391} height={120} />
         </a>
         <LanguageSwitcher
-          className="status-pill"
-          menuClassName="absolute right-0 top-full mt-2 w-40 border-4 border-foreground rounded-xl bg-background p-2 grid grid-cols-3 gap-1 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50"
-          itemClassName="flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-bold uppercase hover:bg-secondary transition-colors"
-          activeItemClassName="bg-accent-yellow"
-          chevronClassName="h-3.5 w-3.5"
+          className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground"
+          menuClassName="absolute right-0 top-full mt-2 w-44 rounded-xl border border-foreground/10 bg-background p-1 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)] z-50"
+          itemClassName="w-full rounded-lg px-3 py-1.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+          activeItemClassName="!text-foreground bg-foreground/5"
+          globeClassName="h-4 w-4"
+          chevronClassName="h-3.5 w-3.5 opacity-60"
         />
       </header>
 

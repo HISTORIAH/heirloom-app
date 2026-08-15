@@ -1,5 +1,5 @@
 import Logo from "@/components/Logo";
-import { useTranslation } from "@heirloom/i18n";
+import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
 
 const FooterSection = () => {
   const { t } = useTranslation("app");
@@ -58,9 +58,19 @@ const FooterSection = () => {
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
             {t("footer.legalNote")}
           </p>
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
-            {t("footer.poweredBy")}
-          </p>
+          <div className="flex items-center gap-6">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
+              {t("footer.poweredBy")}
+            </p>
+            <LanguageSwitcher
+              className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium uppercase tracking-[0.15em] text-background/50 transition-colors hover:text-background"
+              menuClassName="absolute right-0 bottom-full mb-2 w-44 rounded-xl border border-foreground/10 bg-background p-1 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] z-50"
+              itemClassName="w-full rounded-lg px-3 py-1.5 text-left text-sm font-medium normal-case tracking-normal text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+              activeItemClassName="!text-foreground bg-foreground/5"
+              globeClassName="h-4 w-4"
+              chevronClassName="h-3.5 w-3.5 opacity-60"
+            />
+          </div>
         </div>
       </div>
     </footer>

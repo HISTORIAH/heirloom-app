@@ -9,6 +9,7 @@ export interface LanguageSwitcherProps {
   itemClassName?: string;
   activeItemClassName?: string;
   chevronClassName?: string;
+  globeClassName?: string;
 }
 
 export function LanguageSwitcher({
@@ -17,6 +18,7 @@ export function LanguageSwitcher({
   itemClassName,
   activeItemClassName,
   chevronClassName,
+  globeClassName,
 }: LanguageSwitcherProps) {
   const { i18n, t } = useTranslation("common");
   const [open, setOpen] = useState(false);
@@ -56,22 +58,33 @@ export function LanguageSwitcher({
         aria-label={t("language")}
         className={className}
       >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className={globeClassName}
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3.6 9h16.8M3.6 15h16.8" />
+          <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18" />
+        </svg>
         {shortFor(current)}
         <svg
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="1.75"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
-          style={{
-            transform: open ? "rotate(180deg)" : "none",
-            transition: "transform 200ms",
-          }}
           className={chevronClassName}
         >
-          <path d="m6 9 6 6 6-6" />
+          <path d="m8 9 4-4 4 4" />
+          <path d="m16 15-4 4-4-4" />
         </svg>
       </button>
 
@@ -92,7 +105,7 @@ export function LanguageSwitcher({
                 title={lang.name}
                 className={cls}
               >
-                {lang.short}
+                {lang.name}
               </button>
             );
           })}

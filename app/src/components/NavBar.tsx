@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
-import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
+import { useTranslation } from "@heirloom/i18n";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import Logo from "@/components/Logo";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -137,13 +137,6 @@ const NavBar = () => {
                 {t("nav.connectWallet")}
               </Button>
             )}
-            <LanguageSwitcher
-              className="flex items-center gap-1.5 border-[3px] border-foreground rounded-lg px-2 py-1.5 bg-background font-bold text-xs uppercase transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-              menuClassName="absolute right-0 top-full mt-2 w-40 border-4 border-foreground rounded-xl bg-background p-2 grid grid-cols-3 gap-1 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50"
-              itemClassName="flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-bold uppercase hover:bg-secondary transition-colors"
-              activeItemClassName="bg-accent-yellow"
-              chevronClassName="h-3.5 w-3.5"
-            />
           </div>
 
           <button
