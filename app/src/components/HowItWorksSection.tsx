@@ -3,7 +3,7 @@ import { Heart, Clock, Users, ShieldCheck } from "lucide-react";
 const steps = [
   {
     icon: ShieldCheck,
-    title: "Create your vault",
+    title: "Create your Estate",
     description: "Connect your wallet, deposit tokens, and name your heirs with their percentage splits.",
     tile: "neo-section-yellow",
   },
