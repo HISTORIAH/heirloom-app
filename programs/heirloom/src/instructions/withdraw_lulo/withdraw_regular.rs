@@ -122,6 +122,7 @@ impl<'info> InitWithdrawRegular<'info> {
 
     // TODO
     pub fn validate(&self) -> Result<()> {
+        // initiate regular withdrawal
         Ok(())
     }
 }
