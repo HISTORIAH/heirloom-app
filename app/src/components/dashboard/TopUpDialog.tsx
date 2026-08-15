@@ -11,6 +11,7 @@ const TOPUP_PCTS = [
 ] as const;
 import { Loader2, TrendingUp, X, Coins } from "lucide-react";
 import { type TopUpDialogProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 export const TopUpDialog: React.FC<TopUpDialogProps> = ({
   open,
@@ -22,6 +23,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
   onCancel,
   loading = false,
 }) => {
+  const { t } = useTranslation("app");
   const [amount, setAmount] = useState(0);
   const step = amountStep(decimals);
 
@@ -56,9 +58,9 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
               <Coins className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl leading-tight text-foreground">Top Up {symbol}</h3>
+              <h3 className="text-xl leading-tight text-foreground">{t("dashboard.topUpTitle", { symbol })}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
-                Add {symbol} from your wallet to the vault.
+                {t("dashboard.topUpDesc", { symbol })}
               </p>
             </div>
           </div>
@@ -74,7 +76,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
         {/* Vault balance */}
         <div className="mt-4 neo-border rounded-xl p-3 bg-secondary flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Current Vault Balance
+            {t("dashboard.currentVaultBalance")}
           </span>
           <span className="font-bold text-sm">
             {vaultBalance.toLocaleString(undefined, { maximumFractionDigits: decimals })} {symbol}
@@ -109,7 +111,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
           </div>
 
           <p className="text-[11px] font-medium text-muted-foreground">
-            Wallet: {walletBalance.toLocaleString(undefined, { maximumFractionDigits: decimals })} {symbol}
+            {t("dashboard.walletBalanceLabel")}: {walletBalance.toLocaleString(undefined, { maximumFractionDigits: decimals })} {symbol}
           </p>
         </div>
 
@@ -122,7 +124,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
             disabled={loading}
             className="sm:w-auto w-full"
           >
-            Cancel
+            {t("dashboard.manage.cancel")}
           </Button>
           <Button
             variant="yellow"
@@ -132,9 +134,9 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
             className="sm:w-auto w-full"
           >
             {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.sending")}</>
             ) : (
-              <><TrendingUp className="h-4 w-4" /> Top Up</>
+              <><TrendingUp className="h-4 w-4" /> {t("dashboard.topUp")}</>
             )}
           </Button>
         </div>

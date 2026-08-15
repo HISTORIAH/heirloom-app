@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { useTranslation } from "@heirloom/i18n";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -21,8 +22,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   variant = "default",
   loading = false,
   accent,
@@ -32,6 +33,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   children,
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const { t } = useTranslation("app");
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +101,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             disabled={loading}
             className="sm:w-auto w-full"
           >
-            {cancelLabel}
+            {cancelLabel ?? t("common.cancel")}
           </Button>
           <Button
             variant={variant === "destructive" ? "destructive" : "default"}
@@ -109,9 +111,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             className="sm:w-auto w-full"
           >
             {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Working…</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("common.working")}</>
             ) : (
-              confirmLabel
+              confirmLabel ?? t("common.confirm")
             )}
           </Button>
         </div>

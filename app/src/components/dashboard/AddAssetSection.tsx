@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { cn, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { amountStep, pctOfMax } from "@/lib/utils/math";
+import { Loader2, Plus, X } from "lucide-react";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 const TOPUP_PCTS = [
   { pct: 25,  label: "25%", bg: "bg-accent-pink"   },
@@ -13,8 +16,6 @@ const TOPUP_PCTS = [
   { pct: 75,  label: "75%", bg: "bg-accent-orange" },
   { pct: 100, label: "Max", bg: "bg-accent-yellow" },
 ] as const;
-import { Loader2, Plus, X } from "lucide-react";
-import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 interface Props {
   estate: EstateData;
@@ -26,6 +27,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
   const { publicKey, isConnected } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
 
   const [open, setOpen] = useState(false);
   const [addAssetMint, setAddAssetMint] = useState<string>("");
@@ -83,12 +85,12 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
       setAddAssetAmount(0);
       setAddAssetMint("");
       track("asset_added", { asset_type: "token" });
-      toast({ title: "Asset added", description: "Funds deposited into the vault." });
+      toast({ title: t("dashboard.manage.assetAddedTitle"), description: t("dashboard.manage.assetAddedDesc") });
       await fetchEstates();
     } catch (err: unknown) {
       track("asset_add_failed", { asset_type: "token" });
       toast({
-        title: "Add asset failed",
+        title: t("dashboard.manage.addAssetFailedTitle"),
         description: errMsg(err),
         variant: "destructive",
       });
@@ -103,7 +105,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
         onClick={() => setOpen(true)}
         className="neo-border rounded-xl px-4 py-3 bg-accent-orange text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
       >
-        Add Asset
+        {t("dashboard.manage.addAsset")}
       </button>
 
       {open && (
@@ -122,9 +124,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                   <Plus className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl leading-tight text-foreground">Add Asset</h3>
+                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.addAsset")}</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
-                    Add a new token type to this vault.
+                    {t("dashboard.manage.addAssetDesc")}
                   </p>
                 </div>
               </div>
@@ -140,7 +142,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
             <div className="space-y-4 mt-4">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
-                  Asset
+                  {t("dashboard.manage.asset")}
                 </label>
                 <select
                   value={addAssetMint}
@@ -153,7 +155,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                   style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px' }}
                 >
                   {walletSplTokens.length === 0 ? (
-                    <option value="">No new tokens in wallet</option>
+                    <option value="">{t("dashboard.manage.noNewTokens")}</option>
                   ) : (
                     (walletSplTokens ?? []).map((t) => (
                       <option key={t.mint} value={t.mint} className="bg-background text-foreground font-bold">
@@ -164,13 +166,13 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                 </select>
                 {walletTokensLoading && (
                   <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                    Scanning wallet for SPL tokens…
+                    {t("dashboard.manage.scanning")}
                   </p>
                 )}
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
-                  Amount
+                  {t("dashboard.manage.amount")}
                 </label>
                 <input
                   type="number"
@@ -199,18 +201,18 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                 </div>
                 <p className="text-[11px] font-medium text-muted-foreground mt-2">
                   {selectedToken
-                    ? `Wallet balance: ${selectedToken.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${selectedToken.label}`
-                    : "No tokens available in wallet"}
+                    ? `${t("dashboard.manage.walletBalance")} ${selectedToken.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${selectedToken.label}`
+                    : t("dashboard.manage.noTokensAvailable")}
                 </p>
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Adds a new SPL token type to the vault. The token must already exist in your wallet.
+                {t("dashboard.manage.addAssetNote")}
               </p>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
               <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                Cancel
+                {t("dashboard.manage.cancel")}
               </Button>
               <Button
                 variant="orange"
@@ -220,9 +222,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                 className="sm:w-auto w-full"
               >
                 {addingAsset ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Depositing...</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.depositing")}</>
                 ) : (
-                  <><Plus className="h-4 w-4" /> Deposit</>
+                  <><Plus className="h-4 w-4" /> {t("dashboard.manage.deposit")}</>
                 )}
               </Button>
             </div>

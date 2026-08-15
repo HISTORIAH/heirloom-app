@@ -1,53 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-
-const faqs = [
-  {
-    question: "What happens if I lose access to my wallet?",
-    answer:
-      "If you cannot send heartbeats, the vault will naturally transition through the grace period and become claimable by your heirs. This is the intended behavior -- the vault interprets prolonged silence as incapacitation. If you have a guardian set, they can extend the grace period by 30 days to give you more time to recover access.",
-  },
-  {
-    question: "Can I change my heirs after creating a vault?",
-    answer:
-      "Yes. As the vault owner, you can call update-heirs at any time while the vault is active. You can change addresses, adjust percentage splits, add or remove beneficiaries -- as long as the new splits sum to exactly 100%.",
-  },
-  {
-    question: "What does a heartbeat cost?",
-    answer:
-      "A heartbeat costs only the standard Solana network transaction fee (typically a fraction of a cent). There is no protocol fee for sending heartbeats.",
-  },
-  {
-    question: "What are the protocol fees?",
-    answer:
-      "Inheritance claims incur a 0.75% protocol fee, and emergency withdrawals incur a 0.5% fee. These fees are deducted automatically from the vault assets and sent to the protocol treasury. Heartbeats and vault creation have no protocol fee.",
-  },
-  {
-    question: "Can my heirs claim early?",
-    answer:
-      "No. The claim function enforces that the full heartbeat interval plus the grace period must have elapsed. Until that deadline passes, the contract will reject any claim attempt. The vault state is computed from on-chain timestamps, so it cannot be spoofed.",
-  },
-  {
-    question: "What is the guardian role?",
-    answer:
-      "A guardian is an optional trusted address you can designate when creating your vault. If your vault enters the grace period, the guardian can trigger a one-time pause that extends the deadline by 30 days. The guardian cannot withdraw funds, change heirs, or interact with the vault in any other way.",
-  },
-  {
-    question: "What tokens can I deposit?",
-    answer:
-      "Heirloom supports any two SPL tokens configured at vault creation. Each heir receives their percentage share of both tokens when they claim.",
-  },
-  {
-    question: "Is this a legal will?",
-    answer:
-      "No. Heirloom is a programmable self-custody continuity tool, not a legal document. It operates entirely on-chain through an Anchor program on Solana. It does not interact with any legal system or jurisdiction. Consider it a complement to -- not a replacement for -- traditional estate planning.",
-  },
-  {
-    question: "Can I get my assets back after creating a vault?",
-    answer:
-      "Yes, at any time before the vault is fully distributed. The emergency-withdraw function returns all tokens to your wallet and permanently closes the vault. You retain full control for as long as the vault is active.",
-  },
-];
+import { useTranslation } from "@heirloom/i18n";
 
 const FAQItem = ({
   index,
@@ -112,7 +65,20 @@ const FAQItem = ({
 );
 
 const FAQSection = () => {
+  const { t } = useTranslation("app");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const faqs = [
+    { question: t("faq.q1"), answer: t("faq.a1") },
+    { question: t("faq.q2"), answer: t("faq.a2") },
+    { question: t("faq.q3"), answer: t("faq.a3") },
+    { question: t("faq.q4"), answer: t("faq.a4") },
+    { question: t("faq.q5"), answer: t("faq.a5") },
+    { question: t("faq.q6"), answer: t("faq.a6") },
+    { question: t("faq.q7"), answer: t("faq.a7") },
+    { question: t("faq.q8"), answer: t("faq.a8") },
+    { question: t("faq.q9"), answer: t("faq.a9") },
+  ];
 
   return (
     <section className="bg-background px-6 py-16 md:py-24">
@@ -120,14 +86,14 @@ const FAQSection = () => {
         {/* Heading — sits alongside the questions on desktop. */}
         <div className="lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            FAQ
+            {t("faq.eyebrow")}
           </span>
           <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
-            Common{" "}
-            <span className="bg-accent-purple px-2 text-background">questions.</span>
+            {t("faq.headline1")}{" "}
+            <span className="bg-accent-purple px-2 text-background">{t("faq.headline2")}</span>
           </h2>
           <p className="mt-6 max-w-sm text-lg font-medium leading-relaxed text-muted-foreground">
-            Everything you need to know about heartbeats, heirs, fees, and control.
+            {t("faq.description")}
           </p>
         </div>
 

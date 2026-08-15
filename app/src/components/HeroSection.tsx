@@ -12,8 +12,10 @@ import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import HeroWordmark from "@/components/HeroWordmark";
+import { useTranslation } from "@heirloom/i18n";
 
 const HeroSection = () => {
+  const { t } = useTranslation("app");
   const { isConnected } = useWallet();
   const { start: startTour } = useTour();
   const navigate = useNavigate();
@@ -44,24 +46,22 @@ const HeroSection = () => {
           {/* Headline cell */}
           <div className="flex flex-col justify-center bg-background p-8 md:p-12 lg:col-span-8 lg:row-span-2">
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-              Solana Inheritance Protocol
+              {t("hero.eyebrow")}
             </span>
 
             <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
-              Protect your{" "}
-              <span className="bg-accent-pink px-3 text-foreground">assets.</span>{" "}
-              Pass it on trustlessly.
+              {t("hero.headline1")}{" "}
+              <span className="bg-accent-pink px-3 text-foreground">{t("hero.headline2")}</span>{" "}
+              {t("hero.headline3")}
             </h1>
 
             <p className="mt-7 max-w-xl text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">
-              Lock assets into a heartbeat vault on Solana. Check in periodically — or
-              your heirs inherit automatically. No lawyers. No custodians. No seed
-              phrase sharing.
+              {t("hero.description")}
             </p>
 
             <div className="mt-9 flex flex-wrap gap-4">
               <Button variant="yellow" size="xl" onClick={handleLaunch}>
-                {isConnected ? "Create Vault" : "Launch Tour"}
+                {isConnected ? t("hero.createVault") : t("hero.launchTour")}
               </Button>
               <Button
                 variant="outline"
@@ -73,18 +73,18 @@ const HeroSection = () => {
                 }}
               >
                 <Play className="h-5 w-5" fill="currentColor" strokeWidth={0} />
-                View Demo
+                {t("hero.viewDemo")}
               </Button>
             </div>
           </div>
 
           {/* Yellow attribute cell — the gist, in three flat facts. */}
           <div className="neo-section-yellow flex flex-col justify-center p-8 md:p-10 lg:col-span-4">
-            <span className="text-xs font-bold uppercase tracking-[0.25em]">The gist</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em]">{t("hero.gist")}</span>
             <ul className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-4xl">
-              <li>Non-custodial.</li>
-              <li>Trustless.</li>
-              <li>On-chain.</li>
+              <li>{t("hero.gist1")}</li>
+              <li>{t("hero.gist2")}</li>
+              <li>{t("hero.gist3")}</li>
             </ul>
           </div>
 
@@ -100,10 +100,10 @@ const HeroSection = () => {
         <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl gap-0 rounded-none border-4 border-foreground bg-background p-0 shadow-[8px_8px_0px_0px_hsl(var(--foreground))] sm:rounded-none sm:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]">
           <div className="flex items-center justify-between border-b-4 border-foreground bg-accent-yellow px-4 py-3 sm:px-6 sm:py-4">
             <DialogTitle className="text-lg font-bold uppercase tracking-tight sm:text-2xl">
-              Heirloom Demo
+              {t("hero.demoTitle")}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Embedded YouTube video showing how Heirloom works.
+              {t("hero.demoDescription")}
             </DialogDescription>
           </div>
           <div className="relative w-full bg-foreground" style={{ aspectRatio: "16 / 9" }}>
@@ -111,7 +111,7 @@ const HeroSection = () => {
               <iframe
                 className="absolute inset-0 h-full w-full"
                 src="https://www.youtube.com/embed/zqF4Pnm1G2w?si=NkN81t8zX3ZG1fNT&autoplay=1&rel=0"
-                title="Heirloom demo video"
+                title={t("hero.demoVideoTitle")}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen

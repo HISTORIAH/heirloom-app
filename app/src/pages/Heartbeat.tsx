@@ -33,6 +33,7 @@ import {
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -49,6 +50,7 @@ const HeartbeatPageInner: React.FC<{
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
 
   const client: HeirloomClient = { rpc, rpcSubscriptions };
 
@@ -71,13 +73,13 @@ const HeartbeatPageInner: React.FC<{
     setHbTxId(null);
     const result = await lookupEstateSnapshot(client, a, h);
     if (!result) {
-      setLookupError("Estate not found for this authority + heir pair.");
+      setLookupError(t("heartbeat.notFoundError"));
     } else if (!result.hbSigner) {
-      setLookupError("Estate has no heartbeat signer assigned.");
+      setLookupError(t("heartbeat.noSignerError"));
       setEstate(result);
     } else if (walletAddress && result.hbSigner !== walletAddress.toString()) {
       setLookupError(
-        `You are not the heartbeat signer for this estate. Signer is ${result.hbSigner.slice(0, 8)}...`,
+        t("heartbeat.wrongSignerError", { signer: result.hbSigner.slice(0, 8) }),
       );
       setEstate(result);
     } else {
@@ -100,14 +102,14 @@ const HeartbeatPageInner: React.FC<{
       });
       setHbTxId(tx);
       track("heartbeat_succeeded", { source: "heartbeat_signer_page" });
-      toast({ title: "Heartbeat sent", description: "Vault timer reset." });
+      toast({ title: t("heartbeat.toastSentTitle"), description: t("heartbeat.toastSentDesc") });
       const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
     } catch (err: unknown) {
       track("heartbeat_failed", { source: "heartbeat_signer_page" });
       toast({
-        title: "Heartbeat failed",
-        description: errMsg(err, "Rejected"),
+        title: t("heartbeat.toastFailTitle"),
+        description: errMsg(err, t("heartbeat.rejected")),
         variant: "destructive",
       });
     } finally {
@@ -130,11 +132,11 @@ const HeartbeatPageInner: React.FC<{
             className="flex items-center gap-2 text-lg font-semibold hover:underline group"
           >
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Home
+            {t("common.home")}
           </button>
           <div className="flex items-center gap-2">
             <Heart className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-bold">Heartbeat Signer</span>
+            <span className="text-2xl font-bold">{t("heartbeat.title")}</span>
           </div>
           {isConnected ? (
             <button
@@ -142,7 +144,7 @@ const HeartbeatPageInner: React.FC<{
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
             >
               <LogOut className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Disconnect</span>
+              <span className="hidden sm:inline">{t("common.disconnect")}</span>
             </button>
           ) : (
             <button
@@ -150,7 +152,7 @@ const HeartbeatPageInner: React.FC<{
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
             >
               <Wallet className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Connect Wallet</span>
+              <span className="hidden sm:inline">{t("common.connectWallet")}</span>
             </button>
           )}
         </div>
@@ -158,21 +160,20 @@ const HeartbeatPageInner: React.FC<{
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
-              <span className="neo-badge bg-accent-pink mb-4 inline-block">Hot Signer Portal</span>
+              <span className="neo-badge bg-accent-pink mb-4 inline-block">{t("heartbeat.hotSignerPortal")}</span>
               <h2 className="text-4xl md:text-5xl leading-[0.9]">
-                Refresh the{" "}
-                <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">heartbeat.</span>
+                {t("heartbeat.headline1")}{" "}
+                <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">{t("heartbeat.headline2")}</span>
               </h2>
               <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                As the registered heartbeat signer, you can ping the estate without holding
-                full authority.
+                {t("heartbeat.description")}
               </p>
             </div>
 
             <div className="neo-card-static space-y-4" data-tour="heartbeat-lookup">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
-                  Authority (Owner) Address
+                  {t("heartbeat.authorityLabel")}
                 </label>
                 <input
                   type="text"
@@ -180,12 +181,12 @@ const HeartbeatPageInner: React.FC<{
                   onChange={(e) => setAuthorityInput(e.target.value)}
                   maxLength={128}
                   className="neo-input w-full font-mono text-sm focus:bg-accent-pink/10"
-                  placeholder="Vault owner Solana address..."
+                  placeholder={t("heartbeat.authorityPlaceholder")}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
-                  Heir Address
+                  {t("heartbeat.heirLabel")}
                 </label>
                 <input
                   type="text"
@@ -193,7 +194,7 @@ const HeartbeatPageInner: React.FC<{
                   onChange={(e) => setHeirInput(e.target.value)}
                   maxLength={128}
                   className="neo-input w-full font-mono text-sm focus:bg-accent-pink/10"
-                  placeholder="Heir Solana address..."
+                  placeholder={t("heartbeat.heirPlaceholder")}
                 />
               </div>
               <Button
@@ -204,9 +205,9 @@ const HeartbeatPageInner: React.FC<{
                 className="w-full"
               >
                 {looking ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Looking up...</>
+                  <><Loader2 className="h-5 w-5 animate-spin" /> {t("heartbeat.lookingUp")}</>
                 ) : (
-                  <><Search className="h-5 w-5" /> Look Up Estate</>
+                  <><Search className="h-5 w-5" /> {t("heartbeat.lookUpEstate")}</>
                 )}
               </Button>
               {lookupError && (
@@ -223,13 +224,13 @@ const HeartbeatPageInner: React.FC<{
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        Label
+                        {t("heartbeat.label")}
                       </p>
                       <p className="text-2xl font-bold truncate">{estate.label}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        State
+                        {t("heartbeat.state")}
                       </p>
                       <p className="text-2xl font-bold uppercase">{estate.vaultState}</p>
                     </div>
@@ -247,41 +248,41 @@ const HeartbeatPageInner: React.FC<{
                     </div>
                   </div>
                   <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">Interval</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">{t("heartbeat.interval")}</p>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       <p className="text-lg font-bold">{formatDuration(estate.heartbeatInterval)}</p>
                     </div>
                   </div>
                   <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">Last Heartbeat</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">{t("heartbeat.lastHeartbeat")}</p>
                     <p className="text-xs font-bold">
                       {estate.lastHeartbeat > 0
                         ? new Date(estate.lastHeartbeat * 1000).toLocaleString()
-                        : "N/A"}
+                        : t("common.na")}
                     </p>
                   </div>
                 </div>
 
                 <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Heartbeat Signer
+                    {t("heartbeat.heartbeatSigner")}
                   </p>
-                  <p className="font-mono text-xs break-all">{estate.hbSigner ?? "None"}</p>
+                  <p className="font-mono text-xs break-all">{estate.hbSigner ?? t("common.none")}</p>
                 </div>
 
                 <div className="pt-3 border-t-2 border-foreground/10">
                   {hbTxId ? (
                     <div className="text-center">
                       <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                      <p className="font-bold mb-2">Heartbeat sent</p>
+                      <p className="font-bold mb-2">{t("heartbeat.heartbeatSent")}</p>
                       <a
                         href={getSolanaExplorerTxUrl(hbTxId)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
                       >
-                        View on Explorer <ExternalLink className="h-4 w-4" />
+                        {t("common.viewOnExplorer")} <ExternalLink className="h-4 w-4" />
                       </a>
                     </div>
                   ) : !isConnected ? (
@@ -291,7 +292,7 @@ const HeartbeatPageInner: React.FC<{
                       className="w-full"
                       onClick={() => setWalletDialogOpen(true)}
                     >
-                      <Heart className="h-5 w-5" /> Connect Wallet to Sign
+                      <Heart className="h-5 w-5" /> {t("heartbeat.connectToSign")}
                     </Button>
                   ) : (
                     <Button
@@ -302,13 +303,13 @@ const HeartbeatPageInner: React.FC<{
                       disabled={!canSign || signing}
                     >
                       {signing ? (
-                        <><Loader2 className="h-5 w-5 animate-spin" /> Signing...</>
+                        <><Loader2 className="h-5 w-5 animate-spin" /> {t("heartbeat.signing")}</>
                       ) : estate.vaultState === "distributed" ? (
-                        <>Vault Distributed</>
+                        <>{t("heartbeat.vaultDistributed")}</>
                       ) : estate.hbSigner !== walletAddress?.toString() ? (
-                        <>Not the Heartbeat Signer</>
+                        <>{t("heartbeat.notSigner")}</>
                       ) : (
-                        <><Heart className="h-5 w-5" /> Send Heartbeat</>
+                        <><Heart className="h-5 w-5" /> {t("heartbeat.sendHeartbeat")}</>
                       )}
                     </Button>
                   )}

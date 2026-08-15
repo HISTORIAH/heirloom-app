@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { buildTourSteps } from "./tourSteps";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 const BLACK = "hsl(0, 0%, 0%)";
 const WHITE = "hsl(0, 0%, 100%)";
@@ -84,13 +85,14 @@ const AppTour = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
 
   const [finishPromptOpen, setFinishPromptOpen] = useState(false);
   const [connectPromptOpen, setConnectPromptOpen] = useState(false);
 
   const steps = useMemo(
-    () => buildTourSteps({ isConnected, hasEstates: estates.length > 0 }),
-    [isConnected, estates.length],
+    () => buildTourSteps({ isConnected, hasEstates: estates.length > 0, t }),
+    [isConnected, estates.length, t],
   );
 
   // Completing the tour closes the loop: land on Create Vault and show a prompt
@@ -197,7 +199,12 @@ const AppTour = () => {
         stepIndex={stepIndex}
         continuous
         onEvent={handleEvent}
-        locale={{ skip: "Skip", next: "Next", last: "Finish", back: "Back" }}
+        locale={{
+          skip: t("dashboard.tour.skip"),
+          next: t("dashboard.tour.next"),
+          last: t("dashboard.tour.last"),
+          back: t("dashboard.tour.back"),
+        }}
         styles={neoStyles}
         options={{
           primaryColor: LIME,
@@ -219,9 +226,9 @@ const AppTour = () => {
       <Dialog open={finishPromptOpen} onOpenChange={setFinishPromptOpen}>
         <DialogContent className="neo-card-static max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">You're all set</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">{t("dashboard.tour.allSetTitle")}</DialogTitle>
             <DialogDescription className="font-medium">
-              Connect your wallet to create your first vault — we'll take you straight to the builder.
+              {t("dashboard.tour.allSetDesc")}
             </DialogDescription>
           </DialogHeader>
           <Button
@@ -233,7 +240,7 @@ const AppTour = () => {
               setConnectPromptOpen(true);
             }}
           >
-            Connect Wallet
+            {t("dashboard.tour.connectWallet")}
           </Button>
         </DialogContent>
       </Dialog>

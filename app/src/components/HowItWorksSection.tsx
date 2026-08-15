@@ -1,51 +1,53 @@
 import { Heart, Clock, Users, ShieldCheck } from "lucide-react";
-
-const steps = [
-  {
-    icon: ShieldCheck,
-    title: "Create your vault",
-    description: "Connect your wallet, deposit tokens, and name your heirs with their percentage splits.",
-    tile: "neo-section-yellow",
-  },
-  {
-    icon: Heart,
-    title: "Send heartbeats",
-    description: "Periodically sign a one-click transaction. It proves you're alive and resets the timer.",
-    tile: "bg-background",
-  },
-  {
-    icon: Clock,
-    title: "Grace period",
-    description: "Miss a heartbeat and a configurable grace period gives you time to recover. Your guardian can pause it.",
-    tile: "bg-secondary",
-  },
-  {
-    icon: Users,
-    title: "Heirs claim",
-    description: "If your heartbeat stays silent, heirs claim their share in one click. Automatic. Trustless.",
-    tile: "bg-background",
-  },
-];
+import { useTranslation } from "@heirloom/i18n";
 
 const HowItWorksSection = () => {
+  const { t } = useTranslation("app");
+
+  const steps = [
+    {
+      icon: ShieldCheck,
+      title: t("howItWorks.step1Title"),
+      description: t("howItWorks.step1Desc"),
+      tile: "neo-section-yellow",
+    },
+    {
+      icon: Heart,
+      title: t("howItWorks.step2Title"),
+      description: t("howItWorks.step2Desc"),
+      tile: "bg-background",
+    },
+    {
+      icon: Clock,
+      title: t("howItWorks.step3Title"),
+      description: t("howItWorks.step3Desc"),
+      tile: "bg-secondary",
+    },
+    {
+      icon: Users,
+      title: t("howItWorks.step4Title"),
+      description: t("howItWorks.step4Desc"),
+      tile: "bg-background",
+    },
+  ];
+
   return (
     <section className="bg-background px-6 py-16 md:py-24">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-1 border-4 border-foreground bg-foreground md:grid-cols-2 lg:grid-cols-12">
         {/* Heading cell */}
         <div className="flex flex-col justify-center bg-background p-8 md:col-span-2 md:p-10 lg:col-span-4 lg:row-span-2">
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            How it works
+            {t("howItWorks.eyebrow")}
           </span>
           <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-5xl">
-            Four steps to
+            {t("howItWorks.headline1")}
             <br />
             <span className="mt-1 inline-block bg-foreground px-3 text-background">
-              immortal assets.
+              {t("howItWorks.headline2")}
             </span>
           </h2>
           <p className="mt-6 max-w-md text-lg font-medium leading-relaxed text-muted-foreground">
-            A vault with a pulse. Check in and nothing moves — you stay in full
-            control. Go quiet, and it hands off on its own.
+            {t("howItWorks.description")}
           </p>
         </div>
 

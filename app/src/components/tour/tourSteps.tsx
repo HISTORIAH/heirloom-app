@@ -1,8 +1,10 @@
 import type { Step } from "react-joyride";
+import type { TFunction } from "@heirloom/i18n";
 
 export interface BuildTourArgs {
   isConnected: boolean;
   hasEstates: boolean;
+  t: TFunction;
 }
 
 /** A tour step that also records which route it belongs to, so the tour can auto-navigate. */
@@ -13,16 +15,15 @@ export type TourStep = Step & { data: { route: string; vaultStep?: number } };
  * actually render — no mock data is injected. Wallet-gated pages (Claim,
  * Heartbeat) use centered, describe-only steps so they work in any connect state.
  */
-export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): TourStep[] {
+export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): TourStep[] {
   const steps: TourStep[] = [];
 
   // 1. Welcome — landing page.
   steps.push({
     target: "body",
     placement: "center",
-    title: "Welcome to Heirloom",
-    content:
-      "Take a quick tour of the app — no wallet needed yet. You only connect when you're ready to move assets.",
+    title: t("dashboard.tour.step1Title"),
+    content: t("dashboard.tour.step1Content"),
     data: { route: "/" },
   });
 
@@ -30,33 +31,29 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   steps.push({
     target: '[data-tour="create-vault-heirs"]',
     placement: "auto",
-    title: "Name your heir",
-    content:
-      "Set who inherits: enter their Solana address, give the relationship a label, and optionally assign a delegate or a heartbeat signer.",
+    title: t("dashboard.tour.step2Title"),
+    content: t("dashboard.tour.step2Content"),
     data: { route: "/create-vault", vaultStep: 0 },
   });
   steps.push({
     target: '[data-tour="create-vault-assets"]',
     placement: "auto",
-    title: "Choose your assets",
-    content:
-      "Deposit SOL and/or SPL tokens into the vault. You can skip this now and add assets later.",
+    title: t("dashboard.tour.step3Title"),
+    content: t("dashboard.tour.step3Content"),
     data: { route: "/create-vault", vaultStep: 1 },
   });
   steps.push({
     target: '[data-tour="create-vault-heartbeat"]',
     placement: "auto",
-    title: "Set your check-in timer",
-    content:
-      "Pick how often you'll confirm you're active, and the grace period heirs wait after you miss a check-in before they can claim.",
+    title: t("dashboard.tour.step4Title"),
+    content: t("dashboard.tour.step4Content"),
     data: { route: "/create-vault", vaultStep: 2 },
   });
   steps.push({
     target: '[data-tour="create-vault-review"]',
     placement: "auto",
-    title: "Review & create",
-    content:
-      "Check the full plan — heir, assets, timers — then acknowledge and hit Create Estate. This is where you connect your wallet to deposit and sign.",
+    title: t("dashboard.tour.step5Title"),
+    content: t("dashboard.tour.step5Content"),
     data: { route: "/create-vault", vaultStep: 3 },
   });
 
@@ -65,18 +62,16 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
     steps.push({
       target: '[data-tour="dashboard-estate"]',
       placement: "top",
-      title: "Your vault dashboard",
-      content:
-        "Each vault shows its live status, countdown, locked balances and heir. Send a heartbeat here to reset the timer and keep assets with you.",
+      title: t("dashboard.tour.step6Title"),
+      content: t("dashboard.tour.step6Content"),
       data: { route: "/dashboard" },
     });
   } else {
     steps.push({
       target: '[data-tour="dashboard-actions"]',
       placement: "auto",
-      title: "Your dashboard",
-      content:
-        "Before any vault exists, the dashboard lets you create a new estate or — if you were named an heir — claim an inheritance.",
+      title: t("dashboard.tour.step7Title"),
+      content: t("dashboard.tour.step7Content"),
       data: { route: "/dashboard" },
     });
   }
@@ -85,9 +80,8 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   steps.push({
     target: '[data-tour="claim-connect"]',
     placement: "auto",
-    title: "Claim an inheritance",
-    content:
-      "Heirs come here to look up and claim assets left to them. You'll connect a wallet to claim what's yours.",
+    title: t("dashboard.tour.step8Title"),
+    content: t("dashboard.tour.step8Content"),
     data: { route: "/claim" },
   });
 
@@ -95,9 +89,8 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   steps.push({
     target: '[data-tour="claim-manual"]',
     placement: "top",
-    title: "Look up by owner",
-    content:
-      "If the automatic scan can't find your inheritance, expand this to look up an estate by the vault owner's address.",
+    title: t("dashboard.tour.step9Title"),
+    content: t("dashboard.tour.step9Content"),
     data: { route: "/claim" },
   });
 
@@ -105,9 +98,8 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   steps.push({
     target: '[data-tour="heartbeat-lookup"]',
     placement: "auto",
-    title: "Heartbeat signer portal",
-    content:
-      "A trusted signer can refresh a vault's heartbeat here — keeping it active without holding full authority over your assets.",
+    title: t("dashboard.tour.step10Title"),
+    content: t("dashboard.tour.step10Content"),
     data: { route: "/heartbeat" },
   });
 
@@ -115,9 +107,8 @@ export function buildTourSteps({ isConnected, hasEstates }: BuildTourArgs): Tour
   steps.push({
     target: "body",
     placement: "center",
-    title: "That's Heirloom",
-    content:
-      "That's the whole app. Click Finish and connect your wallet to create your first vault.",
+    title: t("dashboard.tour.step11Title"),
+    content: t("dashboard.tour.step11Content"),
     data: { route: "/create-vault" },
   });
 
