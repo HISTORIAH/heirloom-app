@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LABEL_MAX_LEN } from "@/lib/constants";
 import { errMsg, formatDuration } from "@/lib/utils";
 import { Pencil, X } from "lucide-react";
+import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   estate: EstateData;
@@ -15,6 +16,7 @@ interface Props {
 const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
   const { updateEstateFieldsOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
+  const { t } = useTranslation("app");
 
   const [open, setOpen] = useState(false);
   const [editIntervalSec, setEditIntervalSec] = useState(estate.heartbeatInterval);
@@ -71,11 +73,11 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       onTx(tx);
       setSettingsConfirmOpen(false);
       setOpen(false);
-      toast({ title: "Settings updated", description: "Estate config saved on-chain." });
+      toast({ title: t("dashboard.manage.settingsUpdatedTitle"), description: t("dashboard.manage.settingsUpdatedDesc") });
       await fetchEstates();
     } catch (err: unknown) {
       toast({
-        title: "Update failed",
+        title: t("dashboard.manage.updateFailedTitle"),
         description: errMsg(err),
         variant: "destructive",
       });
@@ -90,7 +92,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
         onClick={() => setOpen(true)}
         className="neo-border rounded-xl px-4 py-3 bg-accent-cyan text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
       >
-        Update Estate
+        {t("dashboard.manage.updateEstate")}
       </button>
 
       {open && (
@@ -109,9 +111,9 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                   <Pencil className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl leading-tight text-foreground">Update Estate</h3>
+                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.updateEstate")}</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
-                    Adjust your check-in schedule, grace period, or estate label.
+                    {t("dashboard.manage.updateEstateDesc")}
                   </p>
                 </div>
               </div>
@@ -127,7 +129,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
             <div className="space-y-4 mt-4">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                  Label ({LABEL_MAX_LEN} chars max)
+                  {t("dashboard.manage.labelMax", { max: LABEL_MAX_LEN })}
                 </label>
                 <div className="relative">
                   <Pencil className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" strokeWidth={3} />
@@ -137,14 +139,14 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                     onChange={(e) => setEditLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
                     maxLength={LABEL_MAX_LEN}
                     className="neo-input w-full !pl-10 focus:bg-accent-cyan/20"
-                    placeholder="Estate label"
+                    placeholder={t("dashboard.manage.estateLabelPlaceholder")}
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                    Interval (sec)
+                    {t("dashboard.manage.intervalSec")}
                   </label>
                   <input
                     type="number"
@@ -159,7 +161,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                    Grace (sec)
+                    {t("dashboard.manage.graceSec")}
                   </label>
                   <input
                     type="number"
@@ -174,7 +176,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                    Pause (sec)
+                    {t("dashboard.manage.pauseSec")}
                   </label>
                   <input
                     type="number"
@@ -190,14 +192,14 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
               </div>
               {!labelValid && (
                 <p className="text-xs font-bold text-accent-red">
-                  Label must be 1–{LABEL_MAX_LEN} characters.
+                  {t("dashboard.manage.labelInvalid", { max: LABEL_MAX_LEN })}
                 </p>
               )}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
               <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                Cancel
+                {t("dashboard.manage.cancel")}
               </Button>
               <Button
                 variant="cyan"
@@ -206,7 +208,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                 disabled={!settingsDirty || !settingsValid}
                 className="sm:w-auto w-full"
               >
-                <Pencil className="h-4 w-4" /> Save Changes
+                <Pencil className="h-4 w-4" /> {t("dashboard.manage.saveChanges")}
               </Button>
             </div>
           </div>
@@ -215,10 +217,10 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
 
       <ConfirmDialog
         open={settingsConfirmOpen}
-        title="Update Estate?"
-        description="Changing interval, grace, or pause shifts the heartbeat deadline. Make sure heirs are aware before saving."
-        confirmLabel="Save"
-        cancelLabel="Cancel"
+        title={t("dashboard.manage.updateEstateConfirmTitle")}
+        description={t("dashboard.manage.updateEstateConfirmDesc")}
+        confirmLabel={t("dashboard.manage.save")}
+        cancelLabel={t("dashboard.manage.cancel")}
         variant="default"
         loading={savingSettings}
         icon={<Pencil className="h-6 w-6" strokeWidth={2.5} />}
@@ -231,7 +233,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
         <div className="space-y-2 text-sm">
           {editLabel.trim() !== estate.label && (
             <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">Label</span>
+              <span className="font-bold">{t("dashboard.manage.label")}</span>
               <span className="font-mono text-xs text-right break-all">
                 {estate.label} → <span className="font-bold">{editLabel.trim()}</span>
               </span>
@@ -239,7 +241,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
           )}
           {editIntervalSec !== estate.heartbeatInterval && (
             <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">Interval</span>
+              <span className="font-bold">{t("dashboard.manage.interval")}</span>
               <span className="text-xs text-right">
                 {formatDuration(estate.heartbeatInterval)} →{" "}
                 <span className="font-bold">{formatDuration(editIntervalSec)}</span>
@@ -248,7 +250,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
           )}
           {editGraceSec !== estate.gracePeriod && (
             <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">Grace</span>
+              <span className="font-bold">{t("dashboard.manage.grace")}</span>
               <span className="text-xs text-right">
                 {formatDuration(estate.gracePeriod)} →{" "}
                 <span className="font-bold">{formatDuration(editGraceSec)}</span>
@@ -257,7 +259,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
           )}
           {editPauseSec !== estate.pauseDuration && (
             <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">Pause</span>
+              <span className="font-bold">{t("dashboard.manage.pause")}</span>
               <span className="text-xs text-right">
                 {formatDuration(estate.pauseDuration)} →{" "}
                 <span className="font-bold">{formatDuration(editPauseSec)}</span>

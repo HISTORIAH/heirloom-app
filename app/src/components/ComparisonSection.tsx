@@ -1,6 +1,7 @@
 import { Check, X, Minus, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 type Attr = true | false | "partial";
 type Tone = "dark" | "light" | "highlight";
@@ -62,70 +63,14 @@ const toneStyles: Record<
   },
 };
 
-const solutions: Solution[] = [
-  {
-    name: "Seed phrase in a safe",
-    blurb: "A note in a drawer. No custody logic, nothing on-chain, no plan for silence.",
-    attrs: [
-      { label: "Self-custodial", value: false },
-      { label: "Trustless", value: false },
-      { label: "On-chain", value: false },
-    ],
-    span: "md:col-span-1 lg:col-span-2",
-    tone: "dark",
-  },
-  {
-    name: "Casa inheritance",
-    blurb: "Assisted inheritance with a custodial layer of trust.",
-    attrs: [
-      { label: "Self-custodial", value: "partial" },
-      { label: "Trustless", value: false },
-      { label: "On-chain", value: false },
-    ],
-    span: "md:col-span-1 lg:col-span-1",
-    tone: "light",
-  },
-  {
-    name: "Sarcophagus",
-    blurb: "A trustless dead-man's switch — but on Ethereum, not Solana.",
-    attrs: [
-      { label: "Self-custodial", value: true },
-      { label: "Trustless", value: true },
-      { label: "On-chain", value: false },
-    ],
-    span: "md:col-span-1 lg:col-span-1",
-    tone: "dark",
-  },
-  {
-    name: "Safe Haven",
-    blurb: "Inheritance tooling with partial custody and partial trust.",
-    attrs: [
-      { label: "Self-custodial", value: "partial" },
-      { label: "Trustless", value: "partial" },
-      { label: "On-chain", value: false },
-    ],
-    span: "md:col-span-1 lg:col-span-1",
-    tone: "light",
-  },
-  {
-    name: "Heirloom",
-    blurb: "Self-custodial, trustless, and fully on-chain on Solana.",
-    attrs: [
-      { label: "Self-custodial", value: true },
-      { label: "Trustless", value: true },
-      { label: "On-chain", value: true },
-    ],
-    span: "md:col-span-2 lg:col-span-3",
-    tone: "highlight",
-  },
-];
-
 const AttrRow = ({
   attrs,
   st,
+  t,
 }: {
   attrs: Solution["attrs"];
   st: (typeof toneStyles)[Tone];
+  t: (key: string) => string;
 }) => (
   <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
     {attrs.map((a) => {
@@ -145,7 +90,11 @@ const AttrRow = ({
           {icon}
           {a.label}
           <span className="sr-only">
-            {a.value === true ? "yes" : a.value === "partial" ? "partial" : "no"}
+            {a.value === true
+              ? t("comparison.yes")
+              : a.value === "partial"
+                ? t("comparison.partial")
+                : t("comparison.no")}
           </span>
         </span>
       );
@@ -156,17 +105,76 @@ const AttrRow = ({
 const ComparisonSection = () => {
   const navigate = useNavigate();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
+
+  const solutions: Solution[] = [
+    {
+      name: t("comparison.s1Name"),
+      blurb: t("comparison.s1Blurb"),
+      attrs: [
+        { label: t("comparison.attrSelfCustodial"), value: false },
+        { label: t("comparison.attrTrustless"), value: false },
+        { label: t("comparison.attrOnChain"), value: false },
+      ],
+      span: "md:col-span-1 lg:col-span-2",
+      tone: "dark",
+    },
+    {
+      name: t("comparison.s2Name"),
+      blurb: t("comparison.s2Blurb"),
+      attrs: [
+        { label: t("comparison.attrSelfCustodial"), value: "partial" },
+        { label: t("comparison.attrTrustless"), value: false },
+        { label: t("comparison.attrOnChain"), value: false },
+      ],
+      span: "md:col-span-1 lg:col-span-1",
+      tone: "light",
+    },
+    {
+      name: t("comparison.s3Name"),
+      blurb: t("comparison.s3Blurb"),
+      attrs: [
+        { label: t("comparison.attrSelfCustodial"), value: true },
+        { label: t("comparison.attrTrustless"), value: true },
+        { label: t("comparison.attrOnChain"), value: false },
+      ],
+      span: "md:col-span-1 lg:col-span-1",
+      tone: "dark",
+    },
+    {
+      name: t("comparison.s4Name"),
+      blurb: t("comparison.s4Blurb"),
+      attrs: [
+        { label: t("comparison.attrSelfCustodial"), value: "partial" },
+        { label: t("comparison.attrTrustless"), value: "partial" },
+        { label: t("comparison.attrOnChain"), value: false },
+      ],
+      span: "md:col-span-1 lg:col-span-1",
+      tone: "light",
+    },
+    {
+      name: t("comparison.s5Name"),
+      blurb: t("comparison.s5Blurb"),
+      attrs: [
+        { label: t("comparison.attrSelfCustodial"), value: true },
+        { label: t("comparison.attrTrustless"), value: true },
+        { label: t("comparison.attrOnChain"), value: true },
+      ],
+      span: "md:col-span-2 lg:col-span-3",
+      tone: "highlight",
+    },
+  ];
 
   return (
     <section className="bg-background px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 max-w-2xl">
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            Comparison
+            {t("comparison.eyebrow")}
           </span>
           <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
-            Nothing else{" "}
-            <span className="bg-accent-yellow px-2 text-foreground">comes close.</span>
+            {t("comparison.headline1")}{" "}
+            <span className="bg-accent-yellow px-2 text-foreground">{t("comparison.headline2")}</span>
           </h2>
         </div>
 
@@ -196,7 +204,7 @@ const ComparisonSection = () => {
 
                 <div className="flex items-start justify-between">
                   <span className={`text-xs font-bold uppercase tracking-[0.2em] ${st.label}`}>
-                    {isBest ? "Best · 05" : `0${i + 1}`}
+                    {isBest ? t("comparison.best") : `0${i + 1}`}
                   </span>
                   <ArrowRight
                     aria-hidden="true"
@@ -211,7 +219,7 @@ const ComparisonSection = () => {
                   <p className={`mt-3 max-w-md text-sm font-medium leading-relaxed ${st.blurb}`}>
                     {s.blurb}
                   </p>
-                  <AttrRow attrs={s.attrs} st={st} />
+                  <AttrRow attrs={s.attrs} st={st} t={t} />
                 </div>
               </Tag>
             );

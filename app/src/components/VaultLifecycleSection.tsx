@@ -1,28 +1,29 @@
 import { ShieldAlert, Plus, Heart, Clock, Gift, CheckCircle2 } from "lucide-react";
-
-const states = [
-  { name: "CREATED", description: "Deposit tokens, name heirs", icon: Plus, tile: "bg-secondary" },
-  { name: "ACTIVE", description: "Heartbeat timer running", icon: Heart, tile: "bg-accent-lime" },
-  { name: "GRACE", description: "Missed heartbeat, countdown", icon: Clock, tile: "bg-accent-yellow" },
-  { name: "CLAIMABLE", description: "Heirs can claim their share", icon: Gift, tile: "bg-accent-orange" },
-  { name: "DISTRIBUTED", description: "All claimed, vault closed", icon: CheckCircle2, tile: "bg-accent-pink" },
-];
+import { useTranslation } from "@heirloom/i18n";
 
 const VaultLifecycleSection = () => {
+  const { t } = useTranslation("app");
+
+  const states = [
+    { name: t("vaultLifecycle.stateCreated"), description: t("vaultLifecycle.stateCreatedDesc"), icon: Plus, tile: "bg-secondary" },
+    { name: t("vaultLifecycle.stateActive"), description: t("vaultLifecycle.stateActiveDesc"), icon: Heart, tile: "bg-accent-lime" },
+    { name: t("vaultLifecycle.stateGrace"), description: t("vaultLifecycle.stateGraceDesc"), icon: Clock, tile: "bg-accent-yellow" },
+    { name: t("vaultLifecycle.stateClaimable"), description: t("vaultLifecycle.stateClaimableDesc"), icon: Gift, tile: "bg-accent-orange" },
+    { name: t("vaultLifecycle.stateDistributed"), description: t("vaultLifecycle.stateDistributedDesc"), icon: CheckCircle2, tile: "bg-accent-pink" },
+  ];
+
   return (
     <section className="bg-background px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 max-w-2xl">
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            Vault lifecycle
+            {t("vaultLifecycle.eyebrow")}
           </span>
           <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
-            From heartbeat to inheritance.
+            {t("vaultLifecycle.headline")}
           </h2>
           <p className="mt-6 text-lg font-medium leading-relaxed text-muted-foreground">
-            Five on-chain states, one direction. While it&apos;s active you&apos;re in
-            control; once the deadline passes, the vault does exactly what you told it
-            to.
+            {t("vaultLifecycle.description")}
           </p>
         </div>
 
@@ -52,9 +53,8 @@ const VaultLifecycleSection = () => {
             <ShieldAlert className="h-6 w-6 text-white" strokeWidth={2.5} />
           </div>
           <p className="text-base font-bold leading-snug">
-            <span className="uppercase tracking-wide">Emergency withdraw</span> — the
-            owner can reclaim every asset at any point before distribution. Always in
-            control.
+            <span className="uppercase tracking-wide">{t("vaultLifecycle.emergencyTitle")}</span> —{" "}
+            {t("vaultLifecycle.emergencyDesc")}
           </p>
         </div>
       </div>

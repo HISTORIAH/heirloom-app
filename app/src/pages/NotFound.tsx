@@ -2,9 +2,11 @@ import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "@heirloom/i18n";
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useTranslation("app");
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
@@ -17,15 +19,15 @@ const NotFound = () => {
           <h1 className="text-[120px] md:text-[180px] leading-none">404</h1>
         </div>
         <h2 className="text-3xl md:text-4xl mb-4">
-          Page not{" "}
-          <span className="bg-accent-pink px-2 inline-block rotate-[1deg]">found.</span>
+          {t("notFound.headline1")}{" "}
+          <span className="bg-accent-pink px-2 inline-block rotate-[1deg]">{t("notFound.headline2")}</span>
         </h2>
         <p className="text-lg font-medium text-muted-foreground mb-8 max-w-md mx-auto">
-          This route doesn't exist. The vault you're looking for might be elsewhere.
+          {t("notFound.description")}
         </p>
         <Button variant="yellow" size="lg" asChild>
           <a href="/">
-            <ArrowLeft className="h-5 w-5" /> Return Home
+            <ArrowLeft className="h-5 w-5" /> {t("notFound.returnHome")}
           </a>
         </Button>
       </div>

@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 interface WalletConnectDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface WalletRowProps {
 const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
   const { connect, isConnecting } = useWalletUiWallet({ wallet });
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
   return (
     <button
       type="button"
@@ -46,13 +48,14 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
         <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />
       )}
       <span className="flex-1 text-left">{wallet.name}</span>
-      {isConnecting && <span className="text-xs font-bold">Connecting…</span>}
+      {isConnecting && <span className="text-xs font-bold">{t("common.connecting")}</span>}
     </button>
   );
 };
 
 const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) => {
   const { isConnected } = useWallet();
+  const { t } = useTranslation("app");
   const walletUi = useWalletUi() as unknown as { wallets?: UiWallet[] };
   const wallets = walletUi?.wallets ?? [];
 
@@ -64,9 +67,9 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="neo-card-static max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Connect Wallet</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">{t("walletDialog.title")}</DialogTitle>
           <DialogDescription className="font-medium">
-            Choose a Solana wallet to continue.
+            {t("walletDialog.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 mt-2">
@@ -77,7 +80,7 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
               rel="noopener noreferrer"
               className="neo-border rounded-xl px-4 py-3 bg-accent-yellow font-bold text-center"
             >
-              No wallets detected — install one
+              {t("walletDialog.noWallets")}
             </a>
           ) : (
             wallets.map((w) => (

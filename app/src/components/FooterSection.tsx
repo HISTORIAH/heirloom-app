@@ -1,20 +1,23 @@
 import Logo from "@/components/Logo";
-
-const linkGroups = [
-  {
-    heading: "Protocol",
-    links: [
-      { name: "Documentation", href: "https://docs.heirlm.xyz/" },
-      { name: "GitHub", href: "https://github.com/HISTORIAH/Heirloom-app" },
-    ],
-  },
-  {
-    heading: "Community",
-    links: [{ name: "Twitter / X", href: "https://x.com/heirloom_app" }],
-  },
-];
+import { useTranslation } from "@heirloom/i18n";
 
 const FooterSection = () => {
+  const { t } = useTranslation("app");
+
+  const linkGroups = [
+    {
+      heading: t("footer.protocol"),
+      links: [
+        { name: t("footer.documentation"), href: "https://docs.heirlm.xyz/" },
+        { name: t("footer.github"), href: "https://github.com/HISTORIAH/Heirloom-app" },
+      ],
+    },
+    {
+      heading: t("footer.community"),
+      links: [{ name: t("footer.twitter"), href: "https://x.com/heirloom_app" }],
+    },
+  ];
+
   return (
     <footer className="bg-foreground px-6 pb-12 pt-16 text-background md:pt-20">
       <div className="mx-auto max-w-7xl">
@@ -24,8 +27,7 @@ const FooterSection = () => {
               <Logo tone="paper" className="h-16 md:h-20" />
             </h3>
             <p className="mt-4 max-w-sm text-lg font-medium leading-relaxed text-background/70">
-              A heartbeat inheritance vault built on Solana. Your crypto
-              doesn&apos;t die with you.
+              {t("footer.description")}
             </p>
           </div>
 
@@ -54,10 +56,10 @@ const FooterSection = () => {
 
         <div className="flex flex-col items-start justify-between gap-4 border-t-2 border-background/20 pt-8 md:flex-row md:items-center">
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
-            Not a legal will — programmable self-custody continuity.
+            {t("footer.legalNote")}
           </p>
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-background/50">
-            Powered by Solana
+            {t("footer.poweredBy")}
           </p>
         </div>
       </div>

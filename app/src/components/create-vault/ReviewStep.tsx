@@ -3,6 +3,7 @@ import { SOL_DECIMALS, SECONDS_PER_DAY } from "@/lib/constants";
 import { formatUiAmount, truncateAddress } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import type { TokenSelection } from "@/pages/CreateVault";
+import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   heartbeatSeconds: number;
@@ -33,6 +34,7 @@ const ReviewStep: React.FC<Props> = ({
   setAcknowledged,
   onEdit,
 }) => {
+  const { t } = useTranslation("app");
   const selectedTokenEntries = Object.entries(tokenSelections).filter(([, v]) => v.amount > 0);
   const totalAssets = selectedTokenEntries.length + (solAmount > 0 ? 1 : 0);
 
@@ -48,8 +50,8 @@ const ReviewStep: React.FC<Props> = ({
           <CheckCircle className="h-5 w-5" strokeWidth={2} />
         </div>
         <div>
-          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-lime">STEP 4</div>
-          <h3 className="text-2xl font-display">Review & confirm</h3>
+          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-lime">{t("createVault.wizard.step4")}</div>
+          <h3 className="text-2xl font-display">{t("createVault.wizard.reviewConfirm")}</h3>
         </div>
       </div>
 
@@ -58,26 +60,26 @@ const ReviewStep: React.FC<Props> = ({
         {/* Timing */}
         <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">TIMING</span>
+            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.timing")}</span>
             <button
               onClick={() => onEdit(2)}
               className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
             >
-              EDIT
+              {t("createVault.wizard.edit")}
             </button>
           </div>
           <div className="space-y-1">
             <div className="flex justify-between text-sm py-1">
-              <span className="text-muted-foreground">Interval</span>
-              <span className="font-bold">{heartbeatDays} days</span>
+              <span className="text-muted-foreground">{t("createVault.wizard.interval")}</span>
+              <span className="font-bold">{heartbeatDays} {t("createVault.wizard.daysShort")}</span>
             </div>
             <div className="flex justify-between text-sm py-1">
-              <span className="text-muted-foreground">Grace</span>
-              <span className="font-bold">{graceDays} days</span>
+              <span className="text-muted-foreground">{t("createVault.wizard.grace")}</span>
+              <span className="font-bold">{graceDays} {t("createVault.wizard.daysShort")}</span>
             </div>
             <div className="flex justify-between text-sm py-2 border-t-2 border-foreground mt-2">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-bold">{totalDays} days</span>
+              <span className="text-muted-foreground">{t("createVault.wizard.total")}</span>
+              <span className="font-bold">{totalDays} {t("createVault.wizard.daysShort")}</span>
             </div>
           </div>
         </div>
@@ -85,12 +87,12 @@ const ReviewStep: React.FC<Props> = ({
         {/* Deposits */}
         <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">DEPOSITS</span>
+            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.deposits")}</span>
             <button
               onClick={() => onEdit(1)}
               className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
             >
-              EDIT
+              {t("createVault.wizard.edit")}
             </button>
           </div>
           {solAmount > 0 && (
@@ -115,11 +117,11 @@ const ReviewStep: React.FC<Props> = ({
           })}
           {totalAssets === 0 && (
             <div className="text-sm text-muted-foreground">
-              No deposits — empty estate, fund it later
+              {t("createVault.wizard.noDeposits")}
             </div>
           )}
           <p className="text-xs text-muted-foreground mt-2 border-t-2 border-dashed border-gray-200 pt-2">
-            {totalAssets} asset{totalAssets !== 1 ? "s" : ""} total
+            {t("createVault.wizard.assetTotal", { count: totalAssets })}
           </p>
         </div>
       </div>
@@ -127,21 +129,21 @@ const ReviewStep: React.FC<Props> = ({
       {/* Heir */}
       <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40 mb-5">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">HEIR</span>
+          <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.heir")}</span>
           <button
             onClick={() => onEdit(0)}
             className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
           >
-            EDIT
+            {t("createVault.wizard.edit")}
           </button>
         </div>
         <p className="font-bold text-base">
           {label} · {truncateAddress(heirAddress, 4)}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          100% allocation
-          {delegate && ` · guardian ${truncateAddress(delegate, 4)}`}
-          {hbSigner && ` · signer ${truncateAddress(hbSigner, 4)}`}
+          {t("createVault.wizard.allocation100")}
+          {delegate && ` · ${t("createVault.wizard.guardianShort")} ${truncateAddress(delegate, 4)}`}
+          {hbSigner && ` · ${t("createVault.wizard.signerShort")} ${truncateAddress(hbSigner, 4)}`}
         </p>
       </div>
 
@@ -160,13 +162,12 @@ const ReviewStep: React.FC<Props> = ({
           {acknowledged && "✓"}
         </div>
         <span className="text-sm leading-relaxed text-left">
-          I understand that if I don&apos;t check in for <strong>{totalDays} days</strong> ({heartbeatDays}-day
-          interval + {graceDays}-day grace), my heir can claim these assets on-chain.
+          {t("createVault.wizard.ack", { days: totalDays, hb: heartbeatDays, grace: graceDays })}
         </span>
       </button>
 
       <p className="text-xs text-muted-foreground text-right mt-2">
-        Estimated network fee: ~0.002 SOL
+        {t("createVault.wizard.estFee")}
       </p>
     </div>
   );

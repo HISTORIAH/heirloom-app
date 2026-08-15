@@ -34,6 +34,7 @@ import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
+import { useTranslation } from "@heirloom/i18n";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -72,6 +73,7 @@ const ClaimPageInner: React.FC<{
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
   const [searchParams] = useSearchParams();
 
   const client: HeirloomClient = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
@@ -151,7 +153,7 @@ const ClaimPageInner: React.FC<{
       setShowManual(false);
       setManualAddress("");
     } else {
-      setManualError("Estate not found, or you are not the heir for this owner.");
+      setManualError(t("claim.notFoundError"));
     }
     setManualLoading(false);
   };
@@ -208,7 +210,7 @@ const ClaimPageInner: React.FC<{
         );
       }
 
-      toast({ title: "Claim submitted", description: "Assets transferred to your wallet." });
+      toast({ title: t("claim.toastClaimTitle"), description: t("claim.toastClaimDesc") });
       track("claim_succeeded", {
         asset_type_count: tokenAssets.length + 1,
         token_count: tokenAssets.length,
@@ -216,8 +218,8 @@ const ClaimPageInner: React.FC<{
     } catch (err: unknown) {
       track("claim_failed", { stage: "transaction" });
       toast({
-        title: "Claim failed",
-        description: errMsg(err, "Rejected"),
+        title: t("claim.toastFailTitle"),
+        description: errMsg(err, t("claim.rejected")),
         variant: "destructive",
       });
     } finally {
@@ -231,11 +233,11 @@ const ClaimPageInner: React.FC<{
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-semibold hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Home
+            {t("common.home")}
           </button>
           <div className="flex items-center gap-2">
             <Gift className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-bold">Claim</span>
+            <span className="text-2xl font-bold">{t("claim.title")}</span>
           </div>
           {isConnected ? (
             <button
@@ -243,7 +245,7 @@ const ClaimPageInner: React.FC<{
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
             >
               <LogOut className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Disconnect</span>
+              <span className="hidden sm:inline">{t("common.disconnect")}</span>
             </button>
           ) : (
             <button
@@ -251,7 +253,7 @@ const ClaimPageInner: React.FC<{
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
             >
               <Wallet className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Connect Wallet</span>
+              <span className="hidden sm:inline">{t("common.connectWallet")}</span>
             </button>
           )}
         </div>
@@ -259,25 +261,25 @@ const ClaimPageInner: React.FC<{
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
-              <span className="neo-badge bg-accent-orange mb-4 inline-block">Heir Portal</span>
+              <span className="neo-badge bg-accent-orange mb-4 inline-block">{t("claim.heirPortal")}</span>
               <h2 className="text-4xl md:text-5xl leading-[0.9]">
-                Your inheritance{" "}
-                <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">is waiting.</span>
+                {t("claim.headline1")}{" "}
+                <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">{t("claim.headline2")}</span>
               </h2>
               <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                Enter the owner's Solana address to look up an estate where you're named as heir.
+                {t("claim.description")}
               </p>
             </div>
 
             {!isConnected && (
               <div className="neo-card-static text-center" data-tour="claim-connect">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl mb-2">Connect to find your inheritance</h3>
+                <h3 className="text-xl mb-2">{t("claim.connectTitle")}</h3>
                 <p className="text-muted-foreground font-medium mb-4">
-                  Connect your wallet to scan the chain for estates that name you as heir. Browse the page freely first.
+                  {t("claim.connectDesc")}
                 </p>
                 <Button variant="yellow" onClick={() => setWalletDialogOpen(true)}>
-                  Connect Wallet
+                  {t("common.connectWallet")}
                 </Button>
               </div>
             )}
@@ -285,7 +287,7 @@ const ClaimPageInner: React.FC<{
             {searching && (
               <div className="neo-card-static text-center">
                 <Loader2 className="h-10 w-10 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-                <h3 className="text-xl">Scanning chain for inheritances...</h3>
+                <h3 className="text-xl">{t("claim.scanning")}</h3>
               </div>
             )}
 
@@ -293,9 +295,9 @@ const ClaimPageInner: React.FC<{
               <div className="neo-card-static bg-accent-yellow/20 flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-bold">Auto-fetch unavailable</p>
+                  <p className="font-bold">{t("claim.autoFetchUnavailable")}</p>
                   <p className="text-sm font-medium text-muted-foreground">
-                    RPC rejected the on-chain scan. Use manual lookup below.
+                    {t("claim.autoFetchDesc")}
                   </p>
                 </div>
               </div>
@@ -304,14 +306,14 @@ const ClaimPageInner: React.FC<{
             {searchDone && !searching && inheritances.length === 0 && (
               <div className="neo-card-static text-center">
                 <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl mb-2">No Estates Found</h3>
+                <h3 className="text-xl mb-2">{t("claim.noEstates")}</h3>
                 <p className="text-muted-foreground font-medium mb-4">
                   {autoFetchFailed
-                    ? "Look up an estate by the vault owner's Solana address."
-                    : "No estates name your wallet as heir. Try manual lookup if you expect one."}
+                    ? t("claim.noEstatesDesc1")
+                    : t("claim.noEstatesDesc2")}
                 </p>
                 <Button variant="outline" onClick={() => setShowManual(true)}>
-                  Manual lookup
+                  {t("claim.manualLookup")}
                 </Button>
               </div>
             )}
@@ -335,13 +337,13 @@ const ClaimPageInner: React.FC<{
                         <div className="flex items-center justify-between flex-wrap gap-4">
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                              Owner
+                              {t("claim.owner")}
                             </p>
                             <p className="font-mono text-sm font-bold break-all">{inh.authority}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                              Status
+                              {t("claim.status")}
                             </p>
                             <p className="text-2xl font-bold uppercase">{inh.vaultState}</p>
                           </div>
@@ -350,7 +352,7 @@ const ClaimPageInner: React.FC<{
 
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">Label</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase">{t("claim.label")}</p>
                           <p className="text-lg font-bold">{inh.label}</p>
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
@@ -363,7 +365,7 @@ const ClaimPageInner: React.FC<{
                           </div>
                         </div>
                         <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">Tokens</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase">{t("claim.tokens")}</p>
                           <p className="text-lg font-bold">{inh.vaultTokens.length}</p>
                         </div>
                       </div>
@@ -371,7 +373,7 @@ const ClaimPageInner: React.FC<{
                       {inh.vaultTokens.length > 0 && (
                         <div className="space-y-2">
                           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                            Token Balances
+                            {t("claim.tokenBalances")}
                           </p>
                           {inh.vaultTokens.map((vt) => {
                             const meta = tokenMeta.get(vt.mint);
@@ -413,14 +415,14 @@ const ClaimPageInner: React.FC<{
                         {txId ? (
                           <div className="text-center">
                             <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                            <p className="font-bold mb-2">Claim submitted</p>
+                            <p className="font-bold mb-2">{t("claim.claimSubmitted")}</p>
                             <a
                               href={getSolanaExplorerTxUrl(txId)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
                             >
-                              View on Explorer <ExternalLink className="h-4 w-4" />
+                              {t("common.viewOnExplorer")} <ExternalLink className="h-4 w-4" />
                             </a>
                           </div>
                         ) : (
@@ -432,13 +434,13 @@ const ClaimPageInner: React.FC<{
                             disabled={!canClaim || isClaiming}
                           >
                             {isClaiming ? (
-                              <><Loader2 className="h-5 w-5 animate-spin" /> Claiming...</>
+                              <><Loader2 className="h-5 w-5 animate-spin" /> {t("claim.claiming")}</>
                             ) : nothingToClaim ? (
-                              <><CheckCircle className="h-5 w-5" /> Nothing to claim</>
+                              <><CheckCircle className="h-5 w-5" /> {t("claim.nothingToClaim")}</>
                             ) : inh.vaultState !== "claimable" ? (
-                              <>Not Yet Claimable ({inh.vaultState})</>
+                              <>{t("claim.notYetClaimable")} ({inh.vaultState})</>
                             ) : (
-                              <>Claim Inheritance</>
+                              <>{t("claim.claimInheritance")}</>
                             )}
                           </Button>
                         )}
@@ -454,7 +456,7 @@ const ClaimPageInner: React.FC<{
                 onClick={() => setShowManual(!showManual)}
                 className="flex items-center justify-between w-full font-semibold uppercase tracking-widest text-sm text-muted-foreground"
               >
-                <span>Look up another owner</span>
+                <span>{t("claim.lookUpAnother")}</span>
                 <span>{showManual ? "−" : "+"}</span>
               </button>
               {showManual && (
@@ -466,13 +468,13 @@ const ClaimPageInner: React.FC<{
                       onChange={(e) => setManualAddress(e.target.value)}
                       maxLength={128}
                       className="neo-input flex-1 font-mono text-sm focus:bg-accent-orange/20"
-                      placeholder="Enter vault owner Solana address..."
+                      placeholder={t("claim.ownerPlaceholder")}
                     />
                     <Button variant="orange" onClick={handleManualLookup} disabled={manualLoading || !manualAddress.trim()}>
                       {manualLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
-                        <><Search className="h-5 w-5" /> Lookup</>
+                        <><Search className="h-5 w-5" /> {t("claim.lookup")}</>
                       )}
                     </Button>
                   </div>

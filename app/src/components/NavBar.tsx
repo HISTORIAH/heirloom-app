@@ -3,12 +3,14 @@ import { useState, useRef, useEffect } from "react";
 import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
+import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import Logo from "@/components/Logo";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { SOL_LABEL, USDC_LABEL } from "@/lib/constants";
 
 const NavBar = () => {
+  const { t } = useTranslation("app");
   const [open, setOpen] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -46,21 +48,21 @@ const NavBar = () => {
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
             >
               <LayoutDashboard className="h-5 w-5" />
-              Dashboard
+              {t("nav.dashboard")}
             </button>
             <button
               onClick={() => navigate("/claim")}
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
             >
               <Gift className="h-5 w-5" />
-              Claim Inheritance
+              {t("nav.claimInheritance")}
             </button>
             <button
               onClick={() => navigate("/heartbeat")}
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide hover:bg-secondary rounded-lg px-4 py-2 transition-colors"
             >
               <Heart className="h-5 w-5" />
-              Heartbeat
+              {t("nav.heartbeat")}
             </button>
             {isConnected ? (
                 <div className="relative" ref={dropdownRef}>
@@ -95,9 +97,9 @@ const NavBar = () => {
                         className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
                       >
                         {copied ? (
-                          <><Check className="h-4 w-4" /> Copied</>
+                          <><Check className="h-4 w-4" /> {t("nav.copied")}</>
                         ) : (
-                          <><Copy className="h-4 w-4" /> Copy address</>
+                          <><Copy className="h-4 w-4" /> {t("nav.copyAddress")}</>
                         )}
                       </button>
                       <button
@@ -109,7 +111,7 @@ const NavBar = () => {
                         className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
                       >
                         <RefreshCw className="h-4 w-4" />
-                        Change wallet
+                        {t("nav.changeWallet")}
                       </button>
                       <div className="border-t-2 border-foreground" />
                       <button
@@ -120,7 +122,7 @@ const NavBar = () => {
                         className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
                       >
                         <LogOut className="h-4 w-4" />
-                        Disconnect wallet
+                        {t("nav.disconnectWallet")}
                       </button>
                     </div>
                   )}
@@ -132,15 +134,22 @@ const NavBar = () => {
                 className="!shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 active:!translate-x-0 active:!translate-y-0 hover:brightness-95"
                 onClick={() => setWalletDialogOpen(true)}
               >
-                Connect Wallet
+                {t("nav.connectWallet")}
               </Button>
             )}
+            <LanguageSwitcher
+              className="flex items-center gap-1.5 border-[3px] border-foreground rounded-lg px-2 py-1.5 bg-background font-bold text-xs uppercase transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              menuClassName="absolute right-0 top-full mt-2 w-40 border-4 border-foreground rounded-xl bg-background p-2 grid grid-cols-3 gap-1 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50"
+              itemClassName="flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-bold uppercase hover:bg-secondary transition-colors"
+              activeItemClassName="bg-accent-yellow"
+              chevronClassName="h-3.5 w-3.5"
+            />
           </div>
 
           <button
             className="md:hidden neo-border rounded-lg p-2 transition-all duration-150 active:translate-x-[2px] active:translate-y-[2px]"
             onClick={() => setOpen(!open)}
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
           >
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -182,7 +191,7 @@ const NavBar = () => {
                 navigate("/dashboard");
               }}
             >
-              Dashboard
+              {t("nav.dashboard")}
             </Button>
             <Button
               variant="orange"
@@ -193,7 +202,7 @@ const NavBar = () => {
                 navigate("/claim");
               }}
             >
-              Claim Inheritance
+              {t("nav.claimInheritance")}
             </Button>
             <Button
               variant="default"
@@ -204,7 +213,7 @@ const NavBar = () => {
                 navigate("/heartbeat");
               }}
             >
-              Heartbeat
+              {t("nav.heartbeat")}
             </Button>
             {isConnected ? (
               <Button
@@ -216,7 +225,7 @@ const NavBar = () => {
                   void disconnectWallet();
                 }}
               >
-                Disconnect
+                {t("nav.disconnect")}
               </Button>
             ) : (
               <Button
@@ -228,7 +237,7 @@ const NavBar = () => {
                   setWalletDialogOpen(true);
                 }}
               >
-                Connect Wallet
+                {t("nav.connectWallet")}
               </Button>
             )}
           </div>

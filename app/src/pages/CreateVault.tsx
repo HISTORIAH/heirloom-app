@@ -27,6 +27,7 @@ import { FEATURE_NOTIFICATIONS_UI } from "@/config";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import Stepper from "@/components/create-vault/Stepper";
 import SummaryColumn from "@/components/create-vault/SummaryColumn";
+import { useTranslation } from "@heirloom/i18n";
 
 const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
 // Each step owns an accent. It colors the card's shadow, and every button
@@ -50,6 +51,7 @@ const CreateVaultPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
 
   const [step, setStep] = useState<StepIndex>(0);
 
@@ -124,8 +126,8 @@ const CreateVaultPage = () => {
 
       setSubmitProgress(
         tokenDeposits.length > 0
-          ? `Creating estate + registering ${tokenDeposits.length} token(s)...`
-          : "Creating estate..."
+          ? t("createVault.progressTokens", { count: tokenDeposits.length })
+          : t("createVault.progressEstate")
       );
 
       const createTxId = await createEstateOnChain({
@@ -146,19 +148,20 @@ const CreateVaultPage = () => {
         has_heartbeat_signer: Boolean(hbSigner.trim()),
         token_count: tokenDeposits.length,
       });
-      toast({ title: "Estate Created!", description: "Your heartbeat estate is live on-chain." });
+      toast({ title: t("createVault.toastCreatedTitle"), description: t("createVault.toastCreatedDesc") });
     } catch (err: unknown) {
       setSubmitState("error");
       track("vault_creation_failed", { stage: "transaction" });
       toast({
-        title: "Transaction Failed",
-        description: errMsg(err, "Something went wrong"),
+        title: t("createVault.toastFailedTitle"),
+        description: errMsg(err, t("createVault.toastFailedDesc")),
         variant: "destructive",
       });
     }
   };
 
   const isSubmitting = submitState === "creating" || submitState === "complete";
+  const steps = [t("createVault.stepHeirs"), t("createVault.stepAssets"), t("createVault.stepHeartbeat"), t("createVault.stepReview")];
   const accentVar = STEP_ACCENT_VARS[step];
   const accentColor = `hsl(var(${accentVar}))`;
   const totalDays = Math.round(heartbeatSeconds / SECONDS_PER_DAY) + Math.round(graceSeconds / SECONDS_PER_DAY);
@@ -171,22 +174,22 @@ const CreateVaultPage = () => {
       <>
         <div className="bg-background min-h-screen">
           <PageHeader
-            title="Create Estate"
+            title={t("createVault.title")}
             onConnectWallet={() => setWalletDialogOpen(true)}
           />
 
           <main className="max-w-[1180px] mx-auto px-6 py-12">
-            <Stepper steps={STEPS} currentStep={4} completedSteps={4} onStepClick={() => {}} accentColor="hsl(var(--accent-yellow))" />
+            <Stepper steps={steps} currentStep={4} completedSteps={4} onStepClick={() => {}} accentColor="hsl(var(--accent-yellow))" />
 
             <div className="mt-8">
               <div className="bg-card border-4 border-foreground rounded-[20px] p-12 text-center neo-shadow-yellow neo-slide-up">
                 <div className="w-24 h-24 rounded-full bg-accent-yellow border-4 border-foreground mx-auto mb-8 flex items-center justify-center neo-shadow-md">
                   <CheckCircle className="h-12 w-12" strokeWidth={2.5} />
                 </div>
-                <h2 className="text-4xl font-display mb-4">Estate created.</h2>
+                <h2 className="text-4xl font-display mb-4">{t("createVault.successTitle")}</h2>
                 <p className="text-muted-foreground max-w-lg mx-auto mb-10 leading-relaxed">
-                  <strong>{label || "Your heir"}</strong> ({truncateAddress(heirAddress)}) inherits everything if you go quiet for{" "}
-                  <strong>{totalDays} days</strong>. First check-in due{" "}
+                  <strong>{label || t("createVault.yourHeir")}</strong> ({truncateAddress(heirAddress)}) {t("createVault.successBody1")}{" "}
+                  <strong>{totalDays} {t("createVault.successBody2")}</strong>. {t("createVault.successBody3")}{" "}
                   <strong>
                     {new Date(Date.now() + intervalDays * 864e5).toLocaleDateString("en-US", {
                       month: "short",
@@ -201,7 +204,7 @@ const CreateVaultPage = () => {
                     onClick={() => navigate("/dashboard")}
                     className="inline-flex items-center gap-2 h-12 px-8 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-accent-yellow text-foreground transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))]"
                   >
-                    GO TO DASHBOARD
+                    {t("createVault.goToDashboard")}
                   </button>
                   <button
                     onClick={() => {
@@ -221,13 +224,13 @@ const CreateVaultPage = () => {
                     }}
                     className="inline-flex items-center gap-2 h-12 px-8 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-background text-muted-foreground transition-all duration-150 hover:bg-secondary"
                   >
-                    CREATE ANOTHER
+                    {t("createVault.createAnother")}
                   </button>
                 </div>
                 {FEATURE_NOTIFICATIONS_UI && (
                   <div className="mt-6 pt-6 border-t-2 border-dashed border-foreground/10 flex items-center justify-center gap-2 text-sm font-semibold">
                     <Bell className="h-4 w-4 text-accent-purple" strokeWidth={2} />
-                    Set up reminders anytime from the dashboard.
+                    {t("createVault.remindersNote")}
                   </div>
                 )}
               </div>
@@ -243,14 +246,14 @@ const CreateVaultPage = () => {
     <>
       <div className="bg-background min-h-screen" aria-hidden={isSubmitting} style={isSubmitting ? { pointerEvents: "none" } : undefined}>
         <PageHeader
-          title="Create Estate"
+          title={t("createVault.title")}
           onConnectWallet={() => setWalletDialogOpen(true)}
         />
 
         <main className="max-w-[1180px] mx-auto px-6 pt-12 pb-24">
           {/* Stepper */}
           <Stepper
-            steps={STEPS}
+            steps={steps}
             currentStep={step}
             completedSteps={step}
             onStepClick={(idx) => {
@@ -362,7 +365,7 @@ const CreateVaultPage = () => {
                 disabled={step === 0 || isSubmitting}
                 className="inline-flex items-center gap-2 h-11 px-6 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground bg-background text-muted-foreground transition-all duration-150 hover:bg-secondary disabled:pointer-events-none disabled:opacity-50"
               >
-                <ArrowLeft className="h-4 w-4" strokeWidth={2.5} /> BACK
+                <ArrowLeft className="h-4 w-4" strokeWidth={2.5} /> {t("createVault.back")}
               </button>
 
               {step < 3 ? (
@@ -371,7 +374,7 @@ const CreateVaultPage = () => {
                   disabled={!canProceed() || isSubmitting}
                   className="inline-flex items-center gap-2 h-11 px-7 rounded-xl font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 disabled:pointer-events-none disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:border-4 disabled:border-foreground bg-[hsl(var(--step-accent))] text-foreground shadow-[5px_5px_0_0_hsl(var(--foreground))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_hsl(var(--foreground))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
                 >
-                  {step === 1 && !hasAnyDeposit ? "SKIP FOR NOW →" : "NEXT"}
+                  {step === 1 && !hasAnyDeposit ? t("createVault.skipForNow") : t("createVault.next")}
                   {step !== 1 && <ArrowRight className="h-4 w-4" strokeWidth={2.5} />}
                 </button>
               ) : (
@@ -383,10 +386,10 @@ const CreateVaultPage = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
-                      Creating…
+                      {t("createVault.creating")}
                     </>
                   ) : (
-                    "CREATE ESTATE"
+                    t("createVault.createEstate")
                   )}
                 </button>
               )}

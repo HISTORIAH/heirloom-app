@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   estate: EstateData;
@@ -15,6 +16,7 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
   const { revokeEstateOnChain } = useVault();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
 
@@ -25,11 +27,11 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       onTx(tx);
       setWithdrawConfirmOpen(false);
       track("emergency_withdraw_succeeded");
-      toast({ title: "Vault Closed", description: "Assets returned to your wallet." });
+      toast({ title: t("dashboard.manage.vaultClosedTitle"), description: t("dashboard.manage.vaultClosedDesc") });
     } catch (err: unknown) {
       track("emergency_withdraw_failed", { stage: "transaction" });
       toast({
-        title: "Withdraw Failed",
+        title: t("dashboard.manage.withdrawFailedTitle"),
         description: errMsg(err),
         variant: "destructive",
       });
@@ -46,18 +48,18 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
         className="w-full neo-border rounded-xl h-12 bg-accent-red text-primary-foreground font-bold text-sm uppercase tracking-wide shadow-[4px_4px_0_0_hsl(var(--foreground))] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_hsl(var(--foreground))] disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {withdrawing ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Withdrawing...</>
+          <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.withdrawing")}</>
         ) : (
-          <><AlertTriangle className="h-4 w-4" /> Close Estate & Withdraw</>
+          <><AlertTriangle className="h-4 w-4" /> {t("dashboard.manage.closeEstate")}</>
         )}
       </button>
 
       <ConfirmDialog
         open={withdrawConfirmOpen}
-        title="Close Estate & Withdraw?"
-        description="This returns all SOL and tokens to your wallet and permanently cancels the vault. Heir will no longer be able to claim."
-        confirmLabel="Withdraw & Cancel"
-        cancelLabel="Keep Estate"
+        title={t("dashboard.manage.closeEstateConfirmTitle")}
+        description={t("dashboard.manage.closeEstateConfirmDesc")}
+        confirmLabel={t("dashboard.manage.withdrawCancelLabel")}
+        cancelLabel={t("dashboard.manage.keepEstate")}
         variant="destructive"
         loading={withdrawing}
         onConfirm={performEmergencyWithdraw}

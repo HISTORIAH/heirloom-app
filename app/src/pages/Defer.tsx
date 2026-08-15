@@ -25,6 +25,7 @@ import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useTranslation } from "@heirloom/i18n";
 
 const stateColors: Record<string, string> = {
   active: "bg-accent-lime/20",
@@ -41,6 +42,7 @@ const DeferPageInner: React.FC<{
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
 
   const client: HeirloomClient = { rpc, rpcSubscriptions };
 
@@ -64,13 +66,13 @@ const DeferPageInner: React.FC<{
     setDeferTxId(null);
     const result = await lookupEstateSnapshot(client, a, h);
     if (!result) {
-      setLookupError("Estate not found for this authority + heir pair.");
+      setLookupError(t("defer.notFoundError"));
     } else if (!result.delegate) {
-      setLookupError("Estate has no delegate assigned. Cannot defer.");
+      setLookupError(t("defer.noDelegateError"));
       setEstate(result);
     } else if (delegateAddress && result.delegate !== delegateAddress.toString()) {
       setLookupError(
-        `You are not the delegate for this estate. Delegate is ${result.delegate.slice(0, 8)}...`,
+        t("defer.wrongDelegateError", { delegate: result.delegate.slice(0, 8) }),
       );
       setEstate(result);
     } else {
@@ -87,8 +89,8 @@ const DeferPageInner: React.FC<{
     }
     if (estate.isDeferred) {
       toast({
-        title: "Already deferred",
-        description: "Pause has already been used on this estate.",
+        title: t("defer.toastAlreadyTitle"),
+        description: t("defer.toastAlreadyDesc"),
         variant: "destructive",
       });
       return;
@@ -107,14 +109,14 @@ const DeferPageInner: React.FC<{
       setDeferTxId(tx);
       setDeferConfirmOpen(false);
       track("defer_succeeded");
-      toast({ title: "Defer submitted", description: "Claim window extended." });
+      toast({ title: t("defer.toastDeferTitle"), description: t("defer.toastDeferDesc") });
       const updated = await lookupEstateSnapshot(client, estate.authority, estate.heir);
       if (updated) setEstate(updated);
     } catch (err: unknown) {
       track("defer_failed", { stage: "transaction" });
       toast({
-        title: "Defer failed",
-        description: errMsg(err, "Rejected"),
+        title: t("defer.toastFailTitle"),
+        description: errMsg(err, t("defer.rejected")),
         variant: "destructive",
       });
     } finally {
@@ -135,11 +137,11 @@ const DeferPageInner: React.FC<{
         <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
           <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-semibold hover:underline group">
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            Home
+            {t("common.home")}
           </button>
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-bold">Guardian</span>
+            <span className="text-2xl font-bold">{t("defer.title")}</span>
           </div>
           {isConnected ? (
             <button
@@ -147,7 +149,7 @@ const DeferPageInner: React.FC<{
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
             >
               <LogOut className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Disconnect</span>
+              <span className="hidden sm:inline">{t("common.disconnect")}</span>
             </button>
           ) : (
             <button
@@ -155,7 +157,7 @@ const DeferPageInner: React.FC<{
               className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
             >
               <Wallet className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">Connect Wallet</span>
+              <span className="hidden sm:inline">{t("common.connectWallet")}</span>
             </button>
           )}
         </div>
@@ -163,20 +165,20 @@ const DeferPageInner: React.FC<{
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
             <div>
-              <span className="neo-badge bg-accent-purple mb-4 inline-block text-white">Guardian Portal</span>
+              <span className="neo-badge bg-accent-purple mb-4 inline-block text-white">{t("defer.guardianPortal")}</span>
               <h2 className="text-4xl md:text-5xl leading-[0.9]">
-                Extend the{" "}
-                <span className="bg-accent-purple text-white px-2 inline-block rotate-[-1deg]">claim window.</span>
+                {t("defer.headline1")}{" "}
+                <span className="bg-accent-purple text-white px-2 inline-block rotate-[-1deg]">{t("defer.headline2")}</span>
               </h2>
               <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                As the assigned delegate, you can defer the claim deadline once by the estate's pause duration.
+                {t("defer.description")}
               </p>
             </div>
 
             <div className="neo-card-static space-y-4">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
-                  Authority (Owner) Address
+                  {t("defer.authorityLabel")}
                 </label>
                 <input
                   type="text"
@@ -184,12 +186,12 @@ const DeferPageInner: React.FC<{
                   onChange={(e) => setAuthorityInput(e.target.value)}
                   maxLength={128}
                   className="neo-input w-full font-mono text-sm focus:bg-accent-purple/10"
-                  placeholder="Vault owner Solana address..."
+                  placeholder={t("defer.authorityPlaceholder")}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
-                  Heir Address
+                  {t("defer.heirLabel")}
                 </label>
                 <input
                   type="text"
@@ -197,7 +199,7 @@ const DeferPageInner: React.FC<{
                   onChange={(e) => setHeirInput(e.target.value)}
                   maxLength={128}
                   className="neo-input w-full font-mono text-sm focus:bg-accent-purple/10"
-                  placeholder="Heir Solana address..."
+                  placeholder={t("defer.heirPlaceholder")}
                 />
               </div>
               <Button
@@ -208,9 +210,9 @@ const DeferPageInner: React.FC<{
                 className="w-full"
               >
                 {looking ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Looking up...</>
+                  <><Loader2 className="h-5 w-5 animate-spin" /> {t("defer.lookingUp")}</>
                 ) : (
-                  <><Search className="h-5 w-5" /> Look Up Estate</>
+                  <><Search className="h-5 w-5" /> {t("defer.lookUpEstate")}</>
                 )}
               </Button>
               {lookupError && (
@@ -227,13 +229,13 @@ const DeferPageInner: React.FC<{
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        Label
+                        {t("defer.label")}
                       </p>
                       <p className="text-2xl font-bold truncate">{estate.label}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        State
+                        {t("defer.state")}
                       </p>
                       <p className="text-2xl font-bold uppercase">{estate.vaultState}</p>
                     </div>
@@ -251,24 +253,24 @@ const DeferPageInner: React.FC<{
                     </div>
                   </div>
                   <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">Pause Duration</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">{t("defer.pauseDuration")}</p>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       <p className="text-lg font-bold">{formatDuration(estate.pauseDuration)}</p>
                     </div>
                   </div>
                   <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">Pause Used</p>
-                    <p className="text-lg font-bold">{estate.isDeferred ? "Yes" : "No"}</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">{t("defer.pauseUsed")}</p>
+                    <p className="text-lg font-bold">{estate.isDeferred ? t("common.yes") : t("common.no")}</p>
                   </div>
                 </div>
 
                 <div className="neo-border rounded-lg p-3 bg-accent-purple/10">
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Delegate
+                    {t("defer.delegate")}
                   </p>
                   <p className="font-mono text-xs break-all">
-                    {estate.delegate ?? "None"}
+                    {estate.delegate ?? t("common.none")}
                   </p>
                 </div>
 
@@ -276,14 +278,14 @@ const DeferPageInner: React.FC<{
                   {deferTxId ? (
                     <div className="text-center">
                       <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                      <p className="font-bold mb-2">Defer submitted</p>
+                      <p className="font-bold mb-2">{t("defer.deferSubmitted")}</p>
                       <a
                         href={getSolanaExplorerTxUrl(deferTxId)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
                       >
-                        View on Explorer <ExternalLink className="h-4 w-4" />
+                        {t("common.viewOnExplorer")} <ExternalLink className="h-4 w-4" />
                       </a>
                     </div>
                   ) : !isConnected ? (
@@ -293,7 +295,7 @@ const DeferPageInner: React.FC<{
                       className="w-full"
                       onClick={() => setWalletDialogOpen(true)}
                     >
-                      <Shield className="h-5 w-5" /> Connect Wallet to Defer
+                      <Shield className="h-5 w-5" /> {t("defer.connectToDefer")}
                     </Button>
                   ) : (
                     <Button
@@ -304,15 +306,15 @@ const DeferPageInner: React.FC<{
                       disabled={!canDefer || deferring}
                     >
                       {deferring ? (
-                        <><Loader2 className="h-5 w-5 animate-spin" /> Deferring...</>
+                        <><Loader2 className="h-5 w-5 animate-spin" /> {t("defer.deferring")}</>
                       ) : estate.isDeferred ? (
-                        <><CheckCircle className="h-5 w-5" /> Already Deferred</>
+                        <><CheckCircle className="h-5 w-5" /> {t("defer.alreadyDeferred")}</>
                       ) : estate.vaultState === "distributed" ? (
-                        <>Vault Distributed</>
+                        <>{t("defer.vaultDistributed")}</>
                       ) : estate.delegate !== delegateAddress?.toString() ? (
-                        <>Not the Delegate</>
+                        <>{t("defer.notDelegate")}</>
                       ) : (
-                        <><Shield className="h-5 w-5" /> Defer Claim Window</>
+                        <><Shield className="h-5 w-5" /> {t("defer.deferClaimWindow")}</>
                       )}
                     </Button>
                   )}
@@ -323,14 +325,14 @@ const DeferPageInner: React.FC<{
 
       <ConfirmDialog
         open={deferConfirmOpen}
-        title="Extend Claim Window?"
+        title={t("defer.confirmTitle")}
         description={
           estate
-            ? `Extend the claim window by ${formatDuration(estate.pauseDuration)}. This guardian pause can only be used once per estate.`
+            ? t("defer.confirmDesc", { duration: formatDuration(estate.pauseDuration) })
             : undefined
         }
-        confirmLabel="Defer"
-        cancelLabel="Cancel"
+        confirmLabel={t("defer.confirmLabel")}
+        cancelLabel={t("defer.cancelLabel")}
         variant="default"
         loading={deferring}
         icon={<Shield className="h-6 w-6" strokeWidth={2.5} />}

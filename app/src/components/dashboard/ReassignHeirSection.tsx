@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
 import { UserPlus, X } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   estate: EstateData;
@@ -16,6 +17,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
   const { updateHeirOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
   const [open, setOpen] = useState(false);
   const [newHeirAddress, setNewHeirAddress] = useState("");
   const [updatingHeir, setUpdatingHeir] = useState(false);
@@ -29,8 +31,8 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
     if (!trimmed) return;
     if (trimmed === estate.heir) {
       toast({
-        title: "Same heir",
-        description: "New heir address matches current heir.",
+        title: t("dashboard.manage.sameHeirTitle"),
+        description: t("dashboard.manage.sameHeirDesc"),
         variant: "destructive",
       });
       return;
@@ -49,12 +51,12 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       setOpen(false);
       setReassignConfirm({ open: false, next: "" });
       track("heir_reassigned");
-      toast({ title: "Heir Updated", description: "Estate reassigned to new heir." });
+      toast({ title: t("dashboard.manage.heirUpdatedTitle"), description: t("dashboard.manage.heirUpdatedDesc") });
       await fetchEstates();
     } catch (err: unknown) {
       track("heir_reassign_failed", { stage: "transaction" });
       toast({
-        title: "Update Failed",
+        title: t("dashboard.manage.updateFailedTitle"),
         description: errMsg(err),
         variant: "destructive",
       });
@@ -69,7 +71,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
         onClick={() => setOpen(true)}
         className="neo-border rounded-xl px-4 py-3 bg-accent-pink text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
       >
-        Change Heir
+        {t("dashboard.manage.changeHeir")}
       </button>
 
       {open && (
@@ -88,9 +90,9 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
                   <UserPlus className="h-6 w-6" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl leading-tight text-foreground">Change Heir</h3>
+                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.changeHeir")}</h3>
                   <p className="text-sm font-medium text-muted-foreground mt-1">
-                    Transfer estate to a different heir address.
+                    {t("dashboard.manage.changeHeirDesc")}
                   </p>
                 </div>
               </div>
@@ -110,16 +112,16 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
                 onChange={(e) => setNewHeirAddress(e.target.value)}
                 maxLength={128}
                 className="neo-input w-full font-mono text-sm focus:bg-accent-pink/20"
-                placeholder="New heir Solana address..."
+                placeholder={t("dashboard.manage.newHeirPlaceholder")}
               />
               <p className="text-xs font-medium text-muted-foreground">
-                Warning: this moves the estate PDA + vault assets to the new heir. Old heir can no longer claim.
+                {t("dashboard.manage.changeHeirWarning")}
               </p>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
               <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                Cancel
+                {t("dashboard.manage.cancel")}
               </Button>
               <Button
                 variant="pink"
@@ -128,7 +130,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
                 disabled={!newHeirAddress.trim()}
                 className="sm:w-auto w-full"
               >
-                <UserPlus className="h-4 w-4" /> Change Heir
+                <UserPlus className="h-4 w-4" /> {t("dashboard.manage.changeHeir")}
               </Button>
             </div>
           </div>
@@ -137,10 +139,10 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
 
       <ConfirmDialog
         open={reassignConfirm.open}
-        title="Change Heir?"
-        description="The estate PDA and vault assets move to the new heir. The current heir can no longer claim."
-        confirmLabel="Change Heir"
-        cancelLabel="Cancel"
+        title={t("dashboard.manage.changeHeirConfirmTitle")}
+        description={t("dashboard.manage.changeHeirConfirmDesc")}
+        confirmLabel={t("dashboard.manage.changeHeir")}
+        cancelLabel={t("dashboard.manage.cancel")}
         variant="default"
         loading={updatingHeir}
         icon={<UserPlus className="h-6 w-6" strokeWidth={2.5} />}
@@ -152,11 +154,11 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       >
         <div className="space-y-2 text-sm">
           <div className="neo-border rounded-lg p-3 bg-secondary">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">From</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.manage.from")}</p>
             <p className="font-mono text-xs break-all">{estate.heir}</p>
           </div>
           <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">To</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.manage.to")}</p>
             <p className="font-mono text-xs break-all">{reassignConfirm.next}</p>
           </div>
         </div>

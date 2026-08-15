@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check } from "lucide-react";
+import { useTranslation } from "@heirloom/i18n";
 
 interface PageHeaderProps {
   title: string;
@@ -14,10 +15,11 @@ interface PageHeaderProps {
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   backTo = "/",
-  backLabel = "Home",
+  backLabel,
   onDisconnect,
   onConnectWallet,
 }) => {
+  const { t } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
   const navigate = useNavigate();
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
@@ -55,7 +57,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             className="h-5 w-5 transition-transform group-hover:-translate-x-1"
             strokeWidth={2.5}
           />
-          {backLabel}
+          {backLabel ?? t("common.home")}
         </button>
         <span className="text-2xl font-bold font-display">{title}</span>
         {isConnected ? (
@@ -92,11 +94,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 >
                   {copied ? (
                     <>
-                      <Check className="h-4 w-4" /> Copied
+                      <Check className="h-4 w-4" /> {t("common.copied")}
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4" /> Copy address
+                      <Copy className="h-4 w-4" /> {t("common.copyAddress")}
                     </>
                   )}
                 </button>
@@ -105,7 +107,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                   onClick={handleDisconnect}
                   className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
                 >
-                  <LogOut className="h-4 w-4" /> Disconnect wallet
+                  <LogOut className="h-4 w-4" /> {t("common.disconnectWallet")}
                 </button>
               </div>
             )}
@@ -116,7 +118,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
           >
             <Wallet className="h-4 w-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Connect Wallet</span>
+            <span className="hidden sm:inline">{t("common.connectWallet")}</span>
           </button>
         )}
       </div>

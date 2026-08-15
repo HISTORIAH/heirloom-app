@@ -1,20 +1,7 @@
 import { truncateAddress, formatUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import type { TokenSelection } from "@/pages/CreateVault";
-
-const TIPS = [
-  "A guardian can pause the heartbeat once. A safety net against false triggers. Pick someone you trust not to abuse it.",
-  "Hide tiny balances if it's not worth the transaction fee, it's not worth inheriting.",
-  "The interval is your rhythm; the grace period is your safety net. 90 + 30 means you check in 4× a year and get a month of slack.",
-  "The heir address is the one thing you can't fat-finger later. Read it out loud if you have to.",
-];
-
-const TIP_TITLES = [
-  "Who is a guardian?",
-  "Dust stays out.",
-  "Interval vs grace.",
-  "Last look.",
-];
+import { useTranslation } from "@heirloom/i18n";
 
 interface SummaryColumnProps {
   step: number;
@@ -43,13 +30,27 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
   delegate,
   hbSigner,
 }) => {
-  const displayLabel = label.trim() || "heir";
+  const { t } = useTranslation("app");
+  const displayLabel = label.trim() || t("createVault.wizard.heir");
   const selectedEntries = Object.entries(tokenSelections).filter(([, v]) => v.amount > 0);
+
+  const TIPS = [
+    t("createVault.wizard.tip1"),
+    t("createVault.wizard.tip2"),
+    t("createVault.wizard.tip3"),
+    t("createVault.wizard.tip4"),
+  ];
+  const TIP_TITLES = [
+    t("createVault.wizard.tip1Title"),
+    t("createVault.wizard.tip2Title"),
+    t("createVault.wizard.tip3Title"),
+    t("createVault.wizard.tip4Title"),
+  ];
 
   return (
     <div>
       <div className="text-xs font-bold uppercase tracking-[3px] text-muted-foreground mb-5">
-        ESTATE SO FAR
+        {t("createVault.wizard.estateSoFar")}
       </div>
 
       {/* Heir preview */}
@@ -61,19 +62,19 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
           <div>
             <div className="font-bold text-base">{displayLabel}</div>
             <div className="text-xs text-muted-foreground mt-0.5">
-              {heirAddress ? truncateAddress(heirAddress, 4) : "no address yet"}
+              {heirAddress ? truncateAddress(heirAddress, 4) : t("createVault.wizard.noAddressYet")}
             </div>
           </div>
         </div>
-        <div className="text-[11px] text-muted-foreground">100% allocation · single heir</div>
+        <div className="text-[11px] text-muted-foreground">{t("createVault.wizard.allocation100Single")}</div>
       </div>
 
       {/* Assets */}
       <div className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground mt-6 mb-2.5">
-        ASSETS
+        {t("createVault.wizard.assets")}
       </div>
       {solAmount <= 0 && selectedEntries.length === 0 ? (
-        <div className="text-sm text-gray-400">None yet · picked in step 2</div>
+        <div className="text-sm text-gray-400">{t("createVault.wizard.noneYet")}</div>
       ) : (
         <div className="space-y-2.5">
           {solAmount > 0 && (
@@ -101,37 +102,37 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
 
       {/* Rules */}
       <div className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground mt-6 mb-2.5">
-        RULES
+        {t("createVault.wizard.rules")}
       </div>
       <div className="space-y-0">
         <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">Interval</span>
+          <span className="text-muted-foreground">{t("createVault.wizard.interval")}</span>
           <span className={`font-bold ${step >= 2 ? "" : "text-gray-400 font-normal"}`}>
-            {step >= 2 ? `${intervalDays} days` : "step 3"}
+            {step >= 2 ? `${intervalDays} ${t("createVault.wizard.daysShort")}` : t("createVault.wizard.step3Placeholder")}
           </span>
         </div>
         <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">Grace</span>
+          <span className="text-muted-foreground">{t("createVault.wizard.grace")}</span>
           <span className={`font-bold ${step >= 2 ? "" : "text-gray-400 font-normal"}`}>
-            {step >= 2 ? `${graceDays} days` : "step 3"}
+            {step >= 2 ? `${graceDays} ${t("createVault.wizard.daysShort")}` : t("createVault.wizard.step3Placeholder")}
           </span>
         </div>
         {step >= 2 && (
           <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-            <span className="text-muted-foreground">Total deadline</span>
-            <span className="font-bold">{totalDays} days</span>
+            <span className="text-muted-foreground">{t("createVault.wizard.total")}</span>
+            <span className="font-bold">{totalDays} {t("createVault.wizard.daysShort")}</span>
           </div>
         )}
         <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">Guardian</span>
+          <span className="text-muted-foreground">{t("createVault.wizard.guardianShort")}</span>
           <span className={delegate ? "font-bold" : "text-gray-400 font-normal"}>
-            {delegate ? truncateAddress(delegate, 4) : "not set"}
+            {delegate ? truncateAddress(delegate, 4) : t("createVault.wizard.notSet")}
           </span>
         </div>
         <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">Signer</span>
+          <span className="text-muted-foreground">{t("createVault.wizard.signerShort")}</span>
           <span className={hbSigner ? "font-bold" : "text-gray-400 font-normal"}>
-            {hbSigner ? truncateAddress(hbSigner, 4) : "not set"}
+            {hbSigner ? truncateAddress(hbSigner, 4) : t("createVault.wizard.notSet")}
           </span>
         </div>
       </div>

@@ -50,6 +50,7 @@ import {
 import { FEATURE_YIELD_STAKING_UI, FEATURE_NOTIFICATIONS_UI } from "@/config";
 import { cn, formatSol, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { computeEstateState } from "@/services/heirloom";
+import { useTranslation } from "@heirloom/i18n";
 import {
   Heart,
   Users,
@@ -70,28 +71,28 @@ const ESTATE_STRIP_CAP = 5;
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
 
-const statusConfig: Record<UiState, { bg: string; label: string; description: string }> = {
+const statusConfig = (t: (k: string, opts?: Record<string, unknown>) => string): Record<UiState, { bg: string; label: string; description: string }> => ({
   active: {
     bg: "neo-section-lime",
-    label: "Active",
-    description: "Heartbeat timer is running. All good.",
+    label: t("dashboard.statusActive"),
+    description: t("dashboard.statusActiveDesc"),
   },
   grace: {
     bg: "bg-accent-yellow",
-    label: "Grace Period",
-    description: "Heartbeat missed. Send one before the grace period expires!",
+    label: t("dashboard.statusGrace"),
+    description: t("dashboard.statusGraceDesc"),
   },
   claimable: {
     bg: "bg-accent-red",
-    label: "Claimable",
-    description: "Grace period expired. Heirs can now claim their shares.",
+    label: t("dashboard.statusClaimable"),
+    description: t("dashboard.statusClaimableDesc"),
   },
   distributed: {
     bg: "bg-secondary",
-    label: "Distributed",
-    description: "All assets have been distributed to heirs.",
+    label: t("dashboard.statusDistributed"),
+    description: t("dashboard.statusDistributedDesc"),
   },
-};
+});
 
 interface CountdownParts {
   days: number;
@@ -106,14 +107,14 @@ interface TickResult {
   countdown: CountdownParts;
 }
 
-const LABELS: Record<UiState, string> = {
-  distributed: "Vault Distributed",
-  claimable: "Vault Is Claimable",
-  grace: "Time Until Claimable",
-  active: "Next Check-In Due In",
-};
+const LABELS = (t: (k: string, opts?: Record<string, unknown>) => string): Record<UiState, string> => ({
+  distributed: t("dashboard.labelDistributed"),
+  claimable: t("dashboard.labelClaimable"),
+  grace: t("dashboard.labelGrace"),
+  active: t("dashboard.labelActive"),
+});
 
-function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
+function computeTick(estate: EstateData, vaultEmpty: boolean, t: (k: string, opts?: Record<string, unknown>) => string): TickResult {
   const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
     lastHeartbeat: estate.lastHeartbeat,
     heartbeatInterval: estate.heartbeatInterval,
@@ -130,7 +131,7 @@ function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
 
   return {
     state,
-    label: LABELS[state],
+    label: LABELS(t)[state],
     countdown: {
       days: Math.floor(remaining / 86400),
       hours: Math.floor((remaining % 86400) / 3600),
@@ -147,15 +148,15 @@ const STRIP_DOT_COLOR: Record<UiState, string> = {
   distributed: "bg-secondary",
 };
 
-function getEstateStripMeta(estate: EstateData) {
+function getEstateStripMeta(estate: EstateData, t: (k: string, opts?: Record<string, unknown>) => string) {
   const vaultEmpty =
     estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
-  const { state, countdown } = computeTick(estate, vaultEmpty);
+  const { state, countdown } = computeTick(estate, vaultEmpty, t);
   const timeLabel =
-    state === "active" ? `${countdown.days}d left` :
-    state === "grace" ? `Grace · ${countdown.days}d` :
-    state === "claimable" ? "Claimable" :
-    "Distributed";
+    state === "active" ? t("dashboard.timeLeft", { days: countdown.days }) :
+    state === "grace" ? t("dashboard.graceDays", { days: countdown.days }) :
+    state === "claimable" ? t("dashboard.claimable") :
+    t("dashboard.distributed");
   const assetCount = 1 + estate.vaultTokens.length;
   return { state, dotColor: STRIP_DOT_COLOR[state], timeLabel, assetCount };
 }
@@ -171,7 +172,8 @@ const EstatePillButton = ({
   onClick: () => void;
   fullWidth?: boolean;
 }) => {
-  const { dotColor, timeLabel, assetCount } = getEstateStripMeta(estate);
+  const { t } = useTranslation("app");
+  const { dotColor, timeLabel, assetCount } = getEstateStripMeta(estate, t);
   return (
     <button
       onClick={onClick}
@@ -186,7 +188,7 @@ const EstatePillButton = ({
         <span className="truncate">{estate.label}</span>
       </span>
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground truncate w-full">
-        {assetCount} asset{assetCount !== 1 ? "s" : ""} · {timeLabel}
+        {assetCount} {assetCount !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")} · {timeLabel}
       </span>
     </button>
   );
@@ -197,6 +199,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
   const { publicKey, isConnected } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { t } = useTranslation("app");
   const [sendingHeartbeat, setSendingHeartbeat] = useState(false);
   const [lastTxId, setLastTxId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -288,11 +291,11 @@ This does not cost gas and does not authorize any on-chain transaction.`;
       setLastTxId(tx);
       setTopUpOpen(null);
       track("vault_top_up_succeeded", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
-      toast({ title: "Top-up sent", description: "Funds added to the vault." });
+      toast({ title: t("dashboard.toastTopUpTitle"), description: t("dashboard.toastTopUpDesc") });
       await fetchEstates();
     } catch (err: unknown) {
       track("vault_top_up_failed", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
-      toast({ title: "Top-up failed", description: errMsg(err), variant: "destructive" });
+      toast({ title: t("dashboard.toastTopUpFailTitle"), description: errMsg(err), variant: "destructive" });
     } finally {
       setTopUpLoading(false);
     }
@@ -301,14 +304,14 @@ This does not cost gas and does not authorize any on-chain transaction.`;
   const vaultEmpty = estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
   const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
   const { metadata: tokenMeta } = useTokenMetadata(vaultMints);
-  const initial = computeTick(estate, vaultEmpty);
+  const initial = computeTick(estate, vaultEmpty, t);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);
   const [countdownLabel, setCountdownLabel] = useState(initial.label);
 
   useEffect(() => {
     const tick = () => {
-      const r = computeTick(estate, vaultEmpty);
+      const r = computeTick(estate, vaultEmpty, t);
       setCountdown(r.countdown);
       setComputedState(r.state);
       setCountdownLabel(r.label);
@@ -324,11 +327,11 @@ This does not cost gas and does not authorize any on-chain transaction.`;
       const tx = await sendHeartbeatOnChain(estate.heir);
       setLastTxId(tx);
       track("heartbeat_succeeded", { source: "dashboard" });
-      toast({ title: "Heartbeat Sent!", description: "Your vault timer has been reset." });
+      toast({ title: t("dashboard.toastHeartbeatTitle"), description: t("dashboard.toastHeartbeatDesc") });
     } catch (err: unknown) {
       track("heartbeat_failed", { source: "dashboard" });
       toast({
-        title: "Heartbeat Failed",
+        title: t("dashboard.toastHeartbeatFailTitle"),
         description: errMsg(err),
         variant: "destructive",
       });
@@ -381,7 +384,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
     setShowProgressOverlay(false);
     setStrategyProgress("idle");
     setLuloTargetMint(null);
-    toast({ title: "Lulo yield enabled", description: "Funds are now earning yield." });
+    toast({ title: t("dashboard.toastLuloTitle"), description: t("dashboard.toastLuloDesc") });
   };
 
   const handleRecallLulo = () => {
@@ -415,7 +418,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
     setShowProgressOverlay(false);
     setStrategyProgress("idle");
     setRecallTarget(null);
-    toast({ title: "Funds recalled", description: "Assets returned to your vault." });
+    toast({ title: t("dashboard.toastRecallTitle"), description: t("dashboard.toastRecallDesc") });
   };
 
   const handleEnableStaking = () => {
@@ -441,7 +444,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
     await new Promise((r) => setTimeout(r, 800));
     setShowProgressOverlay(false);
     setStrategyProgress("idle");
-    toast({ title: "Staking enabled", description: `SOL delegated to ${validatorId}.` });
+    toast({ title: t("dashboard.toastStakingTitle"), description: t("dashboard.toastStakingDesc", { validator: validatorId }) });
   };
 
   const handleCopyHeir = () => {
@@ -450,7 +453,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const config = statusConfig[computedState];
+  const config = statusConfig(t)[computedState];
   const solDisplay = formatSol(estate.solBalance);
   const tokenIcon = <Coins className="h-6 w-6" strokeWidth={2.5} />;
 
@@ -460,7 +463,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
       <div className={`${config.bg} neo-border-thick rounded-2xl p-8 neo-shadow-xl`}>
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="min-w-0">
-            <span className="neo-badge bg-background mb-3 inline-block">Vault Status</span>
+            <span className="neo-badge bg-background mb-3 inline-block">{t("dashboard.vaultStatus")}</span>
             <h2 className="text-4xl md:text-5xl uppercase font-display">{config.label}</h2>
             <p className="text-sm font-medium text-foreground/60 mt-1">{config.description}</p>
           </div>
@@ -474,15 +477,15 @@ This does not cost gas and does not authorize any on-chain transaction.`;
                 className={computedState === "grace" ? "neo-shake" : ""}
               >
                 {sendingHeartbeat ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> Signing...</>
+                  <><Loader2 className="h-5 w-5 animate-spin" /> {t("dashboard.signing")}</>
                 ) : computedState === "claimable" ? (
-                  <><Heart className="h-5 w-5" fill="currentColor" /> I'm Alive — Reclaim</>
+                  <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.imAlive")}</>
                 ) : (
-                  <><Heart className="h-5 w-5" fill="currentColor" /> Check In</>
+                  <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.checkIn")}</>
                 )}
               </Button>
               {computedState === "claimable" && !sendingHeartbeat && (
-                <p className="text-xs font-medium text-foreground/60">Restarts your 60-day timer</p>
+                <p className="text-xs font-medium text-foreground/60">{t("dashboard.restartsTimer")}</p>
               )}
             </div>
           )}
@@ -499,7 +502,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
             className="flex items-center gap-2 font-semibold hover:underline"
           >
             <ExternalLink className="h-4 w-4" />
-            View latest transaction on Explorer
+            {t("dashboard.viewLatestTx")}
           </a>
         </div>
       )}
@@ -511,17 +514,17 @@ This does not cost gas and does not authorize any on-chain transaction.`;
         </div>
         <div className="grid grid-cols-4 gap-3 md:gap-4">
           {[
-            { label: "Days", value: countdown.days },
-            { label: "Hours", value: countdown.hours },
-            { label: "Min", value: countdown.minutes },
-            { label: "Sec", value: countdown.seconds },
+            { label: t("dashboard.days"), value: countdown.days },
+            { label: t("dashboard.hours"), value: countdown.hours },
+            { label: t("dashboard.min"), value: countdown.minutes },
+            { label: t("dashboard.sec"), value: countdown.seconds },
           ].map((unit) => (
             <div key={unit.label} className="text-center">
               <div className="neo-border rounded-xl bg-secondary p-4 md:p-6">
                 <span
                   className={cn(
                     "text-4xl md:text-6xl font-bold tabular-nums font-display",
-                    unit.label === "Sec" && "text-accent-lime",
+                    unit.label === t("dashboard.sec") && "text-accent-lime",
                   )}
                 >
                   {String(unit.value).padStart(2, "0")}
@@ -535,7 +538,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
         </div>
         {computedState === "grace" && (
           <div className="flex justify-end mt-4 pt-4 border-t-2 border-foreground/10">
-            <span className="neo-badge bg-accent-yellow text-xs animate-pulse-slow">Urgent</span>
+            <span className="neo-badge bg-accent-yellow text-xs animate-pulse-slow">{t("dashboard.urgent")}</span>
           </div>
         )}
       </div>
@@ -543,9 +546,9 @@ This does not cost gas and does not authorize any on-chain transaction.`;
       {/* Assets — tabs for SOL / Tokens */}
       <div className="neo-card-static">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl">Assets</h3>
+          <h3 className="text-xl">{t("dashboard.assets")}</h3>
           <span className="neo-badge bg-secondary !px-3 !py-0.5 !text-xs">
-            {1 + estate.vaultTokens.length} asset{1 + estate.vaultTokens.length !== 1 ? "s" : ""}
+            {1 + estate.vaultTokens.length} {1 + estate.vaultTokens.length !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")}
           </span>
         </div>
         <div className="flex gap-2 mb-4">
@@ -565,7 +568,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
               assetTab === "tokens" ? "bg-accent-yellow" : "bg-secondary hover:bg-secondary/70",
             )}
           >
-            Tokens ({estate.vaultTokens.length})
+            {t("dashboard.tokens")} ({estate.vaultTokens.length})
           </button>
         </div>
 
@@ -578,7 +581,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
               <div>
                 <p className="font-bold text-lg">{SOL_LABEL}</p>
                 <p className="text-xs font-medium text-muted-foreground">
-                  {`${estate.solBalance.toLocaleString()} lamports`}
+                  {`${estate.solBalance.toLocaleString()} ${t("dashboard.lamports")}`}
                 </p>
               </div>
             </div>
@@ -589,14 +592,14 @@ This does not cost gas and does not authorize any on-chain transaction.`;
                 disabled={solVaultBalance <= 0}
                 className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-accent-yellow hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               >
-                <Sprout className="h-3.5 w-3.5" /> Stake SOL
+                <Sprout className="h-3.5 w-3.5" /> {t("dashboard.stakeSol")}
               </button>
               <button
                 onClick={() => setTopUpOpen("sol")}
                 disabled={estate.solBalance === 0}
                 className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-transparent hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
               >
-                <TrendingUp className="h-3.5 w-3.5" /> Add More
+                <TrendingUp className="h-3.5 w-3.5" /> {t("dashboard.addMore")}
               </button>
             </div>
             {showYieldStaking && stakingStrategy?.active && (
@@ -633,7 +636,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
           >
             {estate.vaultTokens.length === 0 ? (
               <p className="text-sm font-medium text-muted-foreground text-center py-8">
-                No tokens in this vault yet.
+                {t("dashboard.noTokens")}
               </p>
             ) : (
               estate.vaultTokens.map((vt) => {
@@ -739,7 +742,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
               <div className="bg-accent-yellow neo-border rounded-xl p-2">
                 <Users className="h-5 w-5" strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl">Heir & Details</h3>
+              <h3 className="text-xl">{t("dashboard.heirDetails")}</h3>
             </div>
             <div className="flex items-center gap-2">
               <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
@@ -749,10 +752,10 @@ This does not cost gas and does not authorize any on-chain transaction.`;
             <button
               onClick={handleCopyHeir}
               className="w-full neo-border rounded-lg p-3 bg-secondary hover:bg-secondary/70 transition-colors flex items-center justify-between gap-3 text-left"
-              title="Copy heir address"
+              title={t("dashboard.copyHeirAddress")}
             >
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Heir</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.heir")}</p>
                 <p className="font-bold">{estate.label}</p>
                 <p className="text-xs font-mono text-muted-foreground break-all">{estate.heir}</p>
               </div>
@@ -761,14 +764,14 @@ This does not cost gas and does not authorize any on-chain transaction.`;
 
             <div className="neo-border rounded-lg p-3 bg-accent-purple/10">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Guardian{estate.delegate && estate.isDeferred ? " (Pause Used)" : ""}
+                {t("dashboard.guardian")}{estate.delegate && estate.isDeferred ? ` (${t("dashboard.pauseUsed")})` : ""}
               </p>
-              <p className="font-mono text-xs break-all">{estate.delegate || "Not set"}</p>
+              <p className="font-mono text-xs break-all">{estate.delegate || t("common.notSet")}</p>
             </div>
 
             <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Heartbeat Signer</p>
-              <p className="font-mono text-xs break-all">{estate.hbSigner || "Not set"}</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.heartbeatSigner")}</p>
+              <p className="font-mono text-xs break-all">{estate.hbSigner || t("common.notSet")}</p>
             </div>
           </div>
         </details>
@@ -802,10 +805,10 @@ This does not cost gas and does not authorize any on-chain transaction.`;
       {/* Manage Estate — grouped actions */}
       {computedState !== "distributed" && (
         <div className="neo-card-static bg-secondary/30">
-          <h3 className="text-xl mb-6">Manage Estate</h3>
+          <h3 className="text-xl mb-6">{t("dashboard.manageEstate")}</h3>
 
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Heir & Timing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{t("dashboard.heirTiming")}</p>
             <div className="grid grid-cols-2 gap-2">
               <ReassignHeirSection estate={estate} onTx={setLastTxId} />
               <EditSettingsSection estate={estate} onTx={setLastTxId} />
@@ -820,7 +823,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Danger Zone</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{t("dashboard.dangerZone")}</p>
             <EmergencyWithdrawSection estate={estate} onTx={setLastTxId} />
           </div>
         </div>
@@ -833,6 +836,7 @@ const DashboardPage = () => {
   const { isConnected, disconnectWallet } = useWallet();
   const { estates, loading, pendingCreate, pendingTxId, clearVault } = useVault();
   const navigate = useNavigate();
+  const { t } = useTranslation("app");
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -863,8 +867,8 @@ const DashboardPage = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="neo-card-static text-center max-w-md neo-slide-up">
           <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-          <h2 className="text-2xl mb-3">Loading Vault...</h2>
-          <p className="text-muted-foreground font-medium">Fetching on-chain data</p>
+          <h2 className="text-2xl mb-3">{t("dashboard.loadingVault")}</h2>
+          <p className="text-muted-foreground font-medium">{t("dashboard.fetchingData")}</p>
         </div>
       </div>
     );
@@ -873,7 +877,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
-        title="Vault Dashboard"
+        title={t("dashboard.title")}
         onDisconnect={handleDisconnect}
         onConnectWallet={() => setWalletDialogOpen(true)}
       />
@@ -881,10 +885,10 @@ const DashboardPage = () => {
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <h1 className="text-[44px] tracking-tight font-display">
-            Your estates <span className="text-muted-foreground">({estates.length})</span>
+            {t("dashboard.yourEstates")} <span className="text-muted-foreground">({estates.length})</span>
           </h1>
           <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
-            <Plus className="h-5 w-5" /> New Estate
+            <Plus className="h-5 w-5" /> {t("dashboard.newEstate")}
           </Button>
         </div>
 
@@ -892,7 +896,7 @@ const DashboardPage = () => {
           <div className="neo-card-static bg-accent-yellow/20">
             <div className="flex items-center gap-3">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <p className="font-medium">Estate creation pending — waiting for on-chain confirmation...</p>
+              <p className="font-medium">{t("dashboard.pendingCreate")}</p>
             </div>
             {pendingTxId && (
               <a
@@ -901,7 +905,7 @@ const DashboardPage = () => {
                 rel="noopener noreferrer"
                 className="text-sm font-semibold text-accent-cyan hover:underline flex items-center gap-1 mt-2"
               >
-                View on Explorer <ExternalLink className="h-3 w-3" />
+                {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
               </a>
             )}
           </div>
@@ -921,28 +925,28 @@ const DashboardPage = () => {
               </div>
             </div>
             <h2 className="font-display text-3xl md:text-4xl mb-3">
-              {isConnected ? "No estate yet" : "Connect wallet"}
+              {isConnected ? t("dashboard.noVaultYet") : t("dashboard.connectWallet")}
             </h2>
             <p className="text-muted-foreground font-medium mb-8 max-w-sm mx-auto">
               {isConnected
-                ? "Create your first estate to protect your assets for the future."
-                : "Connect your wallet to view your estates and manage your vaults."}
+                ? t("dashboard.noVaultDesc")
+                : t("dashboard.connectDesc")}
             </p>
             <div className="flex flex-col items-center gap-3">
               {isConnected ? (
                 <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
-                  Create Your Estate
+                  {t("dashboard.createYourVault")}
                 </Button>
               ) : (
                 <Button variant="yellow" size="lg" onClick={() => setWalletDialogOpen(true)}>
-                  <Wallet className="h-5 w-5" /> Connect Wallet
+                  <Wallet className="h-5 w-5" /> {t("dashboard.connectWallet")}
                 </Button>
               )}
               <button
                 onClick={() => navigate("/claim")}
                 className="text-sm font-semibold underline underline-offset-4 hover:text-accent-pink transition-colors"
               >
-                Were you named as an heir? Claim inheritance
+                {t("dashboard.namedAsHeir")}
               </button>
             </div>
           </div>
@@ -961,12 +965,12 @@ const DashboardPage = () => {
             {estates.length > ESTATE_STRIP_CAP && (
               <button
                 onClick={() => setSwitcherOpen(true)}
-                aria-label={`View all ${estates.length} estates`}
+                aria-label={`${t("dashboard.viewAllEstates")} (${estates.length})`}
                 className="neo-border border-dashed rounded-xl px-3 py-2 w-44 shrink-0 min-h-[56px] flex flex-col items-start justify-center gap-0.5 bg-accent-purple/10 text-left transition-colors hover:bg-accent-purple/20"
               >
-                <span className="text-sm font-semibold">+{estates.length - ESTATE_STRIP_CAP} more</span>
+                <span className="text-sm font-semibold">+{estates.length - ESTATE_STRIP_CAP} {t("dashboard.more")}</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  View all estates
+                  {t("dashboard.viewAllEstates")}
                 </span>
               </button>
             )}
@@ -989,9 +993,9 @@ const DashboardPage = () => {
       >
         <DialogContent className="neo-card-static max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">All Estates</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">{t("dashboard.allEstates")}</DialogTitle>
             <DialogDescription className="font-medium">
-              {estates.length} total · click one to switch
+              {t("dashboard.totalClickToSwitch", { count: estates.length })}
             </DialogDescription>
           </DialogHeader>
           <div className="relative">
@@ -1003,8 +1007,8 @@ const DashboardPage = () => {
               type="text"
               value={switcherQuery}
               onChange={(e) => setSwitcherQuery(e.target.value)}
-              placeholder="Search estates…"
-              aria-label="Search estates"
+              placeholder={t("dashboard.searchEstates")}
+              aria-label={t("dashboard.searchEstatesAria")}
               autoFocus
               className="neo-input pl-10"
             />
@@ -1012,7 +1016,7 @@ const DashboardPage = () => {
           <div className="grid grid-cols-2 gap-2 max-h-[360px] overflow-y-auto pr-1">
             {filteredSwitcherEstates.length === 0 ? (
               <p className="col-span-2 text-sm font-medium text-muted-foreground text-center py-8">
-                No estates match &ldquo;{switcherQuery}&rdquo;.
+                {t("dashboard.noMatch")} &ldquo;{switcherQuery}&rdquo;.
               </p>
             ) : (
               filteredSwitcherEstates.map(({ estate: e, index: i }) => (
