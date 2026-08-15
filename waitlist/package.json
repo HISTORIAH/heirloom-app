@@ -8,7 +8,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:waitlist": "bun run build",
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev",
