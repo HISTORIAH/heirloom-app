@@ -74,7 +74,7 @@ const app = {
     headline2: "immortal assets.",
     description:
       "A vault with a pulse. Check in and nothing moves — you stay in full control. Go quiet, and it hands off on its own.",
-    step1Title: "Create your vault",
+    step1Title: "Create your Estate",
     step1Desc:
       "Connect your wallet, deposit tokens, and name your heirs with their percentage splits.",
     step2Title: "Send heartbeats",
@@ -364,8 +364,8 @@ const app = {
     noVaultYet: "No vault yet",
     connectWallet: "Connect wallet",
     noVaultDesc: "Create your first estate to protect your assets for the future.",
-    connectDesc: "Connect your wallet to view your estates and manage your vaults.",
-    createYourVault: "Create Your Vault",
+    connectDesc: "Connect your wallet to view your estates and manage your estates.",
+    createYourVault: "Create Your Estate",
     namedAsHeir: "Were you named as an heir? Claim inheritance",
     viewAllEstates: "View all estates",
     more: "more",
