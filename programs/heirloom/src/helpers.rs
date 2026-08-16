@@ -1,3 +1,8 @@
+//! Shared helpers and reusable CPI account structs.
+//!
+//! Contains math utilities, account lifecycle helpers, and account bundles
+//! used when calling external programs (Lulo, Kamino).
+
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface};
 use solana_instructions_sysvar::ID as SOLANA_SYSVAR_IX_ID;
@@ -7,10 +12,14 @@ use crate::{
     KAMINO_PROGRAM_ID, MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
 };
 
-pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
+// ----------------------------------------------------------------- Math & validation
+
+/// Splits `gross_amount` into a protocol fee and a net payout using ceiling
+/// division so the fee always rounds up.
+pub(crate) fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
     let gross = gross_amount as u128;
     let fee = fee_bps as u128;
-    let protocol_fee = ((gross * fee + 9_999) / 10_000) as u64; // ceiling instead of floor
+    let protocol_fee = ((gross * fee + 9_999) / 10_000) as u64;
 
     let payout = gross_amount
         .checked_sub(protocol_fee)
@@ -19,8 +28,22 @@ pub fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u
     Ok((protocol_fee, payout))
 }
 
-/// Closes a program-owned PDA. Caller must ensure account is validated by Anchor constraints.
-pub fn close_pda<'info>(
+/// Ensures `value` is a non-negative interval that does not exceed the max
+/// allowed duration.
+pub(crate) fn validate_interval(value: i64) -> Result<()> {
+    require!(value >= 0, HeirloomError::IntervalNegative);
+    require!(
+        value <= MAX_INTERVAL_SECONDS,
+        HeirloomError::IntervalTooLong
+    );
+    Ok(())
+}
+
+// ----------------------------------------------------------------- Account lifecycle
+
+/// Closes a program-owned PDA by transferring all lamports to `destination`
+/// and zeroing its data. Caller must have already validated the account.
+pub(crate) fn close_pda<'info>(
     account: AccountInfo<'info>,
     destination: AccountInfo<'info>,
 ) -> Result<()> {
@@ -43,11 +66,13 @@ pub fn close_pda<'info>(
     Ok(())
 }
 
-/// Splits a Lulo withdrawal's actual returned amount into principal vs. yield
-/// (principal-first: any excess over what's still outstanding is yield) and
-/// skims `YIELD_FEE_BPS` off the yield portion only.
+// ----------------------------------------------------------------- Lulo integration
+
+/// Splits a Lulo withdrawal into principal and yield (principal is returned
+/// first; any excess is yield), then transfers the protocol yield fee to the
+/// treasury.
 #[inline(never)]
-pub fn skim_lulo_yield_fee<'info>(
+pub(crate) fn skim_lulo_yield_fee<'info>(
     vault_token_account: &mut InterfaceAccount<'info, TokenAccount>,
     asset_record: &mut Account<'info, AssetRecord>,
     input_mint: &InterfaceAccount<'info, Mint>,
@@ -87,10 +112,10 @@ pub fn skim_lulo_yield_fee<'info>(
     Ok(())
 }
 
-/// Refreshes whether an `AssetRecord` still has an open Lulo position for the
-/// given pool, read from the vault's actual LP-receipt balance
+/// Updates an `AssetRecord`'s exposure flags from the vault's LP-receipt
+/// balance for the given deposit type.
 #[inline(never)]
-pub fn refresh_lulo_exposure<'info>(
+pub(crate) fn refresh_lulo_exposure<'info>(
     asset_record: &mut Account<'info, AssetRecord>,
     pool_user_lp_token_account: &AccountInfo<'info>,
     deposit_type: DepositType,
@@ -111,37 +136,28 @@ pub fn refresh_lulo_exposure<'info>(
     Ok(())
 }
 
-pub fn validate_interval(value: i64) -> Result<()> {
-    require!(value >= 0, HeirloomError::IntervalNegative);
-    require!(
-        value <= MAX_INTERVAL_SECONDS,
-        HeirloomError::IntervalTooLong
-    );
-    Ok(())
-}
-
-// ----------------------------------------------------------------- Lulo integration
+/// Accounts required for Lulo v2 CPI calls.
 #[derive(Accounts)]
 pub struct LuloAccounts<'info> {
-    /// CHECK: Lulo position pda
+    /// CHECK: Lulo position PDA.
     #[account(mut)]
     pub pool_user: UncheckedAccount<'info>,
 
-    /// CHECK: pool user input-mint ATA. intermediate hop.
+    /// CHECK: Pool user input-mint ATA; intermediate hop.
     #[account(mut)]
     pub pool_user_token_account: UncheckedAccount<'info>,
 
-    /// CHECK: the pool_user's LP-receipt ATA. created by deposit ix if missing.
+    /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
     #[account(mut)]
     pub pool_user_lp_token_account: UncheckedAccount<'info>,
 
-    /// CHECK: referrer's pool_user, must be owned by this program
+    /// CHECK: Referrer's pool_user; must be owned by this program.
     #[account(mut, constraint = referrer_pool_user.owner.key() == program_id.key())]
     pub referrer_pool_user: UncheckedAccount<'info>,
 
     pub input_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// pool's reserve token account (authority = pool_account).
+    /// Pool's reserve token account (authority = pool_account).
     #[account(
         mut,
         token::mint = input_mint,
@@ -150,15 +166,15 @@ pub struct LuloAccounts<'info> {
     )]
     pub pool_reserve_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// the pool's LP/share mint (token22)
+    /// The pool's LP/share mint (Token-2022).
     #[account(mut)]
     pub lp_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// CHECK: Lulo pool state
+    /// CHECK: Lulo pool state.
     #[account(mut)]
     pub pool_account: UncheckedAccount<'info>,
 
-    /// CHECK: Lulo program
+    /// CHECK: Lulo program.
     #[account(mut, address = lulo_v2::ID)]
     pub program_id: UncheckedAccount<'info>,
 
@@ -166,7 +182,9 @@ pub struct LuloAccounts<'info> {
     pub lp_mint_token_program: Interface<'info, TokenInterface>,
 }
 
-/// withdraws (protected & complete_boosted_withdraw) will pull the USDC directly from Kamino
+// ----------------------------------------------------------------- Kamino integration
+
+/// Accounts required for Kamino lending CPI calls (e.g. withdrawals).
 #[derive(Accounts)]
 pub struct GenericKamino<'info> {
     /// CHECK: CPI
@@ -187,7 +205,7 @@ pub struct GenericKamino<'info> {
     /// CHECK: CPI
     pub lending_market_authority: UncheckedAccount<'info>,
 
-    // collateral mint needs mut
+    /// Collateral mint; needs mut.
     #[account(mut)]
     pub collateral_mint: Box<InterfaceAccount<'info, Mint>>,
 
