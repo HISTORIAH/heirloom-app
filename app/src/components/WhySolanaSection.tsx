@@ -87,7 +87,7 @@ const WhySolanaSection = () => {
               <p
                 className={`mt-2 text-base font-medium leading-relaxed ${
                   r.dark ? "text-background/70" : "text-muted-foreground"
-                }`}
+                  }`}
               >
                 {r.description}
               </p>
