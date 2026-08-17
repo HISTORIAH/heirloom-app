@@ -142,6 +142,7 @@ export type RevokeAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir verified via estate */
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
@@ -149,8 +150,11 @@ export type RevokeAsyncInput<
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: treasury address */
   treasury?: Address<TAccountTreasury>;
+  /** CHECK: treasury ATA, created idempotently if needed */
   treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -313,6 +317,7 @@ export type RevokeInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir verified via estate */
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
@@ -320,8 +325,11 @@ export type RevokeInput<
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: treasury address */
   treasury?: Address<TAccountTreasury>;
+  /** CHECK: treasury ATA, created idempotently if needed */
   treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -461,6 +469,7 @@ export type ParsedRevokeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     authority: TAccountMetas[0];
+    /** CHECK: heir verified via estate */
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
     vault: TAccountMetas[3];
@@ -468,8 +477,11 @@ export type ParsedRevokeInstruction<
     vaultTokenAccount?: TAccountMetas[5] | undefined;
     mint?: TAccountMetas[6] | undefined;
     assetRecord?: TAccountMetas[7] | undefined;
+    /** CHECK: treasury address */
     treasury: TAccountMetas[8];
+    /** CHECK: treasury ATA, created idempotently if needed */
     treasuryTokenAccount?: TAccountMetas[9] | undefined;
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     tokenProgram: TAccountMetas[10];
     associatedTokenProgram: TAccountMetas[11];
     systemProgram: TAccountMetas[12];

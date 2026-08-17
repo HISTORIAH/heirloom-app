@@ -1,167 +1,225 @@
 use crate::{error::HeirloomError, helpers::*, lulo_v2, AssetRecord, DepositType, Estate, Vault};
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token_interface::TokenAccount};
+
+use anchor_spl::{associated_token::AssociatedToken, token, token_interface::TokenAccount};
 
 #[derive(Accounts)]
-pub struct DepositLulo<'info> {
+pub struct DepositLulo {
     // only authority can authorize this hence the address gate
     #[account(mut, address = estate.authority)]
-    pub authority: Signer<'info>,
+    pub authority: Signer,
 
     /// CHECK: heir pubkey, stored in estate
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Account<Vault>,
 
     // We expect this to exist
     #[account(
         mut,
-        token::mint = lulo_accounts.input_mint,
+        token::mint = lulo_accounts.input_mint.address(),
         token::authority = vault,
-        token::token_program = lulo_accounts.input_mint_token_program,
+        token::token_program = lulo_accounts.input_mint_token_program.address(),
     )]
-    pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub vault_token_account: Box<InterfaceAccount<TokenAccount>>,
 
-    // NOTE: remove me if ix size is too large
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
     #[account(
         mut,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            lulo_accounts.input_mint.key().as_ref()
+            estate.address().as_ref(),
+            lulo_accounts.input_mint.address().as_ref()
         ],
         bump = asset_record.bump,
     )]
-    pub asset_record: Box<Account<'info, AssetRecord>>,
+    pub asset_record: Box<BorshAccount<AssetRecord>>,
 
-    pub lulo_accounts: LuloAccounts<'info>,
+    pub lulo_accounts: Nested<LuloAccounts>,
 
-    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub associated_token_program: Program<AssociatedToken>,
 
-    pub rent: Sysvar<'info, Rent>,
+    pub rent: Sysvar<Rent>,
 
-    pub system_program: Program<'info, System>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> DepositLulo<'info> {
+impl DepositLulo {
     pub fn deploy_yield_handler(
-        ctx: Context<'info, DepositLulo<'info>>,
+        ctx: &mut Context<DepositLulo>,
         amount: u64,
         deposit_type: DepositType,
     ) -> Result<()> {
         ctx.accounts.validate()?;
 
-        let asset_record = &mut ctx.accounts.asset_record;
-        let vault_bump = ctx.accounts.vault.bump;
-        let authority_key = ctx.accounts.authority.key();
-        let heir_key = ctx.accounts.heir.key();
-        let lulo_cpi_program_addr = ctx.accounts.lulo_accounts.program_id.key();
+        // let lulo_cpi_program_addr = ctx.accounts.lulo_accounts.0.program_id.address();
 
-        let DepositLulo { lulo_accounts, .. } = ctx.accounts;
-
+        let authority_addr_arr = *ctx.accounts.authority.address().as_array();
+        let heir_addr_arr = *ctx.accounts.heir.address().as_array();
         let vault_seeds: &[&[u8]] = &[
             Vault::SEED,
-            authority_key.as_ref(),
-            heir_key.as_ref(),
-            &[vault_bump],
+            authority_addr_arr.as_ref(),
+            heir_addr_arr.as_ref(),
+            &[ctx.accounts.vault.bump],
         ];
         let signer_seeds = &[vault_seeds];
 
         match deposit_type {
             DepositType::Protected => {
+                let remaining_accounts = ctx.remaining_accounts()?;
+                let remaining_handles: Vec<_> = remaining_accounts
+                    .iter()
+                    .map(anchor_lang::ToCpiHandle::to_cpi_handle)
+                    .collect();
+
                 let cpi_accounts = lulo_v2::cpi::accounts::DepositProtectedPool {
-                    owner: ctx.accounts.vault.to_account_info(),
-                    fee_payer: ctx.accounts.authority.to_account_info(),
-                    input_mint: lulo_accounts.input_mint.to_account_info(),
+                    owner: ctx.accounts.vault.to_cpi_handle_mut(),
+                    fee_payer: ctx.accounts.authority.to_cpi_handle_mut(),
+                    input_mint: ctx.accounts.lulo_accounts.0.input_mint.to_cpi_handle(),
                     owner_input_token_account: ctx
                         .accounts
                         .vault_token_account
-                        .to_account_info()
+                        .to_cpi_handle_mut()
                         .clone(),
-                    pool: lulo_accounts.pool_account.to_account_info(),
-                    pool_input_token_account: lulo_accounts
+                    pool: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .pool_account
+                        .to_cpi_handle_mut(),
+                    pool_input_token_account: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
                         .pool_reserve_token_account
-                        .to_account_info(),
-                    pool_mint: lulo_accounts.lp_mint.to_account_info(),
-                    pool_user: lulo_accounts.pool_user.to_account_info(),
-                    pool_user_lp_token_account: lulo_accounts
+                        .to_cpi_handle_mut(),
+                    pool_mint: ctx.accounts.lulo_accounts.0.lp_mint.to_cpi_handle_mut(),
+                    pool_user: ctx.accounts.lulo_accounts.0.pool_user.to_cpi_handle_mut(),
+                    pool_user_lp_token_account: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
                         .pool_user_lp_token_account
-                        .to_account_info(),
-                    input_mint_token_program: lulo_accounts
+                        .to_cpi_handle_mut(),
+                    input_mint_token_program: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
                         .input_mint_token_program
-                        .to_account_info(),
-                    lp_mint_token_program: lulo_accounts.lp_mint_token_program.to_account_info(),
-                    flex_program: lulo_accounts.program_id.to_account_info(),
+                        .to_cpi_handle(),
+                    lp_mint_token_program: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .lp_mint_token_program
+                        .to_cpi_handle(),
+                    flex_program: ctx.accounts.lulo_accounts.0.program_id.to_cpi_handle(),
                     associated_token_program: ctx
                         .accounts
                         .associated_token_program
-                        .to_account_info()
+                        .to_cpi_handle()
                         .clone(),
-                    system_program: ctx.accounts.system_program.to_account_info().clone(),
-                    rent: ctx.accounts.rent.to_account_info().clone(),
-                    referrer_pool_user: lulo_accounts.referrer_pool_user.to_account_info(),
+                    system_program: ctx.accounts.system_program.to_cpi_handle().clone(),
+                    rent: ctx.accounts.rent.to_cpi_handle().clone(),
+                    referrer_pool_user: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .referrer_pool_user
+                        .to_cpi_handle_mut(),
                 };
-                let cpi_ctx =
-                    CpiContext::new_with_signer(lulo_cpi_program_addr, cpi_accounts, signer_seeds);
+                let cpi_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.lulo_accounts.0.program_id.address(),
+                    cpi_accounts,
+                    signer_seeds,
+                );
+
                 lulo_v2::cpi::deposit_protected_pool(
-                    cpi_ctx.with_remaining_accounts(ctx.remaining_accounts.to_vec()),
+                    cpi_ctx.with_remaining_accounts(remaining_handles),
                     amount,
                 )?;
             }
             DepositType::Boosted => {
+                let remaining_accounts = ctx.remaining_accounts()?;
+                let remaining_handles: Vec<_> = remaining_accounts
+                    .iter()
+                    .map(anchor_lang::ToCpiHandle::to_cpi_handle)
+                    .collect();
+
                 let cpi_accounts = lulo_v2::cpi::accounts::DepositRegularPool {
-                    owner: ctx.accounts.vault.to_account_info(),
-                    fee_payer: ctx.accounts.authority.to_account_info(),
-                    input_mint: lulo_accounts.input_mint.to_account_info(),
-                    owner_input_token_account: ctx.accounts.vault_token_account.to_account_info(),
-                    pool: lulo_accounts.pool_account.to_account_info(),
-                    pool_input_token_account: lulo_accounts
-                        .pool_reserve_token_account
-                        .to_account_info(),
-                    pool_mint: lulo_accounts.lp_mint.to_account_info(),
-                    pool_user: lulo_accounts.pool_user.to_account_info(),
-                    pool_user_lp_token_account: lulo_accounts
-                        .pool_user_lp_token_account
-                        .to_account_info(),
-                    input_mint_token_program: lulo_accounts
-                        .input_mint_token_program
-                        .to_account_info(),
-                    lp_mint_token_program: lulo_accounts.lp_mint_token_program.to_account_info(),
-                    flex_program: lulo_accounts.program_id.to_account_info(),
-                    associated_token_program: ctx
+                    owner: ctx.accounts.vault.to_cpi_handle_mut(),
+                    fee_payer: ctx.accounts.authority.to_cpi_handle_mut(),
+                    input_mint: ctx.accounts.lulo_accounts.0.input_mint.to_cpi_handle(),
+                    owner_input_token_account: ctx.accounts.vault_token_account.to_cpi_handle_mut(),
+                    pool: ctx
                         .accounts
-                        .associated_token_program
-                        .to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    rent: ctx.accounts.rent.to_account_info(),
+                        .lulo_accounts
+                        .0
+                        .pool_account
+                        .to_cpi_handle_mut(),
+                    pool_input_token_account: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .pool_reserve_token_account
+                        .to_cpi_handle_mut(),
+                    pool_mint: ctx.accounts.lulo_accounts.0.lp_mint.to_cpi_handle_mut(),
+                    pool_user: ctx.accounts.lulo_accounts.0.pool_user.to_cpi_handle_mut(),
+                    pool_user_lp_token_account: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .pool_user_lp_token_account
+                        .to_cpi_handle_mut(),
+                    input_mint_token_program: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .input_mint_token_program
+                        .to_cpi_handle(),
+                    lp_mint_token_program: ctx
+                        .accounts
+                        .lulo_accounts
+                        .0
+                        .lp_mint_token_program
+                        .to_cpi_handle(),
+                    flex_program: ctx.accounts.lulo_accounts.0.program_id.to_cpi_handle(),
+                    associated_token_program: ctx.accounts.associated_token_program.to_cpi_handle(),
+                    system_program: ctx.accounts.system_program.to_cpi_handle(),
+                    rent: ctx.accounts.rent.to_cpi_handle(),
                     referrer_pool_user: ctx
                         .accounts
                         .lulo_accounts
+                        .0
                         .referrer_pool_user
-                        .to_account_info(),
+                        .to_cpi_handle_mut(),
                 };
 
-                let cpi_ctx =
-                    CpiContext::new_with_signer(lulo_cpi_program_addr, cpi_accounts, signer_seeds);
+                let cpi_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.lulo_accounts.0.program_id.address(),
+                    cpi_accounts,
+                    signer_seeds,
+                );
+
                 lulo_v2::cpi::deposit_regular_pool(
-                    cpi_ctx.with_remaining_accounts(ctx.remaining_accounts.to_vec()),
+                    cpi_ctx.with_remaining_accounts(remaining_handles),
                     amount,
                 )?;
             }
         };
 
+        let asset_record = &mut ctx.accounts.asset_record;
         match deposit_type {
             DepositType::Protected => asset_record.has_protected_exposure = true,
             DepositType::Boosted => asset_record.has_boosted_exposure = true,

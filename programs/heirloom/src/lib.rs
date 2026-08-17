@@ -30,7 +30,7 @@ pub mod heirloom {
     use super::*;
 
     pub fn initialize(
-        ctx: Context<Initialize>,
+        ctx: &mut Context<Initialize>,
         heartbeat_interval: i64,
         grace_period: i64,
         pause_duration: i64,
@@ -47,24 +47,24 @@ pub mod heirloom {
         )
     }
 
-    pub fn claim(ctx: Context<Claim>) -> Result<()> {
+    pub fn claim(ctx: &mut Context<Claim>) -> Result<()> {
         Claim::claim_handler(ctx)
     }
 
-    pub fn delegate_defer(ctx: Context<DelegateDefer>) -> Result<()> {
+    pub fn delegate_defer(ctx: &mut Context<DelegateDefer>) -> Result<()> {
         DelegateDefer::delegate_defer_handler(ctx)
     }
 
-    pub fn register_asset(ctx: Context<RegisterAsset>, amount: u64) -> Result<()> {
+    pub fn register_asset(ctx: &mut Context<RegisterAsset>, amount: u64) -> Result<()> {
         RegisterAsset::register_asset_handler(ctx, amount)
     }
 
-    pub fn revoke(ctx: Context<Revoke>) -> Result<()> {
+    pub fn revoke(ctx: &mut Context<Revoke>) -> Result<()> {
         Revoke::revoke_handler(ctx)
     }
 
     pub fn update_field(
-        ctx: Context<UpdateField>,
+        ctx: &mut Context<UpdateField>,
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
@@ -79,35 +79,35 @@ pub mod heirloom {
         )
     }
 
-    pub fn update_heir(ctx: Context<UpdateHeir>) -> Result<()> {
+    pub fn update_heir(ctx: &mut Context<UpdateHeir>) -> Result<()> {
         UpdateHeir::update_heir_handler(ctx)
     }
 
-    pub fn deposit_lulo<'info>(
-        ctx: Context<'info, DepositLulo<'info>>,
+    pub fn deposit_lulo(
+        ctx: &mut Context<DepositLulo>,
         amount: u64,
         deposit_type: DepositType,
     ) -> Result<()> {
         DepositLulo::deploy_yield_handler(ctx, amount, deposit_type)
     }
 
-    pub fn withdraw_protected_lulo<'info>(
-        ctx: Context<'info, WithdrawProtected<'info>>,
+    pub fn withdraw_protected_lulo(
+        ctx: &mut Context<WithdrawProtected>,
         amount: u64,
     ) -> Result<()> {
         WithdrawProtected::withdraw_protected_handler(ctx, amount)
     }
 
-    pub fn init_withdraw_regular_lulo<'info>(
-        ctx: Context<'info, InitWithdrawRegular<'info>>,
+    pub fn init_withdraw_regular_lulo(
+        ctx: &mut Context<InitWithdrawRegular>,
         withdrawal_id: u16,
         amount: u64,
     ) -> Result<()> {
         InitWithdrawRegular::init_withdraw_regular_handler(ctx, withdrawal_id, amount)
     }
 
-    pub fn complete_withdraw_regular_lulo<'info>(
-        ctx: Context<'info, CompleteWithdrawRegular<'info>>,
+    pub fn complete_withdraw_regular_lulo(
+        ctx: &mut Context<CompleteWithdrawRegular>,
         withdrawal_id: u16,
     ) -> Result<()> {
         CompleteWithdrawRegular::complete_regular_withdraw_handler(ctx, withdrawal_id)

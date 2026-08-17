@@ -85,6 +85,8 @@ test("it migrates multi-asset vault (sol + 2 tokens) to a new heir", async () =>
     vaultTokenAccount: oldVaultTokenAccount2,
   });
 
+  console.table({oldVault, newVault, oldEstate, newEstate}) // ! debug statement
+
   // Final SOL call: closes old PDAs, SOL moves to new_vault (claimable_assets: 1 → close).
   await sendUpdateHeir(client, {
     newHeir: newHeir.address,

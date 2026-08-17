@@ -16,13 +16,19 @@ pub struct Claim {
       
               
           pub heir: solana_address::Address,
-          
+                /// CHECK: authority verified via estate.authority
+
+    
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: optional delegate
+
+    
               
           pub delegate: Option<solana_address::Address>,
-          
+                /// CHECK: heir's ATA, created idempotently if needed
+
+    
               
           pub heir_token_account: Option<solana_address::Address>,
           
@@ -43,13 +49,19 @@ pub struct Claim {
     
               
           pub asset_record: Option<solana_address::Address>,
-          
+                /// CHECK: treasury address
+
+    
               
           pub treasury: solana_address::Address,
-          
+                /// CHECK: treasury ATA, created idempotently if needed
+
+    
               
           pub treasury_token_account: Option<solana_address::Address>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: solana_address::Address,
           
@@ -248,18 +260,21 @@ impl ClaimBuilder {
                         self.heir = Some(heir);
                     self
     }
-            #[inline(always)]
+            /// CHECK: authority verified via estate.authority
+#[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
                         self.authority = Some(authority);
                     self
     }
             /// `[optional account]`
+/// CHECK: optional delegate
 #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<solana_address::Address>) -> &mut Self {
                         self.delegate = delegate;
                     self
     }
             /// `[optional account]`
+/// CHECK: heir's ATA, created idempotently if needed
 #[inline(always)]
     pub fn heir_token_account(&mut self, heir_token_account: Option<solana_address::Address>) -> &mut Self {
                         self.heir_token_account = heir_token_account;
@@ -296,18 +311,21 @@ impl ClaimBuilder {
                     self
     }
             /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
+/// CHECK: treasury address
 #[inline(always)]
     pub fn treasury(&mut self, treasury: solana_address::Address) -> &mut Self {
                         self.treasury = Some(treasury);
                     self
     }
             /// `[optional account]`
+/// CHECK: treasury ATA, created idempotently if needed
 #[inline(always)]
     pub fn treasury_token_account(&mut self, treasury_token_account: Option<solana_address::Address>) -> &mut Self {
                         self.treasury_token_account = treasury_token_account;
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+/// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
                         self.token_program = Some(token_program);
@@ -365,13 +383,19 @@ impl ClaimBuilder {
           
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: authority verified via estate.authority
+
+      
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: optional delegate
+
+      
                     
               pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: heir's ATA, created idempotently if needed
+
+      
                     
               pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
@@ -392,13 +416,19 @@ impl ClaimBuilder {
       
                     
               pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: treasury address
+
+      
                     
               pub treasury: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: treasury ATA, created idempotently if needed
+
+      
                     
               pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -416,13 +446,19 @@ pub struct ClaimCpi<'a, 'b> {
       
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: authority verified via estate.authority
+
+    
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: optional delegate
+
+    
               
           pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: heir's ATA, created idempotently if needed
+
+    
               
           pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
@@ -443,13 +479,19 @@ pub struct ClaimCpi<'a, 'b> {
     
               
           pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: treasury address
+
+    
               
           pub treasury: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: treasury ATA, created idempotently if needed
+
+    
               
           pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
@@ -704,18 +746,21 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                         self.instruction.heir = Some(heir);
                     self
     }
-      #[inline(always)]
+      /// CHECK: authority verified via estate.authority
+#[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.authority = Some(authority);
                     self
     }
       /// `[optional account]`
+/// CHECK: optional delegate
 #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.delegate = delegate;
                     self
     }
       /// `[optional account]`
+/// CHECK: heir's ATA, created idempotently if needed
 #[inline(always)]
     pub fn heir_token_account(&mut self, heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.heir_token_account = heir_token_account;
@@ -751,18 +796,21 @@ impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
                         self.instruction.asset_record = asset_record;
                     self
     }
-      #[inline(always)]
+      /// CHECK: treasury address
+#[inline(always)]
     pub fn treasury(&mut self, treasury: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.treasury = Some(treasury);
                     self
     }
       /// `[optional account]`
+/// CHECK: treasury ATA, created idempotently if needed
 #[inline(always)]
     pub fn treasury_token_account(&mut self, treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.treasury_token_account = treasury_token_account;
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn token_program(&mut self, token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.token_program = Some(token_program);
                     self

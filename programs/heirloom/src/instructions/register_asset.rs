@@ -4,42 +4,42 @@ use anchor_lang::{
 };
 use anchor_spl::{
     associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
+    token_interface::{self, Mint, TokenAccount, TransferChecked},
 };
 
 use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
 
 #[derive(Accounts)]
-pub struct RegisterAsset<'info> {
+pub struct RegisterAsset {
     #[account(mut, address = estate.authority @ HeirloomError::Unauthorized)]
-    pub authority: Signer<'info>,
+    pub authority: Signer,
 
     /// CHECK: heir verified via estate
     #[account(address = estate.heir)]
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Account<Vault>,
 
     #[account(mut)]
-    pub authority_token_account: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub authority_token_account: Option<InterfaceAccount<TokenAccount>>,
 
     /// CHECK: vault ATA, created idempotently if needed
     #[account(mut)]
-    pub vault_token_account: Option<UncheckedAccount<'info>>,
+    pub vault_token_account: Option<UncheckedAccount>,
 
-    pub mint: Option<InterfaceAccount<'info, Mint>>,
+    pub mint: Option<InterfaceAccount<Mint>>,
 
     /// Marker PDA proving mint is registered as claimable asset for current estate
     #[account(
@@ -48,58 +48,64 @@ pub struct RegisterAsset<'info> {
         space = AssetRecord::LEN,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            mint.as_ref().unwrap().key().as_ref(),
+            estate.address().as_ref(),
+            mint.as_ref().unwrap().address().as_ref(),
         ],
         bump,
     )]
-    pub asset_record: Option<Account<'info, AssetRecord>>,
+    pub asset_record: Option<BorshAccount<AssetRecord>>,
 
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub rent: Sysvar<'info, Rent>,
-    pub system_program: Program<'info, System>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *token_program.address() == Token::id()
+            || *token_program.address() == Token2022::id()
+    )]
+    pub token_program: UncheckedAccount,
+
+    pub associated_token_program: Program<AssociatedToken>,
+    pub rent: Sysvar<Rent>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> RegisterAsset<'info> {
-    pub fn register_asset_handler(ctx: Context<RegisterAsset>, amount: u64) -> Result<()> {
+impl RegisterAsset {
+    pub fn register_asset_handler(ctx: &mut Context<RegisterAsset>, amount: u64) -> Result<()> {
         ctx.accounts.validate(amount)?;
 
         if ctx.accounts.mint.is_none() {
             require!(amount > 0, HeirloomError::ZeroDepositAmount);
         }
 
-        match ctx.accounts.mint.as_ref() {
+        match ctx.accounts.mint.take() {
             Some(mint) => {
-                let vault_ta = ctx.accounts.vault_token_account.as_ref().unwrap();
-                let authority_ta = ctx.accounts.authority_token_account.as_ref().unwrap();
+                let mut vault_ta = ctx.accounts.vault_token_account.take().unwrap();
+                let mut authority_ta = ctx.accounts.authority_token_account.take().unwrap();
 
                 let cpi_accounts = associated_token::Create {
-                    payer: ctx.accounts.authority.to_account_info(),
-                    associated_token: vault_ta.to_account_info(),
-                    authority: ctx.accounts.vault.to_account_info(),
-                    mint: mint.to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    token_program: ctx.accounts.token_program.to_account_info(),
+                    payer: ctx.accounts.authority.to_cpi_handle_mut(),
+                    associated_token: vault_ta.to_cpi_handle_mut(),
+                    authority: ctx.accounts.vault.to_cpi_handle(),
+                    mint: mint.to_cpi_handle(),
+                    system_program: ctx.accounts.system_program.to_cpi_handle(),
+                    token_program: ctx.accounts.token_program.to_cpi_handle(),
                 };
 
-                let associated_program_addr = ctx.accounts.associated_token_program.key();
+                let associated_program_addr = ctx.accounts.associated_token_program.address();
                 let cpi_context = CpiContext::new(associated_program_addr, cpi_accounts);
 
                 associated_token::create_idempotent(cpi_context)?;
 
                 // transfer
                 let cpi_accounts = TransferChecked {
-                    from: authority_ta.to_account_info(),
-                    mint: mint.to_account_info(),
-                    to: vault_ta.to_account_info(),
-                    authority: ctx.accounts.authority.to_account_info(),
+                    from: authority_ta.to_cpi_handle_mut(),
+                    mint: mint.to_cpi_handle(),
+                    to: vault_ta.to_cpi_handle_mut(),
+                    authority: ctx.accounts.authority.to_cpi_handle(),
                 };
 
-                let token_program_addr = ctx.accounts.token_program.key();
+                let token_program_addr = ctx.accounts.token_program.address();
                 let cpi_context = CpiContext::new(token_program_addr, cpi_accounts);
 
-                token_interface::transfer_checked(cpi_context, amount, mint.decimals)?;
+                token_interface::transfer_checked(cpi_context, amount, mint.decimals())?;
 
                 ctx.accounts.asset_record.as_mut().unwrap().bump = ctx.bumps.asset_record.unwrap();
 
@@ -112,11 +118,11 @@ impl<'info> RegisterAsset<'info> {
             }
             None => {
                 let cpi_accounts = system_program::Transfer {
-                    from: ctx.accounts.authority.to_account_info(),
-                    to: ctx.accounts.vault.to_account_info(),
+                    from: ctx.accounts.authority.to_cpi_handle_mut(),
+                    to: ctx.accounts.vault.to_cpi_handle_mut(),
                 };
 
-                let cpi_program_addr = ctx.accounts.system_program.key();
+                let cpi_program_addr = ctx.accounts.system_program.address();
                 let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
 
                 system_program::transfer(cpi_context, amount)?;
@@ -145,13 +151,15 @@ impl<'info> RegisterAsset<'info> {
             }
             None => {
                 if self.vault_token_account.is_some() || self.authority_token_account.is_some() {
-                    return err!(HeirloomError::MissingTokenAccounts);
+                    return Err(HeirloomError::MissingTokenAccounts.into());
                 }
 
                 let vault_sol_bal = self.vault.get_lamports();
+
                 let vault_rent_bal = self
                     .rent
-                    .minimum_balance(self.vault.to_account_info().data_len());
+                    .try_minimum_balance(self.vault.account().data_len())?;
+
                 require!(
                     vault_sol_bal <= vault_rent_bal,
                     HeirloomError::InvalidAccount

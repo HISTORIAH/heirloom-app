@@ -1,76 +1,76 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
+    token_interface::{self, Mint, TokenAccount, TransferChecked},
 };
 
-use crate::{error::HeirloomError, helpers::close_pda, AssetRecord, Estate, Vault};
+use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
 
 #[derive(Accounts)]
-pub struct UpdateHeir<'info> {
+pub struct UpdateHeir {
     #[account(mut, address = estate.authority @ HeirloomError::Unauthorized)]
-    pub authority: Signer<'info>,
+    pub authority: Signer,
 
     /// CHECK: current heir verified via estate
     #[account(address = estate.heir)]
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     /// CHECK: new heir pubkey
-    pub new_heir: UncheckedAccount<'info>,
+    pub new_heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
     #[account(
         init_if_needed,
         payer = authority,
         space = Estate::LEN,
-        seeds = [Estate::SEED, authority.key().as_ref(), new_heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), new_heir.address().as_ref()],
         bump
     )]
-    pub new_estate: Account<'info, Estate>,
+    pub new_estate: BorshAccount<Estate>,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Account<Vault>,
 
     #[account(
         init_if_needed,
         payer = authority,
         space = Vault::LEN,
-        seeds = [Vault::SEED, authority.key().as_ref(), new_heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), new_heir.address().as_ref()],
         bump
     )]
-    pub new_vault: Account<'info, Vault>,
+    pub new_vault: Account<Vault>,
 
     #[account(mut)]
-    pub vault_token_account: Option<Box<InterfaceAccount<'info, TokenAccount>>>,
+    pub vault_token_account: Option<Box<InterfaceAccount<TokenAccount>>>,
 
     /// CHECK: new vault ATA, created by this instruction
     #[account(mut)]
-    pub new_vault_token_account: Option<UncheckedAccount<'info>>,
+    pub new_vault_token_account: Option<UncheckedAccount>,
 
     #[account(mut)]
-    pub mint: Option<Box<InterfaceAccount<'info, Mint>>>,
+    pub mint: Option<Box<InterfaceAccount<Mint>>>,
 
     #[account(
         mut,
         close = authority,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            mint.as_ref().unwrap().key().as_ref(),
+            estate.address().as_ref(),
+            mint.as_ref().unwrap().address().as_ref(),
         ],
         bump = asset_record.bump,
     )]
-    pub asset_record: Option<Box<Account<'info, AssetRecord>>>,
+    pub asset_record: Option<Box<BorshAccount<AssetRecord>>>,
 
     #[account(
         init,
@@ -78,23 +78,28 @@ pub struct UpdateHeir<'info> {
         space = AssetRecord::LEN,
         seeds = [
             AssetRecord::SEED,
-            new_estate.key().as_ref(),
-            mint.as_ref().unwrap().key().as_ref(),
+            new_estate.address().as_ref(),
+            mint.as_ref().unwrap().address().as_ref(),
         ],
         bump,
     )]
-    pub new_asset_record: Option<Box<Account<'info, AssetRecord>>>,
+    pub new_asset_record: Option<Box<BorshAccount<AssetRecord>>>,
 
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *token_program.address() == Token::id()
+            || *token_program.address() == Token2022::id()
+    )]
+    pub token_program: UncheckedAccount,
+    pub associated_token_program: Program<AssociatedToken>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> UpdateHeir<'info> {
-    pub fn update_heir_handler(ctx: Context<UpdateHeir>) -> Result<()> {
+impl UpdateHeir {
+    pub fn update_heir_handler(ctx: &mut Context<UpdateHeir>) -> Result<()> {
         ctx.accounts.validate()?;
 
-        let is_first_call = ctx.accounts.new_estate.authority == Pubkey::default();
+        let is_first_call = ctx.accounts.new_estate.authority == Address::default();
 
         if is_first_call {
             ctx.accounts
@@ -113,11 +118,11 @@ impl<'info> UpdateHeir<'info> {
         if all_tokens_migrated {
             ctx.accounts.new_estate.is_migrating = false;
 
-            let authority_info = ctx.accounts.authority.to_account_info();
-            let new_vault_info = ctx.accounts.new_vault.to_account_info();
+            let authority_view = ctx.accounts.authority.account();
+            let new_vault_view = ctx.accounts.new_vault.account();
 
-            close_pda(ctx.accounts.estate.to_account_info(), authority_info)?;
-            close_pda(ctx.accounts.vault.to_account_info(), new_vault_info)?;
+            ctx.accounts.estate.close(*authority_view)?;
+            ctx.accounts.vault.close(*new_vault_view)?;
         }
 
         Ok(())
@@ -127,14 +132,14 @@ impl<'info> UpdateHeir<'info> {
         let now = Clock::get()?.unix_timestamp;
         require!(now >= self.estate.paused_until, HeirloomError::EstatePaused);
 
-        let is_first_call = self.new_estate.authority == Pubkey::default();
+        let is_first_call = self.new_estate.authority == Address::default();
 
         if !is_first_call {
             // Subsequent calls: ensure new_estate belongs to this authority and is
             // mid-migration (is_migrating), not an unrelated live estate.
             require_keys_eq!(
                 self.new_estate.authority,
-                self.authority.key(),
+                *self.authority.address(),
                 HeirloomError::Unauthorized
             );
             require!(self.new_estate.is_migrating, HeirloomError::InvalidAccount);
@@ -157,22 +162,26 @@ impl<'info> UpdateHeir<'info> {
                 .ok_or(HeirloomError::MissingTokenAccounts)?;
 
             require_keys_eq!(
-                vault_ta.owner,
-                self.vault.key(),
+                vault_ta.owner(),
+                self.vault.address(),
                 HeirloomError::InvalidAccount
             );
-            require_keys_eq!(vault_ta.mint, mint_acc.key(), HeirloomError::MintMismatch);
+            require_keys_eq!(
+                vault_ta.mint(),
+                mint_acc.address(),
+                HeirloomError::MintMismatch
+            );
         }
 
         Ok(())
     }
 
     pub fn set_new_account_data(&mut self, new_estate_bump: u8, new_vault_bump: u8) -> Result<()> {
-        let authority_key = self.authority.key();
-        let new_heir_key = self.new_heir.key();
+        let authority_key = self.authority.address();
+        let new_heir_key = self.new_heir.address();
 
-        self.new_estate.authority = authority_key;
-        self.new_estate.heir = new_heir_key;
+        self.new_estate.authority = *authority_key;
+        self.new_estate.heir = *new_heir_key;
         self.new_estate.heartbeat_interval = self.estate.heartbeat_interval;
         self.new_estate.grace_period = self.estate.grace_period;
         self.new_estate.last_heartbeat = self.estate.last_heartbeat;
@@ -187,44 +196,47 @@ impl<'info> UpdateHeir<'info> {
         // Block claim on new estate until migration is complete.
         self.new_estate.is_migrating = true;
 
-        self.new_vault.estate = self.new_estate.key();
+        // update vault
+        self.new_vault.estate = *self.new_estate.address();
         self.new_vault.bump = new_vault_bump;
 
         Ok(())
     }
 
     pub fn migrate_token(&mut self, new_asset_record_bump: Option<u8>) -> Result<()> {
-        let Some(vault_ta) = self.vault_token_account.as_ref() else {
+        let Some(mut vault_ta) = self.vault_token_account.take() else {
             // No token to migrate on this call — final SOL move is handled
             // by closing old_vault to new_vault in the handler.
             return Ok(());
         };
 
+        let authority_addr_arr = *self.authority.address().as_array();
+        let heir_addr_arr = *self.heir.address().as_array();
         let vault_seeds: &[&[u8]] = &[
             b"vault",
-            self.authority.key.as_ref(),
-            self.heir.key.as_ref(),
+            authority_addr_arr.as_ref(),
+            heir_addr_arr.as_ref(),
             &[self.vault.bump],
         ];
         let signer_seeds = &[vault_seeds];
 
-        let new_vault_ta = self.new_vault_token_account.as_ref().unwrap();
-        let token_program_addr = self.token_program.key();
+        let mut new_vault_ta = self.new_vault_token_account.take().unwrap();
+        let token_program_addr = self.token_program.address();
         let mint = self.mint.as_ref().unwrap();
-        let amount = vault_ta.amount;
+        let amount = vault_ta.amount();
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
         // Create new vault ATA idempotently.
         let cpi_accounts = associated_token::Create {
-            payer: self.authority.to_account_info(),
-            associated_token: new_vault_ta.to_account_info(),
-            authority: self.new_vault.to_account_info(),
-            mint: mint.to_account_info(),
-            system_program: self.system_program.to_account_info(),
-            token_program: self.token_program.to_account_info(),
+            payer: self.authority.to_cpi_handle_mut(),
+            associated_token: new_vault_ta.to_cpi_handle_mut(),
+            authority: self.new_vault.to_cpi_handle(),
+            mint: mint.to_cpi_handle(),
+            system_program: self.system_program.to_cpi_handle(),
+            token_program: self.token_program.to_cpi_handle(),
         };
         associated_token::create_idempotent(CpiContext::new(
-            self.associated_token_program.key(),
+            self.associated_token_program.address(),
             cpi_accounts,
         ))?;
 
@@ -232,22 +244,22 @@ impl<'info> UpdateHeir<'info> {
         let transfer_ctx = CpiContext::new_with_signer(
             token_program_addr,
             TransferChecked {
-                from: vault_ta.to_account_info(),
-                mint: mint.to_account_info(),
-                to: new_vault_ta.to_account_info(),
-                authority: self.vault.to_account_info(),
+                from: vault_ta.to_cpi_handle_mut(),
+                mint: mint.to_cpi_handle(),
+                to: new_vault_ta.to_cpi_handle_mut(),
+                authority: self.vault.to_cpi_handle(),
             },
             signer_seeds,
         );
-        token_interface::transfer_checked(transfer_ctx, amount, mint.decimals)?;
+        token_interface::transfer_checked(transfer_ctx, amount, mint.decimals())?;
 
         // Close old ATA; rent goes back to authority.
         let close_ctx = CpiContext::new_with_signer(
             token_program_addr,
             token_interface::CloseAccount {
-                account: vault_ta.to_account_info(),
-                destination: self.authority.to_account_info(),
-                authority: self.vault.to_account_info(),
+                account: vault_ta.to_cpi_handle_mut(),
+                destination: self.authority.to_cpi_handle_mut(),
+                authority: self.vault.to_cpi_handle(),
             },
             signer_seeds,
         );
@@ -257,6 +269,10 @@ impl<'info> UpdateHeir<'info> {
 
         let unclaimed_assets_count = self.estate.claimable_assets.saturating_sub(1);
         self.estate.claimable_assets = unclaimed_assets_count;
+
+        // put back the taken vault_ta. Leaving it None here would make
+        // `vault_token_account` None, closing the estate/vault a call early.
+        self.vault_token_account = Some(vault_ta);
 
         Ok(())
     }

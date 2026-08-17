@@ -176,16 +176,21 @@ export type InitializeAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
+  /** CHECK: optional delegate pubkey */
   delegate?: Address<TAccountDelegate>;
+  /** CHECK: optional hot-signer pubkey */
   hbSigner?: Address<TAccountHbSigner>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
+  /** CHECK: vault ATA, created by this instruction if needed */
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   /** Marker PDA proving mint is registered as claimable asset for current estate */
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -352,16 +357,21 @@ export type InitializeInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
+  /** CHECK: optional delegate pubkey */
   delegate?: Address<TAccountDelegate>;
+  /** CHECK: optional hot-signer pubkey */
   hbSigner?: Address<TAccountHbSigner>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
+  /** CHECK: vault ATA, created by this instruction if needed */
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   /** Marker PDA proving mint is registered as claimable asset for current estate */
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -505,16 +515,21 @@ export type ParsedInitializeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     authority: TAccountMetas[0];
+    /** CHECK: heir pubkey, stored in estate */
     heir: TAccountMetas[1];
+    /** CHECK: optional delegate pubkey */
     delegate?: TAccountMetas[2] | undefined;
+    /** CHECK: optional hot-signer pubkey */
     hbSigner?: TAccountMetas[3] | undefined;
     authorityTokenAccount?: TAccountMetas[4] | undefined;
     estate: TAccountMetas[5];
     vault: TAccountMetas[6];
+    /** CHECK: vault ATA, created by this instruction if needed */
     vaultTokenAccount?: TAccountMetas[7] | undefined;
     mint?: TAccountMetas[8] | undefined;
     /** Marker PDA proving mint is registered as claimable asset for current estate */
     assetRecord?: TAccountMetas[9] | undefined;
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     tokenProgram: TAccountMetas[10];
     associatedTokenProgram: TAccountMetas[11];
     systemProgram: TAccountMetas[12];

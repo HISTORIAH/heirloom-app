@@ -3,27 +3,27 @@ use anchor_lang::prelude::*;
 use crate::{error::HeirloomError, helpers::validate_interval, Estate};
 
 #[derive(Accounts)]
-pub struct UpdateField<'info> {
+pub struct UpdateField {
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub authority: Signer,
 
     /// CHECK: heir verified via estate PDA derivation
     #[account(address = estate.heir)]
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, estate.authority.as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, estate.authority.as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
-    pub system_program: Program<'info, System>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> UpdateField<'info> {
+impl UpdateField {
     pub fn update_fields_handler(
-        ctx: Context<UpdateField>,
+        ctx: &mut Context<UpdateField>,
         heartbeat_interval: Option<i64>,
         grace_period: Option<i64>,
         pause_duration: Option<i64>,
@@ -32,7 +32,7 @@ impl<'info> UpdateField<'info> {
         ctx.accounts.validate()?;
 
         let now = Clock::get()?.unix_timestamp;
-        let authority_key = ctx.accounts.authority.key();
+        let authority_key = ctx.accounts.authority.address();
         let estate = &mut ctx.accounts.estate;
 
         estate.last_heartbeat = now;
@@ -42,7 +42,7 @@ impl<'info> UpdateField<'info> {
             estate.paused_until = 0;
         }
 
-        if authority_key == estate.authority {
+        if *authority_key == estate.authority {
             if let Some(hi) = heartbeat_interval {
                 validate_interval(hi)?;
                 estate.heartbeat_interval = hi;
@@ -65,11 +65,11 @@ impl<'info> UpdateField<'info> {
     }
 
     pub fn validate(&self) -> Result<()> {
-        let signer = self.authority.key();
+        let signer = *self.authority.address();
         if signer != self.estate.authority {
             match self.estate.hb_signer {
                 Some(hb) if signer == hb => {}
-                _ => return err!(HeirloomError::Unauthorized),
+                _ => return Err(HeirloomError::Unauthorized.into()),
             }
         }
 
