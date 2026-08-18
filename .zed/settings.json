@@ -1,0 +1,25 @@
+{
+  "languages": {
+    "TypeScript": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": true
+      }
+    },
+    "TSX": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": true
+      }
+    },
+    "JavaScript": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": true
+      }
+    },
+  }
+}

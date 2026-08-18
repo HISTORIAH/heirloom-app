@@ -170,7 +170,7 @@ console.log(estateAccount.lastHeartbeat, estateAccount.isClaimed, estateAccount.
 ## Program Address
 
 ```
-heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz 
+heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg 
 ```
 
 ## License

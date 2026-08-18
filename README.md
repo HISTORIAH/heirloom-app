@@ -6,7 +6,7 @@ A Solana-native inheritance protocol. Lock assets into a programmatic estate tha
 
 | Program | ID | Status |
 |---------|----|--------|
-| `heirloom` | `heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz` | devnet |
+| `heirloom` | `heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg` | devnet |
 | `heirloom-ika` | `9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf` | devnet |
 
 ## Quick start
