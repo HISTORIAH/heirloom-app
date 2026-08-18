@@ -5,9 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use solana_address::{address, Address};
+  pub(crate) mod r#deposit_type;
 
-
-  /// `heirloom` program ID.
-  pub const HEIRLOOM_ID: Address = address!("heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg");
+  pub use self::r#deposit_type::*;
 

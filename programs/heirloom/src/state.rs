@@ -102,10 +102,28 @@ impl AssetRecord {
     + 2; // pending_boosted_withdrawals
 }
 
-#[derive(SchemaWrite, SchemaRead, IdlType, Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(SchemaWrite, SchemaRead, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum DepositType {
     #[wincode(tag = 0)]
     Protected,
     #[wincode(tag = 1)]
     Boosted,
+}
+
+#[cfg(feature = "idl-build")]
+impl anchor_lang::IdlAccountType for DepositType {
+    fn __idl_type_def() -> Option<&'static str> {
+        Some(
+            r#"{"name":"DepositType","type":{"kind":"enum","variants":[{"name":"Protected"},{"name":"Boosted"}]}}"#,
+        )
+    }
+
+    fn __register_idl_deps(
+        _accounts: &mut ::anchor_lang::__alloc::vec::Vec<&'static str>,
+        types: &mut ::anchor_lang::__alloc::vec::Vec<&'static str>,
+    ) {
+        if let Some(t) = <Self as anchor_lang::IdlAccountType>::__idl_type_def() {
+            types.push(t);
+        }
+    }
 }

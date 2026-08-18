@@ -21,7 +21,7 @@ export async function findAssetRecordPda(
   config: { programAddress?: Address | undefined } = {},
 ): Promise<ProgramDerivedAddress> {
   const {
-    programAddress = "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz" as Address<"heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz">,
+    programAddress = "heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg" as Address<"heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz">,
   } = config;
   return await getProgramDerivedAddress({
     programAddress,
