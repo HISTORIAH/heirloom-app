@@ -20,6 +20,7 @@ import {
   type ClientWithRpc,
   type ClientWithTransactionPlanning,
   type ClientWithTransactionSending,
+  type ExtendedClient,
   type GetAccountInfoApi,
   type GetMultipleAccountsApi,
   type Instruction,
@@ -404,6 +405,9 @@ export type HeirloomPlugin = {
   accounts: HeirloomPluginAccounts;
   instructions: HeirloomPluginInstructions;
   pdas: HeirloomPluginPdas;
+  identifyAccount: typeof identifyHeirloomAccount;
+  identifyInstruction: typeof identifyHeirloomInstruction;
+  parseInstruction: typeof parseHeirloomInstruction;
 };
 
 export type HeirloomPluginAccounts = {
@@ -463,7 +467,7 @@ export type HeirloomPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMu
 export function heirloomProgram() {
   return <T extends HeirloomPluginRequirements>(
     client: T,
-  ): Omit<T, "heirloom"> & { heirloom: HeirloomPlugin } => {
+  ): ExtendedClient<T, { heirloom: HeirloomPlugin }> => {
     return extendClient(client, {
       heirloom: <HeirloomPlugin>{
         accounts: {
@@ -502,6 +506,9 @@ export function heirloomProgram() {
           newEstate: findNewEstatePda,
           newVault: findNewVaultPda,
         },
+        identifyAccount: identifyHeirloomAccount,
+        identifyInstruction: identifyHeirloomInstruction,
+        parseInstruction: parseHeirloomInstruction,
       },
     });
   };

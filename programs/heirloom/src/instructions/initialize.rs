@@ -135,7 +135,7 @@ impl Initialize {
                 );
                 require!(
                     authority_ta.amount() >= amount,
-                    HeirloomError::InsufficientVaultBalance
+                    HeirloomError::InsufficientVaultBalance // misleading err name
                 );
             }
             None => {
@@ -147,7 +147,7 @@ impl Initialize {
                 }
                 require!(
                     self.authority.get_lamports() >= amount,
-                    HeirloomError::InsufficientVaultBalance
+                    HeirloomError::InsufficientVaultBalance // misleading err name
                 );
             }
         }
