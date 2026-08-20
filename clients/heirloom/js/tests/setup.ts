@@ -1,3 +1,22 @@
+export async function genDelegateDeferIx(input: {
+  client: LiteSvmClient;
+  delegate: KeyPairSigner;
+  authority: Address;
+  heir: Address;
+}) {
+  const { client, delegate, authority, heir } = input;
+
+  const [estate] = await findEstatePda({ authority, heir });
+
+  const ix = await client.heirloom.instructions.delegateDefer({
+    delegate,
+    authority,
+    heir,
+    estate,
+  });
+
+  return { ix, estate };
+}
 import path from "node:path";
 
 import {
@@ -207,9 +226,19 @@ export async function genInitSolEstateIx(input: {
   gracePeriod?: bigint;
   pauseDuration?: bigint;
   hbSigner?: Address;
+  delegate?: Address;
 }) {
-  let { client, authority, heir, amount, heartbeatInterval, gracePeriod, pauseDuration, hbSigner } =
-    input;
+  let {
+    client,
+    authority,
+    heir,
+    amount,
+    heartbeatInterval,
+    gracePeriod,
+    pauseDuration,
+    hbSigner,
+    delegate,
+  } = input;
 
   const { estate, vault } = await deriveEstateVaultPDAs({
     authority: authority.address,
@@ -219,6 +248,7 @@ export async function genInitSolEstateIx(input: {
   let ix = await client.heirloom.instructions.initialize({
     authority: authority,
     heir: heir.address,
+    delegate,
     heartbeatInterval: heartbeatInterval ?? 0,
     gracePeriod: gracePeriod ?? 0,
     pauseDuration: pauseDuration ?? 0,
