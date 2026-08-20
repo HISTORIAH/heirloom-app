@@ -85,7 +85,7 @@ test("it migrates multi-asset vault (sol + 2 tokens) to a new heir", async () =>
     vaultTokenAccount: oldVaultTokenAccount2,
   });
 
-  console.table({oldVault, newVault, oldEstate, newEstate}) // ! debug statement
+  console.table({ oldVault, newVault, oldEstate, newEstate }); // ! debug statement
 
   // Final SOL call: closes old PDAs, SOL moves to new_vault (claimable_assets: 1 → close).
   await sendUpdateHeir(client, {
@@ -93,12 +93,7 @@ test("it migrates multi-asset vault (sol + 2 tokens) to a new heir", async () =>
     oldHeir: oldHeir.address,
   });
 
-  const [
-    oldEstateInfo,
-    oldVaultInfo,
-    newEstateData,
-    newVaultBalance,
-  ] = await Promise.all([
+  const [oldEstateInfo, oldVaultInfo, newEstateData, newVaultBalance] = await Promise.all([
     client.rpc.getAccountInfo(oldEstate).send(),
     client.rpc.getAccountInfo(oldVault).send(),
     fetchEstate(client.rpc, newEstate),
