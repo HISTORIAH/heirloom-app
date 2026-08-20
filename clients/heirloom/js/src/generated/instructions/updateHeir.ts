@@ -147,17 +147,21 @@ export type UpdateHeirAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: current heir verified via estate */
   heir: Address<TAccountHeir>;
+  /** CHECK: new heir pubkey */
   newHeir: Address<TAccountNewHeir>;
   estate?: Address<TAccountEstate>;
   newEstate?: Address<TAccountNewEstate>;
   vault?: Address<TAccountVault>;
   newVault?: Address<TAccountNewVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  /** CHECK: new vault ATA, created by this instruction */
   newVaultTokenAccount?: Address<TAccountNewVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   assetRecord?: Address<TAccountAssetRecord>;
   newAssetRecord?: Address<TAccountNewAssetRecord>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -342,17 +346,21 @@ export type UpdateHeirInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: current heir verified via estate */
   heir: Address<TAccountHeir>;
+  /** CHECK: new heir pubkey */
   newHeir: Address<TAccountNewHeir>;
   estate: Address<TAccountEstate>;
   newEstate: Address<TAccountNewEstate>;
   vault: Address<TAccountVault>;
   newVault: Address<TAccountNewVault>;
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
+  /** CHECK: new vault ATA, created by this instruction */
   newVaultTokenAccount?: Address<TAccountNewVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   assetRecord?: Address<TAccountAssetRecord>;
   newAssetRecord?: Address<TAccountNewAssetRecord>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -500,17 +508,21 @@ export type ParsedUpdateHeirInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     authority: TAccountMetas[0];
+    /** CHECK: current heir verified via estate */
     heir: TAccountMetas[1];
+    /** CHECK: new heir pubkey */
     newHeir: TAccountMetas[2];
     estate: TAccountMetas[3];
     newEstate: TAccountMetas[4];
     vault: TAccountMetas[5];
     newVault: TAccountMetas[6];
     vaultTokenAccount?: TAccountMetas[7] | undefined;
+    /** CHECK: new vault ATA, created by this instruction */
     newVaultTokenAccount?: TAccountMetas[8] | undefined;
     mint?: TAccountMetas[9] | undefined;
     assetRecord?: TAccountMetas[10] | undefined;
     newAssetRecord?: TAccountMetas[11] | undefined;
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     tokenProgram: TAccountMetas[12];
     associatedTokenProgram: TAccountMetas[13];
     systemProgram: TAccountMetas[14];

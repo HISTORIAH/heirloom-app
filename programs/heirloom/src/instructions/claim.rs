@@ -1,52 +1,52 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
+    token_interface::{self, Mint, TokenAccount, TransferChecked},
 };
 
 use crate::{
     constants::{CLAIM_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, close_pda},
+    helpers::calculate_distribution,
     AssetRecord, Estate, Vault,
 };
 
 #[derive(Accounts)]
-pub struct Claim<'info> {
+pub struct Claim {
     #[account(mut, address = estate.heir @ HeirloomError::Unauthorized)]
-    pub heir: Signer<'info>,
+    pub heir: Signer,
 
     /// CHECK: authority verified via estate.authority
     #[account(address = estate.authority)]
-    pub authority: UncheckedAccount<'info>,
+    pub authority: UncheckedAccount,
 
     /// CHECK: optional delegate
     #[account(mut)]
-    pub delegate: Option<UncheckedAccount<'info>>,
+    pub delegate: Option<UncheckedAccount>,
 
     /// CHECK: heir's ATA, created idempotently if needed
     #[account(mut)]
-    pub heir_token_account: Option<UncheckedAccount<'info>>,
+    pub heir_token_account: Option<UncheckedAccount>,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Account<Vault>,
 
     #[account(mut)]
-    pub vault_token_account: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub vault_token_account: Option<InterfaceAccount<TokenAccount>>,
 
     #[account(mut)]
-    pub mint: Option<InterfaceAccount<'info, Mint>>,
+    pub mint: Option<InterfaceAccount<Mint>>,
 
     /// Proves `mint` was actually registered as a claimable asset for this
     /// estate, rather than an arbitrary vault-owned token account.
@@ -55,38 +55,48 @@ pub struct Claim<'info> {
         close = heir,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            mint.as_ref().unwrap().key().as_ref(),
+            estate.address().as_ref(),
+            mint.as_ref().unwrap().address().as_ref(),
         ],
         bump = asset_record.bump,
     )]
-    pub asset_record: Option<Account<'info, AssetRecord>>,
+    pub asset_record: Option<BorshAccount<AssetRecord>>,
 
     /// CHECK: treasury address
     #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
-    pub treasury: UncheckedAccount<'info>,
+    pub treasury: UncheckedAccount,
 
     /// CHECK: treasury ATA, created idempotently if needed
     #[account(mut)]
-    pub treasury_token_account: Option<UncheckedAccount<'info>>,
+    pub treasury_token_account: Option<UncheckedAccount>,
 
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *token_program.address() == Token::id()
+            || *token_program.address() == Token2022::id()
+    )]
+    pub token_program: UncheckedAccount,
+    pub associated_token_program: Program<AssociatedToken>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> Claim<'info> {
-    pub fn claim_handler(ctx: Context<Claim>) -> Result<()> {
+impl Claim {
+    pub fn claim_handler(ctx: &mut Context<Claim>) -> Result<()> {
         ctx.accounts.validate()?;
+
         ctx.accounts.transfer_assets()?;
 
-        let heir_info = ctx.accounts.heir.to_account_info();
+        let heir_view = ctx.accounts.heir.account().clone();
         let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
         ctx.accounts.estate.claimable_assets = remaining;
 
         if remaining == 0 {
-            close_pda(ctx.accounts.estate.to_account_info(), heir_info.clone())?;
-            close_pda(ctx.accounts.vault.to_account_info(), heir_info)?;
+            ctx.accounts.estate.close(heir_view.clone())?;
+            ctx.accounts.vault.close(heir_view)?;
+            msg!(
+                "DEBUG: vault bal after close {}",
+                ctx.accounts.vault.get_lamports()
+            ); // ! DEBUG STATEMENT
         }
 
         Ok(())
@@ -98,7 +108,7 @@ impl<'info> Claim<'info> {
         {
             require_keys_eq!(
                 stored_delegate,
-                delegate_acc.key(),
+                *delegate_acc.address(),
                 HeirloomError::MismatchedAddress
             );
         }
@@ -119,7 +129,7 @@ impl<'info> Claim<'info> {
         match self.heir_token_account.as_ref() {
             Some(_) => {
                 if self.vault_token_account.is_none() || self.mint.is_none() {
-                    return err!(HeirloomError::MissingTokenAccounts);
+                    return Err(HeirloomError::MissingTokenAccounts.into());
                 }
                 let _treasury_ta = self
                     .treasury_token_account
@@ -132,12 +142,15 @@ impl<'info> Claim<'info> {
 
                 let vault_ta = self.vault_token_account.as_ref().unwrap();
                 require_keys_eq!(
-                    vault_ta.owner,
-                    self.vault.key(),
+                    vault_ta.owner(),
+                    self.vault.address(),
                     HeirloomError::InvalidAccount
                 );
 
-                require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
+                require!(
+                    vault_ta.amount() > 0,
+                    HeirloomError::InsufficientVaultBalance
+                );
 
                 let asset_record = self.asset_record.as_ref().unwrap();
                 require!(
@@ -151,7 +164,7 @@ impl<'info> Claim<'info> {
                     HeirloomError::TokensFirst
                 );
                 require!(
-                    self.vault.to_account_info().lamports() > 0,
+                    self.vault.get_lamports() > 0,
                     HeirloomError::InsufficientVaultBalance
                 );
             }
@@ -160,35 +173,37 @@ impl<'info> Claim<'info> {
         Ok(())
     }
 
-    pub fn transfer_assets(&self) -> Result<()> {
-        // let vault_bump = claim_bumps.vault;
+    pub fn transfer_assets(&mut self) -> Result<()> {
+        let authority_addr_arr = *self.authority.address().as_array(); // [u8; 32], owned
+        let heir_addr_arr = *self.heir.address().as_array();
+
         let vault_seeds: &[&[u8]] = &[
             b"vault",
-            self.authority.key.as_ref(),
-            self.heir.key.as_ref(),
+            authority_addr_arr.as_ref(),
+            heir_addr_arr.as_ref(),
             &[self.vault.bump],
         ];
         let signer_seeds = &[vault_seeds];
-        let token_program_addr = self.token_program.key();
-        let associated_token_program_addr = self.associated_token_program.key();
+        let token_program_addr = self.token_program.address();
+        let associated_token_program_addr = self.associated_token_program.address();
 
-        match self.heir_token_account.as_ref() {
-            Some(heir_ta) => {
-                let treasury_ta = self.treasury_token_account.as_ref().unwrap();
-                let vault_ta = self.vault_token_account.as_ref().unwrap();
+        match self.heir_token_account.take() {
+            Some(mut heir_ta) => {
+                let mut treasury_ta = self.treasury_token_account.take().unwrap();
+                let mut vault_ta = self.vault_token_account.take().unwrap();
                 let mint = self.mint.as_ref().unwrap();
-                let amount = vault_ta.amount;
+                let amount = vault_ta.amount();
 
                 let (protocol_fee, heir_payout) = calculate_distribution(amount, CLAIM_FEE_BPS)?;
 
                 if protocol_fee > 0 {
                     let cpi_accounts = associated_token::Create {
-                        payer: self.heir.to_account_info(),
-                        associated_token: treasury_ta.to_account_info(),
-                        authority: self.treasury.to_account_info(),
-                        mint: mint.to_account_info(),
-                        system_program: self.system_program.to_account_info(),
-                        token_program: self.token_program.to_account_info(),
+                        payer: self.heir.to_cpi_handle_mut(),
+                        associated_token: treasury_ta.to_cpi_handle_mut(),
+                        authority: self.treasury.to_cpi_handle(),
+                        mint: mint.to_cpi_handle(),
+                        system_program: self.system_program.to_cpi_handle(),
+                        token_program: self.token_program.to_cpi_handle(),
                     };
 
                     let create_idempotent_ctx =
@@ -198,29 +213,30 @@ impl<'info> Claim<'info> {
 
                     // transfer
                     let cpi_accounts = TransferChecked {
-                        from: vault_ta.to_account_info(),
-                        mint: mint.to_account_info(),
-                        to: treasury_ta.to_account_info(),
-                        authority: self.vault.to_account_info(),
+                        from: vault_ta.to_cpi_handle_mut(),
+                        mint: mint.to_cpi_handle(),
+                        to: treasury_ta.to_cpi_handle_mut(),
+                        authority: self.vault.to_cpi_handle(),
                     };
 
                     let transfer_ctx =
                         CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
 
-                    token_interface::transfer_checked(transfer_ctx, protocol_fee, mint.decimals)?;
+                    token_interface::transfer_checked(transfer_ctx, protocol_fee, mint.decimals())?;
                 }
 
                 // heir
+                let heir_handle = self.heir.to_cpi_handle_mut();
                 let cpi_accounts = associated_token::Create {
-                    payer: self.heir.to_account_info(),
-                    associated_token: heir_ta.to_account_info(),
-                    authority: self.heir.to_account_info(),
-                    mint: mint.to_account_info(),
-                    system_program: self.system_program.to_account_info(),
-                    token_program: self.token_program.to_account_info(),
+                    payer: heir_handle,
+                    associated_token: heir_ta.to_cpi_handle_mut(),
+                    authority: heir_handle.into_readonly(),
+                    mint: mint.to_cpi_handle(),
+                    system_program: self.system_program.to_cpi_handle(),
+                    token_program: self.token_program.to_cpi_handle(),
                 };
 
-                let token_program_addr = self.token_program.key();
+                let token_program_addr = self.token_program.address();
                 let create_idempotent_ctx =
                     CpiContext::new(associated_token_program_addr, cpi_accounts);
 
@@ -228,22 +244,22 @@ impl<'info> Claim<'info> {
 
                 // transfer
                 let cpi_accounts = TransferChecked {
-                    from: vault_ta.to_account_info(),
-                    mint: mint.to_account_info(),
-                    to: heir_ta.to_account_info(),
-                    authority: self.vault.to_account_info(),
+                    from: vault_ta.to_cpi_handle_mut(),
+                    mint: mint.to_cpi_handle(),
+                    to: heir_ta.to_cpi_handle_mut(),
+                    authority: self.vault.to_cpi_handle(),
                 };
 
                 let transfer_ctx =
                     CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
 
-                token_interface::transfer_checked(transfer_ctx, heir_payout, mint.decimals)?;
+                token_interface::transfer_checked(transfer_ctx, heir_payout, mint.decimals())?;
 
                 // close accounts
                 let close_cpi_accounts = token_interface::CloseAccount {
-                    account: vault_ta.to_account_info(),
-                    destination: self.heir.to_account_info(),
-                    authority: self.vault.to_account_info(),
+                    account: vault_ta.to_cpi_handle_mut(),
+                    destination: self.heir.to_cpi_handle_mut(),
+                    authority: self.vault.to_cpi_handle(),
                 };
                 let close_ctx = CpiContext::new_with_signer(
                     token_program_addr,
@@ -254,13 +270,11 @@ impl<'info> Claim<'info> {
                 token_interface::close_account(close_ctx)?;
             }
             None => {
-                let vault_info = self.vault.to_account_info();
-                let treasury_info = self.treasury.to_account_info();
-                let vault_lamports = vault_info.lamports();
+                let vault_lamports = self.vault.get_lamports();
                 let (protocol_fee, _) = calculate_distribution(vault_lamports, CLAIM_FEE_BPS)?;
 
-                vault_info.sub_lamports(protocol_fee)?;
-                treasury_info.add_lamports(protocol_fee)?;
+                self.vault.sub_lamports(protocol_fee)?;
+                self.treasury.add_lamports(protocol_fee)?;
 
                 // NOTE: Heir payout happens implicitly via `close_pda` helper
             }

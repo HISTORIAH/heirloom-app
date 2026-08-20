@@ -16,7 +16,9 @@ pub struct UpdateField {
       
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: heir verified via estate PDA derivation
+
+    
               
           pub heir: solana_address::Address,
           
@@ -132,7 +134,8 @@ impl UpdateFieldBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: heir verified via estate PDA derivation
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -208,7 +211,9 @@ impl UpdateFieldBuilder {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: heir verified via estate PDA derivation
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -226,7 +231,9 @@ pub struct UpdateFieldCpi<'a, 'b> {
       
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: heir verified via estate PDA derivation
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -294,8 +301,8 @@ impl<'a, 'b> UpdateFieldCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let mut data = UpdateFieldInstructionData::new().try_to_vec().unwrap();
@@ -357,7 +364,8 @@ impl<'a, 'b> UpdateFieldCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: heir verified via estate PDA derivation
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self

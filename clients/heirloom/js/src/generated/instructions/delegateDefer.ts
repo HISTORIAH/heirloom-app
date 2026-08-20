@@ -106,7 +106,9 @@ export type DelegateDeferAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   delegate: TransactionSigner<TAccountDelegate>;
+  /** CHECK: authority verified via estate */
   authority: Address<TAccountAuthority>;
+  /** CHECK: heir verified via estate */
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -195,7 +197,9 @@ export type DelegateDeferInput<
   TAccountSystemProgram extends string = string,
 > = {
   delegate: TransactionSigner<TAccountDelegate>;
+  /** CHECK: authority verified via estate */
   authority: Address<TAccountAuthority>;
+  /** CHECK: heir verified via estate */
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -275,7 +279,9 @@ export type ParsedDelegateDeferInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     delegate: TAccountMetas[0];
+    /** CHECK: authority verified via estate */
     authority: TAccountMetas[1];
+    /** CHECK: heir verified via estate */
     heir: TAccountMetas[2];
     estate: TAccountMetas[3];
     systemProgram: TAccountMetas[4];

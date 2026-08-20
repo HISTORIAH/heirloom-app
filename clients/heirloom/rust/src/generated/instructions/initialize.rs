@@ -16,13 +16,19 @@ pub struct Initialize {
       
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: heir pubkey, stored in estate
+
+    
               
           pub heir: solana_address::Address,
-          
+                /// CHECK: optional delegate pubkey
+
+    
               
           pub delegate: Option<solana_address::Address>,
-          
+                /// CHECK: optional hot-signer pubkey
+
+    
               
           pub hb_signer: Option<solana_address::Address>,
           
@@ -34,7 +40,9 @@ pub struct Initialize {
           
               
           pub vault: solana_address::Address,
-          
+                /// CHECK: vault ATA, created by this instruction if needed
+
+    
               
           pub vault_token_account: Option<solana_address::Address>,
           
@@ -45,7 +53,9 @@ pub struct Initialize {
     
               
           pub asset_record: Option<solana_address::Address>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: solana_address::Address,
           
@@ -259,18 +269,21 @@ impl InitializeBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: heir pubkey, stored in estate
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
     }
             /// `[optional account]`
+/// CHECK: optional delegate pubkey
 #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<solana_address::Address>) -> &mut Self {
                         self.delegate = delegate;
                     self
     }
             /// `[optional account]`
+/// CHECK: optional hot-signer pubkey
 #[inline(always)]
     pub fn hb_signer(&mut self, hb_signer: Option<solana_address::Address>) -> &mut Self {
                         self.hb_signer = hb_signer;
@@ -293,6 +306,7 @@ impl InitializeBuilder {
                     self
     }
             /// `[optional account]`
+/// CHECK: vault ATA, created by this instruction if needed
 #[inline(always)]
     pub fn vault_token_account(&mut self, vault_token_account: Option<solana_address::Address>) -> &mut Self {
                         self.vault_token_account = vault_token_account;
@@ -312,6 +326,7 @@ impl InitializeBuilder {
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+/// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
                         self.token_program = Some(token_program);
@@ -400,13 +415,19 @@ impl InitializeBuilder {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: heir pubkey, stored in estate
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: optional delegate pubkey
+
+      
                     
               pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: optional hot-signer pubkey
+
+      
                     
               pub hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
@@ -418,7 +439,9 @@ impl InitializeBuilder {
                 
                     
               pub vault: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: vault ATA, created by this instruction if needed
+
+      
                     
               pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
@@ -429,7 +452,9 @@ impl InitializeBuilder {
       
                     
               pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -447,13 +472,19 @@ pub struct InitializeCpi<'a, 'b> {
       
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: heir pubkey, stored in estate
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: optional delegate pubkey
+
+    
               
           pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: optional hot-signer pubkey
+
+    
               
           pub hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
           
@@ -465,7 +496,9 @@ pub struct InitializeCpi<'a, 'b> {
           
               
           pub vault: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: vault ATA, created by this instruction if needed
+
+    
               
           pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
@@ -476,7 +509,9 @@ pub struct InitializeCpi<'a, 'b> {
     
               
           pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
@@ -631,8 +666,8 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let mut data = InitializeInstructionData::new().try_to_vec().unwrap();
@@ -734,18 +769,21 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: heir pubkey, stored in estate
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
     }
       /// `[optional account]`
+/// CHECK: optional delegate pubkey
 #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.delegate = delegate;
                     self
     }
       /// `[optional account]`
+/// CHECK: optional hot-signer pubkey
 #[inline(always)]
     pub fn hb_signer(&mut self, hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.hb_signer = hb_signer;
@@ -768,6 +806,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                     self
     }
       /// `[optional account]`
+/// CHECK: vault ATA, created by this instruction if needed
 #[inline(always)]
     pub fn vault_token_account(&mut self, vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.vault_token_account = vault_token_account;
@@ -786,7 +825,8 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                         self.instruction.asset_record = asset_record;
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn token_program(&mut self, token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.token_program = Some(token_program);
                     self

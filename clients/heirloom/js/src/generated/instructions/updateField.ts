@@ -136,6 +136,7 @@ export type UpdateFieldInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir verified via estate PDA derivation */
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -211,6 +212,7 @@ export type ParsedUpdateFieldInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     authority: TAccountMetas[0];
+    /** CHECK: heir verified via estate PDA derivation */
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
     systemProgram: TAccountMetas[3];

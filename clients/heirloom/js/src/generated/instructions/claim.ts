@@ -145,8 +145,11 @@ export type ClaimAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   heir: TransactionSigner<TAccountHeir>;
+  /** CHECK: authority verified via estate.authority */
   authority: Address<TAccountAuthority>;
+  /** CHECK: optional delegate */
   delegate?: Address<TAccountDelegate>;
+  /** CHECK: heir's ATA, created idempotently if needed */
   heirTokenAccount?: Address<TAccountHeirTokenAccount>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
@@ -157,8 +160,11 @@ export type ClaimAsyncInput<
    * estate, rather than an arbitrary vault-owned token account.
    */
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: treasury address */
   treasury?: Address<TAccountTreasury>;
+  /** CHECK: treasury ATA, created idempotently if needed */
   treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -328,8 +334,11 @@ export type ClaimInput<
   TAccountSystemProgram extends string = string,
 > = {
   heir: TransactionSigner<TAccountHeir>;
+  /** CHECK: authority verified via estate.authority */
   authority: Address<TAccountAuthority>;
+  /** CHECK: optional delegate */
   delegate?: Address<TAccountDelegate>;
+  /** CHECK: heir's ATA, created idempotently if needed */
   heirTokenAccount?: Address<TAccountHeirTokenAccount>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
@@ -340,8 +349,11 @@ export type ClaimInput<
    * estate, rather than an arbitrary vault-owned token account.
    */
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: treasury address */
   treasury?: Address<TAccountTreasury>;
+  /** CHECK: treasury ATA, created idempotently if needed */
   treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -487,8 +499,11 @@ export type ParsedClaimInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     heir: TAccountMetas[0];
+    /** CHECK: authority verified via estate.authority */
     authority: TAccountMetas[1];
+    /** CHECK: optional delegate */
     delegate?: TAccountMetas[2] | undefined;
+    /** CHECK: heir's ATA, created idempotently if needed */
     heirTokenAccount?: TAccountMetas[3] | undefined;
     estate: TAccountMetas[4];
     vault: TAccountMetas[5];
@@ -499,8 +514,11 @@ export type ParsedClaimInstruction<
      * estate, rather than an arbitrary vault-owned token account.
      */
     assetRecord?: TAccountMetas[8] | undefined;
+    /** CHECK: treasury address */
     treasury: TAccountMetas[9];
+    /** CHECK: treasury ATA, created idempotently if needed */
     treasuryTokenAccount?: TAccountMetas[10] | undefined;
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     tokenProgram: TAccountMetas[11];
     associatedTokenProgram: TAccountMetas[12];
     systemProgram: TAccountMetas[13];

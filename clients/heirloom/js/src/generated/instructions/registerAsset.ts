@@ -147,14 +147,17 @@ export type RegisterAssetAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir verified via estate */
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
+  /** CHECK: vault ATA, created idempotently if needed */
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   /** Marker PDA proving mint is registered as claimable asset for current estate */
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   rent?: Address<TAccountRent>;
@@ -315,14 +318,17 @@ export type RegisterAssetInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir verified via estate */
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
   authorityTokenAccount?: Address<TAccountAuthorityTokenAccount>;
+  /** CHECK: vault ATA, created idempotently if needed */
   vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
   mint?: Address<TAccountMint>;
   /** Marker PDA proving mint is registered as claimable asset for current estate */
   assetRecord?: Address<TAccountAssetRecord>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   rent?: Address<TAccountRent>;
@@ -461,14 +467,17 @@ export type ParsedRegisterAssetInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     authority: TAccountMetas[0];
+    /** CHECK: heir verified via estate */
     heir: TAccountMetas[1];
     estate: TAccountMetas[2];
     vault: TAccountMetas[3];
     authorityTokenAccount?: TAccountMetas[4] | undefined;
+    /** CHECK: vault ATA, created idempotently if needed */
     vaultTokenAccount?: TAccountMetas[5] | undefined;
     mint?: TAccountMetas[6] | undefined;
     /** Marker PDA proving mint is registered as claimable asset for current estate */
     assetRecord?: TAccountMetas[7] | undefined;
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     tokenProgram: TAccountMetas[8];
     associatedTokenProgram: TAccountMetas[9];
     rent: TAccountMetas[10];

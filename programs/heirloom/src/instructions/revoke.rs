@@ -1,87 +1,94 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
+    token_interface::{self, Mint, TokenAccount, TransferChecked},
 };
 
 use crate::{
     constants::{EMERGENCY_EXIT_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, close_pda},
+    helpers::calculate_distribution,
     AssetRecord, Estate, Vault,
 };
 
 #[derive(Accounts)]
-pub struct Revoke<'info> {
+pub struct Revoke {
     #[account(mut, address = estate.authority @ HeirloomError::Unauthorized)]
-    pub authority: Signer<'info>,
+    pub authority: Signer,
 
     /// CHECK: heir verified via estate
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Account<Vault>,
 
     #[account(mut)]
-    pub authority_token_account: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub authority_token_account: Option<InterfaceAccount<TokenAccount>>,
 
     #[account(mut)]
-    pub vault_token_account: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub vault_token_account: Option<InterfaceAccount<TokenAccount>>,
 
     #[account(mut)]
-    pub mint: Option<InterfaceAccount<'info, Mint>>,
+    pub mint: Option<InterfaceAccount<Mint>>,
 
     #[account(
         mut,
         close = authority,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            mint.as_ref().unwrap().key().as_ref(),
+            estate.address().as_ref(),
+            mint.as_ref().unwrap().address().as_ref(),
         ],
         bump = asset_record.bump,
     )]
-    pub asset_record: Option<Account<'info, AssetRecord>>,
+    pub asset_record: Option<BorshAccount<AssetRecord>>,
 
     /// CHECK: treasury address
     #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
-    pub treasury: UncheckedAccount<'info>,
+    pub treasury: UncheckedAccount,
 
     /// CHECK: treasury ATA, created idempotently if needed
     #[account(mut)]
-    pub treasury_token_account: Option<UncheckedAccount<'info>>,
+    pub treasury_token_account: Option<UncheckedAccount>,
 
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *token_program.address() == Token::id()
+            || *token_program.address() == Token2022::id()
+    )]
+    pub token_program: UncheckedAccount,
+    pub associated_token_program: Program<AssociatedToken>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> Revoke<'info> {
-    pub fn revoke_handler(ctx: Context<Revoke>) -> Result<()> {
-        let authority_info = ctx.accounts.authority.to_account_info();
-        let estate = ctx.accounts.estate.clone();
-
+impl Revoke {
+    pub fn revoke_handler(ctx: &mut Context<Revoke>) -> Result<()> {
         ctx.accounts.validate()?;
 
         ctx.accounts.return_assets()?;
 
-        let remaining = estate.claimable_assets.saturating_sub(1);
+        let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
         ctx.accounts.estate.claimable_assets = remaining;
 
+        let authority_view = ctx.accounts.authority.account();
         if remaining == 0 {
-            close_pda(estate.to_account_info(), authority_info.clone())?;
-            close_pda(ctx.accounts.vault.to_account_info(), authority_info)?;
+            ctx.accounts.estate.close(authority_view.clone())?;
+            ctx.accounts.vault.close(*authority_view)?;
+            msg!(
+                "DEBUG: vault bal after close {}",
+                ctx.accounts.vault.get_lamports()
+            ); // ! DEBUG STATEMENT
         }
 
         Ok(())
@@ -108,18 +115,25 @@ impl<'info> Revoke<'info> {
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 
                 require_keys_eq!(
-                    vault_ta.owner,
-                    self.vault.key(),
+                    vault_ta.owner(),
+                    self.vault.address(),
                     HeirloomError::InvalidAccount
                 );
-                require_keys_eq!(authority_ta.mint, mint.key(), HeirloomError::MintMismatch);
                 require_keys_eq!(
-                    authority_ta.owner,
-                    self.authority.key(),
+                    authority_ta.mint(),
+                    mint.address(),
+                    HeirloomError::MintMismatch
+                );
+                require_keys_eq!(
+                    authority_ta.owner(),
+                    self.authority.address(),
                     HeirloomError::InvalidAccount
                 );
 
-                require!(vault_ta.amount > 0, HeirloomError::InsufficientVaultBalance);
+                require!(
+                    vault_ta.amount() > 0,
+                    HeirloomError::InsufficientVaultBalance
+                );
 
                 let asset_record = self.asset_record.as_ref().unwrap();
                 require!(
@@ -129,13 +143,13 @@ impl<'info> Revoke<'info> {
             }
             None => {
                 if self.authority_token_account.is_none() && self.estate.claimable_assets > 1 {
-                    return err!(HeirloomError::TokensFirst);
+                    return Err(HeirloomError::TokensFirst.into());
                 }
 
                 // zero amt check, in the case where the funds are pending a withdrawal
                 // in lulo disallow no-op withdrawals
                 require!(
-                    self.vault.to_account_info().lamports() > 0,
+                    self.vault.get_lamports() > 0,
                     HeirloomError::InsufficientVaultBalance
                 );
             }
@@ -144,73 +158,75 @@ impl<'info> Revoke<'info> {
         Ok(())
     }
 
-    pub fn return_assets(&self) -> Result<()> {
+    pub fn return_assets(&mut self) -> Result<()> {
+        let authority_addr_arr = *self.authority.address().as_array();
+        let heir_addr_arr = *self.heir.address().as_array();
         let vault_seeds: &[&[u8]] = &[
             b"vault",
-            self.authority.key.as_ref(),
-            self.heir.key.as_ref(),
+            authority_addr_arr.as_ref(),
+            heir_addr_arr.as_ref(),
             &[self.vault.bump],
         ];
         let signer_seeds = &[vault_seeds];
 
-        match self.authority_token_account.as_ref() {
-            Some(authority_ta) => {
-                let vault_ta = self.vault_token_account.as_ref().unwrap();
-                let treasury_ta = self.treasury_token_account.as_ref().unwrap();
-                let token_program_addr = self.token_program.key();
+        match self.authority_token_account.take() {
+            Some(mut authority_ta) => {
+                let mut vault_ta = self.vault_token_account.take().unwrap();
+                let mut treasury_ta = self.treasury_token_account.take().unwrap();
+                let token_program_addr = self.token_program.address();
                 let mint = self.mint.as_ref().unwrap();
-                let amount = vault_ta.amount;
+                let amount = vault_ta.amount();
 
                 let (fee, authority_amt) = calculate_distribution(amount, EMERGENCY_EXIT_FEE_BPS)?;
 
                 if fee > 0 {
                     let cpi_accounts = associated_token::Create {
-                        payer: self.authority.to_account_info(),
-                        associated_token: treasury_ta.to_account_info(),
-                        authority: self.treasury.to_account_info(),
-                        mint: mint.to_account_info(),
-                        system_program: self.system_program.to_account_info(),
-                        token_program: self.token_program.to_account_info(),
+                        payer: self.authority.to_cpi_handle_mut(),
+                        associated_token: treasury_ta.to_cpi_handle_mut(),
+                        authority: self.treasury.to_cpi_handle(),
+                        mint: mint.to_cpi_handle(),
+                        system_program: self.system_program.to_cpi_handle(),
+                        token_program: self.token_program.to_cpi_handle(),
                     };
 
-                    let associated_program_addr = self.associated_token_program.key();
+                    let associated_program_addr = self.associated_token_program.address();
                     let cpi_context = CpiContext::new(associated_program_addr, cpi_accounts);
 
                     associated_token::create_idempotent(cpi_context)?;
 
                     // transfer fee
                     let cpi_accounts = TransferChecked {
-                        from: vault_ta.to_account_info(),
-                        mint: mint.to_account_info(),
-                        to: treasury_ta.to_account_info(),
-                        authority: self.vault.to_account_info(),
+                        from: vault_ta.to_cpi_handle_mut(),
+                        mint: mint.to_cpi_handle(),
+                        to: treasury_ta.to_cpi_handle_mut(),
+                        authority: self.vault.to_cpi_handle(),
                     };
 
-                    let token_program_addr = self.token_program.key();
+                    let token_program_addr = self.token_program.address();
                     let cpi_context =
                         CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
 
-                    token_interface::transfer_checked(cpi_context, fee, mint.decimals)?;
+                    token_interface::transfer_checked(cpi_context, fee, mint.decimals())?;
                 }
 
                 // transfer back to authority
                 let cpi_accounts = TransferChecked {
-                    from: vault_ta.to_account_info(),
-                    mint: mint.to_account_info(),
-                    to: authority_ta.to_account_info(),
-                    authority: self.vault.to_account_info(),
+                    from: vault_ta.to_cpi_handle_mut(),
+                    mint: mint.to_cpi_handle(),
+                    to: authority_ta.to_cpi_handle_mut(),
+                    authority: self.vault.to_cpi_handle(),
                 };
 
                 let transfer_ctx =
                     CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
 
-                token_interface::transfer_checked(transfer_ctx, authority_amt, mint.decimals)?;
+                token_interface::transfer_checked(transfer_ctx, authority_amt, mint.decimals())?;
 
                 // close token account
                 let close_cpi_accounts = token_interface::CloseAccount {
-                    account: vault_ta.to_account_info(),
-                    destination: self.authority.to_account_info(),
-                    authority: self.vault.to_account_info(),
+                    account: vault_ta.to_cpi_handle_mut(),
+                    destination: self.authority.to_cpi_handle_mut(),
+                    authority: self.vault.to_cpi_handle(),
                 };
                 let close_ctx = CpiContext::new_with_signer(
                     token_program_addr,
@@ -221,19 +237,18 @@ impl<'info> Revoke<'info> {
                 token_interface::close_account(close_ctx)?;
             }
             None => {
-                let vault_info = self.vault.to_account_info();
-                let authority_info = self.authority.to_account_info();
-                let treasury_info = self.treasury.to_account_info();
-                let vault_lamports = vault_info.lamports();
+                let vault_view = self.vault.account();
+                let treasury_view = self.treasury.account();
 
-                let (protocol_fee, return_amount) =
-                    calculate_distribution(vault_lamports, EMERGENCY_EXIT_FEE_BPS)?;
+                let (protocol_fee, _) =
+                    calculate_distribution(vault_view.get_lamports(), EMERGENCY_EXIT_FEE_BPS)?;
 
-                vault_info.sub_lamports(protocol_fee)?;
-                treasury_info.add_lamports(protocol_fee)?;
+                vault_view.sub_lamports(protocol_fee)?;
+                treasury_view.add_lamports(protocol_fee)?;
 
-                vault_info.sub_lamports(return_amount)?;
-                authority_info.add_lamports(return_amount)?;
+                // ! REMOVED SINCE acc close above will move funds into auth acc
+                // vault_info.sub_lamports(return_amount)?;
+                // authority_info.add_lamports(return_amount)?;
             }
         }
 

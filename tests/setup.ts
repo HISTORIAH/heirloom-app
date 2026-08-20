@@ -280,7 +280,7 @@ export async function getEstate(client: Client, estate: Address) {
 }
 
 export function calculateFee(amount: bigint, basisPoints: bigint): bigint {
-  return (amount * basisPoints) / 10_000n;
+  return (amount * basisPoints + 9_999n) / 10_000n;
 }
 
 // ---------------------------------------------------------------------------
@@ -343,6 +343,126 @@ export const sendInitialize = async (
 
   await sendInstruction(client, authority, ix);
   return { authority: authority.address, heir };
+};
+
+export const sendClaim = async (
+  client: Client,
+  args: {
+    heir: TransactionSigner;
+    mint?: Address;
+    vault?: Address;
+    estate?: Address;
+    tokenProgram?: Address;
+    vaultTokenAccount?: Address;
+    heirTokenAccount?: Address;
+    treasuryTokenAccount?: Address;
+    delegate?: Address;
+  },
+): Promise<{ heir: Address }> => {
+  const authority = await loadDefaultKeypair();
+  const heir = args.heir;
+
+  const { vault, estate } =
+    args.vault && args.estate
+      ? { vault: args.vault, estate: args.estate }
+      : await deriveEstateVault(authority.address, heir.address);
+
+  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
+
+  const ix = await getClaimInstructionAsync({
+    heir,
+    authority: authority.address,
+    mint: args.mint,
+    tokenProgram: args.tokenProgram,
+    vaultTokenAccount: args.vaultTokenAccount,
+    heirTokenAccount: args.heirTokenAccount,
+    vault,
+    estate,
+    delegate: args.delegate,
+    treasury: TREASURY_ADDRESS,
+    treasuryTokenAccount: args.treasuryTokenAccount,
+    assetRecord,
+  });
+
+  await sendInstruction(client, heir, ix);
+  return { heir: heir.address };
+};
+
+export const sendRegisterAsset = async (
+  client: Client,
+  args: {
+    heir: Address;
+    amount: bigint;
+    mint?: Address;
+    vaultTokenAccount?: Address;
+    authorityTokenAccount?: Address;
+    tokenProgram?: Address;
+  },
+): Promise<{ authority: Address }> => {
+  const authority = await loadDefaultKeypair();
+
+  const [vault, estate] = await Promise.all([
+    findVaultPda({ authority: authority.address, heir: args.heir }),
+    findEstatePda({ authority: authority.address, heir: args.heir }),
+  ]);
+
+  const assetRecord = args.mint ? await deriveAssetRecord(estate[0], args.mint) : undefined;
+
+  const ix = await getRegisterAssetInstructionAsync({
+    authority,
+    heir: args.heir,
+    amount: args.amount,
+    mint: args.mint,
+    vault: vault[0],
+    estate: estate[0],
+    vaultTokenAccount: args.vaultTokenAccount,
+    tokenProgram: args.tokenProgram,
+    authorityTokenAccount: args.authorityTokenAccount,
+    assetRecord,
+  });
+
+  await sendInstruction(client, authority, ix);
+  return { authority: authority.address };
+};
+
+export const sendRevoke = async (
+  client: Client,
+  args: {
+    heir: Address;
+    mint?: Address;
+    vault?: Address;
+    estate?: Address;
+    tokenProgram?: Address;
+    vaultTokenAccount?: Address;
+    treasuryTokenAccount?: Address;
+    authorityTokenAccount?: Address;
+  },
+): Promise<{ authority: Address }> => {
+  const authority = await loadDefaultKeypair();
+
+  const { vault, estate } =
+    args.vault && args.estate
+      ? { vault: args.vault, estate: args.estate }
+      : await deriveEstateVault(authority.address, args.heir);
+
+  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
+
+  const ix = await getRevokeInstructionAsync({
+    authority,
+    heir: args.heir,
+    mint: args.mint,
+    vault,
+    estate,
+    tokenProgram: args.tokenProgram,
+    vaultTokenAccount: args.vaultTokenAccount,
+    authorityTokenAccount: args.authorityTokenAccount,
+    treasuryTokenAccount: args.treasuryTokenAccount,
+    treasury: TREASURY_ADDRESS,
+    assetRecord,
+  });
+
+  await sendInstruction(client, authority, ix);
+  return { authority: authority.address };
 };
 
 export const sendUpdateFields = async (
@@ -430,89 +550,6 @@ export const sendUpdateHeir = async (
   return { authority: authority.address, newEstate, newVault };
 };
 
-export const sendRevoke = async (
-  client: Client,
-  args: {
-    heir: Address;
-    mint?: Address;
-    vault?: Address;
-    estate?: Address;
-    tokenProgram?: Address;
-    vaultTokenAccount?: Address;
-    treasuryTokenAccount?: Address;
-    authorityTokenAccount?: Address;
-  },
-): Promise<{ authority: Address }> => {
-  const authority = await loadDefaultKeypair();
-
-  const { vault, estate } =
-    args.vault && args.estate
-      ? { vault: args.vault, estate: args.estate }
-      : await deriveEstateVault(authority.address, args.heir);
-
-  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
-
-  const ix = await getRevokeInstructionAsync({
-    authority,
-    heir: args.heir,
-    mint: args.mint,
-    vault,
-    estate,
-    tokenProgram: args.tokenProgram,
-    vaultTokenAccount: args.vaultTokenAccount,
-    authorityTokenAccount: args.authorityTokenAccount,
-    treasuryTokenAccount: args.treasuryTokenAccount,
-    treasury: TREASURY_ADDRESS,
-    assetRecord,
-  });
-
-  await sendInstruction(client, authority, ix);
-  return { authority: authority.address };
-};
-
-export const sendClaim = async (
-  client: Client,
-  args: {
-    heir: TransactionSigner;
-    mint?: Address;
-    vault?: Address;
-    estate?: Address;
-    tokenProgram?: Address;
-    vaultTokenAccount?: Address;
-    heirTokenAccount?: Address;
-    treasuryTokenAccount?: Address;
-    delegate?: Address;
-  },
-): Promise<{ heir: Address }> => {
-  const authority = await loadDefaultKeypair();
-  const heir = args.heir;
-
-  const { vault, estate } =
-    args.vault && args.estate
-      ? { vault: args.vault, estate: args.estate }
-      : await deriveEstateVault(authority.address, heir.address);
-
-  const assetRecord = args.mint ? await deriveAssetRecord(estate, args.mint) : undefined;
-
-  const ix = await getClaimInstructionAsync({
-    heir,
-    authority: authority.address,
-    mint: args.mint,
-    tokenProgram: args.tokenProgram,
-    vaultTokenAccount: args.vaultTokenAccount,
-    heirTokenAccount: args.heirTokenAccount,
-    vault,
-    estate,
-    delegate: args.delegate,
-    treasury: TREASURY_ADDRESS,
-    treasuryTokenAccount: args.treasuryTokenAccount,
-    assetRecord,
-  });
-
-  await sendInstruction(client, heir, ix);
-  return { heir: heir.address };
-};
-
 export const sendDelegateDefer = async (
   client: Client,
   args: {
@@ -535,41 +572,4 @@ export const sendDelegateDefer = async (
 
   await sendInstruction(client, delegate, ix);
   return { delegate };
-};
-
-export const sendRegisterAsset = async (
-  client: Client,
-  args: {
-    heir: Address;
-    amount: bigint;
-    mint?: Address;
-    vaultTokenAccount?: Address;
-    authorityTokenAccount?: Address;
-    tokenProgram?: Address;
-  },
-): Promise<{ authority: Address }> => {
-  const authority = await loadDefaultKeypair();
-
-  const [vault, estate] = await Promise.all([
-    findVaultPda({ authority: authority.address, heir: args.heir }),
-    findEstatePda({ authority: authority.address, heir: args.heir }),
-  ]);
-
-  const assetRecord = args.mint ? await deriveAssetRecord(estate[0], args.mint) : undefined;
-
-  const ix = await getRegisterAssetInstructionAsync({
-    authority,
-    heir: args.heir,
-    amount: args.amount,
-    mint: args.mint,
-    vault: vault[0],
-    estate: estate[0],
-    vaultTokenAccount: args.vaultTokenAccount,
-    tokenProgram: args.tokenProgram,
-    authorityTokenAccount: args.authorityTokenAccount,
-    assetRecord,
-  });
-
-  await sendInstruction(client, authority, ix);
-  return { authority: authority.address };
 };

@@ -16,10 +16,14 @@ pub struct UpdateHeir {
       
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: current heir verified via estate
+
+    
               
           pub heir: solana_address::Address,
-          
+                /// CHECK: new heir pubkey
+
+    
               
           pub new_heir: solana_address::Address,
           
@@ -37,7 +41,9 @@ pub struct UpdateHeir {
           
               
           pub vault_token_account: Option<solana_address::Address>,
-          
+                /// CHECK: new vault ATA, created by this instruction
+
+    
               
           pub new_vault_token_account: Option<solana_address::Address>,
           
@@ -49,7 +55,9 @@ pub struct UpdateHeir {
           
               
           pub new_asset_record: Option<solana_address::Address>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: solana_address::Address,
           
@@ -247,12 +255,14 @@ impl UpdateHeirBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: current heir verified via estate
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
     }
-            #[inline(always)]
+            /// CHECK: new heir pubkey
+#[inline(always)]
     pub fn new_heir(&mut self, new_heir: solana_address::Address) -> &mut Self {
                         self.new_heir = Some(new_heir);
                     self
@@ -284,6 +294,7 @@ impl UpdateHeirBuilder {
                     self
     }
             /// `[optional account]`
+/// CHECK: new vault ATA, created by this instruction
 #[inline(always)]
     pub fn new_vault_token_account(&mut self, new_vault_token_account: Option<solana_address::Address>) -> &mut Self {
                         self.new_vault_token_account = new_vault_token_account;
@@ -308,6 +319,7 @@ impl UpdateHeirBuilder {
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+/// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
                         self.token_program = Some(token_program);
@@ -366,10 +378,14 @@ impl UpdateHeirBuilder {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: current heir verified via estate
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: new heir pubkey
+
+      
                     
               pub new_heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -387,7 +403,9 @@ impl UpdateHeirBuilder {
                 
                     
               pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: new vault ATA, created by this instruction
+
+      
                     
               pub new_vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
                 
@@ -399,7 +417,9 @@ impl UpdateHeirBuilder {
                 
                     
               pub new_asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -417,10 +437,14 @@ pub struct UpdateHeirCpi<'a, 'b> {
       
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: current heir verified via estate
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: new heir pubkey
+
+    
               
           pub new_heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -438,7 +462,9 @@ pub struct UpdateHeirCpi<'a, 'b> {
           
               
           pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: new vault ATA, created by this instruction
+
+    
               
           pub new_vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
           
@@ -450,7 +476,9 @@ pub struct UpdateHeirCpi<'a, 'b> {
           
               
           pub new_asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
@@ -604,8 +632,8 @@ impl<'a, 'b> UpdateHeirCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let data = UpdateHeirInstructionData::new().try_to_vec().unwrap();
@@ -704,12 +732,14 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: current heir verified via estate
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
     }
-      #[inline(always)]
+      /// CHECK: new heir pubkey
+#[inline(always)]
     pub fn new_heir(&mut self, new_heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.new_heir = Some(new_heir);
                     self
@@ -741,6 +771,7 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
                     self
     }
       /// `[optional account]`
+/// CHECK: new vault ATA, created by this instruction
 #[inline(always)]
     pub fn new_vault_token_account(&mut self, new_vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.new_vault_token_account = new_vault_token_account;
@@ -764,7 +795,8 @@ impl<'a, 'b> UpdateHeirCpiBuilder<'a, 'b> {
                         self.instruction.new_asset_record = new_asset_record;
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn token_program(&mut self, token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.token_program = Some(token_program);
                     self

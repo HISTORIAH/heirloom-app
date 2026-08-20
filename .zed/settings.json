@@ -1,0 +1,44 @@
+{
+  "languages": {
+    "TypeScript": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": true
+      },
+      "language_servers": [
+        "typescript-ls",
+        "vtsls",
+        "!typescript-language-server",
+        "..."
+      ]
+    },
+    "TSX": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": true
+      },
+      "language_servers": [
+        "typescript-ls",
+        "vtsls",
+        "!typescript-language-server",
+        "..."
+      ]
+    },
+    "JavaScript": {
+      "formatter": "prettier",
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": true
+      }
+    },
+  },
+  "lsp": {
+    "typescript-ls": {
+      "settings": {
+        "package_version": "7.0.2"
+      }
+    }
+  }
+}

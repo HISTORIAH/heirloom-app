@@ -16,7 +16,9 @@ pub struct Revoke {
       
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: heir verified via estate
+
+    
               
           pub heir: solana_address::Address,
           
@@ -37,13 +39,19 @@ pub struct Revoke {
           
               
           pub asset_record: Option<solana_address::Address>,
-          
+                /// CHECK: treasury address
+
+    
               
           pub treasury: solana_address::Address,
-          
+                /// CHECK: treasury ATA, created idempotently if needed
+
+    
               
           pub treasury_token_account: Option<solana_address::Address>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: solana_address::Address,
           
@@ -229,7 +237,8 @@ impl RevokeBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: heir verified via estate
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -269,18 +278,21 @@ impl RevokeBuilder {
                     self
     }
             /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
+/// CHECK: treasury address
 #[inline(always)]
     pub fn treasury(&mut self, treasury: solana_address::Address) -> &mut Self {
                         self.treasury = Some(treasury);
                     self
     }
             /// `[optional account]`
+/// CHECK: treasury ATA, created idempotently if needed
 #[inline(always)]
     pub fn treasury_token_account(&mut self, treasury_token_account: Option<solana_address::Address>) -> &mut Self {
                         self.treasury_token_account = treasury_token_account;
                     self
     }
             /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+/// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
 #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
                         self.token_program = Some(token_program);
@@ -337,7 +349,9 @@ impl RevokeBuilder {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: heir verified via estate
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -358,13 +372,19 @@ impl RevokeBuilder {
                 
                     
               pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: treasury address
+
+      
                     
               pub treasury: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: treasury ATA, created idempotently if needed
+
+      
                     
               pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub token_program: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -382,7 +402,9 @@ pub struct RevokeCpi<'a, 'b> {
       
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: heir verified via estate
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -403,13 +425,19 @@ pub struct RevokeCpi<'a, 'b> {
           
               
           pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: treasury address
+
+    
               
           pub treasury: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: treasury ATA, created idempotently if needed
+
+    
               
           pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub token_program: &'b solana_account_info::AccountInfo<'a>,
           
@@ -553,8 +581,8 @@ impl<'a, 'b> RevokeCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let data = RevokeInstructionData::new().try_to_vec().unwrap();
@@ -647,7 +675,8 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: heir verified via estate
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
@@ -686,18 +715,21 @@ impl<'a, 'b> RevokeCpiBuilder<'a, 'b> {
                         self.instruction.asset_record = asset_record;
                     self
     }
-      #[inline(always)]
+      /// CHECK: treasury address
+#[inline(always)]
     pub fn treasury(&mut self, treasury: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.treasury = Some(treasury);
                     self
     }
       /// `[optional account]`
+/// CHECK: treasury ATA, created idempotently if needed
 #[inline(always)]
     pub fn treasury_token_account(&mut self, treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.treasury_token_account = treasury_token_account;
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn token_program(&mut self, token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.token_program = Some(token_program);
                     self

@@ -196,23 +196,32 @@ export type DepositLuloAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
   vault?: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
   estate?: Address<TAccountEstate>;
   assetRecord: Address<TAccountAssetRecord>;
+  /** CHECK: Lulo position PDA. */
   poolUser: Address<TAccountPoolUser>;
+  /** CHECK: Pool user input-mint ATA; intermediate hop. */
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  /** CHECK: Referrer's pool_user; must be owned by this program. */
   referrerPoolUser: Address<TAccountReferrerPoolUser>;
   inputMint: Address<TAccountInputMint>;
-  /** pool's reserve token account (authority = pool_account). */
+  /** Pool's reserve token account (authority = pool_account). */
   poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
-  /** the pool's LP/share mint (token22) */
+  /** The pool's LP/share mint (Token-2022). */
   lpMint: Address<TAccountLpMint>;
+  /** CHECK: Lulo pool state. */
   poolAccount: Address<TAccountPoolAccount>;
+  /** CHECK: Lulo program. */
   programId?: Address<TAccountProgramId>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   rent?: Address<TAccountRent>;
@@ -430,23 +439,32 @@ export type DepositLuloInput<
   TAccountSystemProgram extends string = string,
 > = {
   authority: TransactionSigner<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
   vault: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
   estate: Address<TAccountEstate>;
   assetRecord: Address<TAccountAssetRecord>;
+  /** CHECK: Lulo position PDA. */
   poolUser: Address<TAccountPoolUser>;
+  /** CHECK: Pool user input-mint ATA; intermediate hop. */
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  /** CHECK: Referrer's pool_user; must be owned by this program. */
   referrerPoolUser: Address<TAccountReferrerPoolUser>;
   inputMint: Address<TAccountInputMint>;
-  /** pool's reserve token account (authority = pool_account). */
+  /** Pool's reserve token account (authority = pool_account). */
   poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
-  /** the pool's LP/share mint (token22) */
+  /** The pool's LP/share mint (Token-2022). */
   lpMint: Address<TAccountLpMint>;
+  /** CHECK: Lulo pool state. */
   poolAccount: Address<TAccountPoolAccount>;
+  /** CHECK: Lulo program. */
   programId?: Address<TAccountProgramId>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   rent?: Address<TAccountRent>;
@@ -634,23 +652,32 @@ export type ParsedDepositLuloInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     authority: TAccountMetas[0];
+    /** CHECK: heir pubkey, stored in estate */
     heir: TAccountMetas[1];
     vault: TAccountMetas[2];
     vaultTokenAccount: TAccountMetas[3];
     estate: TAccountMetas[4];
     assetRecord: TAccountMetas[5];
+    /** CHECK: Lulo position PDA. */
     poolUser: TAccountMetas[6];
+    /** CHECK: Pool user input-mint ATA; intermediate hop. */
     poolUserTokenAccount: TAccountMetas[7];
+    /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
     poolUserLpTokenAccount: TAccountMetas[8];
+    /** CHECK: Referrer's pool_user; must be owned by this program. */
     referrerPoolUser: TAccountMetas[9];
     inputMint: TAccountMetas[10];
-    /** pool's reserve token account (authority = pool_account). */
+    /** Pool's reserve token account (authority = pool_account). */
     poolReserveTokenAccount: TAccountMetas[11];
-    /** the pool's LP/share mint (token22) */
+    /** The pool's LP/share mint (Token-2022). */
     lpMint: TAccountMetas[12];
+    /** CHECK: Lulo pool state. */
     poolAccount: TAccountMetas[13];
+    /** CHECK: Lulo program. */
     programId: TAccountMetas[14];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     inputMintTokenProgram: TAccountMetas[15];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     lpMintTokenProgram: TAccountMetas[16];
     associatedTokenProgram: TAccountMetas[17];
     rent: TAccountMetas[18];

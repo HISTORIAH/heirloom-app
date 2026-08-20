@@ -17,7 +17,9 @@ pub struct DepositLulo {
       
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: heir pubkey, stored in estate
+
+    
               
           pub heir: solana_address::Address,
           
@@ -32,41 +34,57 @@ pub struct DepositLulo {
           
               
           pub asset_record: solana_address::Address,
-          
+                /// CHECK: Lulo position PDA.
+
+    
               
           pub pool_user: solana_address::Address,
-          
+                /// CHECK: Pool user input-mint ATA; intermediate hop.
+
+    
               
           pub pool_user_token_account: solana_address::Address,
-          
+                /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+
+    
               
           pub pool_user_lp_token_account: solana_address::Address,
-          
+                /// CHECK: Referrer's pool_user; must be owned by this program.
+
+    
               
           pub referrer_pool_user: solana_address::Address,
           
               
           pub input_mint: solana_address::Address,
-                /// pool's reserve token account (authority = pool_account).
+                /// Pool's reserve token account (authority = pool_account).
 
     
               
           pub pool_reserve_token_account: solana_address::Address,
-                /// the pool's LP/share mint (token22)
+                /// The pool's LP/share mint (Token-2022).
 
     
               
           pub lp_mint: solana_address::Address,
-          
+                /// CHECK: Lulo pool state.
+
+    
               
           pub pool_account: solana_address::Address,
-          
+                /// CHECK: Lulo program.
+
+    
               
           pub program_id: solana_address::Address,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub input_mint_token_program: solana_address::Address,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub lp_mint_token_program: solana_address::Address,
           
@@ -277,7 +295,8 @@ impl DepositLuloBuilder {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: heir pubkey, stored in estate
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -302,22 +321,26 @@ impl DepositLuloBuilder {
                         self.asset_record = Some(asset_record);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Lulo position PDA.
+#[inline(always)]
     pub fn pool_user(&mut self, pool_user: solana_address::Address) -> &mut Self {
                         self.pool_user = Some(pool_user);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Pool user input-mint ATA; intermediate hop.
+#[inline(always)]
     pub fn pool_user_token_account(&mut self, pool_user_token_account: solana_address::Address) -> &mut Self {
                         self.pool_user_token_account = Some(pool_user_token_account);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+#[inline(always)]
     pub fn pool_user_lp_token_account(&mut self, pool_user_lp_token_account: solana_address::Address) -> &mut Self {
                         self.pool_user_lp_token_account = Some(pool_user_lp_token_account);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Referrer's pool_user; must be owned by this program.
+#[inline(always)]
     pub fn referrer_pool_user(&mut self, referrer_pool_user: solana_address::Address) -> &mut Self {
                         self.referrer_pool_user = Some(referrer_pool_user);
                     self
@@ -327,35 +350,39 @@ impl DepositLuloBuilder {
                         self.input_mint = Some(input_mint);
                     self
     }
-            /// pool's reserve token account (authority = pool_account).
+            /// Pool's reserve token account (authority = pool_account).
 #[inline(always)]
     pub fn pool_reserve_token_account(&mut self, pool_reserve_token_account: solana_address::Address) -> &mut Self {
                         self.pool_reserve_token_account = Some(pool_reserve_token_account);
                     self
     }
-            /// the pool's LP/share mint (token22)
+            /// The pool's LP/share mint (Token-2022).
 #[inline(always)]
     pub fn lp_mint(&mut self, lp_mint: solana_address::Address) -> &mut Self {
                         self.lp_mint = Some(lp_mint);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Lulo pool state.
+#[inline(always)]
     pub fn pool_account(&mut self, pool_account: solana_address::Address) -> &mut Self {
                         self.pool_account = Some(pool_account);
                     self
     }
             /// `[optional account, default to 'FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q']`
+/// CHECK: Lulo program.
 #[inline(always)]
     pub fn program_id(&mut self, program_id: solana_address::Address) -> &mut Self {
                         self.program_id = Some(program_id);
                     self
     }
-            #[inline(always)]
+            /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn input_mint_token_program(&mut self, input_mint_token_program: solana_address::Address) -> &mut Self {
                         self.input_mint_token_program = Some(input_mint_token_program);
                     self
     }
-            #[inline(always)]
+            /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn lp_mint_token_program(&mut self, lp_mint_token_program: solana_address::Address) -> &mut Self {
                         self.lp_mint_token_program = Some(lp_mint_token_program);
                     self
@@ -438,7 +465,9 @@ impl DepositLuloBuilder {
           
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: heir pubkey, stored in estate
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -453,41 +482,57 @@ impl DepositLuloBuilder {
                 
                     
               pub asset_record: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo position PDA.
+
+      
                     
               pub pool_user: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Pool user input-mint ATA; intermediate hop.
+
+      
                     
               pub pool_user_token_account: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+
+      
                     
               pub pool_user_lp_token_account: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Referrer's pool_user; must be owned by this program.
+
+      
                     
               pub referrer_pool_user: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub input_mint: &'b solana_account_info::AccountInfo<'a>,
-                        /// pool's reserve token account (authority = pool_account).
+                        /// Pool's reserve token account (authority = pool_account).
 
       
                     
               pub pool_reserve_token_account: &'b solana_account_info::AccountInfo<'a>,
-                        /// the pool's LP/share mint (token22)
+                        /// The pool's LP/share mint (Token-2022).
 
       
                     
               pub lp_mint: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo pool state.
+
+      
                     
               pub pool_account: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo program.
+
+      
                     
               pub program_id: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub input_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub lp_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -508,7 +553,9 @@ pub struct DepositLuloCpi<'a, 'b> {
       
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: heir pubkey, stored in estate
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -523,41 +570,57 @@ pub struct DepositLuloCpi<'a, 'b> {
           
               
           pub asset_record: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo position PDA.
+
+    
               
           pub pool_user: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Pool user input-mint ATA; intermediate hop.
+
+    
               
           pub pool_user_token_account: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+
+    
               
           pub pool_user_lp_token_account: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Referrer's pool_user; must be owned by this program.
+
+    
               
           pub referrer_pool_user: &'b solana_account_info::AccountInfo<'a>,
           
               
           pub input_mint: &'b solana_account_info::AccountInfo<'a>,
-                /// pool's reserve token account (authority = pool_account).
+                /// Pool's reserve token account (authority = pool_account).
 
     
               
           pub pool_reserve_token_account: &'b solana_account_info::AccountInfo<'a>,
-                /// the pool's LP/share mint (token22)
+                /// The pool's LP/share mint (Token-2022).
 
     
               
           pub lp_mint: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo pool state.
+
+    
               
           pub pool_account: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo program.
+
+    
               
           pub program_id: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub input_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub lp_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
           
@@ -708,8 +771,8 @@ impl<'a, 'b> DepositLuloCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let mut data = DepositLuloInstructionData::new().try_to_vec().unwrap();
@@ -817,7 +880,8 @@ impl<'a, 'b> DepositLuloCpiBuilder<'a, 'b> {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: heir pubkey, stored in estate
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
@@ -842,22 +906,26 @@ impl<'a, 'b> DepositLuloCpiBuilder<'a, 'b> {
                         self.instruction.asset_record = Some(asset_record);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo position PDA.
+#[inline(always)]
     pub fn pool_user(&mut self, pool_user: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_user = Some(pool_user);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Pool user input-mint ATA; intermediate hop.
+#[inline(always)]
     pub fn pool_user_token_account(&mut self, pool_user_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_user_token_account = Some(pool_user_token_account);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+#[inline(always)]
     pub fn pool_user_lp_token_account(&mut self, pool_user_lp_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_user_lp_token_account = Some(pool_user_lp_token_account);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Referrer's pool_user; must be owned by this program.
+#[inline(always)]
     pub fn referrer_pool_user(&mut self, referrer_pool_user: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.referrer_pool_user = Some(referrer_pool_user);
                     self
@@ -867,34 +935,38 @@ impl<'a, 'b> DepositLuloCpiBuilder<'a, 'b> {
                         self.instruction.input_mint = Some(input_mint);
                     self
     }
-      /// pool's reserve token account (authority = pool_account).
+      /// Pool's reserve token account (authority = pool_account).
 #[inline(always)]
     pub fn pool_reserve_token_account(&mut self, pool_reserve_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_reserve_token_account = Some(pool_reserve_token_account);
                     self
     }
-      /// the pool's LP/share mint (token22)
+      /// The pool's LP/share mint (Token-2022).
 #[inline(always)]
     pub fn lp_mint(&mut self, lp_mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.lp_mint = Some(lp_mint);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo pool state.
+#[inline(always)]
     pub fn pool_account(&mut self, pool_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_account = Some(pool_account);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo program.
+#[inline(always)]
     pub fn program_id(&mut self, program_id: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.program_id = Some(program_id);
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn input_mint_token_program(&mut self, input_mint_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.input_mint_token_program = Some(input_mint_token_program);
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn lp_mint_token_program(&mut self, lp_mint_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.lp_mint_token_program = Some(lp_mint_token_program);
                     self

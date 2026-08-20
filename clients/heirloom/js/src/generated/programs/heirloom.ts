@@ -20,6 +20,7 @@ import {
   type ClientWithRpc,
   type ClientWithTransactionPlanning,
   type ClientWithTransactionSending,
+  type ExtendedClient,
   type GetAccountInfoApi,
   type GetMultipleAccountsApi,
   type Instruction,
@@ -89,17 +90,10 @@ import {
   type UpdateHeirAsyncInput,
   type WithdrawProtectedLuloAsyncInput,
 } from "../instructions";
-import {
-  findAssetRecordPda,
-  findEstatePda,
-  findNewAssetRecordPda,
-  findNewEstatePda,
-  findNewVaultPda,
-  findVaultPda,
-} from "../pdas";
+import { findEstatePda, findNewEstatePda, findNewVaultPda, findVaultPda } from "../pdas";
 
 export const HEIRLOOM_PROGRAM_ADDRESS =
-  "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz" as Address<"heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz">;
+  "heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg" as Address<"heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg">;
 
 export enum HeirloomAccount {
   AssetRecord,
@@ -296,7 +290,7 @@ export function identifyHeirloomInstruction(
 }
 
 export type ParsedHeirloomInstruction<
-  TProgram extends string = "heird3FWfGcobFHyZEC6FMaPBPN3oWqsh8ZqVQXz5Kz",
+  TProgram extends string = "heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg",
 > =
   | ({ instructionType: HeirloomInstruction.Claim } & ParsedClaimInstruction<TProgram>)
   | ({
@@ -411,6 +405,9 @@ export type HeirloomPlugin = {
   accounts: HeirloomPluginAccounts;
   instructions: HeirloomPluginInstructions;
   pdas: HeirloomPluginPdas;
+  identifyAccount: typeof identifyHeirloomAccount;
+  identifyInstruction: typeof identifyHeirloomInstruction;
+  parseInstruction: typeof parseHeirloomInstruction;
 };
 
 export type HeirloomPluginAccounts = {
@@ -459,10 +456,8 @@ export type HeirloomPluginInstructions = {
 export type HeirloomPluginPdas = {
   estate: typeof findEstatePda;
   vault: typeof findVaultPda;
-  assetRecord: typeof findAssetRecordPda;
   newEstate: typeof findNewEstatePda;
   newVault: typeof findNewVaultPda;
-  newAssetRecord: typeof findNewAssetRecordPda;
 };
 
 export type HeirloomPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
@@ -472,7 +467,7 @@ export type HeirloomPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMu
 export function heirloomProgram() {
   return <T extends HeirloomPluginRequirements>(
     client: T,
-  ): Omit<T, "heirloom"> & { heirloom: HeirloomPlugin } => {
+  ): ExtendedClient<T, { heirloom: HeirloomPlugin }> => {
     return extendClient(client, {
       heirloom: <HeirloomPlugin>{
         accounts: {
@@ -508,11 +503,12 @@ export function heirloomProgram() {
         pdas: {
           estate: findEstatePda,
           vault: findVaultPda,
-          assetRecord: findAssetRecordPda,
           newEstate: findNewEstatePda,
           newVault: findNewVaultPda,
-          newAssetRecord: findNewAssetRecordPda,
         },
+        identifyAccount: identifyHeirloomAccount,
+        identifyInstruction: identifyHeirloomInstruction,
+        parseInstruction: parseHeirloomInstruction,
       },
     });
   };

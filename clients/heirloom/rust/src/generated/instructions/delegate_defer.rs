@@ -16,10 +16,14 @@ pub struct DelegateDefer {
       
               
           pub delegate: solana_address::Address,
-          
+                /// CHECK: authority verified via estate
+
+    
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: heir verified via estate
+
+    
               
           pub heir: solana_address::Address,
           
@@ -122,12 +126,14 @@ impl DelegateDeferBuilder {
                         self.delegate = Some(delegate);
                     self
     }
-            #[inline(always)]
+            /// CHECK: authority verified via estate
+#[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: heir verified via estate
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -174,10 +180,14 @@ impl DelegateDeferBuilder {
           
                     
               pub delegate: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: authority verified via estate
+
+      
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: heir verified via estate
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -195,10 +205,14 @@ pub struct DelegateDeferCpi<'a, 'b> {
       
               
           pub delegate: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: authority verified via estate
+
+    
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: heir verified via estate
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -267,8 +281,8 @@ impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
@@ -327,12 +341,14 @@ impl<'a, 'b> DelegateDeferCpiBuilder<'a, 'b> {
                         self.instruction.delegate = Some(delegate);
                     self
     }
-      #[inline(always)]
+      /// CHECK: authority verified via estate
+#[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: heir verified via estate
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self

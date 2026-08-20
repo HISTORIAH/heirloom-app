@@ -3,109 +3,126 @@ use crate::{
     KAMINO_PROTOCOL_AUTHORITY, KAMINO_PROTOCOL_TOKEN_ACCOUNT, TREASURY,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::TokenAccount;
+use anchor_spl::{token, token_interface::TokenAccount};
 
 #[derive(Accounts)]
-pub struct InitWithdrawRegular<'info> {
+pub struct InitWithdrawRegular {
     #[account(mut)]
-    pub caller: Signer<'info>,
+    pub caller: Signer,
 
     /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
-    pub authority: UncheckedAccount<'info>,
+    pub authority: UncheckedAccount,
 
     /// CHECK: heir pubkey, stored in estate
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Account<Vault>,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Account<'info, Estate>,
+    pub estate: BorshAccount<Estate>,
 
     #[account(
         mut,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            lulo_accounts.input_mint.key().as_ref()
+            estate.address().as_ref(),
+            lulo_accounts.input_mint.address().as_ref()
         ],
         bump = asset_record.bump,
     )]
-    pub asset_record: Box<Account<'info, AssetRecord>>,
+    pub asset_record: Box<BorshAccount<AssetRecord>>,
 
     /// CHECK: Lulo CPI
     #[account(mut)]
-    pub pending_withdrawal_account: UncheckedAccount<'info>,
+    pub pending_withdrawal_account: UncheckedAccount,
 
-    pub lulo_accounts: LuloAccounts<'info>,
+    pub lulo_accounts: Nested<LuloAccounts>,
 
-    pub system_program: Program<'info, System>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> InitWithdrawRegular<'info> {
+impl InitWithdrawRegular {
+    #[inline(never)]
     pub fn init_withdraw_regular_handler(
-        ctx: Context<'info, InitWithdrawRegular<'info>>,
+        ctx: &mut Context<InitWithdrawRegular>,
         withdrawal_id: u16,
         amount: u64,
     ) -> Result<()> {
         ctx.accounts.validate()?;
 
-        let vault_bump = ctx.accounts.vault.bump;
-        let authority_key = ctx.accounts.authority.key();
-        let heir_key = ctx.accounts.heir.key();
-        let lulo_cpi_program_addr = ctx.accounts.lulo_accounts.program_id.key();
+        let remaining_accounts = ctx.remaining_accounts()?;
+        let remaining_handles: Vec<_> = remaining_accounts
+            .iter()
+            .map(anchor_lang::ToCpiHandle::to_cpi_handle)
+            .collect();
+
+        let authority_addr_arr = *ctx.accounts.authority.address().as_array();
+        let heir_addr_arr = *ctx.accounts.heir.address().as_array();
 
         let vault_seeds: &[&[u8]] = &[
             Vault::SEED,
-            authority_key.as_ref(),
-            heir_key.as_ref(),
-            &[vault_bump],
+            authority_addr_arr.as_ref(),
+            heir_addr_arr.as_ref(),
+            &[ctx.accounts.vault.bump],
         ];
         let signer_seeds = &[vault_seeds];
 
         let cpi_accounts = lulo_v2::cpi::accounts::InitiateRegularPoolWithdraw {
-            owner: ctx.accounts.vault.to_account_info(),
-            fee_payer: ctx.accounts.caller.to_account_info(),
-            input_mint: ctx.accounts.lulo_accounts.input_mint.to_account_info(),
-            pending_withdrawal: ctx.accounts.pending_withdrawal_account.to_account_info(),
-            pool: ctx.accounts.lulo_accounts.pool_account.to_account_info(),
-            pool_user: ctx.accounts.lulo_accounts.pool_user.to_account_info(),
-            regular_mint: ctx.accounts.lulo_accounts.lp_mint.to_account_info(),
+            owner: ctx.accounts.vault.to_cpi_handle(),
+            fee_payer: ctx.accounts.caller.to_cpi_handle_mut(),
+            input_mint: ctx.accounts.lulo_accounts.0.input_mint.to_cpi_handle(),
+            pending_withdrawal: ctx.accounts.pending_withdrawal_account.to_cpi_handle_mut(),
+            pool: ctx
+                .accounts
+                .lulo_accounts
+                .0
+                .pool_account
+                .to_cpi_handle_mut(),
+            pool_user: ctx.accounts.lulo_accounts.0.pool_user.to_cpi_handle_mut(),
+            regular_mint: ctx.accounts.lulo_accounts.0.lp_mint.to_cpi_handle_mut(),
             pool_user_lp_token_account: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .pool_user_lp_token_account
-                .to_account_info(),
+                .to_cpi_handle_mut(),
             input_mint_token_program: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .input_mint_token_program
-                .to_account_info(),
+                .to_cpi_handle(),
             lp_mint_token_program: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .lp_mint_token_program
-                .to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
+                .to_cpi_handle(),
+            system_program: ctx.accounts.system_program.to_cpi_handle(),
             referrer_pool_user: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .referrer_pool_user
-                .to_account_info(),
+                .to_cpi_handle_mut(),
         };
 
-        let cpi_ctx =
-            CpiContext::new_with_signer(lulo_cpi_program_addr, cpi_accounts, signer_seeds);
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.lulo_accounts.0.program_id.address(),
+            cpi_accounts,
+            signer_seeds,
+        );
         lulo_v2::cpi::initiate_regular_pool_withdraw(
-            cpi_ctx.with_remaining_accounts(ctx.remaining_accounts.to_vec()),
+            cpi_ctx.with_remaining_accounts(remaining_handles),
             withdrawal_id,
             amount,
         )?;
@@ -127,189 +144,215 @@ impl<'info> InitWithdrawRegular<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CompleteWithdrawRegular<'info> {
+pub struct CompleteWithdrawRegular {
     #[account(mut)]
-    pub caller: Signer<'info>,
+    pub caller: Signer,
 
     /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
-    pub authority: UncheckedAccount<'info>,
+    pub authority: UncheckedAccount,
 
     /// CHECK: heir pubkey, stored in estate
-    pub heir: UncheckedAccount<'info>,
+    pub heir: UncheckedAccount,
 
     #[account(
         mut,
-        seeds = [Estate::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Estate::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = estate.bump,
     )]
-    pub estate: Box<Account<'info, Estate>>,
+    pub estate: Box<BorshAccount<Estate>>,
 
     #[account(
         mut,
-        seeds = [Vault::SEED, authority.key().as_ref(), heir.key().as_ref()],
+        seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Box<Account<'info, Vault>>,
+    pub vault: Box<Account<Vault>>,
 
     // We expect this to exist
     #[account(
         mut,
-        token::mint = lulo_accounts.input_mint,
+        token::mint = lulo_accounts.input_mint.address(),
         token::authority = vault,
-        token::token_program = lulo_accounts.input_mint_token_program,
+        token::token_program = lulo_accounts.input_mint_token_program.address(),
     )]
-    pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub vault_token_account: Box<InterfaceAccount<TokenAccount>>,
 
     #[account(
         mut,
         seeds = [
             AssetRecord::SEED,
-            estate.key().as_ref(),
-            lulo_accounts.input_mint.key().as_ref()
+            estate.address().as_ref(),
+            lulo_accounts.input_mint.address().as_ref()
         ],
         bump = asset_record.bump,
     )]
-    pub asset_record: Box<Account<'info, AssetRecord>>,
+    pub asset_record: Box<BorshAccount<AssetRecord>>,
 
     /// CHECK: Lulo CPI
-    #[account(mut, constraint = pending_withdrawal_account.owner.key() == lulo_accounts.program_id.key())]
-    pub pending_withdrawal_account: UncheckedAccount<'info>,
+    #[account(mut, constraint = *pending_withdrawal_account.owner() == *lulo_accounts.program_id.address())]
+    pub pending_withdrawal_account: UncheckedAccount,
 
-    pub lulo_accounts: LuloAccounts<'info>,
+    pub lulo_accounts: Nested<LuloAccounts>,
 
-    pub kamino_accounts: GenericKamino<'info>,
+    pub kamino_accounts: Nested<GenericKamino>,
 
     /// CHECK: Lulo CPI
     #[account(mut, address = KAMINO_PROTOCOL_AUTHORITY)]
-    pub protocol_authority: UncheckedAccount<'info>,
+    pub protocol_authority: UncheckedAccount,
 
     #[account(mut)]
-    pub treasury_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub treasury_token_account: Box<InterfaceAccount<TokenAccount>>,
 
     /// CHECK: Lulo CPI
     #[account(mut, address = KAMINO_PROTOCOL_TOKEN_ACCOUNT)]
-    pub protocol_authority_token_account: UncheckedAccount<'info>,
+    pub protocol_authority_token_account: UncheckedAccount,
 
-    pub system_program: Program<'info, System>,
+    pub system_program: Program<System>,
 }
 
-impl<'info> CompleteWithdrawRegular<'info> {
+impl CompleteWithdrawRegular {
+    #[inline(never)]
     pub fn complete_regular_withdraw_handler(
-        ctx: Context<'info, CompleteWithdrawRegular<'info>>,
+        ctx: &mut Context<CompleteWithdrawRegular>,
         withdrawal_id: u16,
     ) -> Result<()> {
         ctx.accounts.validate()?;
 
         // vault balance before withdrawal
-        let vault_balance_before = ctx.accounts.vault_token_account.amount;
-        let vault_bump = ctx.accounts.vault.bump;
-        let authority_key = ctx.accounts.authority.key();
-        let heir_key = ctx.accounts.heir.key();
-        let lulo_cpi_program_addr = ctx.accounts.lulo_accounts.program_id.key();
+        let vault_balance_before = ctx.accounts.vault_token_account.amount();
+        let authority_addr_arr = *ctx.accounts.authority.address().as_array();
+        let heir_addr_arr = *ctx.accounts.heir.address().as_array();
 
         let vault_seeds: &[&[u8]] = &[
             Vault::SEED,
-            authority_key.as_ref(),
-            heir_key.as_ref(),
-            &[vault_bump],
+            authority_addr_arr.as_ref(),
+            heir_addr_arr.as_ref(),
+            &[ctx.accounts.vault.bump],
         ];
         let signer_seeds = &[vault_seeds];
 
         let cpi_accounts = lulo_v2::cpi::accounts::CompleteRegularPoolWithdraw {
-            owner: ctx.accounts.vault.to_account_info(),
-            fee_payer: ctx.accounts.caller.to_account_info(),
-            input_mint: ctx.accounts.lulo_accounts.input_mint.to_account_info(),
-            pending_withdrawal: ctx.accounts.pending_withdrawal_account.to_account_info(),
-            pool: ctx.accounts.lulo_accounts.pool_account.to_account_info(),
-            pool_user: ctx.accounts.lulo_accounts.pool_user.to_account_info(),
-            regular_mint: ctx.accounts.lulo_accounts.lp_mint.to_account_info(),
+            owner: ctx.accounts.vault.to_cpi_handle(),
+            fee_payer: ctx.accounts.caller.to_cpi_handle_mut(),
+            input_mint: ctx.accounts.lulo_accounts.0.input_mint.to_cpi_handle(),
+            pending_withdrawal: ctx.accounts.pending_withdrawal_account.to_cpi_handle_mut(),
+            pool: ctx
+                .accounts
+                .lulo_accounts
+                .0
+                .pool_account
+                .to_cpi_handle_mut(),
+            pool_user: ctx.accounts.lulo_accounts.0.pool_user.to_cpi_handle_mut(),
+            regular_mint: ctx.accounts.lulo_accounts.0.lp_mint.to_cpi_handle_mut(),
             input_mint_token_program: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .input_mint_token_program
-                .to_account_info(),
+                .to_cpi_handle(),
             lp_mint_token_program: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .lp_mint_token_program
-                .to_account_info(),
-            owner_input_token_account: ctx.accounts.vault_token_account.to_account_info(),
+                .to_cpi_handle(),
+            owner_input_token_account: ctx.accounts.vault_token_account.to_cpi_handle_mut(),
             pool_input_token_account: ctx
                 .accounts
                 .lulo_accounts
+                .0
                 .pool_reserve_token_account
-                .to_account_info(),
-            protocol_authority: ctx.accounts.protocol_authority.to_account_info(),
+                .to_cpi_handle_mut(),
+            protocol_authority: ctx.accounts.protocol_authority.to_cpi_handle_mut(),
             protocol_authority_token_account: ctx
                 .accounts
                 .protocol_authority_token_account
-                .to_account_info(),
-            market: ctx.accounts.kamino_accounts.market.to_account_info(),
-            obligation: ctx.accounts.kamino_accounts.obligation.to_account_info(),
-            reserve: ctx.accounts.kamino_accounts.reserve.to_account_info(),
+                .to_cpi_handle_mut(),
+            market: ctx.accounts.kamino_accounts.0.market.to_cpi_handle_mut(),
+            obligation: ctx
+                .accounts
+                .kamino_accounts
+                .0
+                .obligation
+                .to_cpi_handle_mut(),
+            reserve: ctx.accounts.kamino_accounts.0.reserve.to_cpi_handle_mut(),
             reserve_liquidity_supply: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .reserve_liquidity_supply
-                .to_account_info(),
+                .to_cpi_handle_mut(),
             lending_market_authority: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .lending_market_authority
-                .to_account_info(),
+                .to_cpi_handle(),
             collateral_mint: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .collateral_mint
-                .to_account_info(),
+                .to_cpi_handle_mut(),
             collateral_token_account: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .collateral_token_account
-                .to_account_info(),
+                .to_cpi_handle_mut(),
             reserve_collateral_supply: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .reserve_collateral_supply
-                .to_account_info(),
+                .to_cpi_handle_mut(),
             collateral_token_program: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .collateral_token_program
-                .to_account_info(),
+                .to_cpi_handle(),
             instructions_sysvar: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .instructions_sysvar
-                .to_account_info(),
+                .to_cpi_handle(),
             kamino_program: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .kamino_program
-                .to_account_info(),
-            farms_program: ctx.accounts.kamino_accounts.farms_program.to_account_info(),
+                .to_cpi_handle(),
+            farms_program: ctx.accounts.kamino_accounts.0.farms_program.to_cpi_handle(),
             reserve_farm_state: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .reserve_farm_state
-                .as_ref()
-                .map(|a| a.to_account_info()),
+                .as_mut()
+                .map(|a| a.to_cpi_handle_mut()),
             obligation_farm_user_state: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .obligation_farm_user_state
-                .as_ref()
-                .map(|a| a.to_account_info()),
+                .as_mut()
+                .map(|a| a.to_cpi_handle_mut()),
             scope_prices: ctx
                 .accounts
                 .kamino_accounts
+                .0
                 .scope_prices
                 .as_ref()
-                .map(|a| a.to_account_info()),
+                .map(|a| a.to_cpi_handle()),
         };
 
-        let cpi_ctx =
-            CpiContext::new_with_signer(lulo_cpi_program_addr, cpi_accounts, signer_seeds);
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.lulo_accounts.0.program_id.address(),
+            cpi_accounts,
+            signer_seeds,
+        );
         lulo_v2::cpi::complete_regular_pool_withdraw(cpi_ctx, withdrawal_id)?;
 
         ctx.accounts.asset_record.pending_boosted_withdrawals = ctx
@@ -320,28 +363,27 @@ impl<'info> CompleteWithdrawRegular<'info> {
             .ok_or(HeirloomError::MathUnderflow)?;
 
         // fee calculation
-        let token_program_addr = ctx.accounts.lulo_accounts.input_mint_token_program.key();
-        let vault_info = ctx.accounts.vault.to_account_info();
+        let token_program_addr = ctx
+            .accounts
+            .lulo_accounts
+            .0
+            .input_mint_token_program
+            .address();
         skim_lulo_yield_fee(
             &mut ctx.accounts.vault_token_account,
             &mut ctx.accounts.asset_record,
-            &ctx.accounts.lulo_accounts.input_mint,
-            &ctx.accounts.treasury_token_account,
-            vault_info,
+            &ctx.accounts.lulo_accounts.0.input_mint,
+            &mut ctx.accounts.treasury_token_account,
+            &ctx.accounts.vault,
             token_program_addr,
             signer_seeds,
             vault_balance_before,
         )?;
 
         // close-safety: refresh from the real Lulo position, not our bookkeeping
-        let lp_ta_info = ctx
-            .accounts
-            .lulo_accounts
-            .pool_user_lp_token_account
-            .to_account_info();
         refresh_lulo_exposure(
             &mut ctx.accounts.asset_record,
-            &lp_ta_info,
+            &ctx.accounts.lulo_accounts.0.pool_user_lp_token_account,
             DepositType::Boosted,
         )?;
 
@@ -350,14 +392,14 @@ impl<'info> CompleteWithdrawRegular<'info> {
 
     pub fn validate(&self) -> Result<()> {
         // check treasury token account
-        require_eq!(
-            self.treasury_token_account.owner.key(),
+        require_keys_eq!(
+            *self.treasury_token_account.owner(),
             TREASURY,
             HeirloomError::InvalidAccount
         );
 
         // this can be the heir / estate authority
-        let caller = self.caller.key();
+        let caller = *self.caller.address();
         let now = Clock::get()?.unix_timestamp;
 
         if caller == self.estate.authority {
@@ -380,6 +422,6 @@ impl<'info> CompleteWithdrawRegular<'info> {
             return Ok(());
         }
 
-        err!(HeirloomError::Unauthorized)
+        Err(HeirloomError::Unauthorized.into())
     }
 }

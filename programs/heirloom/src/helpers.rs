@@ -4,11 +4,14 @@
 //! used when calling external programs (Lulo, Kamino).
 
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface};
+use anchor_spl::{
+    token,
+    token_interface::{self, Mint, TokenAccount},
+};
 use solana_instructions_sysvar::ID as SOLANA_SYSVAR_IX_ID;
 
 use crate::{
-    error::HeirloomError, lulo_v2, AssetRecord, DepositType, KAMINO_FARMS_PROGRAM_ID,
+    error::HeirloomError, lulo_v2, AssetRecord, DepositType, Vault, KAMINO_FARMS_PROGRAM_ID,
     KAMINO_PROGRAM_ID, MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
 };
 
@@ -39,52 +42,24 @@ pub(crate) fn validate_interval(value: i64) -> Result<()> {
     Ok(())
 }
 
-// ----------------------------------------------------------------- Account lifecycle
-
-/// Closes a program-owned PDA by transferring all lamports to `destination`
-/// and zeroing its data. Caller must have already validated the account.
-pub(crate) fn close_pda<'info>(
-    account: AccountInfo<'info>,
-    destination: AccountInfo<'info>,
-) -> Result<()> {
-    debug_assert!(account.key() != destination.key(), "cannot close to self");
-
-    let lamports = account.lamports();
-    account.sub_lamports(lamports)?;
-    destination.add_lamports(lamports)?;
-
-    let mut data = account.try_borrow_mut_data()?;
-    for byte in data.iter_mut() {
-        *byte = 0;
-    }
-
-    // Anchor's CLOSED_ACCOUNT_DISCRIMINATOR = [255; 8]
-    if data.len() >= 8 {
-        data[..8].copy_from_slice(&[255u8; 8]);
-    }
-
-    Ok(())
-}
-
 // ----------------------------------------------------------------- Lulo integration
 
 /// Splits a Lulo withdrawal into principal and yield (principal is returned
 /// first; any excess is yield), then transfers the protocol yield fee to the
 /// treasury.
 #[inline(never)]
-pub(crate) fn skim_lulo_yield_fee<'info>(
-    vault_token_account: &mut InterfaceAccount<'info, TokenAccount>,
-    asset_record: &mut Account<'info, AssetRecord>,
-    input_mint: &InterfaceAccount<'info, Mint>,
-    treasury_token_account: &InterfaceAccount<'info, TokenAccount>,
-    vault: AccountInfo<'info>,
-    token_program_addr: Pubkey,
+pub(crate) fn skim_lulo_yield_fee(
+    vault_token_account: &mut InterfaceAccount<TokenAccount>,
+    asset_record: &mut BorshAccount<AssetRecord>,
+    input_mint: &InterfaceAccount<Mint>,
+    treasury_token_account: &mut InterfaceAccount<TokenAccount>,
+    vault: &Account<Vault>,
+    token_program_addr: &Address,
     signer_seeds: &[&[&[u8]]],
     vault_balance_before: u64,
 ) -> Result<()> {
-    vault_token_account.reload()?;
     let returned = vault_token_account
-        .amount
+        .amount()
         .checked_sub(vault_balance_before)
         .ok_or(HeirloomError::MathUnderflow)?;
     let principal_returned = returned.min(asset_record.principal_deployed);
@@ -97,16 +72,16 @@ pub(crate) fn skim_lulo_yield_fee<'info>(
     if yield_amount > 0 {
         let (fee, _) = calculate_distribution(yield_amount, YIELD_FEE_BPS)?;
         let cpi_accounts = token_interface::TransferChecked {
-            from: vault_token_account.to_account_info(),
-            mint: input_mint.to_account_info(),
-            to: treasury_token_account.to_account_info(),
-            authority: vault,
+            from: vault_token_account.to_cpi_handle_mut(),
+            mint: input_mint.to_cpi_handle(),
+            to: treasury_token_account.to_cpi_handle_mut(),
+            authority: vault.to_cpi_handle(),
         };
 
         let cpi_context =
             CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
 
-        token_interface::transfer_checked(cpi_context, fee, input_mint.decimals)?;
+        token_interface::transfer_checked(cpi_context, fee, input_mint.decimals())?;
     }
 
     Ok(())
@@ -115,14 +90,15 @@ pub(crate) fn skim_lulo_yield_fee<'info>(
 /// Updates an `AssetRecord`'s exposure flags from the vault's LP-receipt
 /// balance for the given deposit type.
 #[inline(never)]
-pub(crate) fn refresh_lulo_exposure<'info>(
-    asset_record: &mut Account<'info, AssetRecord>,
-    pool_user_lp_token_account: &AccountInfo<'info>,
+pub(crate) fn refresh_lulo_exposure(
+    asset_record: &mut BorshAccount<AssetRecord>,
+    pool_user_lp_token_account: &UncheckedAccount,
     deposit_type: DepositType,
 ) -> Result<()> {
     let lp_balance = {
-        let data = pool_user_lp_token_account.try_borrow_data()?;
-        TokenAccount::try_deserialize(&mut &data[..])?.amount
+        let data = pool_user_lp_token_account.account().try_borrow()?;
+        bytemuck::from_bytes::<token::TokenAccount>(&data[..core::mem::size_of::<token::TokenAccount>()])
+            .amount()
     };
 
     match deposit_type {
@@ -138,24 +114,24 @@ pub(crate) fn refresh_lulo_exposure<'info>(
 
 /// Accounts required for Lulo v2 CPI calls.
 #[derive(Accounts)]
-pub struct LuloAccounts<'info> {
+pub struct LuloAccounts {
     /// CHECK: Lulo position PDA.
     #[account(mut)]
-    pub pool_user: UncheckedAccount<'info>,
+    pub pool_user: UncheckedAccount,
 
     /// CHECK: Pool user input-mint ATA; intermediate hop.
     #[account(mut)]
-    pub pool_user_token_account: UncheckedAccount<'info>,
+    pub pool_user_token_account: UncheckedAccount,
 
     /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
     #[account(mut)]
-    pub pool_user_lp_token_account: UncheckedAccount<'info>,
+    pub pool_user_lp_token_account: UncheckedAccount,
 
     /// CHECK: Referrer's pool_user; must be owned by this program.
-    #[account(mut, constraint = referrer_pool_user.owner.key() == program_id.key())]
-    pub referrer_pool_user: UncheckedAccount<'info>,
+    #[account(mut, constraint = referrer_pool_user.owner() == program_id.address())]
+    pub referrer_pool_user: UncheckedAccount,
 
-    pub input_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub input_mint: Box<InterfaceAccount<Mint>>,
 
     /// Pool's reserve token account (authority = pool_account).
     #[account(
@@ -164,80 +140,96 @@ pub struct LuloAccounts<'info> {
         token::authority = pool_account,
         token::token_program = input_mint_token_program,
     )]
-    pub pool_reserve_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub pool_reserve_token_account: Box<InterfaceAccount<TokenAccount>>,
 
     /// The pool's LP/share mint (Token-2022).
     #[account(mut)]
-    pub lp_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub lp_mint: Box<InterfaceAccount<Mint>>,
 
     /// CHECK: Lulo pool state.
     #[account(mut)]
-    pub pool_account: UncheckedAccount<'info>,
+    pub pool_account: UncheckedAccount,
 
     /// CHECK: Lulo program.
     #[account(mut, address = lulo_v2::ID)]
-    pub program_id: UncheckedAccount<'info>,
+    pub program_id: UncheckedAccount,
 
-    pub input_mint_token_program: Interface<'info, TokenInterface>,
-    pub lp_mint_token_program: Interface<'info, TokenInterface>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *input_mint_token_program.address() == Token::id()
+            || *input_mint_token_program.address() == Token2022::id()
+    )]
+    pub input_mint_token_program: UncheckedAccount,
+
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *lp_mint_token_program.address() == Token::id()
+            || *lp_mint_token_program.address() == Token2022::id()
+    )]
+    pub lp_mint_token_program: UncheckedAccount,
 }
 
 // ----------------------------------------------------------------- Kamino integration
 
 /// Accounts required for Kamino lending CPI calls (e.g. withdrawals).
 #[derive(Accounts)]
-pub struct GenericKamino<'info> {
+pub struct GenericKamino {
     /// CHECK: CPI
     #[account(mut)]
-    pub market: UncheckedAccount<'info>,
+    pub market: UncheckedAccount,
 
     /// CHECK: CPI
     #[account(mut)]
-    pub obligation: UncheckedAccount<'info>,
+    pub obligation: UncheckedAccount,
 
     /// CHECK: CPI
     #[account(mut)]
-    pub reserve: UncheckedAccount<'info>,
+    pub reserve: UncheckedAccount,
 
     #[account(mut)]
-    pub reserve_liquidity_supply: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub reserve_liquidity_supply: Box<InterfaceAccount<TokenAccount>>,
 
     /// CHECK: CPI
-    pub lending_market_authority: UncheckedAccount<'info>,
+    pub lending_market_authority: UncheckedAccount,
 
     /// Collateral mint; needs mut.
     #[account(mut)]
-    pub collateral_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub collateral_mint: Box<InterfaceAccount<Mint>>,
 
     #[account(mut)]
-    pub collateral_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub collateral_token_account: Box<InterfaceAccount<TokenAccount>>,
 
     #[account(mut)]
-    pub reserve_collateral_supply: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub reserve_collateral_supply: Box<InterfaceAccount<TokenAccount>>,
 
-    pub collateral_token_program: Interface<'info, TokenInterface>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[account(
+        constraint = *collateral_token_program.address() == Token::id()
+            || *collateral_token_program.address() == Token2022::id()
+    )]
+    pub collateral_token_program: UncheckedAccount,
 
     /// CHECK: SysInstructions
     #[account(address = SOLANA_SYSVAR_IX_ID)]
-    pub instructions_sysvar: UncheckedAccount<'info>,
+    pub instructions_sysvar: UncheckedAccount,
 
     /// CHECK: CPI
     #[account(address = KAMINO_PROGRAM_ID)]
-    pub kamino_program: UncheckedAccount<'info>,
+    pub kamino_program: UncheckedAccount,
 
     /// CHECK: CPI
     #[account(address = KAMINO_FARMS_PROGRAM_ID)]
-    pub farms_program: UncheckedAccount<'info>,
+    pub farms_program: UncheckedAccount,
 
     /// CHECK: CPI
     #[account(mut, owner = KAMINO_FARMS_PROGRAM_ID)]
-    pub reserve_farm_state: Option<UncheckedAccount<'info>>,
+    pub reserve_farm_state: Option<UncheckedAccount>,
 
     /// CHECK: CPI
     #[account(mut, owner = KAMINO_FARMS_PROGRAM_ID)]
-    pub obligation_farm_user_state: Option<UncheckedAccount<'info>>,
+    pub obligation_farm_user_state: Option<UncheckedAccount>,
 
     /// CHECK: CPI
     #[account(owner = SCOPE_PRICES_PROGRAM_ID)]
-    pub scope_prices: Option<UncheckedAccount<'info>>,
+    pub scope_prices: Option<UncheckedAccount>,
 }

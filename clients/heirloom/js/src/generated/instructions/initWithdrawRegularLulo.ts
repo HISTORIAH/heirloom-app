@@ -186,24 +186,35 @@ export type InitWithdrawRegularLuloAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   caller: TransactionSigner<TAccountCaller>;
+  /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
   authority: Address<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
   vault?: Address<TAccountVault>;
   estate?: Address<TAccountEstate>;
   assetRecord: Address<TAccountAssetRecord>;
+  /** CHECK: Lulo CPI */
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
+  /** CHECK: Lulo position PDA. */
   poolUser: Address<TAccountPoolUser>;
+  /** CHECK: Pool user input-mint ATA; intermediate hop. */
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  /** CHECK: Referrer's pool_user; must be owned by this program. */
   referrerPoolUser: Address<TAccountReferrerPoolUser>;
   inputMint: Address<TAccountInputMint>;
-  /** pool's reserve token account (authority = pool_account). */
+  /** Pool's reserve token account (authority = pool_account). */
   poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
-  /** the pool's LP/share mint (token22) */
+  /** The pool's LP/share mint (Token-2022). */
   lpMint: Address<TAccountLpMint>;
+  /** CHECK: Lulo pool state. */
   poolAccount: Address<TAccountPoolAccount>;
+  /** CHECK: Lulo program. */
   programId?: Address<TAccountProgramId>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   withdrawalId: InitWithdrawRegularLuloInstructionDataArgs["withdrawalId"];
@@ -406,24 +417,35 @@ export type InitWithdrawRegularLuloInput<
   TAccountSystemProgram extends string = string,
 > = {
   caller: TransactionSigner<TAccountCaller>;
+  /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
   authority: Address<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
   vault: Address<TAccountVault>;
   estate: Address<TAccountEstate>;
   assetRecord: Address<TAccountAssetRecord>;
+  /** CHECK: Lulo CPI */
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
+  /** CHECK: Lulo position PDA. */
   poolUser: Address<TAccountPoolUser>;
+  /** CHECK: Pool user input-mint ATA; intermediate hop. */
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  /** CHECK: Referrer's pool_user; must be owned by this program. */
   referrerPoolUser: Address<TAccountReferrerPoolUser>;
   inputMint: Address<TAccountInputMint>;
-  /** pool's reserve token account (authority = pool_account). */
+  /** Pool's reserve token account (authority = pool_account). */
   poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
-  /** the pool's LP/share mint (token22) */
+  /** The pool's LP/share mint (Token-2022). */
   lpMint: Address<TAccountLpMint>;
+  /** CHECK: Lulo pool state. */
   poolAccount: Address<TAccountPoolAccount>;
+  /** CHECK: Lulo program. */
   programId?: Address<TAccountProgramId>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   withdrawalId: InitWithdrawRegularLuloInstructionDataArgs["withdrawalId"];
@@ -597,24 +619,35 @@ export type ParsedInitWithdrawRegularLuloInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     caller: TAccountMetas[0];
+    /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
     authority: TAccountMetas[1];
+    /** CHECK: heir pubkey, stored in estate */
     heir: TAccountMetas[2];
     vault: TAccountMetas[3];
     estate: TAccountMetas[4];
     assetRecord: TAccountMetas[5];
+    /** CHECK: Lulo CPI */
     pendingWithdrawalAccount: TAccountMetas[6];
+    /** CHECK: Lulo position PDA. */
     poolUser: TAccountMetas[7];
+    /** CHECK: Pool user input-mint ATA; intermediate hop. */
     poolUserTokenAccount: TAccountMetas[8];
+    /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
     poolUserLpTokenAccount: TAccountMetas[9];
+    /** CHECK: Referrer's pool_user; must be owned by this program. */
     referrerPoolUser: TAccountMetas[10];
     inputMint: TAccountMetas[11];
-    /** pool's reserve token account (authority = pool_account). */
+    /** Pool's reserve token account (authority = pool_account). */
     poolReserveTokenAccount: TAccountMetas[12];
-    /** the pool's LP/share mint (token22) */
+    /** The pool's LP/share mint (Token-2022). */
     lpMint: TAccountMetas[13];
+    /** CHECK: Lulo pool state. */
     poolAccount: TAccountMetas[14];
+    /** CHECK: Lulo program. */
     programId: TAccountMetas[15];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     inputMintTokenProgram: TAccountMetas[16];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     lpMintTokenProgram: TAccountMetas[17];
     systemProgram: TAccountMetas[18];
   };

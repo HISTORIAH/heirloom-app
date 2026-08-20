@@ -272,43 +272,68 @@ export type CompleteWithdrawRegularLuloAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   caller: TransactionSigner<TAccountCaller>;
+  /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
   authority: Address<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
   estate?: Address<TAccountEstate>;
   vault?: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
   assetRecord: Address<TAccountAssetRecord>;
+  /** CHECK: Lulo CPI */
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
+  /** CHECK: Lulo position PDA. */
   poolUser: Address<TAccountPoolUser>;
+  /** CHECK: Pool user input-mint ATA; intermediate hop. */
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  /** CHECK: Referrer's pool_user; must be owned by this program. */
   referrerPoolUser: Address<TAccountReferrerPoolUser>;
   inputMint: Address<TAccountInputMint>;
-  /** pool's reserve token account (authority = pool_account). */
+  /** Pool's reserve token account (authority = pool_account). */
   poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
-  /** the pool's LP/share mint (token22) */
+  /** The pool's LP/share mint (Token-2022). */
   lpMint: Address<TAccountLpMint>;
+  /** CHECK: Lulo pool state. */
   poolAccount: Address<TAccountPoolAccount>;
+  /** CHECK: Lulo program. */
   programId?: Address<TAccountProgramId>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
+  /** CHECK: CPI */
   market: Address<TAccountMarket>;
+  /** CHECK: CPI */
   obligation: Address<TAccountObligation>;
+  /** CHECK: CPI */
   reserve: Address<TAccountReserve>;
   reserveLiquiditySupply: Address<TAccountReserveLiquiditySupply>;
+  /** CHECK: CPI */
   lendingMarketAuthority: Address<TAccountLendingMarketAuthority>;
+  /** Collateral mint; needs mut. */
   collateralMint: Address<TAccountCollateralMint>;
   collateralTokenAccount: Address<TAccountCollateralTokenAccount>;
   reserveCollateralSupply: Address<TAccountReserveCollateralSupply>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   collateralTokenProgram: Address<TAccountCollateralTokenProgram>;
+  /** CHECK: SysInstructions */
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
+  /** CHECK: CPI */
   kaminoProgram?: Address<TAccountKaminoProgram>;
+  /** CHECK: CPI */
   farmsProgram?: Address<TAccountFarmsProgram>;
+  /** CHECK: CPI */
   reserveFarmState?: Address<TAccountReserveFarmState>;
+  /** CHECK: CPI */
   obligationFarmUserState?: Address<TAccountObligationFarmUserState>;
+  /** CHECK: CPI */
   scopePrices?: Address<TAccountScopePrices>;
+  /** CHECK: Lulo CPI */
   protocolAuthority?: Address<TAccountProtocolAuthority>;
   treasuryTokenAccount: Address<TAccountTreasuryTokenAccount>;
+  /** CHECK: Lulo CPI */
   protocolAuthorityTokenAccount?: Address<TAccountProtocolAuthorityTokenAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   withdrawalId: CompleteWithdrawRegularLuloInstructionDataArgs["withdrawalId"];
@@ -666,43 +691,68 @@ export type CompleteWithdrawRegularLuloInput<
   TAccountSystemProgram extends string = string,
 > = {
   caller: TransactionSigner<TAccountCaller>;
+  /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
   authority: Address<TAccountAuthority>;
+  /** CHECK: heir pubkey, stored in estate */
   heir: Address<TAccountHeir>;
   estate: Address<TAccountEstate>;
   vault: Address<TAccountVault>;
   vaultTokenAccount: Address<TAccountVaultTokenAccount>;
   assetRecord: Address<TAccountAssetRecord>;
+  /** CHECK: Lulo CPI */
   pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
+  /** CHECK: Lulo position PDA. */
   poolUser: Address<TAccountPoolUser>;
+  /** CHECK: Pool user input-mint ATA; intermediate hop. */
   poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
   poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  /** CHECK: Referrer's pool_user; must be owned by this program. */
   referrerPoolUser: Address<TAccountReferrerPoolUser>;
   inputMint: Address<TAccountInputMint>;
-  /** pool's reserve token account (authority = pool_account). */
+  /** Pool's reserve token account (authority = pool_account). */
   poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
-  /** the pool's LP/share mint (token22) */
+  /** The pool's LP/share mint (Token-2022). */
   lpMint: Address<TAccountLpMint>;
+  /** CHECK: Lulo pool state. */
   poolAccount: Address<TAccountPoolAccount>;
+  /** CHECK: Lulo program. */
   programId?: Address<TAccountProgramId>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
+  /** CHECK: CPI */
   market: Address<TAccountMarket>;
+  /** CHECK: CPI */
   obligation: Address<TAccountObligation>;
+  /** CHECK: CPI */
   reserve: Address<TAccountReserve>;
   reserveLiquiditySupply: Address<TAccountReserveLiquiditySupply>;
+  /** CHECK: CPI */
   lendingMarketAuthority: Address<TAccountLendingMarketAuthority>;
+  /** Collateral mint; needs mut. */
   collateralMint: Address<TAccountCollateralMint>;
   collateralTokenAccount: Address<TAccountCollateralTokenAccount>;
   reserveCollateralSupply: Address<TAccountReserveCollateralSupply>;
+  /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   collateralTokenProgram: Address<TAccountCollateralTokenProgram>;
+  /** CHECK: SysInstructions */
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
+  /** CHECK: CPI */
   kaminoProgram?: Address<TAccountKaminoProgram>;
+  /** CHECK: CPI */
   farmsProgram?: Address<TAccountFarmsProgram>;
+  /** CHECK: CPI */
   reserveFarmState?: Address<TAccountReserveFarmState>;
+  /** CHECK: CPI */
   obligationFarmUserState?: Address<TAccountObligationFarmUserState>;
+  /** CHECK: CPI */
   scopePrices?: Address<TAccountScopePrices>;
+  /** CHECK: Lulo CPI */
   protocolAuthority?: Address<TAccountProtocolAuthority>;
   treasuryTokenAccount: Address<TAccountTreasuryTokenAccount>;
+  /** CHECK: Lulo CPI */
   protocolAuthorityTokenAccount?: Address<TAccountProtocolAuthorityTokenAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   withdrawalId: CompleteWithdrawRegularLuloInstructionDataArgs["withdrawalId"];
@@ -1012,43 +1062,68 @@ export type ParsedCompleteWithdrawRegularLuloInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     caller: TAccountMetas[0];
+    /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
     authority: TAccountMetas[1];
+    /** CHECK: heir pubkey, stored in estate */
     heir: TAccountMetas[2];
     estate: TAccountMetas[3];
     vault: TAccountMetas[4];
     vaultTokenAccount: TAccountMetas[5];
     assetRecord: TAccountMetas[6];
+    /** CHECK: Lulo CPI */
     pendingWithdrawalAccount: TAccountMetas[7];
+    /** CHECK: Lulo position PDA. */
     poolUser: TAccountMetas[8];
+    /** CHECK: Pool user input-mint ATA; intermediate hop. */
     poolUserTokenAccount: TAccountMetas[9];
+    /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
     poolUserLpTokenAccount: TAccountMetas[10];
+    /** CHECK: Referrer's pool_user; must be owned by this program. */
     referrerPoolUser: TAccountMetas[11];
     inputMint: TAccountMetas[12];
-    /** pool's reserve token account (authority = pool_account). */
+    /** Pool's reserve token account (authority = pool_account). */
     poolReserveTokenAccount: TAccountMetas[13];
-    /** the pool's LP/share mint (token22) */
+    /** The pool's LP/share mint (Token-2022). */
     lpMint: TAccountMetas[14];
+    /** CHECK: Lulo pool state. */
     poolAccount: TAccountMetas[15];
+    /** CHECK: Lulo program. */
     programId: TAccountMetas[16];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     inputMintTokenProgram: TAccountMetas[17];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     lpMintTokenProgram: TAccountMetas[18];
+    /** CHECK: CPI */
     market: TAccountMetas[19];
+    /** CHECK: CPI */
     obligation: TAccountMetas[20];
+    /** CHECK: CPI */
     reserve: TAccountMetas[21];
     reserveLiquiditySupply: TAccountMetas[22];
+    /** CHECK: CPI */
     lendingMarketAuthority: TAccountMetas[23];
+    /** Collateral mint; needs mut. */
     collateralMint: TAccountMetas[24];
     collateralTokenAccount: TAccountMetas[25];
     reserveCollateralSupply: TAccountMetas[26];
+    /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
     collateralTokenProgram: TAccountMetas[27];
+    /** CHECK: SysInstructions */
     instructionsSysvar: TAccountMetas[28];
+    /** CHECK: CPI */
     kaminoProgram: TAccountMetas[29];
+    /** CHECK: CPI */
     farmsProgram: TAccountMetas[30];
+    /** CHECK: CPI */
     reserveFarmState?: TAccountMetas[31] | undefined;
+    /** CHECK: CPI */
     obligationFarmUserState?: TAccountMetas[32] | undefined;
+    /** CHECK: CPI */
     scopePrices?: TAccountMetas[33] | undefined;
+    /** CHECK: Lulo CPI */
     protocolAuthority: TAccountMetas[34];
     treasuryTokenAccount: TAccountMetas[35];
+    /** CHECK: Lulo CPI */
     protocolAuthorityTokenAccount: TAccountMetas[36];
     systemProgram: TAccountMetas[37];
   };

@@ -16,10 +16,14 @@ pub struct WithdrawProtectedLulo {
       
               
           pub caller: solana_address::Address,
-          
+                /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+
+    
               
           pub authority: solana_address::Address,
-          
+                /// CHECK: heir pubkey, stored in estate
+
+    
               
           pub heir: solana_address::Address,
           
@@ -34,59 +38,85 @@ pub struct WithdrawProtectedLulo {
           
               
           pub asset_record: solana_address::Address,
-          
+                /// CHECK: Lulo position PDA.
+
+    
               
           pub pool_user: solana_address::Address,
-          
+                /// CHECK: Pool user input-mint ATA; intermediate hop.
+
+    
               
           pub pool_user_token_account: solana_address::Address,
-          
+                /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+
+    
               
           pub pool_user_lp_token_account: solana_address::Address,
-          
+                /// CHECK: Referrer's pool_user; must be owned by this program.
+
+    
               
           pub referrer_pool_user: solana_address::Address,
           
               
           pub input_mint: solana_address::Address,
-                /// pool's reserve token account (authority = pool_account).
+                /// Pool's reserve token account (authority = pool_account).
 
     
               
           pub pool_reserve_token_account: solana_address::Address,
-                /// the pool's LP/share mint (token22)
+                /// The pool's LP/share mint (Token-2022).
 
     
               
           pub lp_mint: solana_address::Address,
-          
+                /// CHECK: Lulo pool state.
+
+    
               
           pub pool_account: solana_address::Address,
-          
+                /// CHECK: Lulo program.
+
+    
               
           pub program_id: solana_address::Address,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub input_mint_token_program: solana_address::Address,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub lp_mint_token_program: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub market: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub obligation: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub reserve: solana_address::Address,
           
               
           pub reserve_liquidity_supply: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub lending_market_authority: solana_address::Address,
-          
+                /// Collateral mint; needs mut.
+
+    
               
           pub collateral_mint: solana_address::Address,
           
@@ -95,31 +125,49 @@ pub struct WithdrawProtectedLulo {
           
               
           pub reserve_collateral_supply: solana_address::Address,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub collateral_token_program: solana_address::Address,
-          
+                /// CHECK: SysInstructions
+
+    
               
           pub instructions_sysvar: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub kamino_program: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub farms_program: solana_address::Address,
-          
+                /// CHECK: CPI
+
+    
               
           pub reserve_farm_state: Option<solana_address::Address>,
-          
+                /// CHECK: CPI
+
+    
               
           pub obligation_farm_user_state: Option<solana_address::Address>,
-          
+                /// CHECK: CPI
+
+    
               
           pub scope_prices: Option<solana_address::Address>,
-          
+                /// CHECK: Lulo CPI
+
+    
               
           pub protocol_authority: solana_address::Address,
-          
+                /// CHECK: Lulo CPI
+
+    
               
           pub protocol_authority_token_account: solana_address::Address,
           
@@ -457,12 +505,14 @@ impl WithdrawProtectedLuloBuilder {
                         self.caller = Some(caller);
                     self
     }
-            #[inline(always)]
+            /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+#[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
                         self.authority = Some(authority);
                     self
     }
-            #[inline(always)]
+            /// CHECK: heir pubkey, stored in estate
+#[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
                         self.heir = Some(heir);
                     self
@@ -487,22 +537,26 @@ impl WithdrawProtectedLuloBuilder {
                         self.asset_record = Some(asset_record);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Lulo position PDA.
+#[inline(always)]
     pub fn pool_user(&mut self, pool_user: solana_address::Address) -> &mut Self {
                         self.pool_user = Some(pool_user);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Pool user input-mint ATA; intermediate hop.
+#[inline(always)]
     pub fn pool_user_token_account(&mut self, pool_user_token_account: solana_address::Address) -> &mut Self {
                         self.pool_user_token_account = Some(pool_user_token_account);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+#[inline(always)]
     pub fn pool_user_lp_token_account(&mut self, pool_user_lp_token_account: solana_address::Address) -> &mut Self {
                         self.pool_user_lp_token_account = Some(pool_user_lp_token_account);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Referrer's pool_user; must be owned by this program.
+#[inline(always)]
     pub fn referrer_pool_user(&mut self, referrer_pool_user: solana_address::Address) -> &mut Self {
                         self.referrer_pool_user = Some(referrer_pool_user);
                     self
@@ -512,50 +566,57 @@ impl WithdrawProtectedLuloBuilder {
                         self.input_mint = Some(input_mint);
                     self
     }
-            /// pool's reserve token account (authority = pool_account).
+            /// Pool's reserve token account (authority = pool_account).
 #[inline(always)]
     pub fn pool_reserve_token_account(&mut self, pool_reserve_token_account: solana_address::Address) -> &mut Self {
                         self.pool_reserve_token_account = Some(pool_reserve_token_account);
                     self
     }
-            /// the pool's LP/share mint (token22)
+            /// The pool's LP/share mint (Token-2022).
 #[inline(always)]
     pub fn lp_mint(&mut self, lp_mint: solana_address::Address) -> &mut Self {
                         self.lp_mint = Some(lp_mint);
                     self
     }
-            #[inline(always)]
+            /// CHECK: Lulo pool state.
+#[inline(always)]
     pub fn pool_account(&mut self, pool_account: solana_address::Address) -> &mut Self {
                         self.pool_account = Some(pool_account);
                     self
     }
             /// `[optional account, default to 'FL3X2pRsQ9zHENpZSKDRREtccwJuei8yg9fwDu9UN69Q']`
+/// CHECK: Lulo program.
 #[inline(always)]
     pub fn program_id(&mut self, program_id: solana_address::Address) -> &mut Self {
                         self.program_id = Some(program_id);
                     self
     }
-            #[inline(always)]
+            /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn input_mint_token_program(&mut self, input_mint_token_program: solana_address::Address) -> &mut Self {
                         self.input_mint_token_program = Some(input_mint_token_program);
                     self
     }
-            #[inline(always)]
+            /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn lp_mint_token_program(&mut self, lp_mint_token_program: solana_address::Address) -> &mut Self {
                         self.lp_mint_token_program = Some(lp_mint_token_program);
                     self
     }
-            #[inline(always)]
+            /// CHECK: CPI
+#[inline(always)]
     pub fn market(&mut self, market: solana_address::Address) -> &mut Self {
                         self.market = Some(market);
                     self
     }
-            #[inline(always)]
+            /// CHECK: CPI
+#[inline(always)]
     pub fn obligation(&mut self, obligation: solana_address::Address) -> &mut Self {
                         self.obligation = Some(obligation);
                     self
     }
-            #[inline(always)]
+            /// CHECK: CPI
+#[inline(always)]
     pub fn reserve(&mut self, reserve: solana_address::Address) -> &mut Self {
                         self.reserve = Some(reserve);
                     self
@@ -565,12 +626,14 @@ impl WithdrawProtectedLuloBuilder {
                         self.reserve_liquidity_supply = Some(reserve_liquidity_supply);
                     self
     }
-            #[inline(always)]
+            /// CHECK: CPI
+#[inline(always)]
     pub fn lending_market_authority(&mut self, lending_market_authority: solana_address::Address) -> &mut Self {
                         self.lending_market_authority = Some(lending_market_authority);
                     self
     }
-            #[inline(always)]
+            /// Collateral mint; needs mut.
+#[inline(always)]
     pub fn collateral_mint(&mut self, collateral_mint: solana_address::Address) -> &mut Self {
                         self.collateral_mint = Some(collateral_mint);
                     self
@@ -585,54 +648,63 @@ impl WithdrawProtectedLuloBuilder {
                         self.reserve_collateral_supply = Some(reserve_collateral_supply);
                     self
     }
-            #[inline(always)]
+            /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn collateral_token_program(&mut self, collateral_token_program: solana_address::Address) -> &mut Self {
                         self.collateral_token_program = Some(collateral_token_program);
                     self
     }
             /// `[optional account, default to 'Sysvar1nstructions1111111111111111111111111']`
+/// CHECK: SysInstructions
 #[inline(always)]
     pub fn instructions_sysvar(&mut self, instructions_sysvar: solana_address::Address) -> &mut Self {
                         self.instructions_sysvar = Some(instructions_sysvar);
                     self
     }
             /// `[optional account, default to 'KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD']`
+/// CHECK: CPI
 #[inline(always)]
     pub fn kamino_program(&mut self, kamino_program: solana_address::Address) -> &mut Self {
                         self.kamino_program = Some(kamino_program);
                     self
     }
             /// `[optional account, default to 'FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr']`
+/// CHECK: CPI
 #[inline(always)]
     pub fn farms_program(&mut self, farms_program: solana_address::Address) -> &mut Self {
                         self.farms_program = Some(farms_program);
                     self
     }
             /// `[optional account]`
+/// CHECK: CPI
 #[inline(always)]
     pub fn reserve_farm_state(&mut self, reserve_farm_state: Option<solana_address::Address>) -> &mut Self {
                         self.reserve_farm_state = reserve_farm_state;
                     self
     }
             /// `[optional account]`
+/// CHECK: CPI
 #[inline(always)]
     pub fn obligation_farm_user_state(&mut self, obligation_farm_user_state: Option<solana_address::Address>) -> &mut Self {
                         self.obligation_farm_user_state = obligation_farm_user_state;
                     self
     }
             /// `[optional account]`
+/// CHECK: CPI
 #[inline(always)]
     pub fn scope_prices(&mut self, scope_prices: Option<solana_address::Address>) -> &mut Self {
                         self.scope_prices = scope_prices;
                     self
     }
             /// `[optional account, default to '4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR']`
+/// CHECK: Lulo CPI
 #[inline(always)]
     pub fn protocol_authority(&mut self, protocol_authority: solana_address::Address) -> &mut Self {
                         self.protocol_authority = Some(protocol_authority);
                     self
     }
             /// `[optional account, default to 'mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx']`
+/// CHECK: Lulo CPI
 #[inline(always)]
     pub fn protocol_authority_token_account(&mut self, protocol_authority_token_account: solana_address::Address) -> &mut Self {
                         self.protocol_authority_token_account = Some(protocol_authority_token_account);
@@ -727,10 +799,14 @@ impl WithdrawProtectedLuloBuilder {
           
                     
               pub caller: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+
+      
                     
               pub authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: heir pubkey, stored in estate
+
+      
                     
               pub heir: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -745,59 +821,85 @@ impl WithdrawProtectedLuloBuilder {
                 
                     
               pub asset_record: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo position PDA.
+
+      
                     
               pub pool_user: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Pool user input-mint ATA; intermediate hop.
+
+      
                     
               pub pool_user_token_account: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+
+      
                     
               pub pool_user_lp_token_account: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Referrer's pool_user; must be owned by this program.
+
+      
                     
               pub referrer_pool_user: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub input_mint: &'b solana_account_info::AccountInfo<'a>,
-                        /// pool's reserve token account (authority = pool_account).
+                        /// Pool's reserve token account (authority = pool_account).
 
       
                     
               pub pool_reserve_token_account: &'b solana_account_info::AccountInfo<'a>,
-                        /// the pool's LP/share mint (token22)
+                        /// The pool's LP/share mint (Token-2022).
 
       
                     
               pub lp_mint: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo pool state.
+
+      
                     
               pub pool_account: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo program.
+
+      
                     
               pub program_id: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub input_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub lp_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub market: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub obligation: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub reserve: &'b solana_account_info::AccountInfo<'a>,
                 
                     
               pub reserve_liquidity_supply: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub lending_market_authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// Collateral mint; needs mut.
+
+      
                     
               pub collateral_mint: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -806,31 +908,49 @@ impl WithdrawProtectedLuloBuilder {
                 
                     
               pub reserve_collateral_supply: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+      
                     
               pub collateral_token_program: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: SysInstructions
+
+      
                     
               pub instructions_sysvar: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub kamino_program: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub farms_program: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub reserve_farm_state: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub obligation_farm_user_state: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: CPI
+
+      
                     
               pub scope_prices: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
+                        /// CHECK: Lulo CPI
+
+      
                     
               pub protocol_authority: &'b solana_account_info::AccountInfo<'a>,
-                
+                        /// CHECK: Lulo CPI
+
+      
                     
               pub protocol_authority_token_account: &'b solana_account_info::AccountInfo<'a>,
                 
@@ -851,10 +971,14 @@ pub struct WithdrawProtectedLuloCpi<'a, 'b> {
       
               
           pub caller: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+
+    
               
           pub authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: heir pubkey, stored in estate
+
+    
               
           pub heir: &'b solana_account_info::AccountInfo<'a>,
           
@@ -869,59 +993,85 @@ pub struct WithdrawProtectedLuloCpi<'a, 'b> {
           
               
           pub asset_record: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo position PDA.
+
+    
               
           pub pool_user: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Pool user input-mint ATA; intermediate hop.
+
+    
               
           pub pool_user_token_account: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+
+    
               
           pub pool_user_lp_token_account: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Referrer's pool_user; must be owned by this program.
+
+    
               
           pub referrer_pool_user: &'b solana_account_info::AccountInfo<'a>,
           
               
           pub input_mint: &'b solana_account_info::AccountInfo<'a>,
-                /// pool's reserve token account (authority = pool_account).
+                /// Pool's reserve token account (authority = pool_account).
 
     
               
           pub pool_reserve_token_account: &'b solana_account_info::AccountInfo<'a>,
-                /// the pool's LP/share mint (token22)
+                /// The pool's LP/share mint (Token-2022).
 
     
               
           pub lp_mint: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo pool state.
+
+    
               
           pub pool_account: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo program.
+
+    
               
           pub program_id: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub input_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub lp_mint_token_program: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub market: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub obligation: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub reserve: &'b solana_account_info::AccountInfo<'a>,
           
               
           pub reserve_liquidity_supply: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub lending_market_authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// Collateral mint; needs mut.
+
+    
               
           pub collateral_mint: &'b solana_account_info::AccountInfo<'a>,
           
@@ -930,31 +1080,49 @@ pub struct WithdrawProtectedLuloCpi<'a, 'b> {
           
               
           pub reserve_collateral_supply: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+
+    
               
           pub collateral_token_program: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: SysInstructions
+
+    
               
           pub instructions_sysvar: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub kamino_program: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub farms_program: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: CPI
+
+    
               
           pub reserve_farm_state: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: CPI
+
+    
               
           pub obligation_farm_user_state: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: CPI
+
+    
               
           pub scope_prices: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
+                /// CHECK: Lulo CPI
+
+    
               
           pub protocol_authority: &'b solana_account_info::AccountInfo<'a>,
-          
+                /// CHECK: Lulo CPI
+
+    
               
           pub protocol_authority_token_account: &'b solana_account_info::AccountInfo<'a>,
           
@@ -1216,8 +1384,8 @@ impl<'a, 'b> WithdrawProtectedLuloCpi<'a, 'b> {
                       remaining_accounts.iter().for_each(|remaining_account| {
       accounts.push(solana_instruction::AccountMeta {
           pubkey: *remaining_account.0.key,
-          is_signer: remaining_account.1,
-          is_writable: remaining_account.2,
+          is_writable: remaining_account.1,
+          is_signer: remaining_account.2,
       })
     });
     let mut data = WithdrawProtectedLuloInstructionData::new().try_to_vec().unwrap();
@@ -1384,12 +1552,14 @@ impl<'a, 'b> WithdrawProtectedLuloCpiBuilder<'a, 'b> {
                         self.instruction.caller = Some(caller);
                     self
     }
-      #[inline(always)]
+      /// CHECK: estate authority pubkey, stored in estate; used for PDA seeds
+#[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.authority = Some(authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: heir pubkey, stored in estate
+#[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.heir = Some(heir);
                     self
@@ -1414,22 +1584,26 @@ impl<'a, 'b> WithdrawProtectedLuloCpiBuilder<'a, 'b> {
                         self.instruction.asset_record = Some(asset_record);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo position PDA.
+#[inline(always)]
     pub fn pool_user(&mut self, pool_user: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_user = Some(pool_user);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Pool user input-mint ATA; intermediate hop.
+#[inline(always)]
     pub fn pool_user_token_account(&mut self, pool_user_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_user_token_account = Some(pool_user_token_account);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing.
+#[inline(always)]
     pub fn pool_user_lp_token_account(&mut self, pool_user_lp_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_user_lp_token_account = Some(pool_user_lp_token_account);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Referrer's pool_user; must be owned by this program.
+#[inline(always)]
     pub fn referrer_pool_user(&mut self, referrer_pool_user: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.referrer_pool_user = Some(referrer_pool_user);
                     self
@@ -1439,49 +1613,56 @@ impl<'a, 'b> WithdrawProtectedLuloCpiBuilder<'a, 'b> {
                         self.instruction.input_mint = Some(input_mint);
                     self
     }
-      /// pool's reserve token account (authority = pool_account).
+      /// Pool's reserve token account (authority = pool_account).
 #[inline(always)]
     pub fn pool_reserve_token_account(&mut self, pool_reserve_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_reserve_token_account = Some(pool_reserve_token_account);
                     self
     }
-      /// the pool's LP/share mint (token22)
+      /// The pool's LP/share mint (Token-2022).
 #[inline(always)]
     pub fn lp_mint(&mut self, lp_mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.lp_mint = Some(lp_mint);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo pool state.
+#[inline(always)]
     pub fn pool_account(&mut self, pool_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.pool_account = Some(pool_account);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo program.
+#[inline(always)]
     pub fn program_id(&mut self, program_id: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.program_id = Some(program_id);
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn input_mint_token_program(&mut self, input_mint_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.input_mint_token_program = Some(input_mint_token_program);
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn lp_mint_token_program(&mut self, lp_mint_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.lp_mint_token_program = Some(lp_mint_token_program);
                     self
     }
-      #[inline(always)]
+      /// CHECK: CPI
+#[inline(always)]
     pub fn market(&mut self, market: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.market = Some(market);
                     self
     }
-      #[inline(always)]
+      /// CHECK: CPI
+#[inline(always)]
     pub fn obligation(&mut self, obligation: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.obligation = Some(obligation);
                     self
     }
-      #[inline(always)]
+      /// CHECK: CPI
+#[inline(always)]
     pub fn reserve(&mut self, reserve: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.reserve = Some(reserve);
                     self
@@ -1491,12 +1672,14 @@ impl<'a, 'b> WithdrawProtectedLuloCpiBuilder<'a, 'b> {
                         self.instruction.reserve_liquidity_supply = Some(reserve_liquidity_supply);
                     self
     }
-      #[inline(always)]
+      /// CHECK: CPI
+#[inline(always)]
     pub fn lending_market_authority(&mut self, lending_market_authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.lending_market_authority = Some(lending_market_authority);
                     self
     }
-      #[inline(always)]
+      /// Collateral mint; needs mut.
+#[inline(always)]
     pub fn collateral_mint(&mut self, collateral_mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.collateral_mint = Some(collateral_mint);
                     self
@@ -1511,50 +1694,59 @@ impl<'a, 'b> WithdrawProtectedLuloCpiBuilder<'a, 'b> {
                         self.instruction.reserve_collateral_supply = Some(reserve_collateral_supply);
                     self
     }
-      #[inline(always)]
+      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+#[inline(always)]
     pub fn collateral_token_program(&mut self, collateral_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.collateral_token_program = Some(collateral_token_program);
                     self
     }
-      #[inline(always)]
+      /// CHECK: SysInstructions
+#[inline(always)]
     pub fn instructions_sysvar(&mut self, instructions_sysvar: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.instructions_sysvar = Some(instructions_sysvar);
                     self
     }
-      #[inline(always)]
+      /// CHECK: CPI
+#[inline(always)]
     pub fn kamino_program(&mut self, kamino_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.kamino_program = Some(kamino_program);
                     self
     }
-      #[inline(always)]
+      /// CHECK: CPI
+#[inline(always)]
     pub fn farms_program(&mut self, farms_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.farms_program = Some(farms_program);
                     self
     }
       /// `[optional account]`
+/// CHECK: CPI
 #[inline(always)]
     pub fn reserve_farm_state(&mut self, reserve_farm_state: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.reserve_farm_state = reserve_farm_state;
                     self
     }
       /// `[optional account]`
+/// CHECK: CPI
 #[inline(always)]
     pub fn obligation_farm_user_state(&mut self, obligation_farm_user_state: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.obligation_farm_user_state = obligation_farm_user_state;
                     self
     }
       /// `[optional account]`
+/// CHECK: CPI
 #[inline(always)]
     pub fn scope_prices(&mut self, scope_prices: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
                         self.instruction.scope_prices = scope_prices;
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo CPI
+#[inline(always)]
     pub fn protocol_authority(&mut self, protocol_authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.protocol_authority = Some(protocol_authority);
                     self
     }
-      #[inline(always)]
+      /// CHECK: Lulo CPI
+#[inline(always)]
     pub fn protocol_authority_token_account(&mut self, protocol_authority_token_account: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
                         self.instruction.protocol_authority_token_account = Some(protocol_authority_token_account);
                     self

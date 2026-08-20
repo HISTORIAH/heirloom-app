@@ -1,10 +1,11 @@
 use anchor_lang::prelude::*;
 
-#[account]
+#[account(borsh)]
+#[derive(InitSpace)]
 pub struct Estate {
-    pub authority: Pubkey,
+    pub authority: Address,
 
-    pub heir: Pubkey,
+    pub heir: Address,
 
     pub heartbeat_interval: i64,
 
@@ -22,14 +23,15 @@ pub struct Estate {
 
     pub is_migrating: bool,
 
-    pub delegate: Option<Pubkey>,
+    pub delegate: Option<Address>,
 
     /// hot signer wallet
-    pub hb_signer: Option<Pubkey>,
+    pub hb_signer: Option<Address>,
 
     /// number of vault token accounts (ATAs) still open under this estate
     pub claimable_assets: u8,
 
+    #[max_len(32)]
     pub label: String,
 }
 
@@ -55,7 +57,7 @@ impl Estate {
 
 #[account]
 pub struct Vault {
-    pub estate: Pubkey,
+    pub estate: Address,
 
     pub bump: u8,
 }
@@ -72,7 +74,8 @@ impl Vault {
 /// an estate. Its existence (not the vault ATA's) is the source of truth,
 /// since ATA creation is permissionless and can't be used as a registration
 /// check without allowing front-running / double counting.
-#[account]
+#[account(borsh)]
+#[derive(InitSpace)]
 pub struct AssetRecord {
     pub bump: u8,
 
@@ -99,9 +102,28 @@ impl AssetRecord {
     + 2; // pending_boosted_withdrawals
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, PartialEq, Eq, Copy, Clone)]
-#[borsh(use_discriminant = true)]
+#[derive(SchemaWrite, SchemaRead, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum DepositType {
-    Protected = 0,
-    Boosted = 1,
+    #[wincode(tag = 0)]
+    Protected,
+    #[wincode(tag = 1)]
+    Boosted,
+}
+
+#[cfg(feature = "idl-build")]
+impl anchor_lang::IdlAccountType for DepositType {
+    fn __idl_type_def() -> Option<&'static str> {
+        Some(
+            r#"{"name":"DepositType","type":{"kind":"enum","variants":[{"name":"Protected"},{"name":"Boosted"}]}}"#,
+        )
+    }
+
+    fn __register_idl_deps(
+        _accounts: &mut ::anchor_lang::__alloc::vec::Vec<&'static str>,
+        types: &mut ::anchor_lang::__alloc::vec::Vec<&'static str>,
+    ) {
+        if let Some(t) = <Self as anchor_lang::IdlAccountType>::__idl_type_def() {
+            types.push(t);
+        }
+    }
 }
