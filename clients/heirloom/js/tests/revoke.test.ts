@@ -2,8 +2,10 @@ import { expect, test } from "bun:test";
 import { fetchToken, TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import {
   accountExists,
+  calculateFee,
   createAndMintTokens,
   createTestClient,
+  fundTreasury,
   generateKeyPairSignerWithSol,
   genInitSolEstateIx,
   genInitTokenEstateIx,
@@ -15,6 +17,7 @@ import { TREASURY_ADDRESS } from "../src/main";
 
 test("it creates a token-only vault and revokes it", async () => {
   const client = await createTestClient();
+  await fundTreasury(client);
   const [authority, heir] = await Promise.all([
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
@@ -56,31 +59,21 @@ test("it creates a token-only vault and revokes it", async () => {
   expect(await accountExists(client, vaultTokenAccount)).toBe(false);
   expect((await fetchEstate(client.rpc, estate)).data.claimableAssets).toBe(1);
 
-  // NOTE: the final SOL-close revoke is skipped here. After the token revoke,
-  // `vault` only holds incidental rent (never a real SOL deposit), so its
-  // balance is small. `revoke`'s 50bps fee split transfers
-  // (vaultBalance - fee) to authority first, leaving just `fee` lamports in
-  // vault for the following transfer/close — and when vault's balance is
-  // small, that leftover `fee` slice lands below the rent-exempt minimum,
-  // which the System Program rejects as a non-zero sub-rent-exempt balance.
-  // This reproduces even with a bare SOL-only estate once its vault balance
-  // is small (see the isolated repro that motivated this). Re-enable once
-  // the program's revoke fee split is fixed to not leave sub-rent dust.
-  //
-  // const vaultBalanceBefore = (await client.rpc.getBalance(vault).send()).value;
-  // const treasuryBalanceBefore = (await client.rpc.getBalance(TREASURY_ADDRESS).send()).value;
-  // const { ix: revokeSolIx } = await genRevokeIx({ client, authority, heir: heir.address });
-  // await client.sendTransaction(revokeSolIx);
-  //
-  // expect((await client.rpc.getBalance(TREASURY_ADDRESS).send()).value - treasuryBalanceBefore).toBe(
-  //   calculateFee(vaultBalanceBefore, 50n),
-  // );
-  // expect(await accountExists(client, estate)).toBe(false);
-  // expect(await accountExists(client, vault)).toBe(false);
+  const vaultBalanceBefore = (await client.rpc.getBalance(vault).send()).value;
+  const treasuryBalanceBefore = (await client.rpc.getBalance(TREASURY_ADDRESS).send()).value;
+  const { ix: revokeSolIx } = await genRevokeIx({ client, authority, heir: heir.address });
+  await client.sendTransaction(revokeSolIx);
+
+  expect((await client.rpc.getBalance(TREASURY_ADDRESS).send()).value - treasuryBalanceBefore).toBe(
+    calculateFee(vaultBalanceBefore, 50n),
+  );
+  expect(await accountExists(client, estate)).toBe(false);
+  expect(await accountExists(client, vault)).toBe(false);
 });
 
 test("it creates a token-only vault, updates heir and revokes it", async () => {
   const client = await createTestClient();
+  await fundTreasury(client);
   const [authority, heir] = await Promise.all([
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
@@ -88,7 +81,11 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
   const newHeir = await generateKeyPairSignerWithSol(client);
   const { mint } = await createAndMintTokens(client, authority);
 
-  const { ix: initIx, vaultTokenAccount, authorityTokenAccount } = await genInitTokenEstateIx({
+  const {
+    ix: initIx,
+    vaultTokenAccount,
+    authorityTokenAccount,
+  } = await genInitTokenEstateIx({
     client,
     authority,
     heir: heir.address,
@@ -134,14 +131,10 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
   expect(await accountExists(client, newVaultTokenAccount!)).toBe(false);
   expect((await fetchEstate(client.rpc, newEstate)).data.claimableAssets).toBe(1);
 
-  // NOTE: final SOL-close revoke skipped — see the identical note above in
-  // "it creates a token-only vault and revokes it" (small residual vault
-  // balance triggers the sub-rent-exempt-dust rejection in revoke's fee split).
-  //
-  // const { ix: revokeSolIx } = await genRevokeIx({ client, authority, heir: newHeir.address });
-  // await client.sendTransaction(revokeSolIx);
-  // expect(await accountExists(client, newEstate)).toBe(false);
-  // expect(await accountExists(client, newVault)).toBe(false);
+  const { ix: revokeSolIx } = await genRevokeIx({ client, authority, heir: newHeir.address });
+  await client.sendTransaction(revokeSolIx);
+  expect(await accountExists(client, newEstate)).toBe(false);
+  expect(await accountExists(client, newVault)).toBe(false);
 });
 
 test("it rejects a revoke signed by a wallet other than the authority", async () => {
@@ -152,7 +145,11 @@ test("it rejects a revoke signed by a wallet other than the authority", async ()
   ]);
   const unauthorizedAuthority = await generateKeyPairSignerWithSol(client);
 
-  const { ix: initIx, estate, vault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -183,7 +180,11 @@ test("it rejects revoking a vault-owned token account that was never registered"
   ]);
   const { mint } = await createAndMintTokens(client, authority);
 
-  const { ix: initIx, estate, vault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir,

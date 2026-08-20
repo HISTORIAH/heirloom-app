@@ -5,6 +5,7 @@ import {
   accountExists,
   createAndMintTokens,
   createTestClient,
+  fundTreasury,
   generateKeyPairSignerWithSol,
   genClaimIx,
   genInitSolEstateIx,
@@ -15,6 +16,7 @@ import { fetchEstate } from "../src/generated";
 
 test("init → update heir → claim SOL with new heir", async () => {
   const client = await createTestClient();
+  await fundTreasury(client);
   const [authority, oldHeir] = await Promise.all([
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
@@ -29,7 +31,11 @@ test("init → update heir → claim SOL with new heir", async () => {
   });
   await client.sendTransaction(initIx);
 
-  const { ix: updateHeirIx, newEstate, newVault } = await genUpdateHeirIx({
+  const {
+    ix: updateHeirIx,
+    newEstate,
+    newVault,
+  } = await genUpdateHeirIx({
     client,
     authority,
     oldHeir: oldHeir.address,
@@ -74,7 +80,11 @@ test("init → update heir → claim token with new heir", async () => {
   await client.sendTransaction(updateHeirTokenIx);
 
   // Final SOL-only call completes the migration and closes the old PDAs.
-  const { ix: updateHeirSolIx, estate: oldEstate, vault: oldVault } = await genUpdateHeirIx({
+  const {
+    ix: updateHeirSolIx,
+    estate: oldEstate,
+    vault: oldVault,
+  } = await genUpdateHeirIx({
     client,
     authority,
     oldHeir: oldHeir.address,

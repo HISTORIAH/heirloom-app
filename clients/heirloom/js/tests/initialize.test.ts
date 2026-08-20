@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 import {
   createAndMintTokens,
   createTestClient,
-  deriveEstateVaultPDAs,
   expectHeirloomError,
   generateKeyPairSignerWithSol,
   genInitSolEstateIx,
@@ -79,23 +78,23 @@ test("it creates a token solana estate", async () => {
   expect(vaultTokenAccData.data.amount).toBe(amount);
 });
 
-// test("it rejects initializing a token-only estate with a zero amount", async () => {
-//   const client = await createTestClient();
-//   let [authority, heir] = await Promise.all([
-//     generateKeyPairSignerWithSol(client),
-//     generateKeyPairSignerWithSol(client),
-//   ]);
+test("it rejects initializing a token-only estate with a zero amount", async () => {
+  const client = await createTestClient();
+  let [authority, heir] = await Promise.all([
+    generateKeyPairSignerWithSol(client),
+    generateKeyPairSignerWithSol(client),
+  ]);
 
-//   let { mint } = await createAndMintTokens(client, authority);
+  let { mint } = await createAndMintTokens(client, authority);
 
-//   let { ix } = await genInitTokenEstateIx({
-//     client,
-//     authority,
-//     heir: heir.address,
-//     mint,
-//     amount: 0n,
-//     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
-//   });
+  let { ix } = await genInitTokenEstateIx({
+    client,
+    authority,
+    heir: heir.address,
+    mint,
+    amount: 0n,
+    tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+  });
 
-//   await expectHeirloomError(client.sendTransaction(ix), HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT);
-// });
+  await expectHeirloomError(client.sendTransaction(ix), HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT);
+});

@@ -27,7 +27,11 @@ test("it migrates multi-asset vault (sol + 2 tokens) to a new heir", async () =>
   ]);
 
   // Initialize with SOL only — claimable_assets = 1 (SOL entry).
-  const { ix: initIx, estate: oldEstate, vault: oldVault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate: oldEstate,
+    vault: oldVault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir: oldHeir,
@@ -56,7 +60,11 @@ test("it migrates multi-asset vault (sol + 2 tokens) to a new heir", async () =>
   await client.sendTransaction(registerIx2);
 
   // Migrate mint1 (claimable_assets: 3 → 2).
-  const { ix: updateHeirIx1, newEstate, newVault } = await genUpdateHeirIx({
+  const {
+    ix: updateHeirIx1,
+    newEstate,
+    newVault,
+  } = await genUpdateHeirIx({
     client,
     authority,
     oldHeir: oldHeir.address,

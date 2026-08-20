@@ -3,18 +3,20 @@ import path from "node:path";
 import {
   createClient,
   generateKeyPairSigner,
+  isSolanaError,
   lamports,
+  SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
   type Address,
   type KeyPairSigner,
+  type SolanaError,
 } from "@solana/kit";
 import { airdropSigner, generatedSigner } from "@solana/kit-plugin-signer";
-import { type TransactionMetadata, litesvm } from "@solana/kit-plugin-litesvm";
+import { litesvm } from "@solana/kit-plugin-litesvm";
 import { systemProgram } from "@solana-program/system";
 import {
   findAssociatedTokenPda,
   token2022Program,
   TOKEN_2022_PROGRAM_ADDRESS,
-  TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token-2022";
 import { associatedTokenProgram } from "@solana-program/token";
 
@@ -24,6 +26,7 @@ import {
   HEIRLOOM_PROGRAM_ADDRESS,
   heirloomProgram,
 } from "../src/generated";
+import { getHeirloomErrorMessage, type HeirloomError } from "../src/generated/errors";
 import { findAssetRecordPda, TREASURY_ADDRESS } from "../src/main";
 
 const HEIRLOOM_BINARY_PATH = path.resolve(
@@ -37,32 +40,9 @@ const HEIRLOOM_BINARY_PATH = path.resolve(
   "heirloom.so",
 );
 
-import { isSolanaError, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM } from "@solana/kit";
-import { getHeirloomErrorMessage, type HeirloomError } from "../src/generated/errors";
-
-export function decodeHeirloomError(error: unknown): string {
-  if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM)) {
-    const code = error.context.code as HeirloomError;
-    return `${getHeirloomErrorMessage(code)} (${code})`;
-  }
-  throw error;
-}
-
-export async function expectHeirloomError(promise: Promise<unknown>, code: HeirloomError) {
-  try {
-    await promise;
-  } catch (error) {
-    if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM) && error.context.code === code) {
-      return;
-    }
-    throw new Error(
-      `Expected ${getHeirloomErrorMessage(code)} (${code}), got: ${decodeHeirloomError(error)}`,
-    );
-  }
-  throw new Error(
-    `Expected transaction to fail with ${getHeirloomErrorMessage(code)} (${code}), but it succeeded`,
-  );
-}
+// ---------------------------------------------------------------------------
+// Client setup
+// ---------------------------------------------------------------------------
 
 export async function createTestClient() {
   return createClient()
@@ -80,8 +60,11 @@ export async function createTestClient() {
     .use(associatedTokenProgram());
 }
 
-// --------------- helpers
 export type LiteSvmClient = Awaited<ReturnType<typeof createTestClient>>;
+
+// ---------------------------------------------------------------------------
+// General test helpers
+// ---------------------------------------------------------------------------
 
 export const generateKeyPairSignerWithSol = async (
   client: LiteSvmClient,
@@ -91,6 +74,10 @@ export const generateKeyPairSignerWithSol = async (
   await client.airdrop(signer.address, lamports(putativeLamports));
   return signer;
 };
+
+export async function fundTreasury(client: LiteSvmClient) {
+  await client.airdrop(TREASURY_ADDRESS, lamports(1_000_000_000n));
+}
 
 export function calculateFee(amount: bigint, basisPoints: bigint): bigint {
   return (amount * basisPoints + 9_999n) / 10_000n;
@@ -132,7 +119,52 @@ export async function createAndMintTokens(
   return { mint: mint.address, authorityAta };
 }
 
-// --- heirloom pda
+// ---------------------------------------------------------------------------
+// Error helpers
+// ---------------------------------------------------------------------------
+
+// client.sendTransaction() rejects with an outer SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION
+// whose `.cause` holds the actual SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM — walk the
+// cause chain to find it instead of only checking the top-level error.
+function findCustomProgramError(
+  error: unknown,
+): SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> | undefined {
+  if (isSolanaError(error, SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM)) {
+    return error;
+  }
+  if (error instanceof Error && error.cause) {
+    return findCustomProgramError(error.cause);
+  }
+  return undefined;
+}
+
+export function decodeHeirloomError(error: unknown): string {
+  const customError = findCustomProgramError(error);
+  if (!customError) throw error;
+  const code = customError.context.code as HeirloomError;
+  return `${getHeirloomErrorMessage(code)} (${code})`;
+}
+
+export async function expectHeirloomError(promise: Promise<unknown>, code: HeirloomError) {
+  try {
+    await promise;
+  } catch (error) {
+    const customError = findCustomProgramError(error);
+    if (customError && customError.context.code === code) {
+      return;
+    }
+    throw new Error(
+      `Expected ${getHeirloomErrorMessage(code)} (${code}), got: ${decodeHeirloomError(error)}`,
+    );
+  }
+  throw new Error(
+    `Expected transaction to fail with ${getHeirloomErrorMessage(code)} (${code}), but it succeeded`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PDA helpers
+// ---------------------------------------------------------------------------
 
 export async function deriveEstateVaultPDAs(input: { authority: Address; heir: Address }) {
   const { authority, heir } = input;
@@ -162,7 +194,9 @@ export async function deriveTokenAccounts(
   return { vaultTokenAccount, authorityTokenAccount, heirTokenAccount, treasuryTokenAccount };
 }
 
-// -------- heirloom program ix helpers
+// ---------------------------------------------------------------------------
+// Heirloom program instruction builders
+// ---------------------------------------------------------------------------
 
 export async function genInitSolEstateIx(input: {
   client: LiteSvmClient;
@@ -306,7 +340,15 @@ export async function genRevokeIx(input: {
     assetRecord,
   });
 
-  return { ix, estate, vault, assetRecord, vaultTokenAccount, authorityTokenAccount, treasuryTokenAccount };
+  return {
+    ix,
+    estate,
+    vault,
+    assetRecord,
+    vaultTokenAccount,
+    authorityTokenAccount,
+    treasuryTokenAccount,
+  };
 }
 
 export async function genClaimIx(input: {
@@ -345,7 +387,15 @@ export async function genClaimIx(input: {
     assetRecord,
   });
 
-  return { ix, estate, vault, assetRecord, vaultTokenAccount, heirTokenAccount, treasuryTokenAccount };
+  return {
+    ix,
+    estate,
+    vault,
+    assetRecord,
+    vaultTokenAccount,
+    heirTokenAccount,
+    treasuryTokenAccount,
+  };
 }
 
 export async function genUpdateHeirIx(input: {
@@ -421,7 +471,7 @@ export async function genUpdateFieldsIx(input: {
 
   const [estate] = await findEstatePda({ authority: authority.address, heir });
 
-  const ix = await client.heirloom.instructions.updateField({
+  const ix = client.heirloom.instructions.updateField({
     authority: signer,
     heir,
     estate,

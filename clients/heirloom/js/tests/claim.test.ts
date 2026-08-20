@@ -5,6 +5,7 @@ import {
   calculateFee,
   createAndMintTokens,
   createTestClient,
+  fundTreasury,
   generateKeyPairSignerWithSol,
   genClaimIx,
   genInitSolEstateIx,
@@ -15,12 +16,17 @@ import { TREASURY_ADDRESS } from "../src/main";
 
 test("it claims a native SOL vault", async () => {
   const client = await createTestClient();
+  await fundTreasury(client);
   const [authority, heir] = await Promise.all([
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
   ]);
 
-  const { ix: initIx, estate, vault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -29,9 +35,18 @@ test("it claims a native SOL vault", async () => {
   await client.sendTransaction(initIx);
 
   const [vaultBalanceBefore, treasuryBalanceBefore, heirBalanceBefore] = await Promise.all([
-    client.rpc.getBalance(vault).send().then((r) => r.value),
-    client.rpc.getBalance(TREASURY_ADDRESS).send().then((r) => r.value),
-    client.rpc.getBalance(heir.address).send().then((r) => r.value),
+    client.rpc
+      .getBalance(vault)
+      .send()
+      .then((r) => r.value),
+    client.rpc
+      .getBalance(TREASURY_ADDRESS)
+      .send()
+      .then((r) => r.value),
+    client.rpc
+      .getBalance(heir.address)
+      .send()
+      .then((r) => r.value),
   ]);
   const expectedFee = calculateFee(vaultBalanceBefore, 75n);
 
@@ -39,8 +54,14 @@ test("it claims a native SOL vault", async () => {
   await client.sendTransaction(claimIx);
 
   const [treasuryBalanceAfter, heirBalanceAfter] = await Promise.all([
-    client.rpc.getBalance(TREASURY_ADDRESS).send().then((r) => r.value),
-    client.rpc.getBalance(heir.address).send().then((r) => r.value),
+    client.rpc
+      .getBalance(TREASURY_ADDRESS)
+      .send()
+      .then((r) => r.value),
+    client.rpc
+      .getBalance(heir.address)
+      .send()
+      .then((r) => r.value),
   ]);
   expect(treasuryBalanceAfter - treasuryBalanceBefore).toBe(expectedFee);
   expect(heirBalanceAfter).toBeGreaterThan(heirBalanceBefore);
@@ -50,13 +71,19 @@ test("it claims a native SOL vault", async () => {
 
 test("it claims a token vault", async () => {
   const client = await createTestClient();
+  await fundTreasury(client);
   const [authority, heir] = await Promise.all([
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
   ]);
   const { mint } = await createAndMintTokens(client, authority);
 
-  const { ix: initIx, estate, vaultTokenAccount } = await genInitTokenEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+    vaultTokenAccount,
+  } = await genInitTokenEstateIx({
     client,
     authority,
     heir: heir.address,
@@ -69,7 +96,11 @@ test("it claims a token vault", async () => {
   expect((await fetchToken(client.rpc, vaultTokenAccount)).data.amount).toBe(1_000_000n);
   expect((await fetchEstate(client.rpc, estate)).data.claimableAssets).toBe(2);
 
-  const { ix: claimTokenIx, heirTokenAccount, treasuryTokenAccount } = await genClaimIx({
+  const {
+    ix: claimTokenIx,
+    heirTokenAccount,
+    treasuryTokenAccount,
+  } = await genClaimIx({
     client,
     authority: authority.address,
     heir,
@@ -83,12 +114,24 @@ test("it claims a token vault", async () => {
   expect(await accountExists(client, vaultTokenAccount)).toBe(false);
   expect((await fetchEstate(client.rpc, estate)).data.claimableAssets).toBe(1);
 
-  // NOTE: the final SOL-close claim is skipped here — same root cause as the
-  // skipped SOL-close revoke steps in revoke.test.ts. After the token claim,
-  // `vault` only holds incidental rent (never a real SOL deposit), so the
-  // 75bps fee slice of that small balance lands below the rent-exempt
-  // minimum, and the System Program rejects the leftover as non-zero
-  // sub-rent-exempt dust. Re-enable once the program's fee split is fixed.
+  const [vaultBalanceBefore, treasuryBalanceBefore] = await Promise.all([
+    client.rpc
+      .getBalance(vault)
+      .send()
+      .then((r) => r.value),
+    client.rpc
+      .getBalance(TREASURY_ADDRESS)
+      .send()
+      .then((r) => r.value),
+  ]);
+  const { ix: claimSolIx } = await genClaimIx({ client, authority: authority.address, heir });
+  await client.sendTransaction(claimSolIx);
+
+  expect((await client.rpc.getBalance(TREASURY_ADDRESS).send()).value - treasuryBalanceBefore).toBe(
+    calculateFee(vaultBalanceBefore, 75n),
+  );
+  expect(await accountExists(client, estate)).toBe(false);
+  expect(await accountExists(client, vault)).toBe(false);
 });
 
 test("it rejects a claim before the estate is claimable", async () => {
@@ -98,7 +141,11 @@ test("it rejects a claim before the estate is claimable", async () => {
     generateKeyPairSignerWithSol(client),
   ]);
 
-  const { ix: initIx, estate, vault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -125,7 +172,11 @@ test("it rejects a claim signed by a wallet other than the heir", async () => {
   ]);
   const unauthorizedHeir = await generateKeyPairSignerWithSol(client);
 
-  const { ix: initIx, estate, vault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -154,7 +205,11 @@ test("it rejects claiming a vault-owned token account that was never registered"
   ]);
   const { mint } = await createAndMintTokens(client, authority);
 
-  const { ix: initIx, estate, vault } = await genInitSolEstateIx({
+  const {
+    ix: initIx,
+    estate,
+    vault,
+  } = await genInitSolEstateIx({
     client,
     authority,
     heir,
