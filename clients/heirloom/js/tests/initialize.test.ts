@@ -8,7 +8,7 @@ import {
   genInitTokenEstateIx,
 } from "./setup";
 import { fetchToken, TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
-import { fetchAssetRecord, fetchEstate, fetchVault } from "../src/generated";
+import { fetchAssetRecord, fetchEstate } from "../src/generated";
 import { HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT } from "../src/generated/errors";
 import { sol, solToLamports } from "@solana/kit";
 
