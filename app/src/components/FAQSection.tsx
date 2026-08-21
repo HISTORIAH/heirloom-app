@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import Section from "@/components/landing/Section";
 import { useTranslation } from "@heirloom/i18n";
 
+// The one section that isn't a mosaic: a stack of questions reads better than
+// a grid of them. It borrows the tile language — hairline borders, square
+// corners, the same caps — so it still belongs to the page.
 const FAQItem = ({
   index,
   question,
@@ -16,36 +20,24 @@ const FAQItem = ({
   onToggle: () => void;
 }) => (
   <div
-    className={`group relative border transition-colors duration-200 ${
+    className={`rounded-xl border transition-colors duration-200 ${
       isOpen
-        ? "border-foreground/40 bg-accent-purple/[0.06]"
-        : "border-foreground/15 hover:border-foreground/40"
+        ? "border-foreground/35 bg-tile-soft"
+        : "border-tile-line bg-background hover:border-foreground/25"
     }`}
   >
-    {/* Corner tick — echoes the comparison cells. */}
-    <span
-      aria-hidden="true"
-      className={`pointer-events-none absolute left-0 top-0 h-3.5 w-3.5 border-l-2 border-t-2 ${
-        isOpen ? "border-accent-purple/60" : "border-foreground/20"
-      }`}
-    />
-
     <button
       onClick={onToggle}
       aria-expanded={isOpen}
-      className="flex w-full items-start gap-4 p-5 text-left md:p-6"
+      className="flex w-full items-center gap-5 p-5 text-left md:px-7 md:py-6"
     >
-      <span
-        className={`w-6 shrink-0 pt-0.5 text-xs font-bold tabular-nums tracking-[0.2em] transition-colors ${
-          isOpen ? "text-accent-purple" : "text-muted-foreground/60"
-        }`}
-      >
-        0{index + 1}
+      <span className="w-7 shrink-0 text-xs font-bold tabular-nums tracking-[0.16em] text-muted-foreground">
+        {String(index + 1).padStart(2, "0")}
       </span>
-      <span className="flex-1 text-base font-bold leading-snug md:text-lg">{question}</span>
+      <span className="ed-h3 flex-1 pr-4">{question}</span>
       <Plus
-        className={`h-6 w-6 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}
-        strokeWidth={3}
+        className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}
+        strokeWidth={2.5}
       />
     </button>
 
@@ -56,7 +48,7 @@ const FAQItem = ({
       }`}
     >
       <div className="overflow-hidden">
-        <p className="pb-5 pl-[3.75rem] pr-5 text-base font-medium leading-relaxed text-muted-foreground md:pb-6 md:pl-16 md:pr-6">
+        <p className="tile-body max-w-[80ch] pb-6 pl-[3.25rem] pr-5 text-muted-foreground md:pl-[4rem] md:pr-7">
           {answer}
         </p>
       </div>
@@ -69,7 +61,7 @@ const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
-    { question: t("faq.q1"), answer: t("faq.a1") },
+    { question: t("faq.q1"), answer: t("faq.a1r") },
     { question: t("faq.q2"), answer: t("faq.a2") },
     { question: t("faq.q3"), answer: t("faq.a3") },
     { question: t("faq.q4"), answer: t("faq.a4") },
@@ -78,27 +70,24 @@ const FAQSection = () => {
     { question: t("faq.q7"), answer: t("faq.a7") },
     { question: t("faq.q8"), answer: t("faq.a8") },
     { question: t("faq.q9"), answer: t("faq.a9") },
+    { question: t("faq.q10"), answer: t("faq.a10") },
+    { question: t("faq.q11"), answer: t("faq.a11") },
   ];
 
   return (
-    <section className="bg-background px-6 py-16 md:py-24">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
-        {/* Heading — sits alongside the questions on desktop. */}
-        <div className="lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            {t("faq.eyebrow")}
-          </span>
-          <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
+    <Section id="faq" index={9} total={10} tall label={t("faq.eyebrow")} bodyClassName="items-start">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-[6%]">
+        <div className="lg:sticky lg:top-[calc(var(--nav-h)+2rem)] lg:col-span-4 lg:self-start">
+          <h2 className="ed-h2">
             {t("faq.headline1")}{" "}
-            <span className="bg-accent-purple px-2 text-background">{t("faq.headline2")}</span>
+            <span className="bg-accent-purple px-1.5 text-background">{t("faq.headline2")}</span>
           </h2>
-          <p className="mt-6 max-w-sm text-lg font-medium leading-relaxed text-muted-foreground">
-            {t("faq.description")}
+          <p className="ed-lede mt-6 max-w-[38ch] text-muted-foreground">
+            {t("faq.lede")}
           </p>
         </div>
 
-        {/* Questions */}
-        <div className="space-y-3 lg:col-span-8">
+        <div className="space-y-2 lg:col-span-8">
           {faqs.map((faq, i) => (
             <FAQItem
               key={i}
@@ -111,7 +100,7 @@ const FAQSection = () => {
           ))}
         </div>
       </div>
-    </section>
+    </Section>
   );
 };
 

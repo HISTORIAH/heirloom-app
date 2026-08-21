@@ -20,6 +20,13 @@ const buttonVariants = cva(
         destructive: "bg-accent-red text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
         ghost: "border-transparent hover:bg-secondary",
         link: "border-transparent text-foreground underline-offset-4 hover:underline",
+        // Flat, near-square buttons for the mosaic landing — no 4px border and
+        // no offset shadow, so they sit inside a tile rather than on top of it.
+        flat: "rounded-lg border-0 bg-foreground text-background hover:bg-foreground/85 active:translate-x-0 active:translate-y-0",
+        "flat-inverse": "rounded-lg border-0 bg-background text-foreground hover:bg-background/85 active:translate-x-0 active:translate-y-0",
+        "flat-yellow": "rounded-lg border-0 bg-accent-yellow text-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
+        "flat-outline":
+          "rounded-lg border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background active:translate-x-0 active:translate-y-0",
         pill: "rounded-xl bg-transparent text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
         "pill-dark": "rounded-xl bg-foreground text-background border-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
       },

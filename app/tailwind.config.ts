@@ -50,6 +50,12 @@ export default {
           purple: "hsl(var(--accent-purple))",
           yellow: "hsl(var(--accent-yellow))",
           red: "hsl(var(--accent-red))",
+          sage: "hsl(var(--accent-sage))",
+          sky: "hsl(var(--accent-sky))",
+        },
+        tile: {
+          line: "hsl(var(--tile-line))",
+          soft: "hsl(var(--tile-soft))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",

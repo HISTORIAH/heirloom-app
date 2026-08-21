@@ -1,19 +1,17 @@
 import { Check, X, Minus, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { Mosaic, Tile } from "@/components/landing/Mosaic";
+import Section, { SectionLead } from "@/components/landing/Section";
 import { useTranslation } from "@heirloom/i18n";
 
 type Attr = true | false | "partial";
 type Tone = "dark" | "light" | "highlight";
 
-interface Solution {
-  name: string;
-  blurb: string;
-  attrs: { label: string; value: Attr }[];
-  span: string;
-  tone: Tone;
-}
-
+// This section keeps its own tone system rather than the page's tile fills:
+// alternating dark and light cells with a corner tick is what makes a
+// comparison scan like a comparison. Spans stay uneven so it still belongs to
+// the mosaic — the two cells that matter most are the widest.
 const toneStyles: Record<
   Tone,
   {
@@ -29,7 +27,7 @@ const toneStyles: Record<
   }
 > = {
   dark: {
-    cell: "border border-white/10 bg-[hsl(0_0%_7%)] text-white hover:border-white/25 hover:bg-[hsl(0_0%_9%)]",
+    cell: "!border-white/10 !bg-[hsl(0_0%_7%)] !text-white hover:!border-white/25 hover:!bg-[hsl(0_0%_9%)]",
     label: "text-white/40",
     blurb: "text-white/45",
     arrow: "text-white/20 group-hover:text-white/50",
@@ -40,7 +38,7 @@ const toneStyles: Record<
     no: "text-white/25",
   },
   light: {
-    cell: "border border-foreground/15 bg-background text-foreground hover:border-foreground/40 hover:bg-secondary/40",
+    cell: "!border-foreground/15 !bg-background !text-foreground hover:!border-foreground/40 hover:!bg-tile-soft",
     label: "text-muted-foreground",
     blurb: "text-muted-foreground",
     arrow: "text-foreground/25 group-hover:text-foreground/60",
@@ -51,7 +49,7 @@ const toneStyles: Record<
     no: "text-muted-foreground/40",
   },
   highlight: {
-    cell: "neo-section-yellow text-foreground hover:brightness-[0.97]",
+    cell: "!border-accent-yellow !bg-accent-yellow !text-foreground hover:!brightness-[0.97]",
     label: "text-foreground/60",
     blurb: "text-foreground/70",
     arrow: "text-foreground group-hover:translate-x-1",
@@ -65,40 +63,38 @@ const toneStyles: Record<
 
 const AttrRow = ({
   attrs,
+  labels,
   st,
   t,
 }: {
-  attrs: Solution["attrs"];
+  attrs: Attr[];
+  labels: string[];
   st: (typeof toneStyles)[Tone];
   t: (key: string) => string;
 }) => (
   <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
-    {attrs.map((a) => {
-      const icon =
-        a.value === true ? (
-          <Check className={`h-4 w-4 ${st.yes}`} strokeWidth={3} />
-        ) : a.value === "partial" ? (
-          <Minus className={`h-4 w-4 ${st.partial}`} strokeWidth={3} />
+    {attrs.map((value, i) => (
+      <span
+        key={labels[i]}
+        className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide ${st.attrLabel}`}
+      >
+        {value === true ? (
+          <Check className={`h-4 w-4 shrink-0 ${st.yes}`} strokeWidth={3} />
+        ) : value === "partial" ? (
+          <Minus className={`h-4 w-4 shrink-0 ${st.partial}`} strokeWidth={3} />
         ) : (
-          <X className={`h-4 w-4 ${st.no}`} strokeWidth={3} />
-        );
-      return (
-        <span
-          key={a.label}
-          className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide ${st.attrLabel}`}
-        >
-          {icon}
-          {a.label}
-          <span className="sr-only">
-            {a.value === true
-              ? t("comparison.yes")
-              : a.value === "partial"
-                ? t("comparison.partial")
-                : t("comparison.no")}
-          </span>
+          <X className={`h-4 w-4 shrink-0 ${st.no}`} strokeWidth={3} />
+        )}
+        {labels[i]}
+        <span className="sr-only">
+          {value === true
+            ? t("comparison.yes")
+            : value === "partial"
+              ? t("comparison.partial")
+              : t("comparison.no")}
         </span>
-      );
-    })}
+      </span>
+    ))}
   </div>
 );
 
@@ -107,126 +103,98 @@ const ComparisonSection = () => {
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
 
-  const solutions: Solution[] = [
-    {
-      name: t("comparison.s1Name"),
-      blurb: t("comparison.s1Blurb"),
-      attrs: [
-        { label: t("comparison.attrSelfCustodial"), value: false },
-        { label: t("comparison.attrTrustless"), value: false },
-        { label: t("comparison.attrOnChain"), value: false },
-      ],
-      span: "md:col-span-1 lg:col-span-2",
-      tone: "dark",
-    },
-    {
-      name: t("comparison.s2Name"),
-      blurb: t("comparison.s2Blurb"),
-      attrs: [
-        { label: t("comparison.attrSelfCustodial"), value: "partial" },
-        { label: t("comparison.attrTrustless"), value: false },
-        { label: t("comparison.attrOnChain"), value: false },
-      ],
-      span: "md:col-span-1 lg:col-span-1",
-      tone: "light",
-    },
-    {
-      name: t("comparison.s3Name"),
-      blurb: t("comparison.s3Blurb"),
-      attrs: [
-        { label: t("comparison.attrSelfCustodial"), value: true },
-        { label: t("comparison.attrTrustless"), value: true },
-        { label: t("comparison.attrOnChain"), value: false },
-      ],
-      span: "md:col-span-1 lg:col-span-1",
-      tone: "dark",
-    },
-    {
-      name: t("comparison.s4Name"),
-      blurb: t("comparison.s4Blurb"),
-      attrs: [
-        { label: t("comparison.attrSelfCustodial"), value: "partial" },
-        { label: t("comparison.attrTrustless"), value: "partial" },
-        { label: t("comparison.attrOnChain"), value: false },
-      ],
-      span: "md:col-span-1 lg:col-span-1",
-      tone: "light",
-    },
-    {
-      name: t("comparison.s5Name"),
-      blurb: t("comparison.s5Blurb"),
-      attrs: [
-        { label: t("comparison.attrSelfCustodial"), value: true },
-        { label: t("comparison.attrTrustless"), value: true },
-        { label: t("comparison.attrOnChain"), value: true },
-      ],
-      span: "md:col-span-2 lg:col-span-3",
-      tone: "highlight",
-    },
+  const labels = [
+    t("comparison.attrSelfCustodial"),
+    t("comparison.attrTrustless"),
+    t("comparison.attrOnChain"),
+    t("comparison.attrEarns"),
+  ];
+
+  const solutions: {
+    name: string;
+    blurb: string;
+    attrs: Attr[];
+    tone: Tone;
+    col: number;
+    best?: boolean;
+  }[] = [
+    { name: t("comparison.s1Name"), blurb: t("comparison.b1"), attrs: [false, false, false, false], tone: "dark", col: 2 },
+    { name: t("comparison.s2Name"), blurb: t("comparison.b2"), attrs: ["partial", false, false, false], tone: "light", col: 2 },
+    { name: t("comparison.s3Name"), blurb: t("comparison.b3"), attrs: [true, true, false, false], tone: "dark", col: 2 },
+    { name: t("comparison.s4Name"), blurb: t("comparison.b4"), attrs: ["partial", "partial", false, false], tone: "light", col: 3 },
+    { name: t("comparison.s5Name"), blurb: t("comparison.b5"), attrs: [true, true, true, true], tone: "highlight", col: 3, best: true },
   ];
 
   return (
-    <section className="bg-background px-6 py-16 md:py-24">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 max-w-2xl">
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            {t("comparison.eyebrow")}
-          </span>
-          <h2 className="mt-5 font-display text-4xl leading-[0.95] tracking-tight md:text-6xl">
+    <Section id="compare" index={8} total={10} label={t("comparison.eyebrow")}>
+      <SectionLead
+        headline={
+          <>
             {t("comparison.headline1")}{" "}
-            <span className="bg-accent-yellow px-2 text-foreground">{t("comparison.headline2")}</span>
-          </h2>
-        </div>
+            <span className="bg-accent-yellow px-1.5">{t("comparison.headline2")}</span>
+          </>
+        }
+      />
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {solutions.map((s, i) => {
-            const st = toneStyles[s.tone];
-            const isBest = s.tone === "highlight";
-            const Tag = isBest ? "button" : "div";
-            return (
-              <Tag
-                key={s.name}
-                {...(isBest
-                  ? {
-                      onClick: () => {
-                        track("launch_app_clicked", { source: "comparison" });
-                        navigate("/create-vault");
-                      },
-                    }
-                  : {})}
-                className={`group relative flex min-h-[220px] flex-col justify-between p-6 text-left transition-colors duration-200 md:min-h-[260px] ${s.span} ${st.cell}`}
-              >
-                {/* Corner tick */}
-                <span
+      <Mosaic cols={6} band={2.6}>
+        {solutions.map((s, i) => {
+          const st = toneStyles[s.tone];
+          const Inner = (
+            <>
+              {/* Corner tick — the detail that made this grid read as a spec sheet. */}
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none absolute left-3 top-3 h-3 w-3 border-l-2 border-t-2 ${st.tick}`}
+              />
+              <div className="flex items-start justify-between">
+                <span className={`text-xs font-bold uppercase tracking-[0.2em] ${st.label}`}>
+                  {s.best ? t("comparison.best") : `0${i + 1}`}
+                </span>
+                <ArrowRight
                   aria-hidden="true"
-                  className={`pointer-events-none absolute left-0 top-0 h-3.5 w-3.5 border-l-2 border-t-2 ${st.tick}`}
+                  className={`h-4 w-4 shrink-0 transition-all duration-200 ${st.arrow}`}
                 />
+              </div>
+              <div className="mt-10">
+                <h3 className="font-display text-3xl font-semibold leading-none tracking-tight md:text-4xl">
+                  {s.name}
+                </h3>
+                <p className={`mt-3 max-w-md text-sm font-medium leading-relaxed ${st.blurb}`}>
+                  {s.blurb}
+                </p>
+                <AttrRow attrs={s.attrs} labels={labels} st={st} t={t} />
+              </div>
+            </>
+          );
 
-                <div className="flex items-start justify-between">
-                  <span className={`text-xs font-bold uppercase tracking-[0.2em] ${st.label}`}>
-                    {isBest ? t("comparison.best") : `0${i + 1}`}
-                  </span>
-                  <ArrowRight
-                    aria-hidden="true"
-                    className={`h-4 w-4 transition-all duration-200 ${st.arrow}`}
-                  />
-                </div>
-
-                <div>
-                  <h3 className="font-display text-3xl leading-none tracking-tight md:text-4xl">
-                    {s.name}
-                  </h3>
-                  <p className={`mt-3 max-w-md text-sm font-medium leading-relaxed ${st.blurb}`}>
-                    {s.blurb}
-                  </p>
-                  <AttrRow attrs={s.attrs} st={st} t={t} />
-                </div>
-              </Tag>
-            );
-          })}
-        </div>
-      </div>
-    </section>
+          return (
+            <Tile
+              key={s.name}
+              col={s.col}
+              row={1}
+              colMd={3}
+              tone="paper"
+              bare
+              className={`group relative transition-colors duration-200 ${st.cell}`}
+            >
+              {s.best ? (
+                <button
+                  onClick={() => {
+                    track("launch_app_clicked", { source: "comparison" });
+                    navigate("/create-vault");
+                  }}
+                  className="flex h-full w-full flex-col justify-between p-6 text-left md:p-7 xl:p-8 2xl:p-10"
+                >
+                  {Inner}
+                </button>
+              ) : (
+                <div className="flex h-full w-full flex-col justify-between p-6 md:p-7 xl:p-8 2xl:p-10">{Inner}</div>
+              )}
+            </Tile>
+          );
+        })}
+      </Mosaic>
+    </Section>
   );
 };
 

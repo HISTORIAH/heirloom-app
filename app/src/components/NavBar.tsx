@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "@heirloom/i18n";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import Logo from "@/components/Logo";
@@ -17,6 +17,10 @@ const NavBar = () => {
   const [copied, setCopied] = useState(false);
   const { isConnected, publicKey, disconnectWallet } = useWallet();
   const navigate = useNavigate();
+  // The landing page is built from hairline tiles; the app screens still use
+  // the heavier bordered language. The nav is shared, so it follows the route
+  // rather than forcing one look on both.
+  const isLanding = useLocation().pathname === "/";
   const { sol, usdc, loading: balancesLoading } = useTokenBalances(
     isConnected ? publicKey : null,
   );
@@ -36,8 +40,20 @@ const NavBar = () => {
 
   return (
     <>
-      <nav className="border-b-4 border-foreground bg-background sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
+      <nav
+        className={`sticky top-0 z-50 bg-background ${
+          isLanding ? "border-b border-tile-line" : "border-b-4 border-foreground"
+        }`}
+      >
+        <div
+          className={
+            // The landing runs edge to edge, so the nav does too — its logo and
+            // controls sit on the same gutter the page ruling is drawn on.
+            isLanding
+              ? "flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]"
+              : "mx-auto flex h-20 max-w-7xl items-center justify-between px-6"
+          }
+        >
           <a href="/" className="flex items-center">
             <Logo className="h-8 md:h-10" />
           </a>
@@ -129,7 +145,7 @@ const NavBar = () => {
                 </div>
             ) : (
               <Button
-                variant="yellow"
+                variant={isLanding ? "flat-yellow" : "yellow"}
                 size="sm"
                 className="!shadow-none hover:!shadow-none hover:!translate-x-0 hover:!translate-y-0 active:!translate-x-0 active:!translate-y-0 hover:brightness-95"
                 onClick={() => setWalletDialogOpen(true)}
