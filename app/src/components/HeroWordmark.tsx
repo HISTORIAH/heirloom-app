@@ -8,6 +8,7 @@
 // a 9s loop a lift travels across the word, one glyph at a time. Nothing else —
 // no colour, no sweep. See .glyph-clip / .glyph-rise in index.css.
 import { cn } from "@/lib/utils";
+import VaultMark from "@/components/landing/VaultMark";
 
 const LETTERS = "EIRLOOM".split("");
 
@@ -28,23 +29,7 @@ const HeroWordmark = ({ className }: { className?: string }) => (
   >
     <span className="glyph-clip" style={{ marginRight: "0.03em" }}>
       <span className="glyph-rise" style={{ animationDelay: delays(0) }}>
-        <svg
-          viewBox="16 14 88 92"
-          fill="none"
-          aria-hidden="true"
-          className="inline-block h-[0.7em] w-auto align-baseline"
-        >
-          <rect x="16" y="14" width="21" height="92" rx="7" fill="currentColor" />
-          <rect x="83" y="14" width="21" height="92" rx="7" fill="currentColor" />
-          <path
-            d="M37 60h9l7-17 14 34 7-17h9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={13}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <VaultMark className="inline-block h-[0.7em] w-auto align-baseline" />
         {/* Zero-width space: gives the mark's line box the same strut as the
             letters', so the svg's baseline is their baseline. */}
         {"​"}

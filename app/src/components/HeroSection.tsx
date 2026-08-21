@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +12,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import HeroWordmark from "@/components/HeroWordmark";
+import OrbitingVault from "@/components/landing/OrbitingVault";
+import { Cap } from "@/components/landing/Mosaic";
 import { useTranslation } from "@heirloom/i18n";
 
 const HeroSection = () => {
@@ -32,81 +34,99 @@ const HeroSection = () => {
     }
   };
 
+  const rail = [
+    { label: t("hero.rail1Label"), value: t("hero.rail1Value") },
+    { label: t("hero.rail2Label"), value: t("hero.rail2Value") },
+    { label: t("hero.rail3Label"), value: t("hero.rail3Value") },
+    { label: t("hero.rail4Label"), value: t("hero.rail4Value") },
+  ];
+
   return (
-    <section className="relative overflow-hidden bg-background text-foreground">
-      {/* Faint hairline grid — echoes the modular gridlines the page is built on. */}
-      <div className="grid-fade-light pointer-events-none absolute inset-0 [-webkit-mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_78%)]" />
-
-      <div className="relative mx-auto max-w-7xl px-6 py-14 md:py-20">
-        {/* The whole hero is one modular grid: black lines, mixed-color cells. */}
-        {/* The reveal animates this container, not the cells: the cells' opaque
-            fills are the only thing hiding the black scaffold behind them, so
-            fading them individually washes the whole hero grey. */}
-        <div className="neo-slide-up grid grid-cols-1 gap-1 border-4 border-foreground bg-foreground lg:grid-cols-12">
-          {/* Headline cell */}
-          <div className="flex flex-col justify-center bg-background p-8 md:p-12 lg:col-span-8 lg:row-span-2">
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-              {t("hero.eyebrow")}
-            </span>
-
-            <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-[5.25rem]">
-              {t("hero.headline1")}{" "}
-              <span className="bg-accent-pink px-3 text-foreground">{t("hero.headline2")}</span>{" "}
-              {t("hero.headline3")}
+    <section className="section-full text-foreground">
+      {/* The opening spread. Copy holds the left seven columns, the object the
+          right five, and the whole thing runs gutter to gutter — the headline
+          is set to the window, not to a measure. */}
+      <div className="section-body">
+        <div className="section-inner grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-7 lg:pr-[6%]">
+            <div className="flex items-center gap-4">
+              <Cap tone="plain">{t("hero.kicker")}</Cap>
+              <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
+            </div>
+            <h1 className="hero-display mt-7">
+              {t("hero.line1")}
+              <br />
+              {t("hero.line2")}
+              <br />
+              {t("hero.line3")}
             </h1>
-
-            <p className="mt-7 max-w-xl text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">
-              {t("hero.description")}
+            <p className="ed-lede mt-8 max-w-[42ch] text-muted-foreground">
+              {t("hero.lede")}
             </p>
-
-            <div className="mt-9 flex flex-wrap gap-4">
-              <Button variant="yellow" size="xl" onClick={handleLaunch}>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Button variant="flat" size="lg" onClick={handleLaunch}>
                 {isConnected ? t("hero.createVault") : t("hero.launchTour")}
               </Button>
               <Button
-                variant="outline"
-                size="xl"
-                className="!border-2 !border-foreground/25 bg-transparent text-foreground !shadow-none hover:!translate-x-0 hover:!translate-y-0 hover:!border-foreground/60 hover:bg-foreground/5 hover:!shadow-none active:!translate-x-0 active:!translate-y-0"
+                variant="ghost"
+                size="lg"
+                className="gap-2 text-base font-bold hover:bg-transparent hover:underline"
                 onClick={() => {
                   track("demo_opened", { source: "hero" });
                   setDemoOpen(true);
                 }}
               >
-                <Play className="h-5 w-5" fill="currentColor" strokeWidth={0} />
+                <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />
                 {t("hero.viewDemo")}
               </Button>
             </div>
           </div>
 
-          {/* Yellow attribute cell — the gist, in three flat facts. */}
-          <div className="neo-section-yellow flex flex-col justify-center p-8 md:p-10 lg:col-span-4">
-            <span className="text-xs font-bold uppercase tracking-[0.25em]">{t("hero.gist")}</span>
-            <ul className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight md:text-4xl">
-              <li>{t("hero.gist1")}</li>
-              <li>{t("hero.gist2")}</li>
-              <li>{t("hero.gist3")}</li>
-            </ul>
-          </div>
-
-          {/* Wordmark cell — the name at poster scale, set in the page's own
-              face so it belongs to the type on the left of the grid. */}
-          <div className="flex items-center justify-center overflow-hidden bg-background px-4 py-8 md:px-6 lg:col-span-4">
-            <HeroWordmark className="whitespace-nowrap font-display text-[clamp(3rem,13vw,4.25rem)] font-bold leading-none tracking-[-0.035em] text-foreground lg:text-[min(5.6vw,4.75rem)]" />
+          {/* The orbit throws discs a little outside its own box, so the
+              object is sized to 82% of its column — the ring stays clear of
+              the right rule instead of crossing it. */}
+          <div className="flex justify-center lg:col-span-5">
+            <OrbitingVault className="w-[86%] max-w-[26rem] sm:max-w-[32rem] lg:w-[95%] lg:max-w-none" />
           </div>
         </div>
       </div>
 
+      {/* Facts worth reading before scrolling, set as a masthead strip: the
+          rule runs the full width of the window, the type stays in the
+          gutters, and a column rule stands between each fact. */}
+      <div className="w-full border-t border-tile-line bg-background">
+        <dl className="section-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {rail.map((item, i) => (
+            <div
+              key={item.label}
+              className={cn(
+                "py-7 md:py-9",
+                // Column rules between facts, following the grid as it folds:
+                // four across, then two, then one.
+                i > 0 && "border-t border-tile-line pt-6",
+                i % 2 === 1 && "sm:border-t-0 sm:border-l sm:pl-6 sm:pt-6",
+                i >= 2 && "sm:border-t sm:pt-6",
+                i > 0 && "lg:border-l lg:border-t-0 lg:pl-6 lg:pt-7",
+              )}
+            >
+              <dt className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground md:text-xs">
+                {item.label}
+              </dt>
+              <dd className="ed-h3 mt-3 max-w-[22ch]">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
       <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl gap-0 rounded-none border-4 border-foreground bg-background p-0 shadow-[8px_8px_0px_0px_hsl(var(--foreground))] sm:rounded-none sm:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]">
-          <div className="flex items-center justify-between border-b-4 border-foreground bg-accent-yellow px-4 py-3 sm:px-6 sm:py-4">
-            <DialogTitle className="text-lg font-bold uppercase tracking-tight sm:text-2xl">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl gap-0 rounded-xl border border-tile-line bg-background p-0">
+          <div className="flex items-center justify-between rounded-t-xl border-b border-tile-line bg-accent-yellow px-5 py-3.5">
+            <DialogTitle className="text-base font-bold uppercase tracking-tight sm:text-lg">
               {t("hero.demoTitle")}
             </DialogTitle>
-            <DialogDescription className="sr-only">
-              {t("hero.demoDescription")}
-            </DialogDescription>
+            <DialogDescription className="sr-only">{t("hero.demoDescription")}</DialogDescription>
           </div>
-          <div className="relative w-full bg-foreground" style={{ aspectRatio: "16 / 9" }}>
+          <div className="relative w-full overflow-hidden rounded-b-xl bg-foreground" style={{ aspectRatio: "16 / 9" }}>
             {demoOpen && (
               <iframe
                 className="absolute inset-0 h-full w-full"

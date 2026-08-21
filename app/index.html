@@ -12,8 +12,8 @@
     <link rel="canonical" href="https://heirlm.xyz/" />
     <link rel="alternate" hreflang="en" href="https://heirlm.xyz/" />
 
-    <title>Heirloom - Digital Asset Inheritance on Solana</title>
-    <meta name="description" content="A Solana inheritance protocol for self-custody continuity. Lock digital assets & SPL tokens in a heartbeat vault, check in to prove life, or your heirs inherit on-chain — trustless, non-custodial." />
+    <title>Heirloom — Self-Custody Vaults on Solana</title>
+    <meta name="description" content="Lock SOL and SPL tokens into a vault only you control. They earn while they sit, a backup wallet can recover them if you lose your keys, and the wallets you name claim on-chain if you step away." />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="author" content="Heirloom" />
 
@@ -28,8 +28,8 @@
     <meta property="og:site_name" content="Heirloom" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://heirlm.xyz/" />
-    <meta property="og:title" content="Heirloom - Digital Asset Inheritance on Solana" />
-    <meta property="og:description" content="Your wallet should outlive you — even if your seed phrase doesn't. Trustless, heartbeat-based crypto inheritance vaults on Solana." />
+    <meta property="og:title" content="Heirloom — Self-Custody Vaults on Solana" />
+    <meta property="og:description" content="Vaults that keep working while you are not looking. Earn yield on idle assets, recover a lost wallet, and hand off on-chain — self-custodial, on Solana." />
     <meta property="og:image" content="https://heirlm.xyz/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="2373" />
@@ -39,10 +39,10 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@heirloom_app" />
     <meta name="twitter:creator" content="@heirloom_app" />
-    <meta name="twitter:title" content="Heirloom - Digital Asset Inheritance on Solana" />
-    <meta name="twitter:description" content="Your wallet should outlive you — even if your seed phrase doesn't. Trustless, heartbeat-based crypto inheritance vaults on Solana." />
+    <meta name="twitter:title" content="Heirloom — Self-Custody Vaults on Solana" />
+    <meta name="twitter:description" content="Vaults that keep working while you are not looking. Earn yield on idle assets, recover a lost wallet, and hand off on-chain — self-custodial, on Solana." />
     <meta name="twitter:image" content="https://heirlm.xyz/og-image.png" />
-    <meta name="twitter:image:alt" content="Heirloom — trustless crypto inheritance on Solana." />
+    <meta name="twitter:image:alt" content="Heirloom — self-custody vaults on Solana." />
 
     <script type="application/ld+json">
       {
@@ -54,7 +54,7 @@
             "name": "Heirloom",
             "url": "https://heirlm.xyz/",
             "logo": "https://heirlm.xyz/favicon.png",
-            "description": "Heirloom is a Solana-native inheritance protocol. Lock assets into a heartbeat vault, check in periodically, or your heirs inherit automatically — no custodians, no seed-phrase sharing.",
+            "description": "Heirloom is a Solana-native vault protocol. Lock SOL and SPL tokens into a vault you control, earn yield on idle balances, recover a lost wallet through a backup you name, and hand off on-chain if you stop checking in — no custodians, no seed-phrase sharing.",
             "sameAs": [
               "https://x.com/heirloom_app",
               "https://github.com/HISTORIAH/Heirloom-app",
@@ -66,7 +66,7 @@
             "@id": "https://heirlm.xyz/#website",
             "url": "https://heirlm.xyz/",
             "name": "Heirloom",
-            "description": "Heartbeat-based digital asset inheritance vaults on Solana.",
+            "description": "Self-custody vaults on Solana that earn yield, recover lost wallets, and hand off on-chain.",
             "publisher": { "@id": "https://heirlm.xyz/#organization" }
           },
           {
@@ -76,14 +76,14 @@
             "url": "https://heirlm.xyz/",
             "applicationCategory": "FinanceApplication",
             "operatingSystem": "Web, Solana",
-            "description": "A trustless, on-chain inheritance protocol on Solana for self-custody continuity. Lock SOL and SPL tokens into a heartbeat vault with proof-of-life check-ins, a grace period, and optional guardian recovery; if you stop checking in, your designated heirs inherit their on-chain beneficiary splits automatically — non-custodial, with no seed-phrase sharing.",
-            "keywords": "Solana inheritance protocol, digital asset inheritance, crypto inheritance vault, on-chain inheritance, trustless inheritance, heartbeat vault, self-custody continuity, crypto estate planning, SOL inheritance, SPL token inheritance, proof-of-life check-in, guardian recovery wallet, programmable inheritance, non-custodial inheritance",
+            "description": "A trustless, on-chain vault protocol on Solana for self-custody continuity. Lock SOL and SPL tokens into a vault, route idle balances into Lulo lending or native SOL staking for yield, and name the wallets that can claim — including a backup of your own for wallet recovery. Check in on your own schedule; if the check-ins stop, a grace period runs and the named wallets claim their splits automatically — non-custodial, with no seed-phrase sharing.",
+            "keywords": "Solana vault protocol, self-custody vault, crypto wallet recovery, lost wallet recovery Solana, yield on idle assets, Lulo lending, native SOL staking, on-chain inheritance, trustless handoff, self-custody continuity, SOL vault, SPL token vault, check-in vault, guardian recovery wallet, programmable beneficiaries, non-custodial yield",
             "publisher": { "@id": "https://heirlm.xyz/#organization" },
             "offers": {
               "@type": "Offer",
               "price": "0",
               "priceCurrency": "USD",
-              "description": "Free to create a vault and send heartbeats; standard Solana network fees apply. Inheritance claims incur a 0.75% protocol fee and emergency withdrawals a 0.5% fee."
+              "description": "Free to create a vault and check in; standard Solana network fees apply. Claims incur a 0.75% protocol fee, emergency withdrawals a 0.5% fee, and yield strategies a 10% fee on yield earned only."
             }
           },
           {
@@ -95,7 +95,7 @@
                 "name": "What happens if I lose access to my wallet?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "If you cannot send heartbeats, the vault will naturally transition through the grace period and become claimable by your heirs. This is the intended behavior -- the vault interprets prolonged silence as incapacitation. If you have a guardian set, they can extend the grace period by 30 days to give you more time to recover access."
+                  "text": "If you cannot check in, the vault moves through its grace period and becomes claimable by the wallets you named — that is the intended behaviour, and it is exactly why many people name a backup wallet of their own. If you have a guardian set, they can extend the grace period by 30 days to give you more time to recover access."
                 }
               },
               {
@@ -160,6 +160,22 @@
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "Yes, at any time before the vault is fully distributed. The emergency-withdraw function returns all tokens to your wallet and permanently closes the vault. You retain full control for as long as the vault is active."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do my assets earn anything while they are locked?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Vault balances can be routed into Lulo lending or staked natively with a Solana validator, and the yield accrues inside the vault rather than in a separate account. Heirloom takes 10% of the yield earned and never touches your principal. You can recall a strategy at any time, and claims always settle from the vault."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I name my own wallet as the heir?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, and it is one of the most common setups. Point the vault at a second wallet you control. If you ever lose access to your main wallet, simply stop checking in and the backup claims the vault once the grace period elapses -- without you ever sharing a seed phrase with anyone."
                 }
               }
             ]

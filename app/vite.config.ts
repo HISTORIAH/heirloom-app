@@ -14,4 +14,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // @heirloom/i18n is consumed as source from packages/, outside this app's
+  // root. Without excluding it from dep pre-bundling, edits to the locale
+  // files can be served from a stale cache and every new key renders as its
+  // own name until the dev server is restarted.
+  optimizeDeps: {
+    exclude: ["@heirloom/i18n"],
+  },
+  server: {
+    watch: {
+      ignored: ["!**/packages/i18n/src/**"],
+    },
+  },
 });
