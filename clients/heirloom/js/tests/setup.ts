@@ -1,22 +1,3 @@
-export async function genDelegateDeferIx(input: {
-  client: LiteSvmClient;
-  delegate: KeyPairSigner;
-  authority: Address;
-  heir: Address;
-}) {
-  const { client, delegate, authority, heir } = input;
-
-  const [estate] = await findEstatePda({ authority, heir });
-
-  const ix = await client.heirloom.instructions.delegateDefer({
-    delegate,
-    authority,
-    heir,
-    estate,
-  });
-
-  return { ix, estate };
-}
 import path from "node:path";
 
 import {
@@ -509,6 +490,26 @@ export async function genUpdateFieldsIx(input: {
     gracePeriod: gracePeriod ?? null,
     pauseDuration: pauseDuration ?? null,
     label: label ?? null,
+  });
+
+  return { ix, estate };
+}
+
+export async function genDelegateDeferIx(input: {
+  client: LiteSvmClient;
+  delegate: KeyPairSigner;
+  authority: Address;
+  heir: Address;
+}) {
+  const { client, delegate, authority, heir } = input;
+
+  const [estate] = await findEstatePda({ authority, heir });
+
+  const ix = await client.heirloom.instructions.delegateDefer({
+    delegate,
+    authority,
+    heir,
+    estate,
   });
 
   return { ix, estate };
