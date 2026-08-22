@@ -17,7 +17,7 @@ const HeartbeatStep: React.FC<Props> = ({
   setGraceSeconds,
   assetCount,
 }) => {
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
   const heartbeatDays = Math.max(30, Math.round(heartbeatSeconds / SECONDS_PER_DAY));
   const graceDays = Math.max(7, Math.round(graceSeconds / SECONDS_PER_DAY));
   const totalDays = heartbeatDays + graceDays;
@@ -26,7 +26,7 @@ const HeartbeatStep: React.FC<Props> = ({
   const GRACE_PRESETS = [7, 30, 60, 90];
 
   const futureDate = (days: number) =>
-    new Date(Date.now() + days * 864e5).toLocaleDateString("en-US", {
+    new Date(Date.now() + days * 864e5).toLocaleDateString(i18n.language, {
       month: "short",
       day: "numeric",
       year: "numeric",

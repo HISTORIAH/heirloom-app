@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { type ValidatorOption, type StakingEnableDialogProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 // TEMP: placeholder validator list — replace with live API before launch
 const VALIDATOR_OPTIONS: ValidatorOption[] = [
@@ -22,7 +23,7 @@ const VALIDATOR_OPTIONS: ValidatorOption[] = [
     commission: 5,
     icon: <Flame className="h-5 w-5" strokeWidth={2.5} />,
     accent: "bg-accent-orange",
-    description: "MEV-enhanced staking with automatic reward compounding.",
+    descriptionKey: "yield.validatorJitoDesc",
   },
   {
     id: "marinade",
@@ -31,7 +32,7 @@ const VALIDATOR_OPTIONS: ValidatorOption[] = [
     commission: 6,
     icon: <Shield className="h-5 w-5" strokeWidth={2.5} />,
     accent: "bg-accent-cyan",
-    description: "Liquid staking with mSOL — stay liquid while earning.",
+    descriptionKey: "yield.validatorMarinadeDesc",
   },
 ];
 
@@ -42,6 +43,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
   onCancel,
   loading = false,
 }) => {
+  const { t, i18n } = useTranslation("app");
   const [selectedValidator, setSelectedValidator] = useState<string>(VALIDATOR_OPTIONS[0].id);
 
   if (!open) return null;
@@ -68,9 +70,11 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
               <Sprout className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl leading-tight">Stake SOL</h3>
+              <h3 className="text-xl leading-tight">{t("yield.stakeSol")}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
-                Delegate {solBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL to earn network rewards.
+                {t("yield.stakeDesc", {
+                  amount: solBalance.toLocaleString(i18n.language, { maximumFractionDigits: 4 }),
+                })}
               </p>
             </div>
           </div>
@@ -86,7 +90,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
         {/* Validator list */}
         <div className="mt-6 space-y-3">
           <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            Choose a validator
+            {t("yield.chooseValidator")}
           </p>
 
           {VALIDATOR_OPTIONS.map((validator) => (
@@ -114,14 +118,14 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold">{validator.name}</span>
                     <span className="neo-badge text-[10px] px-2 py-0.5 bg-accent-lime">
-                      {validator.apy.toFixed(1)}% APY
+                      {t("yield.apy", { apy: validator.apy.toFixed(1) })}
                     </span>
                   </div>
                   <p className="text-xs font-medium text-muted-foreground mt-0.5">
-                    {validator.description}
+                    {t(validator.descriptionKey)}
                   </p>
                   <p className="text-[11px] font-bold text-muted-foreground mt-1">
-                    Commission: {validator.commission}%
+                    {t("yield.commission", { pct: String(validator.commission) })}
                   </p>
                 </div>
                 {selectedValidator === validator.id && (
@@ -135,10 +139,10 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
         {/* Summary */}
         <div className="mt-4 neo-border rounded-xl p-4 bg-secondary flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Selected
+            {t("yield.selected")}
           </span>
           <span className="font-bold text-sm">
-            {selected.name} @ {selected.apy.toFixed(1)}% APY
+            {t("yield.selectedApy", { name: selected.name, apy: selected.apy.toFixed(1) })}
           </span>
         </div>
 
@@ -146,16 +150,16 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
         <div className="mt-4 neo-border rounded-xl p-4 bg-accent-yellow/10 flex items-start gap-3">
           <Timer className="h-5 w-5 shrink-0 mt-0.5 text-accent-yellow" strokeWidth={2.5} />
           <div>
-            <p className="text-sm font-bold">Epoch-based staking</p>
+            <p className="text-sm font-bold">{t("yield.epochTitle")}</p>
             <p className="text-xs font-medium text-muted-foreground mt-0.5">
-              Delegation takes effect at the next epoch boundary (~2–3 days). Rewards accrue per epoch and are credited at epoch end. You can undelegate anytime, but unstaking has a cooldown period.
+              {t("yield.epochDesc")}
             </p>
           </div>
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
           <Button variant="outline" size="default" onClick={onCancel} disabled={loading} className="sm:w-auto w-full">
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="yellow"
@@ -165,9 +169,9 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
             className="sm:w-auto w-full"
           >
             {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("yield.confirming")}</>
             ) : (
-              <><Zap className="h-4 w-4" /> Delegate to {selected.name}</>
+              <><Zap className="h-4 w-4" /> {t("yield.delegateTo", { name: selected.name })}</>
             )}
           </Button>
         </div>

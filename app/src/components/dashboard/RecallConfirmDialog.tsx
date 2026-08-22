@@ -8,6 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { type RecallConfirmDialogProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
   open,
@@ -18,11 +19,12 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
   onCancel,
   loading = false,
 }) => {
+  const { t, i18n } = useTranslation("app");
   if (!open) return null;
 
   const accent = strategyType === "lulo" ? "bg-accent-purple" : "bg-accent-lime";
-  const title = strategyType === "lulo" ? "Recall from Lulo" : "Unstake SOL";
-  const unit = strategyType === "lulo" ? tokenSymbol || "tokens" : "SOL";
+  const title = strategyType === "lulo" ? t("yield.recallLulo") : t("yield.unstakeSol");
+  const unit = strategyType === "lulo" ? tokenSymbol || t("yield.tokens") : "SOL";
 
   return (
     <div
@@ -49,8 +51,10 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
             <div>
               <h3 className="text-xl leading-tight">{title}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
-                Pull {routedAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
-                {unit} back to your vault.
+                {t("yield.pullBack", {
+                  amount: routedAmount.toLocaleString(i18n.language, { maximumFractionDigits: 6 }),
+                  unit,
+                })}
               </p>
             </div>
           </div>
@@ -66,16 +70,16 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
         <div className="mt-4 neo-border rounded-xl p-4 bg-secondary flex items-start gap-3">
           <Landmark className="h-5 w-5 shrink-0 mt-0.5" strokeWidth={2.5} />
           <div>
-            <p className="text-sm font-bold">One-signature recall</p>
+            <p className="text-sm font-bold">{t("yield.oneSigTitle")}</p>
             <p className="text-xs font-medium text-muted-foreground mt-0.5">
-              The backend handles the {strategyType === "lulo" ? "Lulo" : "staking"} withdrawal and returns funds to your vault automatically.
+              {strategyType === "lulo" ? t("yield.oneSigLulo") : t("yield.oneSigStake")}
             </p>
           </div>
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
           <Button variant="outline" size="default" onClick={onCancel} disabled={loading} className="sm:w-auto w-full">
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant={strategyType === "lulo" ? "purple" : "lime"}
@@ -85,7 +89,7 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
             className="sm:w-auto w-full"
           >
             {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Recalling…</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("yield.recalling")}</>
             ) : (
               <><ArrowLeftRight className="h-4 w-4" /> {title}</>
             )}

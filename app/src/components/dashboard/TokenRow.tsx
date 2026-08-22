@@ -6,6 +6,7 @@ import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
 import { TrendingUp } from "lucide-react";
 import type { VaultTokenHolding } from "@/types";
 import type { LuloStrategy, StrategyProgressStep } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 interface TokenMeta {
   symbol?: string;
@@ -46,6 +47,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
   onTopUpConfirm,
   topUpLoading,
 }) => {
+  const { t } = useTranslation("app");
   const symbol = meta?.symbol;
   const name = meta?.name;
   const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
@@ -111,7 +113,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
             "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground bg-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
           )}
         >
-          <TrendingUp className="h-3 w-3" /> Add
+          <TrendingUp className="h-3 w-3" /> {t("yield.add")}
         </button>
       </div>
 

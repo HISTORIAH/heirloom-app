@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@heirloom/i18n";
 import {
   type NotificationsConfig,
   type RoleNotificationConfig,
@@ -10,6 +11,20 @@ import {
   HEIR_CHANNELS,
   CHANNEL_META,
 } from "@/types/notifications";
+
+const CHANNEL_LABEL: Record<NotificationChannel, string> = {
+  email: "notifications.channelEmail",
+  telegram: "notifications.channelTelegram",
+  whatsapp: "notifications.channelWhatsapp",
+  sms: "notifications.channelSms",
+};
+
+const CHANNEL_PLACEHOLDER: Record<NotificationChannel, string> = {
+  email: "notifications.placeholderEmail",
+  telegram: "notifications.placeholderTelegram",
+  whatsapp: "notifications.placeholderPhone",
+  sms: "notifications.placeholderPhone",
+};
 
 interface RoleSectionProps {
   title: string;
@@ -20,6 +35,7 @@ interface RoleSectionProps {
 }
 
 const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels, config, onChange }) => {
+  const { t } = useTranslation("app");
   const primaryOptions = channels.filter((c) => c !== config.backup?.channel);
   const backupOptions = channels.filter((c) => c !== config.primary.channel);
 
@@ -57,7 +73,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
                     : "bg-background hover:bg-secondary"
                 )}
               >
-                {CHANNEL_META[c].label}
+                {t(CHANNEL_LABEL[c])}
               </button>
             ))}
           </div>
@@ -65,7 +81,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
             type={CHANNEL_META[config.primary.channel].inputType}
             value={config.primary.value}
             onChange={(e) => onChange({ ...config, primary: { ...config.primary, value: e.target.value } })}
-            placeholder={CHANNEL_META[config.primary.channel].placeholder}
+            placeholder={t(CHANNEL_PLACEHOLDER[config.primary.channel])}
             className="neo-input w-full text-sm"
           />
 
@@ -73,14 +89,14 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
             <div className="mt-3 p-3 border-2 border-dashed border-foreground/20 rounded-xl">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
-                  Backup
+                  {t("notifications.backup")}
                 </span>
                 <button
                   type="button"
                   onClick={() => onChange({ ...config, backup: null })}
                   className="text-xs font-bold text-muted-foreground hover:text-foreground"
                 >
-                  Remove
+                  {t("notifications.remove")}
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5 mb-2">
@@ -94,7 +110,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
                       c === config.backup?.channel ? "bg-accent-cyan" : "bg-background hover:bg-secondary"
                     )}
                   >
-                    {CHANNEL_META[c].label}
+                    {t(CHANNEL_LABEL[c])}
                   </button>
                 ))}
               </div>
@@ -104,7 +120,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
                 onChange={(e) =>
                   config.backup && onChange({ ...config, backup: { ...config.backup, value: e.target.value } })
                 }
-                placeholder={CHANNEL_META[config.backup.channel].placeholder}
+                placeholder={t(CHANNEL_PLACEHOLDER[config.backup.channel])}
                 className="neo-input w-full text-sm"
               />
             </div>
@@ -115,7 +131,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
                 onClick={() => onChange({ ...config, backup: { channel: backupOptions[0], value: "" } })}
                 className="mt-2.5 text-[11px] font-extrabold uppercase tracking-wide text-accent-purple hover:underline"
               >
-                + Add backup channel
+                {t("notifications.addBackup")}
               </button>
             )
           )}
@@ -135,6 +151,7 @@ interface Props {
 }
 
 const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, saving, onClose, onSave }) => {
+  const { t } = useTranslation("app");
   const [config, setConfig] = useState<NotificationsConfig>(initialConfig);
 
   useEffect(() => {
@@ -160,9 +177,9 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
               <Bell className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl leading-tight">Notifications</h3>
+              <h3 className="text-xl leading-tight">{t("notifications.title")}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
-                Flip on what you want. Nothing here affects the estate itself.
+                {t("notifications.dialogDesc")}
               </p>
             </div>
           </div>
@@ -176,8 +193,8 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
         </div>
 
         <RoleSection
-          title="Remind me before expiry"
-          description="A heads-up before your heartbeat is due"
+          title={t("notifications.remindTitle")}
+          description={t("notifications.remindDesc")}
           channels={CREATOR_CHANNELS}
           config={config.creator}
           onChange={(creator) => setConfig((c) => ({ ...c, creator }))}
@@ -186,8 +203,8 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
         <div className="h-0.5 bg-secondary" />
 
         <RoleSection
-          title={`Notify ${heirLabel} at unlock`}
-          description="Let them know the moment funds are claimable"
+          title={t("notifications.notifyTitle", { name: heirLabel })}
+          description={t("notifications.notifyDesc")}
           channels={HEIR_CHANNELS}
           config={config.heir}
           onChange={(heir) => setConfig((c) => ({ ...c, heir }))}
@@ -195,10 +212,10 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
 
         <div className="flex gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>
-            Cancel
+            {t("notifications.cancel")}
           </Button>
           <Button variant="cyan" className="flex-1" onClick={() => onSave(config)} disabled={saving}>
-            {saving ? "Saving…" : "Save changes"}
+            {saving ? t("notifications.saving") : t("notifications.save")}
           </Button>
         </div>
       </div>

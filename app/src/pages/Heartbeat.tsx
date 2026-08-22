@@ -50,7 +50,7 @@ const HeartbeatPageInner: React.FC<{
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
 
   const client: HeirloomClient = { rpc, rpcSubscriptions };
 
@@ -258,7 +258,7 @@ const HeartbeatPageInner: React.FC<{
                     <p className="text-xs font-bold text-muted-foreground uppercase">{t("heartbeat.lastHeartbeat")}</p>
                     <p className="text-xs font-bold">
                       {estate.lastHeartbeat > 0
-                        ? new Date(estate.lastHeartbeat * 1000).toLocaleString()
+                        ? new Date(estate.lastHeartbeat * 1000).toLocaleString(i18n.language)
                         : t("common.na")}
                     </p>
                   </div>

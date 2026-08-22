@@ -7,7 +7,7 @@ const TOPUP_PCTS = [
   { pct: 25,  label: "25%", bg: "bg-accent-pink"   },
   { pct: 50,  label: "50%", bg: "bg-accent-cyan"   },
   { pct: 75,  label: "75%", bg: "bg-accent-orange" },
-  { pct: 100, label: "Max", bg: "bg-accent-yellow" },
+  { pct: 100, label: null, bg: "bg-accent-yellow" },
 ] as const;
 import { Loader2, TrendingUp, X, Coins } from "lucide-react";
 import { type TopUpDialogProps } from "@/types/strategy-ui";
@@ -23,7 +23,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
   onCancel,
   loading = false,
 }) => {
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
   const [amount, setAmount] = useState(0);
   const step = amountStep(decimals);
 
@@ -105,13 +105,13 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
                   bg,
                 )}
               >
-                {label}
+                {label ?? t("createVault.wizard.max")}
               </button>
             ))}
           </div>
 
           <p className="text-[11px] font-medium text-muted-foreground">
-            {t("dashboard.walletBalanceLabel")}: {walletBalance.toLocaleString(undefined, { maximumFractionDigits: decimals })} {symbol}
+            {t("dashboard.walletBalanceLabel")}: {walletBalance.toLocaleString(i18n.language, { maximumFractionDigits: decimals })} {symbol}
           </p>
         </div>
 

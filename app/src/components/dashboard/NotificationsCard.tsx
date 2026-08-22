@@ -1,6 +1,7 @@
 import { Bell, Lock, Clock, AlertTriangle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NotificationsCardStatus } from "@/types/notifications";
+import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   status: NotificationsCardStatus;
@@ -14,55 +15,56 @@ const STATE_META: Record<
   {
     icon: LucideIcon;
     badgeClass: string;
-    text: string;
+    textKey: string;
     textClass: string;
-    buttonLabel: string;
+    buttonKey: string;
     buttonClass: string;
   }
 > = {
   locked: {
     icon: Lock,
     badgeClass: "bg-secondary text-muted-foreground",
-    text: "Sign in to view current settings",
+    textKey: "notifications.locked",
     textClass: "text-muted-foreground",
-    buttonLabel: "Manage",
+    buttonKey: "notifications.manage",
     buttonClass: "bg-accent-cyan",
   },
   off: {
     icon: Bell,
     badgeClass: "bg-accent-cyan",
-    text: "Off — you won't be reminded before your heartbeat is due",
+    textKey: "notifications.off",
     textClass: "text-muted-foreground",
-    buttonLabel: "Set up",
+    buttonKey: "notifications.setUp",
     buttonClass: "bg-accent-cyan",
   },
   authorized: {
     icon: Bell,
     badgeClass: "bg-accent-cyan",
-    text: "",
+    textKey: "",
     textClass: "text-green-700 font-semibold",
-    buttonLabel: "Edit",
+    buttonKey: "notifications.edit",
     buttonClass: "bg-background hover:bg-secondary",
   },
   expired: {
     icon: Clock,
     badgeClass: "bg-accent-yellow",
-    text: "Session expired — sign in again to make changes",
+    textKey: "notifications.expired",
     textClass: "text-amber-700 font-semibold",
-    buttonLabel: "Sign in",
+    buttonKey: "notifications.signIn",
     buttonClass: "bg-accent-cyan",
   },
   error: {
     icon: AlertTriangle,
     badgeClass: "bg-accent-red text-white",
-    text: "Couldn't verify — try again",
+    textKey: "notifications.error",
     textClass: "text-destructive font-semibold",
-    buttonLabel: "Retry",
+    buttonKey: "notifications.retry",
     buttonClass: "bg-accent-red text-white",
   },
 };
 
 const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
+  const { t } = useTranslation("app");
   if (status === "loading") {
     return (
       <div className="neo-card-static">
@@ -91,9 +93,9 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
             <Icon className="h-5 w-5" strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
-            <h3 className="text-xl leading-tight">Notifications</h3>
+            <h3 className="text-xl leading-tight">{t("notifications.title")}</h3>
             <p className={cn("text-sm truncate mt-0.5", meta.textClass)}>
-              {status === "authorized" ? summary : meta.text}
+              {status === "authorized" ? summary : t(meta.textKey)}
             </p>
           </div>
         </div>
@@ -105,7 +107,7 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
             meta.buttonClass
           )}
         >
-          {meta.buttonLabel}
+          {t(meta.buttonKey)}
         </button>
       </div>
     </div>

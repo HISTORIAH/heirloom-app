@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { type LuloEnableDialogProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
   open,
@@ -21,6 +22,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
   onCancel,
   loading = false,
 }) => {
+  const { t, i18n } = useTranslation("app");
   const [selectedMode, setSelectedMode] = useState<"protected" | "unprotected">("protected");
   const config = getYieldConfigByMint(tokenMint);
 
@@ -45,10 +47,12 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
               <Landmark className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl leading-tight">Enable Lulo Yield</h3>
+              <h3 className="text-xl leading-tight">{t("yield.enableLulo")}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
-                Route {vaultBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
-                {tokenSymbol} from your vault to Lulo.
+                {t("yield.routeToLulo", {
+                  amount: vaultBalance.toLocaleString(i18n.language, { maximumFractionDigits: 6 }),
+                  symbol: tokenSymbol,
+                })}
               </p>
             </div>
           </div>
@@ -63,7 +67,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
 
         <div className="mt-6 space-y-3">
           <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            Choose deposit type
+            {t("yield.chooseDeposit")}
           </p>
 
           <button
@@ -87,13 +91,13 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold">Protected</span>
-                  <span className="neo-badge text-[10px] px-2 py-0.5 bg-accent-cyan">Recommended</span>
+                  <span className="font-bold">{t("yield.protected")}</span>
+                  <span className="neo-badge text-[10px] px-2 py-0.5 bg-accent-cyan">{t("yield.recommended")}</span>
                 </div>
                 <p className="text-xs font-medium text-muted-foreground mt-0.5">
-                  Funds are insured against platform risk. Lower yield, higher safety.
+                  {t("yield.protectedDesc")}
                 </p>
-                <p className="text-sm font-bold mt-1">{config.apyProtected.toFixed(1)}% APY</p>
+                <p className="text-sm font-bold mt-1">{t("yield.apy", { apy: config.apyProtected.toFixed(1) })}</p>
               </div>
               {selectedMode === "protected" && (
                 <div className="w-4 h-4 rounded-full bg-accent-cyan neo-border shrink-0" />
@@ -121,11 +125,11 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
                 <ShieldOff className="h-5 w-5" strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="font-bold">Unprotected</span>
+                <span className="font-bold">{t("yield.unprotected")}</span>
                 <p className="text-xs font-medium text-muted-foreground mt-0.5">
-                  Higher yield with no insurance. Best for risk-tolerant deposits.
+                  {t("yield.unprotectedDesc")}
                 </p>
-                <p className="text-sm font-bold mt-1">{config.apyUnprotected.toFixed(1)}% APY</p>
+                <p className="text-sm font-bold mt-1">{t("yield.apy", { apy: config.apyUnprotected.toFixed(1) })}</p>
               </div>
               {selectedMode === "unprotected" && (
                 <div className="w-4 h-4 rounded-full bg-accent-orange neo-border shrink-0" />
@@ -136,7 +140,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
           <Button variant="outline" size="default" onClick={onCancel} disabled={loading} className="sm:w-auto w-full">
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="purple"
@@ -146,9 +150,9 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
             className="sm:w-auto w-full"
           >
             {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("yield.confirming")}</>
             ) : (
-              <><Zap className="h-4 w-4" /> Route to Lulo</>
+              <><Zap className="h-4 w-4" /> {t("yield.routeButton")}</>
             )}
           </Button>
         </div>
