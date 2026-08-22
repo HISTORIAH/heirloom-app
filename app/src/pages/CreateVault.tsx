@@ -51,7 +51,7 @@ const CreateVaultPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
 
   const [step, setStep] = useState<StepIndex>(0);
 
@@ -191,7 +191,7 @@ const CreateVaultPage = () => {
                   <strong>{label || t("createVault.yourHeir")}</strong> ({truncateAddress(heirAddress)}) {t("createVault.successBody1")}{" "}
                   <strong>{totalDays} {t("createVault.successBody2")}</strong>. {t("createVault.successBody3")}{" "}
                   <strong>
-                    {new Date(Date.now() + intervalDays * 864e5).toLocaleDateString("en-US", {
+                    {new Date(Date.now() + intervalDays * 864e5).toLocaleDateString(i18n.language, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

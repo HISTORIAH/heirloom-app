@@ -262,7 +262,7 @@ const EstateCard = ({ estate }: { estate: EstateData }) => {
       setNotifSaving(false);
       setNotifConfig(next);
       setNotifEditOpen(false);
-      setNotifSummary(summarizeNotifications(next, estate.label));
+      setNotifSummary(summarizeNotifications(next, estate.label, t));
     }, 400);
   };
 
@@ -816,7 +816,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
           </div>
 
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">Assets</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{t("dashboard.assets")}</p>
             <div className="grid grid-cols-1 gap-2">
               <AddAssetSection estate={estate} onTx={setLastTxId} />
             </div>

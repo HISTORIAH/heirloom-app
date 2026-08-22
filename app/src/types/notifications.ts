@@ -40,13 +40,35 @@ export const defaultNotificationsConfig = (): NotificationsConfig => ({
   heir: defaultRoleConfig(),
 });
 
-export function summarizeNotifications(config: NotificationsConfig, heirLabel: string): string {
+type Translate = (key: string, opts?: Record<string, string>) => string;
+
+const CHANNEL_KEYS: Record<NotificationChannel, string> = {
+  email: "notifications.channelEmail",
+  telegram: "notifications.channelTelegram",
+  whatsapp: "notifications.channelWhatsapp",
+  sms: "notifications.channelSms",
+};
+
+export function summarizeNotifications(
+  config: NotificationsConfig,
+  heirLabel: string,
+  t: Translate,
+): string {
   const parts: string[] = [];
   if (config.creator.enabled) {
-    parts.push(`You: ${CHANNEL_META[config.creator.primary.channel].label}${config.creator.backup ? " +1" : ""}`);
+    const channel = t(CHANNEL_KEYS[config.creator.primary.channel]);
+    parts.push(
+      t(config.creator.backup ? "notifications.summaryYouPlus" : "notifications.summaryYou", { channel }),
+    );
   }
   if (config.heir.enabled) {
-    parts.push(`${heirLabel}: ${CHANNEL_META[config.heir.primary.channel].label}${config.heir.backup ? " +1" : ""}`);
+    const channel = t(CHANNEL_KEYS[config.heir.primary.channel]);
+    parts.push(
+      t(config.heir.backup ? "notifications.summaryHeirPlus" : "notifications.summaryHeir", {
+        name: heirLabel,
+        channel,
+      }),
+    );
   }
   return parts.join(" · ");
 }

@@ -5,6 +5,7 @@ export { resources } from "./resources";
 export type { Resources } from "./resources";
 export { LanguageSwitcher } from "./LanguageSwitcher";
 export type { LanguageSwitcherProps } from "./LanguageSwitcher";
-export { I18nProvider } from "./I18nProvider";
+export { I18nProvider, getI18n } from "./I18nProvider";
+export type { AppMessages } from "./messages";
 export { useTranslation } from "react-i18next";
 export type { TFunction } from "i18next";

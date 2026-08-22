@@ -8,6 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { type InlineTokenYieldProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
   mint,
@@ -18,6 +19,7 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
   loading = false,
   progressStep = "idle",
 }) => {
+  const { t } = useTranslation("app");
   const config = getYieldConfigByMint(mint);
   if (!config || !config.luloSupported) return null;
 
@@ -45,20 +47,20 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
           ) : (
             <ArrowLeftRight className="h-3 w-3 inline" />
           )}
-          <span className="ml-0.5">Recall</span>
+          <span className="ml-0.5">{t("yield.recall")}</span>
         </button>
 
         {/* Inline progress */}
         {progressStep !== "idle" && progressStep !== "complete" && (
           <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
             <Loader2 className="h-3 w-3 animate-spin text-accent-purple" />
-            {getProgressMessage(progressStep, "lulo")}
+            {getProgressMessage(progressStep, "lulo", t)}
           </span>
         )}
         {progressStep === "complete" && (
           <span className="text-[10px] font-bold text-accent-lime flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
-            Done
+            {t("yield.done")}
           </span>
         )}
       </div>
@@ -84,7 +86,7 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
         ) : (
           <TrendingUp className="h-3 w-3" />
         )}
-        Earn
+        {t("yield.earn")}
       </button>
     </div>
   );

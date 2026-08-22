@@ -8,6 +8,7 @@ import {
   Timer,
 } from "lucide-react";
 import { type StrategyProgressOverlayProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = ({
   open,
@@ -15,6 +16,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
   step,
   title,
 }) => {
+  const { t } = useTranslation("app");
   if (!open) return null;
 
   const isComplete = step === "complete";
@@ -27,11 +29,11 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
 
   // Step labels — staking never mentions Lulo
   const firstStepLabel = isRecallFlow
-    ? (isStaking ? "Undelegate" : "Lulo Withdraw")
-    : "Vault Withdraw";
+    ? (isStaking ? t("yield.stepUndelegate") : t("yield.stepLuloWithdraw"))
+    : t("yield.stepVaultWithdraw");
   const secondStepLabel = isRecallFlow
-    ? "Return to Vault"
-    : (isStaking ? "Delegate" : "Lulo Deposit");
+    ? t("yield.stepReturn")
+    : (isStaking ? t("yield.stepDelegate") : t("yield.stepLuloDeposit"));
 
   return (
     <div className="fixed inset-0 z-[80] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6">
@@ -58,10 +60,10 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
         </div>
 
         <h2 className="text-2xl mb-2">
-          {title || (isComplete ? "Done!" : isError ? "Failed" : "Processing...")}
+          {title || (isComplete ? t("yield.done") : isError ? t("yield.failed") : t("yield.processing"))}
         </h2>
         <p className="text-sm font-medium text-muted-foreground mb-6">
-          {getProgressMessage(step, strategyType)}
+          {getProgressMessage(step, strategyType, t)}
         </p>
 
         {/* Two-step progress */}
@@ -112,9 +114,9 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
           <div className="mt-6 neo-border rounded-xl p-4 bg-accent-yellow/10 flex items-start gap-3">
             <Timer className="h-5 w-5 shrink-0 mt-0.5 text-accent-yellow" strokeWidth={2.5} />
             <div className="text-left">
-              <p className="text-sm font-bold">Delegation takes effect next epoch</p>
+              <p className="text-sm font-bold">{t("yield.epochNextTitle")}</p>
               <p className="text-xs font-medium text-muted-foreground mt-0.5">
-                Staking rewards begin accruing after the next epoch boundary (~2–3 days). You can undelegate anytime, but rewards earned during the current epoch will be credited at epoch end.
+                {t("yield.epochNextDesc")}
               </p>
             </div>
           </div>

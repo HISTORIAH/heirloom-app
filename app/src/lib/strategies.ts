@@ -13,20 +13,26 @@ import {
   type StakingStrategy,
 } from "@/types/strategy-ui";
 
-export function getProgressMessage(step: StrategyProgressStep, strategy: StrategyType): string {
+type Translate = (key: string) => string;
+
+export function getProgressMessage(
+  step: StrategyProgressStep,
+  strategy: StrategyType,
+  t: Translate,
+): string {
   switch (step) {
     case "withdrawing":
-      return "Confirming withdrawal from vault…";
+      return t("yield.progressWithdrawing");
     case "depositing":
-      return strategy === "lulo" ? "Depositing into Lulo…" : "Delegating stake…";
+      return strategy === "lulo" ? t("yield.progressDepositLulo") : t("yield.progressDelegate");
     case "recalling":
-      return strategy === "lulo" ? "Withdrawing from Lulo…" : "Undelegating stake…";
+      return strategy === "lulo" ? t("yield.progressRecallLulo") : t("yield.progressUndelegate");
     case "returning":
-      return "Returning funds to vault…";
+      return t("yield.progressReturning");
     case "complete":
-      return "Done!";
+      return t("yield.progressDone");
     case "error":
-      return "Something went wrong.";
+      return t("yield.progressError");
     default:
       return "";
   }

@@ -1,5 +1,6 @@
 import { Lock, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   open: boolean;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onClose, onSign }) => {
+  const { t } = useTranslation("app");
   if (!open) return null;
 
   return (
@@ -27,9 +29,9 @@ const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onC
               <Lock className="h-6 w-6" strokeWidth={2.5} />
             </div>
             <div>
-              <h3 className="text-xl leading-tight">Sign in to manage notifications</h3>
+              <h3 className="text-xl leading-tight">{t("notifications.signInTitle")}</h3>
               <p className="text-sm font-medium text-muted-foreground mt-1">
-                Contact details are private to this estate. Prove you own this wallet — nothing more.
+                {t("notifications.signInDesc")}
               </p>
             </div>
           </div>
@@ -43,7 +45,7 @@ const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onC
         </div>
 
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-          You'll be asked to sign this exact message
+          {t("notifications.signPrompt")}
         </p>
         <pre className="neo-border rounded-lg p-4 bg-secondary/40 text-[11px] leading-relaxed font-mono whitespace-pre-wrap mb-4">
           {message}
@@ -51,15 +53,15 @@ const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onC
 
         <div className="flex items-start gap-2 text-xs text-muted-foreground font-medium mb-6">
           <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-accent-purple" strokeWidth={2} />
-          No transaction, no gas, no wallet connection request — just a signature, valid for this session only.
+          {t("notifications.signNote")}
         </div>
 
         <div className="flex gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={signing}>
-            Cancel
+            {t("notifications.cancel")}
           </Button>
           <Button variant="cyan" className="flex-1" onClick={onSign} disabled={signing}>
-            {signing ? "Signing…" : "Sign message"}
+            {signing ? t("notifications.signing") : t("notifications.signMessage")}
           </Button>
         </div>
       </div>
