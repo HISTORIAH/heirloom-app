@@ -49,11 +49,7 @@ test("claim succeeds after heartbeat interval + grace period", async () => {
     generateKeyPairSignerWithSol(client),
   ]);
 
-  const {
-    ix: initIx,
-    estate,
-    vault,
-  } = await genInitSolEstateIx({
+  const { ix: initIx, estate } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -63,9 +59,6 @@ test("claim succeeds after heartbeat interval + grace period", async () => {
     pauseDuration: 0n,
   });
   await client.sendTransaction(initIx);
-
-  const estateBefore = await fetchEstate(client.rpc, estate);
-  const claimableAt = estateBefore.data.lastHeartbeat + 3_600n + 600n;
 
   // Warp exactly to claimable time (heartbeat + grace)
   warpSeconds(client, 4_200n);
@@ -77,8 +70,6 @@ test("claim succeeds after heartbeat interval + grace period", async () => {
   });
   await client.sendTransaction(claimIx);
 
-  // SOL is the estate's only claimable asset, so a successful claim drops
-  // claimableAssets to 0 and the program closes the estate/vault accounts.
   expect(await accountExists(client, estate)).toBe(false);
 });
 
@@ -91,7 +82,7 @@ test("claim fails before grace period ends", async () => {
     generateKeyPairSignerWithSol(client),
   ]);
 
-  const { ix: initIx, estate } = await genInitSolEstateIx({
+  const { ix: initIx } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -101,9 +92,6 @@ test("claim fails before grace period ends", async () => {
     pauseDuration: 0n,
   });
   await client.sendTransaction(initIx);
-
-  const estateBefore = await fetchEstate(client.rpc, estate);
-  const graceDeadline = estateBefore.data.lastHeartbeat + 3_600n;
 
   // Warp into grace period but before claimable (300s into grace)
   warpSeconds(client, 3_900n);
@@ -126,7 +114,7 @@ test("claim fails before heartbeat interval ends", async () => {
     generateKeyPairSignerWithSol(client),
   ]);
 
-  const { ix: initIx, estate } = await genInitSolEstateIx({
+  const { ix: initIx } = await genInitSolEstateIx({
     client,
     authority,
     heir,
@@ -136,8 +124,6 @@ test("claim fails before heartbeat interval ends", async () => {
     pauseDuration: 0n,
   });
   await client.sendTransaction(initIx);
-
-  const estateBefore = await fetchEstate(client.rpc, estate);
 
   // Warp barely past lastHeartbeat but before grace deadline
   warpSeconds(client, 100n);
