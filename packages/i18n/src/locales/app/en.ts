@@ -76,8 +76,8 @@ const app = {
   },
   idle: {
     eyebrow: "Why it matters",
-    headline1: "Most crypto just",
-    headline2: "sits",
+    headline1: "Most digital assets just",
+    headline2: "sit",
     headline3: "there.",
     lede: "Self-custody is the right call. But safe usually ends up meaning untouched — earning nothing, with no route back if you lose the keys and no route on if you step away for a while.",
     pointsCap: "What sitting still costs",
@@ -664,7 +664,7 @@ const app = {
     returnHome: "Return Home",
   },
   seo: {
-    homeTitle: "Heirloom — Solana Inheritance Protocol & Crypto Vault",
+    homeTitle: "Heirloom — Solana Inheritance Protocol",
     homeDescription:
       "A Solana inheritance protocol for self-custody continuity. Lock SOL and SPL tokens in a heartbeat vault, check in to prove life, or your heir inherits on-chain.",
     createVaultTitle: "Create a Vault | Heirloom",
