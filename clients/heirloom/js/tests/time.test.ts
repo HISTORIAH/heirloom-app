@@ -369,7 +369,6 @@ test("multiple heartbeats push claim time back repeatedly", async () => {
   // Send 3 heartbeats in sequence, each pushing back claim time
   for (let i = 0; i < 3; i++) {
     const before = await fetchEstate(client.rpc, estate);
-    const claimableAt = before.data.lastHeartbeat + 1_000n + 100n;
 
     // Warp close to claimable
     warpSeconds(client, 1_000n + 100n - 50n);
