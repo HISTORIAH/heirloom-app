@@ -63,6 +63,7 @@ const RouteAnalytics = () => {
 
 // Per-route head tags. Only the marketing homepage is indexable; every other
 // route is wallet-gated and per-user, so it carries a noindex directive.
+
 const RouteSeo = () => {
   const { pathname } = useLocation();
   const { t } = useTranslation("app");
