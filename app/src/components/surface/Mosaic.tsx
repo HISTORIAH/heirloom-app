@@ -1,11 +1,12 @@
 import { createContext, useContext, useRef, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { toneStyles, toneCap, type TileTone } from "@/components/landing/tones";
+import { toneStyles, toneCap, type TileTone } from "@/components/surface/tones";
 
 /**
- * The landing page is a mosaic: tiles of uneven size and weight placed on a
- * 12-column grid, rather than equal cells in a rigid band. `Mosaic` owns the
- * grid; `Tile` owns one block's span, fill, and padding.
+ * A mosaic is tiles of uneven size and weight placed on a 12-column grid,
+ * rather than equal cells in a rigid band. `Mosaic` owns the grid; `Tile` owns
+ * one block's span, fill, and padding. The landing is built from it, and so is
+ * the dashboard.
  *
  * Span is handed to CSS as `--col` / `--row` custom properties so Tailwind
  * never needs to see a dynamic class name. The responsive collapse lives in

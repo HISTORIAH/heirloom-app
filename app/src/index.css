@@ -283,6 +283,25 @@
   .neo-step-dot.complete { @apply bg-accent-yellow; }
   .neo-step-dot.pending { @apply bg-secondary; }
 
+  /* ------------------------------------------------------ editorial fields
+     The `.neo-input` counterpart: a hairline field that sits inside a tile
+     instead of standing off it. Focus moves the border to full ink rather
+     than growing a shadow, because a control that shifts position on focus
+     reflows the form around it. */
+  .ed-input {
+    @apply w-full rounded-lg border border-tile-line bg-background px-4 py-3 text-sm font-medium transition-colors;
+    outline: none;
+  }
+  .ed-input:focus {
+    @apply border-foreground;
+  }
+  .ed-input::placeholder {
+    @apply font-medium text-muted-foreground/70;
+  }
+  .ed-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
   /* --------------------------------------------------- full-bleed sections
      Every landing section is a spread: it runs the full width of the window
      and stands at least a full viewport tall, with its mosaic centred in the
@@ -635,12 +654,25 @@
 
   /* Tiles enter in reading order, close together — a mosaic that assembles
      rather than one that fades in as a single sheet. */
+  /* `backwards` holds the from-state during the stagger delay. `both` would
+     also keep the to-state, and a leftover transform makes `position: fixed`
+     descendants (modals) sit inside the tile instead of the viewport. */
   .tile-rise {
-    animation: tileRise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: tileRise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
     animation-delay: calc(var(--i, 0) * 45ms);
   }
   @keyframes tileRise {
     from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* A dialog is already the only thing on screen once the overlay lands, so
+     it only needs to arrive — not slide the 24px `.neo-slide-up` travels. */
+  .modal-rise {
+    animation: modalRise 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes modalRise {
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
 
@@ -731,6 +763,7 @@
   .tile-rise,
   .orbit-ring,
   .orbit-face,
+  .modal-rise,
   .neo-slide-up,
   .neo-fade-in {
     animation: none !important;

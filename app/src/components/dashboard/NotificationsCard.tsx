@@ -67,7 +67,7 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
   const { t } = useTranslation("app");
   if (status === "loading") {
     return (
-      <div className="neo-card-static">
+      <div className="rounded-xl border border-tile-line bg-background p-5 md:p-6 xl:p-7">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 flex-1 min-w-0">
             <div className="h-10 w-10 rounded-xl bg-secondary animate-pulse shrink-0" />
@@ -86,14 +86,14 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
   const Icon = meta.icon;
 
   return (
-    <div className="neo-card-static">
+    <div className="rounded-xl border border-tile-line bg-background p-5 md:p-6 xl:p-7">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
-          <div className={cn("neo-border rounded-xl p-2 shrink-0", meta.badgeClass)}>
-            <Icon className="h-5 w-5" strokeWidth={2.5} />
+          <div className={cn("rounded-lg border border-tile-line p-2 shrink-0", meta.badgeClass)}>
+            <Icon className="h-5 w-5" strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <h3 className="text-xl leading-tight">{t("notifications.title")}</h3>
+            <h3 className="ed-h3">{t("notifications.title")}</h3>
             <p className={cn("text-sm truncate mt-0.5", meta.textClass)}>
               {status === "authorized" ? summary : t(meta.textKey)}
             </p>
@@ -103,7 +103,7 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
           type="button"
           onClick={onAction}
           className={cn(
-            "neo-border rounded-xl px-5 py-2.5 font-bold text-sm text-center hover:opacity-90 transition-opacity shrink-0",
+            "shrink-0 rounded-lg border border-tile-line px-5 py-2.5 text-sm font-semibold transition-colors hover:brightness-95",
             meta.buttonClass
           )}
         >

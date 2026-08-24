@@ -1,6 +1,8 @@
 import { truncateAddress, formatUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import type { TokenSelection } from "@/pages/CreateVault";
+import { PanelCap } from "@/components/surface/Panel";
+import { EstateTimelineMini } from "@/components/create-vault/EstateTimeline";
 import { useTranslation } from "@heirloom/i18n";
 
 interface SummaryColumnProps {
@@ -12,7 +14,6 @@ interface SummaryColumnProps {
   tokens: SplTokenAsset[] | undefined;
   intervalDays: number;
   graceDays: number;
-  totalDays: number;
   delegate: string;
   hbSigner: string;
 }
@@ -26,124 +27,109 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
   tokens,
   intervalDays,
   graceDays,
-  totalDays,
   delegate,
   hbSigner,
 }) => {
   const { t } = useTranslation("app");
-  const displayLabel = label.trim() || t("createVault.wizard.heir");
+  const displayLabel = label.trim() || t("createVault.yourHeir");
   const selectedEntries = Object.entries(tokenSelections).filter(([, v]) => v.amount > 0);
-
-  const TIPS = [
-    t("createVault.wizard.tip1"),
-    t("createVault.wizard.tip2"),
-    t("createVault.wizard.tip3"),
-    t("createVault.wizard.tip4"),
+  const tips = [
+    {
+      title: t("createVault.wizard.tipCheckAddressTitle"),
+      body: t("createVault.wizard.tipCheckAddress"),
+    },
+    {
+      title: t("createVault.wizard.tipAddLaterTitle"),
+      body: t("createVault.wizard.tipAddLater"),
+    },
+    {
+      title: t("createVault.wizard.tipKeepIntervalTitle"),
+      body: t("createVault.wizard.tipKeepInterval"),
+    },
+    {
+      title: t("createVault.wizard.tipStaysYoursTitle"),
+      body: t("createVault.wizard.tipStaysYours"),
+    },
   ];
-  const TIP_TITLES = [
-    t("createVault.wizard.tip1Title"),
-    t("createVault.wizard.tip2Title"),
-    t("createVault.wizard.tip3Title"),
-    t("createVault.wizard.tip4Title"),
-  ];
+  const tip = tips[step] ?? tips[0];
 
   return (
-    <div>
-      <div className="text-xs font-bold uppercase tracking-[3px] text-muted-foreground mb-5">
-        {t("createVault.wizard.estateSoFar")}
-      </div>
+    <div className="flex flex-col gap-7">
+      <PanelCap className="text-muted-foreground">{t("createVault.wizard.estateSoFarPlain")}</PanelCap>
 
-      {/* Heir preview */}
-      <div className="bg-card border-4 border-foreground rounded-[14px] p-5 shadow-[5px_5px_0_0_hsl(var(--foreground))]">
-        <div className="flex items-center gap-3.5 mb-2.5">
-          <div className="w-11 h-11 rounded-[10px] bg-[hsl(var(--step-accent))] border-4 border-foreground flex items-center justify-center font-bold text-lg text-foreground shrink-0">
+      <section>
+        <PanelCap className="block text-muted-foreground/70">{t("createVault.wizard.heirPlain")}</PanelCap>
+        <div className="mt-3 flex items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-background text-sm font-semibold">
             {displayLabel.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="font-bold text-base">{displayLabel}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {heirAddress ? truncateAddress(heirAddress, 4) : t("createVault.wizard.noAddressYet")}
-            </div>
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{displayLabel}</p>
+            <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+              {heirAddress ? truncateAddress(heirAddress, 4) : t("createVault.wizard.noAddressYetCap")}
+            </p>
           </div>
         </div>
-        <div className="text-[11px] text-muted-foreground">{t("createVault.wizard.allocation100Single")}</div>
-      </div>
+      </section>
 
-      {/* Assets */}
-      <div className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground mt-6 mb-2.5">
-        {t("createVault.wizard.assets")}
-      </div>
-      {solAmount <= 0 && selectedEntries.length === 0 ? (
-        <div className="text-sm text-gray-400">{t("createVault.wizard.noneYet")}</div>
-      ) : (
-        <div className="space-y-2.5">
-          {solAmount > 0 && (
-            <div className="border-2 border-foreground rounded-[10px] p-3 bg-card">
-              <div className="flex justify-between text-sm font-bold">
-                <span>SOL</span>
-                <span className="font-normal text-muted-foreground">{solAmount} SOL</span>
+      <section>
+        <PanelCap className="block text-muted-foreground/70">{t("createVault.wizard.assetsPlain")}</PanelCap>
+        {solAmount <= 0 && selectedEntries.length === 0 ? (
+          <p className="mt-2.5 text-sm text-muted-foreground">{t("createVault.wizard.nothingAddedYet")}</p>
+        ) : (
+          <div className="mt-2.5 divide-y divide-tile-line border-y border-tile-line">
+            {solAmount > 0 && (
+              <div className="flex justify-between gap-3 py-2.5 text-sm">
+                <span className="font-semibold">SOL</span>
+                <span className="tabular-nums text-muted-foreground">{solAmount}</span>
               </div>
-            </div>
-          )}
-          {selectedEntries.map(([mint, sel]) => {
-            const tok = (tokens ?? []).find((t) => t.mint === mint);
-            if (!tok) return null;
-            return (
-              <div key={mint} className="border-2 border-foreground rounded-[10px] p-3 bg-card">
-                <div className="flex justify-between text-sm font-bold">
-                  <span>{tok.symbol || tok.label}</span>
-                  <span className="font-normal text-muted-foreground">{formatUiAmount(sel.amount)}</span>
+            )}
+            {selectedEntries.map(([mint, sel]) => {
+              const tok = (tokens ?? []).find((item) => item.mint === mint);
+              if (!tok) return null;
+              return (
+                <div key={mint} className="flex justify-between gap-3 py-2.5 text-sm">
+                  <span className="truncate font-semibold">{tok.symbol || tok.label}</span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatUiAmount(sel.amount)}
+                  </span>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Rules */}
-      <div className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground mt-6 mb-2.5">
-        {t("createVault.wizard.rules")}
-      </div>
-      <div className="space-y-0">
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.interval")}</span>
-          <span className={`font-bold ${step >= 2 ? "" : "text-gray-400 font-normal"}`}>
-            {step >= 2 ? `${intervalDays} ${t("createVault.wizard.daysShort")}` : t("createVault.wizard.step3Placeholder")}
-          </span>
-        </div>
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.grace")}</span>
-          <span className={`font-bold ${step >= 2 ? "" : "text-gray-400 font-normal"}`}>
-            {step >= 2 ? `${graceDays} ${t("createVault.wizard.daysShort")}` : t("createVault.wizard.step3Placeholder")}
-          </span>
-        </div>
-        {step >= 2 && (
-          <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-            <span className="text-muted-foreground">{t("createVault.wizard.total")}</span>
-            <span className="font-bold">{totalDays} {t("createVault.wizard.daysShort")}</span>
+              );
+            })}
           </div>
         )}
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.guardianShort")}</span>
-          <span className={delegate ? "font-bold" : "text-gray-400 font-normal"}>
-            {delegate ? truncateAddress(delegate, 4) : t("createVault.wizard.notSet")}
-          </span>
-        </div>
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.signerShort")}</span>
-          <span className={hbSigner ? "font-bold" : "text-gray-400 font-normal"}>
-            {hbSigner ? truncateAddress(hbSigner, 4) : t("createVault.wizard.notSet")}
-          </span>
-        </div>
-      </div>
+      </section>
 
-      {/* Tip */}
-      <div className="mt-6 border-4 border-foreground rounded-[12px] bg-[#FEF9C3] p-4 text-sm leading-relaxed">
-        <b className="block mb-1">💡 {TIP_TITLES[step]}</b>
-        {TIPS[step]}
+      <section>
+        <PanelCap className="block text-muted-foreground/70">{t("createVault.wizard.timingPlain")}</PanelCap>
+        <EstateTimelineMini
+          className="mt-3"
+          heartbeatDays={intervalDays}
+          graceDays={graceDays}
+          pending={step < 2}
+        />
+      </section>
+
+      {(delegate || hbSigner) && (
+        <section className="divide-y divide-tile-line border-y border-tile-line">
+          {delegate && <Row label={t("createVault.wizard.guardianPlain")} value={truncateAddress(delegate, 4)} />}
+          {hbSigner && <Row label={t("createVault.wizard.signerLabelPlain")} value={truncateAddress(hbSigner, 4)} />}
+        </section>
+      )}
+
+      <div className="rounded-lg bg-accent-yellow/20 px-4 py-3.5">
+        <p className="ed-label text-foreground/70">{tip.title}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{tip.body}</p>
       </div>
     </div>
   );
 };
+
+const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex items-baseline justify-between gap-3 py-2.5">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <span className="font-mono text-sm font-semibold">{value}</span>
+  </div>
+);
 
 export default SummaryColumn;

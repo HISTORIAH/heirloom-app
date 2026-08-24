@@ -1,12 +1,6 @@
-import { getProgressMessage } from "@/lib/strategies";
 import { getYieldConfigByMint } from "@/lib/yieldTokens";
 import { cn } from "@/lib/utils";
-import {
-  Loader2,
-  ArrowLeftRight,
-  CheckCircle2,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowLeftRight, Check, Loader2, TrendingUp } from "lucide-react";
 import { type InlineTokenYieldProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -21,73 +15,57 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
 }) => {
   const { t } = useTranslation("app");
   const config = getYieldConfigByMint(mint);
-  if (!config || !config.luloSupported) return null;
+  if (!config?.luloSupported) return null;
 
-  const isActive = strategy?.active ?? false;
-  const isWorking = loading || progressStep !== "idle";
+  const isActive = strategy?.active && strategy.type === "lulo";
+  const isWorking = loading || (progressStep !== "idle" && progressStep !== "complete");
 
-  // Active state — compact pill with recall button
-  if (isActive && strategy?.type === "lulo") {
-    return (
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Recall button — lime pill with shadow */}
+  const pill =
+    "flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors disabled:opacity-40";
+
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      {isWorking && (
+        <span className="hidden text-[11px] font-medium text-muted-foreground sm:inline">
+          {progressStep === "recalling"
+            ? t("yield.withdrawingShort")
+            : progressStep === "returning"
+              ? t("yield.returningShort")
+              : t("common.working")}
+        </span>
+      )}
+      {!isWorking && progressStep === "complete" && (
+        <Check className="h-3.5 w-3.5 text-accent-lime" strokeWidth={3} />
+      )}
+
+      {isActive ? (
         <button
           onClick={onRecall}
           disabled={isWorking}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all shrink-0",
-            "border-2 border-foreground shadow-[2px_2px_0_0_hsl(var(--foreground))]",
-            isWorking
-              ? "bg-secondary opacity-50"
-              : "bg-accent-yellow hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
-          )}
+          className={cn(pill, "border-accent-purple/50 bg-accent-purple/15 hover:brightness-95")}
         >
           {isWorking ? (
-            <Loader2 className="h-3 w-3 animate-spin inline" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            <ArrowLeftRight className="h-3 w-3 inline" />
+            <ArrowLeftRight className="h-3 w-3" />
           )}
-          <span className="ml-0.5">{t("yield.recall")}</span>
+          {t("yield.recall")}
         </button>
-
-        {/* Inline progress */}
-        {progressStep !== "idle" && progressStep !== "complete" && (
-          <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
-            <Loader2 className="h-3 w-3 animate-spin text-accent-purple" />
-            {getProgressMessage(progressStep, "lulo", t)}
-          </span>
-        )}
-        {progressStep === "complete" && (
-          <span className="text-[10px] font-bold text-accent-lime flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            {t("yield.done")}
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  // Inactive state — compact earn yield button (only shown if yield is available)
-  return (
-    <div className="flex items-center gap-2 shrink-0">
-      <button
-        onClick={onEnable}
-        disabled={isWorking || vaultBalance <= 0}
-        className={cn(
-          "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground",
-          isWorking || vaultBalance <= 0
-            ? "bg-secondary opacity-50"
-            : "bg-accent-yellow hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
-        )}
-      >
-
-        {isWorking ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <TrendingUp className="h-3 w-3" />
-        )}
-        {t("yield.earn")}
-      </button>
+      ) : (
+        <button
+          onClick={onEnable}
+          disabled={isWorking || vaultBalance <= 0}
+          title={t("yield.earnApyTitle", { apy: config.apyProtected.toFixed(1) })}
+          className={cn(pill, "border-tile-line hover:bg-tile-soft")}
+        >
+          {isWorking ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <TrendingUp className="h-3 w-3" />
+          )}
+          {t("yield.earnApyShort", { apy: config.apyProtected.toFixed(1) })}
+        </button>
+      )}
     </div>
   );
 };

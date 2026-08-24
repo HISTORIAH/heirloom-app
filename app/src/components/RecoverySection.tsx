@@ -1,7 +1,7 @@
 import { Wallet, Unplug, LifeBuoy, ShieldCheck } from "lucide-react";
-import { Mosaic, Tile } from "@/components/landing/Mosaic";
+import { Mosaic, Tile } from "@/components/surface/Mosaic";
 import Section, { SectionLead, SectionNote } from "@/components/landing/Section";
-import { toneMuted, toneCap, type TileTone } from "@/components/landing/tones";
+import { toneMuted, toneCap, type TileTone } from "@/components/surface/tones";
 import { useTranslation } from "@heirloom/i18n";
 
 // Three equal beats — today, the bad day, the way back — with the bad day in

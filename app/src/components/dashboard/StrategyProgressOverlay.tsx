@@ -1,14 +1,36 @@
-import { getProgressMessage } from "@/lib/strategies";
 import { cn } from "@/lib/utils";
-import {
-  Loader2,
-  CheckCircle2,
-  Landmark,
-  Sprout,
-  Timer,
-} from "lucide-react";
+import { Check, Loader2, Timer } from "lucide-react";
 import { type StrategyProgressOverlayProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
+
+const Step: React.FC<{ label: string; state: "done" | "active" | "waiting" }> = ({
+  label,
+  state,
+}) => (
+  <div className="flex flex-1 flex-col items-center gap-2">
+    <div
+      className={cn(
+        "grid h-9 w-9 place-items-center rounded-full border transition-colors",
+        state === "done"
+          ? "border-transparent bg-foreground text-background"
+          : state === "active"
+            ? "border-foreground"
+            : "border-tile-line text-muted-foreground",
+      )}
+    >
+      {state === "done" ? (
+        <Check className="h-4 w-4" strokeWidth={3} />
+      ) : state === "active" ? (
+        <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+      ) : (
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+      )}
+    </div>
+    <span className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+      {label}
+    </span>
+  </div>
+);
 
 export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = ({
   open,
@@ -25,100 +47,62 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
   const isStaking = strategyType === "staking";
 
   const firstDone = isComplete || (isRecallFlow ? step === "returning" : step === "depositing");
-  const secondDone = isComplete;
+  const secondActive = step === (isRecallFlow ? "returning" : "depositing");
 
-  // Step labels — staking never mentions Lulo
+  const progressCopy: Record<string, string> = {
+    withdrawing: t("yield.progressWithdrawVault"),
+    depositing: t("yield.progressDepositStrategy"),
+    recalling: t("yield.progressPullStrategy"),
+    returning: t("yield.progressReturnVault"),
+    complete: t("yield.allDone"),
+    error: t("yield.nothingMoved"),
+  };
+
   const firstStepLabel = isRecallFlow
-    ? (isStaking ? t("yield.stepUndelegate") : t("yield.stepLuloWithdraw"))
-    : t("yield.stepVaultWithdraw");
+    ? isStaking
+      ? t("yield.stepUndelegate")
+      : t("yield.withdrawFromLulo")
+    : t("yield.withdrawFromVault");
   const secondStepLabel = isRecallFlow
-    ? t("yield.stepReturn")
-    : (isStaking ? t("yield.stepDelegate") : t("yield.stepLuloDeposit"));
+    ? t("yield.returnToVault")
+    : isStaking
+      ? t("yield.stepDelegate")
+      : t("yield.depositToLulo");
 
   return (
-    <div className="fixed inset-0 z-[80] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6">
-      <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
-        <div className="flex justify-center mb-4">
-          <div
-            className={cn(
-              "neo-border rounded-full p-4 w-16 h-16 flex items-center justify-center",
-              isComplete ? "bg-accent-lime" : isError ? "bg-accent-red" : isStaking ? "bg-accent-lime" : "bg-accent-purple",
-            )}
-          >
-            {isComplete ? (
-              <CheckCircle2 className="h-8 w-8" strokeWidth={2.5} />
-            ) : isError ? (
-              isStaking ? (
-                <Sprout className="h-8 w-8" strokeWidth={2.5} />
-              ) : (
-                <Landmark className="h-8 w-8" strokeWidth={2.5} />
-              )
-            ) : (
-              <Loader2 className="h-8 w-8 animate-spin" strokeWidth={2.5} />
-            )}
-          </div>
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-foreground/25 p-6 backdrop-blur-[3px]"
+    >
+      <div className="modal-rise w-full max-w-md overflow-hidden rounded-xl border border-tile-line bg-background shadow-[0_24px_64px_-24px_hsl(var(--foreground)/0.35)]">
+        <div className="border-b border-tile-line px-6 py-6 text-center">
+          <span className="ed-label">
+            {isStaking ? t("yield.capStaking") : t("yield.capYield")}
+          </span>
+          <h2 className={cn("ed-h3 mt-2", isError && "text-accent-red")}>
+            {title || (isComplete ? t("yield.doneShort") : isError ? t("yield.failed") : t("common.working"))}
+          </h2>
+          <p className="mt-2 text-sm font-medium text-muted-foreground">
+            {progressCopy[step] ?? t("common.working")}
+          </p>
         </div>
 
-        <h2 className="text-2xl mb-2">
-          {title || (isComplete ? t("yield.done") : isError ? t("yield.failed") : t("yield.processing"))}
-        </h2>
-        <p className="text-sm font-medium text-muted-foreground mb-6">
-          {getProgressMessage(step, strategyType, t)}
-        </p>
-
-        {/* Two-step progress */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={cn(
-                "neo-border rounded-full w-10 h-10 flex items-center justify-center transition-colors duration-300",
-                firstDone ? "bg-accent-lime" : "bg-secondary",
-              )}
-            >
-              {firstDone ? (
-                <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
-              ) : (
-                <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
-              )}
-            </div>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {firstStepLabel}
-            </span>
-          </div>
-
-          <div className="h-px w-8 bg-foreground/20 mb-6" />
-
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={cn(
-                "neo-border rounded-full w-10 h-10 flex items-center justify-center transition-colors duration-300",
-                secondDone ? "bg-accent-lime" : step === (isRecallFlow ? "returning" : "depositing") ? "bg-secondary" : "bg-secondary/50",
-              )}
-            >
-              {secondDone ? (
-                <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
-              ) : step === (isRecallFlow ? "returning" : "depositing") ? (
-                <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
-              ) : (
-                <div className="w-3 h-3 rounded-full bg-muted-foreground/30" />
-              )}
-            </div>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {secondStepLabel}
-            </span>
-          </div>
+        <div className="flex items-start gap-2 px-6 py-6">
+          <Step label={firstStepLabel} state={firstDone ? "done" : "active"} />
+          <div className="mt-[18px] h-px flex-1 bg-tile-line" />
+          <Step
+            label={secondStepLabel}
+            state={isComplete ? "done" : secondActive ? "active" : "waiting"}
+          />
         </div>
 
-        {/* Epoch notice for staking */}
         {isStaking && isComplete && (
-          <div className="mt-6 neo-border rounded-xl p-4 bg-accent-yellow/10 flex items-start gap-3">
-            <Timer className="h-5 w-5 shrink-0 mt-0.5 text-accent-yellow" strokeWidth={2.5} />
-            <div className="text-left">
-              <p className="text-sm font-bold">{t("yield.epochNextTitle")}</p>
-              <p className="text-xs font-medium text-muted-foreground mt-0.5">
-                {t("yield.epochNextDesc")}
-              </p>
-            </div>
+          <div className="flex items-start gap-3 border-t border-tile-line px-6 py-4">
+            <Timer className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("yield.epochActiveNote")}
+            </p>
           </div>
         )}
       </div>

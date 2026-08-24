@@ -27,6 +27,8 @@ const buttonVariants = cva(
         "flat-yellow": "rounded-lg border-0 bg-accent-yellow text-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
         "flat-outline":
           "rounded-lg border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background active:translate-x-0 active:translate-y-0",
+        "flat-destructive":
+          "rounded-lg border-0 bg-accent-red text-primary-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
         pill: "rounded-xl bg-transparent text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
         "pill-dark": "rounded-xl bg-foreground text-background border-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
       },

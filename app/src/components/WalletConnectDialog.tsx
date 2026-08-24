@@ -42,13 +42,15 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
           console.error("wallet connect failed", err);
         }
       }}
-      className="w-full neo-border rounded-xl px-4 py-3 bg-secondary hover:bg-accent-yellow transition-all duration-150 flex items-center gap-3 font-bold disabled:opacity-60"
+      className="flex w-full items-center gap-3 rounded-lg border border-tile-line px-4 py-3 font-semibold transition-colors hover:bg-tile-soft disabled:opacity-60"
     >
-      {wallet.icon && (
-        <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />
-      )}
+      {wallet.icon && <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />}
       <span className="flex-1 text-left">{wallet.name}</span>
-      {isConnecting && <span className="text-xs font-bold">{t("common.connecting")}</span>}
+      {isConnecting && (
+        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          {t("common.connecting")}
+        </span>
+      )}
     </button>
   );
 };
@@ -65,20 +67,20 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="neo-card-static max-w-md">
+      <DialogContent className="max-w-md rounded-xl border-tile-line p-6 sm:rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{t("walletDialog.title")}</DialogTitle>
-          <DialogDescription className="font-medium">
+          <DialogTitle className="ed-h3">{t("walletDialog.title")}</DialogTitle>
+          <DialogDescription className="text-sm font-medium text-muted-foreground">
             {t("walletDialog.description")}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3 mt-2">
+        <div className="mt-2 flex flex-col gap-2">
           {wallets.length === 0 ? (
             <a
               href="https://solana.com/solana-wallets"
               target="_blank"
               rel="noopener noreferrer"
-              className="neo-border rounded-xl px-4 py-3 bg-accent-yellow font-bold text-center"
+              className="rounded-lg border border-accent-yellow bg-accent-yellow px-4 py-3 text-center text-sm font-semibold"
             >
               {t("walletDialog.noWallets")}
             </a>

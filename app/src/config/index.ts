@@ -12,9 +12,11 @@ export const ANALYTICS_ENABLED =
 
 // --- Feature flags (temporary — remove once shipped) ---
 
-// TEMP: Raw env flag for yield/staking feature on local testing
+// TEMP: Yield/staking is on by default. The flows are
+// still mocked. Set VITE_FEATURE_YIELD_STAKING_UI=false to hide them.
+// TODO: Flip back to opt-in (or delete) once the strategies are wired to real programs.
 export const FEATURE_YIELD_STAKING_UI =
-  import.meta.env.VITE_FEATURE_YIELD_STAKING_UI?.trim().toLowerCase() === "true";
+  import.meta.env.VITE_FEATURE_YIELD_STAKING_UI?.trim().toLowerCase() !== "false";
 
 // TEMP: Notifications UI doesn't have backend wired up
 // TODO: Remove this flag once the notifications backend is live.

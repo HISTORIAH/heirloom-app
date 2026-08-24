@@ -25,6 +25,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
+  const homeLabel = backLabel ?? t("common.home");
 
   useEffect(() => {
     if (!walletDropdownOpen) return;
@@ -46,36 +47,55 @@ const PageHeader: React.FC<PageHeaderProps> = ({
     }
   };
 
+  const chromeBtn =
+    "grid h-10 w-10 shrink-0 place-items-center rounded-lg transition-colors hover:bg-tile-soft";
+
   return (
-    <div className="border-b-4 border-foreground bg-background sticky top-0 z-50">
-      <div className="max-w-[1180px] mx-auto px-6 flex items-center justify-between h-20">
+    <div className="sticky top-0 z-50 border-b border-tile-line bg-background">
+      <div className="flex h-[var(--nav-h)] items-center gap-3 px-[var(--page-pad)] md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4">
         <button
+          type="button"
           onClick={() => navigate(backTo)}
-          className="flex items-center gap-2 text-lg font-semibold hover:underline group"
+          aria-label={homeLabel}
+          className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:justify-self-start md:px-0 md:hover:bg-transparent`}
         >
           <ArrowLeft
-            className="h-5 w-5 transition-transform group-hover:-translate-x-1"
-            strokeWidth={2.5}
+            className="h-4 w-4 transition-transform group-hover:-translate-x-1 md:group-hover:-translate-x-1"
+            strokeWidth={2.25}
           />
-          {backLabel ?? t("common.home")}
+          <span className="hidden text-sm font-semibold md:inline md:hover:underline">{homeLabel}</span>
         </button>
-        <span className="text-2xl font-bold font-display">{title}</span>
+
+        <span className="min-w-0 flex-1 truncate font-display text-base font-semibold tracking-tight md:flex-none md:justify-self-center md:text-center md:text-[clamp(1.35rem,1.75vw,2.15rem)] md:tracking-[-0.022em]">
+          {title}
+        </span>
+
         {isConnected ? (
-          <div className="relative" ref={walletDropdownRef}>
+          <div className="relative shrink-0 md:justify-self-end" ref={walletDropdownRef}>
             <button
+              type="button"
               onClick={() => setWalletDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-yellow font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              aria-label={publicKey ?? t("common.connectWallet")}
+              className={`${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:rounded-lg md:border md:border-tile-line md:bg-tile-soft md:px-3 md:py-2 md:hover:bg-secondary`}
             >
-              {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
+              <Wallet className="h-4 w-4 md:hidden" strokeWidth={2.25} />
+              <span className="hidden font-mono text-xs font-semibold md:inline">
+                {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
+              </span>
               <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                className={`hidden h-3.5 w-3.5 transition-transform duration-200 md:block ${
                   walletDropdownOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             {walletDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 border-4 border-foreground rounded-xl bg-background p-3 space-y-2 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50">
+              <div className="absolute right-0 top-full z-50 mt-2 w-64 space-y-1 rounded-xl border border-tile-line bg-background p-2 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]">
+                {publicKey && (
+                  <p className="truncate px-3 py-1.5 font-mono text-[11px] text-muted-foreground md:hidden">
+                    {publicKey}
+                  </p>
+                )}
                 <button
                   onClick={async () => {
                     if (!publicKey) return;
@@ -90,7 +110,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                       setCopied(false);
                     }
                   }}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
                 >
                   {copied ? (
                     <>
@@ -102,10 +122,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                     </>
                   )}
                 </button>
-                <div className="border-t-2 border-foreground" />
+                <div className="border-t border-tile-line" />
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-accent-red transition-colors hover:bg-accent-red/10"
                 >
                   <LogOut className="h-4 w-4" /> {t("common.disconnectWallet")}
                 </button>
@@ -114,11 +134,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         ) : (
           <button
+            type="button"
             onClick={onConnectWallet}
-            className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            aria-label={t("common.connectWallet")}
+            className={`${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:justify-self-end md:px-0 md:hover:bg-transparent`}
           >
-            <Wallet className="h-4 w-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">{t("common.connectWallet")}</span>
+            <Wallet className="h-4 w-4" strokeWidth={2.25} />
+            <span className="hidden text-[11px] font-bold uppercase tracking-[0.18em] md:inline md:text-xs md:hover:underline">
+              {t("common.connectWallet")}
+            </span>
           </button>
         )}
       </div>

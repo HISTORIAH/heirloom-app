@@ -42,10 +42,10 @@ async function fetchTokens(owner: string): Promise<SplTokenAsset[]> {
     .filter((t): t is SplTokenAsset => t !== null);
 }
 export function useWalletSplTokens(owner: string | null) {
-  return useQuery({
+  return useQuery<SplTokenAsset[]>({
     queryKey: ["wallet-spl-tokens", owner],
     queryFn: () => {
-      if (!owner) return Promise.resolve([]);
+      if (!owner) return Promise.resolve([] as SplTokenAsset[]);
       return fetchTokens(owner);
     },
     enabled: !!owner,

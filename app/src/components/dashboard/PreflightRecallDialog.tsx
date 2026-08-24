@@ -1,15 +1,9 @@
 import { Button } from "@/components/ui/button";
-import {
-  type Strategy,
-} from "@/types/strategy-ui";
+import { Modal } from "@/components/surface/Modal";
 import { cn } from "@/lib/utils";
-import {
-  Landmark,
-  Sprout,
-  Loader2,
-  Zap,
-} from "lucide-react";
+import { Landmark, Loader2, Sprout, Zap } from "lucide-react";
 import { type PreflightRecallDialogProps } from "@/types/strategy-ui";
+import { useTranslation } from "@heirloom/i18n";
 
 export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
   open,
@@ -19,94 +13,73 @@ export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
   onCancel,
   loading = false,
 }) => {
-  if (!open) return null;
-
+  const { t } = useTranslation("app");
   const activeStrategies = strategies.filter((s) => s.active);
+  const verb = actionName.toLowerCase();
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
-      onClick={() => {
-        if (!loading) onCancel();
-      }}
-    >
-      <div
-        className="neo-card-static max-w-lg w-full neo-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start gap-3">
-          <div className="bg-accent-yellow neo-border rounded-xl p-3 shrink-0">
-            <Zap className="h-6 w-6" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h3 className="text-xl leading-tight">
-              Active Strategies Detected
-            </h3>
-            <p className="text-sm font-medium text-muted-foreground mt-1">
-              Before {actionName.toLowerCase()}, we need to recall funds from your active strategies.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-2">
-          {activeStrategies.map((s, i) => (
-            <div key={i} className="neo-border rounded-lg p-3 bg-secondary flex items-center gap-3">
-              <div
-                className={cn(
-                  "neo-border rounded-lg p-2 shrink-0",
-                  s.type === "lulo" ? "bg-accent-purple" : "bg-accent-lime",
-                )}
-              >
-                {s.type === "lulo" ? (
-                  <Landmark className="h-4 w-4" strokeWidth={2.5} />
-                ) : (
-                  <Sprout className="h-4 w-4" strokeWidth={2.5} />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold">
-                  {s.type === "lulo"
-                    ? `${(s as Extract<Strategy, { type: "lulo" }>).amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} tokens @ Lulo`
-                    : `${(s as Extract<Strategy, { type: "staking" }>).amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL staked`}
-                </p>
-                <p className="text-xs font-medium text-muted-foreground">
-                  Will be recalled automatically — one signature total
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 neo-border rounded-xl p-4 bg-accent-yellow/10">
-          <p className="text-sm font-bold">
-            One transaction, one signature
-          </p>
-          <p className="text-xs font-medium text-muted-foreground mt-0.5">
-            The backend handles all recalls and the final {actionName.toLowerCase()} in a single flow.
-          </p>
-        </div>
-
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-          <Button variant="outline" size="default" onClick={onCancel} disabled={loading} className="sm:w-auto w-full">
-            Cancel
+    <Modal
+      open={open}
+      cap={t("yield.capHeadsUp")}
+      accent="bg-accent-yellow"
+      title={t("yield.fundsOutEarning")}
+      description={t("yield.beforeAction", { action: verb })}
+      size="lg"
+      busy={loading}
+      onClose={onCancel}
+      footer={
+        <>
+          <Button
+            variant="flat-outline"
+            size="default"
+            onClick={onCancel}
+            disabled={loading}
+            className="w-full sm:w-auto"
+          >
+            {t("common.cancel")}
           </Button>
           <Button
-            variant="yellow"
+            variant="flat-yellow"
             size="default"
             onClick={onConfirm}
             disabled={loading}
-            className="sm:w-auto w-full"
+            className="w-full sm:w-auto"
           >
             {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Preparing…</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("yield.preparing")}</>
             ) : (
-              <><Zap className="h-4 w-4" /> {actionName} All</>
+              <><Zap className="h-4 w-4" /> {t("yield.recallAndAction", { action: verb })}</>
             )}
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="divide-y divide-tile-line border-y border-tile-line">
+        {activeStrategies.map((s, i) => (
+          <div key={i} className="flex items-center gap-3 py-3">
+            <span
+              className={cn(
+                "shrink-0 rounded-lg p-2",
+                s.type === "lulo" ? "bg-accent-purple/20" : "bg-accent-lime/20",
+              )}
+            >
+              {s.type === "lulo" ? (
+                <Landmark className="h-4 w-4" strokeWidth={2} />
+              ) : (
+                <Sprout className="h-4 w-4" strokeWidth={2} />
+              )}
+            </span>
+            <p className="min-w-0 flex-1 text-sm font-semibold tabular-nums">
+              {s.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}{" "}
+              {s.type === "lulo" ? t("yield.tokensInLulo") : t("yield.solStaked")}
+            </p>
+          </div>
+        ))}
       </div>
-    </div>
+
+      <p className="mt-4 text-xs font-medium text-muted-foreground">
+        {t("yield.oneSigCovers", { action: verb })}
+      </p>
+    </Modal>
   );
 };
