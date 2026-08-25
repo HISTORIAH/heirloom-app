@@ -283,20 +283,22 @@
   .neo-step-dot.pending { @apply bg-secondary; }
 
   /* ------------------------------------------------------ editorial fields
-     An underline, not a box. Inputs used to share the 4px focus outline with
-     buttons, which read as an all-round border. The rule lives on the bottom
-     only; focus inks it. */
+     A hairline box, not an ink one. Hover and focus stay on tile-line so the
+     field does not jump to a solid black outline. Keyboard focus uses a
+     quieter ring than buttons. */
   .ed-input {
-    @apply w-full appearance-none rounded-none bg-transparent px-0 py-3 text-sm font-medium transition-colors;
-    border: none;
-    border-bottom: 1px solid hsl(var(--tile-line));
-    box-shadow: none;
+    @apply w-full appearance-none rounded-lg border border-tile-line bg-background px-4 py-3 text-sm font-medium transition-colors;
     outline: none;
   }
-  .ed-input:focus,
-  .ed-input:focus-visible {
-    border-bottom-color: hsl(var(--foreground));
+  .ed-input:hover,
+  .ed-input:focus {
+    @apply border-tile-line;
     outline: none;
+  }
+  .ed-input:focus-visible {
+    @apply border-tile-line;
+    outline: 2px solid hsl(var(--foreground) / 0.28);
+    outline-offset: 2px;
   }
   .ed-input::placeholder {
     @apply font-medium text-muted-foreground/70;
