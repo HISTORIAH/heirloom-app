@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import Sheet from "@/components/app/Sheet";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
-import { UserPlus, X } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -67,75 +68,47 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="neo-border rounded-xl px-4 py-3 bg-accent-pink text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
-      >
+      <Button variant="outline" size="sm" className="w-full" onClick={() => setOpen(true)}>
         {t("dashboard.manage.changeHeir")}
-      </button>
+      </Button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-foreground"
-          onClick={() => {
-            if (!updatingHeir) setOpen(false);
-          }}
-        >
-          <div className="neo-card-static max-w-md w-full neo-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-accent-pink neo-border rounded-xl p-3 shrink-0">
-                  <UserPlus className="h-6 w-6" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.changeHeir")}</h3>
-                  <p className="text-sm font-medium text-muted-foreground mt-1">
-                    {t("dashboard.manage.changeHeirDesc")}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setOpen(false)}
-                disabled={updatingHeir}
-                className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
-              >
-                <X className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </div>
-
-            <div className="space-y-3 mt-4">
-              <input
-                type="text"
-                value={newHeirAddress}
-                onChange={(e) => setNewHeirAddress(e.target.value)}
-                maxLength={128}
-                className="neo-input w-full font-mono text-sm focus:bg-accent-pink/20"
-                placeholder={t("dashboard.manage.newHeirPlaceholder")}
-              />
-              <p className="text-xs font-medium text-muted-foreground">
-                {t("dashboard.manage.changeHeirWarning")}
-              </p>
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-              <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                {t("dashboard.manage.cancel")}
-              </Button>
-              <Button
-                variant="pink"
-                size="default"
-                onClick={handleUpdateHeir}
-                disabled={!newHeirAddress.trim()}
-                className="sm:w-auto w-full"
-              >
-                <UserPlus className="h-4 w-4" /> {t("dashboard.manage.changeHeir")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Sheet
+        open={open}
+        title={t("dashboard.manage.changeHeir")}
+        caption={t("dashboard.heir")}
+        icon={<UserPlus strokeWidth={2} />}
+        busy={updatingHeir}
+        onClose={() => setOpen(false)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)} className="w-full sm:w-auto">
+              {t("dashboard.manage.cancel")}
+            </Button>
+            <Button
+              onClick={handleUpdateHeir}
+              disabled={!newHeirAddress.trim()}
+              className="w-full sm:w-auto"
+            >
+              <UserPlus className="h-4 w-4" /> {t("dashboard.manage.changeHeir")}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm font-medium text-muted-foreground">
+          {t("dashboard.manage.changeHeirDesc")}
+        </p>
+        <input
+          type="text"
+          value={newHeirAddress}
+          onChange={(e) => setNewHeirAddress(e.target.value)}
+          maxLength={128}
+          className="field field-mono mt-4"
+          placeholder={t("dashboard.manage.newHeirPlaceholder")}
+        />
+        <p className="mt-3 text-xs font-medium text-muted-foreground">
+          {t("dashboard.manage.changeHeirWarning")}
+        </p>
+      </Sheet>
 
       <ConfirmDialog
         open={reassignConfirm.open}
@@ -145,21 +118,22 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
         cancelLabel={t("dashboard.manage.cancel")}
         variant="default"
         loading={updatingHeir}
-        icon={<UserPlus className="h-6 w-6" strokeWidth={2.5} />}
-        accent="bg-accent-pink/20"
+        icon={<UserPlus strokeWidth={2} />}
         onConfirm={performUpdateHeir}
         onCancel={() => {
           if (!updatingHeir) setReassignConfirm({ open: false, next: "" });
         }}
       >
-        <div className="space-y-2 text-sm">
-          <div className="neo-border rounded-lg p-3 bg-secondary">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.manage.from")}</p>
-            <p className="font-mono text-xs break-all">{estate.heir}</p>
+        {/* The whole point of the confirmation is the pair of addresses, so
+            they are set as the only two rows in it. */}
+        <div className="mt-1">
+          <div className="data-row flex-col items-start gap-1">
+            <span className="cap">{t("dashboard.manage.from")}</span>
+            <span className="break-all font-mono text-xs">{estate.heir}</span>
           </div>
-          <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.manage.to")}</p>
-            <p className="font-mono text-xs break-all">{reassignConfirm.next}</p>
+          <div className="data-row flex-col items-start gap-1">
+            <span className="cap">{t("dashboard.manage.to")}</span>
+            <span className="break-all font-mono text-xs font-semibold">{reassignConfirm.next}</span>
           </div>
         </div>
       </ConfirmDialog>

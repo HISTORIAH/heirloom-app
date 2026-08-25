@@ -45,9 +45,6 @@
        success, and editorial highlights. */
     --accent: 50 100% 50%;
 
-    /* Overridden per wizard step so controls match the card's shadow color;
-       falls back to the primary accent outside those flows. */
-    --step-accent: var(--accent-yellow);
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 100% 61%;
@@ -75,10 +72,11 @@
     --mosaic-gap: 0.875rem;
     --nav-h: 5rem;
 
-    --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
-    --shadow-md: 8px 8px 0px 0px hsl(0 0% 0%);
-    --shadow-lg: 12px 12px 0px 0px hsl(0 0% 0%);
-    --shadow-xl: 16px 16px 0px 0px hsl(0 0% 0%);
+    /* The page has one shadow, and it is only ever used to lift a sheet off
+       a dimmed page. Nothing sitting on the paper casts one. */
+    --shadow-sheet:
+      0 1px 2px 0 hsl(0 0% 0% / 0.06),
+      0 28px 64px -28px hsl(0 0% 0% / 0.3);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 0%;
@@ -128,61 +126,69 @@
     color: hsl(var(--foreground));
   }
 
+  /* The scrollbar is page furniture, not a graphic element: a hairline track
+     and a thumb the weight of the type it scrolls past. */
   ::-webkit-scrollbar {
-    width: 12px;
+    width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: hsl(var(--secondary));
-    border-left: 4px solid hsl(var(--foreground));
+    background: hsl(var(--background));
+    border-left: 1px solid hsl(var(--tile-line));
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--foreground));
-    border: 2px solid hsl(var(--secondary));
+    background: hsl(var(--foreground) / 0.25);
+    border: 3px solid hsl(var(--background));
+    border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground));
+    background: hsl(var(--foreground) / 0.5);
   }
 
+  /* The slider is drawn as a rule with a mark riding on it: a hairline track
+     and a small ink disc, sized to the type rather than to a toy control. */
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    height: 12px;
-    border-radius: 6px;
+    height: 2px;
+    background: hsl(var(--tile-line));
+    border-radius: 999px;
     outline: none;
     cursor: pointer;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 28px;
-    height: 28px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: hsl(var(--foreground));
-    border: 4px solid hsl(var(--background));
-    box-shadow: var(--shadow-sm);
+    border: 3px solid hsl(var(--background));
+    box-shadow: 0 0 0 1px hsl(var(--foreground));
     cursor: grab;
     transition: transform 0.15s ease;
   }
   input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
+    transform: scale(1.12);
   }
   input[type="range"]::-webkit-slider-thumb:active {
     cursor: grabbing;
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
   input[type="range"]::-moz-range-thumb {
-    width: 28px;
-    height: 28px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: hsl(var(--foreground));
-    border: 4px solid hsl(var(--background));
-    box-shadow: var(--shadow-sm);
+    border: 3px solid hsl(var(--background));
+    box-shadow: 0 0 0 1px hsl(var(--foreground));
     cursor: grab;
   }
 
-  input:focus-visible,
-  button:focus-visible {
-    outline: 4px solid hsl(var(--foreground));
+  /* One focus ring for the whole product: a thin ink rule held off the
+     control, so it reads on paper, on yellow, and on ink alike. */
+  :where(input, button, select, textarea, a, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--foreground));
     outline-offset: 2px;
   }
 
@@ -216,72 +222,141 @@
 }
 
 @layer components {
-  .neo-shadow-sm { box-shadow: var(--shadow-sm); }
-  .neo-shadow-md { box-shadow: var(--shadow-md); }
-  .neo-shadow-lg { box-shadow: var(--shadow-lg); }
-  .neo-shadow-xl { box-shadow: var(--shadow-xl); }
-  /* Color-matched card shadows (shadow color mirrors the card's accent). */
-  .neo-shadow-pink { box-shadow: 12px 12px 0px 0px hsl(var(--accent-pink)); }
-  .neo-shadow-lime { box-shadow: 12px 12px 0px 0px hsl(var(--accent-lime)); }
-  .neo-shadow-cyan { box-shadow: 12px 12px 0px 0px hsl(var(--accent-cyan)); }
-  .neo-shadow-orange { box-shadow: 12px 12px 0px 0px hsl(var(--accent-orange)); }
-  .neo-shadow-yellow { box-shadow: 12px 12px 0px 0px hsl(var(--accent-yellow)); }
-  .neo-shadow-purple { box-shadow: 12px 12px 0px 0px hsl(var(--accent-purple)); }
-  .neo-shadow-red { box-shadow: 12px 12px 0px 0px hsl(var(--accent-red)); }
-  .neo-border { @apply border-4 border-foreground; }
-  .neo-border-thick { @apply border-[6px] border-foreground; }
-  .neo-card {
-    @apply bg-card neo-border rounded-2xl p-8 transition-all duration-150 ease-out;
-    box-shadow: var(--shadow-lg);
-  }
-  .neo-card:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-xl);
-  }
-  .neo-card-static {
-    @apply bg-card neo-border rounded-2xl p-6;
-    box-shadow: var(--shadow-lg);
-  }
-  .neo-badge {
-    @apply inline-block neo-border rounded-full px-4 py-1 text-sm font-bold uppercase tracking-widest;
-    box-shadow: var(--shadow-sm);
-  }
-  .neo-section-pink { background-color: hsl(var(--accent-pink)); }
-  .neo-section-lime { background-color: hsl(var(--accent-lime)); }
-  .neo-section-cyan { background-color: hsl(var(--accent-cyan)); }
-  .neo-section-orange { background-color: hsl(var(--accent-orange)); }
-  .neo-section-yellow { background-color: hsl(var(--accent-yellow)); }
-  .neo-section-purple { background-color: hsl(var(--accent-purple)); }
+  /* ======================================================== app surfaces
+     The app screens are the same ruled page as the landing: paper ground,
+     hairline boxes, one loud colour. A panel is a landing tile that happens
+     to hold controls, so the marketing page and the product read as one
+     document rather than two products.
 
-  .neo-input {
-    @apply w-full neo-border rounded-lg px-4 py-3 bg-background font-bold text-base transition-all duration-150;
-    box-shadow: var(--shadow-sm);
+     Nothing here carries an offset shadow or a heavy border. Depth is done
+     with fill (paper → soft → ink) and with the ruling; never with a drop
+     shadow, which is the one device the landing does not own. */
+  .panel {
+    @apply rounded-xl border border-tile-line bg-background;
   }
-  .neo-input:focus {
-    box-shadow: var(--shadow-md);
-    transform: translate(-2px, -2px);
+  .panel-soft {
+    @apply rounded-xl border border-tile-line bg-tile-soft;
+  }
+  .panel-ink {
+    @apply rounded-xl border border-foreground bg-foreground text-background;
+  }
+  .panel-accent {
+    @apply rounded-xl border border-accent-yellow bg-accent-yellow text-foreground;
+  }
+  /* A panel that can be clicked moves on the only axis the page has: fill. */
+  .panel-hover {
+    @apply transition-colors duration-150 hover:bg-tile-soft;
+  }
+  .panel-pad { @apply p-5 md:p-6; }
+  .panel-pad-lg { @apply p-6 md:p-8; }
+
+  /* The small uppercase label most blocks open with — the landing's Cap,
+     available as a class where plain markup is enough. */
+  .cap {
+    @apply text-[11px] font-bold uppercase leading-none tracking-[0.18em] text-muted-foreground md:text-xs;
+  }
+  .cap-ink { @apply text-foreground; }
+
+  /* Numbers are what the app is actually made of: display face, tabular so
+     a running countdown does not jitter, tight enough to read as a figure. */
+  .num { @apply font-display font-semibold tabular-nums tracking-[-0.02em]; }
+  .num-xl {
+    @apply num;
+    font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+    line-height: 0.9;
+  }
+  .num-lg { @apply num text-2xl leading-none md:text-3xl; }
+
+  /* ---------------------------------------------------------------- fields
+     An input is a hairline box that thickens to a full rule on focus — the
+     inset ring doubles the border rather than adding a second frame outside
+     it, so the field never shifts the layout when focused. */
+  .field {
+    @apply w-full rounded-lg border border-tile-line bg-background px-4 py-3 text-sm font-medium text-foreground transition-colors duration-150;
+  }
+  .field:hover:not(:disabled) { border-color: hsl(var(--foreground) / 0.35); }
+  .field:focus,
+  .field:focus-visible {
     outline: none;
+    border-color: hsl(var(--foreground));
+    box-shadow: inset 0 0 0 1px hsl(var(--foreground));
   }
+  .field:disabled { @apply cursor-not-allowed opacity-50; }
+  .field-lg { @apply px-5 py-4 text-base; }
+  .field-mono { @apply font-mono text-[13px]; }
+  .field-num { @apply text-center text-3xl font-semibold tabular-nums; }
 
-  .neo-digit {
-    @apply bg-secondary neo-border rounded-xl py-4 px-2 relative overflow-hidden transition-all duration-300;
-    box-shadow: var(--shadow-sm);
+  /* ------------------------------------------------------------------ tags */
+  .tag {
+    @apply inline-flex items-center gap-1.5 rounded-md border border-tile-line px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-[0.14em] md:text-[11px];
   }
-  .neo-digit::after {
-    content: '';
-    @apply absolute left-0 right-0 h-[2px] bg-foreground/10;
-    top: 50%;
-  }
+  .tag-ink { @apply border-foreground bg-foreground text-background; }
+  .tag-accent { @apply border-accent-yellow bg-accent-yellow text-foreground; }
+  /* Sage is reserved for one meaning across the app: alive. It is the same
+     low-chroma green the landing's orbit is built from — loud enough to mean
+     something on a page of hairlines, quiet enough to sit next to yellow. */
+  .tag-live { @apply border-accent-sage bg-accent-sage text-foreground; }
+  .tag-alert { @apply border-accent-red bg-accent-red text-background; }
 
-  .neo-step-dot {
-    @apply w-10 h-10 md:w-12 md:h-12 neo-border rounded-full flex items-center justify-center font-bold text-sm md:text-base transition-all duration-300;
+  /* -------------------------------------------------------------- data rows
+     A list of facts is set as ruled rows, not as a stack of little cards.
+     The rule is the only separation needed once everything sits on paper. */
+  .data-row {
+    @apply flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-tile-line py-3 text-sm first:border-t-0;
   }
-  .neo-step-dot.active {
-    @apply bg-accent-yellow scale-110;
-    box-shadow: var(--shadow-md);
+  .data-k { @apply font-medium text-muted-foreground; }
+  .data-v { @apply font-semibold text-foreground; }
+
+  /* ------------------------------------------------------ segmented control
+     Tabs are a single hairline box divided by fill, not a row of buttons —
+     the active one is ink, the rest are paper. */
+  .seg { @apply inline-flex gap-1 rounded-lg border border-tile-line bg-background p-1; }
+  .seg-item {
+    @apply rounded-md px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground md:text-xs;
   }
-  .neo-step-dot.complete { @apply bg-accent-yellow; }
-  .neo-step-dot.pending { @apply bg-secondary; }
+  .seg-item[data-active="true"] { @apply bg-foreground text-background; }
+
+  /* ------------------------------------------------------- app running head
+     The app's answer to the landing's section head: the screen is named at
+     the margin, a rule runs out to the right, and the page's own controls
+     sit at the far end. Sticky under the nav, so the current screen stays
+     named for the whole scroll. */
+  .app-head {
+    @apply sticky z-40 flex w-full flex-wrap items-center gap-x-4 gap-y-2 border-b border-tile-line bg-background py-3 md:flex-nowrap md:gap-x-5;
+    top: var(--nav-h);
+    min-height: var(--head-h);
+    padding-inline: var(--page-pad);
+  }
+  .app-head-rule { @apply hidden h-px flex-1 bg-tile-line sm:block; }
+
+  /* The app page frame: full bleed on the same gutters as the landing, so
+     the ruling behind it lines up with the marketing page's. */
+  .app-page { @apply min-h-screen bg-background; }
+  .app-body {
+    @apply py-8 md:py-12;
+    padding-inline: var(--page-pad);
+  }
+  .app-grid { @apply grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5; }
+
+  /* ------------------------------------------------------------- overlays
+     A dialog does not darken the page, and it does not hide it either: the
+     scrim is a light veil of the page's own paper over a shallow blur, so the
+     screen behind the sheet stays readable and you keep your place. Deep blur
+     and heavy tint both turn the product into a grey plate for as long as the
+     dialog is up. The sheet is separated by its hairline and its shadow. */
+  .scrim {
+    @apply fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto p-4 md:p-6;
+    background: hsl(var(--background) / 0.35);
+    backdrop-filter: blur(3px);
+  }
+  .sheet {
+    @apply w-full rounded-xl border border-tile-line bg-background;
+    box-shadow: var(--shadow-sheet);
+  }
+  /* A sheet's head: the one band of colour, with the title set against it. */
+  .sheet-head {
+    @apply flex items-center justify-between gap-4 rounded-t-xl border-b border-tile-line px-5 py-4 md:px-6;
+  }
 
   /* --------------------------------------------------- full-bleed sections
      Every landing section is a spread: it runs the full width of the window
@@ -644,13 +719,13 @@
     to { opacity: 1; transform: none; }
   }
 
-  .neo-slide-up { animation: slideUp 0.4s ease-out; }
+  .rise-in { animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .neo-shake { animation: shake 0.4s ease-out; }
+  .shake-alert { animation: shake 0.4s ease-out; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-8px); }
@@ -658,21 +733,6 @@
     75% { transform: translateX(-4px); }
   }
 
-  .neo-glow-yellow { animation: glowYellow 2s ease-in-out infinite; }
-  @keyframes glowYellow {
-    0%, 100% { box-shadow: var(--shadow-md); }
-    50% { box-shadow: var(--shadow-lg), 0 0 20px hsl(var(--accent-yellow) / 0.35); }
-  }
-
-  /* --- Heartbeat motif --- */
-  .alive-dot { animation: aliveBeat 2.4s ease-in-out infinite; }
-  @keyframes aliveBeat {
-    0%, 100% { transform: scale(1); }
-    8% { transform: scale(1.4); }
-    16% { transform: scale(1); }
-    24% { transform: scale(1.25); }
-    32% { transform: scale(1); }
-  }
 
   .grid-fade {
     background-image:
@@ -718,7 +778,7 @@
     100% { transform: translateY(0); }
   }
 
-  .neo-fade-in { animation: fadeIn 0.6s ease-out both; }
+  .fade-in { animation: fadeIn 0.6s ease-out both; }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
@@ -726,13 +786,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alive-dot,
+  .rise-in,
+  .fade-in,
+  .shake-alert,
   .glyph-rise,
   .tile-rise,
   .orbit-ring,
-  .orbit-face,
-  .neo-slide-up,
-  .neo-fade-in {
+  .orbit-face {
     animation: none !important;
   }
 }

@@ -6,16 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { cn, errMsg, toRawTokenAmount } from "@/lib/utils";
 import { amountStep, pctOfMax } from "@/lib/utils/math";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
+import Sheet from "@/components/app/Sheet";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTranslation } from "@heirloom/i18n";
 
-const TOPUP_PCTS = [
-  { pct: 25,  label: "25%", bg: "bg-accent-pink"   },
-  { pct: 50,  label: "50%", bg: "bg-accent-cyan"   },
-  { pct: 75,  label: "75%", bg: "bg-accent-orange" },
-  { pct: 100, label: "Max", bg: "bg-accent-yellow" },
-] as const;
+const TOPUP_PCTS = [25, 50, 75, 100] as const;
 
 interface Props {
   estate: EstateData;
@@ -101,136 +97,114 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="neo-border rounded-xl px-4 py-3 bg-accent-orange text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
-      >
+      <Button variant="outline" size="sm" className="w-full" onClick={() => setOpen(true)}>
         {t("dashboard.manage.addAsset")}
-      </button>
+      </Button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 overflow-y-auto text-foreground"
-          onClick={() => {
-            if (!addingAsset) setOpen(false);
-          }}
-        >
-          <div className="neo-card-static max-w-md w-full neo-slide-up my-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-accent-orange neo-border rounded-xl p-3 shrink-0">
-                  <Plus className="h-6 w-6" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.addAsset")}</h3>
-                  <p className="text-sm font-medium text-muted-foreground mt-1">
-                    {t("dashboard.manage.addAssetDesc")}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setOpen(false)}
-                disabled={addingAsset}
-                className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
-              >
-                <X className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </div>
+      <Sheet
+        open={open}
+        title={t("dashboard.manage.addAsset")}
+        caption={t("dashboard.assets")}
+        icon={<Plus strokeWidth={2} />}
+        busy={addingAsset}
+        onClose={() => setOpen(false)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)} className="w-full sm:w-auto">
+              {t("dashboard.manage.cancel")}
+            </Button>
+            <Button
+              onClick={handleAddAsset}
+              disabled={addingAsset || addAssetAmount <= 0 || walletSplTokens.length === 0}
+              className="w-full sm:w-auto"
+            >
+              {addingAsset ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.depositing")}</>
+              ) : (
+                <><Plus className="h-4 w-4" /> {t("dashboard.manage.deposit")}</>
+              )}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm font-medium text-muted-foreground">
+          {t("dashboard.manage.addAssetDesc")}
+        </p>
 
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
-                  {t("dashboard.manage.asset")}
-                </label>
-                <select
-                  value={addAssetMint}
-                  onChange={(e) => {
-                    setAddAssetMint(e.target.value);
-                    setAddAssetAmount(0);
-                  }}
-                  disabled={walletSplTokens.length === 0}
-                  className="neo-input w-full font-bold bg-background text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px' }}
-                >
-                  {walletSplTokens.length === 0 ? (
-                    <option value="">{t("dashboard.manage.noNewTokens")}</option>
-                  ) : (
-                    (walletSplTokens ?? []).map((t) => (
-                      <option key={t.mint} value={t.mint} className="bg-background text-foreground font-bold">
-                        {t.label} — bal {t.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}
-                      </option>
-                    ))
-                  )}
-                </select>
-                {walletTokensLoading && (
-                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                    {t("dashboard.manage.scanning")}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-2">
-                  {t("dashboard.manage.amount")}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={activeStep}
-                  value={addAssetAmount || ""}
-                  onChange={(e) => setAddAssetAmount(Math.max(0, Number(e.target.value)))}
-                  placeholder="0"
-                  className="neo-input w-full font-bold text-2xl text-center"
-                />
-                <div className="flex gap-2 mt-3">
-                  {TOPUP_PCTS.map(({ pct, label, bg }) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => applyPct(pct)}
-                      disabled={maxBalance <= 0}
-                      className={cn(
-                        "flex-1 neo-border rounded-lg py-3 text-xs font-bold uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none shadow-[3px_3px_0px_0px_hsl(var(--foreground))] hover:shadow-[5px_5px_0px_0px_hsl(var(--foreground))] hover:-translate-x-px hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0px_0px_hsl(var(--foreground))]",
-                        bg,
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] font-medium text-muted-foreground mt-2">
-                  {selectedToken
-                    ? `${t("dashboard.manage.walletBalance")} ${selectedToken.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${selectedToken.label}`
-                    : t("dashboard.manage.noTokensAvailable")}
-                </p>
-              </div>
-              <p className="text-xs font-medium text-muted-foreground">
-                {t("dashboard.manage.addAssetNote")}
+        <div className="mt-5 space-y-5">
+          <div>
+            <label className="cap mb-2 block">{t("dashboard.manage.asset")}</label>
+            <select
+              value={addAssetMint}
+              onChange={(e) => {
+                setAddAssetMint(e.target.value);
+                setAddAssetAmount(0);
+              }}
+              disabled={walletSplTokens.length === 0}
+              className="field cursor-pointer appearance-none pr-10"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 12px center",
+                backgroundSize: "18px",
+              }}
+            >
+              {walletSplTokens.length === 0 ? (
+                <option value="">{t("dashboard.manage.noNewTokens")}</option>
+              ) : (
+                (walletSplTokens ?? []).map((tok) => (
+                  <option key={tok.mint} value={tok.mint}>
+                    {tok.label} — bal {tok.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                  </option>
+                ))
+              )}
+            </select>
+            {walletTokensLoading && (
+              <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
+                {t("dashboard.manage.scanning")}
               </p>
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-              <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                {t("dashboard.manage.cancel")}
-              </Button>
-              <Button
-                variant="orange"
-                size="default"
-                onClick={handleAddAsset}
-                disabled={addingAsset || addAssetAmount <= 0 || walletSplTokens.length === 0}
-                className="sm:w-auto w-full"
-              >
-                {addingAsset ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.depositing")}</>
-                ) : (
-                  <><Plus className="h-4 w-4" /> {t("dashboard.manage.deposit")}</>
-                )}
-              </Button>
-            </div>
+            )}
           </div>
+
+          <div>
+            <label className="cap mb-2 block">{t("dashboard.manage.amount")}</label>
+            <input
+              type="number"
+              min={0}
+              step={activeStep}
+              value={addAssetAmount || ""}
+              onChange={(e) => setAddAssetAmount(Math.max(0, Number(e.target.value)))}
+              placeholder="0"
+              className="field field-lg field-num"
+            />
+            <div className="mt-2.5 flex gap-2">
+              {TOPUP_PCTS.map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => applyPct(pct)}
+                  disabled={maxBalance <= 0}
+                  className={cn(
+                    "flex-1 rounded-lg border border-tile-line py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
+                    "hover:border-foreground hover:bg-tile-soft disabled:cursor-not-allowed disabled:opacity-40",
+                  )}
+                >
+                  {pct === 100 ? "Max" : `${pct}%`}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2.5 text-[11px] font-medium text-muted-foreground">
+              {selectedToken
+                ? `${t("dashboard.manage.walletBalance")} ${selectedToken.uiAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${selectedToken.label}`
+                : t("dashboard.manage.noTokensAvailable")}
+            </p>
+          </div>
+
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("dashboard.manage.addAssetNote")}
+          </p>
         </div>
-      )}
+      </Sheet>
     </>
   );
 };

@@ -24,23 +24,27 @@ import { buildTourSteps } from "./tourSteps";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTranslation } from "@heirloom/i18n";
 
-const BLACK = "hsl(0, 0%, 0%)";
-const WHITE = "hsl(0, 0%, 100%)";
-const LIME = "hsl(72, 100%, 50%)";
+const INK = "hsl(0, 0%, 0%)";
+const PAPER = "hsl(0, 0%, 100%)";
+const LINE = "hsl(60, 9%, 87%)";
+const YELLOW = "hsl(50, 100%, 50%)";
 
-// Neo-brutalist tooltip styling to match the rest of the app.
-const neoStyles: Partial<Styles> = {
+// The tour speaks the same language as the page it is explaining: a paper
+// sheet with a hairline border, one soft shadow to lift it, and yellow on the
+// single button that moves you forward.
+const tourStyles: Partial<Styles> = {
   tooltip: {
-    borderRadius: 0,
-    border: `4px solid ${BLACK}`,
-    boxShadow: `8px 8px 0 0 ${BLACK}`,
+    borderRadius: 12,
+    border: `1px solid ${LINE}`,
+    boxShadow: "0 24px 60px -24px hsl(0 0% 0% / 0.35)",
     padding: 24,
     fontFamily: "inherit",
+    backgroundColor: PAPER,
   },
   tooltipTitle: {
-    fontWeight: 900,
-    fontSize: 22,
-    textTransform: "uppercase",
+    fontWeight: 600,
+    fontSize: 20,
+    letterSpacing: "-0.02em",
     margin: 0,
     marginBottom: 8,
     textAlign: "left",
@@ -48,29 +52,40 @@ const neoStyles: Partial<Styles> = {
   tooltipContent: {
     fontWeight: 500,
     fontSize: 15,
-    lineHeight: 1.5,
+    lineHeight: 1.55,
     textAlign: "left",
     padding: "4px 0 0",
+    color: "hsl(0, 0%, 40%)",
   },
   buttonPrimary: {
-    backgroundColor: LIME,
-    color: BLACK,
-    border: `3px solid ${BLACK}`,
-    borderRadius: 12,
-    fontWeight: 900,
+    backgroundColor: YELLOW,
+    color: INK,
+    border: `1px solid ${YELLOW}`,
+    borderRadius: 8,
+    fontWeight: 700,
     textTransform: "uppercase",
-    fontSize: 13,
-    letterSpacing: "0.05em",
-    padding: "10px 18px",
-    boxShadow: `3px 3px 0 0 ${BLACK}`,
+    fontSize: 12,
+    letterSpacing: "0.12em",
+    padding: "11px 20px",
+  },
+  buttonBack: {
+    color: "hsl(0, 0%, 40%)",
+    fontWeight: 700,
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: "0.12em",
   },
   buttonSkip: {
-    color: BLACK,
+    color: "hsl(0, 0%, 40%)",
     fontWeight: 700,
-    fontSize: 13,
+    fontSize: 12,
     textTransform: "uppercase",
-    letterSpacing: "0.05em",
+    letterSpacing: "0.12em",
     textDecoration: "underline",
+    textUnderlineOffset: 4,
+  },
+  overlay: {
+    backgroundColor: "hsl(0 0% 100% / 0.7)",
   },
 };
 
@@ -205,14 +220,14 @@ const AppTour = () => {
           last: t("dashboard.tour.last"),
           back: t("dashboard.tour.back"),
         }}
-        styles={neoStyles}
+        styles={tourStyles}
         options={{
-          primaryColor: LIME,
-          backgroundColor: WHITE,
-          textColor: BLACK,
-          arrowColor: WHITE,
-          overlayColor: "rgba(0, 0, 0, 0.55)",
-          spotlightRadius: 8,
+          primaryColor: YELLOW,
+          backgroundColor: PAPER,
+          textColor: INK,
+          arrowColor: PAPER,
+          overlayColor: "hsl(0 0% 100% / 0.7)",
+          spotlightRadius: 12,
           spotlightPadding: 8,
           zIndex: 10000,
           width: 400,
@@ -224,10 +239,12 @@ const AppTour = () => {
         }}
       />
       <Dialog open={finishPromptOpen} onOpenChange={setFinishPromptOpen}>
-        <DialogContent className="neo-card-static max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">{t("dashboard.tour.allSetTitle")}</DialogTitle>
-            <DialogDescription className="font-medium">
+            <DialogTitle className="font-display text-lg font-semibold tracking-[-0.02em]">
+              {t("dashboard.tour.allSetTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-sm font-medium">
               {t("dashboard.tour.allSetDesc")}
             </DialogDescription>
           </DialogHeader>

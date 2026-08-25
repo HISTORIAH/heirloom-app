@@ -4,38 +4,59 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * One button language for the whole product: a hairline box that fills, and
+ * fills that darken. No offset shadow and no travel on press — the page is
+ * flat paper, so a control announces itself by weight of fill, not by depth.
+ *
+ * Disabled is one state for every variant: the control drops back to soft
+ * paper rather than becoming a faded version of its own colour, which is how
+ * a greyed-out ink button ends up reading as a solid grey slab.
+ *
+ * Fills carry meaning and are not interchangeable: ink is the default action,
+ * yellow is the one promoted action on a screen, sage means alive, red means
+ * irreversible. Everything else is a hairline outline or plain type.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 ease-out focus-visible:outline-4 focus-visible:outline-foreground focus-visible:outline-offset-4 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0 active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border font-bold uppercase tracking-[0.12em] transition-colors duration-150 ease-out disabled:pointer-events-none disabled:border-tile-line disabled:bg-tile-soft disabled:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        lime: "bg-accent-lime text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        pink: "bg-accent-pink text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        cyan: "bg-accent-cyan text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        orange: "bg-accent-orange text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        purple: "bg-accent-purple text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        yellow: "bg-accent-yellow text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        outline: "bg-background text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        destructive: "bg-accent-red text-primary-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[8px_8px_0px_0px_hsl(var(--foreground))] hover:shadow-[12px_12px_0px_0px_hsl(var(--foreground))]",
-        ghost: "border-transparent hover:bg-secondary",
-        link: "border-transparent text-foreground underline-offset-4 hover:underline",
-        // Flat, near-square buttons for the mosaic landing — no 4px border and
-        // no offset shadow, so they sit inside a tile rather than on top of it.
-        flat: "rounded-lg border-0 bg-foreground text-background hover:bg-foreground/85 active:translate-x-0 active:translate-y-0",
-        "flat-inverse": "rounded-lg border-0 bg-background text-foreground hover:bg-background/85 active:translate-x-0 active:translate-y-0",
-        "flat-yellow": "rounded-lg border-0 bg-accent-yellow text-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
+        default: "border-foreground bg-foreground text-background hover:bg-foreground/85",
+        yellow: "border-accent-yellow bg-accent-yellow text-foreground hover:brightness-95",
+        // Alive, and only alive: the check-in, the live state, the confirmation.
+        sage: "border-accent-sage bg-accent-sage text-foreground hover:brightness-95",
+        outline:
+          "border-foreground/25 bg-background text-foreground hover:border-foreground hover:bg-tile-soft",
+        soft: "border-tile-line bg-tile-soft text-foreground hover:bg-secondary",
+        ghost: "border-transparent bg-transparent text-foreground hover:bg-tile-soft",
+        link: "border-transparent bg-transparent text-foreground underline-offset-4 hover:underline",
+        destructive:
+          "border-accent-red bg-accent-red text-background hover:brightness-95",
+        // Irreversible, but not yet chosen — the danger action at rest.
+        "destructive-outline":
+          "border-accent-red/40 bg-background text-accent-red hover:border-accent-red hover:bg-accent-red hover:text-background",
+        // Landing aliases. Kept so the marketing page keeps its exact look.
+        flat: "border-0 bg-foreground text-background hover:bg-foreground/85",
+        "flat-inverse": "border-0 bg-background text-foreground hover:bg-background/85",
+        "flat-yellow": "border-0 bg-accent-yellow text-foreground hover:brightness-95",
         "flat-outline":
-          "rounded-lg border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background active:translate-x-0 active:translate-y-0",
-        pill: "rounded-xl bg-transparent text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
-        "pill-dark": "rounded-xl bg-foreground text-background border-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
+          "border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background",
+        // Legacy colour names, folded onto the new palette so no screen can
+        // reintroduce a colour the page does not have.
+        pink: "border-accent-yellow bg-accent-yellow text-foreground hover:brightness-95",
+        cyan: "border-accent-sky bg-accent-sky text-foreground hover:brightness-95",
+        orange: "border-accent-yellow bg-accent-yellow text-foreground hover:brightness-95",
+        purple: "border-foreground bg-foreground text-background hover:bg-foreground/85",
+        pill: "rounded-full border-foreground/25 bg-background text-foreground hover:border-foreground hover:bg-tile-soft",
+        "pill-dark": "rounded-full border-foreground bg-foreground text-background hover:bg-foreground/85",
       },
       size: {
-        default: "h-12 px-6 py-3 text-sm",
-        sm: "h-10 px-4 py-2 text-xs",
-        lg: "h-14 px-10 py-4 text-base",
-        xl: "h-16 px-12 py-5 text-lg",
-        icon: "h-12 w-12",
+        default: "h-11 px-5 text-xs",
+        sm: "h-9 px-3.5 text-[11px]",
+        lg: "h-14 px-10 text-base",
+        xl: "h-14 px-8 text-sm",
+        icon: "h-10 w-10 p-0",
       },
     },
     defaultVariants: {

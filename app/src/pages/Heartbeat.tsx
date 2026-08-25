@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SOL_LABEL } from "@/lib/constants";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
@@ -18,36 +17,27 @@ import {
   type TransactionSigner,
 } from "@solana/kit";
 import {
-  ArrowLeft,
   Search,
   Loader2,
-  CheckCircle,
+  Check,
   ExternalLink,
   AlertTriangle,
-  Coins,
   Heart,
-  Clock,
-  LogOut,
-  Wallet,
 } from "lucide-react";
+import AppFrame, { PageHead } from "@/components/app/AppFrame";
+import PortalLead from "@/components/app/PortalLead";
+import { Panel, StatCell } from "@/components/app/Panel";
+import StateTag from "@/components/app/StateTag";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTranslation } from "@heirloom/i18n";
 
-const stateColors: Record<string, string> = {
-  active: "bg-accent-lime/20",
-  grace: "bg-accent-yellow/20",
-  claimable: "bg-accent-red/20",
-  distributed: "bg-secondary",
-};
-
 const HeartbeatPageInner: React.FC<{
   signer: TransactionSigner | null;
   walletAddress: Address | null;
 }> = ({ signer, walletAddress }) => {
-  const { isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
-  const navigate = useNavigate();
+  const { isConnected, rpc, rpcSubscriptions } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t, i18n } = useTranslation("app");
@@ -124,202 +114,173 @@ const HeartbeatPageInner: React.FC<{
     estate.vaultState !== "distributed";
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-lg font-semibold hover:underline group"
-          >
-            <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            {t("common.home")}
-          </button>
-          <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-bold">{t("heartbeat.title")}</span>
-          </div>
-          {isConnected ? (
-            <button
-              onClick={() => void disconnectWallet()}
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-            >
-              <LogOut className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">{t("common.disconnect")}</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setWalletDialogOpen(true)}
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-            >
-              <Wallet className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">{t("common.connectWallet")}</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-            <div>
-              <span className="neo-badge bg-accent-pink mb-4 inline-block">{t("heartbeat.hotSignerPortal")}</span>
-              <h2 className="text-4xl md:text-5xl leading-[0.9]">
+    <>
+      <AppFrame
+        measure="narrow"
+        head={
+          <PageHead
+            label={t("heartbeat.title")}
+            backTo="/"
+            backLabel={t("common.home")}
+            right={<span className="tag">{t("heartbeat.hotSignerPortal")}</span>}
+          />
+        }
+      >
+        <div className="rise-in">
+          <PortalLead
+            headline={
+              <>
                 {t("heartbeat.headline1")}{" "}
-                <span className="bg-accent-pink px-2 inline-block rotate-[-1deg]">{t("heartbeat.headline2")}</span>
-              </h2>
-              <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                {t("heartbeat.description")}
-              </p>
-            </div>
+                <span className="bg-accent-yellow px-2">{t("heartbeat.headline2")}</span>
+              </>
+            }
+            lede={t("heartbeat.description")}
+          />
 
-            <div className="neo-card-static space-y-4" data-tour="heartbeat-lookup">
+          <Panel className="mt-9" data-tour="heartbeat-lookup">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
-                  {t("heartbeat.authorityLabel")}
-                </label>
+                <label className="cap mb-2 block">{t("heartbeat.authorityLabel")}</label>
                 <input
                   type="text"
                   value={authorityInput}
                   onChange={(e) => setAuthorityInput(e.target.value)}
                   maxLength={128}
-                  className="neo-input w-full font-mono text-sm focus:bg-accent-pink/10"
+                  className="field field-mono"
                   placeholder={t("heartbeat.authorityPlaceholder")}
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2 block">
-                  {t("heartbeat.heirLabel")}
-                </label>
+                <label className="cap mb-2 block">{t("heartbeat.heirLabel")}</label>
                 <input
                   type="text"
                   value={heirInput}
                   onChange={(e) => setHeirInput(e.target.value)}
                   maxLength={128}
-                  className="neo-input w-full font-mono text-sm focus:bg-accent-pink/10"
+                  className="field field-mono"
                   placeholder={t("heartbeat.heirPlaceholder")}
                 />
               </div>
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handleLookup}
-                disabled={looking || !authorityInput.trim() || !heirInput.trim()}
-                className="w-full"
-              >
-                {looking ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> {t("heartbeat.lookingUp")}</>
-                ) : (
-                  <><Search className="h-5 w-5" /> {t("heartbeat.lookUpEstate")}</>
-                )}
-              </Button>
-              {lookupError && (
-                <div className="flex items-center gap-2 text-sm font-bold text-accent-red">
-                  <AlertTriangle className="h-4 w-4" />
-                  {lookupError}
-                </div>
-              )}
             </div>
 
-            {estate && (
-              <div className="neo-card-static space-y-5">
-                <div className={`neo-border rounded-xl p-5 ${stateColors[estate.vaultState]}`}>
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        {t("heartbeat.label")}
-                      </p>
-                      <p className="text-2xl font-bold truncate">{estate.label}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        {t("heartbeat.state")}
-                      </p>
-                      <p className="text-2xl font-bold uppercase">{estate.vaultState}</p>
-                    </div>
-                  </div>
-                </div>
+            <Button
+              variant="default"
+              className="mt-5 w-full sm:w-auto"
+              onClick={handleLookup}
+              disabled={looking || !authorityInput.trim() || !heirInput.trim()}
+            >
+              {looking ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> {t("heartbeat.lookingUp")}</>
+              ) : (
+                <><Search className="h-4 w-4" /> {t("heartbeat.lookUpEstate")}</>
+              )}
+            </Button>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">{SOL_LABEL}</p>
-                    <div className="flex items-center gap-1">
-                      <Coins className="h-4 w-4" />
-                      <p className="text-lg font-bold">
-                        {formatSol(estate.solBalance)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">{t("heartbeat.interval")}</p>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <p className="text-lg font-bold">{formatDuration(estate.heartbeatInterval)}</p>
-                    </div>
-                  </div>
-                  <div className="neo-border rounded-lg p-3 bg-secondary">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">{t("heartbeat.lastHeartbeat")}</p>
-                    <p className="text-xs font-bold">
-                      {estate.lastHeartbeat > 0
-                        ? new Date(estate.lastHeartbeat * 1000).toLocaleString(i18n.language)
-                        : t("common.na")}
-                    </p>
-                  </div>
-                </div>
+            {lookupError && (
+              <p className="mt-4 flex items-start gap-2 text-sm font-semibold text-accent-red">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                {lookupError}
+              </p>
+            )}
+          </Panel>
 
-                <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    {t("heartbeat.heartbeatSigner")}
+          {estate && (
+            <Panel pad={false} className="mt-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-tile-line px-5 py-4 md:px-6">
+                <div className="min-w-0">
+                  <p className="cap">{t("heartbeat.label")}</p>
+                  <p className="mt-1.5 truncate font-display text-xl font-semibold tracking-[-0.02em]">
+                    {estate.label}
                   </p>
-                  <p className="font-mono text-xs break-all">{estate.hbSigner ?? t("common.none")}</p>
                 </div>
-
-                <div className="pt-3 border-t-2 border-foreground/10">
-                  {hbTxId ? (
-                    <div className="text-center">
-                      <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                      <p className="font-bold mb-2">{t("heartbeat.heartbeatSent")}</p>
-                      <a
-                        href={getSolanaExplorerTxUrl(hbTxId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
-                      >
-                        {t("common.viewOnExplorer")} <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </div>
-                  ) : !isConnected ? (
-                    <Button
-                      variant="yellow"
-                      size="xl"
-                      className="w-full"
-                      onClick={() => setWalletDialogOpen(true)}
-                    >
-                      <Heart className="h-5 w-5" /> {t("heartbeat.connectToSign")}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="default"
-                      size="xl"
-                      className="w-full"
-                      onClick={handleSendHeartbeat}
-                      disabled={!canSign || signing}
-                    >
-                      {signing ? (
-                        <><Loader2 className="h-5 w-5 animate-spin" /> {t("heartbeat.signing")}</>
-                      ) : estate.vaultState === "distributed" ? (
-                        <>{t("heartbeat.vaultDistributed")}</>
-                      ) : estate.hbSigner !== walletAddress?.toString() ? (
-                        <>{t("heartbeat.notSigner")}</>
-                      ) : (
-                        <><Heart className="h-5 w-5" /> {t("heartbeat.sendHeartbeat")}</>
-                      )}
-                    </Button>
-                  )}
+                <div className="text-right">
+                  <p className="cap">{t("heartbeat.state")}</p>
+                  <StateTag state={estate.vaultState} className="mt-1.5" />
                 </div>
               </div>
-            )}
-      </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3">
+                <div className="px-5 py-5 md:px-6">
+                  <StatCell label={SOL_LABEL} value={formatSol(estate.solBalance)} />
+                </div>
+                <div className="border-t border-tile-line px-5 py-5 sm:border-l sm:border-t-0 md:px-6">
+                  <StatCell
+                    label={t("heartbeat.interval")}
+                    value={formatDuration(estate.heartbeatInterval)}
+                  />
+                </div>
+                <div className="border-t border-tile-line px-5 py-5 sm:border-l sm:border-t-0 md:px-6">
+                  <StatCell
+                    label={t("heartbeat.lastHeartbeat")}
+                    value={
+                      <span className="text-base">
+                        {estate.lastHeartbeat > 0
+                          ? new Date(estate.lastHeartbeat * 1000).toLocaleString(i18n.language)
+                          : t("common.na")}
+                      </span>
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-tile-line px-5 py-4 md:px-6">
+                <p className="cap">{t("heartbeat.heartbeatSigner")}</p>
+                <p className="mt-1.5 break-all font-mono text-xs">
+                  {estate.hbSigner ?? t("common.none")}
+                </p>
+              </div>
+
+              <div className="border-t border-tile-line px-5 py-5 md:px-6">
+                {hbTxId ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="tag tag-live">
+                      <Check className="h-3 w-3" strokeWidth={2.5} /> {t("heartbeat.heartbeatSent")}
+                    </span>
+                    <a
+                      href={getSolanaExplorerTxUrl(hbTxId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] underline-offset-4 hover:underline"
+                    >
+                      {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                ) : !isConnected ? (
+                  <Button
+                    variant="yellow"
+                    size="xl"
+                    className="w-full"
+                    onClick={() => setWalletDialogOpen(true)}
+                  >
+                    <Heart className="h-4 w-4" fill="currentColor" /> {t("heartbeat.connectToSign")}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="sage"
+                    size="xl"
+                    className="w-full"
+                    onClick={handleSendHeartbeat}
+                    disabled={!canSign || signing}
+                  >
+                    {signing ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> {t("heartbeat.signing")}</>
+                    ) : estate.vaultState === "distributed" ? (
+                      <>{t("heartbeat.vaultDistributed")}</>
+                    ) : estate.hbSigner !== walletAddress?.toString() ? (
+                      <>{t("heartbeat.notSigner")}</>
+                    ) : (
+                      <><Heart className="h-4 w-4" fill="currentColor" /> {t("heartbeat.sendHeartbeat")}</>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </Panel>
+          )}
+        </div>
+      </AppFrame>
 
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
-    </div>
+    </>
   );
 };
 

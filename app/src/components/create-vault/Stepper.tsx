@@ -1,68 +1,62 @@
-import { CheckCircle } from "lucide-react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StepperProps {
   steps: readonly string[];
   currentStep: number;
   completedSteps: number;
   onStepClick: (index: number) => void;
-  accentColor: string;
 }
 
-const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, onStepClick, accentColor }) => {
-  // Completed steps are always yellow; only the active dot takes the step's
-  // own accent.
-  const doneColor = "hsl(var(--accent-yellow))";
+/**
+ * The wizard's progress, drawn as the landing draws a lifecycle: marks on one
+ * axis, joined by a rule. A finished step is ink, the step you are on is
+ * yellow, and the ones ahead are hairline outlines — so the rail reads at a
+ * glance without giving each step a colour of its own.
+ */
+const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, onStepClick }) => (
+  <ol className="flex items-start">
+    {steps.map((label, i) => {
+      const isDone = i < completedSteps || currentStep >= steps.length;
+      const isActive = i === currentStep && currentStep < steps.length;
+      const isClickable = isDone && i < currentStep;
+      const isLast = i === steps.length - 1;
 
-  return (
-    <div className="flex items-start">
-      {steps.map((label, i) => {
-        const isDone = i < completedSteps || currentStep >= 4;
-        const isActive = i === currentStep && currentStep < 4;
-        const isClickable = isDone && i < currentStep;
-        const isLast = i === steps.length - 1;
-
-        return (
-          <div key={label} className={`flex items-start ${isLast ? "" : "flex-1"}`}>
-            <div className="flex flex-col items-center gap-2.5">
-              <button
-                onClick={() => isClickable && onStepClick(i)}
-                disabled={!isClickable}
-                className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 border-4 border-foreground shrink-0 ${
-                  isClickable ? "cursor-pointer" : "cursor-default"
-                } ${isActive ? "scale-110" : ""}`}
-                style={
-                  isActive
-                    ? { backgroundColor: accentColor, boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }
-                    : isDone
-                      ? { backgroundColor: doneColor }
-                      : { backgroundColor: "white" }
-                }
-              >
-                {isDone ? <CheckCircle className="h-5 w-5" strokeWidth={2.5} /> : i + 1}
-              </button>
-              <span
-                className={`text-xs font-bold uppercase tracking-[2px] whitespace-nowrap ${
-                  isActive || isDone ? "text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                {label}
-              </span>
-            </div>
-            {!isLast && (
-              <div className="flex-1 self-start mt-5 md:mt-6 mx-2 md:mx-4">
-                <div
-                  className="h-1 md:h-1.5 w-full"
-                  style={{
-                    backgroundColor: isDone ? doneColor : "hsl(var(--foreground))",
-                  }}
-                />
-              </div>
-            )}
+      return (
+        <li key={label} className={cn("flex items-start", !isLast && "flex-1")}>
+          <div className="flex flex-col items-center gap-2.5">
+            <button
+              onClick={() => isClickable && onStepClick(i)}
+              disabled={!isClickable}
+              aria-current={isActive ? "step" : undefined}
+              className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors duration-200 md:h-11 md:w-11",
+                isClickable ? "cursor-pointer" : "cursor-default",
+                isActive && "border-accent-yellow bg-accent-yellow",
+                isDone && "border-foreground bg-foreground text-background",
+                !isActive && !isDone && "border-tile-line bg-background text-muted-foreground",
+              )}
+            >
+              {isDone ? <Check className="h-4 w-4" strokeWidth={2.5} /> : i + 1}
+            </button>
+            <span
+              className={cn(
+                "whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.16em] md:text-[11px]",
+                isActive || isDone ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {label}
+            </span>
           </div>
-        );
-      })}
-    </div>
-  );
-};
+          {!isLast && (
+            <div className="mt-5 flex-1 px-2 md:mt-[22px] md:px-4">
+              <div className={cn("h-px w-full", isDone ? "bg-foreground" : "bg-tile-line")} />
+            </div>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+);
 
 export default Stepper;

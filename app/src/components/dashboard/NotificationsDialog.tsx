@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Bell, X } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Sheet from "@/components/app/Sheet";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 import {
@@ -40,37 +41,39 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
   const backupOptions = channels.filter((c) => c !== config.primary.channel);
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4 py-3.5">
-        <div>
-          <div className="text-sm font-extrabold">{title}</div>
-          <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+    <div className="border-t border-tile-line py-4 first:border-t-0 first:pt-0">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold">{title}</div>
+          <div className="mt-0.5 text-xs font-medium text-muted-foreground">{description}</div>
         </div>
-        <label className="relative inline-flex h-[27px] w-[46px] shrink-0 cursor-pointer items-center">
+        {/* The switch is the one control that has to read as on or off at a
+            glance, so on is lime — the same lime that means alive elsewhere. */}
+        <label className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center">
           <input
             type="checkbox"
             checked={config.enabled}
             onChange={(e) => onChange({ ...config, enabled: e.target.checked })}
             className="peer sr-only"
           />
-          <span className="absolute inset-0 rounded-full border-[3px] border-foreground bg-gray-200 transition-colors peer-checked:bg-accent-lime peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-foreground" />
-          <span className="absolute left-[2px] h-[17px] w-[17px] rounded-full border-2 border-foreground bg-background transition-transform peer-checked:translate-x-[19px]" />
+          <span className="absolute inset-0 rounded-full border border-tile-line bg-tile-soft transition-colors peer-checked:border-accent-sage peer-checked:bg-accent-sage peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-foreground" />
+          <span className="absolute left-[3px] h-[18px] w-[18px] rounded-full border border-foreground bg-background transition-transform peer-checked:translate-x-[20px]" />
         </label>
       </div>
 
       {config.enabled && (
-        <div className="pb-4">
-          <div className="flex flex-wrap gap-2 mb-2.5">
+        <div className="mt-4">
+          <div className="mb-2.5 flex flex-wrap gap-2">
             {primaryOptions.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => onChange({ ...config, primary: { channel: c, value: "" } })}
                 className={cn(
-                  "border-[3px] border-foreground rounded-full px-4 py-2 text-xs font-extrabold transition-all",
+                  "rounded-lg border px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
                   c === config.primary.channel
-                    ? "bg-accent-cyan shadow-[3px_3px_0_0_hsl(var(--foreground))]"
-                    : "bg-background hover:bg-secondary"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-tile-line bg-background hover:bg-tile-soft"
                 )}
               >
                 {t(CHANNEL_LABEL[c])}
@@ -82,19 +85,19 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
             value={config.primary.value}
             onChange={(e) => onChange({ ...config, primary: { ...config.primary, value: e.target.value } })}
             placeholder={t(CHANNEL_PLACEHOLDER[config.primary.channel])}
-            className="neo-input w-full text-sm"
+            className="field"
           />
 
           {config.backup ? (
-            <div className="mt-3 p-3 border-2 border-dashed border-foreground/20 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
+            <div className="mt-3 rounded-lg border border-dashed border-tile-line p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="cap">
                   {t("notifications.backup")}
                 </span>
                 <button
                   type="button"
                   onClick={() => onChange({ ...config, backup: null })}
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground"
+                  className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t("notifications.remove")}
                 </button>
@@ -106,8 +109,10 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
                     type="button"
                     onClick={() => onChange({ ...config, backup: { channel: c, value: "" } })}
                     className={cn(
-                      "border-2 border-foreground rounded-full px-3 py-1.5 text-[11px] font-extrabold",
-                      c === config.backup?.channel ? "bg-accent-cyan" : "bg-background hover:bg-secondary"
+                      "rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
+                      c === config.backup?.channel
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-tile-line bg-background hover:bg-tile-soft"
                     )}
                   >
                     {t(CHANNEL_LABEL[c])}
@@ -121,7 +126,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
                   config.backup && onChange({ ...config, backup: { ...config.backup, value: e.target.value } })
                 }
                 placeholder={t(CHANNEL_PLACEHOLDER[config.backup.channel])}
-                className="neo-input w-full text-sm"
+                className="field"
               />
             </div>
           ) : (
@@ -129,7 +134,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels,
               <button
                 type="button"
                 onClick={() => onChange({ ...config, backup: { channel: backupOptions[0], value: "" } })}
-                className="mt-2.5 text-[11px] font-extrabold uppercase tracking-wide text-accent-purple hover:underline"
+                className="mt-2.5 text-[11px] font-bold uppercase tracking-[0.14em] underline-offset-4 hover:underline"
               >
                 {t("notifications.addBackup")}
               </button>
@@ -158,40 +163,29 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
     if (open) setConfig(initialConfig);
   }, [open, initialConfig]);
 
-  if (!open) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
-      onClick={() => !saving && onClose()}
+    <Sheet
+      open={open}
+      title={t("notifications.title")}
+      caption={t("dashboard.manageEstate")}
+      icon={<Bell strokeWidth={2} />}
+      size="lg"
+      busy={saving}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving} className="w-full sm:w-auto">
+            {t("notifications.cancel")}
+          </Button>
+          <Button onClick={() => onSave(config)} disabled={saving} className="w-full sm:w-auto">
+            {saving ? t("notifications.saving") : t("notifications.save")}
+          </Button>
+        </>
+      }
     >
-      <div
-        className="neo-card-static max-w-lg w-full neo-slide-up max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <div className="flex items-start gap-3">
-            <div className="bg-accent-cyan neo-border rounded-xl p-3 shrink-0">
-              <Bell className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h3 className="text-xl leading-tight">{t("notifications.title")}</h3>
-              <p className="text-sm font-medium text-muted-foreground mt-1">
-                {t("notifications.dialogDesc")}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
-          >
-            <X className="h-4 w-4" strokeWidth={2.5} />
-          </button>
-        </div>
+      <p className="text-sm font-medium text-muted-foreground">{t("notifications.dialogDesc")}</p>
 
+      <div className="mt-4">
         <RoleSection
           title={t("notifications.remindTitle")}
           description={t("notifications.remindDesc")}
@@ -200,8 +194,6 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
           onChange={(creator) => setConfig((c) => ({ ...c, creator }))}
         />
 
-        <div className="h-0.5 bg-secondary" />
-
         <RoleSection
           title={t("notifications.notifyTitle", { name: heirLabel })}
           description={t("notifications.notifyDesc")}
@@ -209,17 +201,8 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
           config={config.heir}
           onChange={(heir) => setConfig((c) => ({ ...c, heir }))}
         />
-
-        <div className="flex gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-          <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>
-            {t("notifications.cancel")}
-          </Button>
-          <Button variant="cyan" className="flex-1" onClick={() => onSave(config)} disabled={saving}>
-            {saving ? t("notifications.saving") : t("notifications.save")}
-          </Button>
-        </div>
       </div>
-    </div>
+    </Sheet>
   );
 };
 

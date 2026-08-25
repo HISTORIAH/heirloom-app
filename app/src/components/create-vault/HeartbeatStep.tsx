@@ -1,4 +1,6 @@
 import { Clock } from "lucide-react";
+import StepHead from "@/components/create-vault/StepHead";
+import { cn } from "@/lib/utils";
 import { SECONDS_PER_DAY } from "@/lib/constants";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -34,108 +36,100 @@ const HeartbeatStep: React.FC<Props> = ({
 
   return (
     <div>
-      {/* Step header */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className="bg-accent-cyan border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
-          <Clock className="h-5 w-5" strokeWidth={2} />
-        </div>
-        <div>
-          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-cyan">{t("createVault.wizard.step3")}</div>
-          <h3 className="text-2xl font-display">{t("createVault.wizard.howOften")}</h3>
-        </div>
-      </div>
+      <StepHead
+        step={t("createVault.wizard.step3")}
+        title={t("createVault.wizard.howOften")}
+        icon={<Clock strokeWidth={2} />}
+      />
 
-      <p className="text-sm text-muted-foreground mb-6">
-        {t("createVault.wizard.youHave")} <strong>{assetCount || t("createVault.wizard.no")} {assetCount === 1 ? t("createVault.wizard.asset") : t("createVault.wizard.assets")}</strong> {t("createVault.wizard.and")}{" "}
-        <strong>{t("createVault.wizard.oneHeir")}</strong> {t("createVault.wizard.chooseHowOften")}
+      <p className="text-sm font-medium leading-relaxed text-muted-foreground">
+        {t("createVault.wizard.youHave")}{" "}
+        <strong className="font-semibold text-foreground">
+          {assetCount || t("createVault.wizard.no")}{" "}
+          {assetCount === 1 ? t("createVault.wizard.asset") : t("createVault.wizard.assets")}
+        </strong>{" "}
+        {t("createVault.wizard.and")}{" "}
+        <strong className="font-semibold text-foreground">{t("createVault.wizard.oneHeir")}</strong>{" "}
+        {t("createVault.wizard.chooseHowOften")}
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 mb-6">
-        {/* Heartbeat Interval */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-4">
-            {t("createVault.wizard.heartbeatInterval")}
-          </label>
-          <input
-            type="range"
-            min={30}
-            max={365}
-            step={5}
-            value={heartbeatDays}
-            onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
-            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5 focus:outline-none"
-            style={{ accentColor: "hsl(var(--step-accent))" }}
-          />
-          <div className="flex items-baseline gap-2 mb-3.5">
-            <span className="text-5xl font-display font-bold tabular-nums leading-none">{heartbeatDays}</span>
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.days")}</span>
+      {/* Two dials, each set as figure first: the number is the answer, the
+          slider and the presets are only ways of changing it. */}
+      <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+        {[
+          {
+            key: "interval",
+            label: t("createVault.wizard.heartbeatInterval"),
+            value: heartbeatDays,
+            min: 30,
+            max: 365,
+            step: 5,
+            presets: HEARTBEAT_PRESETS,
+            set: (days: number) => setHeartbeatSeconds(days * SECONDS_PER_DAY),
+          },
+          {
+            key: "grace",
+            label: t("createVault.wizard.gracePeriod"),
+            value: graceDays,
+            min: 7,
+            max: 90,
+            step: 1,
+            presets: GRACE_PRESETS,
+            set: (days: number) => setGraceSeconds(days * SECONDS_PER_DAY),
+          },
+        ].map((dial) => (
+          <div key={dial.key}>
+            <label className="cap block">{dial.label}</label>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="num-xl">{dial.value}</span>
+              <span className="cap">{t("createVault.wizard.days")}</span>
+            </div>
+            <input
+              type="range"
+              min={dial.min}
+              max={dial.max}
+              step={dial.step}
+              value={dial.value}
+              onChange={(e) => dial.set(Number(e.target.value))}
+              aria-label={dial.label}
+              className="mt-5 w-full"
+            />
+            <div className="mt-4 flex flex-wrap gap-2">
+              {dial.presets.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => dial.set(p)}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors",
+                    dial.value === p
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-tile-line bg-background hover:border-foreground/40 hover:bg-tile-soft",
+                  )}
+                >
+                  {p}d
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {HEARTBEAT_PRESETS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setHeartbeatSeconds(p * SECONDS_PER_DAY)}
-                className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
-                  heartbeatDays === p
-                    ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                    : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)]"
-                }`}
-              >
-                {p}d
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Grace Period */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-4">
-            {t("createVault.wizard.gracePeriod")}
-          </label>
-          <input
-            type="range"
-            min={7}
-            max={90}
-            step={1}
-            value={graceDays}
-            onChange={(e) => setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
-            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5 focus:outline-none"
-            style={{ accentColor: "hsl(var(--step-accent))" }}
-          />
-          <div className="flex items-baseline gap-2 mb-3.5">
-            <span className="text-5xl font-display font-bold tabular-nums leading-none">{graceDays}</span>
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.days")}</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {GRACE_PRESETS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setGraceSeconds(p * SECONDS_PER_DAY)}
-                className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
-                  graceDays === p
-                    ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                    : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)]"
-                }`}
-              >
-                {p}d
-              </button>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Deadline box */}
-      <div className="border-4 border-foreground rounded-[14px] bg-[#F7FEE7] p-5 mb-5 text-sm leading-relaxed">
-        <span className="font-bold">{t("createVault.wizard.totalDeadline", { days: totalDays })}</span>{" "}
-        {t("createVault.wizard.ifNoCheckin")}
-        <span className="block mt-1.5 text-xs text-muted-foreground">
-          {t("createVault.wizard.neverCheckin")} <strong>{futureDate(totalDays)}</strong>
-        </span>
+      {/* What the two dials add up to, in one sentence and one date. */}
+      <div className="mt-8 border-t border-tile-line pt-5">
+        <p className="text-sm font-medium leading-relaxed">
+          <strong className="font-semibold">
+            {t("createVault.wizard.totalDeadline", { days: totalDays })}
+          </strong>{" "}
+          {t("createVault.wizard.ifNoCheckin")}
+        </p>
+        <p className="mt-2 text-xs font-medium text-muted-foreground">
+          {t("createVault.wizard.neverCheckin")}{" "}
+          <strong className="font-semibold text-foreground">{futureDate(totalDays)}</strong>
+        </p>
       </div>
 
-      {/* Info box */}
-      <div className="border-4 border-foreground rounded-xl bg-secondary p-4 text-sm leading-relaxed">
-        <strong>{t("createVault.wizard.graceUndo")}</strong>{" "}
+      <div className="mt-5 rounded-lg border border-tile-line bg-tile-soft p-4 text-sm font-medium leading-relaxed">
+        <strong className="font-semibold">{t("createVault.wizard.graceUndo")}</strong>{" "}
         {t("createVault.wizard.graceUndoDesc", { days: totalDays })}
       </div>
     </div>

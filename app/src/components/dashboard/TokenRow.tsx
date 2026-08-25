@@ -1,6 +1,7 @@
 import { cn, formatTokenAmount, getTokenAccent } from "@/lib/utils";
 import { useDominantColor } from "@/hooks/useDominantColor";
 import TokenAvatar from "@/components/TokenAvatar";
+import { Button } from "@/components/ui/button";
 import { InlineTokenYield } from "@/components/dashboard/InlineTokenYield";
 import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
 import { TrendingUp } from "lucide-react";
@@ -31,6 +32,11 @@ interface TokenRowProps {
   topUpLoading: boolean;
 }
 
+/**
+ * One holding, set as a ruled row rather than a card: mark, name, figure,
+ * controls. A vault with twelve tokens in it should read as a statement, not
+ * as twelve boxes.
+ */
 const TokenRow: React.FC<TokenRowProps> = ({
   vt,
   meta,
@@ -57,29 +63,26 @@ const TokenRow: React.FC<TokenRowProps> = ({
 
   const fallbackAccent = getTokenAccent(vt.mint);
   const dominantColor = useDominantColor(meta?.image, fallbackAccent.shadow);
+  // The token's own colour is allowed exactly one job: marking the row that is
+  // out earning. Everywhere else the page stays black, white and yellow.
   const accentColor = meta?.image ? dominantColor : fallbackAccent.shadow;
 
   return (
     <div
-      className="neo-card-static flex items-center gap-4 py-4 px-4"
-      // style={
-      //   isYieldActive
-      //     ? { boxShadow: `6px 6px 0 0 ${accentColor}`, borderLeft: `4px solid ${accentColor}` }
-      //     : undefined
-      // }
-      style={
-        isYieldActive
-          ? { boxShadow: "none", borderLeft: `4px solid ${accentColor}` }
-          : { boxShadow: "none" }
-      }
+      className={cn(
+        "flex flex-wrap items-center gap-x-3 gap-y-3 border-t border-tile-line py-3.5 first:border-t-0 sm:flex-nowrap",
+        isYieldActive && "pl-3",
+      )}
+      style={isYieldActive ? { borderLeft: `2px solid ${accentColor}` } : undefined}
     >
       <TokenAvatar image={meta?.image} label={primary} size="md" accent={fallbackAccent.bg} />
-      <div className="flex-1 min-w-0">
+
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="font-bold text-base leading-tight truncate">{primary}</p>
+          <p className="truncate text-sm font-semibold leading-tight">{primary}</p>
           {isYieldActive && (
             <span
-              className="neo-badge !py-0 !px-1.5 text-[10px]"
+              className="tag shrink-0 border-transparent"
               style={{ backgroundColor: accentColor }}
             >
               {luloStrategy.apy.toFixed(1)}% APY
@@ -87,13 +90,15 @@ const TokenRow: React.FC<TokenRowProps> = ({
           )}
         </div>
         {secondary && (
-          <p className="text-xs font-bold text-muted-foreground truncate mt-0.5">{secondary}</p>
+          <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{secondary}</p>
         )}
       </div>
-      <span className="font-bold text-lg tabular-nums shrink-0 mr-2">
+
+      <span className="num shrink-0 text-base sm:mr-2">
         {formatTokenAmount(vt.rawAmount, vt.decimals)}
       </span>
-      <div className="flex items-center gap-2 shrink-0">
+
+      <div className="flex shrink-0 items-center gap-2">
         {showYieldStaking && (
           <InlineTokenYield
             mint={vt.mint}
@@ -107,14 +112,9 @@ const TokenRow: React.FC<TokenRowProps> = ({
             progressStep={yieldProgressStep}
           />
         )}
-        <button
-          onClick={onTopUpOpen}
-          className={cn(
-            "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground bg-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
-          )}
-        >
-          <TrendingUp className="h-3 w-3" /> {t("yield.add")}
-        </button>
+        <Button variant="outline" size="sm" onClick={onTopUpOpen}>
+          <TrendingUp className="h-3.5 w-3.5" /> {t("yield.add")}
+        </Button>
       </div>
 
       <TopUpDialog

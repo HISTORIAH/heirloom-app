@@ -42,13 +42,13 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
           console.error("wallet connect failed", err);
         }
       }}
-      className="w-full neo-border rounded-xl px-4 py-3 bg-secondary hover:bg-accent-yellow transition-all duration-150 flex items-center gap-3 font-bold disabled:opacity-60"
+      className="flex w-full items-center gap-3 rounded-lg border border-tile-line bg-background px-4 py-3 text-sm font-semibold transition-colors hover:border-foreground hover:bg-tile-soft disabled:opacity-60"
     >
       {wallet.icon && (
-        <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />
+        <img src={wallet.icon} alt={wallet.name} className="h-7 w-7 rounded-md" />
       )}
       <span className="flex-1 text-left">{wallet.name}</span>
-      {isConnecting && <span className="text-xs font-bold">{t("common.connecting")}</span>}
+      {isConnecting && <span className="cap">{t("common.connecting")}</span>}
     </button>
   );
 };
@@ -65,20 +65,22 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="neo-card-static max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{t("walletDialog.title")}</DialogTitle>
-          <DialogDescription className="font-medium">
+          <DialogTitle className="font-display text-lg font-semibold tracking-[-0.02em]">
+            {t("walletDialog.title")}
+          </DialogTitle>
+          <DialogDescription className="text-sm font-medium">
             {t("walletDialog.description")}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3 mt-2">
+        <div className="mt-2 flex flex-col gap-2">
           {wallets.length === 0 ? (
             <a
               href="https://solana.com/solana-wallets"
               target="_blank"
               rel="noopener noreferrer"
-              className="neo-border rounded-xl px-4 py-3 bg-accent-yellow font-bold text-center"
+              className="rounded-lg border border-accent-yellow bg-accent-yellow px-4 py-3 text-center text-sm font-semibold transition-colors hover:brightness-95"
             >
               {t("walletDialog.noWallets")}
             </a>

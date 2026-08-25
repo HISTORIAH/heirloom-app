@@ -30,8 +30,8 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         this.props.fallback ?? (
           <div className="min-h-screen bg-background flex items-center justify-center p-6">
-            <div className="neo-card-static max-w-lg w-full">
-              <h1 className="text-2xl text-accent-red mb-4">
+            <div className="panel panel-pad-lg w-full max-w-lg">
+              <h1 className="mb-4 font-display text-2xl font-semibold tracking-[-0.02em] text-accent-red">
                 {getI18n().t("error.title", { ns: "app" })}
               </h1>
               <p className="text-muted-foreground mb-4 font-mono text-sm break-all">
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
               <button
                 onClick={() => window.location.reload()}
-                className="neo-border bg-accent-yellow px-4 py-2 font-bold rounded-lg hover:neo-shadow-sm transition-shadow"
+                className="rounded-lg border border-accent-yellow bg-accent-yellow px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] transition-colors hover:brightness-95"
               >
                 {getI18n().t("error.reload", { ns: "app" })}
               </button>

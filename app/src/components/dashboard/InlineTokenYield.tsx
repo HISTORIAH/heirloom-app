@@ -26,39 +26,37 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
   const isActive = strategy?.active ?? false;
   const isWorking = loading || progressStep !== "idle";
 
-  // Active state — compact pill with recall button
+  // Active — the row is already marked by its accent rule, so all that is
+  // needed here is the way back.
   if (isActive && strategy?.type === "lulo") {
     return (
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Recall button — lime pill with shadow */}
+      <div className="flex shrink-0 items-center gap-2">
         <button
           onClick={onRecall}
           disabled={isWorking}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all shrink-0",
-            "border-2 border-foreground shadow-[2px_2px_0_0_hsl(var(--foreground))]",
+            "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
             isWorking
-              ? "bg-secondary opacity-50"
-              : "bg-accent-yellow hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+              ? "border-tile-line bg-tile-soft opacity-50"
+              : "border-accent-yellow bg-accent-yellow hover:brightness-95",
           )}
         >
           {isWorking ? (
-            <Loader2 className="h-3 w-3 animate-spin inline" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            <ArrowLeftRight className="h-3 w-3 inline" />
+            <ArrowLeftRight className="h-3 w-3" />
           )}
-          <span className="ml-0.5">{t("yield.recall")}</span>
+          {t("yield.recall")}
         </button>
 
-        {/* Inline progress */}
         {progressStep !== "idle" && progressStep !== "complete" && (
-          <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
-            <Loader2 className="h-3 w-3 animate-spin text-accent-purple" />
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
             {getProgressMessage(progressStep, "lulo", t)}
           </span>
         )}
         {progressStep === "complete" && (
-          <span className="text-[10px] font-bold text-accent-lime flex items-center gap-1">
+          <span className="flex items-center gap-1 text-[10px] font-semibold">
             <CheckCircle2 className="h-3 w-3" />
             {t("yield.done")}
           </span>
@@ -67,27 +65,24 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
     );
   }
 
-  // Inactive state — compact earn yield button (only shown if yield is available)
+  // Inactive — offered only where yield is actually available for the mint.
   return (
-    <div className="flex items-center gap-2 shrink-0">
-      <button
-        onClick={onEnable}
-        disabled={isWorking || vaultBalance <= 0}
-        className={cn(
-          "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground",
-          isWorking || vaultBalance <= 0
-            ? "bg-secondary opacity-50"
-            : "bg-accent-yellow hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
-        )}
-      >
-
-        {isWorking ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <TrendingUp className="h-3 w-3" />
-        )}
-        {t("yield.earn")}
-      </button>
-    </div>
+    <button
+      onClick={onEnable}
+      disabled={isWorking || vaultBalance <= 0}
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
+        isWorking || vaultBalance <= 0
+          ? "border-tile-line bg-tile-soft opacity-50"
+          : "border-accent-yellow bg-accent-yellow hover:brightness-95",
+      )}
+    >
+      {isWorking ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <TrendingUp className="h-3 w-3" />
+      )}
+      {t("yield.earn")}
+    </button>
   );
 };

@@ -1,5 +1,6 @@
-import { Lock, ShieldCheck, X } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Sheet from "@/components/app/Sheet";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -13,59 +14,40 @@ interface Props {
 
 const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onClose, onSign }) => {
   const { t } = useTranslation("app");
-  if (!open) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
-      onClick={() => !signing && onClose()}
-    >
-      <div className="neo-card-static max-w-md w-full neo-slide-up" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex items-start gap-3">
-            <div className="bg-accent-cyan neo-border rounded-xl p-3 shrink-0">
-              <Lock className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h3 className="text-xl leading-tight">{t("notifications.signInTitle")}</h3>
-              <p className="text-sm font-medium text-muted-foreground mt-1">
-                {t("notifications.signInDesc")}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={signing}
-            className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
-          >
-            <X className="h-4 w-4" strokeWidth={2.5} />
-          </button>
-        </div>
-
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-          {t("notifications.signPrompt")}
-        </p>
-        <pre className="neo-border rounded-lg p-4 bg-secondary/40 text-[11px] leading-relaxed font-mono whitespace-pre-wrap mb-4">
-          {message}
-        </pre>
-
-        <div className="flex items-start gap-2 text-xs text-muted-foreground font-medium mb-6">
-          <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-accent-purple" strokeWidth={2} />
-          {t("notifications.signNote")}
-        </div>
-
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={onClose} disabled={signing}>
+    <Sheet
+      open={open}
+      title={t("notifications.signInTitle")}
+      caption={t("notifications.title")}
+      icon={<Lock strokeWidth={2} />}
+      busy={signing}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={signing} className="w-full sm:w-auto">
             {t("notifications.cancel")}
           </Button>
-          <Button variant="cyan" className="flex-1" onClick={onSign} disabled={signing}>
+          <Button onClick={onSign} disabled={signing} className="w-full sm:w-auto">
             {signing ? t("notifications.signing") : t("notifications.signMessage")}
           </Button>
-        </div>
+        </>
+      }
+    >
+      <p className="text-sm font-medium text-muted-foreground">{t("notifications.signInDesc")}</p>
+
+      <p className="cap mt-5">{t("notifications.signPrompt")}</p>
+      {/* The message is shown verbatim: anything a wallet is asked to sign is
+          read, not summarised. */}
+      <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-tile-line bg-tile-soft p-4 font-mono text-[11px] leading-relaxed">
+        {message}
+      </pre>
+
+      <div className="mt-4 flex items-start gap-2.5 text-xs font-medium text-muted-foreground">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+        {t("notifications.signNote")}
       </div>
-    </div>
+    </Sheet>
   );
 };
 

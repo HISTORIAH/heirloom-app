@@ -1,15 +1,16 @@
 import { getProgressMessage } from "@/lib/strategies";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
-import {
-  Loader2,
-  CheckCircle2,
-  Landmark,
-  Sprout,
-  Timer,
-} from "lucide-react";
+import { Loader2, CheckCircle2, Timer } from "lucide-react";
 import { type StrategyProgressOverlayProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
 
+/**
+ * A two-step move, drawn the way the landing draws a lifecycle: marks joined
+ * by a line, with the state of each mark saying where the funds are. It is a
+ * sheet rather than a card because the page underneath is genuinely locked
+ * while a signature is out.
+ */
 export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = ({
   open,
   strategyType,
@@ -25,7 +26,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
   const isStaking = strategyType === "staking";
 
   const firstDone = isComplete || (isRecallFlow ? step === "returning" : step === "depositing");
-  const secondDone = isComplete;
+  const secondActive = step === (isRecallFlow ? "returning" : "depositing");
 
   // Step labels — staking never mentions Lulo
   const firstStepLabel = isRecallFlow
@@ -35,93 +36,66 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
     ? t("yield.stepReturn")
     : (isStaking ? t("yield.stepDelegate") : t("yield.stepLuloDeposit"));
 
-  return (
-    <div className="fixed inset-0 z-[80] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6">
-      <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
-        <div className="flex justify-center mb-4">
-          <div
-            className={cn(
-              "neo-border rounded-full p-4 w-16 h-16 flex items-center justify-center",
-              isComplete ? "bg-accent-lime" : isError ? "bg-accent-red" : isStaking ? "bg-accent-lime" : "bg-accent-purple",
-            )}
-          >
-            {isComplete ? (
-              <CheckCircle2 className="h-8 w-8" strokeWidth={2.5} />
-            ) : isError ? (
-              isStaking ? (
-                <Sprout className="h-8 w-8" strokeWidth={2.5} />
-              ) : (
-                <Landmark className="h-8 w-8" strokeWidth={2.5} />
-              )
-            ) : (
-              <Loader2 className="h-8 w-8 animate-spin" strokeWidth={2.5} />
-            )}
-          </div>
-        </div>
+  const marks = [
+    { label: firstStepLabel, done: firstDone, active: !firstDone },
+    { label: secondStepLabel, done: isComplete, active: secondActive },
+  ];
 
-        <h2 className="text-2xl mb-2">
+  return createPortal(
+    <div className="scrim z-[80]">
+      <div className="sheet rise-in my-auto max-w-md px-6 py-7 text-center">
+        <p className="cap">{isRecallFlow ? t("yield.recall") : t("yield.earn")}</p>
+        <h2 className="mt-3 font-display text-2xl font-semibold tracking-[-0.03em]">
           {title || (isComplete ? t("yield.done") : isError ? t("yield.failed") : t("yield.processing"))}
         </h2>
-        <p className="text-sm font-medium text-muted-foreground mb-6">
+        <p className="mt-2 text-sm font-medium text-muted-foreground">
           {getProgressMessage(step, strategyType, t)}
         </p>
 
-        {/* Two-step progress */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={cn(
-                "neo-border rounded-full w-10 h-10 flex items-center justify-center transition-colors duration-300",
-                firstDone ? "bg-accent-lime" : "bg-secondary",
+        <div className="mt-7 flex items-start justify-center gap-2">
+          {marks.map((mark, i) => (
+            <div key={mark.label} className="contents">
+              {i > 0 && (
+                <span aria-hidden="true" className="mt-6 h-px w-10 shrink-0 bg-tile-line md:w-14" />
               )}
-            >
-              {firstDone ? (
-                <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
-              ) : (
-                <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
-              )}
+              <div className="flex w-28 flex-col items-center gap-2.5">
+                <span
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl border transition-colors duration-300",
+                    mark.done
+                      ? "border-accent-sage bg-accent-sage"
+                      : mark.active
+                        ? "border-foreground bg-background"
+                        : "border-tile-line bg-tile-soft",
+                  )}
+                >
+                  {mark.done ? (
+                    <CheckCircle2 className="h-5 w-5" strokeWidth={2} />
+                  ) : mark.active ? (
+                    <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} />
+                  ) : (
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+                  )}
+                </span>
+                <span className="cap text-center leading-tight">{mark.label}</span>
+              </div>
             </div>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {firstStepLabel}
-            </span>
-          </div>
-
-          <div className="h-px w-8 bg-foreground/20 mb-6" />
-
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={cn(
-                "neo-border rounded-full w-10 h-10 flex items-center justify-center transition-colors duration-300",
-                secondDone ? "bg-accent-lime" : step === (isRecallFlow ? "returning" : "depositing") ? "bg-secondary" : "bg-secondary/50",
-              )}
-            >
-              {secondDone ? (
-                <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
-              ) : step === (isRecallFlow ? "returning" : "depositing") ? (
-                <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
-              ) : (
-                <div className="w-3 h-3 rounded-full bg-muted-foreground/30" />
-              )}
-            </div>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {secondStepLabel}
-            </span>
-          </div>
+          ))}
         </div>
 
-        {/* Epoch notice for staking */}
         {isStaking && isComplete && (
-          <div className="mt-6 neo-border rounded-xl p-4 bg-accent-yellow/10 flex items-start gap-3">
-            <Timer className="h-5 w-5 shrink-0 mt-0.5 text-accent-yellow" strokeWidth={2.5} />
-            <div className="text-left">
-              <p className="text-sm font-bold">{t("yield.epochNextTitle")}</p>
-              <p className="text-xs font-medium text-muted-foreground mt-0.5">
+          <div className="mt-7 flex items-start gap-3 border-t border-tile-line pt-5 text-left">
+            <Timer className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+            <div>
+              <p className="text-sm font-semibold">{t("yield.epochNextTitle")}</p>
+              <p className="mt-0.5 text-xs font-medium text-muted-foreground">
                 {t("yield.epochNextDesc")}
               </p>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

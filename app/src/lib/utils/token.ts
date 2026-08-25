@@ -1,8 +1,10 @@
+// Low-chroma companions, plus the one loud yellow. A logoless token gets a
+// distinguishable mark without introducing a colour the page does not own.
 const TOKEN_ACCENTS = [
-  { bg: "bg-accent-cyan", shadow: "hsl(var(--accent-cyan))" },
+  { bg: "bg-accent-sky", shadow: "hsl(var(--accent-sky))" },
   { bg: "bg-accent-yellow", shadow: "hsl(var(--accent-yellow))" },
-  { bg: "bg-accent-purple", shadow: "hsl(var(--accent-purple))" },
-  { bg: "bg-accent-orange", shadow: "hsl(var(--accent-orange))" },
+  { bg: "bg-accent-sage", shadow: "hsl(var(--accent-sage))" },
+  { bg: "bg-tile-soft", shadow: "hsl(var(--tile-soft))" },
 ] as const;
 
 /**

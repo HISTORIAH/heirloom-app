@@ -5,7 +5,8 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { LABEL_MAX_LEN } from "@/lib/constants";
 import { errMsg, formatDuration } from "@/lib/utils";
-import { Pencil, X } from "lucide-react";
+import { Pencil } from "lucide-react";
+import Sheet from "@/components/app/Sheet";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -88,132 +89,101 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="neo-border rounded-xl px-4 py-3 bg-accent-cyan text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
-      >
+      <Button variant="outline" size="sm" className="w-full" onClick={() => setOpen(true)}>
         {t("dashboard.manage.updateEstate")}
-      </button>
+      </Button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 overflow-y-auto text-foreground"
-          onClick={() => {
-            if (!savingSettings) setOpen(false);
-          }}
-        >
-          <div className="neo-card-static max-w-md w-full neo-slide-up my-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-accent-cyan neo-border rounded-xl p-3 shrink-0">
-                  <Pencil className="h-6 w-6" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.updateEstate")}</h3>
-                  <p className="text-sm font-medium text-muted-foreground mt-1">
-                    {t("dashboard.manage.updateEstateDesc")}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setOpen(false)}
-                disabled={savingSettings}
-                className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
-              >
-                <X className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </div>
+      <Sheet
+        open={open}
+        title={t("dashboard.manage.updateEstate")}
+        caption={t("dashboard.manage.interval")}
+        icon={<Pencil strokeWidth={2} />}
+        busy={savingSettings}
+        onClose={() => setOpen(false)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)} className="w-full sm:w-auto">
+              {t("dashboard.manage.cancel")}
+            </Button>
+            <Button
+              onClick={requestSaveSettings}
+              disabled={!settingsDirty || !settingsValid}
+              className="w-full sm:w-auto"
+            >
+              <Pencil className="h-4 w-4" /> {t("dashboard.manage.saveChanges")}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm font-medium text-muted-foreground">
+          {t("dashboard.manage.updateEstateDesc")}
+        </p>
 
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                  {t("dashboard.manage.labelMax", { max: LABEL_MAX_LEN })}
-                </label>
-                <div className="relative">
-                  <Pencil className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none" strokeWidth={3} />
-                  <input
-                    type="text"
-                    value={editLabel}
-                    onChange={(e) => setEditLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
-                    maxLength={LABEL_MAX_LEN}
-                    className="neo-input w-full !pl-10 focus:bg-accent-cyan/20"
-                    placeholder={t("dashboard.manage.estateLabelPlaceholder")}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                    {t("dashboard.manage.intervalSec")}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={editIntervalSec}
-                    onChange={(e) => setEditIntervalSec(Math.max(1, Number(e.target.value)))}
-                    className="neo-input w-full focus:bg-accent-cyan/20"
-                  />
-                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                    {formatDuration(editIntervalSec)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                    {t("dashboard.manage.graceSec")}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={editGraceSec}
-                    onChange={(e) => setEditGraceSec(Math.max(1, Number(e.target.value)))}
-                    className="neo-input w-full focus:bg-accent-cyan/20"
-                  />
-                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                    {formatDuration(editGraceSec)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground block mb-1">
-                    {t("dashboard.manage.pauseSec")}
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editPauseSec}
-                    onChange={(e) => setEditPauseSec(Math.max(0, Number(e.target.value)))}
-                    className="neo-input w-full focus:bg-accent-cyan/20"
-                  />
-                  <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                    {formatDuration(editPauseSec)}
-                  </p>
-                </div>
-              </div>
-              {!labelValid && (
-                <p className="text-xs font-bold text-accent-red">
-                  {t("dashboard.manage.labelInvalid", { max: LABEL_MAX_LEN })}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-              <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                {t("dashboard.manage.cancel")}
-              </Button>
-              <Button
-                variant="cyan"
-                size="default"
-                onClick={requestSaveSettings}
-                disabled={!settingsDirty || !settingsValid}
-                className="sm:w-auto w-full"
-              >
-                <Pencil className="h-4 w-4" /> {t("dashboard.manage.saveChanges")}
-              </Button>
-            </div>
+        <div className="mt-5 space-y-5">
+          <div>
+            <label className="cap mb-2 block">
+              {t("dashboard.manage.labelMax", { max: LABEL_MAX_LEN })}
+            </label>
+            <input
+              type="text"
+              value={editLabel}
+              onChange={(e) => setEditLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
+              maxLength={LABEL_MAX_LEN}
+              className="field"
+              placeholder={t("dashboard.manage.estateLabelPlaceholder")}
+            />
           </div>
+
+          {/* Three durations, set as one ruled row of fields — each with the
+              same number said in words underneath, because seconds are not a
+              unit anybody thinks in. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              {
+                key: "interval",
+                label: t("dashboard.manage.intervalSec"),
+                value: editIntervalSec,
+                min: 1,
+                set: (n: number) => setEditIntervalSec(Math.max(1, n)),
+              },
+              {
+                key: "grace",
+                label: t("dashboard.manage.graceSec"),
+                value: editGraceSec,
+                min: 1,
+                set: (n: number) => setEditGraceSec(Math.max(1, n)),
+              },
+              {
+                key: "pause",
+                label: t("dashboard.manage.pauseSec"),
+                value: editPauseSec,
+                min: 0,
+                set: (n: number) => setEditPauseSec(Math.max(0, n)),
+              },
+            ].map((f) => (
+              <div key={f.key}>
+                <label className="cap mb-2 block">{f.label}</label>
+                <input
+                  type="number"
+                  min={f.min}
+                  value={f.value}
+                  onChange={(e) => f.set(Number(e.target.value))}
+                  className="field tabular-nums"
+                />
+                <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
+                  {formatDuration(f.value)}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {!labelValid && (
+            <p className="text-xs font-bold text-accent-red">
+              {t("dashboard.manage.labelInvalid", { max: LABEL_MAX_LEN })}
+            </p>
+          )}
         </div>
-      )}
+      </Sheet>
 
       <ConfirmDialog
         open={settingsConfirmOpen}
@@ -223,46 +193,46 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
         cancelLabel={t("dashboard.manage.cancel")}
         variant="default"
         loading={savingSettings}
-        icon={<Pencil className="h-6 w-6" strokeWidth={2.5} />}
-        accent="bg-accent-cyan/20"
+        icon={<Pencil strokeWidth={2} />}
         onConfirm={performSaveSettings}
         onCancel={() => {
           if (!savingSettings) setSettingsConfirmOpen(false);
         }}
       >
-        <div className="space-y-2 text-sm">
+        <div className="mt-1 text-sm">
           {editLabel.trim() !== estate.label && (
-            <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">{t("dashboard.manage.label")}</span>
-              <span className="font-mono text-xs text-right break-all">
-                {estate.label} → <span className="font-bold">{editLabel.trim()}</span>
+            <div className="data-row">
+              <span className="data-k">{t("dashboard.manage.label")}</span>
+              <span className="text-right">
+                <span className="text-muted-foreground">{estate.label}</span> →{" "}
+                <span className="font-semibold">{editLabel.trim()}</span>
               </span>
             </div>
           )}
           {editIntervalSec !== estate.heartbeatInterval && (
-            <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">{t("dashboard.manage.interval")}</span>
-              <span className="text-xs text-right">
-                {formatDuration(estate.heartbeatInterval)} →{" "}
-                <span className="font-bold">{formatDuration(editIntervalSec)}</span>
+            <div className="data-row">
+              <span className="data-k">{t("dashboard.manage.interval")}</span>
+              <span className="text-right">
+                <span className="text-muted-foreground">{formatDuration(estate.heartbeatInterval)}</span> →{" "}
+                <span className="font-semibold">{formatDuration(editIntervalSec)}</span>
               </span>
             </div>
           )}
           {editGraceSec !== estate.gracePeriod && (
-            <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">{t("dashboard.manage.grace")}</span>
-              <span className="text-xs text-right">
-                {formatDuration(estate.gracePeriod)} →{" "}
-                <span className="font-bold">{formatDuration(editGraceSec)}</span>
+            <div className="data-row">
+              <span className="data-k">{t("dashboard.manage.grace")}</span>
+              <span className="text-right">
+                <span className="text-muted-foreground">{formatDuration(estate.gracePeriod)}</span> →{" "}
+                <span className="font-semibold">{formatDuration(editGraceSec)}</span>
               </span>
             </div>
           )}
           {editPauseSec !== estate.pauseDuration && (
-            <div className="neo-border rounded-lg p-3 bg-secondary flex justify-between gap-3">
-              <span className="font-bold">{t("dashboard.manage.pause")}</span>
-              <span className="text-xs text-right">
-                {formatDuration(estate.pauseDuration)} →{" "}
-                <span className="font-bold">{formatDuration(editPauseSec)}</span>
+            <div className="data-row">
+              <span className="data-k">{t("dashboard.manage.pause")}</span>
+              <span className="text-right">
+                <span className="text-muted-foreground">{formatDuration(estate.pauseDuration)}</span> →{" "}
+                <span className="font-semibold">{formatDuration(editPauseSec)}</span>
               </span>
             </div>
           )}

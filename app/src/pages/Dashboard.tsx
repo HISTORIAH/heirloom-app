@@ -1,6 +1,8 @@
-import PageHeader from "@/components/PageHeader";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import AppFrame, { PageHead } from "@/components/app/AppFrame";
+import { Panel } from "@/components/app/Panel";
+import Sheet from "@/components/app/Sheet";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +13,7 @@ import { getSolanaExplorerTxUrl, getClusterFromEndpoint } from "@/lib/utils";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
+import VaultMark from "@/components/landing/VaultMark";
 import ReassignHeirSection from "@/components/dashboard/ReassignHeirSection";
 import EditSettingsSection from "@/components/dashboard/EditSettingsSection";
 import AddAssetSection from "@/components/dashboard/AddAssetSection";
@@ -25,13 +28,6 @@ import {
   summarizeNotifications,
 } from "@/types/notifications";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import TokenRow from "@/components/dashboard/TokenRow";
 import { SolStakingIndicator } from "@/components/dashboard/SolStakingIndicator";
 import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
@@ -53,7 +49,6 @@ import { computeEstateState } from "@/services/heirloom";
 import { useTranslation } from "@heirloom/i18n";
 import {
   Heart,
-  Users,
   Coins,
   Loader2,
   ExternalLink,
@@ -62,7 +57,6 @@ import {
   Plus,
   TrendingUp,
   Wallet,
-  ChevronDown,
   Sprout,
   Search,
 } from "lucide-react";
@@ -71,24 +65,32 @@ const ESTATE_STRIP_CAP = 5;
 
 type UiState = "active" | "grace" | "claimable" | "distributed";
 
-const statusConfig = (t: (k: string, opts?: Record<string, unknown>) => string): Record<UiState, { bg: string; label: string; description: string }> => ({
+/**
+ * The four states, each with the one fill it is allowed to wear. Sage means
+ * alive and nothing else, yellow marks the window that still has a way out,
+ * red is the state the owner can no longer undo. Distributed is spent, so it
+ * carries no colour at all.
+ */
+const statusConfig = (
+  t: (k: string, opts?: Record<string, unknown>) => string,
+): Record<UiState, { edge: string; label: string; description: string }> => ({
   active: {
-    bg: "neo-section-lime",
+    edge: "border-accent-sage",
     label: t("dashboard.statusActive"),
     description: t("dashboard.statusActiveDesc"),
   },
   grace: {
-    bg: "bg-accent-yellow",
+    edge: "border-accent-yellow",
     label: t("dashboard.statusGrace"),
     description: t("dashboard.statusGraceDesc"),
   },
   claimable: {
-    bg: "bg-accent-red",
+    edge: "border-accent-red",
     label: t("dashboard.statusClaimable"),
     description: t("dashboard.statusClaimableDesc"),
   },
   distributed: {
-    bg: "bg-secondary",
+    edge: "border-tile-line",
     label: t("dashboard.statusDistributed"),
     description: t("dashboard.statusDistributedDesc"),
   },
@@ -141,13 +143,6 @@ function computeTick(estate: EstateData, vaultEmpty: boolean, t: (k: string, opt
   };
 }
 
-const STRIP_DOT_COLOR: Record<UiState, string> = {
-  active: "bg-accent-lime",
-  grace: "bg-accent-yellow",
-  claimable: "bg-accent-red",
-  distributed: "bg-secondary",
-};
-
 function getEstateStripMeta(estate: EstateData, t: (k: string, opts?: Record<string, unknown>) => string) {
   const vaultEmpty =
     estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
@@ -158,10 +153,14 @@ function getEstateStripMeta(estate: EstateData, t: (k: string, opts?: Record<str
     state === "claimable" ? t("dashboard.claimable") :
     t("dashboard.distributed");
   const assetCount = 1 + estate.vaultTokens.length;
-  return { state, dotColor: STRIP_DOT_COLOR[state], timeLabel, assetCount };
+  return { state, timeLabel, assetCount };
 }
 
-const EstatePillButton = ({
+/**
+ * One estate in the switcher: a hairline chip carrying its label and the one
+ * line that matters at a glance — how much is in it, and how long is left.
+ */
+const EstateChip = ({
   estate,
   selected,
   onClick,
@@ -173,21 +172,26 @@ const EstatePillButton = ({
   fullWidth?: boolean;
 }) => {
   const { t } = useTranslation("app");
-  const { dotColor, timeLabel, assetCount } = getEstateStripMeta(estate, t);
+  const { timeLabel, assetCount } = getEstateStripMeta(estate, t);
   return (
     <button
       onClick={onClick}
+      aria-pressed={selected}
       className={cn(
-        "neo-border rounded-xl px-3 py-2 min-h-[56px] flex flex-col items-start justify-center gap-0.5 transition-colors text-left overflow-hidden",
-        fullWidth ? "w-full" : "w-44 shrink-0",
-        selected ? "bg-accent-yellow" : "bg-background hover:bg-secondary",
+        "flex flex-col items-start justify-center gap-1 overflow-hidden rounded-lg border px-3.5 py-2.5 text-left transition-colors",
+        fullWidth ? "w-full" : "w-48 shrink-0",
+        selected
+          ? "border-foreground bg-foreground text-background"
+          : "border-tile-line bg-background hover:bg-tile-soft",
       )}
     >
-      <span className="flex items-center gap-2 text-sm font-semibold w-full min-w-0">
-        <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", dotColor)} />
-        <span className="truncate">{estate.label}</span>
-      </span>
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground truncate w-full">
+      <span className="w-full truncate text-sm font-semibold">{estate.label}</span>
+      <span
+        className={cn(
+          "w-full truncate text-[10px] font-bold uppercase tracking-[0.14em]",
+          selected ? "text-background/60" : "text-muted-foreground",
+        )}
+      >
         {assetCount} {assetCount !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")} · {timeLabel}
       </span>
     </button>
@@ -455,222 +459,329 @@ This does not cost gas and does not authorize any on-chain transaction.`;
 
   const config = statusConfig(t)[computedState];
   const solDisplay = formatSol(estate.solBalance);
-  const tokenIcon = <Coins className="h-6 w-6" strokeWidth={2.5} />;
+  const assetCount = 1 + estate.vaultTokens.length;
+  const countdownUnits = [
+    { label: t("dashboard.days"), value: countdown.days },
+    { label: t("dashboard.hours"), value: countdown.hours },
+    { label: t("dashboard.min"), value: countdown.minutes },
+    { label: t("dashboard.sec"), value: countdown.seconds },
+  ];
 
   return (
-    <div className="space-y-8">
-      {/* Status banner */}
-      <div className={`${config.bg} neo-border-thick rounded-2xl p-8 neo-shadow-xl`}>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="min-w-0">
-            <span className="neo-badge bg-background mb-3 inline-block">{t("dashboard.vaultStatus")}</span>
-            <h2 className="text-4xl md:text-5xl uppercase font-display">{config.label}</h2>
-            <p className="text-sm font-medium text-foreground/60 mt-1">{config.description}</p>
+    <div className="app-grid items-start">
+      {/* ------------------------------------------------------ the vault itself */}
+      <div className="space-y-4 lg:col-span-8 lg:space-y-5">
+        {/* State and clock read as one object: what the vault is right now, and
+            how long it stays that way. The panel's border carries the state's
+            colour so the escalation is visible before a word is read. */}
+        <Panel pad={false} className={cn("overflow-hidden", config.edge)}>
+          <div className="flex flex-col gap-6 p-5 md:flex-row md:items-start md:justify-between md:p-6">
+            <div className="min-w-0">
+              {/* The state is carried by the word below and by the colour of
+                  the panel's own edge — the label stays a label. */}
+              <span className="tag">{t("dashboard.vaultStatus")}</span>
+              <h2 className="mt-4 font-display text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                {config.label}
+              </h2>
+              <p className="mt-2 max-w-[48ch] text-sm font-medium leading-relaxed text-muted-foreground">
+                {config.description}
+              </p>
+            </div>
+
+            {computedState !== "distributed" && (
+              <div className="flex shrink-0 flex-col items-start gap-2 md:items-end">
+                <Button
+                  variant={computedState === "claimable" ? "default" : "sage"}
+                  size="xl"
+                  onClick={handleHeartbeat}
+                  disabled={sendingHeartbeat}
+                  className={cn("w-full md:w-auto", computedState === "grace" && "shake-alert")}
+                >
+                  {sendingHeartbeat ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.signing")}</>
+                  ) : computedState === "claimable" ? (
+                    <><Heart className="h-4 w-4" fill="currentColor" /> {t("dashboard.imAlive")}</>
+                  ) : (
+                    <><Heart className="h-4 w-4" fill="currentColor" /> {t("dashboard.checkIn")}</>
+                  )}
+                </Button>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {t("dashboard.restartsTimer")}
+                </p>
+              </div>
+            )}
           </div>
-          {computedState !== "distributed" && (
-            <div className="flex flex-col items-center gap-2 shrink-0">
-              <Button
-                variant={computedState === "claimable" ? "pill-dark" : "pill"}
-                size="xl"
-                onClick={handleHeartbeat}
-                disabled={sendingHeartbeat}
-                className={computedState === "grace" ? "neo-shake" : ""}
-              >
-                {sendingHeartbeat ? (
-                  <><Loader2 className="h-5 w-5 animate-spin" /> {t("dashboard.signing")}</>
-                ) : computedState === "claimable" ? (
-                  <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.imAlive")}</>
-                ) : (
-                  <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.checkIn")}</>
-                )}
-              </Button>
-              {computedState === "claimable" && !sendingHeartbeat && (
-                <p className="text-xs font-medium text-foreground/60">{t("dashboard.restartsTimer")}</p>
+
+          <div className="border-t border-tile-line">
+            <div className="flex items-center gap-3 px-5 pt-4 md:px-6">
+              <span className="cap">{countdownLabel}</span>
+              <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
+              {computedState === "grace" && (
+                <span className="tag tag-accent animate-pulse-slow">{t("dashboard.urgent")}</span>
               )}
             </div>
-          )}
-        </div>
-      </div>
+            <dl className="grid grid-cols-4">
+              {countdownUnits.map((unit, i) => (
+                <div
+                  key={unit.label}
+                  className={cn(
+                    "px-3 py-4 md:px-6 md:py-5",
+                    i === 0 && "pl-5 md:pl-6",
+                    i > 0 && "border-l border-tile-line",
+                  )}
+                >
+                  <dd className="num-xl">{String(unit.value).padStart(2, "0")}</dd>
+                  <dt className="cap mt-2">{unit.label}</dt>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </Panel>
 
-      {/* Last tx link */}
-      {lastTxId && (
-        <div className="neo-card-static bg-accent-cyan/10 !p-5">
+        {/* ------------------------------------------------------------- assets */}
+        <Panel pad={false}>
+          <div className="flex flex-wrap items-center gap-3 border-b border-tile-line px-5 py-4 md:px-6">
+            <span className="cap cap-ink">{t("dashboard.assets")}</span>
+            <span className="tag">
+              {assetCount} {assetCount !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")}
+            </span>
+            <span aria-hidden="true" className="hidden h-px flex-1 bg-tile-line sm:block" />
+            <div className="seg ml-auto sm:ml-0">
+              <button
+                onClick={() => setAssetTab("sol")}
+                data-active={assetTab === "sol"}
+                className="seg-item"
+              >
+                {SOL_LABEL}
+              </button>
+              <button
+                onClick={() => setAssetTab("tokens")}
+                data-active={assetTab === "tokens"}
+                className="seg-item"
+              >
+                {t("dashboard.tokens")} ({estate.vaultTokens.length})
+              </button>
+            </div>
+          </div>
+
+          <div className="p-5 md:p-6">
+            {assetTab === "sol" ? (
+              <div>
+                <div className="flex flex-wrap items-end justify-between gap-5">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-4 w-4 text-muted-foreground" strokeWidth={2} />
+                      <span className="cap">{SOL_LABEL}</span>
+                    </div>
+                    <p className="num-xl mt-3">{solDisplay}</p>
+                    <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+                      {`${estate.solBalance.toLocaleString()} ${t("dashboard.lamports")}`}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {showYieldStaking && !stakingStrategy?.active && (
+                      <Button
+                        variant="yellow"
+                        size="sm"
+                        onClick={handleEnableStaking}
+                        disabled={solVaultBalance <= 0}
+                      >
+                        <Sprout className="h-3.5 w-3.5" /> {t("dashboard.stakeSol")}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTopUpOpen("sol")}
+                      disabled={estate.solBalance === 0}
+                    >
+                      <TrendingUp className="h-3.5 w-3.5" /> {t("dashboard.addMore")}
+                    </Button>
+                  </div>
+                </div>
+
+                {showYieldStaking && stakingStrategy?.active && (
+                  <SolStakingIndicator
+                    solBalance={solVaultBalance}
+                    strategy={stakingStrategy}
+                    onEnable={handleEnableStaking}
+                    onRecall={handleRecallStaking}
+                    loading={showProgressOverlay && recallTarget === "staking" && strategyProgress !== "idle"}
+                    progressStep={
+                      showProgressOverlay && recallTarget === "staking" ? strategyProgress : "idle"
+                    }
+                  />
+                )}
+
+                {/* SOL Top Up Dialog */}
+                <TopUpDialog
+                  open={topUpOpen === "sol"}
+                  symbol={SOL_LABEL}
+                  decimals={SOL_DECIMALS}
+                  vaultBalance={solVaultBalance}
+                  walletBalance={walletSolBalance}
+                  onConfirm={handleTopUp}
+                  onCancel={() => setTopUpOpen(null)}
+                  loading={topUpLoading}
+                />
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  estate.vaultTokens.length > 6 && "max-h-[420px] overflow-y-auto pr-1",
+                )}
+              >
+                {estate.vaultTokens.length === 0 ? (
+                  <p className="py-10 text-center text-sm font-medium text-muted-foreground">
+                    {t("dashboard.noTokens")}
+                  </p>
+                ) : (
+                  estate.vaultTokens.map((vt) => {
+                    const walletBal = walletSplTokens?.find((t) => t.mint === vt.mint);
+                    return (
+                      <TokenRow
+                        key={vt.ata}
+                        vt={vt}
+                        meta={tokenMeta.get(vt.mint)}
+                        walletBalance={walletBal?.uiAmount ?? 0}
+                        showYieldStaking={showYieldStaking}
+                        luloStrategy={luloStrategy?.type === "lulo" ? luloStrategy : null}
+                        onEnableYield={() => {
+                          setLuloTargetMint(vt.mint);
+                          setActiveStrategyType("lulo");
+                          setLuloDialogOpen(true);
+                        }}
+                        onRecallYield={handleRecallLulo}
+                        yieldLoading={showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint && strategyProgress !== "idle"}
+                        yieldProgressStep={
+                          showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint
+                            ? strategyProgress
+                            : "idle"
+                        }
+                        topUpOpen={topUpOpen === vt.mint}
+                        onTopUpOpen={() => setTopUpOpen(vt.mint)}
+                        onTopUpCancel={() => setTopUpOpen(null)}
+                        onTopUpConfirm={handleTopUp}
+                        topUpLoading={topUpLoading}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </Panel>
+
+        {lastTxId && (
           <a
             href={getSolanaExplorerTxUrl(lastTxId)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 font-semibold hover:underline"
+            className="panel panel-hover flex items-center gap-2.5 px-5 py-3.5 text-sm font-semibold md:px-6"
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-4 w-4 shrink-0" strokeWidth={2} />
             {t("dashboard.viewLatestTx")}
           </a>
-        </div>
-      )}
-
-      {/* Countdown */}
-      <div className="neo-card-static">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl">{countdownLabel}</h3>
-        </div>
-        <div className="grid grid-cols-4 gap-3 md:gap-4">
-          {[
-            { label: t("dashboard.days"), value: countdown.days },
-            { label: t("dashboard.hours"), value: countdown.hours },
-            { label: t("dashboard.min"), value: countdown.minutes },
-            { label: t("dashboard.sec"), value: countdown.seconds },
-          ].map((unit) => (
-            <div key={unit.label} className="text-center">
-              <div className="neo-border rounded-xl bg-secondary p-4 md:p-6">
-                <span
-                  className={cn(
-                    "text-4xl md:text-6xl font-bold tabular-nums font-display",
-                    unit.label === t("dashboard.sec") && "text-accent-lime",
-                  )}
-                >
-                  {String(unit.value).padStart(2, "0")}
-                </span>
-              </div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mt-2">
-                {unit.label}
-              </p>
-            </div>
-          ))}
-        </div>
-        {computedState === "grace" && (
-          <div className="flex justify-end mt-4 pt-4 border-t-2 border-foreground/10">
-            <span className="neo-badge bg-accent-yellow text-xs animate-pulse-slow">{t("dashboard.urgent")}</span>
-          </div>
         )}
       </div>
 
-      {/* Assets — tabs for SOL / Tokens */}
-      <div className="neo-card-static">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl">{t("dashboard.assets")}</h3>
-          <span className="neo-badge bg-secondary !px-3 !py-0.5 !text-xs">
-            {1 + estate.vaultTokens.length} {1 + estate.vaultTokens.length !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")}
-          </span>
-        </div>
-        <div className="flex gap-2 mb-4">
+      {/* ----------------------------------------------------------- the rail
+          Everything that describes or changes the vault, rather than being it:
+          who it goes to, what it tells you, and the levers that alter it. */}
+      <div className="space-y-4 lg:col-span-4 lg:space-y-5">
+        <Panel>
+          <p className="cap cap-ink">{t("dashboard.heirDetails")}</p>
           <button
-            onClick={() => setAssetTab("sol")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-bold uppercase neo-border transition-colors",
-              assetTab === "sol" ? "bg-accent-yellow" : "bg-secondary hover:bg-secondary/70",
-            )}
+            onClick={handleCopyHeir}
+            title={t("dashboard.copyHeirAddress")}
+            className="mt-4 flex w-full items-start justify-between gap-3 rounded-lg border border-tile-line px-4 py-3 text-left transition-colors hover:bg-tile-soft"
           >
-            {SOL_LABEL}
-          </button>
-          <button
-            onClick={() => setAssetTab("tokens")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-bold uppercase neo-border transition-colors",
-              assetTab === "tokens" ? "bg-accent-yellow" : "bg-secondary hover:bg-secondary/70",
-            )}
-          >
-            {t("dashboard.tokens")} ({estate.vaultTokens.length})
-          </button>
-        </div>
-
-        {assetTab === "sol" ? (
-          <div className="neo-card-static" style={{ boxShadow: "none" }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-accent-orange neo-border rounded-xl p-3">
-                {tokenIcon}
-              </div>
-              <div>
-                <p className="font-bold text-lg">{SOL_LABEL}</p>
-                <p className="text-xs font-medium text-muted-foreground">
-                  {`${estate.solBalance.toLocaleString()} ${t("dashboard.lamports")}`}
-                </p>
-              </div>
-            </div>
-            <p className="text-4xl font-bold tabular-nums mb-4">{solDisplay}</p>
-            <div className={cn("grid gap-2", showYieldStaking && !stakingStrategy?.active ? "grid-cols-2" : "grid-cols-1")}>
-              <button
-                onClick={handleEnableStaking}
-                disabled={solVaultBalance <= 0}
-                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-accent-yellow hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
-              >
-                <Sprout className="h-3.5 w-3.5" /> {t("dashboard.stakeSol")}
-              </button>
-              <button
-                onClick={() => setTopUpOpen("sol")}
-                disabled={estate.solBalance === 0}
-                className="rounded-lg h-10 text-sm font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-1 disabled:opacity-40 border-4 border-foreground bg-transparent hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_0_hsl(var(--foreground))]"
-              >
-                <TrendingUp className="h-3.5 w-3.5" /> {t("dashboard.addMore")}
-              </button>
-            </div>
-            {showYieldStaking && stakingStrategy?.active && (
-              <SolStakingIndicator
-                solBalance={solVaultBalance}
-                strategy={stakingStrategy}
-                onEnable={handleEnableStaking}
-                onRecall={handleRecallStaking}
-                loading={showProgressOverlay && recallTarget === "staking" && strategyProgress !== "idle"}
-                progressStep={
-                  showProgressOverlay && recallTarget === "staking" ? strategyProgress : "idle"
-                }
-              />
-            )}
-
-            {/* SOL Top Up Dialog */}
-            <TopUpDialog
-              open={topUpOpen === "sol"}
-              symbol={SOL_LABEL}
-              decimals={SOL_DECIMALS}
-              vaultBalance={solVaultBalance}
-              walletBalance={walletSolBalance}
-              onConfirm={handleTopUp}
-              onCancel={() => setTopUpOpen(null)}
-              loading={topUpLoading}
-            />
-          </div>
-        ) : (
-          <div
-            className={cn(
-              "space-y-4",
-              estate.vaultTokens.length > 6 && "max-h-[420px] overflow-y-auto pr-1",
-            )}
-          >
-            {estate.vaultTokens.length === 0 ? (
-              <p className="text-sm font-medium text-muted-foreground text-center py-8">
-                {t("dashboard.noTokens")}
-              </p>
+            <span className="min-w-0">
+              <span className="cap block">{t("dashboard.heir")}</span>
+              <span className="mt-1.5 block truncate text-sm font-semibold">{estate.label}</span>
+              <span className="mt-0.5 block break-all font-mono text-[11px] text-muted-foreground">
+                {estate.heir}
+              </span>
+            </span>
+            {copied ? (
+              <Check className="h-4 w-4 shrink-0" strokeWidth={2} />
             ) : (
-              estate.vaultTokens.map((vt) => {
-                const walletBal = walletSplTokens?.find((t) => t.mint === vt.mint);
-                return (
-                  <TokenRow
-                    key={vt.ata}
-                    vt={vt}
-                    meta={tokenMeta.get(vt.mint)}
-                    walletBalance={walletBal?.uiAmount ?? 0}
-                    showYieldStaking={showYieldStaking}
-                    luloStrategy={luloStrategy?.type === "lulo" ? luloStrategy : null}
-                    onEnableYield={() => {
-                      setLuloTargetMint(vt.mint);
-                      setActiveStrategyType("lulo");
-                      setLuloDialogOpen(true);
-                    }}
-                    onRecallYield={handleRecallLulo}
-                    yieldLoading={showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint && strategyProgress !== "idle"}
-                    yieldProgressStep={
-                      showProgressOverlay && recallTarget === "lulo" && luloTargetMint === vt.mint
-                        ? strategyProgress
-                        : "idle"
-                    }
-                    topUpOpen={topUpOpen === vt.mint}
-                    onTopUpOpen={() => setTopUpOpen(vt.mint)}
-                    onTopUpCancel={() => setTopUpOpen(null)}
-                    onTopUpConfirm={handleTopUp}
-                    topUpLoading={topUpLoading}
-                  />
-                );
-              })
+              <Copy className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
             )}
+          </button>
+
+          <div className="mt-4">
+            <div className="data-row flex-col items-start">
+              <span className="data-k">
+                {t("dashboard.guardian")}
+                {estate.delegate && estate.isDeferred ? ` (${t("dashboard.pauseUsed")})` : ""}
+              </span>
+              <span className="break-all font-mono text-[11px] font-medium">
+                {estate.delegate || t("common.notSet")}
+              </span>
+            </div>
+            <div className="data-row flex-col items-start">
+              <span className="data-k">{t("dashboard.heartbeatSigner")}</span>
+              <span className="break-all font-mono text-[11px] font-medium">
+                {estate.hbSigner || t("common.notSet")}
+              </span>
+            </div>
           </div>
+        </Panel>
+
+        {/* Notifications — separate from Manage Estate: off-chain preference, not a vault mutation.
+            Gated behind FEATURE_NOTIFICATIONS_UI: no backend (fetch/sign/save) wired up yet. */}
+        {FEATURE_NOTIFICATIONS_UI && (
+          <>
+            <NotificationsCard status={notifStatus} summary={notifSummary} onAction={handleNotifAction} />
+
+            <NotificationsSignInPanel
+              open={notifSignInOpen}
+              message={notifSignMessage}
+              signing={notifSigning}
+              onClose={() => setNotifSignInOpen(false)}
+              onSign={handleNotifSign}
+            />
+
+            <NotificationsDialog
+              open={notifEditOpen}
+              heirLabel={estate.label}
+              initialConfig={notifConfig}
+              saving={notifSaving}
+              onClose={() => setNotifEditOpen(false)}
+              onSave={handleNotifSave}
+            />
+          </>
+        )}
+
+        {computedState !== "distributed" && (
+          <Panel>
+            <p className="cap cap-ink">{t("dashboard.manageEstate")}</p>
+
+            <div className="mt-5 space-y-5">
+              <div>
+                <p className="cap">{t("dashboard.heirTiming")}</p>
+                <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <ReassignHeirSection estate={estate} onTx={setLastTxId} />
+                  <EditSettingsSection estate={estate} onTx={setLastTxId} />
+                </div>
+              </div>
+
+              <div>
+                <p className="cap">{t("dashboard.assets")}</p>
+                <div className="mt-2.5">
+                  <AddAssetSection estate={estate} onTx={setLastTxId} />
+                </div>
+              </div>
+
+              <div>
+                <p className="cap">{t("dashboard.dangerZone")}</p>
+                <div className="mt-2.5">
+                  <EmergencyWithdrawSection estate={estate} onTx={setLastTxId} />
+                </div>
+              </div>
+            </div>
+          </Panel>
         )}
       </div>
 
@@ -733,104 +844,10 @@ This does not cost gas and does not authorize any on-chain transaction.`;
           step={strategyProgress}
         />
       )}
-
-      {/* Heir & Details — collapsible */}
-      <div className="neo-card-static">
-        <details className="group">
-          <summary className="flex items-center justify-between cursor-pointer list-none gap-3 flex-wrap rounded-lg -m-2 p-2 transition-colors hover:bg-secondary">
-            <div className="flex items-center gap-3">
-              <div className="bg-accent-yellow neo-border rounded-xl p-2">
-                <Users className="h-5 w-5" strokeWidth={2.5} />
-              </div>
-              <h3 className="text-xl">{t("dashboard.heirDetails")}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180 shrink-0" strokeWidth={2.5} />
-            </div>
-          </summary>
-          <div className="mt-4 space-y-3 pt-4 border-foreground/10">
-            <button
-              onClick={handleCopyHeir}
-              className="w-full neo-border rounded-lg p-3 bg-secondary hover:bg-secondary/70 transition-colors flex items-center justify-between gap-3 text-left"
-              title={t("dashboard.copyHeirAddress")}
-            >
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.heir")}</p>
-                <p className="font-bold">{estate.label}</p>
-                <p className="text-xs font-mono text-muted-foreground break-all">{estate.heir}</p>
-              </div>
-              {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
-            </button>
-
-            <div className="neo-border rounded-lg p-3 bg-accent-purple/10">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                {t("dashboard.guardian")}{estate.delegate && estate.isDeferred ? ` (${t("dashboard.pauseUsed")})` : ""}
-              </p>
-              <p className="font-mono text-xs break-all">{estate.delegate || t("common.notSet")}</p>
-            </div>
-
-            <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.heartbeatSigner")}</p>
-              <p className="font-mono text-xs break-all">{estate.hbSigner || t("common.notSet")}</p>
-            </div>
-          </div>
-        </details>
-      </div>
-
-      {/* Notifications — separate from Manage Estate: off-chain preference, not a vault mutation.
-          Gated behind FEATURE_NOTIFICATIONS_UI: no backend (fetch/sign/save) wired up yet. */}
-      {FEATURE_NOTIFICATIONS_UI && (
-        <>
-          <NotificationsCard status={notifStatus} summary={notifSummary} onAction={handleNotifAction} />
-
-          <NotificationsSignInPanel
-            open={notifSignInOpen}
-            message={notifSignMessage}
-            signing={notifSigning}
-            onClose={() => setNotifSignInOpen(false)}
-            onSign={handleNotifSign}
-          />
-
-          <NotificationsDialog
-            open={notifEditOpen}
-            heirLabel={estate.label}
-            initialConfig={notifConfig}
-            saving={notifSaving}
-            onClose={() => setNotifEditOpen(false)}
-            onSave={handleNotifSave}
-          />
-        </>
-      )}
-
-      {/* Manage Estate — grouped actions */}
-      {computedState !== "distributed" && (
-        <div className="neo-card-static bg-secondary/30">
-          <h3 className="text-xl mb-6">{t("dashboard.manageEstate")}</h3>
-
-          <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{t("dashboard.heirTiming")}</p>
-            <div className="grid grid-cols-2 gap-2">
-              <ReassignHeirSection estate={estate} onTx={setLastTxId} />
-              <EditSettingsSection estate={estate} onTx={setLastTxId} />
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{t("dashboard.assets")}</p>
-            <div className="grid grid-cols-1 gap-2">
-              <AddAssetSection estate={estate} onTx={setLastTxId} />
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">{t("dashboard.dangerZone")}</p>
-            <EmergencyWithdrawSection estate={estate} onTx={setLastTxId} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+
 
 const DashboardPage = () => {
   const { isConnected, disconnectWallet } = useWallet();
@@ -864,181 +881,191 @@ const DashboardPage = () => {
 
   if (loading && estates.length === 0 && !pendingCreate) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="neo-card-static text-center max-w-md neo-slide-up">
-          <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-          <h2 className="text-2xl mb-3">{t("dashboard.loadingVault")}</h2>
-          <p className="text-muted-foreground font-medium">{t("dashboard.fetchingData")}</p>
+      <AppFrame head={<PageHead label={t("dashboard.title")} backTo="/" backLabel={t("common.home")} />}>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="rise-in text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin" strokeWidth={2} />
+            <h2 className="ed-h3 mt-6">{t("dashboard.loadingVault")}</h2>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              {t("dashboard.fetchingData")}
+            </p>
+          </div>
         </div>
-      </div>
+      </AppFrame>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader
-        title={t("dashboard.title")}
-        onDisconnect={handleDisconnect}
-        onConnectWallet={() => setWalletDialogOpen(true)}
-      />
-
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-10 neo-slide-up">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-[44px] tracking-tight font-display">
-            {t("dashboard.yourEstates")} <span className="text-muted-foreground">({estates.length})</span>
-          </h1>
-          <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
-            <Plus className="h-5 w-5" /> {t("dashboard.newEstate")}
-          </Button>
-        </div>
-
-        {pendingCreate && (
-          <div className="neo-card-static bg-accent-yellow/20">
-            <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <p className="font-medium">{t("dashboard.pendingCreate")}</p>
-            </div>
-            {pendingTxId && (
-              <a
-                href={getSolanaExplorerTxUrl(pendingTxId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold text-accent-cyan hover:underline flex items-center gap-1 mt-2"
-              >
-                {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </div>
-        )}
-
-        {estates.length === 0 && !pendingCreate && (
-          <div className="text-center py-16" data-tour="dashboard-actions">
-            {/* Big illustration */}
-            <div className="relative inline-block mb-8">
-              <div className="w-32 h-32 rounded-3xl neo-border bg-secondary flex items-center justify-center" style={{ boxShadow: "8px 8px 0 0 hsl(var(--foreground))" }}>
-                <svg className="w-16 h-16 text-muted-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-16L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-              </div>
-              <div className="absolute -top-2 -right-2 w-10 h-10 rounded-xl bg-accent-pink neo-border flex items-center justify-center" style={{ boxShadow: "4px 4px 0 0 hsl(var(--foreground))" }}>
-                <span className="text-lg">✦</span>
-              </div>
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl mb-3">
-              {isConnected ? t("dashboard.noVaultYet") : t("dashboard.connectWallet")}
-            </h2>
-            <p className="text-muted-foreground font-medium mb-8 max-w-sm mx-auto">
-              {isConnected
-                ? t("dashboard.noVaultDesc")
-                : t("dashboard.connectDesc")}
-            </p>
-            <div className="flex flex-col items-center gap-3">
-              {isConnected ? (
-                <Button variant="yellow" size="lg" onClick={() => navigate("/create-vault")}>
-                  {t("dashboard.createYourVault")}
+    <>
+      <AppFrame
+        head={
+          <PageHead
+            label={t("dashboard.title")}
+            backTo="/"
+            backLabel={t("common.home")}
+            right={
+              <>
+                {isConnected ? (
+                  <Button variant="ghost" size="sm" onClick={handleDisconnect} className="hidden sm:inline-flex">
+                    {t("common.disconnect")}
+                  </Button>
+                ) : null}
+                <Button variant="yellow" size="sm" onClick={() => navigate("/create-vault")}>
+                  <Plus className="h-3.5 w-3.5" /> {t("dashboard.newEstate")}
                 </Button>
-              ) : (
-                <Button variant="yellow" size="lg" onClick={() => setWalletDialogOpen(true)}>
-                  <Wallet className="h-5 w-5" /> {t("dashboard.connectWallet")}
-                </Button>
-              )}
-              <button
-                onClick={() => navigate("/claim")}
-                className="text-sm font-semibold underline underline-offset-4 hover:text-accent-pink transition-colors"
-              >
-                {t("dashboard.namedAsHeir")}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {estates.length > 1 && (
-          <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
-            {stripEntries.map(({ estate: e, index: i }) => (
-              <EstatePillButton
-                key={e.estatePda}
-                estate={e}
-                selected={i === selectedIndex}
-                onClick={() => setSelectedIndex(i)}
-              />
-            ))}
-            {estates.length > ESTATE_STRIP_CAP && (
-              <button
-                onClick={() => setSwitcherOpen(true)}
-                aria-label={`${t("dashboard.viewAllEstates")} (${estates.length})`}
-                className="neo-border border-dashed rounded-xl px-3 py-2 w-44 shrink-0 min-h-[56px] flex flex-col items-start justify-center gap-0.5 bg-accent-purple/10 text-left transition-colors hover:bg-accent-purple/20"
-              >
-                <span className="text-sm font-semibold">+{estates.length - ESTATE_STRIP_CAP} {t("dashboard.more")}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("dashboard.viewAllEstates")}
-                </span>
-              </button>
-            )}
-          </div>
-        )}
-
-        {selectedEstate && (
-          <div data-tour="dashboard-estate">
-            <EstateCard estate={selectedEstate} />
-          </div>
-        )}
-      </div>
-
-      <Dialog
-        open={switcherOpen}
-        onOpenChange={(open) => {
-          setSwitcherOpen(open);
-          if (!open) setSwitcherQuery("");
-        }}
+              </>
+            }
+          />
+        }
       >
-        <DialogContent className="neo-card-static max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">{t("dashboard.allEstates")}</DialogTitle>
-            <DialogDescription className="font-medium">
-              {t("dashboard.totalClickToSwitch", { count: estates.length })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="relative">
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-              strokeWidth={2.5}
-            />
-            <input
-              type="text"
-              value={switcherQuery}
-              onChange={(e) => setSwitcherQuery(e.target.value)}
-              placeholder={t("dashboard.searchEstates")}
-              aria-label={t("dashboard.searchEstatesAria")}
-              autoFocus
-              className="neo-input pl-10"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2 max-h-[360px] overflow-y-auto pr-1">
-            {filteredSwitcherEstates.length === 0 ? (
-              <p className="col-span-2 text-sm font-medium text-muted-foreground text-center py-8">
-                {t("dashboard.noMatch")} &ldquo;{switcherQuery}&rdquo;.
+        <div className="rise-in space-y-6">
+          {/* The page opens on its own headline, the way a landing section does:
+              what you are looking at, and how much of it there is. With nothing
+              to count, the empty state below carries the page instead. */}
+          {estates.length > 0 && (
+            <h1 className="ed-h2">
+              {t("dashboard.yourEstates")}{" "}
+              <span className="text-muted-foreground tabular-nums">({estates.length})</span>
+            </h1>
+          )}
+
+          {pendingCreate && (
+            <Panel tone="soft" className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" strokeWidth={2} />
+              <p className="text-sm font-medium">{t("dashboard.pendingCreate")}</p>
+              {pendingTxId && (
+                <a
+                  href={getSolanaExplorerTxUrl(pendingTxId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] underline-offset-4 hover:underline"
+                >
+                  {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </Panel>
+          )}
+
+          {estates.length === 0 && !pendingCreate && (
+            /* Nothing to lay out yet, so the screen is composed rather than
+               filled: the mark, the ask, and the two ways forward, centred. */
+            <div className="py-10 text-center md:py-16" data-tour="dashboard-actions">
+              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-xl border border-tile-line bg-tile-soft md:h-32 md:w-32">
+                <VaultMark className="h-11 w-11 text-foreground/25 md:h-12 md:w-12" />
+              </div>
+
+              <h2 className="ed-h2 mt-8">
+                {isConnected ? t("dashboard.noVaultYet") : t("dashboard.connectWallet")}
+              </h2>
+              <p className="ed-lede mx-auto mt-4 max-w-[46ch] text-muted-foreground">
+                {isConnected ? t("dashboard.noVaultDesc") : t("dashboard.connectDesc")}
               </p>
-            ) : (
-              filteredSwitcherEstates.map(({ estate: e, index: i }) => (
-                <EstatePillButton
+
+              <div className="mt-8 flex flex-col items-center gap-4">
+                {isConnected ? (
+                  <Button variant="flat" size="lg" onClick={() => navigate("/create-vault")}>
+                    {t("dashboard.createYourVault")}
+                  </Button>
+                ) : (
+                  <Button variant="flat" size="lg" onClick={() => setWalletDialogOpen(true)}>
+                    <Wallet className="h-4 w-4" /> {t("dashboard.connectWallet")}
+                  </Button>
+                )}
+                {/* A sentence, so it is set as one: a link, not a control
+                    shouting in tracked capitals. */}
+                <button
+                  onClick={() => navigate("/claim")}
+                  className="text-sm font-semibold underline underline-offset-4 transition-colors hover:text-muted-foreground"
+                >
+                  {t("dashboard.namedAsHeir")}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {estates.length > 1 && (
+            <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1">
+              {stripEntries.map(({ estate: e, index: i }) => (
+                <EstateChip
                   key={e.estatePda}
                   estate={e}
                   selected={i === selectedIndex}
-                  fullWidth
-                  onClick={() => {
-                    setSelectedIndex(i);
-                    setSwitcherOpen(false);
-                    setSwitcherQuery("");
-                  }}
+                  onClick={() => setSelectedIndex(i)}
                 />
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+              ))}
+              {estates.length > ESTATE_STRIP_CAP && (
+                <button
+                  onClick={() => setSwitcherOpen(true)}
+                  aria-label={`${t("dashboard.viewAllEstates")} (${estates.length})`}
+                  className="flex w-40 shrink-0 flex-col items-start justify-center gap-1 rounded-lg border border-dashed border-tile-line px-3.5 py-2.5 text-left transition-colors hover:border-foreground hover:bg-tile-soft"
+                >
+                  <span className="text-sm font-semibold">
+                    +{estates.length - ESTATE_STRIP_CAP} {t("dashboard.more")}
+                  </span>
+                  <span className="cap truncate">{t("dashboard.viewAllEstates")}</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {selectedEstate && (
+            <div data-tour="dashboard-estate">
+              <EstateCard estate={selectedEstate} />
+            </div>
+          )}
+        </div>
+      </AppFrame>
+
+      <Sheet
+        open={switcherOpen}
+        size="lg"
+        title={t("dashboard.allEstates")}
+        caption={t("dashboard.totalClickToSwitch", { count: estates.length })}
+        onClose={() => {
+          setSwitcherOpen(false);
+          setSwitcherQuery("");
+        }}
+      >
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            strokeWidth={2}
+          />
+          <input
+            type="text"
+            value={switcherQuery}
+            onChange={(e) => setSwitcherQuery(e.target.value)}
+            placeholder={t("dashboard.searchEstates")}
+            aria-label={t("dashboard.searchEstatesAria")}
+            autoFocus
+            className="field pl-10"
+          />
+        </div>
+        <div className="mt-4 grid max-h-[360px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+          {filteredSwitcherEstates.length === 0 ? (
+            <p className="col-span-full py-10 text-center text-sm font-medium text-muted-foreground">
+              {t("dashboard.noMatch")} &ldquo;{switcherQuery}&rdquo;.
+            </p>
+          ) : (
+            filteredSwitcherEstates.map(({ estate: e, index: i }) => (
+              <EstateChip
+                key={e.estatePda}
+                estate={e}
+                selected={i === selectedIndex}
+                fullWidth
+                onClick={() => {
+                  setSelectedIndex(i);
+                  setSwitcherOpen(false);
+                  setSwitcherQuery("");
+                }}
+              />
+            ))
+          )}
+        </div>
+      </Sheet>
 
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
-    </div>
+    </>
   );
 };
 

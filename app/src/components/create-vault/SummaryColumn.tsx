@@ -49,98 +49,95 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
 
   return (
     <div>
-      <div className="text-xs font-bold uppercase tracking-[3px] text-muted-foreground mb-5">
-        {t("createVault.wizard.estateSoFar")}
-      </div>
+      <p className="cap cap-ink">{t("createVault.wizard.estateSoFar")}</p>
 
-      {/* Heir preview */}
-      <div className="bg-card border-4 border-foreground rounded-[14px] p-5 shadow-[5px_5px_0_0_hsl(var(--foreground))]">
-        <div className="flex items-center gap-3.5 mb-2.5">
-          <div className="w-11 h-11 rounded-[10px] bg-[hsl(var(--step-accent))] border-4 border-foreground flex items-center justify-center font-bold text-lg text-foreground shrink-0">
-            {displayLabel.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="font-bold text-base">{displayLabel}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {heirAddress ? truncateAddress(heirAddress, 4) : t("createVault.wizard.noAddressYet")}
-            </div>
-          </div>
-        </div>
-        <div className="text-[11px] text-muted-foreground">{t("createVault.wizard.allocation100Single")}</div>
+      {/* Who it goes to, drawn as a single line entry: initial, name, address.
+          It is the one thing in the rail that is a person rather than a number. */}
+      <div className="mt-4 flex items-center gap-3 rounded-lg border border-tile-line bg-background px-4 py-3.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-accent-yellow bg-accent-yellow font-display text-sm font-semibold">
+          {displayLabel.charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold">{displayLabel}</span>
+          <span className="mt-0.5 block truncate font-mono text-[11px] text-muted-foreground">
+            {heirAddress ? truncateAddress(heirAddress, 4) : t("createVault.wizard.noAddressYet")}
+          </span>
+        </span>
       </div>
+      <p className="mt-2 text-[11px] font-medium text-muted-foreground">
+        {t("createVault.wizard.allocation100Single")}
+      </p>
 
-      {/* Assets */}
-      <div className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground mt-6 mb-2.5">
-        {t("createVault.wizard.assets")}
-      </div>
+      <p className="cap mt-7">{t("createVault.wizard.assets")}</p>
       {solAmount <= 0 && selectedEntries.length === 0 ? (
-        <div className="text-sm text-gray-400">{t("createVault.wizard.noneYet")}</div>
+        <p className="mt-2 text-sm font-medium text-muted-foreground">
+          {t("createVault.wizard.noneYet")}
+        </p>
       ) : (
-        <div className="space-y-2.5">
+        <div className="mt-1">
           {solAmount > 0 && (
-            <div className="border-2 border-foreground rounded-[10px] p-3 bg-card">
-              <div className="flex justify-between text-sm font-bold">
-                <span>SOL</span>
-                <span className="font-normal text-muted-foreground">{solAmount} SOL</span>
-              </div>
+            <div className="data-row">
+              <span className="data-k">SOL</span>
+              <span className="data-v tabular-nums">{solAmount} SOL</span>
             </div>
           )}
           {selectedEntries.map(([mint, sel]) => {
             const tok = (tokens ?? []).find((t) => t.mint === mint);
             if (!tok) return null;
             return (
-              <div key={mint} className="border-2 border-foreground rounded-[10px] p-3 bg-card">
-                <div className="flex justify-between text-sm font-bold">
-                  <span>{tok.symbol || tok.label}</span>
-                  <span className="font-normal text-muted-foreground">{formatUiAmount(sel.amount)}</span>
-                </div>
+              <div key={mint} className="data-row">
+                <span className="data-k">{tok.symbol || tok.label}</span>
+                <span className="data-v tabular-nums">{formatUiAmount(sel.amount)}</span>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Rules */}
-      <div className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground mt-6 mb-2.5">
-        {t("createVault.wizard.rules")}
-      </div>
-      <div className="space-y-0">
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.interval")}</span>
-          <span className={`font-bold ${step >= 2 ? "" : "text-gray-400 font-normal"}`}>
-            {step >= 2 ? `${intervalDays} ${t("createVault.wizard.daysShort")}` : t("createVault.wizard.step3Placeholder")}
+      <p className="cap mt-7">{t("createVault.wizard.rules")}</p>
+      <div className="mt-1">
+        <div className="data-row">
+          <span className="data-k">{t("createVault.wizard.interval")}</span>
+          <span className={step >= 2 ? "data-v tabular-nums" : "text-sm font-medium text-muted-foreground/60"}>
+            {step >= 2
+              ? `${intervalDays} ${t("createVault.wizard.daysShort")}`
+              : t("createVault.wizard.step3Placeholder")}
           </span>
         </div>
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.grace")}</span>
-          <span className={`font-bold ${step >= 2 ? "" : "text-gray-400 font-normal"}`}>
-            {step >= 2 ? `${graceDays} ${t("createVault.wizard.daysShort")}` : t("createVault.wizard.step3Placeholder")}
+        <div className="data-row">
+          <span className="data-k">{t("createVault.wizard.grace")}</span>
+          <span className={step >= 2 ? "data-v tabular-nums" : "text-sm font-medium text-muted-foreground/60"}>
+            {step >= 2
+              ? `${graceDays} ${t("createVault.wizard.daysShort")}`
+              : t("createVault.wizard.step3Placeholder")}
           </span>
         </div>
         {step >= 2 && (
-          <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-            <span className="text-muted-foreground">{t("createVault.wizard.total")}</span>
-            <span className="font-bold">{totalDays} {t("createVault.wizard.daysShort")}</span>
+          <div className="data-row">
+            <span className="data-k">{t("createVault.wizard.total")}</span>
+            <span className="data-v tabular-nums">
+              {totalDays} {t("createVault.wizard.daysShort")}
+            </span>
           </div>
         )}
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.guardianShort")}</span>
-          <span className={delegate ? "font-bold" : "text-gray-400 font-normal"}>
+        <div className="data-row">
+          <span className="data-k">{t("createVault.wizard.guardianShort")}</span>
+          <span className={delegate ? "data-v font-mono text-xs" : "text-sm font-medium text-muted-foreground/60"}>
             {delegate ? truncateAddress(delegate, 4) : t("createVault.wizard.notSet")}
           </span>
         </div>
-        <div className="flex justify-between items-baseline py-2 border-b-2 border-dashed border-gray-200 text-sm">
-          <span className="text-muted-foreground">{t("createVault.wizard.signerShort")}</span>
-          <span className={hbSigner ? "font-bold" : "text-gray-400 font-normal"}>
+        <div className="data-row">
+          <span className="data-k">{t("createVault.wizard.signerShort")}</span>
+          <span className={hbSigner ? "data-v font-mono text-xs" : "text-sm font-medium text-muted-foreground/60"}>
             {hbSigner ? truncateAddress(hbSigner, 4) : t("createVault.wizard.notSet")}
           </span>
         </div>
       </div>
 
-      {/* Tip */}
-      <div className="mt-6 border-4 border-foreground rounded-[12px] bg-[#FEF9C3] p-4 text-sm leading-relaxed">
-        <b className="block mb-1">💡 {TIP_TITLES[step]}</b>
-        {TIPS[step]}
+      {/* One tip per step, set as a note rather than as a coloured callout. */}
+      <div className="mt-7 border-t border-tile-line pt-5">
+        <p className="cap">{TIP_TITLES[step]}</p>
+        <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground">{TIPS[step]}</p>
       </div>
     </div>
   );

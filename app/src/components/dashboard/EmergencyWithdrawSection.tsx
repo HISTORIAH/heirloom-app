@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
@@ -42,17 +43,21 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
 
   return (
     <>
-      <button
+      {/* The one irreversible action on the page. It stays an outline until
+          hovered — red type on paper, not a red button waiting to be hit. */}
+      <Button
+        variant="destructive-outline"
+        size="sm"
+        className="w-full"
         onClick={() => setWithdrawConfirmOpen(true)}
         disabled={withdrawing}
-        className="w-full neo-border rounded-xl h-12 bg-accent-red text-primary-foreground font-bold text-sm uppercase tracking-wide shadow-[4px_4px_0_0_hsl(var(--foreground))] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_hsl(var(--foreground))] disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {withdrawing ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.withdrawing")}</>
         ) : (
           <><AlertTriangle className="h-4 w-4" /> {t("dashboard.manage.closeEstate")}</>
         )}
-      </button>
+      </Button>
 
       <ConfirmDialog
         open={withdrawConfirmOpen}

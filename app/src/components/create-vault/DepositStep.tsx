@@ -3,12 +3,9 @@ import TokenAvatar from "@/components/TokenAvatar";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
 import { formatUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
-import {
-  CircleDollarSign,
-  Loader2,
-  Search,
-  ChevronDown,
-} from "lucide-react";
+import { CircleDollarSign, Loader2, Search, ChevronDown, Check } from "lucide-react";
+import StepHead from "@/components/create-vault/StepHead";
+import { cn } from "@/lib/utils";
 import type { TokenSelection } from "@/pages/CreateVault";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -118,45 +115,37 @@ const DepositStep: React.FC<Props> = ({
 
   return (
     <div>
-      {/* Step header */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className="bg-accent-orange border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
-          <CircleDollarSign className="h-5 w-5" strokeWidth={2} />
-        </div>
-        <div>
-          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-orange">{t("createVault.wizard.step2")}</div>
-          <h3 className="text-2xl font-display">{t("createVault.wizard.whatProtecting")}</h3>
-        </div>
-      </div>
+      <StepHead
+        step={t("createVault.wizard.step2")}
+        title={t("createVault.wizard.whatProtecting")}
+        icon={<CircleDollarSign strokeWidth={2} />}
+      />
 
-      {/* Tabs */}
-      <div className="flex gap-2.5 mb-5">
+      <div className="seg">
         <button
           onClick={() => setActiveTab("sol")}
-          className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest border-4 border-foreground transition-all duration-150 ${
-            activeTab === "sol"
-              ? "bg-[hsl(var(--step-accent))] shadow-[4px_4px_0_0_hsl(var(--foreground))]"
-              : "bg-secondary hover:bg-secondary/80"
-          }`}
+          data-active={activeTab === "sol"}
+          className="seg-item"
         >
           {t("createVault.wizard.depositSol")}
         </button>
         <button
           onClick={() => setActiveTab("tokens")}
-          className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest border-4 border-foreground transition-all duration-150 ${
-            activeTab === "tokens"
-              ? "bg-[hsl(var(--step-accent))] shadow-[4px_4px_0_0_hsl(var(--foreground))]"
-              : "bg-secondary hover:bg-secondary/80"
-          }`}
+          data-active={activeTab === "tokens"}
+          className="seg-item"
         >
           {t("createVault.wizard.depositTokens")}
         </button>
       </div>
 
-      {/* SOL Tab */}
+      {/* SOL */}
       {activeTab === "sol" && (
-        <div className="space-y-4">
+        <div className="mt-6">
+          <label className="cap mb-2 block" htmlFor="deposit-sol">
+            {SOL_LABEL}
+          </label>
           <input
+            id="deposit-sol"
             type="number"
             min={0}
             max={solBalance}
@@ -168,16 +157,18 @@ const DepositStep: React.FC<Props> = ({
             }}
             placeholder="0"
             aria-label={`${SOL_LABEL} amount`}
-            className="w-full border-4 border-foreground rounded-xl px-5 py-6 bg-background font-bold text-3xl text-center transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+            className="field field-num py-6 text-4xl"
           />
-          <div className="flex gap-2.5 flex-wrap">
+
+          <div className="mt-3 flex flex-wrap gap-2">
             <button
               onClick={() => setSolAmount(0)}
-              className={`border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all duration-150 ${
+              className={cn(
+                "rounded-lg border px-3.5 py-2 text-xs font-semibold transition-colors",
                 solAmount <= 0
-                  ? "bg-accent-yellow shadow-[3px_3px_0_0_hsl(var(--foreground))]"
-                  : "bg-secondary hover:bg-accent-yellow/40"
-              }`}
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-tile-line hover:border-foreground/40 hover:bg-tile-soft",
+              )}
             >
               {t("createVault.wizard.skip")}
             </button>
@@ -186,7 +177,7 @@ const DepositStep: React.FC<Props> = ({
                 key={pct}
                 onClick={() => setSolByPercent(pct)}
                 disabled={!isConnected || solBalance <= 0}
-                className="border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg border border-tile-line px-3.5 py-2 text-xs font-semibold tabular-nums transition-colors hover:border-foreground/40 hover:bg-tile-soft disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {pct}%
               </button>
@@ -194,34 +185,34 @@ const DepositStep: React.FC<Props> = ({
             <button
               onClick={() => setSolByPercent(100)}
               disabled={!isConnected || solBalance <= 0}
-              className="border-4 border-foreground rounded-xl px-4 py-2 text-sm font-bold bg-[hsl(var(--step-accent))] transition-all duration-150 shadow-[3px_3px_0_0_hsl(var(--foreground))] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border border-accent-yellow bg-accent-yellow px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.1em] transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {t("createVault.wizard.max")}
             </button>
           </div>
+
           {isConnected && (
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="mt-3 text-xs font-medium text-muted-foreground">
               {t("createVault.wizard.balance")}{" "}
               {solLoading
                 ? "…"
                 : `${solBalance.toLocaleString(undefined, {
                     maximumFractionDigits: Math.min(6, SOL_DECIMALS),
-                  })} SOL`}
-              {" "}{t("createVault.wizard.keepLittle")}
+                  })} SOL`}{" "}
+              {t("createVault.wizard.keepLittle")}
             </p>
           )}
         </div>
       )}
 
-      {/* Tokens Tab */}
+      {/* Tokens */}
       {activeTab === "tokens" && (
-        <div className="space-y-3">
-          {/* Search + filters */}
-          <div className="flex gap-2.5 mb-2">
-            <div className="relative flex-1">
+        <div className="mt-6">
+          <div className="flex flex-wrap gap-2">
+            <div className="relative min-w-[12rem] flex-1">
               <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-                strokeWidth={2.5}
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                strokeWidth={2}
               />
               <input
                 type="text"
@@ -229,40 +220,49 @@ const DepositStep: React.FC<Props> = ({
                 onChange={(e) => setTokenSearch(e.target.value)}
                 placeholder={t("createVault.wizard.searchTokens")}
                 aria-label={t("createVault.wizard.searchTokensAria")}
-                className="w-full border-4 border-foreground rounded-xl pl-10 pr-4 py-3 bg-background font-bold text-sm transition-all duration-150 shadow-[4px_4px_0_0_hsl(var(--foreground))] focus:shadow-[6px_6px_0_0_hsl(var(--foreground))] focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none"
+                className="field pl-10"
               />
             </div>
             <button
               onClick={() => setTokenSort((s) => (s === "balance" ? "name" : "balance"))}
-              className="border-4 border-foreground rounded-xl px-3 py-2 text-xs font-bold uppercase bg-background hover:bg-secondary transition-colors flex items-center gap-1 shrink-0"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-tile-line px-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:border-foreground hover:bg-tile-soft"
             >
-              {t("createVault.wizard.sort")} {tokenSort === "balance" ? t("createVault.wizard.bal") : t("createVault.wizard.name")}
-              <ChevronDown className="h-3 w-3" strokeWidth={2.5} />
+              {t("createVault.wizard.sort")}{" "}
+              {tokenSort === "balance" ? t("createVault.wizard.bal") : t("createVault.wizard.name")}
+              <ChevronDown className="h-3 w-3" strokeWidth={2} />
             </button>
             <button
               onClick={() => setHideDust((v) => !v)}
-              className={`border-4 border-foreground rounded-xl px-3 py-2 text-xs font-bold uppercase transition-colors flex items-center gap-1 shrink-0 ${
+              aria-pressed={hideDust}
+              className={cn(
+                "flex shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
                 hideDust
-                  ? "bg-[hsl(var(--step-accent))] text-foreground"
-                  : "bg-background hover:bg-secondary"
-              }`}
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-tile-line hover:border-foreground hover:bg-tile-soft",
+              )}
             >
               {t("createVault.wizard.hideDust")}
-              {hideDust && <span>✓</span>}
+              {hideDust && <Check className="h-3 w-3" strokeWidth={2.5} />}
             </button>
           </div>
-          <p className="text-xs font-medium text-muted-foreground">
+
+          <p className="mt-2.5 text-xs font-medium text-muted-foreground">
             {t("createVault.wizard.showing", { shown: displayTokens.length, total: filteredTokens.length })}
             {hideDust && ` ${t("createVault.wizard.dustHidden")}`}
           </p>
 
-          {/* Token list */}
-          <div className={`overflow-y-auto ${showAllTokens ? "max-h-[600px]" : "max-h-96"} border-4 border-foreground rounded-xl`}>
+          <div
+            className={cn(
+              "mt-3 overflow-y-auto rounded-xl border border-tile-line",
+              showAllTokens ? "max-h-[600px]" : "max-h-96",
+            )}
+          >
             {displayTokens.length === 0 && (
-              <p className="text-sm font-medium text-muted-foreground px-5 py-6 text-center">
+              <p className="px-5 py-8 text-center text-sm font-medium text-muted-foreground">
                 {t("createVault.wizard.noTokensMatch")} &ldquo;{tokenSearch}&rdquo;.
               </p>
             )}
+
             {displayTokens.map((tok) => {
               const isSelected = tokenSelections[tok.mint]?.amount > 0;
               const sel = tokenSelections[tok.mint];
@@ -270,70 +270,61 @@ const DepositStep: React.FC<Props> = ({
               return (
                 <div
                   key={tok.mint}
-                  className={`border-b-2 border-foreground/5 transition-all duration-150 ${
-                    isSelected ? "bg-[hsl(var(--step-accent)/0.1)]" : "hover:bg-accent-cyan/10"
-                  }`}
+                  className={cn(
+                    "border-b border-tile-line transition-colors last:border-b-0",
+                    isSelected ? "bg-tile-soft" : "hover:bg-tile-soft/60",
+                  )}
                 >
-                  {/* Token row */}
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <TokenAvatar
-                      image={tok.image}
-                      label={tok.label}
-                      size="md"
-                      accent={isSelected ? "bg-[hsl(var(--step-accent))]" : "bg-accent-cyan"}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm leading-tight truncate">
-                        {tok.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
+                    <TokenAvatar image={tok.image} label={tok.label} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold leading-tight">{tok.label}</p>
+                      <p className="truncate text-xs font-medium text-muted-foreground">
                         {tok.name && tok.name !== tok.label
                           ? tok.name
                           : `${tok.mint.slice(0, 8)}…${tok.mint.slice(-4)}`}
                       </p>
                     </div>
-                    <p className="font-bold text-sm tabular-nums shrink-0">
-                      {formatUiAmount(tok.uiAmount)}
-                    </p>
+                    <p className="num shrink-0 text-sm">{formatUiAmount(tok.uiAmount)}</p>
                     <button
                       onClick={() => toggleToken(tok.mint)}
-                      className={`border-4 border-foreground rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                      className={cn(
+                        "shrink-0 rounded-lg border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
                         isSelected
-                          ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                          : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.6)]"
-                      }`}
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-tile-line bg-background hover:border-foreground hover:bg-background",
+                      )}
                     >
-                      {isSelected ? "✓" : t("createVault.wizard.select")}
+                      {isSelected ? <Check className="h-3 w-3" strokeWidth={2.5} /> : t("createVault.wizard.select")}
                     </button>
                   </div>
 
-                  {/* Amount editor for selected token */}
                   {isSelected && (
-                    <div className="px-4 pb-3 pt-0 flex items-center gap-2">
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <span className="text-xs font-bold text-muted-foreground shrink-0">{t("createVault.wizard.amount")}</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={tok.uiAmount}
-                          step={1 / Math.pow(10, Math.min(6, tok.decimals))}
-                          value={sel.amount}
-                          onChange={(e) => updateTokenAmount(tok.mint, e.target.value)}
-                          className="flex-1 min-w-0 text-sm font-bold border-2 border-foreground rounded-lg px-2 py-0.5 bg-background text-center focus:outline-none focus:shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                        />
-                      </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        {[25, 50, 75, 100].map((p) => (
+                    <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
+                      <span className="cap shrink-0">{t("createVault.wizard.amount")}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={tok.uiAmount}
+                        step={1 / Math.pow(10, Math.min(6, tok.decimals))}
+                        value={sel.amount}
+                        onChange={(e) => updateTokenAmount(tok.mint, e.target.value)}
+                        aria-label={`${tok.label} ${t("createVault.wizard.amount")}`}
+                        className="field min-w-0 flex-1 px-3 py-1.5 text-center text-sm tabular-nums"
+                      />
+                      <div className="flex shrink-0 gap-1.5">
+                        {[25, 50, 75, 100].map((pct) => (
                           <button
-                            key={p}
-                            onClick={() => setTokenByPercent(tok.mint, p)}
-                            className={`font-mono text-[11px] font-bold border-2 border-foreground rounded-full px-2 py-0.5 transition-all ${
-                              sel.pct === p
-                                ? "bg-[hsl(var(--step-accent))]"
-                                : "bg-background hover:bg-secondary"
-                            }`}
+                            key={pct}
+                            onClick={() => setTokenByPercent(tok.mint, pct)}
+                            className={cn(
+                              "rounded-md border px-2 py-1 text-[10px] font-bold tabular-nums transition-colors",
+                              sel.pct === pct
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-tile-line bg-background hover:border-foreground/40",
+                            )}
                           >
-                            {p === 100 ? t("createVault.wizard.max") : `${p}%`}
+                            {pct === 100 ? t("createVault.wizard.max") : `${pct}%`}
                           </button>
                         ))}
                       </div>
@@ -343,12 +334,11 @@ const DepositStep: React.FC<Props> = ({
               );
             })}
 
-            {/* Show all / Show less */}
             {hasMoreTokens && (
-              <div className="p-2 bg-secondary/40 border-t-4 border-foreground text-center">
+              <div className="border-t border-tile-line bg-tile-soft p-2.5 text-center">
                 <button
                   onClick={() => setShowAllTokens((v) => !v)}
-                  className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                  className="cap underline-offset-4 transition-colors hover:text-foreground hover:underline"
                 >
                   {showAllTokens
                     ? t("createVault.wizard.showLess")
@@ -361,14 +351,14 @@ const DepositStep: React.FC<Props> = ({
       )}
 
       {tokensLoading && (
-        <div className="flex items-center gap-2 mt-3">
-          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+        <div className="mt-3 flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
           <span className="text-sm font-medium">{t("createVault.wizard.scanning")}</span>
         </div>
       )}
 
       {!tokensLoading && (tokens ?? []).length === 0 && (
-        <p className="text-sm font-medium text-muted-foreground mt-3">
+        <p className="mt-3 text-sm font-medium text-muted-foreground">
           {t("createVault.wizard.noSplTokens")}
         </p>
       )}

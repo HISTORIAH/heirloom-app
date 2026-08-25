@@ -1,4 +1,5 @@
-import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
+import { Check, Loader2, ArrowRight } from "lucide-react";
+import { createPortal } from "react-dom";
 import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -8,6 +9,11 @@ interface SubmitOverlayProps {
   txId: string | null;
 }
 
+/**
+ * The page while a signature is out. It is deliberately the quietest screen in
+ * the product: one mark, one line of status, and the only link worth having
+ * while you wait — the transaction itself.
+ */
 const SubmitOverlay: React.FC<SubmitOverlayProps> = ({ submitState, submitProgress, txId }) => {
   const { t } = useTranslation("app");
   const isComplete = submitState === "complete";
@@ -15,55 +21,50 @@ const SubmitOverlay: React.FC<SubmitOverlayProps> = ({ submitState, submitProgre
 
   if (!isComplete && !isCreating) return null;
 
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-live="polite"
-      className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
-    >
-      <div className="neo-card-static text-center max-w-md w-full neo-slide-up">
-        {isComplete ? (
-          <>
-            <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10" strokeWidth={2.5} />
-            </div>
-            <h2 className="text-3xl mb-3">{t("createVault.wizard.estateCreated")}</h2>
-            <p className="text-lg font-medium text-muted-foreground mb-4">
-              {t("createVault.wizard.heartbeatLive")}
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="bg-accent-yellow neo-border rounded-full p-6 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.5} />
-            </div>
-            <h2 className="text-3xl mb-3">{t("createVault.wizard.creatingEstate")}</h2>
-            <p className="text-lg font-medium text-muted-foreground mb-4">
-              {submitProgress || t("createVault.wizard.confirmTx")}
-            </p>
-          </>
-        )}
-        <div className="flex flex-wrap gap-2 justify-center items-center">
-          {txId && (
-            <a
-              href={getSolanaExplorerTxUrl(txId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
-            >
-              {t("common.viewOnExplorer")} <ArrowRight className="h-4 w-4" />
-            </a>
+  return createPortal(
+    <div role="dialog" aria-modal="true" aria-live="polite" className="scrim z-[60]">
+      <div className="sheet rise-in my-auto max-w-md px-6 py-8 text-center">
+        <span
+          className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full border ${
+            isComplete ? "border-accent-sage bg-accent-sage" : "border-tile-line bg-tile-soft"
+          }`}
+        >
+          {isComplete ? (
+            <Check className="h-6 w-6" strokeWidth={2.5} />
+          ) : (
+            <Loader2 className="h-6 w-6 animate-spin" strokeWidth={2} />
           )}
-        </div>
+        </span>
+
+        <h2 className="mt-6 font-display text-2xl font-semibold tracking-[-0.03em]">
+          {isComplete ? t("createVault.wizard.estateCreated") : t("createVault.wizard.creatingEstate")}
+        </h2>
+        <p className="mt-2 text-sm font-medium text-muted-foreground">
+          {isComplete
+            ? t("createVault.wizard.heartbeatLive")
+            : submitProgress || t("createVault.wizard.confirmTx")}
+        </p>
+
+        {txId && (
+          <a
+            href={getSolanaExplorerTxUrl(txId)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg border border-tile-line px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:border-foreground hover:bg-tile-soft"
+          >
+            {t("common.viewOnExplorer")} <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+        )}
+
         {isComplete && (
-          <div className="flex items-center justify-center gap-2 mt-5 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+          <p className="mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
             {t("createVault.wizard.redirecting")}
-          </div>
+          </p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

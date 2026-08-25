@@ -45,6 +45,11 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .env.*
 !.env.example
 
+# cloudflare — wrangler reads local secrets from .dev.vars, and it is NOT
+# covered by the .env rules above
+.dev.vars
+.dev.vars.*
+
 # caches
 .eslintcache
 .cache

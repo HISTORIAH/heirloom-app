@@ -25,43 +25,44 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
   if (isActive && strategy?.type === "staking") {
     const staked = strategy;
     return (
-      <div className="flex items-center gap-2 flex-wrap mt-3">
-        <span className="inline-flex items-center gap-1 neo-border rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide bg-accent-lime/10 border-accent-lime/40">
-          <Sprout className="h-3 w-3 text-accent-lime" />
-          {staked.amount.toLocaleString(i18n.language, { maximumFractionDigits: 4 })} SOL
-          <span className="text-accent-lime">@ {staked.apy.toFixed(1)}%</span>
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-tile-line pt-4">
+        <span className="tag tag-live">
+          <Sprout className="h-3 w-3" />
+          {staked.amount.toLocaleString(i18n.language, { maximumFractionDigits: 4 })} SOL @{" "}
+          {staked.apy.toFixed(1)}%
         </span>
         <button
           onClick={onRecall}
           disabled={isWorking}
           className={cn(
-            "neo-border rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors shrink-0",
+            "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
             isWorking
-              ? "bg-secondary opacity-50"
-              : "bg-accent-yellow hover:bg-accent-yellow/90",
+              ? "border-tile-line bg-tile-soft opacity-50"
+              : "border-tile-line bg-background hover:border-foreground hover:bg-tile-soft",
           )}
         >
           {isWorking ? (
-            <Loader2 className="h-3 w-3 animate-spin inline" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            <ArrowLeftRight className="h-3 w-3 inline" />
+            <ArrowLeftRight className="h-3 w-3" />
           )}
-          <span className="ml-0.5">{t("yield.unstake")}</span>
+          {t("yield.unstake")}
         </button>
+
         {progressStep !== "idle" && progressStep !== "complete" && (
-          <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
-            <Loader2 className="h-3 w-3 animate-spin text-accent-lime" />
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
             {getProgressMessage(progressStep, "staking", t)}
           </span>
         )}
         {progressStep === "complete" && (
-          <span className="text-[10px] font-bold text-accent-lime flex items-center gap-1">
+          <span className="flex items-center gap-1 text-[10px] font-semibold">
             <CheckCircle2 className="h-3 w-3" />
             {t("yield.done")}
           </span>
         )}
 
-        <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1">
+        <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
           <Timer className="h-3 w-3" />
           {t("yield.rewardsEpoch")}
         </span>
@@ -69,27 +70,23 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
     );
   }
 
-  // Inactive
+  // Inactive: an offer, kept quiet — the balance above it is the headline.
   return (
-    <div className="flex items-center gap-2 flex-wrap mt-3">
+    <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-tile-line pt-4">
       <button
         onClick={onEnable}
         disabled={isWorking || solBalance <= 0}
         className={cn(
-          "neo-border rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shrink-0",
+          "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors",
           isWorking || solBalance <= 0
-            ? "bg-secondary opacity-50"
-            : "bg-accent-yellow hover:bg-accent-yellow/90",
+            ? "border-tile-line bg-tile-soft opacity-50"
+            : "border-accent-yellow bg-accent-yellow hover:brightness-95",
         )}
       >
-        {isWorking ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Sprout className="h-3 w-3" />
-        )}
+        {isWorking ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sprout className="h-3 w-3" />}
         {t("yield.stakeSol")}
       </button>
-      <span className="text-[10px] font-bold text-muted-foreground">
+      <span className="text-[11px] font-medium text-muted-foreground">
         {t("yield.approxApy", { apy: "6.2" })}
       </span>
     </div>

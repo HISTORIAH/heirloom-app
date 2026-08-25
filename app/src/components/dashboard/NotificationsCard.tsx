@@ -1,6 +1,9 @@
 import { Bell, Lock, Clock, AlertTriangle, type LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Panel } from "@/components/app/Panel";
 import { cn } from "@/lib/utils";
 import type { NotificationsCardStatus } from "@/types/notifications";
+import type { ButtonProps } from "@/components/ui/button";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -10,75 +13,78 @@ interface Props {
   onAction: () => void;
 }
 
+/**
+ * Notification state is a status line, not a colour scheme: the icon and the
+ * verb change, the panel does not. Only the two states that need something
+ * from the reader — expired, error — carry any colour at all.
+ */
 const STATE_META: Record<
   Exclude<NotificationsCardStatus, "loading">,
   {
     icon: LucideIcon;
-    badgeClass: string;
+    iconClass: string;
     textKey: string;
     textClass: string;
     buttonKey: string;
-    buttonClass: string;
+    buttonVariant: ButtonProps["variant"];
   }
 > = {
   locked: {
     icon: Lock,
-    badgeClass: "bg-secondary text-muted-foreground",
+    iconClass: "text-muted-foreground",
     textKey: "notifications.locked",
     textClass: "text-muted-foreground",
     buttonKey: "notifications.manage",
-    buttonClass: "bg-accent-cyan",
+    buttonVariant: "outline",
   },
   off: {
     icon: Bell,
-    badgeClass: "bg-accent-cyan",
+    iconClass: "text-muted-foreground",
     textKey: "notifications.off",
     textClass: "text-muted-foreground",
     buttonKey: "notifications.setUp",
-    buttonClass: "bg-accent-cyan",
+    buttonVariant: "yellow",
   },
   authorized: {
     icon: Bell,
-    badgeClass: "bg-accent-cyan",
+    iconClass: "text-foreground",
     textKey: "",
-    textClass: "text-green-700 font-semibold",
+    textClass: "text-foreground font-semibold",
     buttonKey: "notifications.edit",
-    buttonClass: "bg-background hover:bg-secondary",
+    buttonVariant: "outline",
   },
   expired: {
     icon: Clock,
-    badgeClass: "bg-accent-yellow",
+    iconClass: "text-foreground",
     textKey: "notifications.expired",
-    textClass: "text-amber-700 font-semibold",
+    textClass: "text-foreground font-semibold",
     buttonKey: "notifications.signIn",
-    buttonClass: "bg-accent-cyan",
+    buttonVariant: "yellow",
   },
   error: {
     icon: AlertTriangle,
-    badgeClass: "bg-accent-red text-white",
+    iconClass: "text-accent-red",
     textKey: "notifications.error",
-    textClass: "text-destructive font-semibold",
+    textClass: "text-accent-red font-semibold",
     buttonKey: "notifications.retry",
-    buttonClass: "bg-accent-red text-white",
+    buttonVariant: "destructive-outline",
   },
 };
 
 const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
   const { t } = useTranslation("app");
+
   if (status === "loading") {
     return (
-      <div className="neo-card-static">
+      <Panel>
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 flex-1 min-w-0">
-            <div className="h-10 w-10 rounded-xl bg-secondary animate-pulse shrink-0" />
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="h-3 w-24 rounded bg-secondary animate-pulse" />
-              <div className="h-3 w-44 rounded bg-secondary animate-pulse" />
-            </div>
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3 w-24 animate-pulse rounded bg-tile-soft" />
+            <div className="h-3 w-40 animate-pulse rounded bg-tile-soft" />
           </div>
-          <div className="h-9 w-20 rounded-lg bg-secondary animate-pulse shrink-0" />
+          <div className="h-9 w-20 shrink-0 animate-pulse rounded-lg bg-tile-soft" />
         </div>
-      </div>
+      </Panel>
     );
   }
 
@@ -86,31 +92,22 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
   const Icon = meta.icon;
 
   return (
-    <div className="neo-card-static">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <div className={cn("neo-border rounded-xl p-2 shrink-0", meta.badgeClass)}>
-            <Icon className="h-5 w-5" strokeWidth={2.5} />
-          </div>
+    <Panel>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.iconClass)} strokeWidth={2} />
           <div className="min-w-0">
-            <h3 className="text-xl leading-tight">{t("notifications.title")}</h3>
-            <p className={cn("text-sm truncate mt-0.5", meta.textClass)}>
+            <p className="cap cap-ink">{t("notifications.title")}</p>
+            <p className={cn("mt-1.5 truncate text-sm", meta.textClass)}>
               {status === "authorized" ? summary : t(meta.textKey)}
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onAction}
-          className={cn(
-            "neo-border rounded-xl px-5 py-2.5 font-bold text-sm text-center hover:opacity-90 transition-opacity shrink-0",
-            meta.buttonClass
-          )}
-        >
+        <Button variant={meta.buttonVariant} size="sm" onClick={onAction} className="shrink-0">
           {t(meta.buttonKey)}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Panel>
   );
 };
 

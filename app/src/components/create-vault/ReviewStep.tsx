@@ -1,4 +1,6 @@
-import { CheckCircle } from "lucide-react";
+import { Check, ClipboardCheck } from "lucide-react";
+import StepHead from "@/components/create-vault/StepHead";
+import { cn } from "@/lib/utils";
 import { SOL_DECIMALS, SECONDS_PER_DAY } from "@/lib/constants";
 import { formatUiAmount, truncateAddress } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
@@ -44,129 +46,140 @@ const ReviewStep: React.FC<Props> = ({
 
   return (
     <div>
-      {/* Step header */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className="bg-accent-lime border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
-          <CheckCircle className="h-5 w-5" strokeWidth={2} />
-        </div>
-        <div>
-          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-lime">{t("createVault.wizard.step4")}</div>
-          <h3 className="text-2xl font-display">{t("createVault.wizard.reviewConfirm")}</h3>
-        </div>
-      </div>
+      <StepHead
+        step={t("createVault.wizard.step4")}
+        title={t("createVault.wizard.reviewConfirm")}
+        icon={<ClipboardCheck strokeWidth={2} />}
+      />
 
-      {/* Two-column grid: Timing + Deposits */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        {/* Timing */}
-        <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.timing")}</span>
+      {/* Three blocks of ruled rows — timing, deposits, heir — each with the
+          one control that matters on a review screen: go back and change it. */}
+      <div className="grid grid-cols-1 gap-x-10 gap-y-8 md:grid-cols-2">
+        <section>
+          <div className="flex items-center gap-3">
+            <span className="cap">{t("createVault.wizard.timing")}</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
             <button
               onClick={() => onEdit(2)}
-              className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
+              className="cap underline-offset-4 transition-colors hover:text-foreground hover:underline"
             >
               {t("createVault.wizard.edit")}
             </button>
           </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm py-1">
-              <span className="text-muted-foreground">{t("createVault.wizard.interval")}</span>
-              <span className="font-bold">{heartbeatDays} {t("createVault.wizard.daysShort")}</span>
-            </div>
-            <div className="flex justify-between text-sm py-1">
-              <span className="text-muted-foreground">{t("createVault.wizard.grace")}</span>
-              <span className="font-bold">{graceDays} {t("createVault.wizard.daysShort")}</span>
-            </div>
-            <div className="flex justify-between text-sm py-2 border-t-2 border-foreground mt-2">
-              <span className="text-muted-foreground">{t("createVault.wizard.total")}</span>
-              <span className="font-bold">{totalDays} {t("createVault.wizard.daysShort")}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Deposits */}
-        <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.deposits")}</span>
-            <button
-              onClick={() => onEdit(1)}
-              className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
-            >
-              {t("createVault.wizard.edit")}
-            </button>
-          </div>
-          {solAmount > 0 && (
-            <div className="flex justify-between text-sm py-1">
-              <span className="text-muted-foreground">SOL</span>
-              <span className="font-bold">
-                {solAmount.toFixed(Math.min(6, SOL_DECIMALS))}
+          <div className="mt-2">
+            <div className="data-row">
+              <span className="data-k">{t("createVault.wizard.interval")}</span>
+              <span className="data-v tabular-nums">
+                {heartbeatDays} {t("createVault.wizard.daysShort")}
               </span>
             </div>
-          )}
-          {selectedTokenEntries.map(([mint, sel]) => {
-            const tok = (tokens ?? []).find((t) => t.mint === mint);
-            const tokLabel = tok?.symbol || tok?.label || mint.slice(0, 8);
-            return (
-              <div key={mint} className="flex justify-between text-sm py-1">
-                <span className="text-muted-foreground">
-                  {tokLabel} <span className="text-xs">({truncateAddress(mint, 4)})</span>
-                </span>
-                <span className="font-bold">{formatUiAmount(sel.amount)}</span>
-              </div>
-            );
-          })}
-          {totalAssets === 0 && (
-            <div className="text-sm text-muted-foreground">
-              {t("createVault.wizard.noDeposits")}
+            <div className="data-row">
+              <span className="data-k">{t("createVault.wizard.grace")}</span>
+              <span className="data-v tabular-nums">
+                {graceDays} {t("createVault.wizard.daysShort")}
+              </span>
             </div>
-          )}
-          <p className="text-xs text-muted-foreground mt-2 border-t-2 border-dashed border-gray-200 pt-2">
-            {t("createVault.wizard.assetTotal", { count: totalAssets })}
+            <div className="data-row">
+              <span className="data-k">{t("createVault.wizard.total")}</span>
+              <span className="data-v tabular-nums">
+                {totalDays} {t("createVault.wizard.daysShort")}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center gap-3">
+            <span className="cap">{t("createVault.wizard.deposits")}</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
+            <button
+              onClick={() => onEdit(1)}
+              className="cap underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {t("createVault.wizard.edit")}
+            </button>
+          </div>
+          <div className="mt-2">
+            {solAmount > 0 && (
+              <div className="data-row">
+                <span className="data-k">SOL</span>
+                <span className="data-v tabular-nums">
+                  {solAmount.toFixed(Math.min(6, SOL_DECIMALS))}
+                </span>
+              </div>
+            )}
+            {selectedTokenEntries.map(([mint, sel]) => {
+              const tok = (tokens ?? []).find((t) => t.mint === mint);
+              const tokLabel = tok?.symbol || tok?.label || mint.slice(0, 8);
+              return (
+                <div key={mint} className="data-row">
+                  <span className="data-k">
+                    {tokLabel}{" "}
+                    <span className="text-xs">({truncateAddress(mint, 4)})</span>
+                  </span>
+                  <span className="data-v tabular-nums">{formatUiAmount(sel.amount)}</span>
+                </div>
+              );
+            })}
+            {totalAssets === 0 && (
+              <p className="py-3 text-sm font-medium text-muted-foreground">
+                {t("createVault.wizard.noDeposits")}
+              </p>
+            )}
+            <p className="border-t border-tile-line pt-3 text-xs font-medium text-muted-foreground">
+              {t("createVault.wizard.assetTotal", { count: totalAssets })}
+            </p>
+          </div>
+        </section>
+
+        <section className="md:col-span-2">
+          <div className="flex items-center gap-3">
+            <span className="cap">{t("createVault.wizard.heir")}</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
+            <button
+              onClick={() => onEdit(0)}
+              className="cap underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {t("createVault.wizard.edit")}
+            </button>
+          </div>
+          <p className="mt-3 font-display text-lg font-semibold tracking-[-0.02em]">
+            {label} · {truncateAddress(heirAddress, 4)}
           </p>
-        </div>
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
+            {t("createVault.wizard.allocation100")}
+            {delegate && ` · ${t("createVault.wizard.guardianShort")} ${truncateAddress(delegate, 4)}`}
+            {hbSigner && ` · ${t("createVault.wizard.signerShort")} ${truncateAddress(hbSigner, 4)}`}
+          </p>
+        </section>
       </div>
 
-      {/* Heir */}
-      <div className="border-4 border-foreground rounded-[14px] p-5 bg-secondary/40 mb-5">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.heir")}</span>
-          <button
-            onClick={() => onEdit(0)}
-            className="font-mono font-bold text-xs border-2 border-foreground rounded-full px-3.5 py-1 bg-background hover:bg-secondary transition-colors"
-          >
-            {t("createVault.wizard.edit")}
-          </button>
-        </div>
-        <p className="font-bold text-base">
-          {label} · {truncateAddress(heirAddress, 4)}
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t("createVault.wizard.allocation100")}
-          {delegate && ` · ${t("createVault.wizard.guardianShort")} ${truncateAddress(delegate, 4)}`}
-          {hbSigner && ` · ${t("createVault.wizard.signerShort")} ${truncateAddress(hbSigner, 4)}`}
-        </p>
-      </div>
-
-      {/* Acknowledgment */}
+      {/* The acknowledgement is the last thing between the reader and an
+          on-chain estate, so it is a full-width control, not a footnote. */}
       <button
         onClick={() => setAcknowledged(!acknowledged)}
-        className={`w-full flex items-start gap-3.5 border-4 border-foreground rounded-xl p-4 cursor-pointer transition-colors ${
-          acknowledged ? "bg-[hsl(var(--step-accent)/0.1)]" : "bg-background"
-        }`}
+        aria-pressed={acknowledged}
+        className={cn(
+          "mt-8 flex w-full items-start gap-3.5 rounded-lg border p-4 text-left transition-colors",
+          acknowledged
+            ? "border-foreground bg-tile-soft"
+            : "border-tile-line hover:border-foreground/40 hover:bg-tile-soft",
+        )}
       >
-        <div
-          className={`w-6 h-6 shrink-0 border-4 border-foreground rounded-lg flex items-center justify-center font-bold text-sm transition-colors ${
-            acknowledged ? "bg-[hsl(var(--step-accent))]" : "bg-background"
-          }`}
+        <span
+          className={cn(
+            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+            acknowledged ? "border-foreground bg-foreground text-background" : "border-tile-line",
+          )}
         >
-          {acknowledged && "✓"}
-        </div>
-        <span className="text-sm leading-relaxed text-left">
+          {acknowledged && <Check className="h-3 w-3" strokeWidth={3} />}
+        </span>
+        <span className="text-sm font-medium leading-relaxed">
           {t("createVault.wizard.ack", { days: totalDays, hb: heartbeatDays, grace: graceDays })}
         </span>
       </button>
 
-      <p className="text-xs text-muted-foreground text-right mt-2">
+      <p className="mt-2.5 text-right text-xs font-medium text-muted-foreground">
         {t("createVault.wizard.estFee")}
       </p>
     </div>
