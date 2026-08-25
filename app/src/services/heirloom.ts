@@ -139,7 +139,8 @@ export interface EstateLike {
   claimableAssets: number;
 }
 
-function unwrapOption(opt: unknown): string | null {
+export function unwrapOption(opt: unknown): string | null {
+  if (typeof opt === "string") return opt.length > 0 ? opt : null;
   if (opt && typeof opt === "object" && "__option" in opt) {
     const o = opt as { __option: "Some" | "None"; value?: unknown };
     return o.__option === "Some" && o.value !== undefined ? String(o.value) : null;

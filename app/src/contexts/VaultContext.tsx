@@ -22,7 +22,12 @@ import {
   fetchEstatesByAuthority,
   fetchVaultClaimableLamports,
 } from "@/services/heirloom";
-import { computeEstateState, type EstateUiState, type VaultTokenHolding } from "@/services/heirloom";
+import {
+  computeEstateState,
+  unwrapOption,
+  type EstateUiState,
+  type VaultTokenHolding,
+} from "@/services/heirloom";
 import { errMsg } from "@/lib/utils";
 import { TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
 
@@ -206,8 +211,8 @@ const VaultProviderInner: React.FC<{
             createdAt,
             isMigrating: estate.data.isMigrating,
             isDeferred: pausedUntil > 0,
-            delegate: estate.data.delegate ? String(estate.data.delegate) : null,
-            hbSigner: estate.data.hbSigner ? String(estate.data.hbSigner) : null,
+            delegate: unwrapOption(estate.data.delegate),
+            hbSigner: unwrapOption(estate.data.hbSigner),
             claimableAssets: estate.data.claimableAssets,
             estatePda: estate.address,
             vaultPda,

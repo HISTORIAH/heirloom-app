@@ -181,7 +181,10 @@ const CreateVaultPage = () => {
               <span className="tag tag-live">
                 <Check className="h-3 w-3" strokeWidth={2.5} /> {t("dashboard.statusActive")}
               </span>
-              <h2 className="ed-h2 mt-6">{t("createVault.successTitle")}</h2>
+              
+              <h2 className="ed-h2 mt-6">
+                {t("createVault.successTitle", { label: label || t("createVault.yourHeir") })}
+              </h2>
               <p className="ed-body mx-auto mt-5 max-w-[52ch] text-muted-foreground">
                 <strong className="font-semibold text-foreground">{label || t("createVault.yourHeir")}</strong>{" "}
                 ({truncateAddress(heirAddress)}) {t("createVault.successBody1")}{" "}

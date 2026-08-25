@@ -851,8 +851,8 @@ This does not cost gas and does not authorize any on-chain transaction.`;
 
 
 const DashboardPage = () => {
-  const { isConnected, disconnectWallet } = useWallet();
-  const { estates, loading, pendingCreate, pendingTxId, clearVault } = useVault();
+  const { isConnected } = useWallet();
+  const { estates, loading, pendingCreate, pendingTxId } = useVault();
   const navigate = useNavigate();
   const { t } = useTranslation("app");
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
@@ -873,12 +873,6 @@ const DashboardPage = () => {
           { estate: estates[selectedIndex], index: selectedIndex },
         ]
       : estates.slice(0, ESTATE_STRIP_CAP).map((estate, index) => ({ estate, index }));
-
-  const handleDisconnect = () => {
-    clearVault();
-    disconnectWallet();
-    navigate("/");
-  };
 
   if (loading && estates.length === 0 && !pendingCreate) {
     return (
@@ -905,16 +899,9 @@ const DashboardPage = () => {
             backTo="/"
             backLabel={t("common.home")}
             right={
-              <>
-                {isConnected ? (
-                  <Button variant="ghost" size="sm" onClick={handleDisconnect} className="hidden sm:inline-flex">
-                    {t("common.disconnect")}
-                  </Button>
-                ) : null}
-                <Button variant="yellow" size="sm" onClick={() => navigate("/create-vault")}>
-                  <Plus className="h-3.5 w-3.5" /> {t("dashboard.newEstate")}
-                </Button>
-              </>
+              <Button variant="yellow" size="sm" onClick={() => navigate("/create-vault")}>
+                <Plus className="h-3.5 w-3.5" /> {t("dashboard.newEstate")}
+              </Button>
             }
           />
         }
