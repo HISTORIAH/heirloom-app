@@ -68,7 +68,6 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
           onSelect={() => setMode("protected")}
           disabled={loading}
           icon={<ShieldCheck className="h-5 w-5" strokeWidth={2} />}
-          accent="bg-accent-cyan"
           title={t("yield.protected")}
           badge={t("yield.recommended")}
           note={t("yield.apy", { apy: config.apyProtected.toFixed(1) })}
@@ -81,7 +80,6 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
           onSelect={() => setMode("unprotected")}
           disabled={loading}
           icon={<ShieldOff className="h-5 w-5" strokeWidth={2} />}
-          accent="bg-accent-orange"
           title={t("yield.boosted")}
           note={t("yield.apy", { apy: config.apyUnprotected.toFixed(1) })}
         >

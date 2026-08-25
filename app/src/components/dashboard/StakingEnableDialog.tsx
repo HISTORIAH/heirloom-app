@@ -14,7 +14,6 @@ const VALIDATOR_OPTIONS: ValidatorOption[] = [
     apy: 6.2,
     commission: 5,
     icon: <Flame className="h-5 w-5" strokeWidth={2} />,
-    accent: "bg-accent-orange",
   },
   {
     id: "marinade",
@@ -22,7 +21,6 @@ const VALIDATOR_OPTIONS: ValidatorOption[] = [
     apy: 5.8,
     commission: 6,
     icon: <Shield className="h-5 w-5" strokeWidth={2} />,
-    accent: "bg-accent-cyan",
   },
 ];
 
@@ -85,7 +83,6 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
             onSelect={() => setSelectedValidator(validator.id)}
             disabled={loading}
             icon={validator.icon}
-            accent={validator.accent}
             title={validator.name}
             badge={t("yield.apy", { apy: validator.apy.toFixed(1) })}
             note={t("yield.commissionPct", { pct: validator.commission })}
