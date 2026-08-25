@@ -5,7 +5,6 @@ import { toneMuted } from "@/components/surface/tones";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 import {
-  STATE_DOT,
   STATE_LINE,
   STATE_TONE,
   statusMeta,
