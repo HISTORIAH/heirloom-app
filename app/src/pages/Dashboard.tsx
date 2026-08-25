@@ -106,11 +106,12 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-background">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
       <PageHeader
         title={t("dashboard.title")}
         onDisconnect={handleDisconnect}
         onConnectWallet={() => setWalletDialogOpen(true)}
+        hideConnect={estates.length === 0 && !pendingCreate}
       />
 
       {/* The running head, borrowed from the landing spread: the page is
@@ -128,99 +129,102 @@ const DashboardPage = () => {
         </Button>
       </div>
 
-      <div className="space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
-        {pendingCreate && (
-          <div className="rounded-xl border border-accent-yellow bg-accent-yellow px-5 py-4">
-            <div className="flex items-center gap-3">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-sm font-semibold">{t("dashboard.pendingCreate")}</p>
-            </div>
-            {pendingTxId && (
-              <a
-                href={getSolanaExplorerTxUrl(pendingTxId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 flex items-center gap-1 text-xs font-semibold underline underline-offset-4"
-              >
-                {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
-              </a>
+      {estates.length === 0 && !pendingCreate ? (
+        <div
+          className="flex flex-1 flex-col items-center justify-center px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]"
+          data-tour="dashboard-actions"
+        >
+          <div className="mx-auto max-w-xl text-center">
+            <VaultMark className="mark-lg mx-auto text-tile-line" />
+            {isConnected && (
+              <h2 className="ed-h2 mt-8">{t("dashboard.noVaultYet")}</h2>
             )}
-          </div>
-        )}
-
-        {estates.length === 0 && !pendingCreate && (
-          <div
-            className="grid grid-cols-1 items-center gap-10 py-[clamp(2rem,7vh,5rem)] lg:grid-cols-12 lg:gap-8"
-            data-tour="dashboard-actions"
-          >
-            <div className="lg:col-span-7">
-              <h2 className="ed-h2">
-                {isConnected ? t("dashboard.noVaultYet") : t("dashboard.connectWallet")}
-              </h2>
-              <p className="ed-lede mt-6 max-w-[42ch] text-muted-foreground">
-                {isConnected ? t("dashboard.noVaultDesc") : t("dashboard.connectDesc")}
-              </p>
-              <div className="mt-9 flex flex-wrap items-center gap-4">
-                {isConnected ? (
-                  <Button variant="flat-yellow" size="lg" onClick={() => navigate("/create-vault")}>
-                    {t("dashboard.createYourVault")}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="flat-yellow"
-                    size="lg"
-                    onClick={() => setWalletDialogOpen(true)}
-                  >
-                    <Wallet className="h-5 w-5" /> {t("dashboard.connectWallet")}
-                  </Button>
-                )}
-                <button
-                  onClick={() => navigate("/claim")}
-                  className="text-sm font-semibold underline underline-offset-4 transition-colors hover:text-muted-foreground"
+            <p
+              className={
+                isConnected
+                  ? "ed-lede mx-auto mt-6 max-w-[42ch] text-muted-foreground"
+                  : "ed-lede mx-auto mt-8 max-w-[42ch] text-muted-foreground"
+              }
+            >
+              {isConnected ? t("dashboard.noVaultDesc") : t("dashboard.connectDesc")}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+              {isConnected ? (
+                <Button variant="flat-yellow" size="lg" onClick={() => navigate("/create-vault")}>
+                  {t("dashboard.createYourVault")}
+                </Button>
+              ) : (
+                <Button
+                  variant="flat-yellow"
+                  size="lg"
+                  onClick={() => setWalletDialogOpen(true)}
                 >
-                  {t("dashboard.namedAsHeir")}
-                </button>
-              </div>
-            </div>
-            <div className="hidden justify-end lg:col-span-5 lg:flex">
-              <VaultMark className="mark-lg text-tile-line" />
-            </div>
-          </div>
-        )}
-
-        {estates.length > 1 && (
-          <div className="flex flex-nowrap items-center gap-2 overflow-hidden">
-            {stripEntries.map(({ estate: e, index: i }) => (
-              <EstatePillButton
-                key={e.estatePda}
-                estate={e}
-                selected={i === selectedIndex}
-                onClick={() => setSelectedIndex(i)}
-              />
-            ))}
-            {estates.length > ESTATE_STRIP_CAP && (
+                  <Wallet className="h-5 w-5" /> {t("dashboard.connectWallet")}
+                </Button>
+              )}
               <button
-                onClick={() => setSwitcherOpen(true)}
-                aria-label={`${t("dashboard.viewAllEstates")} (${estates.length})`}
-                className="flex min-h-[54px] w-44 shrink-0 flex-col items-start justify-center gap-0.5 rounded-lg border border-dashed border-tile-line px-3.5 py-2 text-left transition-colors hover:bg-tile-soft"
+                onClick={() => navigate("/claim")}
+                className="text-sm font-semibold underline underline-offset-4 transition-colors hover:text-muted-foreground"
               >
-                <span className="text-sm font-semibold">
-                  +{estates.length - ESTATE_STRIP_CAP} {t("dashboard.more")}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                  {t("dashboard.viewAllEstates")}
-                </span>
+                {t("dashboard.namedAsHeir")}
               </button>
-            )}
+            </div>
           </div>
-        )}
+        </div>
+      ) : (
+        <div className="space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
+          {pendingCreate && (
+            <div className="rounded-xl border border-accent-yellow bg-accent-yellow px-5 py-4">
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <p className="text-sm font-semibold">{t("dashboard.pendingCreate")}</p>
+              </div>
+              {pendingTxId && (
+                <a
+                  href={getSolanaExplorerTxUrl(pendingTxId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 flex items-center gap-1 text-xs font-semibold underline underline-offset-4"
+                >
+                  {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          )}
+          {estates.length > 1 && (
+            <div className="flex flex-nowrap items-center gap-2 overflow-hidden">
+              {stripEntries.map(({ estate: e, index: i }) => (
+                <EstatePillButton
+                  key={e.estatePda}
+                  estate={e}
+                  selected={i === selectedIndex}
+                  onClick={() => setSelectedIndex(i)}
+                />
+              ))}
+              {estates.length > ESTATE_STRIP_CAP && (
+                <button
+                  onClick={() => setSwitcherOpen(true)}
+                  aria-label={`${t("dashboard.viewAllEstates")} (${estates.length})`}
+                  className="flex min-h-[54px] w-44 shrink-0 flex-col items-start justify-center gap-0.5 rounded-lg border border-dashed border-tile-line px-3.5 py-2 text-left transition-colors hover:bg-tile-soft"
+                >
+                  <span className="text-sm font-semibold">
+                    +{estates.length - ESTATE_STRIP_CAP} {t("dashboard.more")}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    {t("dashboard.viewAllEstates")}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
 
-        {selectedEstate && (
-          <div data-tour="dashboard-estate">
-            <EstateCard key={selectedEstate.estatePda} estate={selectedEstate} />
-          </div>
-        )}
-      </div>
+          {selectedEstate && (
+            <div data-tour="dashboard-estate">
+              <EstateCard key={selectedEstate.estatePda} estate={selectedEstate} />
+            </div>
+          )}
+        </div>
+      )}
 
       <Dialog
         open={switcherOpen}

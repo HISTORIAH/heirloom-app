@@ -10,6 +10,8 @@ interface PageHeaderProps {
   backLabel?: string;
   onDisconnect?: () => void;
   onConnectWallet?: () => void;
+  /** Hide the disconnected connect control (empty dashboard already has a CTA). */
+  hideConnect?: boolean;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
@@ -18,6 +20,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   backLabel,
   onDisconnect,
   onConnectWallet,
+  hideConnect = false,
 }) => {
   const { t } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
@@ -132,6 +135,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               </div>
             )}
           </div>
+        ) : hideConnect ? (
+          <div aria-hidden="true" className="hidden md:block md:justify-self-end" />
         ) : (
           <button
             type="button"
