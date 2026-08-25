@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
-import { Landmark, Sprout, Loader2, ArrowLeftRight } from "lucide-react";
+import { Loader2, ArrowLeftRight } from "lucide-react";
 import { type RecallConfirmDialogProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -23,7 +23,6 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
       open={open}
       title={title}
       caption={t("yield.recall")}
-      icon={strategyType === "lulo" ? <Landmark strokeWidth={2} /> : <Sprout strokeWidth={2} />}
       busy={loading}
       onClose={onCancel}
       footer={

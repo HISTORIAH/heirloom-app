@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
 import { amountStep, pctOfMax } from "@/lib/utils/math";
-import { Loader2, TrendingUp, Coins } from "lucide-react";
+import { Loader2, TrendingUp } from "lucide-react";
 import { type TopUpDialogProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -36,7 +36,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
       open={open}
       title={t("dashboard.topUpTitle", { symbol })}
       caption={t("dashboard.assets")}
-      icon={<Coins strokeWidth={2} />}
+      description={t("dashboard.topUpDesc", { symbol })}
       busy={loading}
       onClose={onCancel}
       footer={
@@ -59,11 +59,7 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
         </>
       }
     >
-      <p className="text-sm font-medium text-muted-foreground">
-        {t("dashboard.topUpDesc", { symbol })}
-      </p>
-
-      <div className="mt-4">
+      <div>
         <div className="data-row">
           <span className="data-k">{t("dashboard.currentVaultBalance")}</span>
           <span className="data-v tabular-nums">

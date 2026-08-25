@@ -1,4 +1,4 @@
-import { Lock, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
 import { useTranslation } from "@heirloom/i18n";
@@ -20,7 +20,7 @@ const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onC
       open={open}
       title={t("notifications.signInTitle")}
       caption={t("notifications.title")}
-      icon={<Lock strokeWidth={2} />}
+      description={t("notifications.signInDesc")}
       busy={signing}
       onClose={onClose}
       footer={
@@ -34,9 +34,7 @@ const NotificationsSignInPanel: React.FC<Props> = ({ open, message, signing, onC
         </>
       }
     >
-      <p className="text-sm font-medium text-muted-foreground">{t("notifications.signInDesc")}</p>
-
-      <p className="cap mt-5">{t("notifications.signPrompt")}</p>
+      <p className="cap">{t("notifications.signPrompt")}</p>
       {/* The message is shown verbatim: anything a wallet is asked to sign is
           read, not summarised. */}
       <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-tile-line bg-tile-soft p-4 font-mono text-[11px] leading-relaxed">

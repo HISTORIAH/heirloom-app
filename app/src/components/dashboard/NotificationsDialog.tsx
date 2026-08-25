@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
 import { cn } from "@/lib/utils";
@@ -168,7 +167,7 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
       open={open}
       title={t("notifications.title")}
       caption={t("dashboard.manageEstate")}
-      icon={<Bell strokeWidth={2} />}
+      description={t("notifications.dialogDesc")}
       size="lg"
       busy={saving}
       onClose={onClose}
@@ -183,9 +182,7 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
         </>
       }
     >
-      <p className="text-sm font-medium text-muted-foreground">{t("notifications.dialogDesc")}</p>
-
-      <div className="mt-4">
+      <div>
         <RoleSection
           title={t("notifications.remindTitle")}
           description={t("notifications.remindDesc")}

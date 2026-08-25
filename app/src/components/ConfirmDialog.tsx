@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
 
 export interface ConfirmDialogProps {
@@ -12,9 +12,8 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: "default" | "destructive";
   loading?: boolean;
-  /** Retained for call-site compatibility; the sheet's head carries the tone now. */
-  accent?: string;
-  icon?: React.ReactNode;
+  /** Small uppercase line above the title — which part of the app this belongs to. */
+  caption?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
   children?: React.ReactNode;
@@ -22,8 +21,8 @@ export interface ConfirmDialogProps {
 
 /**
  * The confirmation before anything on-chain. It is the same sheet every other
- * overlay uses; only the head changes colour, and only when the action cannot
- * be taken back.
+ * overlay uses — the weight of the action is carried by the confirm button,
+ * which is the only red thing on the screen when the move cannot be undone.
  */
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
@@ -33,7 +32,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelLabel,
   variant = "default",
   loading = false,
-  icon,
+  caption,
   onConfirm,
   onCancel,
   children,
@@ -56,8 +55,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       role="alertdialog"
       labelledBy="confirm-dialog-title"
       title={title}
-      tone={variant === "destructive" ? "alert" : "paper"}
-      icon={icon ?? <AlertTriangle strokeWidth={2} />}
+      caption={caption}
+      description={description}
       busy={loading}
       onClose={onCancel}
       footer={
@@ -86,11 +85,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </>
       }
     >
-      {description && (
-        <p id="confirm-dialog-desc" className="text-sm font-medium leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      )}
       {children}
     </Sheet>
   );

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
 import Choice from "@/components/app/Choice";
 import { getYieldConfigByMint } from "@/lib/yieldTokens";
-import { Landmark, ShieldCheck, ShieldOff, Loader2, Zap } from "lucide-react";
+import { ShieldCheck, ShieldOff, Loader2, Zap } from "lucide-react";
 import { type LuloEnableDialogProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -27,7 +27,10 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
       open={open}
       title={t("yield.enableLulo")}
       caption={t("yield.earn")}
-      icon={<Landmark strokeWidth={2} />}
+      description={t("yield.routeToLulo", {
+        amount: vaultBalance.toLocaleString(i18n.language, { maximumFractionDigits: 6 }),
+        symbol: tokenSymbol,
+      })}
       size="lg"
       busy={loading}
       onClose={onCancel}
@@ -50,14 +53,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
         </>
       }
     >
-      <p className="text-sm font-medium text-muted-foreground">
-        {t("yield.routeToLulo", {
-          amount: vaultBalance.toLocaleString(i18n.language, { maximumFractionDigits: 6 }),
-          symbol: tokenSymbol,
-        })}
-      </p>
-
-      <p className="cap mt-6">{t("yield.chooseDeposit")}</p>
+      <p className="cap">{t("yield.chooseDeposit")}</p>
       <div className="mt-3 space-y-2.5">
         <Choice
           selected={selectedMode === "protected"}

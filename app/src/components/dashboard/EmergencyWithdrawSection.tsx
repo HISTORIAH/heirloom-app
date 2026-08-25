@@ -62,6 +62,7 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       <ConfirmDialog
         open={withdrawConfirmOpen}
         title={t("dashboard.manage.closeEstateConfirmTitle")}
+        caption={t("dashboard.dangerZone")}
         description={t("dashboard.manage.closeEstateConfirmDesc")}
         confirmLabel={t("dashboard.manage.withdrawCancelLabel")}
         cancelLabel={t("dashboard.manage.keepEstate")}

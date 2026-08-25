@@ -849,6 +849,7 @@ This does not cost gas and does not authorize any on-chain transaction.`;
 };
 
 
+
 const DashboardPage = () => {
   const { isConnected, disconnectWallet } = useWallet();
   const { estates, loading, pendingCreate, pendingTxId, clearVault } = useVault();
@@ -1020,7 +1021,8 @@ const DashboardPage = () => {
         open={switcherOpen}
         size="lg"
         title={t("dashboard.allEstates")}
-        caption={t("dashboard.totalClickToSwitch", { count: estates.length })}
+        caption={t("dashboard.title")}
+        description={t("dashboard.totalClickToSwitch", { count: estates.length })}
         onClose={() => {
           setSwitcherOpen(false);
           setSwitcherQuery("");

@@ -51,10 +51,12 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
     <div>
       <p className="cap cap-ink">{t("createVault.wizard.estateSoFar")}</p>
 
-      {/* Who it goes to, drawn as a single line entry: initial, name, address.
-          It is the one thing in the rail that is a person rather than a number. */}
-      <div className="mt-4 flex items-center gap-3 rounded-lg border border-tile-line bg-background px-4 py-3.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-accent-yellow bg-accent-yellow font-display text-sm font-semibold">
+      {/* Who it goes to. It sits directly on the rail and is ruled off like
+          every other entry — as a white card floating on the soft ground it
+          read as a component pasted in from another screen. The yellow mark is
+          the only thing that separates a person from the numbers below. */}
+      <div className="mt-4 flex items-center gap-3 border-b border-tile-line pb-4">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-yellow font-display text-sm font-semibold">
           {displayLabel.charAt(0).toUpperCase()}
         </span>
         <span className="min-w-0">
@@ -64,7 +66,7 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
           </span>
         </span>
       </div>
-      <p className="mt-2 text-[11px] font-medium text-muted-foreground">
+      <p className="mt-3 text-[11px] font-medium text-muted-foreground">
         {t("createVault.wizard.allocation100Single")}
       </p>
 

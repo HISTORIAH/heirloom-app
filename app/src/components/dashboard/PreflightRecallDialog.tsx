@@ -19,7 +19,6 @@ export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
       open={open}
       title="Active strategies detected"
       caption="Before you continue"
-      icon={<Zap strokeWidth={2} />}
       size="lg"
       busy={loading}
       onClose={onCancel}

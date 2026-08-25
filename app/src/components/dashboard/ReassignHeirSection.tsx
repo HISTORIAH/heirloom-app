@@ -76,7 +76,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
         open={open}
         title={t("dashboard.manage.changeHeir")}
         caption={t("dashboard.heir")}
-        icon={<UserPlus strokeWidth={2} />}
+        description={t("dashboard.manage.changeHeirDesc")}
         busy={updatingHeir}
         onClose={() => setOpen(false)}
         footer={
@@ -94,15 +94,12 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
           </>
         }
       >
-        <p className="text-sm font-medium text-muted-foreground">
-          {t("dashboard.manage.changeHeirDesc")}
-        </p>
         <input
           type="text"
           value={newHeirAddress}
           onChange={(e) => setNewHeirAddress(e.target.value)}
           maxLength={128}
-          className="field field-mono mt-4"
+          className="field field-mono"
           placeholder={t("dashboard.manage.newHeirPlaceholder")}
         />
         <p className="mt-3 text-xs font-medium text-muted-foreground">
@@ -113,12 +110,12 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       <ConfirmDialog
         open={reassignConfirm.open}
         title={t("dashboard.manage.changeHeirConfirmTitle")}
+        caption={t("dashboard.heir")}
         description={t("dashboard.manage.changeHeirConfirmDesc")}
         confirmLabel={t("dashboard.manage.changeHeir")}
         cancelLabel={t("dashboard.manage.cancel")}
         variant="default"
         loading={updatingHeir}
-        icon={<UserPlus strokeWidth={2} />}
         onConfirm={performUpdateHeir}
         onCancel={() => {
           if (!updatingHeir) setReassignConfirm({ open: false, next: "" });

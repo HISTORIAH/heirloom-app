@@ -3,27 +3,22 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SheetTone = "paper" | "accent" | "alert";
-
-const headTone: Record<SheetTone, string> = {
-  paper: "bg-tile-soft",
-  accent: "bg-accent-yellow",
-  alert: "bg-accent-red text-background",
-};
-
 /**
- * Every overlay in the app is this sheet: paper on a dimmed page, one band of
- * colour across the head, the body ruled the same way the pages are. Dialogs
- * used to each invent their own frame, which is why the product read as a
- * dozen different apps.
+ * Every overlay in the app is this sheet, and it opens the way a page does:
+ * a caption at the margin, the title set large under it, the sentence that
+ * explains it, then a rule and the work itself.
+ *
+ * It carries no coloured head band and no icon tile. Both were doing the job
+ * the title should do, and a band of fill across the top of a white sheet is
+ * the one thing that made a dialog read as a different product from the page
+ * that opened it.
  */
 const Sheet = ({
   open,
   title,
   caption,
-  tone = "paper",
+  description,
   size = "md",
-  icon,
   busy = false,
   onClose,
   footer,
@@ -33,11 +28,11 @@ const Sheet = ({
 }: {
   open: boolean;
   title: ReactNode;
-  /** Small uppercase line above the title. */
+  /** Small uppercase line above the title — which part of the app this belongs to. */
   caption?: ReactNode;
-  tone?: SheetTone;
+  /** One sentence under the title. Lives in the head, not in the body. */
+  description?: ReactNode;
   size?: "sm" | "md" | "lg";
-  icon?: ReactNode;
   /** While busy the sheet refuses to close — a signature is in flight. */
   busy?: boolean;
   onClose?: () => void;
@@ -76,45 +71,38 @@ const Sheet = ({
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={cn("sheet-head", headTone[tone])}>
-          <div className="flex min-w-0 items-center gap-3">
-            {icon ? <span className="shrink-0 [&_svg]:h-5 [&_svg]:w-5">{icon}</span> : null}
-            <div className="min-w-0">
-              {caption ? (
-                <p
-                  className={cn(
-                    "cap mb-1",
-                    tone === "alert" ? "text-background/70" : "text-foreground/55",
-                  )}
-                >
-                  {caption}
-                </p>
-              ) : null}
-              <h2
-                id={labelledBy}
-                className="truncate font-display text-base font-semibold tracking-[-0.02em] md:text-lg"
+        <div className="px-5 pb-5 pt-5 md:px-6 md:pb-6 md:pt-6">
+          <div className="flex items-start justify-between gap-4">
+            {caption ? <p className="cap pt-1">{caption}</p> : <span />}
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                aria-label="Close"
+                className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-tile-line transition-colors hover:border-foreground hover:bg-tile-soft disabled:opacity-40"
               >
-                {title}
-              </h2>
-            </div>
+                <X className="h-4 w-4" strokeWidth={2} />
+              </button>
+            ) : null}
           </div>
-          {onClose ? (
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              aria-label="Close"
-              className={cn(
-                "-mr-1 shrink-0 rounded-md p-1.5 transition-colors disabled:opacity-40",
-                tone === "alert" ? "hover:bg-background/20" : "hover:bg-foreground/10",
-              )}
-            >
-              <X className="h-4 w-4" strokeWidth={2} />
-            </button>
+
+          <h2
+            id={labelledBy}
+            className="mt-3 font-display text-2xl font-semibold tracking-[-0.03em] md:text-3xl"
+          >
+            {title}
+          </h2>
+          {description ? (
+            <p className="mt-2.5 max-w-[46ch] text-sm font-medium leading-relaxed text-muted-foreground">
+              {description}
+            </p>
           ) : null}
         </div>
 
-        {children ? <div className="px-5 py-5 md:px-6">{children}</div> : null}
+        {children ? (
+          <div className="border-t border-tile-line px-5 py-5 md:px-6 md:py-6">{children}</div>
+        ) : null}
 
         {footer ? (
           <div className="flex flex-col-reverse gap-2.5 border-t border-tile-line px-5 py-4 sm:flex-row sm:justify-end md:px-6">

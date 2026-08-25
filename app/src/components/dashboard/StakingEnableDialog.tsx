@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Sheet from "@/components/app/Sheet";
 import Choice from "@/components/app/Choice";
-import { Sprout, Loader2, Zap, Shield, Flame, Timer } from "lucide-react";
+import { Loader2, Zap, Shield, Flame, Timer } from "lucide-react";
 
 import { type ValidatorOption, type StakingEnableDialogProps } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
@@ -46,7 +46,9 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
       open={open}
       title={t("yield.stakeSol")}
       caption={t("yield.earn")}
-      icon={<Sprout strokeWidth={2} />}
+      description={t("yield.stakeDesc", {
+        amount: solBalance.toLocaleString(i18n.language, { maximumFractionDigits: 4 }),
+      })}
       size="lg"
       busy={loading}
       onClose={onCancel}
@@ -65,13 +67,7 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
         </>
       }
     >
-      <p className="text-sm font-medium text-muted-foreground">
-        {t("yield.stakeDesc", {
-          amount: solBalance.toLocaleString(i18n.language, { maximumFractionDigits: 4 }),
-        })}
-      </p>
-
-      <p className="cap mt-6">{t("yield.chooseValidator")}</p>
+      <p className="cap">{t("yield.chooseValidator")}</p>
       <div className="mt-3 space-y-2.5">
         {VALIDATOR_OPTIONS.map((validator) => (
           <Choice

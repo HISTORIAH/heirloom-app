@@ -96,8 +96,8 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       <Sheet
         open={open}
         title={t("dashboard.manage.updateEstate")}
-        caption={t("dashboard.manage.interval")}
-        icon={<Pencil strokeWidth={2} />}
+        caption={t("createVault.wizard.timing")}
+        description={t("dashboard.manage.updateEstateDesc")}
         busy={savingSettings}
         onClose={() => setOpen(false)}
         footer={
@@ -115,11 +115,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
           </>
         }
       >
-        <p className="text-sm font-medium text-muted-foreground">
-          {t("dashboard.manage.updateEstateDesc")}
-        </p>
-
-        <div className="mt-5 space-y-5">
+        <div className="space-y-5">
           <div>
             <label className="cap mb-2 block">
               {t("dashboard.manage.labelMax", { max: LABEL_MAX_LEN })}
@@ -188,12 +184,12 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       <ConfirmDialog
         open={settingsConfirmOpen}
         title={t("dashboard.manage.updateEstateConfirmTitle")}
+        caption={t("createVault.wizard.timing")}
         description={t("dashboard.manage.updateEstateConfirmDesc")}
         confirmLabel={t("dashboard.manage.save")}
         cancelLabel={t("dashboard.manage.cancel")}
         variant="default"
         loading={savingSettings}
-        icon={<Pencil strokeWidth={2} />}
         onConfirm={performSaveSettings}
         onCancel={() => {
           if (!savingSettings) setSettingsConfirmOpen(false);

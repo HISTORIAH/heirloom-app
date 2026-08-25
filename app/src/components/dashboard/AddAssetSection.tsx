@@ -105,7 +105,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
         open={open}
         title={t("dashboard.manage.addAsset")}
         caption={t("dashboard.assets")}
-        icon={<Plus strokeWidth={2} />}
+        description={t("dashboard.manage.addAssetDesc")}
         busy={addingAsset}
         onClose={() => setOpen(false)}
         footer={
@@ -127,11 +127,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
           </>
         }
       >
-        <p className="text-sm font-medium text-muted-foreground">
-          {t("dashboard.manage.addAssetDesc")}
-        </p>
-
-        <div className="mt-5 space-y-5">
+        <div className="space-y-5">
           <div>
             <label className="cap mb-2 block">{t("dashboard.manage.asset")}</label>
             <select

@@ -288,6 +288,7 @@ const DeferPageInner: React.FC<{
       <ConfirmDialog
         open={deferConfirmOpen}
         title={t("defer.confirmTitle")}
+        caption={t("defer.title")}
         description={
           estate
             ? t("defer.confirmDesc", { duration: formatDuration(estate.pauseDuration) })
@@ -297,7 +298,6 @@ const DeferPageInner: React.FC<{
         cancelLabel={t("defer.cancelLabel")}
         variant="default"
         loading={deferring}
-        icon={<Shield strokeWidth={2} />}
         onConfirm={performDefer}
         onCancel={() => {
           if (!deferring) setDeferConfirmOpen(false);
