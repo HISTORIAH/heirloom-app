@@ -135,7 +135,7 @@ const DepositStep: React.FC<Props> = ({
 
   return (
     <div>
-      <StepHeader cap={t("createVault.wizard.step02")} accent="bg-accent-orange" title={t("createVault.wizard.whatGoesIn")} />
+      <StepHeader cap={t("createVault.wizard.step02")} title={t("createVault.wizard.whatGoesIn")} />
 
       {/* Above the tabs on purpose: SOL and tokens both feed one deposit, and
           switching tabs used to hide whatever you had entered on the other. */}
@@ -313,7 +313,7 @@ const DepositStep: React.FC<Props> = ({
                   {isSelected && sel && (
                     <div className="px-4 pb-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="ed-label shrink-0">{t("createVault.wizard.amountPlain")}</span>
+                        <span className="ed-field-label shrink-0">{t("createVault.wizard.amountPlain")}</span>
                         <input
                           autoFocus
                           type="number"

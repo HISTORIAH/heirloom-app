@@ -90,16 +90,14 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2.5 rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+        className="rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
       >
-        <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-orange" />
         {t("dashboard.manage.addAssetShort")}
       </button>
 
       <Modal
         open={open}
         cap={t("dashboard.manage.assetsCap")}
-        accent="bg-accent-orange"
         title={t("dashboard.manage.addAssetShort")}
         description={t("dashboard.manage.addAssetEditorialDesc")}
         busy={addingAsset}
@@ -132,7 +130,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
       >
         <div className="space-y-5">
           <div>
-            <label className="ed-label" htmlFor="add-asset-mint">
+            <label className="ed-field-label" htmlFor="add-asset-mint">
               {t("dashboard.manage.tokenLabel")}
             </label>
             <div className="relative mt-2">
@@ -169,7 +167,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
           </div>
 
           <div>
-            <label className="ed-label" htmlFor="add-asset-amount">
+            <label className="ed-field-label" htmlFor="add-asset-amount">
               {t("dashboard.manage.amount")}
             </label>
             <input

@@ -43,7 +43,6 @@ export const StakingEnableDialog: React.FC<StakingEnableDialogProps> = ({
     <Modal
       open={open}
       cap={t("yield.capStaking")}
-      accent="bg-accent-lime"
       title={t("yield.stakeVaultSol")}
       description={t("yield.stakeVaultDesc", { amount })}
       size="lg"

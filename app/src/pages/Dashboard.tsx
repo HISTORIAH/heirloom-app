@@ -33,7 +33,7 @@ const EstatePillButton = ({
   fullWidth?: boolean;
 }) => {
   const { t } = useTranslation("app");
-  const { dotColor, timeLabel, assetCount } = getEstateStripMeta(estate, t);
+  const { timeLabel, assetCount } = getEstateStripMeta(estate, t);
   return (
     <button
       onClick={onClick}
@@ -46,7 +46,6 @@ const EstatePillButton = ({
       )}
     >
       <span className="flex w-full min-w-0 items-center gap-2 text-sm font-semibold">
-        <span className={cn("h-2 w-2 shrink-0 rounded-full", dotColor)} />
         <span className="truncate">{estate.label}</span>
       </span>
       <span
@@ -129,7 +128,7 @@ const DashboardPage = () => {
         </Button>
       </div>
 
-      <div className="space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,3.5vh,3rem)]">
+      <div className="space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
         {pendingCreate && (
           <div className="rounded-xl border border-accent-yellow bg-accent-yellow px-5 py-4">
             <div className="flex items-center gap-3">
@@ -249,7 +248,7 @@ const DashboardPage = () => {
               placeholder={t("dashboard.searchEstates")}
               aria-label={t("dashboard.searchEstatesAria")}
               autoFocus
-              className="h-11 w-full rounded-lg border border-tile-line bg-background pl-10 pr-4 text-sm font-medium outline-none transition-colors focus:border-foreground"
+              className="ed-input h-11 pl-10 pr-4"
             />
           </div>
           <div className="grid max-h-[360px] grid-cols-2 gap-2 overflow-y-auto pr-1">

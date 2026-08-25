@@ -54,11 +54,11 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
   const tip = tips[step] ?? tips[0];
 
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-7 [--muted-foreground:0_0%_28%]">
       <PanelCap className="text-muted-foreground">{t("createVault.wizard.estateSoFarPlain")}</PanelCap>
 
       <section>
-        <PanelCap className="block text-muted-foreground/70">{t("createVault.wizard.heirPlain")}</PanelCap>
+        <PanelCap className="block text-muted-foreground">{t("createVault.wizard.heirPlain")}</PanelCap>
         <div className="mt-3 flex items-center gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-background text-sm font-semibold">
             {displayLabel.charAt(0).toUpperCase()}
@@ -73,7 +73,7 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
       </section>
 
       <section>
-        <PanelCap className="block text-muted-foreground/70">{t("createVault.wizard.assetsPlain")}</PanelCap>
+        <PanelCap className="block text-muted-foreground">{t("createVault.wizard.assetsPlain")}</PanelCap>
         {solAmount <= 0 && selectedEntries.length === 0 ? (
           <p className="mt-2.5 text-sm text-muted-foreground">{t("createVault.wizard.nothingAddedYet")}</p>
         ) : (
@@ -101,7 +101,7 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
       </section>
 
       <section>
-        <PanelCap className="block text-muted-foreground/70">{t("createVault.wizard.timingPlain")}</PanelCap>
+        <PanelCap className="block text-muted-foreground">{t("createVault.wizard.timingPlain")}</PanelCap>
         <EstateTimelineMini
           className="mt-3"
           heartbeatDays={intervalDays}

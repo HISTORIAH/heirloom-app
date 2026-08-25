@@ -28,7 +28,6 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
     <Modal
       open={open}
       cap={t("yield.capYield")}
-      accent="bg-accent-purple"
       title={t("yield.earnYieldTitle")}
       description={t("yield.routeFromVault", { amount, symbol: tokenSymbol })}
       size="lg"

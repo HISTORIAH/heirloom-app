@@ -12,8 +12,6 @@ export const OptionCard: React.FC<{
   onSelect: () => void;
   disabled?: boolean;
   icon?: ReactNode;
-  /** Tailwind bg-* for the icon well when selected. */
-  accent?: string;
   title: string;
   badge?: string;
   note?: string;
@@ -23,7 +21,6 @@ export const OptionCard: React.FC<{
   onSelect,
   disabled = false,
   icon,
-  accent = "bg-accent-yellow",
   title,
   badge,
   note,
@@ -44,7 +41,7 @@ export const OptionCard: React.FC<{
         <span
           className={cn(
             "shrink-0 rounded-lg border p-2",
-            selected ? cn(accent, "border-transparent") : "border-tile-line",
+            selected ? cn("border-transparent") : "border-tile-line",
           )}
         >
           {icon}

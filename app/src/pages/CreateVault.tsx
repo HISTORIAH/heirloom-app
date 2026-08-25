@@ -7,7 +7,7 @@ import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
-import { toRawTokenAmount, truncateAddress } from "@/lib/utils";
+import { cn, errMsg, toRawTokenAmount, truncateAddress } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -16,7 +16,6 @@ import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
 import ReviewStep from "@/components/create-vault/ReviewStep";
 import { ArrowLeft, ArrowRight, Bell, Loader2 } from "lucide-react";
-import { errMsg } from "@/lib/utils";
 import { FEATURE_NOTIFICATIONS_UI } from "@/config";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import Stepper from "@/components/create-vault/Stepper";
@@ -93,10 +92,11 @@ const CreateVaultPage = () => {
     if (step === 0) return isHeirValid;
     if (step === 1) return true; // empty estate allowed
     if (step === 2) return heartbeatSeconds > 0 && graceSeconds > 0;
-    return acknowledged;
+    return acknowledged && hasAnyDeposit;
   };
 
   const handleSubmit = async () => {
+    if (!hasAnyDeposit || !acknowledged) return;
     if (!isConnected) {
       setWalletDialogOpen(true);
       return;
@@ -190,7 +190,7 @@ const CreateVaultPage = () => {
   const rail = (
     <div className="flex h-[3.75rem] items-center gap-[clamp(0.75rem,1.4vw,1.5rem)] border-b border-tile-line px-[var(--page-pad)]">
       <span className="truncate text-[11px] font-bold uppercase leading-none tracking-[0.18em]">
-        {submitState === "complete" ? t("createVault.successTitle") : steps[step]}
+        {submitState === "complete" ? "complete" : steps[step]}
       </span>
       <span className="shrink-0 font-display text-[13px] font-bold leading-none tabular-nums text-muted-foreground">
         {submitState === "complete" ? "04" : String(step + 1).padStart(2, "0")} / 04
@@ -216,15 +216,11 @@ const CreateVaultPage = () => {
             onConnectWallet={() => setWalletDialogOpen(true)}
           />
           {rail}
-          <main className="px-[var(--page-pad)] py-[clamp(1.5rem,3.5vh,3rem)]">
+          <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
             <Panel className="mx-auto max-w-xl text-center">
-              <span className="ed-label inline-flex items-center gap-2">
-                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent-green" />
-                {t("createVault.wizard.confirmed")}
-              </span>
-              <h2 className="ed-h2 mt-3">{t("createVault.successTitle")}</h2>
+              <span className="ed-label">{t("createVault.wizard.confirmed")}</span>
+              <h2 className="ed-h2 mt-3">{label && t("createVault.successTitle", { label: t(label) })}</h2>
               <p className="ed-lede mx-auto mt-4 max-w-[42ch] text-muted-foreground">
-                <strong>{label || t("createVault.yourHeir")}</strong> (
                 {truncateAddress(heirAddress)}) {t("createVault.successBody1")}{" "}
                 <strong>
                   {totalDays} {t("createVault.successBody2")}
@@ -274,7 +270,7 @@ const CreateVaultPage = () => {
         />
         {rail}
 
-        <main className="px-[var(--page-pad)] py-[clamp(1.5rem,3.5vh,3rem)]">
+        <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
           <div className="grid items-start gap-6 lg:grid-cols-12">
             <Panel className="gap-0 lg:col-span-7">
               {step === 0 && (
@@ -365,21 +361,40 @@ const CreateVaultPage = () => {
                     )}
                   </Button>
                 ) : (
-                  <Button
-                    variant="flat"
-                    size="default"
-                    onClick={handleSubmit}
-                    disabled={!canProceed() || isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        {t("createVault.creating")}
-                      </>
-                    ) : (
-                      t("createVault.createEstate")
-                    )}
-                  </Button>
+                  <span className="group inline-flex">
+                    <Button
+                      variant="flat"
+                      size="default"
+                      onClick={handleSubmit}
+                      disabled={!canProceed() || isSubmitting}
+                      aria-label={
+                        !hasAnyDeposit ? t("createVault.selectAssetFirst") : undefined
+                      }
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t("createVault.creating")}
+                        </>
+                      ) : (
+                        <span className="grid justify-items-center">
+                          <span
+                            className={cn(
+                              "col-start-1 row-start-1",
+                              !hasAnyDeposit && "group-hover:invisible",
+                            )}
+                          >
+                            {t("createVault.createEstate")}
+                          </span>
+                          {!hasAnyDeposit && (
+                            <span className="col-start-1 row-start-1 invisible group-hover:visible">
+                              {t("createVault.selectAssetFirst")}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </Button>
+                  </span>
                 )}
               </div>
             </Panel>

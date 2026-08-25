@@ -114,7 +114,6 @@ const HeartbeatPageInner: React.FC<{
       <PortalLayout
         title={t("heartbeat.title")}
         cap={t("heartbeat.hotSignerPortal")}
-        accent="bg-accent-pink"
         headline={
           <>
             {t("heartbeat.headline1")} {t("heartbeat.headline2")}
@@ -126,7 +125,7 @@ const HeartbeatPageInner: React.FC<{
         <div data-tour="heartbeat-lookup">
         <Panel className="gap-4">
           <div>
-            <label className="ed-label" htmlFor="hb-authority">
+            <label className="ed-field-label" htmlFor="hb-authority">
               {t("heartbeat.authorityLabel")}
             </label>
             <input
@@ -142,7 +141,7 @@ const HeartbeatPageInner: React.FC<{
             />
           </div>
           <div>
-            <label className="ed-label" htmlFor="hb-heir">
+            <label className="ed-field-label" htmlFor="hb-heir">
               {t("heartbeat.heirLabel")}
             </label>
             <input

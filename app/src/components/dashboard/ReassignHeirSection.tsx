@@ -66,16 +66,14 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2.5 rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+        className="rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
       >
-        <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-pink" />
         {t("dashboard.manage.changeHeirShort")}
       </button>
 
       <Modal
         open={open}
         cap={t("dashboard.manage.heirCap")}
-        accent="bg-accent-pink"
         title={t("dashboard.manage.changeHeirShort")}
         description={t("dashboard.manage.changeHeirMigrateDesc")}
         busy={updatingHeir}
@@ -102,7 +100,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
           </>
         }
       >
-        <label className="ed-label" htmlFor="new-heir-address">
+        <label className="ed-field-label" htmlFor="new-heir-address">
           {t("dashboard.manage.newHeirAddress")}
         </label>
         <input
@@ -122,7 +120,6 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       <ConfirmDialog
         open={reassignConfirm.open}
         cap={t("dashboard.manage.heirCap")}
-        accent="bg-accent-pink"
         title={t("dashboard.manage.changeHeirQuestion")}
         description={t("dashboard.manage.changeHeirMovesDesc")}
         confirmLabel={t("dashboard.manage.changeHeirShort")}

@@ -110,16 +110,14 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2.5 rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+        className="rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
       >
-        <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-cyan" />
         {t("dashboard.manage.updateEstateShort")}
       </button>
 
       <Modal
         open={open}
         cap={t("dashboard.manage.timingCap")}
-        accent="bg-accent-cyan"
         title={t("dashboard.manage.updateEstateShort")}
         description={t("dashboard.manage.updateEstateEditorialDesc")}
         size="lg"
@@ -149,7 +147,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       >
         <div className="space-y-5">
           <div>
-            <label className="ed-label" htmlFor="estate-label">
+            <label className="ed-field-label" htmlFor="estate-label">
               {t("dashboard.manage.labelMaxN", { max: LABEL_MAX_LEN })}
             </label>
             <input
@@ -166,7 +164,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {durations.map((d) => (
               <div key={d.key}>
-                <label className="ed-label" htmlFor={`estate-${d.key}`}>
+                <label className="ed-field-label" htmlFor={`estate-${d.key}`}>
                   {d.label}
                 </label>
                 <input
@@ -195,7 +193,6 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       <ConfirmDialog
         open={settingsConfirmOpen}
         cap={t("dashboard.manage.timingCap")}
-        accent="bg-accent-cyan"
         title={t("dashboard.manage.saveChangesQuestion")}
         description={t("dashboard.manage.saveCountsCheckIn")}
         confirmLabel={t("dashboard.manage.save")}

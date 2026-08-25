@@ -56,7 +56,6 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
 
       <div>
         <div className="flex items-center gap-2.5">
-          <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", STATE_DOT[state])} />
           <h2 className="ed-h2">{meta.label}</h2>
         </div>
         <p className={cn("ed-body mt-3 max-w-[46ch]", muted)}>{meta.description}</p>

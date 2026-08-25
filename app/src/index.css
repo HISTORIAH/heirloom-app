@@ -180,7 +180,6 @@
     cursor: grab;
   }
 
-  input:focus-visible,
   button:focus-visible {
     outline: 4px solid hsl(var(--foreground));
     outline-offset: 2px;
@@ -284,22 +283,29 @@
   .neo-step-dot.pending { @apply bg-secondary; }
 
   /* ------------------------------------------------------ editorial fields
-     The `.neo-input` counterpart: a hairline field that sits inside a tile
-     instead of standing off it. Focus moves the border to full ink rather
-     than growing a shadow, because a control that shifts position on focus
-     reflows the form around it. */
+     An underline, not a box. Inputs used to share the 4px focus outline with
+     buttons, which read as an all-round border. The rule lives on the bottom
+     only; focus inks it. */
   .ed-input {
-    @apply w-full rounded-lg border border-tile-line bg-background px-4 py-3 text-sm font-medium transition-colors;
+    @apply w-full appearance-none rounded-none bg-transparent px-0 py-3 text-sm font-medium transition-colors;
+    border: none;
+    border-bottom: 1px solid hsl(var(--tile-line));
+    box-shadow: none;
     outline: none;
   }
-  .ed-input:focus {
-    @apply border-foreground;
+  .ed-input:focus,
+  .ed-input:focus-visible {
+    border-bottom-color: hsl(var(--foreground));
+    outline: none;
   }
   .ed-input::placeholder {
     @apply font-medium text-muted-foreground/70;
   }
   .ed-label {
     @apply text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+  .ed-field-label {
+    @apply text-xs font-bold uppercase tracking-[0.16em] text-foreground;
   }
 
   /* --------------------------------------------------- full-bleed sections

@@ -131,7 +131,6 @@ const DeferPageInner: React.FC<{
       <PortalLayout
         title={t("defer.title")}
         cap={t("defer.guardianPortal")}
-        accent="bg-accent-purple"
         headline={
           <>
             {t("defer.headline1")} {t("defer.headline2")}
@@ -142,7 +141,7 @@ const DeferPageInner: React.FC<{
       >
         <Panel className="gap-4">
           <div>
-            <label className="ed-label" htmlFor="defer-authority">
+            <label className="ed-field-label" htmlFor="defer-authority">
               {t("defer.authorityLabel")}
             </label>
             <input
@@ -158,7 +157,7 @@ const DeferPageInner: React.FC<{
             />
           </div>
           <div>
-            <label className="ed-label" htmlFor="defer-heir">
+            <label className="ed-field-label" htmlFor="defer-heir">
               {t("defer.heirLabel")}
             </label>
             <input
@@ -270,7 +269,6 @@ const DeferPageInner: React.FC<{
         variant="default"
         loading={deferring}
         cap={t("defer.title")}
-        accent="bg-accent-purple"
         onConfirm={performDefer}
         onCancel={() => {
           if (!deferring) setDeferConfirmOpen(false);

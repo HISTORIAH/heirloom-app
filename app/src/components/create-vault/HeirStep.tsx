@@ -24,33 +24,10 @@ const HeirStep: React.FC<Props> = ({
   setHbSigner,
 }) => {
   const { t } = useTranslation("app");
-  const name = label.trim();
-  const address = heirAddress.trim();
 
   return (
     <div>
-      <StepHeader cap={t("createVault.wizard.step01")} accent="bg-accent-pink" title={t("createVault.wizard.whoInheritsTitle")} />
-
-      {/* The address is shown in full rather than truncated. This is the one
-          screen where getting it wrong is unrecoverable, so the display exists
-          to be read against the heir's wallet, not to look tidy. */}
-      <div className="mb-8">
-        <p className="ed-label">{t("createVault.wizard.thisEstateGoesTo")}</p>
-        <p
-          className={`mt-1 font-display text-[clamp(1.75rem,4.5vw,2.75rem)] font-bold leading-[1.05] tracking-tight ${
-            name ? "" : "text-muted-foreground/50"
-          }`}
-        >
-          {name || t("createVault.wizard.someoneYouName")}
-        </p>
-        <p
-          className={`mt-2.5 break-all font-mono text-sm ${
-            address ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          {address || t("createVault.wizard.noAddressYetCap")}
-        </p>
-      </div>
+      <StepHeader cap={t("createVault.wizard.step01")} title={t("createVault.wizard.whoInheritsTitle")} />
 
       <div className="space-y-5 border-t border-tile-line pt-6">
         <Field
@@ -142,7 +119,7 @@ const Field: React.FC<{
   children: React.ReactNode;
 }> = ({ id, label, hint, children }) => (
   <div>
-    <label className="ed-label" htmlFor={id}>
+    <label className="ed-field-label" htmlFor={id}>
       {label}
     </label>
     {children}

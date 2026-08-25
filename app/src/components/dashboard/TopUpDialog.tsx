@@ -27,7 +27,6 @@ export const TopUpDialog: React.FC<TopUpDialogProps> = ({
     <Modal
       open={open}
       cap={t("common.deposit")}
-      accent="bg-accent-yellow"
       title={t("yield.topUpSymbol", { symbol })}
       description={t("yield.moveIntoVault", { symbol })}
       busy={loading}

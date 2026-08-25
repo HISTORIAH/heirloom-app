@@ -103,7 +103,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({
           {config.backup ? (
             <div className="mt-3 rounded-lg border border-dashed border-tile-line p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="ed-label">{backupLabel}</span>
+                <span className="ed-field-label">{backupLabel}</span>
                 <button
                   type="button"
                   onClick={() => onChange({ ...config, backup: null })}
@@ -192,7 +192,6 @@ const NotificationsDialog: React.FC<Props> = ({
     <Modal
       open={open}
       cap={t("notifications.title")}
-      accent="bg-accent-cyan"
       title={t("notifications.dialogTitle")}
       description={t("notifications.dialogLead")}
       size="lg"

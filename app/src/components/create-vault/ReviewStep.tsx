@@ -49,7 +49,7 @@ const ReviewStep: React.FC<Props> = ({
 
   return (
     <div>
-      <StepHeader cap={t("createVault.wizard.step04")} accent="bg-accent-lime" title={t("createVault.wizard.checkAndConfirm")} />
+      <StepHeader cap={t("createVault.wizard.step04")} title={t("createVault.wizard.checkAndConfirm")} />
 
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">

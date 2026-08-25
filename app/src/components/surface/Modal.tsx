@@ -10,7 +10,6 @@ export interface ModalProps {
   title: string;
   cap?: string;
   description?: ReactNode;
-  accent?: string;
   tone?: TileTone;
   size?: "sm" | "md" | "lg";
   /** Blocks the overlay click, the escape key, and the close button. */
@@ -35,7 +34,6 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   cap,
   description,
-  accent = "bg-accent-yellow",
   tone = "paper",
   size = "md",
   busy = false,
@@ -81,8 +79,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex items-start justify-between gap-4 border-b border-tile-line px-6 py-5">
           <div className="min-w-0">
             {cap && (
-              <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", accent)} />
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 {cap}
               </span>
             )}

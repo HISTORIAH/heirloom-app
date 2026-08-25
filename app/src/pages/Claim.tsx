@@ -226,7 +226,6 @@ const ClaimPageInner: React.FC<{
       <PortalLayout
         title={t("claim.title")}
         cap={t("claim.heirPortal")}
-        accent="bg-accent-orange"
         headline={
           <>
             {t("claim.headline1")} {t("claim.headline2")}

@@ -26,20 +26,20 @@ export const EstateManagePanel: React.FC<EstateManagePanelProps> = ({
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="space-y-2.5">
-          <PanelCap className="text-muted-foreground/70">{t("dashboard.heirTiming")}</PanelCap>
+          <PanelCap className="text-muted-foreground">{t("dashboard.heirTiming")}</PanelCap>
           <div className="grid gap-2">
             <ReassignHeirSection estate={estate} onTx={onTx} />
             <EditSettingsSection estate={estate} onTx={onTx} />
           </div>
         </div>
 
-        <div className="space-y-2.5">
-          <PanelCap className="text-muted-foreground/70">{t("dashboard.assets")}</PanelCap>
+        <div className="flex flex-col space-y-2.5">
+          <PanelCap className="text-muted-foreground">{t("dashboard.assets")}</PanelCap>
           <AddAssetSection estate={estate} onTx={onTx} />
         </div>
 
         <div className="space-y-2.5">
-          <PanelCap className="text-muted-foreground/70">{t("dashboard.dangerZone")}</PanelCap>
+          <PanelCap className="text-muted-foreground">{t("dashboard.dangerZone")}</PanelCap>
           <EmergencyWithdrawSection estate={estate} onTx={onTx} />
         </div>
       </div>

@@ -25,7 +25,6 @@ const SubmitOverlay: React.FC<SubmitOverlayProps> = ({
       open
       closable={false}
       cap={t("common.estate")}
-      accent="bg-accent-yellow"
       labelledBy="submit-overlay-title"
       title={
         isComplete

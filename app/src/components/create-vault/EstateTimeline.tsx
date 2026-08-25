@@ -189,11 +189,17 @@ export const EstateTimelineMini: React.FC<{
       {pending ? (
         <p className="mt-2.5 text-sm text-muted-foreground">{t("createVault.wizard.timelinePending")}</p>
       ) : (
-        <div className="mt-2.5 flex items-baseline justify-between gap-3">
-          <span className="min-w-0 truncate text-sm text-muted-foreground">
+        <div className="mt-2.5 space-y-0.5">
+          <p className="text-sm text-muted-foreground">
             {t("createVault.wizard.checkInEveryDays", { days: heartbeatDays })}
-          </span>
-          <span className="shrink-0 text-sm font-semibold tabular-nums">{date.short(total)}</span>
+          </p>
+          <p className="text-sm font-semibold tabular-nums">
+            {t("createVault.wizard.estateOpensOn", {
+              date: date.short(total),
+              hb: heartbeatDays,
+              grace: graceDays,
+            })}
+          </p>
         </div>
       )}
     </div>

@@ -35,7 +35,6 @@ const HeartbeatStep: React.FC<Props> = ({
     <div>
       <StepHeader
         cap={t("createVault.wizard.step03")}
-        accent="bg-accent-cyan"
         title={t("createVault.wizard.whenHeirInherits")}
       />
 
@@ -58,7 +57,6 @@ const HeartbeatStep: React.FC<Props> = ({
 
       <div className="mt-9 grid gap-px overflow-hidden rounded-lg border border-tile-line bg-tile-line sm:grid-cols-2">
         <Readout
-          swatch="bg-accent-sage"
           label={t("createVault.wizard.youCheckInEvery")}
           value={heartbeatDays}
           daysLabel={t("createVault.wizard.nDaysInline", { count: heartbeatDays })}
@@ -68,7 +66,6 @@ const HeartbeatStep: React.FC<Props> = ({
           note={t("createVault.wizard.checkInFeeNote")}
         />
         <Readout
-          swatch="bg-accent-yellow"
           label={t("createVault.wizard.heirThenWaits")}
           value={graceDays}
           daysLabel={t("createVault.wizard.nDaysInline", { count: graceDays })}
@@ -82,7 +79,6 @@ const HeartbeatStep: React.FC<Props> = ({
 };
 
 const Readout: React.FC<{
-  swatch: string;
   label: string;
   value: number;
   daysLabel: string;
@@ -91,12 +87,9 @@ const Readout: React.FC<{
   /** The date this span lands on, when it isn't already the headline. */
   meta?: string;
   note: string;
-}> = ({ swatch, label, value, daysLabel, presets, onPick, meta, note }) => (
+}> = ({ label, value, daysLabel, presets, onPick, meta, note }) => (
   <div className="bg-background px-4 py-4">
-    <span className="ed-label flex items-center gap-2">
-      <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", swatch)} />
-      {label}
-    </span>
+    <span className="ed-field-label">{label}</span>
     <p className="mt-1.5 font-display text-2xl font-bold tabular-nums">{daysLabel}</p>
     {meta && <p className="mt-1 text-xs font-semibold tabular-nums">{meta}</p>}
     <div className="mt-3 flex flex-wrap gap-1.5">

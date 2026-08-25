@@ -11,8 +11,6 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: "default" | "destructive";
   loading?: boolean;
-  /** Colour of the swatch beside the title. */
-  accent?: string;
   cap?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -27,7 +25,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelLabel,
   variant = "default",
   loading = false,
-  accent,
   cap,
   onConfirm,
   onCancel,
@@ -40,7 +37,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     role="alertdialog"
     labelledBy="confirm-dialog-title"
     cap={cap ?? t("common.confirm")}
-    accent={accent ?? (variant === "destructive" ? "bg-accent-red" : "bg-accent-cyan")}
     title={title}
     description={description}
     busy={loading}

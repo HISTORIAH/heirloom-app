@@ -24,7 +24,6 @@ export const RecallConfirmDialog: React.FC<RecallConfirmDialogProps> = ({
       open={open}
       role="alertdialog"
       cap={isLulo ? t("yield.capYield") : t("yield.capStaking")}
-      accent={isLulo ? "bg-accent-purple" : "bg-accent-lime"}
       title={title}
       description={t("yield.pullBackEarned", { amount, unit })}
       busy={loading}

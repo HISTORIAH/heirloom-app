@@ -21,7 +21,6 @@ export const PreflightRecallDialog: React.FC<PreflightRecallDialogProps> = ({
     <Modal
       open={open}
       cap={t("yield.capHeadsUp")}
-      accent="bg-accent-yellow"
       title={t("yield.fundsOutEarning")}
       description={t("yield.beforeAction", { action: verb })}
       size="lg"

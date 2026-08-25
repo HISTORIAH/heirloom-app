@@ -24,7 +24,6 @@ const NotificationsSignInPanel: React.FC<Props> = ({
   <Modal
     open={open}
     cap={t("notifications.title")}
-    accent="bg-accent-cyan"
     title={t("notifications.proveWallet")}
     description={t("notifications.proveWalletDesc")}
     busy={signing}
