@@ -106,7 +106,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
+    <div className="app-shell flex min-h-screen flex-col overflow-x-clip bg-background">
       <PageHeader
         onDisconnect={handleDisconnect}
         onConnectWallet={() => setWalletDialogOpen(true)}

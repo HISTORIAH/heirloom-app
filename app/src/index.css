@@ -64,10 +64,11 @@
        where the vertical rules are drawn; --page-pad is where content starts,
        always --rule-gap clear of them. Nothing on the page touches a rule:
        the ruling is the margin the page is written inside, not a border the
-       type is flush against. */
+       type is flush against. App routes (not landing) sit in --app-max. */
     --rule-pad: 1.25rem;
     --rule-gap: 1.25rem;
     --page-pad: calc(var(--rule-pad) + var(--rule-gap));
+    --app-max: 1300px;
     /* The running head is a fixed rule of the layout, so the height left for a
        section's content can be solved exactly rather than estimated. */
     --head-h: 2.75rem;
@@ -215,6 +216,13 @@
 }
 
 @layer components {
+  /* App routes (dashboard, wizard, portals). Landing stays full-bleed. */
+  .app-shell {
+    width: 100%;
+    max-width: var(--app-max);
+    min-height: 100svh;
+    margin-inline: auto;
+  }
   .neo-shadow-sm { box-shadow: var(--shadow-sm); }
   .neo-shadow-md { box-shadow: var(--shadow-md); }
   .neo-shadow-lg { box-shadow: var(--shadow-lg); }

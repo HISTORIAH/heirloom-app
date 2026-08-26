@@ -210,7 +210,7 @@ const CreateVaultPage = () => {
   if (submitState === "complete") {
     return (
       <>
-        <div className="min-h-screen overflow-x-clip bg-background">
+        <div className="app-shell min-h-screen overflow-x-clip bg-background">
           <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
           {rail}
           <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
@@ -257,7 +257,7 @@ const CreateVaultPage = () => {
   return (
     <>
       <div
-        className="min-h-screen overflow-x-clip bg-background"
+        className="app-shell min-h-screen overflow-x-clip bg-background"
         aria-hidden={isSubmitting}
         style={isSubmitting ? { pointerEvents: "none" } : undefined}
       >

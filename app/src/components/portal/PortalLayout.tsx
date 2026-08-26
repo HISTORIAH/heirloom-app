@@ -16,7 +16,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   onConnectWallet,
   children,
 }) => (
-  <div className="min-h-screen overflow-x-clip bg-background">
+  <div className="app-shell min-h-screen overflow-x-clip bg-background">
     <PageHeader onConnectWallet={onConnectWallet} />
     <main className="mx-auto max-w-2xl px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
       <header className="mb-8">
