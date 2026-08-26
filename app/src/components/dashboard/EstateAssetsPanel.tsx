@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Panel, PanelCap } from "@/components/surface/Panel";
 import TokenRow from "@/components/dashboard/TokenRow";
+import TokenAvatar from "@/components/TokenAvatar";
 import { SolStakingIndicator } from "@/components/dashboard/SolStakingIndicator";
 import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
 import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
@@ -82,54 +83,61 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
     );
 
   return (
-    <Panel className={cn("gap-6", className)}>
+    <Panel className={cn("h-full gap-6", className)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <PanelCap className="text-muted-foreground">{t("dashboard.assets")}</PanelCap>
-        <span className="text-[11px] font-bold tabular-nums text-muted-foreground">
-          {assetCount} {assetCount !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")}
-        </span>
-      </div>
-
-      <div className="flex w-fit overflow-hidden rounded-lg border border-tile-line">
-        <button onClick={() => setTab("sol")} className={tabClass(tab === "sol")}>
-          {SOL_LABEL}
-        </button>
-        <span aria-hidden="true" className="w-px bg-tile-line" />
-        <button onClick={() => setTab("tokens")} className={tabClass(tab === "tokens")}>
-          {t("dashboard.tokens")} ({estate.vaultTokens.length})
-        </button>
+        <div className="flex items-center gap-2.5">
+          <PanelCap className="text-muted-foreground">{t("dashboard.assets")}</PanelCap>
+          <span className="rounded-full border border-tile-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            {assetCount} {assetCount !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")}
+          </span>
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-tile-line">
+          <button onClick={() => setTab("sol")} className={tabClass(tab === "sol")}>
+            {SOL_LABEL}
+          </button>
+          <span aria-hidden="true" className="w-px bg-tile-line" />
+          <button onClick={() => setTab("tokens")} className={tabClass(tab === "tokens")}>
+            {t("dashboard.tokens")} ({estate.vaultTokens.length})
+          </button>
+        </div>
       </div>
 
       {tab === "sol" ? (
         <div className="flex flex-1 flex-col justify-between gap-6">
           <div>
-            <p className="tile-h tabular-nums">{formatSol(estate.solBalance)}</p>
+            <div className="flex items-center gap-2">
+              <TokenAvatar label={SOL_LABEL} size="sm" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                {SOL_LABEL}
+              </span>
+            </div>
+            <p className="tile-h mt-3 tabular-nums">{formatSol(estate.solBalance)}</p>
             <p className="mt-2 font-mono text-xs text-muted-foreground">
               {`${estate.solBalance.toLocaleString()} ${t("dashboard.lamports")}`}
             </p>
           </div>
 
-          {/* The staking indicator carries its own call to action when nothing is
-              staked, so the tab only needs the deposit button of its own. */}
-          <div className="space-y-2">
+          <div className="flex flex-col items-end gap-2">
             <button
               onClick={() => onTopUpOpen("sol")}
-              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-foreground text-xs font-bold uppercase tracking-[0.12em] transition-colors hover:bg-foreground hover:text-background"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-tile-line px-4 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
             >
               <Plus className="h-3.5 w-3.5" /> {t("dashboard.addMore")}
             </button>
 
             {showYieldStaking && (
-              <SolStakingIndicator
-                solBalance={solVaultBalance}
-                strategy={stakingStrategy}
-                onEnable={onEnableStaking}
-                onRecall={onRecallStaking}
-                loading={progressVisible && recallTarget === "staking" && strategyProgress !== "idle"}
-                progressStep={
-                  progressVisible && recallTarget === "staking" ? strategyProgress : "idle"
-                }
-              />
+              <div className="w-full">
+                <SolStakingIndicator
+                  solBalance={solVaultBalance}
+                  strategy={stakingStrategy}
+                  onEnable={onEnableStaking}
+                  onRecall={onRecallStaking}
+                  loading={progressVisible && recallTarget === "staking" && strategyProgress !== "idle"}
+                  progressStep={
+                    progressVisible && recallTarget === "staking" ? strategyProgress : "idle"
+                  }
+                />
+              </div>
             )}
           </div>
 

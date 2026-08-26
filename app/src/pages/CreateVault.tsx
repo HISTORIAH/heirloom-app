@@ -211,10 +211,7 @@ const CreateVaultPage = () => {
     return (
       <>
         <div className="min-h-screen overflow-x-clip bg-background">
-          <PageHeader
-            title={t("createVault.title")}
-            onConnectWallet={() => setWalletDialogOpen(true)}
-          />
+          <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
           {rail}
           <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
             <Panel className="mx-auto max-w-xl text-center">
@@ -264,10 +261,7 @@ const CreateVaultPage = () => {
         aria-hidden={isSubmitting}
         style={isSubmitting ? { pointerEvents: "none" } : undefined}
       >
-        <PageHeader
-          title={t("createVault.title")}
-          onConnectWallet={() => setWalletDialogOpen(true)}
-        />
+        <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
         {rail}
 
         <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">

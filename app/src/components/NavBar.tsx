@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, ChevronDown, LayoutDashboard, Gift, Heart, LogOut, Copy, Check, RefreshCw } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, Copy, Check, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@heirloom/i18n";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import Logo from "@/components/Logo";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { SOL_LABEL, USDC_LABEL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { AppNavLinks } from "@/components/app/AppNavLinks";
 
 const NavBar = () => {
   const { t } = useTranslation("app");
@@ -17,7 +17,6 @@ const NavBar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { isConnected, publicKey, disconnectWallet } = useWallet();
-  const navigate = useNavigate();
   const { sol, usdc, loading: balancesLoading } = useTokenBalances(
     isConnected ? publicKey : null,
   );
@@ -49,11 +48,6 @@ const NavBar = () => {
     };
   }, [open]);
 
-  const go = (path: string) => {
-    setOpen(false);
-    navigate(path);
-  };
-
   return (
     <>
       <nav className="sticky top-0 z-50 border-b border-tile-line bg-background">
@@ -63,18 +57,7 @@ const NavBar = () => {
           </a>
 
           <div className="hidden items-center gap-1 md:flex">
-            <NavLink onClick={() => navigate("/dashboard")}>
-              <LayoutDashboard className="h-4 w-4" strokeWidth={2} />
-              {t("nav.dashboard")}
-            </NavLink>
-            <NavLink onClick={() => navigate("/claim")}>
-              <Gift className="h-4 w-4" strokeWidth={2} />
-              {t("nav.claimInheritance")}
-            </NavLink>
-            <NavLink onClick={() => navigate("/heartbeat")}>
-              <Heart className="h-4 w-4" strokeWidth={2} />
-              {t("nav.heartbeat")}
-            </NavLink>
+            <AppNavLinks />
             {isConnected ? (
               <div className="relative ml-3" ref={dropdownRef}>
                 <button
@@ -186,18 +169,7 @@ const NavBar = () => {
                   </div>
                 </div>
               )}
-              <DrawerLink onClick={() => go("/dashboard")}>
-                <LayoutDashboard className="h-4 w-4" strokeWidth={2} />
-                {t("nav.dashboard")}
-              </DrawerLink>
-              <DrawerLink onClick={() => go("/claim")}>
-                <Gift className="h-4 w-4" strokeWidth={2} />
-                {t("nav.claimInheritance")}
-              </DrawerLink>
-              <DrawerLink onClick={() => go("/heartbeat")}>
-                <Heart className="h-4 w-4" strokeWidth={2} />
-                {t("nav.heartbeat")}
-              </DrawerLink>
+              <AppNavLinks variant="drawer" onNavigate={() => setOpen(false)} />
               {isConnected ? (
                 <DrawerLink
                   onClick={() => {
@@ -231,19 +203,6 @@ const NavBar = () => {
     </>
   );
 };
-
-const NavLink: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({
-  onClick,
-  children,
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft"
-  >
-    {children}
-  </button>
-);
 
 const DrawerLink: React.FC<{
   onClick: () => void;

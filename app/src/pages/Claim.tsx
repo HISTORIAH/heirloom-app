@@ -14,7 +14,7 @@ import {
   getAtaAddress,
   type HeirloomClient,
 } from "@/lib/heirloom";
-import { formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
+import { formatSol, formatTokenAmount, errMsg, truncateAddress } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
@@ -224,7 +224,6 @@ const ClaimPageInner: React.FC<{
   return (
     <>
       <PortalLayout
-        title={t("claim.title")}
         cap={t("claim.heirPortal")}
         headline={
           <>
@@ -289,7 +288,11 @@ const ClaimPageInner: React.FC<{
           return (
             <EstateGlance key={inh.authority} label={inh.label} state={inh.vaultState}>
               <GlanceStats>
-                <GlanceRow label={t("claim.owner")} value={inh.authority} mono />
+                <GlanceRow
+                  label={t("claim.owner")}
+                  value={<span title={inh.authority}>{truncateAddress(inh.authority, 4)}</span>}
+                  mono
+                />
                 <GlanceRow label={SOL_LABEL} value={formatSol(inh.solBalance)} />
                 <GlanceRow label={t("claim.tokens")} value={inh.vaultTokens.length} />
               </GlanceStats>

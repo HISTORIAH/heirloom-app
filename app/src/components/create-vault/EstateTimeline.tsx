@@ -12,6 +12,8 @@ import {
 } from "@/components/create-vault/estateTiming";
 import { useTranslation } from "@heirloom/i18n";
 
+type Mark = "checkin" | "transfer";
+
 /**
  * The spine of the wizard.
  *
@@ -43,8 +45,24 @@ export const EstateTimeline: React.FC<EstateTimelineProps> = ({
   const { t } = useTranslation("app");
   const date = useEstateDates();
   const trackRef = useRef<HTMLDivElement>(null);
-  const [drag, setDrag] = useState<null | "checkin" | "transfer">(null);
+  const [drag, setDrag] = useState<Mark | null>(null);
+  const [hover, setHover] = useState<Mark | null>(null);
+  const [focus, setFocus] = useState<Mark | null>(null);
+  const [intro, setIntro] = useState(true);
   const total = heartbeatDays + graceDays;
+
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = window.setTimeout(() => setIntro(false), reduce ? 900 : 2400);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  const live = (mark: Mark) => intro || drag === mark || hover === mark || focus === mark;
+
+  const grab = (mark: Mark) => {
+    setIntro(false);
+    setDrag(mark);
+  };
 
   useEffect(() => {
     if (!drag) return;
@@ -128,10 +146,14 @@ export const EstateTimeline: React.FC<EstateTimelineProps> = ({
             count: heartbeatDays,
             date: date.short(heartbeatDays),
           })}
-          onPointerDown={() => setDrag("checkin")}
+          onPointerDown={() => grab("checkin")}
+          onPointerEnter={() => setHover("checkin")}
+          onPointerLeave={() => setHover((h) => (h === "checkin" ? null : h))}
+          onFocus={() => setFocus("checkin")}
+          onBlur={() => setFocus((f) => (f === "checkin" ? null : f))}
           onKeyDown={nudge(heartbeatDays, onHeartbeatChange, HB_MIN_DAYS, HB_MAX_DAYS)}
           style={{ left: pct(heartbeatDays) }}
-          className={cn(handleClass, segment)}
+          className={cn(handleClass, segment, live("checkin") && "z-10")}
         />
         <div
           role="slider"
@@ -144,20 +166,69 @@ export const EstateTimeline: React.FC<EstateTimelineProps> = ({
             count: graceDays,
             date: date.short(total),
           })}
-          onPointerDown={() => setDrag("transfer")}
+          onPointerDown={() => grab("transfer")}
+          onPointerEnter={() => setHover("transfer")}
+          onPointerLeave={() => setHover((h) => (h === "transfer" ? null : h))}
+          onFocus={() => setFocus("transfer")}
+          onBlur={() => setFocus((f) => (f === "transfer" ? null : f))}
           onKeyDown={nudge(graceDays, onGraceChange, GRACE_MIN_DAYS, GRACE_MAX_DAYS)}
           style={{ left: pct(total) }}
-          className={cn(handleClass, segment)}
+          className={cn(handleClass, segment, live("transfer") && "z-10")}
+        />
+
+        <FloatLabel
+          side="start"
+          left={pct(heartbeatDays)}
+          live={live("checkin")}
+          cap={t("createVault.wizard.floatCheckIn")}
+          date={date.short(heartbeatDays)}
+        />
+        <FloatLabel
+          side="end"
+          left={pct(total)}
+          live={live("transfer")}
+          cap={t("createVault.wizard.floatOpens")}
+          date={date.short(total)}
         />
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between gap-4">
+      <div className="mt-16 flex items-baseline justify-between gap-4">
         <span className="ed-label">{t("createVault.wizard.timelineToday")}</span>
         <span className="ed-label">{t("createVault.wizard.timelineHorizon")}</span>
       </div>
     </div>
   );
 };
+
+const FloatLabel: React.FC<{
+  side: "start" | "end";
+  left: string;
+  live: boolean;
+  cap: string;
+  date: string;
+}> = ({ side, left, live, cap, date }) => (
+  <div
+    aria-hidden="true"
+    className={cn(
+      "pointer-events-none absolute top-full z-10 flex -translate-x-1/2 flex-col items-center pt-1.5",
+      "transition-opacity duration-200",
+      live ? "opacity-100" : "opacity-0",
+    )}
+    style={{ left }}
+  >
+    <span className="h-3 w-px bg-foreground/40" />
+    <span
+      className={cn(
+        "mt-0.5 whitespace-nowrap rounded-md border bg-background px-2 py-1",
+        live ? "border-foreground" : "border-tile-line",
+        side === "start" ? "-translate-x-1/4" : "translate-x-1/4",
+      )}
+    >
+      <span className="block text-[10px] font-bold uppercase tracking-[0.14em]">{cap}</span>
+      <span className="mt-0.5 block text-[11px] font-semibold tabular-nums">{date}</span>
+    </span>
+  </div>
+);
 
 export const EstateTimelineMini: React.FC<{
   heartbeatDays: number;

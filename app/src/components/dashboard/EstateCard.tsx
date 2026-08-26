@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
@@ -8,18 +7,13 @@ import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { SOL_DECIMALS } from "@/lib/constants";
-import {
-  errMsg,
-  getClusterFromEndpoint,
-  getSolanaExplorerTxUrl,
-  toRawTokenAmount,
-} from "@/lib/utils";
+import { errMsg, getClusterFromEndpoint, toRawTokenAmount } from "@/lib/utils";
 import { FEATURE_NOTIFICATIONS_UI, FEATURE_YIELD_STAKING_UI } from "@/config";
-import { Mosaic, Tile } from "@/components/surface/Mosaic";
 import { EstateStatusTile } from "@/components/dashboard/EstateStatusTile";
 import { EstateAssetsPanel } from "@/components/dashboard/EstateAssetsPanel";
 import { EstateHeirTile } from "@/components/dashboard/EstateHeirTile";
 import { EstateManagePanel } from "@/components/dashboard/EstateManagePanel";
+import { EstateFactsBand } from "@/components/dashboard/EstateFactsBand";
 import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
 import { RecallConfirmDialog } from "@/components/dashboard/RecallConfirmDialog";
 import { StakingEnableDialog } from "@/components/dashboard/StakingEnableDialog";
@@ -45,9 +39,7 @@ import {
 import { useTranslation } from "@heirloom/i18n";
 
 /**
- * One estate, laid out as a mosaic. The status tile and the assets panel share
- * the top band because they are the two things an owner opens the dashboard
- * for; everything below is reference or a mutation.
+ * One estate as a 2×2: status over assets, heir over manage, facts under all four.
  */
 export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
   const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
@@ -322,78 +314,53 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
 
   return (
     <>
-      <Mosaic className="[--row-unit:3.5rem]">
-        <Tile col={7} colMd={6} row={8} bare tone="plain">
-          <EstateStatusTile
-            state={computedState}
-            countdown={countdown}
-            countdownLabel={countdownLabel}
-            sending={sendingHeartbeat}
-            onCheckIn={handleHeartbeat}
-            className="flex-1"
-          />
-        </Tile>
-
-        <Tile col={5} colMd={6} row={8} bare tone="plain">
-          <EstateAssetsPanel
-            estate={estate}
-            tokenMeta={tokenMeta}
-            walletSplTokens={walletSplTokens}
-            walletSolBalance={walletSolBalance}
-            showYieldStaking={showYieldStaking}
-            stakingStrategy={stakingStrategy}
-            luloStrategy={luloStrategy?.type === "lulo" ? luloStrategy : null}
-            onEnableStaking={handleEnableStaking}
-            onRecallStaking={handleRecallStaking}
-            onEnableLulo={handleEnableLulo}
-            onRecallLulo={handleRecallLulo}
-            strategyProgress={strategyProgress}
-            progressVisible={showProgressOverlay}
-            recallTarget={recallTarget}
-            luloTargetMint={luloTargetMint}
-            topUpOpen={topUpOpen}
-            onTopUpOpen={setTopUpOpen}
-            onTopUpCancel={() => setTopUpOpen(null)}
-            onTopUpConfirm={handleTopUp}
-            topUpLoading={topUpLoading}
-            className="flex-1"
-          />
-        </Tile>
-
-        {lastTxId && (
-          <Tile col={12} colMd={6} row={1} bare tone="plain">
-            <a
-              href={getSolanaExplorerTxUrl(lastTxId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-1 items-center gap-2 rounded-xl border border-tile-line px-5 py-4 text-sm font-semibold transition-colors hover:bg-tile-soft"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t("dashboard.viewLatestTx")}
-            </a>
-          </Tile>
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12 lg:gap-5">
+        <EstateStatusTile
+          state={computedState}
+          countdown={countdown}
+          countdownLabel={countdownLabel}
+          sending={sendingHeartbeat}
+          onCheckIn={handleHeartbeat}
+          className="lg:col-span-7"
+        />
+        <EstateHeirTile estate={estate} className="lg:col-span-5" />
+        <EstateAssetsPanel
+          estate={estate}
+          tokenMeta={tokenMeta}
+          walletSplTokens={walletSplTokens}
+          walletSolBalance={walletSolBalance}
+          showYieldStaking={showYieldStaking}
+          stakingStrategy={stakingStrategy}
+          luloStrategy={luloStrategy?.type === "lulo" ? luloStrategy : null}
+          onEnableStaking={handleEnableStaking}
+          onRecallStaking={handleRecallStaking}
+          onEnableLulo={handleEnableLulo}
+          onRecallLulo={handleRecallLulo}
+          strategyProgress={strategyProgress}
+          progressVisible={showProgressOverlay}
+          recallTarget={recallTarget}
+          luloTargetMint={luloTargetMint}
+          topUpOpen={topUpOpen}
+          onTopUpOpen={setTopUpOpen}
+          onTopUpCancel={() => setTopUpOpen(null)}
+          onTopUpConfirm={handleTopUp}
+          topUpLoading={topUpLoading}
+          className={computedState === "distributed" ? "lg:col-span-12" : "lg:col-span-7"}
+        />
+        {computedState !== "distributed" && (
+          <EstateManagePanel estate={estate} onTx={setLastTxId} className="lg:col-span-5" />
         )}
-
-        <Tile col={12} colMd={6} row={1} bare tone="plain">
-          <EstateHeirTile estate={estate} className="flex-1" />
-        </Tile>
-
+        <EstateFactsBand estate={estate} lastTxId={lastTxId} className="lg:col-span-12" />
         {FEATURE_NOTIFICATIONS_UI && (
-          <Tile col={12} colMd={6} row={1} bare tone="plain">
+          <div className="lg:col-span-12">
             <NotificationsCard
               status={notifStatus}
               summary={notifSummary}
               onAction={handleNotifAction}
             />
-          </Tile>
+          </div>
         )}
-
-        {computedState !== "distributed" && (
-          <Tile col={12} colMd={6} row={2} bare tone="plain">
-            <EstateManagePanel estate={estate} onTx={setLastTxId} className="flex-1" />
-          </Tile>
-        )}
-      </Mosaic>
+      </div>
 
       {showYieldStaking && activeLuloHolding && (
         <LuloEnableDialog

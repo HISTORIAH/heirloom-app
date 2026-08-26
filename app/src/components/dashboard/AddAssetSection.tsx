@@ -90,7 +90,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-tile-line px-4 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+        className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
       >
         {t("dashboard.manage.addAssetShort")}
       </button>

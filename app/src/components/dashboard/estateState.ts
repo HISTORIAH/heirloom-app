@@ -27,8 +27,8 @@ export interface TickResult {
 
 export const STATE_TONE: Record<UiState, TileTone> = {
   active: "paper",
-  grace: "yellow",
-  claimable: "ink",
+  grace: "yellow-line",
+  claimable: "red-line",
   distributed: "soft",
 };
 
@@ -42,8 +42,8 @@ export const STATE_DOT: Record<UiState, string> = {
 /** Hairline colour that stays visible on whichever fill the state carries. */
 export const STATE_LINE: Record<UiState, string> = {
   active: "border-tile-line",
-  grace: "border-foreground/15",
-  claimable: "border-background/20",
+  grace: "border-tile-line",
+  claimable: "border-tile-line",
   distributed: "border-foreground/10",
 };
 

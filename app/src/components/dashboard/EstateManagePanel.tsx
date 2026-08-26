@@ -21,27 +21,31 @@ export const EstateManagePanel: React.FC<EstateManagePanelProps> = ({
   const { t } = useTranslation("app");
 
   return (
-    <Panel tone="soft" className={cn("gap-6", className)}>
+    <Panel className={cn("h-full gap-6", className)}>
       <PanelCap className="text-muted-foreground">{t("dashboard.manageEstate")}</PanelCap>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="space-y-2.5">
+      <div className="flex flex-1 flex-col gap-5">
+        <section>
           <PanelCap className="text-muted-foreground">{t("dashboard.heirTiming")}</PanelCap>
-          <div className="grid gap-2">
+          <div className="mt-2.5 grid grid-cols-2 gap-2">
             <ReassignHeirSection estate={estate} onTx={onTx} />
             <EditSettingsSection estate={estate} onTx={onTx} />
           </div>
-        </div>
+        </section>
 
-        <div className="flex flex-col space-y-2.5">
+        <section>
           <PanelCap className="text-muted-foreground">{t("dashboard.assets")}</PanelCap>
-          <AddAssetSection estate={estate} onTx={onTx} />
-        </div>
+          <div className="mt-2.5">
+            <AddAssetSection estate={estate} onTx={onTx} />
+          </div>
+        </section>
 
-        <div className="space-y-2.5">
+        <section>
           <PanelCap className="text-muted-foreground">{t("dashboard.dangerZone")}</PanelCap>
-          <EmergencyWithdrawSection estate={estate} onTx={onTx} />
-        </div>
+          <div className="mt-2.5">
+            <EmergencyWithdrawSection estate={estate} onTx={onTx} />
+          </div>
+        </section>
       </div>
     </Panel>
   );

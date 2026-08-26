@@ -108,7 +108,6 @@ const DashboardPage = () => {
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
       <PageHeader
-        title={t("dashboard.title")}
         onDisconnect={handleDisconnect}
         onConnectWallet={() => setWalletDialogOpen(true)}
         hideConnect={estates.length === 0 && !pendingCreate}

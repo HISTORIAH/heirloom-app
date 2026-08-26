@@ -35,6 +35,9 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
   const line = STATE_LINE[state];
   const muted = toneMuted[tone];
 
+  const checkInVariant =
+    state === "grace" ? "flat-sage" : state === "claimable" ? "flat" : "flat-yellow";
+
   const units = [
     { label: t("dashboard.days"), value: countdown.days },
     { label: t("dashboard.hours"), value: countdown.hours },
@@ -43,25 +46,50 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
   ];
 
   return (
-    <Panel tone={tone} className={cn("justify-between gap-7", className)}>
-      <div className="flex items-start justify-between gap-4">
-        <PanelCap className={muted}>{t("dashboard.vaultStatus")}</PanelCap>
-        {state === "grace" && (
-          <span className="rounded-md border border-foreground/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]">
-            {t("dashboard.urgent")}
+    <Panel tone={tone} className={cn("h-full justify-between gap-7", className)}>
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <span className="inline-flex rounded-full border border-tile-line px-2.5 py-0.5">
+            <PanelCap className={muted}>{t("dashboard.vaultStatus")}</PanelCap>
           </span>
+          <h2 className="ed-h2 mt-4">{meta.label}</h2>
+          <p className={cn("ed-body mt-3 max-w-[46ch]", muted)}>{meta.description}</p>
+        </div>
+        {state !== "distributed" && (
+          <div className="shrink-0 sm:max-w-[16rem] sm:pt-1 sm:text-right">
+            <Button
+              variant={checkInVariant}
+              size="lg"
+              onClick={onCheckIn}
+              disabled={sending}
+              className="w-full sm:w-auto"
+            >
+              {sending ? (
+                <><Loader2 className="h-5 w-5 animate-spin" /> {t("dashboard.signing")}</>
+              ) : state === "claimable" ? (
+                <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.imAlive")}</>
+              ) : (
+                <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.checkIn")}</>
+              )}
+            </Button>
+            {!sending && (
+              <p className={cn("mt-2 text-xs font-medium sm:text-right", muted)}>
+                {t("dashboard.restartsTimer")}
+              </p>
+            )}
+          </div>
         )}
       </div>
 
-      <div>
-        <div className="flex items-center gap-2.5">
-          <h2 className="ed-h2">{meta.label}</h2>
-        </div>
-        <p className={cn("ed-body mt-3 max-w-[46ch]", muted)}>{meta.description}</p>
-      </div>
-
       <div className={cn("border-t pt-6", line)}>
-        <PanelCap className={muted}>{countdownLabel}</PanelCap>
+        <div className="flex items-center justify-between gap-3">
+          <PanelCap className={muted}>{countdownLabel}</PanelCap>
+          {state === "grace" && (
+            <span className="rounded-full bg-accent-yellow px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]">
+              {t("dashboard.urgent")}
+            </span>
+          )}
+        </div>
         <div className={cn("mt-4 grid grid-cols-4 divide-x", line)}>
           {units.map((unit, i) => (
             <div key={unit.label} className={cn("min-w-0", i === 0 ? "pr-4" : "px-4 last:pr-0")}>
@@ -80,31 +108,6 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
           ))}
         </div>
       </div>
-
-      {state !== "distributed" && (
-        <div className={cn("border-t pt-6", line)}>
-          <Button
-            variant={state === "grace" ? "flat" : "flat-yellow"}
-            size="lg"
-            onClick={onCheckIn}
-            disabled={sending}
-            className="w-full"
-          >
-            {sending ? (
-              <><Loader2 className="h-5 w-5 animate-spin" /> {t("dashboard.signing")}</>
-            ) : state === "claimable" ? (
-              <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.imAlive")}</>
-            ) : (
-              <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.checkIn")}</>
-            )}
-          </Button>
-          {state === "claimable" && !sending && (
-            <p className={cn("mt-3 text-center text-xs font-medium", muted)}>
-              {t("dashboard.restartsTimer")}
-            </p>
-          )}
-        </div>
-      )}
     </Panel>
   );
 };

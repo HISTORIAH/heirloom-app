@@ -9,7 +9,7 @@ import {
   lookupEstateSnapshot,
   type EstateSnapshot,
 } from "@/services/heirloom";
-import { formatDuration, formatSol, errMsg } from "@/lib/utils";
+import { formatDuration, formatSol, errMsg, truncateAddress } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
@@ -112,7 +112,6 @@ const HeartbeatPageInner: React.FC<{
   return (
     <>
       <PortalLayout
-        title={t("heartbeat.title")}
         cap={t("heartbeat.hotSignerPortal")}
         headline={
           <>
@@ -193,7 +192,13 @@ const HeartbeatPageInner: React.FC<{
               />
               <GlanceRow
                 label={t("heartbeat.heartbeatSigner")}
-                value={estate.hbSigner ?? t("common.none")}
+                value={
+                  estate.hbSigner ? (
+                    <span title={estate.hbSigner}>{truncateAddress(estate.hbSigner, 4)}</span>
+                  ) : (
+                    t("common.none")
+                  )
+                }
                 mono
               />
             </GlanceStats>

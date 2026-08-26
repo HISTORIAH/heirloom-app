@@ -139,12 +139,18 @@ export interface EstateLike {
   claimableAssets: number;
 }
 
-function unwrapOption(opt: unknown): string | null {
-  if (opt && typeof opt === "object" && "__option" in opt) {
-    const o = opt as { __option: "Some" | "None"; value?: unknown };
-    return o.__option === "Some" && o.value !== undefined ? String(o.value) : null;
+/** Codama Option<Address> is `{ __option, value }`. `String(option)` is `[object Object]`. */
+export function unwrapOption(opt: unknown): string | null {
+  if (opt == null) return null;
+  if (typeof opt === "string") return opt || null;
+  if (typeof opt !== "object") return null;
+  if ("__option" in opt) {
+    const o = opt as { __option: string; value?: unknown };
+    if (o.__option !== "Some") return null;
+    return unwrapOption(o.value);
   }
-  return null;
+  const s = String(opt);
+  return s && s !== "[object Object]" ? s : null;
 }
 
 export async function buildSnapshotFromEstate(

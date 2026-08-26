@@ -63,19 +63,20 @@ export const Modal: React.FC<ModalProps> = ({
       role={role}
       aria-modal="true"
       aria-labelledby={titleId}
-      className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-foreground/25 p-4 backdrop-blur-[3px] sm:p-6"
+      className="fixed inset-0 z-[70] overflow-y-auto bg-foreground/25 backdrop-blur-[3px]"
       onClick={() => {
         if (!busy && closable) onClose();
       }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className={cn(
-          "modal-rise my-auto w-full overflow-hidden rounded-xl shadow-[0_24px_64px_-24px_hsl(var(--foreground)/0.35)]",
-          WIDTHS[size],
-          toneStyles[tone],
-        )}
-      >
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "modal-rise w-full overflow-hidden rounded-xl shadow-[0_24px_64px_-24px_hsl(var(--foreground)/0.35)]",
+            WIDTHS[size],
+            toneStyles[tone],
+          )}
+        >
         <div className="flex items-start justify-between gap-4 border-b border-tile-line px-6 py-5">
           <div className="min-w-0">
             {cap && (
@@ -109,6 +110,7 @@ export const Modal: React.FC<ModalProps> = ({
             {footer}
           </div>
         )}
+        </div>
       </div>
     </div>,
     document.body,

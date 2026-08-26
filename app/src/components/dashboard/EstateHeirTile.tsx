@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Check, ChevronDown, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { Panel, PanelCap } from "@/components/surface/Panel";
+import { cn, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 import type { EstateData } from "@/contexts/VaultContext";
+
+const Addr: React.FC<{ value: string | null; empty: string }> = ({ value, empty }) => {
+  if (!value) return <span>{empty}</span>;
+  return (
+    <span className="font-mono tabular-nums" title={value}>
+      {truncateAddress(value, 4)}
+    </span>
+  );
+};
 
 export const EstateHeirTile: React.FC<{ estate: EstateData; className?: string }> = ({
   estate,
@@ -18,52 +28,46 @@ export const EstateHeirTile: React.FC<{ estate: EstateData; className?: string }
   };
 
   return (
-    <Panel className={className}>
-      <details className="group">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-          <PanelCap className="text-muted-foreground">{t("dashboard.heirDetails")}</PanelCap>
-          <ChevronDown
-            className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
-            strokeWidth={2}
-          />
-        </summary>
+    <Panel className={cn("h-full", className)}>
+      <PanelCap className="text-muted-foreground">{t("dashboard.heirDetails")}</PanelCap>
 
-        <div className="mt-5 divide-y divide-tile-line border-t border-tile-line">
-          <button
-            onClick={handleCopyHeir}
-            title={t("dashboard.copyHeirAddress")}
-            className="flex w-full items-center justify-between gap-3 py-4 text-left transition-colors hover:bg-tile-soft"
-          >
-            <div className="min-w-0">
-              <PanelCap className="text-muted-foreground">{t("dashboard.heir")}</PanelCap>
-              <p className="mt-1.5 font-semibold">{estate.label}</p>
-              <p className="break-all font-mono text-xs text-muted-foreground">{estate.heir}</p>
-            </div>
-            {copied ? (
-              <Check className="h-4 w-4 shrink-0" />
-            ) : (
-              <Copy className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-          </button>
-
-          <div className="py-4">
-            <PanelCap className="text-muted-foreground">
-              {t("dashboard.guardian")}
-              {estate.delegate && estate.isDeferred ? ` (${t("dashboard.pauseUsed")})` : ""}
-            </PanelCap>
-            <p className="mt-1.5 break-all font-mono text-xs">
-              {estate.delegate || t("common.notSet")}
-            </p>
-          </div>
-
-          <div className="py-4">
-            <PanelCap className="text-muted-foreground">{t("dashboard.heartbeatSigner")}</PanelCap>
-            <p className="mt-1.5 break-all font-mono text-xs">
-              {estate.hbSigner || t("common.notSet")}
-            </p>
-          </div>
+      <button
+        onClick={handleCopyHeir}
+        title={t("dashboard.copyHeirAddress")}
+        className="mt-5 flex w-full items-start justify-between gap-3 rounded-lg border border-tile-line bg-background px-4 py-3.5 text-left transition-colors hover:bg-tile-soft"
+      >
+        <div className="min-w-0">
+          <PanelCap className="text-muted-foreground">{t("dashboard.heir")}</PanelCap>
+          <p className="mt-1.5 font-semibold">{estate.label}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            <Addr value={estate.heir} empty={t("common.notSet")} />
+          </p>
         </div>
-      </details>
+        {copied ? (
+          <Check className="mt-0.5 h-4 w-4 shrink-0" />
+        ) : (
+          <Copy className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        )}
+      </button>
+
+      <div className="mt-1 divide-y divide-tile-line">
+        <div className="py-4">
+          <PanelCap className="text-muted-foreground">
+            {t("dashboard.guardian")}
+            {estate.delegate && estate.isDeferred ? ` (${t("dashboard.pauseUsed")})` : ""}
+          </PanelCap>
+          <p className="mt-1.5 text-sm">
+            <Addr value={estate.delegate} empty={t("common.notSet")} />
+          </p>
+        </div>
+
+        <div className="py-4">
+          <PanelCap className="text-muted-foreground">{t("dashboard.heartbeatSigner")}</PanelCap>
+          <p className="mt-1.5 text-sm">
+            <Addr value={estate.hbSigner} empty={t("common.notSet")} />
+          </p>
+        </div>
+      </div>
     </Panel>
   );
 };

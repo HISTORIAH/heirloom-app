@@ -41,12 +41,12 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       <button
         onClick={() => setWithdrawConfirmOpen(true)}
         disabled={withdrawing}
-        className="flex w-full items-center gap-2.5 rounded-lg border border-accent-red/50 px-4 py-3 text-left text-sm font-semibold text-accent-red transition-colors hover:bg-accent-red/10 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-accent-red/50 px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-accent-red transition-colors hover:bg-accent-red/10 disabled:opacity-50"
       >
         {withdrawing ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.withdrawing")}</>
         ) : (
-          <><AlertTriangle className="h-4 w-4" /> {t("dashboard.manage.closeEstateShort")}</>
+          <><AlertTriangle className="h-4 w-4" /> {t("dashboard.manage.closeEstate")}</>
         )}
       </button>
 

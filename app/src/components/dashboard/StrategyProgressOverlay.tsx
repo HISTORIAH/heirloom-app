@@ -73,8 +73,9 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-foreground/25 p-6 backdrop-blur-[3px]"
+      className="fixed inset-0 z-[80] overflow-y-auto bg-foreground/25 backdrop-blur-[3px]"
     >
+      <div className="flex min-h-full items-center justify-center p-6">
       <div className="modal-rise w-full max-w-md overflow-hidden rounded-xl border border-tile-line bg-background shadow-[0_24px_64px_-24px_hsl(var(--foreground)/0.35)]">
         <div className="border-b border-tile-line px-6 py-6 text-center">
           <span className="ed-label">
@@ -105,6 +106,7 @@ export const StrategyProgressOverlay: React.FC<StrategyProgressOverlayProps> = (
             </p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

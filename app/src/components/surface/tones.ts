@@ -14,7 +14,9 @@ export type TileTone =
   | "sky"
   | "cyan"
   | "orange"
-  | "ink";
+  | "ink"
+  | "yellow-line"
+  | "red-line";
 
 export const toneStyles: Record<TileTone, string> = {
   // No border and no fill: type sitting directly on the page, which is what
@@ -30,6 +32,8 @@ export const toneStyles: Record<TileTone, string> = {
   cyan: "border border-accent-cyan bg-accent-cyan",
   orange: "border border-accent-orange bg-accent-orange",
   ink: "border border-foreground bg-foreground text-background",
+  "yellow-line": "border border-accent-yellow bg-background",
+  "red-line": "border border-accent-red bg-background",
 };
 
 /** Muted body copy that stays legible on whichever fill the tile carries. */
@@ -43,6 +47,8 @@ export const toneMuted: Record<TileTone, string> = {
   cyan: "text-foreground/70",
   orange: "text-foreground/70",
   ink: "text-background/65",
+  "yellow-line": "text-muted-foreground",
+  "red-line": "text-muted-foreground",
 };
 
 /** Small uppercase label sitting at the top of most tiles. */
@@ -56,4 +62,6 @@ export const toneCap: Record<TileTone, string> = {
   cyan: "text-foreground/60",
   orange: "text-foreground/60",
   ink: "text-background/55",
+  "yellow-line": "text-muted-foreground",
+  "red-line": "text-muted-foreground",
 };

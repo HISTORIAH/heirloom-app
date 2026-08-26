@@ -9,7 +9,7 @@ import {
   lookupEstateSnapshot,
   type EstateSnapshot,
 } from "@/services/heirloom";
-import { formatDuration, formatSol, errMsg } from "@/lib/utils";
+import { formatDuration, formatSol, errMsg, truncateAddress } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
@@ -129,7 +129,6 @@ const DeferPageInner: React.FC<{
   return (
     <>
       <PortalLayout
-        title={t("defer.title")}
         cap={t("defer.guardianPortal")}
         headline={
           <>
@@ -207,7 +206,13 @@ const DeferPageInner: React.FC<{
               />
               <GlanceRow
                 label={t("defer.delegate")}
-                value={estate.delegate ?? t("common.none")}
+                value={
+                  estate.delegate ? (
+                    <span title={estate.delegate}>{truncateAddress(estate.delegate, 4)}</span>
+                  ) : (
+                    t("common.none")
+                  )
+                }
                 mono
               />
             </GlanceStats>
