@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Modal } from "@/components/surface/Modal";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
-import { UserPlus, X } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -32,7 +33,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
     if (trimmed === estate.heir) {
       toast({
         title: t("dashboard.manage.sameHeirTitle"),
-        description: t("dashboard.manage.sameHeirDesc"),
+        description: t("dashboard.manage.alreadyHeirDesc"),
         variant: "destructive",
       });
       return;
@@ -51,15 +52,11 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
       setOpen(false);
       setReassignConfirm({ open: false, next: "" });
       track("heir_reassigned");
-      toast({ title: t("dashboard.manage.heirUpdatedTitle"), description: t("dashboard.manage.heirUpdatedDesc") });
+      toast({ title: t("dashboard.manage.heirUpdatedTitle"), description: t("dashboard.manage.migratedDesc") });
       await fetchEstates();
     } catch (err: unknown) {
       track("heir_reassign_failed", { stage: "transaction" });
-      toast({
-        title: t("dashboard.manage.updateFailedTitle"),
-        description: errMsg(err),
-        variant: "destructive",
-      });
+      toast({ title: t("dashboard.manage.updateFailedTitle"), description: errMsg(err), variant: "destructive" });
     } finally {
       setUpdatingHeir(false);
     }
@@ -69,97 +66,79 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="neo-border rounded-xl px-4 py-3 bg-accent-pink text-foreground font-bold text-sm text-center hover:opacity-90 transition-opacity"
+        className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
       >
-        {t("dashboard.manage.changeHeir")}
+        {t("dashboard.manage.changeHeirShort")}
       </button>
 
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6 text-foreground"
-          onClick={() => {
-            if (!updatingHeir) setOpen(false);
-          }}
-        >
-          <div className="neo-card-static max-w-md w-full neo-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-accent-pink neo-border rounded-xl p-3 shrink-0">
-                  <UserPlus className="h-6 w-6" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-xl leading-tight text-foreground">{t("dashboard.manage.changeHeir")}</h3>
-                  <p className="text-sm font-medium text-muted-foreground mt-1">
-                    {t("dashboard.manage.changeHeirDesc")}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setOpen(false)}
-                disabled={updatingHeir}
-                className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
-              >
-                <X className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </div>
-
-            <div className="space-y-3 mt-4">
-              <input
-                type="text"
-                value={newHeirAddress}
-                onChange={(e) => setNewHeirAddress(e.target.value)}
-                maxLength={128}
-                className="neo-input w-full font-mono text-sm focus:bg-accent-pink/20"
-                placeholder={t("dashboard.manage.newHeirPlaceholder")}
-              />
-              <p className="text-xs font-medium text-muted-foreground">
-                {t("dashboard.manage.changeHeirWarning")}
-              </p>
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-              <Button variant="outline" size="default" onClick={() => setOpen(false)} className="sm:w-auto w-full">
-                {t("dashboard.manage.cancel")}
-              </Button>
-              <Button
-                variant="pink"
-                size="default"
-                onClick={handleUpdateHeir}
-                disabled={!newHeirAddress.trim()}
-                className="sm:w-auto w-full"
-              >
-                <UserPlus className="h-4 w-4" /> {t("dashboard.manage.changeHeir")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={open}
+        cap={t("dashboard.manage.heirCap")}
+        title={t("dashboard.manage.changeHeirShort")}
+        description={t("dashboard.manage.changeHeirMigrateDesc")}
+        busy={updatingHeir}
+        onClose={() => setOpen(false)}
+        footer={
+          <>
+            <Button
+              variant="flat-outline"
+              size="default"
+              onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="flat"
+              size="default"
+              onClick={handleUpdateHeir}
+              disabled={!newHeirAddress.trim()}
+              className="w-full sm:w-auto"
+            >
+              <UserPlus className="h-4 w-4" /> {t("dashboard.manage.changeHeirShort")}
+            </Button>
+          </>
+        }
+      >
+        <label className="ed-field-label" htmlFor="new-heir-address">
+          {t("dashboard.manage.newHeirAddress")}
+        </label>
+        <input
+          id="new-heir-address"
+          type="text"
+          value={newHeirAddress}
+          onChange={(e) => setNewHeirAddress(e.target.value)}
+          maxLength={128}
+          className="ed-input mt-2 font-mono"
+          placeholder={t("dashboard.manage.addressPlaceholder")}
+        />
+        <p className="mt-3 text-xs font-medium text-muted-foreground">
+          {t("dashboard.manage.reassignPauseNote")}
+        </p>
+      </Modal>
 
       <ConfirmDialog
         open={reassignConfirm.open}
-        title={t("dashboard.manage.changeHeirConfirmTitle")}
-        description={t("dashboard.manage.changeHeirConfirmDesc")}
-        confirmLabel={t("dashboard.manage.changeHeir")}
-        cancelLabel={t("dashboard.manage.cancel")}
+        cap={t("dashboard.manage.heirCap")}
+        title={t("dashboard.manage.changeHeirQuestion")}
+        description={t("dashboard.manage.changeHeirMovesDesc")}
+        confirmLabel={t("dashboard.manage.changeHeirShort")}
+        cancelLabel={t("common.cancel")}
         variant="default"
         loading={updatingHeir}
-        icon={<UserPlus className="h-6 w-6" strokeWidth={2.5} />}
-        accent="bg-accent-pink/20"
         onConfirm={performUpdateHeir}
         onCancel={() => {
           if (!updatingHeir) setReassignConfirm({ open: false, next: "" });
         }}
       >
-        <div className="space-y-2 text-sm">
-          <div className="neo-border rounded-lg p-3 bg-secondary">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.manage.from")}</p>
-            <p className="font-mono text-xs break-all">{estate.heir}</p>
+        <div className="space-y-2">
+          <div className="rounded-lg border border-tile-line bg-tile-soft px-4 py-3">
+            <p className="ed-label">{t("dashboard.manage.from")}</p>
+            <p className="mt-1 break-all font-mono text-xs">{estate.heir}</p>
           </div>
-          <div className="neo-border rounded-lg p-3 bg-accent-pink/10">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t("dashboard.manage.to")}</p>
-            <p className="font-mono text-xs break-all">{reassignConfirm.next}</p>
+          <div className="rounded-lg border border-accent-pink/60 bg-accent-pink/10 px-4 py-3">
+            <p className="ed-label">{t("dashboard.manage.to")}</p>
+            <p className="mt-1 break-all font-mono text-xs">{reassignConfirm.next}</p>
           </div>
         </div>
       </ConfirmDialog>

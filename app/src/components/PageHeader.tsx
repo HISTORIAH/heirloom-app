@@ -1,30 +1,34 @@
 import { useState, useRef, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check } from "lucide-react";
+import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check, Menu, X } from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
+import { AppNavLinks } from "@/components/app/AppNavLinks";
 
 interface PageHeaderProps {
-  title: string;
   backTo?: string;
   backLabel?: string;
   onDisconnect?: () => void;
   onConnectWallet?: () => void;
+  /** Hide the disconnected connect control (empty dashboard already has a CTA). */
+  hideConnect?: boolean;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
-  title,
   backTo = "/",
   backLabel,
   onDisconnect,
   onConnectWallet,
+  hideConnect = false,
 }) => {
   const { t } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
   const navigate = useNavigate();
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
+  const homeLabel = backLabel ?? t("common.home");
 
   useEffect(() => {
     if (!walletDropdownOpen) return;
@@ -37,6 +41,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [walletDropdownOpen]);
 
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [navOpen]);
+
   const handleDisconnect = () => {
     setWalletDropdownOpen(false);
     if (onDisconnect) {
@@ -46,82 +59,131 @@ const PageHeader: React.FC<PageHeaderProps> = ({
     }
   };
 
+  const chromeBtn =
+    "grid h-10 w-10 shrink-0 place-items-center rounded-lg transition-colors hover:bg-tile-soft";
+
+  const walletControl = isConnected ? (
+    <div className="relative md:ml-3" ref={walletDropdownRef}>
+      <button
+        type="button"
+        onClick={() => {
+          setNavOpen(false);
+          setWalletDropdownOpen((v) => !v);
+        }}
+        aria-label={publicKey ?? t("common.connectWallet")}
+        className={`${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:rounded-lg md:border md:border-tile-line md:bg-tile-soft md:px-3 md:py-2 md:hover:bg-secondary`}
+      >
+        <Wallet className="h-4 w-4 md:hidden" strokeWidth={2.25} />
+        <span className="hidden font-mono text-xs font-semibold md:inline">
+          {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
+        </span>
+        <ChevronDown
+          className={`hidden h-3.5 w-3.5 transition-transform duration-200 md:block ${
+            walletDropdownOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {walletDropdownOpen && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 space-y-1 rounded-xl border border-tile-line bg-background p-2 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]">
+          {publicKey && (
+            <p className="truncate px-3 py-1.5 font-mono text-[11px] text-muted-foreground md:hidden">
+              {publicKey}
+            </p>
+          )}
+          <button
+            onClick={async () => {
+              if (!publicKey) return;
+              try {
+                await navigator.clipboard.writeText(publicKey);
+                setCopied(true);
+                setTimeout(() => {
+                  setCopied(false);
+                  setWalletDropdownOpen(false);
+                }, 1200);
+              } catch {
+                setCopied(false);
+              }
+            }}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" /> {t("common.copied")}
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" /> {t("common.copyAddress")}
+              </>
+            )}
+          </button>
+          <div className="border-t border-tile-line" />
+          <button
+            onClick={handleDisconnect}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-accent-red transition-colors hover:bg-accent-red/10"
+          >
+            <LogOut className="h-4 w-4" /> {t("common.disconnectWallet")}
+          </button>
+        </div>
+      )}
+    </div>
+  ) : hideConnect ? null : (
+    <button
+      type="button"
+      onClick={onConnectWallet}
+      aria-label={t("common.connectWallet")}
+      className={`${chromeBtn} md:ml-3 md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`}
+    >
+      <Wallet className="h-4 w-4" strokeWidth={2.25} />
+      <span className="hidden text-[11px] font-bold uppercase tracking-[0.18em] md:inline md:text-xs md:hover:underline">
+        {t("common.connectWallet")}
+      </span>
+    </button>
+  );
+
   return (
-    <div className="border-b-4 border-foreground bg-background sticky top-0 z-50">
-      <div className="max-w-[1180px] mx-auto px-6 flex items-center justify-between h-20">
+    <div className="sticky top-0 z-50 border-b border-tile-line bg-background">
+      <div className="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
         <button
+          type="button"
           onClick={() => navigate(backTo)}
-          className="flex items-center gap-2 text-lg font-semibold hover:underline group"
+          aria-label={homeLabel}
+          className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`}
         >
           <ArrowLeft
-            className="h-5 w-5 transition-transform group-hover:-translate-x-1"
-            strokeWidth={2.5}
+            className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+            strokeWidth={2.25}
           />
-          {backLabel ?? t("common.home")}
+          <span className="hidden text-sm font-semibold md:inline md:hover:underline">{homeLabel}</span>
         </button>
-        <span className="text-2xl font-bold font-display">{title}</span>
-        {isConnected ? (
-          <div className="relative" ref={walletDropdownRef}>
-            <button
-              onClick={() => setWalletDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 border-[3px] border-foreground rounded-lg px-3 py-2 bg-accent-yellow font-bold text-sm transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-            >
-              {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
-              <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                  walletDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
 
-            {walletDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 border-4 border-foreground rounded-xl bg-background p-3 space-y-2 shadow-[6px_6px_0px_0px_hsl(var(--foreground))] z-50">
-                <button
-                  onClick={async () => {
-                    if (!publicKey) return;
-                    try {
-                      await navigator.clipboard.writeText(publicKey);
-                      setCopied(true);
-                      setTimeout(() => {
-                        setCopied(false);
-                        setWalletDropdownOpen(false);
-                      }, 1200);
-                    } catch {
-                      setCopied(false);
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-secondary transition-colors text-left"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4" /> {t("common.copied")}
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" /> {t("common.copyAddress")}
-                    </>
-                  )}
-                </button>
-                <div className="border-t-2 border-foreground" />
-                <button
-                  onClick={handleDisconnect}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
-                >
-                  <LogOut className="h-4 w-4" /> {t("common.disconnectWallet")}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
+        <div className="flex items-center">
+          <nav className="hidden items-center gap-1 md:flex">
+            <AppNavLinks />
+          </nav>
+          {walletControl}
           <button
-            onClick={onConnectWallet}
-            className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
+            type="button"
+            className={`${chromeBtn} md:hidden`}
+            aria-expanded={navOpen}
+            aria-label={navOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+            onClick={() => {
+              setWalletDropdownOpen(false);
+              setNavOpen((v) => !v);
+            }}
           >
-            <Wallet className="h-4 w-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">{t("common.connectWallet")}</span>
+            {navOpen ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
           </button>
-        )}
+        </div>
       </div>
+
+      {navOpen && (
+        <div className="border-t border-tile-line bg-background md:hidden">
+          <div className="space-y-1 px-[var(--page-pad)] py-3">
+            <AppNavLinks variant="drawer" onNavigate={() => setNavOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

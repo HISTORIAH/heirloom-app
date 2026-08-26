@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { Mosaic, Tile, Cap } from "@/components/landing/Mosaic";
+import { Mosaic, Tile, Cap } from "@/components/surface/Mosaic";
 import Section, { SectionLead } from "@/components/landing/Section";
 import { useTranslation } from "@heirloom/i18n";
 

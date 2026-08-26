@@ -1,7 +1,7 @@
 import { Shield, Clock, Zap, Lock, FileCode, Blocks } from "lucide-react";
-import { Mosaic, Tile, Cap } from "@/components/landing/Mosaic";
+import { Mosaic, Tile, Cap } from "@/components/surface/Mosaic";
 import Section, { SectionLead } from "@/components/landing/Section";
-import { toneMuted, type TileTone } from "@/components/landing/tones";
+import { toneMuted, type TileTone } from "@/components/surface/tones";
 import { useTranslation } from "@heirloom/i18n";
 
 // Six reasons on an even three-by-two block. One cyan tile is the section's

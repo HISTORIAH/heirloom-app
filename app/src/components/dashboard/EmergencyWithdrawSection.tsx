@@ -27,14 +27,10 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       onTx(tx);
       setWithdrawConfirmOpen(false);
       track("emergency_withdraw_succeeded");
-      toast({ title: t("dashboard.manage.vaultClosedTitle"), description: t("dashboard.manage.vaultClosedDesc") });
+      toast({ title: t("dashboard.manage.estateClosedTitle"), description: t("dashboard.manage.vaultClosedDesc") });
     } catch (err: unknown) {
       track("emergency_withdraw_failed", { stage: "transaction" });
-      toast({
-        title: t("dashboard.manage.withdrawFailedTitle"),
-        description: errMsg(err),
-        variant: "destructive",
-      });
+      toast({ title: t("dashboard.manage.withdrawFailedTitle"), description: errMsg(err), variant: "destructive" });
     } finally {
       setWithdrawing(false);
     }
@@ -45,7 +41,7 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
       <button
         onClick={() => setWithdrawConfirmOpen(true)}
         disabled={withdrawing}
-        className="w-full neo-border rounded-xl h-12 bg-accent-red text-primary-foreground font-bold text-sm uppercase tracking-wide shadow-[4px_4px_0_0_hsl(var(--foreground))] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_hsl(var(--foreground))] disabled:opacity-50 flex items-center justify-center gap-2"
+        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-accent-red/50 px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-accent-red transition-colors hover:bg-accent-red/10 disabled:opacity-50"
       >
         {withdrawing ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.withdrawing")}</>
@@ -56,9 +52,10 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
 
       <ConfirmDialog
         open={withdrawConfirmOpen}
-        title={t("dashboard.manage.closeEstateConfirmTitle")}
-        description={t("dashboard.manage.closeEstateConfirmDesc")}
-        confirmLabel={t("dashboard.manage.withdrawCancelLabel")}
+        cap={t("dashboard.manage.dangerZoneCap")}
+        title={t("dashboard.manage.closeEstateQuestion")}
+        description={t("dashboard.manage.closeEstateDescEditorial")}
+        confirmLabel={t("dashboard.manage.closeEstateShort")}
         cancelLabel={t("dashboard.manage.keepEstate")}
         variant="destructive"
         loading={withdrawing}

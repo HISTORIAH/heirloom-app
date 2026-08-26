@@ -3,7 +3,7 @@ import { useDominantColor } from "@/hooks/useDominantColor";
 import TokenAvatar from "@/components/TokenAvatar";
 import { InlineTokenYield } from "@/components/dashboard/InlineTokenYield";
 import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
-import { TrendingUp } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { VaultTokenHolding } from "@/types";
 import type { LuloStrategy, StrategyProgressStep } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
@@ -61,43 +61,34 @@ const TokenRow: React.FC<TokenRowProps> = ({
 
   return (
     <div
-      className="neo-card-static flex items-center gap-4 py-4 px-4"
-      // style={
-      //   isYieldActive
-      //     ? { boxShadow: `6px 6px 0 0 ${accentColor}`, borderLeft: `4px solid ${accentColor}` }
-      //     : undefined
-      // }
-      style={
-        isYieldActive
-          ? { boxShadow: "none", borderLeft: `4px solid ${accentColor}` }
-          : { boxShadow: "none" }
-      }
+      className={cn("flex items-center gap-4 py-3.5", isYieldActive && "pl-3")}
+      style={isYieldActive ? { boxShadow: `inset 3px 0 0 0 ${accentColor}` } : undefined}
     >
       <TokenAvatar image={meta?.image} label={primary} size="md" accent={fallbackAccent.bg} />
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="font-bold text-base leading-tight truncate">{primary}</p>
+          <p className="truncate font-semibold leading-tight">{primary}</p>
           {isYieldActive && (
             <span
-              className="neo-badge !py-0 !px-1.5 text-[10px]"
+              className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
               style={{ backgroundColor: accentColor }}
             >
-              {luloStrategy.apy.toFixed(1)}% APY
+              {t("dashboard.apyBadge", { apy: luloStrategy.apy.toFixed(1) })}
             </span>
           )}
         </div>
         {secondary && (
-          <p className="text-xs font-bold text-muted-foreground truncate mt-0.5">{secondary}</p>
+          <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{secondary}</p>
         )}
       </div>
-      <span className="font-bold text-lg tabular-nums shrink-0 mr-2">
+      <span className="mr-2 shrink-0 font-semibold tabular-nums">
         {formatTokenAmount(vt.rawAmount, vt.decimals)}
       </span>
       <div className="flex items-center gap-2 shrink-0">
         {showYieldStaking && (
           <InlineTokenYield
             mint={vt.mint}
-            symbol={symbol || "tokens"}
+            symbol={symbol || t("dashboard.tokensFallback")}
             decimals={vt.decimals}
             vaultBalance={Number(vt.rawAmount) / 10 ** vt.decimals}
             strategy={isYieldActive ? luloStrategy : null}
@@ -109,17 +100,15 @@ const TokenRow: React.FC<TokenRowProps> = ({
         )}
         <button
           onClick={onTopUpOpen}
-          className={cn(
-            "rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all duration-150 ease-out flex items-center gap-1 shrink-0 border-4 border-foreground bg-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
-          )}
+          className="flex shrink-0 items-center gap-1 rounded-lg border border-foreground px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-foreground hover:text-background"
         >
-          <TrendingUp className="h-3 w-3" /> {t("yield.add")}
+          <Plus className="h-3 w-3" /> {t("yield.add")}
         </button>
       </div>
 
       <TopUpDialog
         open={topUpOpen}
-        symbol={symbol || "tokens"}
+        symbol={symbol || t("dashboard.tokensFallback")}
         decimals={vt.decimals}
         vaultBalance={Number(vt.rawAmount) / 10 ** vt.decimals}
         walletBalance={walletBalance}

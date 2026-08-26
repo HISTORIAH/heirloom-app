@@ -1,7 +1,7 @@
 import { Banknote, Layers, Undo2 } from "lucide-react";
-import { Mosaic, Tile, Cap } from "@/components/landing/Mosaic";
+import { Mosaic, Tile, Cap } from "@/components/surface/Mosaic";
 import Section, { SectionLead } from "@/components/landing/Section";
-import { toneMuted, toneCap, type TileTone } from "@/components/landing/tones";
+import { toneMuted, toneCap, type TileTone } from "@/components/surface/tones";
 import { useTranslation } from "@heirloom/i18n";
 
 // The take is stated across the full width before the three strategies —

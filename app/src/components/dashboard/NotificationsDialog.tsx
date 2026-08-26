@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/surface/Modal";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@heirloom/i18n";
 import {
   type NotificationsConfig,
   type RoleNotificationConfig,
@@ -11,20 +10,26 @@ import {
   HEIR_CHANNELS,
   CHANNEL_META,
 } from "@/types/notifications";
+import { useTranslation } from "@heirloom/i18n";
 
-const CHANNEL_LABEL: Record<NotificationChannel, string> = {
-  email: "notifications.channelEmail",
-  telegram: "notifications.channelTelegram",
-  whatsapp: "notifications.channelWhatsapp",
-  sms: "notifications.channelSms",
-};
-
-const CHANNEL_PLACEHOLDER: Record<NotificationChannel, string> = {
-  email: "notifications.placeholderEmail",
-  telegram: "notifications.placeholderTelegram",
-  whatsapp: "notifications.placeholderPhone",
-  sms: "notifications.placeholderPhone",
-};
+const ChannelChip: React.FC<{
+  selected: boolean;
+  onSelect: () => void;
+  label: string;
+}> = ({ selected, onSelect, label }) => (
+  <button
+    type="button"
+    onClick={onSelect}
+    className={cn(
+      "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+      selected
+        ? "border-foreground bg-foreground text-background"
+        : "border-tile-line hover:bg-tile-soft",
+    )}
+  >
+    {label}
+  </button>
+);
 
 interface RoleSectionProps {
   title: string;
@@ -32,106 +37,112 @@ interface RoleSectionProps {
   channels: NotificationChannel[];
   config: RoleNotificationConfig;
   onChange: (next: RoleNotificationConfig) => void;
+  backupLabel: string;
+  removeLabel: string;
+  addBackupLabel: string;
+  channelLabel: (c: NotificationChannel) => string;
+  channelPlaceholder: (c: NotificationChannel) => string;
 }
 
-const RoleSection: React.FC<RoleSectionProps> = ({ title, description, channels, config, onChange }) => {
-  const { t } = useTranslation("app");
+const RoleSection: React.FC<RoleSectionProps> = ({
+  title,
+  description,
+  channels,
+  config,
+  onChange,
+  backupLabel,
+  removeLabel,
+  addBackupLabel,
+  channelLabel,
+  channelPlaceholder,
+}) => {
   const primaryOptions = channels.filter((c) => c !== config.backup?.channel);
   const backupOptions = channels.filter((c) => c !== config.primary.channel);
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4 py-3.5">
+    <div className="py-4">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-sm font-extrabold">{title}</div>
-          <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-0.5 text-xs font-medium text-muted-foreground">{description}</p>
         </div>
-        <label className="relative inline-flex h-[27px] w-[46px] shrink-0 cursor-pointer items-center">
+        <label className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center">
           <input
             type="checkbox"
             checked={config.enabled}
             onChange={(e) => onChange({ ...config, enabled: e.target.checked })}
             className="peer sr-only"
           />
-          <span className="absolute inset-0 rounded-full border-[3px] border-foreground bg-gray-200 transition-colors peer-checked:bg-accent-lime peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-foreground" />
-          <span className="absolute left-[2px] h-[17px] w-[17px] rounded-full border-2 border-foreground bg-background transition-transform peer-checked:translate-x-[19px]" />
+          <span className="absolute inset-0 rounded-full border border-tile-line bg-tile-soft transition-colors peer-checked:border-foreground peer-checked:bg-foreground peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-foreground" />
+          <span className="absolute left-[3px] h-[18px] w-[18px] rounded-full bg-background shadow-sm transition-transform peer-checked:translate-x-[20px]" />
         </label>
       </div>
 
       {config.enabled && (
-        <div className="pb-4">
-          <div className="flex flex-wrap gap-2 mb-2.5">
+        <div className="mt-4">
+          <div className="mb-2.5 flex flex-wrap gap-2">
             {primaryOptions.map((c) => (
-              <button
+              <ChannelChip
                 key={c}
-                type="button"
-                onClick={() => onChange({ ...config, primary: { channel: c, value: "" } })}
-                className={cn(
-                  "border-[3px] border-foreground rounded-full px-4 py-2 text-xs font-extrabold transition-all",
-                  c === config.primary.channel
-                    ? "bg-accent-cyan shadow-[3px_3px_0_0_hsl(var(--foreground))]"
-                    : "bg-background hover:bg-secondary"
-                )}
-              >
-                {t(CHANNEL_LABEL[c])}
-              </button>
+                selected={c === config.primary.channel}
+                label={channelLabel(c)}
+                onSelect={() => onChange({ ...config, primary: { channel: c, value: "" } })}
+              />
             ))}
           </div>
           <input
             type={CHANNEL_META[config.primary.channel].inputType}
             value={config.primary.value}
-            onChange={(e) => onChange({ ...config, primary: { ...config.primary, value: e.target.value } })}
-            placeholder={t(CHANNEL_PLACEHOLDER[config.primary.channel])}
-            className="neo-input w-full text-sm"
+            onChange={(e) =>
+              onChange({ ...config, primary: { ...config.primary, value: e.target.value } })
+            }
+            placeholder={channelPlaceholder(config.primary.channel)}
+            className="ed-input"
           />
 
           {config.backup ? (
-            <div className="mt-3 p-3 border-2 border-dashed border-foreground/20 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
-                  {t("notifications.backup")}
-                </span>
+            <div className="mt-3 rounded-lg border border-dashed border-tile-line p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="ed-field-label">{backupLabel}</span>
                 <button
                   type="button"
                   onClick={() => onChange({ ...config, backup: null })}
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground"
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
                 >
-                  {t("notifications.remove")}
+                  {removeLabel}
                 </button>
               </div>
-              <div className="flex flex-wrap gap-1.5 mb-2">
+              <div className="mb-2 flex flex-wrap gap-1.5">
                 {backupOptions.map((c) => (
-                  <button
+                  <ChannelChip
                     key={c}
-                    type="button"
-                    onClick={() => onChange({ ...config, backup: { channel: c, value: "" } })}
-                    className={cn(
-                      "border-2 border-foreground rounded-full px-3 py-1.5 text-[11px] font-extrabold",
-                      c === config.backup?.channel ? "bg-accent-cyan" : "bg-background hover:bg-secondary"
-                    )}
-                  >
-                    {t(CHANNEL_LABEL[c])}
-                  </button>
+                    selected={c === config.backup?.channel}
+                    label={channelLabel(c)}
+                    onSelect={() => onChange({ ...config, backup: { channel: c, value: "" } })}
+                  />
                 ))}
               </div>
               <input
                 type={CHANNEL_META[config.backup.channel].inputType}
                 value={config.backup.value}
                 onChange={(e) =>
-                  config.backup && onChange({ ...config, backup: { ...config.backup, value: e.target.value } })
+                  config.backup &&
+                  onChange({ ...config, backup: { ...config.backup, value: e.target.value } })
                 }
-                placeholder={t(CHANNEL_PLACEHOLDER[config.backup.channel])}
-                className="neo-input w-full text-sm"
+                placeholder={channelPlaceholder(config.backup.channel)}
+                className="ed-input"
               />
             </div>
           ) : (
             backupOptions.length > 0 && (
               <button
                 type="button"
-                onClick={() => onChange({ ...config, backup: { channel: backupOptions[0], value: "" } })}
-                className="mt-2.5 text-[11px] font-extrabold uppercase tracking-wide text-accent-purple hover:underline"
+                onClick={() =>
+                  onChange({ ...config, backup: { channel: backupOptions[0], value: "" } })
+                }
+                className="mt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
               >
-                {t("notifications.addBackup")}
+                {addBackupLabel}
               </button>
             )
           )}
@@ -150,7 +161,14 @@ interface Props {
   onSave: (config: NotificationsConfig) => void;
 }
 
-const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, saving, onClose, onSave }) => {
+const NotificationsDialog: React.FC<Props> = ({
+  open,
+  heirLabel,
+  initialConfig,
+  saving,
+  onClose,
+  onSave,
+}) => {
   const { t } = useTranslation("app");
   const [config, setConfig] = useState<NotificationsConfig>(initialConfig);
 
@@ -158,68 +176,75 @@ const NotificationsDialog: React.FC<Props> = ({ open, heirLabel, initialConfig, 
     if (open) setConfig(initialConfig);
   }, [open, initialConfig]);
 
-  if (!open) return null;
+  const channelLabel = (c: NotificationChannel) => {
+    if (c === "email") return t("notifications.channelEmail");
+    if (c === "telegram") return t("notifications.channelTelegram");
+    if (c === "whatsapp") return t("notifications.channelWhatsapp");
+    return t("notifications.channelSms");
+  };
+  const channelPlaceholder = (c: NotificationChannel) => {
+    if (c === "email") return t("notifications.placeholderEmail");
+    if (c === "telegram") return t("notifications.placeholderTelegram");
+    return t("notifications.placeholderPhone");
+  };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[70] bg-foreground/40 backdrop-blur-[2px] flex items-center justify-center p-6"
-      onClick={() => !saving && onClose()}
-    >
-      <div
-        className="neo-card-static max-w-lg w-full neo-slide-up max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <div className="flex items-start gap-3">
-            <div className="bg-accent-cyan neo-border rounded-xl p-3 shrink-0">
-              <Bell className="h-6 w-6" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h3 className="text-xl leading-tight">{t("notifications.title")}</h3>
-              <p className="text-sm font-medium text-muted-foreground mt-1">
-                {t("notifications.dialogDesc")}
-              </p>
-            </div>
-          </div>
-          <button
+    <Modal
+      open={open}
+      cap={t("notifications.title")}
+      title={t("notifications.dialogTitle")}
+      description={t("notifications.dialogLead")}
+      size="lg"
+      busy={saving}
+      onClose={onClose}
+      footer={
+        <>
+          <Button
+            variant="flat-outline"
+            className="flex-1 sm:flex-none"
             onClick={onClose}
             disabled={saving}
-            className="neo-border rounded-lg p-2 bg-secondary hover:bg-secondary/70 transition-colors shrink-0 disabled:opacity-50"
           >
-            <X className="h-4 w-4" strokeWidth={2.5} />
-          </button>
-        </div>
-
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="flat"
+            className="flex-1 sm:flex-none"
+            onClick={() => onSave(config)}
+            disabled={saving}
+          >
+            {saving ? t("notifications.saving") : t("notifications.save")}
+          </Button>
+        </>
+      }
+    >
+      <div className="divide-y divide-tile-line">
         <RoleSection
-          title={t("notifications.remindTitle")}
-          description={t("notifications.remindDesc")}
+          title={t("notifications.remindCheckIn")}
+          description={t("notifications.remindCheckInDesc")}
           channels={CREATOR_CHANNELS}
           config={config.creator}
           onChange={(creator) => setConfig((c) => ({ ...c, creator }))}
+          backupLabel={t("notifications.backup")}
+          removeLabel={t("notifications.remove")}
+          addBackupLabel={t("notifications.addBackupPlain")}
+          channelLabel={channelLabel}
+          channelPlaceholder={channelPlaceholder}
         />
-
-        <div className="h-0.5 bg-secondary" />
-
         <RoleSection
-          title={t("notifications.notifyTitle", { name: heirLabel })}
-          description={t("notifications.notifyDesc")}
+          title={t("notifications.notifyName", { name: heirLabel })}
+          description={t("notifications.notifyWhenClaimable")}
           channels={HEIR_CHANNELS}
           config={config.heir}
           onChange={(heir) => setConfig((c) => ({ ...c, heir }))}
+          backupLabel={t("notifications.backup")}
+          removeLabel={t("notifications.remove")}
+          addBackupLabel={t("notifications.addBackupPlain")}
+          channelLabel={channelLabel}
+          channelPlaceholder={channelPlaceholder}
         />
-
-        <div className="flex gap-3 mt-6 pt-4 border-t-2 border-foreground/10">
-          <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>
-            {t("notifications.cancel")}
-          </Button>
-          <Button variant="cyan" className="flex-1" onClick={() => onSave(config)} disabled={saving}>
-            {saving ? t("notifications.saving") : t("notifications.save")}
-          </Button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

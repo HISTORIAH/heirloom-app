@@ -86,8 +86,6 @@ export type ValidatorOption = {
   apy: number;
   commission: number; // percent
   icon: React.ReactNode;
-  accent: string;
-  descriptionKey: string;
 };
 
 export type StakingEnableDialogProps = {

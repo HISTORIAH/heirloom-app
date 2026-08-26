@@ -13,7 +13,7 @@ import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import OrbitingVault from "@/components/landing/OrbitingVault";
-import { Cap } from "@/components/landing/Mosaic";
+import { Cap } from "@/components/surface/Mosaic";
 import { useTranslation } from "@heirloom/i18n";
 
 const HeroSection = () => {

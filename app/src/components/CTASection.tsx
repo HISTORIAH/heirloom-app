@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { Mosaic, Tile, Cap } from "@/components/landing/Mosaic";
+import { Mosaic, Tile, Cap } from "@/components/surface/Mosaic";
 import Section from "@/components/landing/Section";
 import HeroWordmark from "@/components/HeroWordmark";
 import { useTranslation } from "@heirloom/i18n";

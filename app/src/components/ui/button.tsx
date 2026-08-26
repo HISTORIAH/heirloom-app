@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 ease-out focus-visible:outline-4 focus-visible:outline-foreground focus-visible:outline-offset-4 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0 active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-center font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 ease-out focus-visible:outline-4 focus-visible:outline-foreground focus-visible:outline-offset-4 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0 active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
   {
     variants: {
       variant: {
@@ -25,8 +25,11 @@ const buttonVariants = cva(
         flat: "rounded-lg border-0 bg-foreground text-background hover:bg-foreground/85 active:translate-x-0 active:translate-y-0",
         "flat-inverse": "rounded-lg border-0 bg-background text-foreground hover:bg-background/85 active:translate-x-0 active:translate-y-0",
         "flat-yellow": "rounded-lg border-0 bg-accent-yellow text-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
+        "flat-sage": "rounded-lg border-0 bg-accent-sage text-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
         "flat-outline":
           "rounded-lg border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background active:translate-x-0 active:translate-y-0",
+        "flat-destructive":
+          "rounded-lg border-0 bg-accent-red text-primary-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
         pill: "rounded-xl bg-transparent text-foreground hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
         "pill-dark": "rounded-xl bg-foreground text-background border-transparent hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_0px_hsl(var(--foreground))]",
       },

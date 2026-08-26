@@ -1,7 +1,7 @@
 import { Wallet, Coins, CheckCircle2, ArrowRightLeft } from "lucide-react";
-import { Mosaic, Tile } from "@/components/landing/Mosaic";
+import { Mosaic, Tile } from "@/components/surface/Mosaic";
 import Section, { SectionLead } from "@/components/landing/Section";
-import { toneMuted, toneCap, type TileTone } from "@/components/landing/tones";
+import { toneMuted, toneCap, type TileTone } from "@/components/surface/tones";
 import { useTranslation } from "@heirloom/i18n";
 
 // Four steps as a two-by-two block. Four across made columns too narrow for

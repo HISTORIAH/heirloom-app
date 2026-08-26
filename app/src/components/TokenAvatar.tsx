@@ -25,14 +25,14 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
         alt={label}
         loading="lazy"
         onError={() => setBroken(true)}
-        className={`${dim} rounded-lg neo-border object-cover shrink-0 bg-background`}
+        className={`${dim} shrink-0 rounded-lg border border-tile-line bg-background object-cover`}
       />
     );
   }
   const initial = label.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase();
   return (
     <div
-      className={`${dim} ${accent} neo-border rounded-lg flex items-center justify-center shrink-0`}
+      className={`${dim} ${accent} flex shrink-0 items-center justify-center rounded-lg border border-tile-line`}
       aria-hidden="true"
     >
       {initial ? (

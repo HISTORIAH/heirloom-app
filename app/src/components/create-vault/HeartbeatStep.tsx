@@ -1,5 +1,12 @@
-import { Clock } from "lucide-react";
 import { SECONDS_PER_DAY } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { StepHeader } from "@/components/create-vault/StepHeader";
+import { EstateTimeline } from "@/components/create-vault/EstateTimeline";
+import {
+  useEstateDates,
+  HB_MIN_DAYS,
+  GRACE_MIN_DAYS,
+} from "@/components/create-vault/estateTiming";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -7,139 +14,104 @@ interface Props {
   setHeartbeatSeconds: (n: number) => void;
   graceSeconds: number;
   setGraceSeconds: (n: number) => void;
-  assetCount: number;
 }
+
+const HEARTBEAT_PRESETS = [30, 60, 90, 180, 365];
+const GRACE_PRESETS = [7, 14, 30, 60, 90];
 
 const HeartbeatStep: React.FC<Props> = ({
   heartbeatSeconds,
   setHeartbeatSeconds,
   graceSeconds,
   setGraceSeconds,
-  assetCount,
 }) => {
-  const { t, i18n } = useTranslation("app");
-  const heartbeatDays = Math.max(30, Math.round(heartbeatSeconds / SECONDS_PER_DAY));
-  const graceDays = Math.max(7, Math.round(graceSeconds / SECONDS_PER_DAY));
+  const { t } = useTranslation("app");
+  const date = useEstateDates();
+  const heartbeatDays = Math.max(HB_MIN_DAYS, Math.round(heartbeatSeconds / SECONDS_PER_DAY));
+  const graceDays = Math.max(GRACE_MIN_DAYS, Math.round(graceSeconds / SECONDS_PER_DAY));
   const totalDays = heartbeatDays + graceDays;
-
-  const HEARTBEAT_PRESETS = [30, 60, 90, 180, 365];
-  const GRACE_PRESETS = [7, 30, 60, 90];
-
-  const futureDate = (days: number) =>
-    new Date(Date.now() + days * 864e5).toLocaleDateString(i18n.language, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
 
   return (
     <div>
-      {/* Step header */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className="bg-accent-cyan border-4 border-foreground rounded-xl p-3.5 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
-          <Clock className="h-5 w-5" strokeWidth={2} />
-        </div>
-        <div>
-          <div className="text-xs font-bold uppercase tracking-[3px] text-accent-cyan">{t("createVault.wizard.step3")}</div>
-          <h3 className="text-2xl font-display">{t("createVault.wizard.howOften")}</h3>
-        </div>
-      </div>
+      <StepHeader
+        cap={t("createVault.wizard.step03")}
+        title={t("createVault.wizard.whenHeirInherits")}
+      />
 
-      <p className="text-sm text-muted-foreground mb-6">
-        {t("createVault.wizard.youHave")} <strong>{assetCount || t("createVault.wizard.no")} {assetCount === 1 ? t("createVault.wizard.asset") : t("createVault.wizard.assets")}</strong> {t("createVault.wizard.and")}{" "}
-        <strong>{t("createVault.wizard.oneHeir")}</strong> {t("createVault.wizard.chooseHowOften")}
+      <p className="ed-label">{t("createVault.wizard.ifNeverCheckIn")}</p>
+      <p className="mt-1 font-display text-[clamp(1.75rem,4.5vw,2.75rem)] font-bold leading-[1.05] tracking-tight">
+        {date.long(totalDays)}
+      </p>
+      <p className="mt-2.5 max-w-[48ch] text-sm text-muted-foreground">
+        {t("createVault.wizard.dragToMove", { days: totalDays })}
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 mb-6">
-        {/* Heartbeat Interval */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-4">
-            {t("createVault.wizard.heartbeatInterval")}
-          </label>
-          <input
-            type="range"
-            min={30}
-            max={365}
-            step={5}
-            value={heartbeatDays}
-            onChange={(e) => setHeartbeatSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
-            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5 focus:outline-none"
-            style={{ accentColor: "hsl(var(--step-accent))" }}
-          />
-          <div className="flex items-baseline gap-2 mb-3.5">
-            <span className="text-5xl font-display font-bold tabular-nums leading-none">{heartbeatDays}</span>
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.days")}</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {HEARTBEAT_PRESETS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setHeartbeatSeconds(p * SECONDS_PER_DAY)}
-                className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
-                  heartbeatDays === p
-                    ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                    : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)]"
-                }`}
-              >
-                {p}d
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Grace Period */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground block mb-4">
-            {t("createVault.wizard.gracePeriod")}
-          </label>
-          <input
-            type="range"
-            min={7}
-            max={90}
-            step={1}
-            value={graceDays}
-            onChange={(e) => setGraceSeconds(Number(e.target.value) * SECONDS_PER_DAY)}
-            className="w-full h-3 bg-secondary border-4 border-foreground rounded-full appearance-none cursor-pointer mb-5 focus:outline-none"
-            style={{ accentColor: "hsl(var(--step-accent))" }}
-          />
-          <div className="flex items-baseline gap-2 mb-3.5">
-            <span className="text-5xl font-display font-bold tabular-nums leading-none">{graceDays}</span>
-            <span className="text-xs font-bold uppercase tracking-[2px] text-muted-foreground">{t("createVault.wizard.days")}</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {GRACE_PRESETS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setGraceSeconds(p * SECONDS_PER_DAY)}
-                className={`border-4 border-foreground rounded-lg px-3.5 py-1.5 text-sm font-bold transition-all duration-150 ${
-                  graceDays === p
-                    ? "bg-[hsl(var(--step-accent))] shadow-[2px_2px_0_0_hsl(var(--foreground))]"
-                    : "bg-secondary hover:bg-[hsl(var(--step-accent)/0.4)]"
-                }`}
-              >
-                {p}d
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="mt-9">
+        <EstateTimeline
+          heartbeatDays={heartbeatDays}
+          graceDays={graceDays}
+          onHeartbeatChange={(d) => setHeartbeatSeconds(d * SECONDS_PER_DAY)}
+          onGraceChange={(d) => setGraceSeconds(d * SECONDS_PER_DAY)}
+        />
       </div>
 
-      {/* Deadline box */}
-      <div className="border-4 border-foreground rounded-[14px] bg-[#F7FEE7] p-5 mb-5 text-sm leading-relaxed">
-        <span className="font-bold">{t("createVault.wizard.totalDeadline", { days: totalDays })}</span>{" "}
-        {t("createVault.wizard.ifNoCheckin")}
-        <span className="block mt-1.5 text-xs text-muted-foreground">
-          {t("createVault.wizard.neverCheckin")} <strong>{futureDate(totalDays)}</strong>
-        </span>
-      </div>
-
-      {/* Info box */}
-      <div className="border-4 border-foreground rounded-xl bg-secondary p-4 text-sm leading-relaxed">
-        <strong>{t("createVault.wizard.graceUndo")}</strong>{" "}
-        {t("createVault.wizard.graceUndoDesc", { days: totalDays })}
+      <div className="mt-9 grid gap-px overflow-hidden rounded-lg border border-tile-line bg-tile-line sm:grid-cols-2">
+        <Readout
+          label={t("createVault.wizard.youCheckInEvery")}
+          value={heartbeatDays}
+          daysLabel={t("createVault.wizard.nDaysInline", { count: heartbeatDays })}
+          presets={HEARTBEAT_PRESETS}
+          onPick={(d) => setHeartbeatSeconds(d * SECONDS_PER_DAY)}
+          meta={t("createVault.wizard.heirNotifiedOn", { date: date.short(heartbeatDays) })}
+          note={t("createVault.wizard.checkInFeeNote")}
+        />
+        <Readout
+          label={t("createVault.wizard.heirThenWaits")}
+          value={graceDays}
+          daysLabel={t("createVault.wizard.nDaysInline", { count: graceDays })}
+          presets={GRACE_PRESETS}
+          onPick={(d) => setGraceSeconds(d * SECONDS_PER_DAY)}
+          note={t("createVault.wizard.graceWaitNote")}
+        />
       </div>
     </div>
   );
 };
+
+const Readout: React.FC<{
+  label: string;
+  value: number;
+  daysLabel: string;
+  presets: number[];
+  onPick: (days: number) => void;
+  /** The date this span lands on, when it isn't already the headline. */
+  meta?: string;
+  note: string;
+}> = ({ label, value, daysLabel, presets, onPick, meta, note }) => (
+  <div className="bg-background px-4 py-4">
+    <span className="ed-field-label">{label}</span>
+    <p className="mt-1.5 font-display text-2xl font-bold tabular-nums">{daysLabel}</p>
+    {meta && <p className="mt-1 text-xs font-semibold tabular-nums">{meta}</p>}
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {presets.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onPick(p)}
+          aria-pressed={value === p}
+          className={cn(
+            "rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums transition-colors",
+            value === p
+              ? "border-foreground bg-foreground text-background"
+              : "border-tile-line hover:bg-tile-soft",
+          )}
+        >
+          {p}
+        </button>
+      ))}
+    </div>
+    <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{note}</p>
+  </div>
+);
 
 export default HeartbeatStep;

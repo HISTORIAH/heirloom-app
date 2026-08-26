@@ -1,47 +1,42 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { SOL_LABEL } from "@/lib/constants";
-import { getSolanaExplorerTxUrl } from "@/lib/utils";
 import {
   fetchEstatesByHeir,
+  claimAll,
+  buildSnapshotFromEstate,
+  lookupEstateSnapshot,
+  type EstateSnapshot,
 } from "@/services/heirloom";
 import {
   getAtaAddress,
   type HeirloomClient,
 } from "@/lib/heirloom";
-import { claimAll } from "@/services/heirloom";
-import {
-  buildSnapshotFromEstate,
-  lookupEstateSnapshot,
-  type EstateSnapshot,
-} from "@/services/heirloom";
-import { formatSol, formatTokenAmount, errMsg } from "@/lib/utils";
+import { formatSol, formatTokenAmount, errMsg, truncateAddress } from "@/lib/utils";
 import {
   address as toAddress,
   type Address,
   type TransactionSigner,
 } from "@solana/kit";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
-import {
-  ArrowLeft, Search, Loader2, CheckCircle, ExternalLink,
-  AlertTriangle, Coins, Gift, LogOut, Wallet,
-} from "lucide-react";
+import { Search, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import TokenAvatar from "@/components/TokenAvatar";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useTranslation } from "@heirloom/i18n";
-
-const stateColors: Record<string, string> = {
-  active: "bg-accent-lime/20",
-  grace: "bg-accent-yellow/20",
-  claimable: "bg-accent-cyan/30",
-  distributed: "bg-secondary",
-};
+import { useToast } from "@/hooks/use-toast";
+import { Panel } from "@/components/surface/Panel";
+import { PortalLayout } from "@/components/portal/PortalLayout";
+import {
+  EstateGlance,
+  ExplorerLink,
+  GlanceRow,
+  GlanceStats,
+} from "@/components/portal/EstateGlance";
 
 async function autoFetchInheritances(
   client: HeirloomClient,
@@ -69,8 +64,7 @@ const ClaimPageInner: React.FC<{
   signer: TransactionSigner | null;
   heirAddress: Address | null;
 }> = ({ signer, heirAddress }) => {
-  const { publicKey, isConnected, rpc, rpcSubscriptions, disconnectWallet } = useWallet();
-  const navigate = useNavigate();
+  const { publicKey, isConnected, rpc, rpcSubscriptions } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
@@ -228,269 +222,196 @@ const ClaimPageInner: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b-8 border-foreground bg-background sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between h-20">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-lg font-semibold hover:underline group">
-            <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-            {t("common.home")}
-          </button>
-          <div className="flex items-center gap-2">
-            <Gift className="h-5 w-5" strokeWidth={3} />
-            <span className="text-2xl font-bold">{t("claim.title")}</span>
+    <>
+      <PortalLayout
+        cap={t("claim.heirPortal")}
+        headline={
+          <>
+            {t("claim.headline1")} {t("claim.headline2")}
+          </>
+        }
+        description={t("claim.description")}
+        onConnectWallet={() => setWalletDialogOpen(true)}
+      >
+        {!isConnected && (
+          <div data-tour="claim-connect">
+            <Panel className="text-center">
+            <h2 className="ed-h3">{t("claim.connectTitle")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("claim.connectDesc")}</p>
+            <Button variant="flat-yellow" className="mt-5" onClick={() => setWalletDialogOpen(true)}>
+              {t("common.connectWallet")}
+            </Button>
+            </Panel>
           </div>
-          {isConnected ? (
-            <button
-              onClick={() => void disconnectWallet()}
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-            >
-              <LogOut className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">{t("common.disconnect")}</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setWalletDialogOpen(true)}
-              className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:underline"
-            >
-              <Wallet className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">{t("common.connectWallet")}</span>
-            </button>
-          )}
-        </div>
-      </div>
+        )}
 
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 neo-slide-up">
-            <div>
-              <span className="neo-badge bg-accent-orange mb-4 inline-block">{t("claim.heirPortal")}</span>
-              <h2 className="text-4xl md:text-5xl leading-[0.9]">
-                {t("claim.headline1")}{" "}
-                <span className="bg-accent-orange px-2 inline-block rotate-[-1deg]">{t("claim.headline2")}</span>
-              </h2>
-              <p className="text-lg font-medium text-muted-foreground mt-4 max-w-xl">
-                {t("claim.description")}
-              </p>
+        {searching && (
+          <Panel className="items-center text-center">
+            <Loader2 className="h-6 w-6 animate-spin" strokeWidth={2} />
+            <h2 className="ed-h3 mt-3">{t("claim.scanning")}</h2>
+          </Panel>
+        )}
+
+        {searchDone && !searching && autoFetchFailed && (
+          <Panel tone="yellow">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+              <div>
+                <p className="font-semibold">{t("claim.autoFetchUnavailable")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("claim.autoFetchDesc")}</p>
+              </div>
             </div>
+          </Panel>
+        )}
 
-            {!isConnected && (
-              <div className="neo-card-static text-center" data-tour="claim-connect">
-                <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl mb-2">{t("claim.connectTitle")}</h3>
-                <p className="text-muted-foreground font-medium mb-4">
-                  {t("claim.connectDesc")}
-                </p>
-                <Button variant="yellow" onClick={() => setWalletDialogOpen(true)}>
-                  {t("common.connectWallet")}
-                </Button>
-              </div>
-            )}
+        {searchDone && !searching && inheritances.length === 0 && (
+          <Panel className="text-center">
+            <h2 className="ed-h3">{t("claim.noEstates")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {autoFetchFailed ? t("claim.noEstatesDesc1") : t("claim.noEstatesDesc2")}
+            </p>
+            <Button variant="flat-outline" className="mt-5" onClick={() => setShowManual(true)}>
+              {t("claim.manualLookup")}
+            </Button>
+          </Panel>
+        )}
 
-            {searching && (
-              <div className="neo-card-static text-center">
-                <Loader2 className="h-10 w-10 mx-auto mb-4 animate-spin" strokeWidth={2.5} />
-                <h3 className="text-xl">{t("claim.scanning")}</h3>
-              </div>
-            )}
+        {inheritances.map((inh) => {
+          const txId = claimTxIds[inh.authority];
+          const isClaiming = claimingOwner === inh.authority;
+          const nothingToClaim =
+            inh.solBalance === 0 &&
+            inh.vaultTokens.length === 0 &&
+            inh.claimableAssets === 0;
+          const canClaim = inh.vaultState === "claimable" && !nothingToClaim;
 
-            {searchDone && !searching && autoFetchFailed && (
-              <div className="neo-card-static bg-accent-yellow/20 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-bold">{t("claim.autoFetchUnavailable")}</p>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {t("claim.autoFetchDesc")}
-                  </p>
-                </div>
-              </div>
-            )}
+          return (
+            <EstateGlance key={inh.authority} label={inh.label} state={inh.vaultState}>
+              <GlanceStats>
+                <GlanceRow
+                  label={t("claim.owner")}
+                  value={<span title={inh.authority}>{truncateAddress(inh.authority, 4)}</span>}
+                  mono
+                />
+                <GlanceRow label={SOL_LABEL} value={formatSol(inh.solBalance)} />
+                <GlanceRow label={t("claim.tokens")} value={inh.vaultTokens.length} />
+              </GlanceStats>
 
-            {searchDone && !searching && inheritances.length === 0 && (
-              <div className="neo-card-static text-center">
-                <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl mb-2">{t("claim.noEstates")}</h3>
-                <p className="text-muted-foreground font-medium mb-4">
-                  {autoFetchFailed
-                    ? t("claim.noEstatesDesc1")
-                    : t("claim.noEstatesDesc2")}
-                </p>
-                <Button variant="outline" onClick={() => setShowManual(true)}>
-                  {t("claim.manualLookup")}
-                </Button>
-              </div>
-            )}
-
-            {inheritances.length > 0 && (
-              <div className="space-y-6">
-                {inheritances.map((inh) => {
-                  const txId = claimTxIds[inh.authority];
-                  const isClaiming = claimingOwner === inh.authority;
-                  const nothingToClaim =
-                    inh.solBalance === 0 &&
-                    inh.vaultTokens.length === 0 &&
-                    inh.claimableAssets === 0;
-                  const canClaim =
-                    inh.vaultState === "claimable" &&
-                    !nothingToClaim;
-
-                  return (
-                    <div key={inh.authority} className="neo-card-static space-y-5">
-                      <div className={`neo-border rounded-xl p-5 ${stateColors[inh.vaultState]}`}>
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                              {t("claim.owner")}
-                            </p>
-                            <p className="font-mono text-sm font-bold break-all">{inh.authority}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                              {t("claim.status")}
-                            </p>
-                            <p className="text-2xl font-bold uppercase">{inh.vaultState}</p>
-                          </div>
+              {inh.vaultTokens.length > 0 && (
+                <div className="mt-5 divide-y divide-tile-line border-t border-tile-line">
+                  {inh.vaultTokens.map((vt) => {
+                    const meta = tokenMeta.get(vt.mint);
+                    const symbol = meta?.symbol;
+                    const name = meta?.name;
+                    const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
+                    const primary = symbol || name || shortMint;
+                    const secondary =
+                      name && name !== primary ? name : symbol ? shortMint : null;
+                    return (
+                      <div key={vt.ata} className="flex items-center gap-3 py-3">
+                        <TokenAvatar
+                          image={meta?.image}
+                          label={primary}
+                          size="md"
+                          accent="bg-accent-cyan"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold leading-tight">{primary}</p>
+                          {secondary && (
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{secondary}</p>
+                          )}
                         </div>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums">
+                          {formatTokenAmount(vt.rawAmount, vt.decimals)}
+                        </span>
                       </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">{t("claim.label")}</p>
-                          <p className="text-lg font-bold">{inh.label}</p>
-                        </div>
-                        <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">{SOL_LABEL}</p>
-                          <div className="flex items-center gap-1">
-                            <Coins className="h-4 w-4" />
-                            <p className="text-lg font-bold">
-                              {formatSol(inh.solBalance)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="neo-border rounded-lg p-3 bg-secondary">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">{t("claim.tokens")}</p>
-                          <p className="text-lg font-bold">{inh.vaultTokens.length}</p>
-                        </div>
-                      </div>
-
-                      {inh.vaultTokens.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                            {t("claim.tokenBalances")}
-                          </p>
-                          {inh.vaultTokens.map((vt) => {
-                            const meta = tokenMeta.get(vt.mint);
-                            const symbol = meta?.symbol;
-                            const name = meta?.name;
-                            const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
-                            const primary = symbol || name || shortMint;
-                            const secondary =
-                              name && name !== primary ? name : symbol ? shortMint : null;
-                            return (
-                              <div
-                                key={vt.ata}
-                                className="flex items-center gap-4 neo-border rounded-lg p-4 bg-secondary"
-                              >
-                                <TokenAvatar
-                                  image={meta?.image}
-                                  label={primary}
-                                  size="md"
-                                  accent="bg-accent-cyan"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-lg leading-tight truncate">{primary}</p>
-                                  {secondary && (
-                                    <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">
-                                      {secondary}
-                                    </p>
-                                  )}
-                                </div>
-                                <span className="font-bold text-lg tabular-nums shrink-0">
-                                  {formatTokenAmount(vt.rawAmount, vt.decimals)}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      <div className="pt-3 border-t-2 border-foreground/10">
-                        {txId ? (
-                          <div className="text-center">
-                            <CheckCircle className="h-10 w-10 mx-auto mb-2" strokeWidth={2.5} />
-                            <p className="font-bold mb-2">{t("claim.claimSubmitted")}</p>
-                            <a
-                              href={getSolanaExplorerTxUrl(txId)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 neo-badge bg-background hover:bg-secondary transition-colors"
-                            >
-                              {t("common.viewOnExplorer")} <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="yellow"
-                            size="xl"
-                            className={`w-full ${canClaim ? "neo-glow-yellow" : ""}`}
-                            onClick={() => handleClaim(inh)}
-                            disabled={!canClaim || isClaiming}
-                          >
-                            {isClaiming ? (
-                              <><Loader2 className="h-5 w-5 animate-spin" /> {t("claim.claiming")}</>
-                            ) : nothingToClaim ? (
-                              <><CheckCircle className="h-5 w-5" /> {t("claim.nothingToClaim")}</>
-                            ) : inh.vaultState !== "claimable" ? (
-                              <>{t("claim.notYetClaimable")} ({inh.vaultState})</>
-                            ) : (
-                              <>{t("claim.claimInheritance")}</>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="neo-card-static" data-tour="claim-manual">
-              <button
-                onClick={() => setShowManual(!showManual)}
-                className="flex items-center justify-between w-full font-semibold uppercase tracking-widest text-sm text-muted-foreground"
-              >
-                <span>{t("claim.lookUpAnother")}</span>
-                <span>{showManual ? "−" : "+"}</span>
-              </button>
-              {showManual && (
-                <div className="space-y-3 mt-4">
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      value={manualAddress}
-                      onChange={(e) => setManualAddress(e.target.value)}
-                      maxLength={128}
-                      className="neo-input flex-1 font-mono text-sm focus:bg-accent-orange/20"
-                      placeholder={t("claim.ownerPlaceholder")}
-                    />
-                    <Button variant="orange" onClick={handleManualLookup} disabled={manualLoading || !manualAddress.trim()}>
-                      {manualLoading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <><Search className="h-5 w-5" /> {t("claim.lookup")}</>
-                      )}
-                    </Button>
-                  </div>
-                  {manualError && (
-                    <div className="flex items-center gap-2 text-sm font-bold text-accent-red">
-                      <AlertTriangle className="h-4 w-4" />
-                      {manualError}
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               )}
+
+              <div className="mt-5 border-t border-tile-line pt-5">
+                {txId ? (
+                  <div className="text-center">
+                    <CheckCircle className="mx-auto mb-2 h-6 w-6" strokeWidth={2} />
+                    <p className="font-semibold">{t("claim.claimSubmitted")}</p>
+                    <div className="mt-2">
+                      <ExplorerLink txId={txId}>{t("common.viewOnExplorer")}</ExplorerLink>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant={canClaim ? "flat-yellow" : "flat"}
+                    size="lg"
+                    className="w-full"
+                    onClick={() => handleClaim(inh)}
+                    disabled={!canClaim || isClaiming}
+                  >
+                    {isClaiming ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> {t("claim.claiming")}</>
+                    ) : nothingToClaim ? (
+                      t("claim.nothingToClaim")
+                    ) : inh.vaultState !== "claimable" ? (
+                      `${t("claim.notYetClaimable")} (${inh.vaultState})`
+                    ) : (
+                      t("claim.claimInheritance")
+                    )}
+                  </Button>
+                )}
+              </div>
+            </EstateGlance>
+          );
+        })}
+
+        <div data-tour="claim-manual">
+        <Panel>
+          <button
+            type="button"
+            onClick={() => setShowManual(!showManual)}
+            className="flex w-full items-center justify-between text-left"
+          >
+            <span className="ed-label">{t("claim.lookUpAnother")}</span>
+            <span className="text-sm text-muted-foreground">{showManual ? "−" : "+"}</span>
+          </button>
+          {showManual && (
+            <div className="mt-4 space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  maxLength={128}
+                  spellCheck={false}
+                  autoComplete="off"
+                  className="ed-input flex-1 font-mono"
+                  placeholder={t("claim.ownerPlaceholder")}
+                />
+                <Button
+                  variant="flat"
+                  onClick={handleManualLookup}
+                  disabled={manualLoading || !manualAddress.trim()}
+                >
+                  {manualLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <><Search className="h-4 w-4" /> {t("claim.lookup")}</>
+                  )}
+                </Button>
+              </div>
+              {manualError && (
+                <p className="flex items-center gap-2 text-sm font-semibold text-accent-red">
+                  <AlertTriangle className="h-4 w-4" />
+                  {manualError}
+                </p>
+              )}
             </div>
-      </div>
+          )}
+        </Panel>
+        </div>
+      </PortalLayout>
 
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
-    </div>
+    </>
   );
 };
 

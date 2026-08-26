@@ -1,7 +1,7 @@
 import { TrendingUp, KeyRound, Users } from "lucide-react";
-import { Mosaic, Tile } from "@/components/landing/Mosaic";
+import { Mosaic, Tile } from "@/components/surface/Mosaic";
 import Section, { SectionLead } from "@/components/landing/Section";
-import { toneMuted, toneCap, type TileTone } from "@/components/landing/tones";
+import { toneMuted, toneCap, type TileTone } from "@/components/surface/tones";
 import { useTranslation } from "@heirloom/i18n";
 
 // Three jobs, three equal columns. The tiles were uneven before and the page

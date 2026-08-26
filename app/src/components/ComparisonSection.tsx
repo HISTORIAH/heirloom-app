@@ -1,7 +1,7 @@
 import { Check, X, Minus, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { Mosaic, Tile } from "@/components/landing/Mosaic";
+import { Mosaic, Tile } from "@/components/surface/Mosaic";
 import Section, { SectionLead } from "@/components/landing/Section";
 import { useTranslation } from "@heirloom/i18n";
 

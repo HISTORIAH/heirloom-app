@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -13,22 +13,17 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
-      <div className="text-center neo-slide-up">
-        <div className="neo-card-static inline-block rotate-[-2deg] mb-8">
-          <h1 className="text-[120px] md:text-[180px] leading-none">404</h1>
-        </div>
-        <h2 className="text-3xl md:text-4xl mb-4">
-          {t("notFound.headline1")}{" "}
-          <span className="bg-accent-pink px-2 inline-block rotate-[1deg]">{t("notFound.headline2")}</span>
-        </h2>
-        <p className="text-lg font-medium text-muted-foreground mb-8 max-w-md mx-auto">
-          {t("notFound.description")}
-        </p>
-        <Button variant="yellow" size="lg" asChild>
-          <a href="/">
-            <ArrowLeft className="h-5 w-5" /> {t("notFound.returnHome")}
-          </a>
+    <div className="flex min-h-screen items-center justify-center bg-background px-[var(--page-pad)]">
+      <div className="max-w-md text-center">
+        <p className="ed-label">404</p>
+        <h1 className="hero-display mt-3">
+          {t("notFound.headline1")} {t("notFound.headline2")}
+        </h1>
+        <p className="ed-lede mt-4 text-muted-foreground">{t("notFound.description")}</p>
+        <Button variant="flat-yellow" size="lg" className="mt-8" asChild>
+          <Link to="/">
+            <ArrowLeft className="h-4 w-4" /> {t("notFound.returnHome")}
+          </Link>
         </Button>
       </div>
     </div>
