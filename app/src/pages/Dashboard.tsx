@@ -106,7 +106,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="app-shell flex min-h-screen flex-col overflow-x-clip bg-background">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
       <PageHeader
         onDisconnect={handleDisconnect}
         onConnectWallet={() => setWalletDialogOpen(true)}
@@ -130,7 +130,7 @@ const DashboardPage = () => {
 
       {estates.length === 0 && !pendingCreate ? (
         <div
-          className="flex flex-1 flex-col items-center justify-center px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]"
+          className="app-shell flex flex-1 flex-col items-center justify-center px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]"
           data-tour="dashboard-actions"
         >
           <div className="mx-auto max-w-xl text-center">
@@ -171,7 +171,7 @@ const DashboardPage = () => {
           </div>
         </div>
       ) : (
-        <div className="space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
+        <div className="app-shell space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
           {pendingCreate && (
             <div className="rounded-xl border border-accent-yellow bg-accent-yellow px-5 py-4">
               <div className="flex items-center gap-3">

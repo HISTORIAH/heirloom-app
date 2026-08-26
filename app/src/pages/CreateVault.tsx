@@ -210,10 +210,10 @@ const CreateVaultPage = () => {
   if (submitState === "complete") {
     return (
       <>
-        <div className="app-shell min-h-screen overflow-x-clip bg-background">
+        <div className="min-h-screen overflow-x-clip bg-background">
           <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
           {rail}
-          <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
+          <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
             <Panel className="mx-auto max-w-xl text-center">
               <span className="ed-label">{t("createVault.wizard.confirmed")}</span>
               <h2 className="ed-h2 mt-3">{label && t("createVault.successTitle", { label: t(label) })}</h2>
@@ -257,14 +257,14 @@ const CreateVaultPage = () => {
   return (
     <>
       <div
-        className="app-shell min-h-screen overflow-x-clip bg-background"
+        className="min-h-screen overflow-x-clip bg-background"
         aria-hidden={isSubmitting}
         style={isSubmitting ? { pointerEvents: "none" } : undefined}
       >
         <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
         {rail}
 
-        <main className="px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
+        <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
           <div className="grid items-start gap-6 lg:grid-cols-12">
             <Panel className="gap-0 lg:col-span-7">
               {step === 0 && (

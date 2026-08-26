@@ -216,11 +216,10 @@
 }
 
 @layer components {
-  /* App routes (dashboard, wizard, portals). Landing stays full-bleed. */
+  /* Body of app routes (dashboard, wizard). Chrome stays full-bleed. */
   .app-shell {
     width: 100%;
     max-width: var(--app-max);
-    min-height: 100svh;
     margin-inline: auto;
   }
   .neo-shadow-sm { box-shadow: var(--shadow-sm); }
