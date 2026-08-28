@@ -32,7 +32,7 @@ const OrbitingVault = ({ className }: { className?: string }) => (
   <div
     className={`orbit-scene relative aspect-square w-full ${className ?? ""}`}
     role="img"
-    aria-label="Assets orbiting a Heirloom vault"
+    aria-label="Assets orbiting a Heirloom estate"
   >
     <div className="orbit-ring">
       {DISCS.map((disc, i) => (

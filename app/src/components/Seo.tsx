@@ -1,9 +1,9 @@
 import { Helmet } from "react-helmet-async";
 
 const SITE_URL = "https://heirlm.xyz";
-const DEFAULT_TITLE = "Heirloom — Self-Custody Vaults on Solana";
+const DEFAULT_TITLE = "Heirloom — Self-Custody Estates on Solana";
 const DEFAULT_DESCRIPTION =
-  "Lock SOL and SPL tokens into a vault only you control. They earn while they sit, a backup wallet can recover them if you lose your keys, and the wallets you name claim on-chain if you step away.";
+  "Lock digital assets into an estate only you control. They earn while they sit, a backup wallet can recover them if you lose your keys, and the wallets you name claim on-chain if you step away.";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 export interface SeoProps {
