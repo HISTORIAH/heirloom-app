@@ -5,7 +5,6 @@
     "app",
     "app-ika",
     "waitlist",
-    "tests",
     "packages/*",
     "clients/heirloom/js",
     "clients/heirloom-ika/js"
