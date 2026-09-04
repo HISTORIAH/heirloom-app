@@ -9,7 +9,9 @@
 
 ## Overview
 
-This package is the user-facing React application for Heirloom. It is a single-page app that lets anyone connect a Solana wallet, create an inheritance vault, keep it alive with periodic heartbeats (either from the authority key or from an optional hot signer wallet), pause the clock through a trusted delegate, and, when the time comes, claim the assets as the designated heir.
+This package is the user-facing React application for Heirloom. It is a single-page app that lets anyone connect a Solana wallet, open an estate for a named heir, fund it with SOL and SPL tokens, keep it alive with periodic heartbeats (from the authority key or an optional hot signer), pause the clock through a trusted delegate, and, when the time comes, claim the assets as the heir.
+
+An estate has **one heir** and **any number of registered assets**. Every asset the owner registers goes to that heir on claim.
 
 It is deliberately thin. It does not run business logic of its own, it does not cache on-chain state in any authoritative way, and it does not hide the contract from the user. Every meaningful action becomes a Solana transaction that the user signs with their own wallet. The app's job is to make that transaction easy to understand and impossible to get wrong.
 
@@ -23,7 +25,12 @@ It is deliberately thin. It does not run business logic of its own, it does not 
    ┌──────────────────────────────────────────────┐
    │                  app  (this package)         │
    │                                              │
-   │   React components ─▶ lib/contracts.ts       │
+   │   React components ─▶ services/heirloom.ts   │
+   │                              │               │
+   │                              ▼               │
+   │                     lib/heirloom/            │
+   │              (PDAs, instruction builders,    │
+   │               sign-and-send)                 │
    │                              │               │
    │                              ▼               │
    │                   @historiah/heirloom (JS)   │
@@ -35,31 +42,35 @@ It is deliberately thin. It does not run business logic of its own, it does not 
                                   │
                                   ▼
                          Heirloom on-chain program
+                heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg
 ```
 
-The app never imports Solana program logic directly. It imports the **generated JS client** (`@historiah/heirloom`, a Yarn workspace package under `clients/js/`), which exposes typed instruction builders, account codecs, PDA derivers, and error decoders for every instruction the on-chain program supports. When the program changes, regenerating the client propagates the new shape into this package as a TypeScript type change at compile time.
+The app never imports Solana program logic directly. It imports the **generated JS client** (`@historiah/heirloom`, a Bun workspace package under `clients/heirloom/js/`), which exposes typed instruction builders, account codecs, PDA derivers, and error decoders for every instruction the on-chain program supports. When the program changes, regenerating the client propagates the new shape into this package as a TypeScript type change at compile time.
 
 ## Technology Stack
 
 - **React 18** with function components and hooks throughout.
 - **TypeScript 5.6**, strict mode.
-- **Vite 6** for dev server and production bundling.
+- **Vite 6** for dev server and production bundling; **Bun** as package manager, **Turborepo** for the workspace.
 - **React Router v6** for routing.
 - **TanStack Query** for server-state caching of RPC reads.
 - **Tailwind CSS 3** + **tailwindcss-animate** for styling, with Radix UI primitives (`Dialog`, `Toast`, `Tooltip`, `Slot`) wrapping accessible behavior.
-- **lucide-react** for iconography and **sonner** for transient toasts.
-- **`@solana/kit` v6** as the Solana SDK, tree-shakable, codec-based, and the native runtime of the generated client.
+- **lucide-react** for iconography, **sonner** for transient toasts, **react-helmet-async** for per-route head tags.
+- **`@heirloom/i18n`** (workspace package) for copy, via the `app` namespace. Nine locales; English is the source of truth.
+- **`react-joyride`** for the product tour, which the landing hands off to with `?tour=1`.
+- **`posthog-js`** for optional, anonymous product analytics.
+- **`@solana/kit` v7** as the Solana SDK — tree-shakable, codec-based, and the native runtime of the generated client.
 - **`@wallet-ui/react`** for wallet discovery, connection UX, and signer adapters.
-- **`@solana-program/system`** and **`@solana-program/token`** for SPL Token and System Program instruction builders used alongside Heirloom instructions (creating ATAs, transferring checked amounts).
+- **`@solana-program/system`**, **`@solana-program/token`**, and **`@solana-program/token-2022`** for System and SPL Token instruction builders used alongside Heirloom instructions.
 - **`gill`** for RPC convenience.
-- **Helius DAS API** (optional) for SPL token metadata, symbols, and images on dashboard and claim screens.
+- **Helius DAS API** (optional) for SPL token metadata, symbols, and images.
 - **`@historiah/heirloom`**, the generated Heirloom client, wired as `workspace:*`.
 
 ## Directory Layout
 
 ```
 app/
-├── index.html
+├── index.html                  App shell. No marketing copy, noindex.
 ├── vite.config.ts              Alias: "@" → "./src"
 ├── tailwind.config.ts
 ├── postcss.config.js
@@ -67,31 +78,41 @@ app/
 ├── tsconfig.app.json
 ├── tsconfig.node.json
 ├── eslint.config.js
+├── wrangler.jsonc              Cloudflare, app.heirlm.xyz, SPA fallback
 ├── package.json
+├── public/                     favicons, manifest, robots.txt (Disallow: /)
 └── src/
-    ├── main.tsx                ReactDOM root
-    ├── App.tsx                 Providers + router + route table
-    ├── index.css               Tailwind entry, global tokens
+    ├── main.tsx                Root: Helmet → i18n → Analytics → App
+    ├── App.tsx                 Providers + router + per-route <Seo>
+    ├── index.css               Tailwind entry, design tokens, editorial scale
     ├── vite-env.d.ts
     │
     ├── pages/                  Route-level components
-    │   ├── CreateVault.tsx     Estate creation form
-    │   ├── Dashboard.tsx       Authority's estate list + actions
+    │   ├── CreateVault.tsx     Four-step estate creation wizard
+    │   ├── Dashboard.tsx       Owner's estate list, assets, management
     │   ├── Claim.tsx           Heir flow with auto-discovery
     │   ├── Defer.tsx           Delegate pause flow
     │   ├── Heartbeat.tsx       Hot signer (hb_signer) heartbeat flow
     │   └── NotFound.tsx
     │
-    ├── components/             Reusable view components
+    ├── components/
     │   ├── PageHeader.tsx      App chrome; its Home link leaves for heirlm.xyz
-    │   ├── NavLink.tsx
-    │   ├── VaultMark.tsx
+    │   ├── VaultMark.tsx       The Heirloom mark, used as the empty state
     │   ├── WalletConnectDialog.tsx
-    │   ├── WalletPill.tsx      Connected-wallet pill: copy / change wallet
-    │   ├── TokenAvatar.tsx     Token icon + symbol with Helius enrichment
-    │   ├── ConfirmDialog.tsx   Destructive-action confirmation modal
+    │   ├── WithWallet.tsx      Render-prop gate that supplies the signer
+    │   ├── TokenAvatar.tsx     Presentational token icon, initial, or fallback
+    │   ├── ConfirmDialog.tsx   Destructive-action confirmation
+    │   ├── Seo.tsx             Per-route head tags; noindex throughout
+    │   ├── app/                AppNavLinks — the shared destination list
+    │   ├── create-vault/       Heir → Deposit → Heartbeat → Review, plus
+    │   │                       stepper, timeline, and summary column
+    │   ├── dashboard/          Estate cards, asset panels, yield + settings
+    │   ├── portal/             PortalLayout + EstateGlance, for the three
+    │   │                       single-purpose flows (claim/defer/heartbeat)
+    │   ├── surface/            Panel, Modal, OptionCard, PercentRow, tones
+    │   ├── tour/               AppTour (joyride) + tourSteps
     │   └── ui/                 Radix-based primitives
-    │       ├── button.tsx
+    │       ├── button.tsx      cva variants; the flat set is shared with the landing
     │       ├── dialog.tsx
     │       ├── tooltip.tsx
     │       ├── toast.tsx
@@ -100,26 +121,41 @@ app/
     │
     ├── contexts/
     │   ├── WalletContext.tsx   RPC singletons + wallet-ui bridge
-    │   └── VaultContext.tsx    Estate discovery, polling, on-chain actions
+    │   ├── VaultContext.tsx    Estate discovery, polling, on-chain actions
+    │   ├── TourContext.tsx     Tour run/step state, shared across routes
+    │   └── AnalyticsContext.tsx PostHog, dormant unless configured
     │
     ├── hooks/
     │   ├── use-mobile.tsx
     │   ├── use-toast.ts
-    │   ├── useTokenBalances.ts
-    │   ├── useTokenMetadata.ts Helius DAS metadata fetcher with cache
-    │   └── useWalletSplTokens.ts
+    │   ├── useTokenBalances.ts   SOL + USDC for the connected wallet
+    │   ├── useTokenMetadata.ts   DAS metadata fetcher with in-memory cache
+    │   ├── useWalletSplTokens.ts Wallet's SPL holdings, for deposit pickers
+    │   └── useDominantColor.ts   Samples a token icon to tint its row
+    │
+    ├── services/
+    │   ├── heirloom.ts         The only module that talks to the client
+    │   ├── das.ts              Typed Helius DAS helpers (getAssetBatch, byOwner)
+    │   └── api/notifications.ts Placeholder — the backend is not wired up
     │
     ├── lib/
-    │   ├── contracts.ts        The only module that talks to the client
-    │   ├── heliusDas.ts        Typed Helius DAS API helpers
-    │   └── utils.ts            clsx/tw-merge helper
+    │   ├── heirloom/
+    │   │   ├── client.ts       sendTx: build, sign, send, return a signature
+    │   │   ├── pdas.ts         estate / vault / asset-record / ATA derivation
+    │   │   └── instructions.ts Instruction builders, one per program action
+    │   ├── analytics.ts        PostHog init + capture wrappers
+    │   ├── constants.ts        Labels, decimals, time units, PostHog host
+    │   ├── strategies.ts       Yield strategy helpers (currently mocked)
+    │   ├── yieldTokens.ts      Yield-eligible token registry (placeholder APYs)
+    │   └── utils/              cn, format, math, solana, token
     │
     ├── config/
-    │   └── constants.ts        NETWORK, RPC_URL, PROGRAM_ID, mints,
-    │                           Helius keys, explorer URLs
+    │   └── index.ts            RPC endpoints, landing URL, analytics, flags
     │
-    └── assets/                 Static imagery
+    └── types/                  Shared types, analytics events, strategy UI
 ```
+
+Three files are currently orphaned and imported by nothing: `components/WalletPill.tsx`, `components/NavLink.tsx`, and `components/ErrorBoundary.tsx`.
 
 ## Routing
 
@@ -128,175 +164,195 @@ All routes are declared in `src/App.tsx`:
 | Path            | Component         | Purpose                                                                |
 | --------------- | ----------------- | ---------------------------------------------------------------------- |
 | `/`             | redirect          | Sends to `/dashboard`. The landing lives on `heirlm.xyz`.              |
-| `/create-vault` | `CreateVault`     | Form to initialize a new estate and fund it with SOL and/or tokens.    |
-| `/dashboard`    | `Dashboard`       | Authority view: list of estates, state badges, heartbeat, revoke.      |
+| `/create-vault` | `CreateVault`     | Wizard to open an estate and fund it with SOL and/or tokens.           |
+| `/dashboard`    | `Dashboard`       | Owner view: estates, state, assets, yield, heartbeat, settings.        |
 | `/claim`        | `Claim`           | Heir view: auto-discover claimable estates and pull the assets.        |
-| `/defer`        | `Defer`           | Delegate view: pause an authority's heartbeat clock.                   |
+| `/defer`        | `Defer`           | Delegate view: pause an owner's heartbeat clock.                       |
 | `/heartbeat`    | `Heartbeat`       | Hot signer view: registered `hb_signer` refreshes the heartbeat.       |
 | `*`             | `NotFound`        | 404.                                                                   |
 
+`RouteSeo` sets the title per path and stamps `noindex, nofollow` on every one of them.
+
 ## Provider Stack
 
-`App.tsx` composes five providers, outer-to-inner:
+Composed across `main.tsx` and `App.tsx`, outer to inner:
 
-1. `QueryClientProvider` (TanStack Query)
-2. `TooltipProvider` (Radix)
-3. `WalletUi` with a `createWalletUiConfig({ clusters })` list ordered by `VITE_NETWORK`
-4. `WalletProvider`, local context that exposes RPC singletons and the current address
-5. `VaultProvider`, owns estate discovery, polling, and on-chain write wrappers
+1. `HelmetProvider` — per-route head tags
+2. `I18nProvider` — i18next, from `@heirloom/i18n`
+3. `AnalyticsProvider` — PostHog, or an inert stub when unconfigured
+4. `QueryClientProvider` — TanStack Query
+5. `TooltipProvider` — Radix
+6. `WalletUi` with a `createWalletUiConfig({ clusters })` list ordered by the configured RPC endpoint (mainnet, localnet, or devnet first)
+7. `WalletProvider` — RPC singletons and the current address
+8. `VaultProvider` — estate discovery, polling, and on-chain write wrappers
+9. `BrowserRouter` → `TourProvider` → `AppTour`
 
-Toast surfaces (`Toaster`, `Sonner`) mount inside the wallet/vault providers so any action can fire a notification.
+Toast surfaces (`Toaster`, `Sonner`) mount inside the wallet/vault providers so any action can fire a notification. `@wallet-ui/react`'s stylesheet is injected as a raw string into a `<style id="wallet-ui-css">` tag at module load.
 
 ## How the App Integrates with the Client and the Program
 
-### The single gateway: `src/lib/contracts.ts`
+### The single gateway: `src/services/heirloom.ts`
 
-This module is the only place where the app touches `@historiah/heirloom`. It does three things:
+This module is the only place where the app touches `@historiah/heirloom`. Under it, `src/lib/heirloom/` splits the mechanics three ways: `pdas.ts` derives addresses, `instructions.ts` builds instructions, and `client.ts` exposes one `sendTx(client, feePayer, ix | ix[])` that pipes a v0 transaction message through `@solana/kit` and returns a base58 signature.
 
-1. **Wraps every instruction builder** in an ergonomic `sendX(client, args)` function that composes the instruction(s), pipes them through `@solana/kit` transaction helpers, and returns a base58-encoded signature. The current set:
-   - `sendInitialize` and `sendInitializeWithTokens` (initialize plus N register_asset deposits bundled into one tx).
-   - `sendUpdate` (heartbeat refresh; signer can be the authority or the registered `hb_signer`).
-   - `sendRevoke`, `sendRevokeAll` (multi-asset revoke ordered as tokens first then SOL).
-   - `sendClaim`, `sendClaimAll` (same ordering, for the heir).
-   - `sendDelegateDefer`.
-   - `sendUpdateHeir` (re-derives PDAs for the new heir and migrates registered token accounts).
-   - `sendRegisterAndDeposit` (add an SPL token to an existing estate).
-   - `sendRegisterSolDeposit` (top up SOL on an existing estate via the mint-less `register_asset` path).
-2. **Derives PDAs** via the generated `findEstatePda` and `findVaultPda`, plus `findAssociatedTokenPda` from `@solana-program/token`.
-3. **Reads state from chain**:
-   - `fetchEstateByPair` fetches one estate by (authority, heir) using `fetchMaybeEstate`.
-   - `fetchEstatesByAuthority` and `fetchEstatesByHeir` use `getProgramAccounts` with `memcmp` filters on the Estate discriminator and the relevant offset (1 for authority, 33 for heir), then decode each account with the generated `decodeEstate`. The heir variant powers auto-discovery on the claim page so an heir does not need to know the authority's address.
-   - `fetchVaultClaimableLamports` returns the raw lamport balance minus the rent-exempt reserve, so the UI shows real deposits rather than rent overhead.
-   - `discoverVaultTokenAccounts` calls `getTokenAccountsByOwner(vaultPda)` with `jsonParsed` encoding to enumerate SPL holdings, filtering out zero-balance accounts.
+**Writes.** Each is an `async` function taking the client, a signer, and typed args:
 
-Bundling patterns the app relies on:
+- `initialize` and `initializeWithTokens` — open an estate, optionally bundling one `register_asset` per extra token into the same transaction.
+- `updateFields` — heartbeat refresh, and the setter for interval / grace / pause duration / label. Signer may be the authority or the registered `hb_signer`.
+- `registerAsset` and `registerSolDeposit` — add an SPL token or top up SOL on a live estate.
+- `depositSol` and `depositToken` — plain transfers into an already-registered asset.
+- `revoke` / `revokeAll` — the owner's emergency withdraw.
+- `claim` / `claimAll` — the heir's claim.
+- `delegateDefer` — the guardian's one-time pause.
+- `updateHeirAll` — re-derives estate and vault PDAs for the new heir and migrates registered token accounts.
 
-- **Initialize with multiple assets**: `sendInitializeWithTokens` bundles `initialize` plus one `register_asset` per extra token in a single signed transaction.
-- **Revoke / claim all assets**: ordered tokens before SOL (since the SOL path closes the vault). The program closes the estate and vault PDAs inline once the last asset clears, returning rent.
-- **Update heir**: re-derives `findEstatePda` and `findVaultPda` for the new heir (the generated client does not auto-derive dependent PDAs) and resolves the new vault ATA when a token is being migrated.
+The `*All` variants order **tokens before SOL**, because the SOL path closes the vault. The program closes the estate and vault PDAs inline once the last asset clears, returning rent.
+
+**Reads.**
+
+- `fetchEstateByPair` fetches one estate by (authority, heir) via `fetchMaybeEstate`.
+- `fetchEstatesByAuthority` / `fetchEstatesByHeir` use `getProgramAccounts` with `memcmp` filters on the Estate discriminator and the relevant offset, then decode with the generated `decodeEstate`. The heir variant powers auto-discovery on `/claim`, so an heir never needs to know the owner's address.
+- `fetchVaultClaimableLamports` returns the raw lamport balance minus the rent-exempt reserve, so the UI shows real deposits rather than rent overhead.
+- `discoverVaultTokenAccounts` calls `getTokenAccountsByOwner(vaultPda)` with `jsonParsed` encoding, filtering out zero-balance accounts.
+- `buildSnapshotFromEstate` / `lookupEstateSnapshot` assemble the denormalized `EstateSnapshot` the portal pages render.
+
+**Lifecycle.** `computeEstateState({ lastHeartbeat, heartbeatInterval, gracePeriod, pausedUntil, createdAt, vaultEmpty })` returns `active | grace | claimable | distributed` plus the two countdowns. It anchors on `lastHeartbeat`, falling back to `createdAt` when the estate has never beaten, and takes `max(graceDeadline + gracePeriod, pausedUntil)` as the claimable moment so a delegate's pause is respected. An empty vault reads as `distributed`.
 
 ### The generated client
 
-`clients/heirloom/js/src/main.ts` re-exports everything from `generated/` plus the `TREASURY_ADDRESS` constant. Because the codecs are generated by Codama directly from the Anchor IDL, they match the on-chain wire format as-is — no hand-written overrides are required. The app imports instruction builders, account decoders (`decodeEstate`, `fetchEstate`), PDA derivers (`findEstatePda`, `findVaultPda`), and the treasury constant from `@historiah/heirloom`.
+`clients/heirloom/js/src/main.ts` re-exports everything from `generated/`, the `TREASURY_ADDRESS` constant, and a hand-written `findAssetRecordPda` (marked `FIXME` until Codama emits it). Because the codecs are generated directly from the Anchor IDL, they match the on-chain wire format as-is — no hand-written overrides are required.
 
 ### State layer: `VaultContext`
 
 `src/contexts/VaultContext.tsx` is where on-chain reality becomes UI reality. It:
 
-- Polls `fetchEstatesByAuthority` every 15 seconds (or every 5 seconds while a create is pending) and assembles an `EstateData[]` with denormalized fields: parsed `delegate` and `hb_signer` options, computed SOL balance, discovered vault tokens, `claimable_assets` count, and human-readable lifecycle state.
-- Computes lifecycle state off-chain with `computeState`, returning `active | grace | claimable | distributed` from `last_heartbeat + heartbeat_interval + grace_period` against `Date.now()`, treating drained or `is_claimed` estates as `distributed`.
-- Exposes action callbacks (`createEstateOnChain`, `registerAssetOnChain`, `sendHeartbeatOnChain`, `revokeEstateOnChain`, `updateHeirOnChain`) that call into `lib/contracts.ts` and track the last pending signature.
-- Handles the "stale PDA" edge case in `createEstateOnChain`: after a revoke, the runtime garbage-collects zero-lamport PDAs at transaction end, but RPC snapshots can lag. The provider polls `getAccountInfo` for up to 20 seconds before retrying `initialize`, surfacing a clear error if the accounts haven't cleared.
+- Polls `fetchEstatesByAuthority` every 15 seconds, or every 5 seconds while a create is pending, and assembles an `EstateData[]` with denormalized fields: unwrapped `delegate` and `hbSigner` options, SOL balance, discovered vault tokens, `claimableAssets` count, lifecycle state, and both countdowns.
+- Exposes action callbacks (`createEstateOnChain`, `registerAssetOnChain`, `registerSolOnChain`, `depositSolOnChain`, `depositTokenOnChain`, `sendHeartbeatOnChain`, `updateEstateFieldsOnChain`, `revokeEstateOnChain`, `updateHeirOnChain`) that call into `services/heirloom.ts` and track the last pending signature.
+- Handles the "stale PDA" edge case in `createEstateOnChain`: after a revoke, the runtime garbage-collects zero-lamport PDAs at transaction end, but RPC snapshots can lag. The provider polls `getAccountInfo` for up to 20 seconds before retrying `initialize`, then surfaces `"Prior estate/vault PDAs not yet cleared on-chain."`.
 
-### Wallet layer: `WalletContext`
+### Wallet layer: `WalletContext` and `WithWallet`
 
-`src/contexts/WalletContext.tsx` creates one `createSolanaRpc(RPC_URL)` and one `createSolanaRpcSubscriptions(RPC_WS_URL)` at module scope; both are referentially stable singletons. It reads the connected account from `@wallet-ui/react`'s `useWalletUi()` and exposes `{ isConnected, publicKey, address, rpc, rpcSubscriptions, disconnectWallet }`. The signer itself is obtained inside `VaultContext` and the `Heartbeat` page via `useWalletUiSigner()`, which returns a `TransactionSigner` that forwards signing to the user's wallet extension.
+`src/contexts/WalletContext.tsx` creates one `createSolanaRpc(SOLANA_RPC_ENDPOINT)` and one `createSolanaRpcSubscriptions(SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT)` at module scope; both are referentially stable singletons, and their types (`AppRpc`, `AppRpcSubscriptions`) are exported for the service layer. It reads the connected account from `useWalletUi()` and exposes `{ isConnected, publicKey, address, rpc, rpcSubscriptions, disconnectWallet }`.
+
+The signer comes from `WithWallet`, a render-prop component that calls `useWalletUiSigner()` only once an account exists — the hook requires a non-null account, so pages stay fully viewable while disconnected and only their *actions* are gated.
 
 ### Token metadata: Helius DAS
 
-`src/lib/heliusDas.ts` provides typed wrappers around the Helius `getAssetBatch` and `searchAssets` endpoints. `src/hooks/useTokenMetadata.ts` batches mint addresses, caches results in-memory, and resolves symbols, decimals, and image URIs (preferring `cdn_uri`). `TokenAvatar` renders the result with a graceful fallback when metadata is unavailable. The whole flow is gated on `VITE_HELIUS_API_KEY`; if no key is configured, the UI falls back to short mint addresses.
+`src/services/das.ts` wraps the Helius `getAssetBatch` and `getAssetsByOwner` endpoints, chunking batches at 1,000 ids and preferring `cdn_uri` for images. `useTokenMetadata` batches mints, caches results in memory, and is called at the screen level — `EstateCard` and `Claim` — which then pass a resolved `image` down. `TokenAvatar` itself fetches nothing: given an image it renders it, and otherwise falls back to the symbol's initial or a coin glyph.
 
-### Configuration: `src/config/constants.ts`
+There is no separate Helius key: DAS is served from whatever `VITE_SOLANA_RPC_ENDPOINT` points at. Against a plain public RPC the DAS calls fail and the UI falls back to truncated mint addresses.
 
-All environment-dependent values live here. Defaults target devnet, and when a Helius API key is present, RPC URLs default to Helius endpoints:
+### Configuration: `src/config/index.ts`
 
 ```ts
-NETWORK         = import.meta.env.VITE_NETWORK         || "devnet"
-HELIUS_API_KEY  = import.meta.env.VITE_HELIUS_API_KEY  || ""
-RPC_URL         = import.meta.env.VITE_RPC_URL         || helius || cluster-default
-RPC_WS_URL      = import.meta.env.VITE_RPC_WS_URL      || helius || cluster-default
-PROGRAM_ID      = import.meta.env.VITE_PROGRAM_ID      || "JE2LF...AnKN"
-USDC_MINT       = import.meta.env.VITE_USDC_MINT       || devnet USDC faucet mint
+LANDING_URL                     = VITE_LANDING_URL                      || "https://heirlm.xyz"
+SOLANA_RPC_ENDPOINT             = VITE_SOLANA_RPC_ENDPOINT              || "http://127.0.0.1:8899"
+SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT = VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT || "ws://127.0.0.1:8900"
+POSTHOG_PROJECT_TOKEN           = VITE_POSTHOG_PROJECT_TOKEN            || ""
+ANALYTICS_ENABLED               = VITE_ANALYTICS_ENABLED === "true"
+FEATURE_YIELD_STAKING_UI        = VITE_FEATURE_YIELD_STAKING_UI !== "false"   // on by default
+FEATURE_NOTIFICATIONS_UI        = VITE_FEATURE_NOTIFICATIONS_UI === "true"    // off by default
 ```
 
-`explorerTxUrl(signature)` and `explorerAddressUrl(addr)` append the right `?cluster=` suffix based on `NETWORK`.
+The program ID and treasury address are not configurable here — they come from the generated client. Non-environment constants (token labels, decimals, `LABEL_MAX_LEN`, time units, the PostHog host, the devnet USDC mint) live in `src/lib/constants.ts`.
+
+**Both feature flags are temporary.** The yield and staking flows render against `lib/strategies.ts` placeholder generators and the placeholder APYs in `lib/yieldTokens.ts`; no strategy is wired to a real program yet. `services/api/notifications.ts` is an empty placeholder, which is why the notifications flag defaults off.
 
 ### Product analytics: PostHog
 
-PostHog is optional and initializes only when `VITE_POSTHOG_PROJECT_TOKEN` is set. Configure these variables in the deployment environment:
+Analytics is dormant by default and initializes only when `VITE_ANALYTICS_ENABLED` is exactly `true` **and** a project token is present. The ingestion host is a fixed constant in `src/lib/constants.ts`.
 
 ```env
 VITE_ANALYTICS_ENABLED=false
 VITE_POSTHOG_PROJECT_TOKEN=
 ```
 
-Analytics is dormant by default and initializes only when `VITE_ANALYTICS_ENABLED` is exactly `true` and a project token is present. Keep the flag disabled in production until the required privacy and consent controls are in place.
-
-The PostHog ingestion host is a fixed application constant in `src/lib/constants.ts`. The integration records SPA page views, clicks on links and buttons, and coarse product events for the wallet, vault, heartbeat, claim, defer, and dashboard flows. It deliberately does not identify wallet owners or send wallet addresses, heir addresses, transaction signatures, asset amounts, form values, or error messages. Autocaptured text is masked and session recording is disabled.
+`src/types/index.ts` holds the closed `AnalyticsEvent` union — wallet, vault, heartbeat, claim, defer, top-up, asset, heir-reassign, emergency-withdraw, and tour events — so a typo in a capture call fails to compile. The integration records SPA page views and clicks on links and buttons. It deliberately does not identify wallet owners or send wallet addresses, heir addresses, transaction signatures, asset amounts, form values, or error messages. Autocaptured text is masked and session recording is disabled.
 
 ## Alice, Concretely
 
-The base README introduces Alice, who wants her daughter Mia to inherit her SOL. Here is exactly what her fingers do in this app:
+The base README introduces Alice, who wants her daughter Mia to inherit her SOL. Here is exactly what her fingers do:
 
-1. Opens `heirlm.xyz`, reads the landing (a separate Astro build — see `landing/`), and clicks **Launch App**, which brings her to `app.heirlm.xyz`. If she took **Launch Tour** instead, she arrives at `?tour=1` and `AppTour` opens the walkthrough on the dashboard.
+1. Opens `heirlm.xyz`, reads the landing (a separate Astro build — see [`landing/`](../landing/README.md)), and clicks **Launch App**, which brings her to `app.heirlm.xyz`. Had she taken **Launch Tour**, she would arrive at `?tour=1` and `AppTour` would open the walkthrough on the dashboard.
 2. Clicks **Connect Wallet** in `PageHeader`. `WalletConnectDialog` opens, powered by `@wallet-ui/react`. Once connected, the header shows her address with copy and change-wallet affordances.
-3. Navigates to `/create-vault`. The `CreateVault` page collects heir address, label, timer values, optional delegate, optional heartbeat signer (the field auto-hides when left at 0/empty), initial SOL amount, and optional token deposits. On submit, it calls `vault.createEstateOnChain(input)`, which routes through `sendInitializeWithTokens` to bundle `initialize` and every `register_asset` deposit into a single transaction.
-4. On `/dashboard`, `VaultContext` renders her one estate card, showing `state: active`, the computed `secondsUntilGrace`, the vault SOL balance, and any SPL holdings discovered via `discoverVaultTokenAccounts` with `TokenAvatar`-rendered symbols and icons. Destructive actions (revoke, reassign heir) route through `ConfirmDialog`.
-5. She clicks **Send Heartbeat**, which calls `sendHeartbeatOnChain(heir)`, which calls `sendUpdate` with all update fields `null`. The program reads null-everything as "just reset `last_heartbeat`".
-6. From her phone wallet, she opens `/heartbeat`, enters her authority and Mia's heir address, and the page looks up the estate, verifies that her connected wallet matches the registered `hb_signer`, and lets her sign the same `update_fields` transaction without ever needing her cold key.
-7. For her retreat, Bob opens `/defer`, enters Alice's authority + Mia's heir, and triggers `sendDelegateDefer`. The estate's `paused_until` advances.
-8. If the worst happens, Mia (or her guardian) visits `/claim`. The page calls `fetchEstatesByHeir(rpc, heirAddress)` and auto-lists every estate where she is named heir. She picks one, signs once, `sendClaimAll` bundles all token claims followed by the SOL claim in a single transaction (tokens first because the SOL claim closes the vault), and the assets land in Mia's accounts minus the 0.75% protocol fee per asset.
+3. Navigates to `/create-vault`. The wizard runs four steps — **Heir** (address, label, optional delegate), **Deposit** (SOL amount and any token deposits), **Heartbeat** (interval, grace period, pause duration, optional `hb_signer`), **Review**. On submit it calls `vault.createEstateOnChain(input)`, which routes through `initializeWithTokens` to bundle `initialize` and every `register_asset` deposit into a single transaction.
+4. On `/dashboard`, `EstateCard` renders her estate: `state: active`, `secondsUntilGrace`, the vault SOL balance, and any SPL holdings discovered via `discoverVaultTokenAccounts`, with symbols and icons resolved in one `useTokenMetadata` batch. Destructive actions route through `ConfirmDialog`.
+5. She clicks **Send Heartbeat**, which calls `sendHeartbeatOnChain(heir)` → `updateFields` with every field `null`. The program reads null-everything as "just reset `last_heartbeat`".
+6. From her phone wallet she opens `/heartbeat`, enters her authority and Mia's address; the page looks up the estate, checks that her connected wallet matches the registered `hb_signer`, and lets her sign the same transaction without her cold key.
+7. For her retreat, Bob opens `/defer`, enters the same pair, and triggers `delegateDefer`. The estate's `paused_until` advances by the configured pause duration.
+8. If the worst happens, Mia visits `/claim`. The page calls `fetchEstatesByHeir(heirAddress)` and lists every estate naming her. She picks one, signs once, and `claimAll` bundles the token claims followed by the SOL claim in a single transaction — tokens first, because the SOL claim closes the vault. The assets land in her accounts minus the 0.75% protocol fee per asset.
 
-Every step is one signed transaction. Every failure surfaces as a `sonner` toast with an Explorer link built from `explorerTxUrl`.
+Every step is one signed transaction. Every failure surfaces as a `sonner` toast with an Explorer link.
 
 ## Running the App
 
 From the repo root (preferred, so Turborepo handles the client dependency):
 
 ```bash
-yarn install
-yarn dev:ui           # runs `turbo run dev --filter=app`
+bun install
+bun dev:ui            # turbo run dev --filter=app
+bun build:ui
 ```
 
 Or from within `app/`:
 
 ```bash
-yarn dev              # Vite on http://localhost:5173
-yarn build            # tsc -b && vite build → dist/
-yarn preview          # Serve the production build locally
-yarn lint             # ESLint (flat config)
+bun run dev           # Vite on http://localhost:5173
+bun run build         # tsc -b && vite build → dist/
+bun run preview       # serve the production build
+bun run lint          # ESLint (flat config)
 ```
+
+To see the landing beside it, run `bun dev:landing` from the root.
 
 ### Environment Variables
 
-Create `app/.env.local` (git-ignored) to override defaults:
+Copy `.env.example` to `.env.local` (git-ignored) and fill it in:
 
-```
-VITE_NETWORK=devnet
-VITE_RPC_URL=https://api.devnet.solana.com
-VITE_RPC_WS_URL=wss://api.devnet.solana.com
-VITE_PROGRAM_ID=JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN
-VITE_USDC_MINT=4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
-VITE_HELIUS_API_KEY=                  # optional, enables Helius RPC + DAS
-VITE_HELIUS_RPC_URL=                  # optional, overrides default Helius URL
-VITE_LANDING_URL=https://heirlm.xyz   # where "Home" and a skipped tour go
+```env
+VITE_SOLANA_RPC_ENDPOINT=https://devnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>
+VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT=wss://devnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>
+
+# Where "Home" and a skipped tour go
+VITE_LANDING_URL=https://heirlm.xyz
+
+# PostHog. Leave disabled unless privacy and consent controls are in place.
+VITE_ANALYTICS_ENABLED=false
+VITE_POSTHOG_PROJECT_TOKEN=
+
+# Temporary feature flags — local only, the flows behind them are mocked
+VITE_FEATURE_YIELD_STAKING_UI=true
+VITE_FEATURE_NOTIFICATIONS_UI=true
 ```
 
-Vite exposes any `VITE_`-prefixed variable through `import.meta.env`. See `.env.example` at the package root for a copy-pasteable template.
+Without an RPC endpoint the app targets a local validator at `127.0.0.1:8899`. Vite exposes any `VITE_`-prefixed variable through `import.meta.env`.
 
 ### Regenerating the Client After a Program Change
 
 If the on-chain program's IDL changes, run from the repo root:
 
 ```bash
-yarn generate:clients
+bun generate          # or bun generate:heirloom for just this program
 ```
 
-That rebuilds `clients/js/src/generated/`. Because `@historiah/heirloom` is a `workspace:*` dependency, the app picks up the change on the next Vite reload. Any broken type contracts show up in `tsc` before they show up in the browser.
+That rebuilds `clients/heirloom/js/src/generated/`. Because `@historiah/heirloom` is a `workspace:*` dependency, the app picks up the change on the next Vite reload. Any broken type contracts show up in `tsc` before they show up in the browser.
 
 ## Conventions
 
 - Path alias `@/` maps to `src/` (configured in `vite.config.ts` and mirrored in `tsconfig.app.json`).
-- Components are PascalCase `.tsx`, hooks are kebab- or camel-cased `.ts`/`.tsx`, everything in `lib/` and `config/` is plain `.ts`.
-- Styling is Tailwind-first. The `cn` helper in `lib/utils.ts` merges conditional class strings via `clsx` + `tailwind-merge`.
+- Components are PascalCase `.tsx`; hooks are kebab- or camel-cased; everything in `lib/`, `services/`, `config/`, and `types/` is plain `.ts` unless it renders.
+- Styling is Tailwind-first. The `cn` helper in `lib/utils/cn.ts` merges conditional class strings via `clsx` + `tailwind-merge`.
+- All user-visible copy goes through `useTranslation("app")` from `@heirloom/i18n`. Never inline a string — add it to `packages/i18n/src/locales/app/en.ts` first.
 - Keep RPC access routed through `WalletContext`'s singletons. Do not create new `createSolanaRpc` instances per render.
-- Keep program access routed through `lib/contracts.ts`. Do not import from `@historiah/heirloom` in components; wrap it in a typed helper first.
-- Token displays should go through `TokenAvatar` + `useTokenMetadata` so the Helius cache is reused.
+- Keep program access routed through `services/heirloom.ts`. Do not import from `@historiah/heirloom` in components; wrap it in a typed helper first.
+- Resolve token metadata once per screen with `useTokenMetadata` and pass the image down to `TokenAvatar`, so one DAS batch serves the whole view.
+- `surface/` primitives (`Panel`, `Modal`, `OptionCard`, `PercentRow`, `tones`) are the shared design system. They are the same system the landing uses; a change to their look usually belongs in both packages.
 
 ## Troubleshooting
 
-- **"Wallet not connected" thrown from an action**: `VaultProviderDisconnected` is mounted; connect a wallet and the real provider takes over.
-- **"Prior estate/vault PDAs not yet cleared on-chain"** during re-create: a recent revoke is still propagating. Wait a few seconds and retry.
-- **Tokens not showing in the vault card**: `discoverVaultTokenAccounts` filters out zero-balance accounts; confirm the deposit actually landed via the Explorer link.
-- **Heartbeat from `/heartbeat` rejected**: confirm the connected wallet's address matches the `hb_signer` field on the estate. The page renders the registered signer underneath the lookup result, so it is straightforward to compare.
-- **Token metadata missing**: ensure `VITE_HELIUS_API_KEY` is set. Without it, `useTokenMetadata` short-circuits and `TokenAvatar` falls back to the truncated mint address.
+- **"Wallet not connected" thrown from an action**: `VaultContext.requireAuth` found no signer. Connect a wallet and retry.
+- **"Prior estate/vault PDAs not yet cleared on-chain"** during re-create: a recent revoke is still propagating. The provider already waited 20 seconds; wait a few more and retry.
+- **Tokens not showing in the estate card**: `discoverVaultTokenAccounts` filters out zero-balance accounts; confirm the deposit landed via the Explorer link.
+- **Heartbeat from `/heartbeat` rejected**: confirm the connected wallet matches the estate's `hb_signer`. The page renders the registered signer under the lookup result for comparison.
+- **Token metadata missing, icons falling back to mint addresses**: `VITE_SOLANA_RPC_ENDPOINT` is not a DAS-capable endpoint. Point it at Helius.
+- **Yield or notifications UI missing**: both sit behind feature flags in `src/config/index.ts`. Neither is wired to a backend yet.

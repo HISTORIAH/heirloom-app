@@ -1,10 +1,12 @@
-# Astro fingerprints everything under /_astro, so those files can be cached
-# forever — the filename changes when the content does. Documents must not be,
-# or a redeploy is invisible until the browser gets bored.
-/_astro/*
-  Cache-Control: public, max-age=31536000, immutable
-
+# Cloudflare *appends* every matching rule rather than letting the most
+# specific one win, so `/*` must not set Cache-Control — a rule here plus a
+# rule below would emit both, and a comma-joined pair of conflicting max-ages
+# resolves to whichever came first. Documents therefore keep the platform
+# default (public, max-age=0, must-revalidate), which is what we want anyway.
 /*
-  Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+
+# Astro fingerprints these, so the filename changes whenever the bytes do.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
