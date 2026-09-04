@@ -1,0 +1,131 @@
+---
+/**
+ * The landing's chrome. The React version carried the whole wallet apparatus —
+ * connect dialog, address dropdown, balances — because the landing and the app
+ * were one bundle. They are not any more: the only thing this bar can do about
+ * a wallet is hand the visitor over to the app, so that is all it does.
+ */
+import type { LandingT } from "@heirloom/i18n/landing";
+import { APP_URL } from "@/lib/site";
+import Button from "@/components/Button.astro";
+import Icon from "@/components/Icon.astro";
+import Logo from "@/components/Logo.astro";
+
+interface Props {
+  t: LandingT;
+  /** Site-root-relative home for the locale being rendered. */
+  home: string;
+}
+const { t, home } = Astro.props;
+
+const destinations = [
+  { href: `${APP_URL}/dashboard`, label: t("nav.dashboard"), icon: "layout-dashboard" },
+  { href: `${APP_URL}/claim`, label: t("nav.claimInheritance"), icon: "gift" },
+  { href: `${APP_URL}/heartbeat`, label: t("nav.heartbeat"), icon: "heart" },
+];
+---
+
+<nav class="sticky top-0 z-50 border-b border-tile-line bg-background" data-nav>
+  <div class="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
+    <a href={home} class="flex items-center">
+      <Logo class="h-8 md:h-10" />
+    </a>
+
+    <div class="hidden items-center gap-1 md:flex">
+      {
+        destinations.map((d) => (
+          <a
+            href={d.href}
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft"
+          >
+            <Icon name={d.icon} class="h-4 w-4" strokeWidth={2} />
+            {d.label}
+          </a>
+        ))
+      }
+      <Button
+        href={APP_URL}
+        variant="flat-yellow"
+        size="sm"
+        class="ml-3"
+        data-track="launch_app_nav"
+      >
+        {t("nav.launchApp")}
+      </Button>
+    </div>
+
+    <button
+      type="button"
+      class="rounded-lg border border-tile-line p-2 transition-colors hover:bg-tile-soft md:hidden"
+      data-nav-toggle
+      aria-expanded="false"
+      aria-controls="nav-drawer"
+      aria-label={t("nav.openMenu")}
+      data-label-open={t("nav.openMenu")}
+      data-label-close={t("nav.closeMenu")}
+    >
+      <Icon name="menu" data-nav-icon-open class="h-5 w-5" strokeWidth={2} />
+      <Icon name="x" data-nav-icon-close class="h-5 w-5" strokeWidth={2} hidden />
+    </button>
+  </div>
+
+  <div id="nav-drawer" data-nav-drawer hidden class="border-t border-tile-line bg-background md:hidden">
+    <div class="space-y-1 px-[var(--page-pad)] py-4">
+      {
+        destinations.map((d) => (
+          <a
+            href={d.href}
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+          >
+            <Icon name={d.icon} class="h-4 w-4" strokeWidth={2} />
+            {d.label}
+          </a>
+        ))
+      }
+      <Button
+        href={APP_URL}
+        variant="flat-yellow"
+        size="lg"
+        class="mt-3 w-full"
+        data-track="launch_app_nav_drawer"
+      >
+        {t("nav.launchApp")}
+      </Button>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>("[data-nav]");
+  const toggle = nav?.querySelector<HTMLElement>("[data-nav-toggle]");
+  const drawer = nav?.querySelector<HTMLElement>("[data-nav-drawer]");
+
+  if (nav && toggle && drawer) {
+    const iconOpen = toggle.querySelector<HTMLElement>("[data-nav-icon-open]");
+    const iconClose = toggle.querySelector<HTMLElement>("[data-nav-icon-close]");
+    let restoreOverflow = "";
+
+    const set = (open: boolean) => {
+      drawer.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute(
+        "aria-label",
+        (open ? toggle.dataset.labelClose : toggle.dataset.labelOpen) ?? "",
+      );
+      if (iconOpen) iconOpen.hidden = open;
+      if (iconClose) iconClose.hidden = !open;
+      // The drawer covers the page, so the page behind it should not scroll.
+      if (open) {
+        restoreOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = restoreOverflow;
+      }
+    };
+
+    toggle.addEventListener("click", () => set(drawer.hidden));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !drawer.hidden) set(false);
+    });
+  }
+</script>

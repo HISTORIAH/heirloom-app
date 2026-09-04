@@ -1,0 +1,58 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Icon from "@/components/Icon.astro";
+import Mosaic from "@/components/surface/Mosaic.astro";
+import Tile from "@/components/surface/Tile.astro";
+import Section from "@/components/landing/Section.astro";
+import SectionLead from "@/components/landing/SectionLead.astro";
+import SectionNote from "@/components/landing/SectionNote.astro";
+import { toneMuted, toneCap, type TileTone } from "@/lib/tones";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+// Three equal beats — today, the bad day, the way back — with the bad day in
+// ink between two lighter tiles so the middle of the band is the low point
+// and the row reads as a passage rather than an ending.
+const beats: { icon: string; label: string; desc: string; tone: TileTone }[] = [
+  { icon: "wallet", label: t("recovery.s1Label"), desc: t("recovery.s1Desc"), tone: "sky" },
+  { icon: "unplug", label: t("recovery.s2Label"), desc: t("recovery.s2Desc"), tone: "ink" },
+  { icon: "life-buoy", label: t("recovery.s3Label"), desc: t("recovery.s3Desc"), tone: "yellow" },
+];
+---
+
+<Section id="recovery" index={5} total={10} label={t("recovery.eyebrow")}>
+  <SectionLead>
+    <Fragment slot="headline">
+      {t("recovery.title1")}{" "}
+      <span class="bg-accent-pink px-1.5">{t("recovery.title2")}</span>
+    </Fragment>
+    <Fragment slot="lede">{t("recovery.lede")}</Fragment>
+  </SectionLead>
+
+  <Mosaic cols={3} band={3.5}>
+    {
+      beats.map((b, i) => (
+        <Tile col={1} row={1} colMd={3} tone={b.tone} class="gap-6 md:gap-8">
+          <div class="flex items-start justify-between gap-4">
+            <span class={`tile-num ${toneCap[b.tone]}`}>{`0${i + 1}`}</span>
+            <Icon name={b.icon} class="h-7 w-7 shrink-0 md:h-9 md:w-9" strokeWidth={1.75} />
+          </div>
+          <h3 class="tile-h">{b.label}</h3>
+          <p class={`tile-body max-w-[34ch] ${toneMuted[b.tone]}`}>{b.desc}</p>
+        </Tile>
+      ))
+    }
+  </Mosaic>
+
+  {/* The human failsafe on top of the timer — a footnote, not a tile. */}
+  <SectionNote
+    icon="shield-check"
+    label={t("recovery.guardianTitle")}
+    class="!bg-accent-sage !border-accent-sage"
+  >
+    {t("recovery.guardianDesc")}
+  </SectionNote>
+</Section>

@@ -1,0 +1,102 @@
+---
+/**
+ * On the React landing this swapped i18next's active language in place. Here
+ * each locale is its own prerendered document, so the switcher is what it
+ * should always have been: a list of links. They sit in the markup whether the
+ * menu is open or not, which is also how a crawler finds the other nine pages.
+ */
+import { LANGUAGES, languageLabel, localeHref } from "@heirloom/i18n/landing";
+
+interface Props {
+  locale: string;
+}
+const { locale } = Astro.props;
+
+const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0]!;
+---
+
+<div class="relative" data-lang-switcher>
+  <button
+    type="button"
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-label={languageLabel(locale)}
+    data-lang-trigger
+    class="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      class="h-4 w-4"
+    >
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M3.6 9h16.8M3.6 15h16.8"></path>
+      <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"></path>
+    </svg>
+    {current.short}
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      class="h-3.5 w-3.5 opacity-60"
+    >
+      <path d="m8 9 4-4 4 4"></path>
+      <path d="m16 15-4 4-4-4"></path>
+    </svg>
+  </button>
+
+  <div
+    role="listbox"
+    data-lang-menu
+    hidden
+    class="absolute right-0 bottom-full mb-2 w-44 rounded-none border border-tile-line bg-background p-1 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)] z-50"
+  >
+    {
+      LANGUAGES.map((lang) => (
+        <a
+          role="option"
+          aria-selected={lang.code === locale ? "true" : "false"}
+          hreflang={lang.code}
+          href={localeHref(lang.code)}
+          title={lang.name}
+          class:list={[
+            "block w-full rounded-none px-3 py-1.5 text-left text-sm font-medium normal-case tracking-normal text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground",
+            lang.code === locale && "!text-foreground bg-tile-soft",
+          ]}
+        >
+          {lang.name}
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-lang-switcher]").forEach((root) => {
+    const trigger = root.querySelector<HTMLElement>("[data-lang-trigger]");
+    const menu = root.querySelector<HTMLElement>("[data-lang-menu]");
+    if (!trigger || !menu) return;
+
+    const set = (open: boolean) => {
+      menu.hidden = !open;
+      trigger.setAttribute("aria-expanded", String(open));
+    };
+
+    trigger.addEventListener("click", () => set(menu.hidden));
+    document.addEventListener("mousedown", (e) => {
+      if (!root.contains(e.target as Node)) set(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") set(false);
+    });
+  });
+</script>

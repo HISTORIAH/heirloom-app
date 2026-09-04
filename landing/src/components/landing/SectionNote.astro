@@ -1,0 +1,34 @@
+---
+/**
+ * A footnote under a section's band — the guardian rule, the emergency exit.
+ *
+ * It sits outside the mosaic on purpose: given a grid row it would be handed a
+ * full share of the screen and become a mostly empty box. For the same reason
+ * it is sized to its own copy and centred rather than stretched across the
+ * page — a sentence ruled out to full bleed is mostly empty box in the other
+ * direction, with the type stranded at the left end of it.
+ */
+import { cn } from "@/lib/cn";
+import Icon from "@/components/Icon.astro";
+
+interface Props {
+  /** kebab-case lucide icon name. */
+  icon: string;
+  label: string;
+  class?: string;
+}
+
+const { icon, label, class: className } = Astro.props;
+---
+
+<div
+  class={cn(
+    "mx-auto flex w-fit max-w-[68ch] items-start gap-4 rounded-xl border border-tile-line bg-background px-6 py-5 md:gap-5 md:px-8 md:py-6",
+    className,
+  )}
+>
+  <Icon name={icon} class="mt-0.5 h-6 w-6 shrink-0 md:h-7 md:w-7" strokeWidth={2} />
+  <p class="ed-body text-foreground/75">
+    <span class="font-bold uppercase tracking-[0.1em] text-foreground">{label}</span> — <slot />
+  </p>
+</div>

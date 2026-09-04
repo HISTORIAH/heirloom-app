@@ -1,0 +1,22 @@
+---
+/** The small uppercase label most tiles open with. */
+import { cn } from "@/lib/cn";
+import { toneCap, type TileTone } from "@/lib/tones";
+
+interface Props {
+  tone?: TileTone;
+  class?: string;
+}
+
+const { tone = "paper", class: className } = Astro.props;
+---
+
+<span
+  class={cn(
+    "text-[11px] font-bold uppercase tracking-[0.18em] md:text-xs",
+    toneCap[tone],
+    className,
+  )}
+>
+  <slot />
+</span>

@@ -1,0 +1,56 @@
+---
+/**
+ * The landing's slice of the app's Button: the flat variants the mosaic uses,
+ * rendered as an anchor when it has an href and a button when it does not.
+ *
+ * Every class string is copied from app/src/components/ui/button.tsx so the
+ * two surfaces cannot drift apart.
+ */
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/cn";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-center font-bold uppercase tracking-wide border-4 border-foreground transition-all duration-150 ease-out focus-visible:outline-4 focus-visible:outline-foreground focus-visible:outline-offset-4 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0 active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
+  {
+    variants: {
+      variant: {
+        ghost: "border-transparent hover:bg-secondary",
+        // Flat, near-square buttons for the mosaic landing — no 4px border and
+        // no offset shadow, so they sit inside a tile rather than on top of it.
+        flat: "rounded-lg border-0 bg-foreground text-background hover:bg-foreground/85 active:translate-x-0 active:translate-y-0",
+        "flat-yellow":
+          "rounded-lg border-0 bg-accent-yellow text-foreground hover:brightness-95 active:translate-x-0 active:translate-y-0",
+        "flat-outline":
+          "rounded-lg border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background active:translate-x-0 active:translate-y-0",
+      },
+      size: {
+        default: "h-12 px-6 py-3 text-sm",
+        sm: "h-10 px-4 py-2 text-xs",
+        lg: "h-14 px-10 py-4 text-base",
+      },
+    },
+    defaultVariants: { variant: "flat", size: "default" },
+  },
+);
+
+interface Props extends VariantProps<typeof buttonVariants> {
+  href?: string;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { href, variant, size, class: className, ...rest } = Astro.props;
+const classes = cn(buttonVariants({ variant, size }), className);
+---
+
+{
+  href ? (
+    <a href={href} class={classes} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type="button" class={classes} {...rest}>
+      <slot />
+    </button>
+  )
+}

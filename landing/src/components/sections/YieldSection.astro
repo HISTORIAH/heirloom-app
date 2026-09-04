@@ -1,0 +1,59 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Icon from "@/components/Icon.astro";
+import Mosaic from "@/components/surface/Mosaic.astro";
+import Tile from "@/components/surface/Tile.astro";
+import Cap from "@/components/surface/Cap.astro";
+import Section from "@/components/landing/Section.astro";
+import SectionLead from "@/components/landing/SectionLead.astro";
+import { toneMuted, toneCap, type TileTone } from "@/lib/tones";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+// The take is stated across the full width before the three strategies —
+// saying the fee out loud, at headline scale, is what makes the pitch under
+// it credible.
+const strategies: { icon: string; title: string; desc: string; tone: TileTone }[] = [
+  { icon: "banknote", title: t("yieldSection.c1Title"), desc: t("yieldSection.c1Desc"), tone: "paper" },
+  { icon: "layers", title: t("yieldSection.c2Title"), desc: t("yieldSection.c2Desc"), tone: "soft" },
+  { icon: "undo-2", title: t("yieldSection.c3Title"), desc: t("yieldSection.c3Desc"), tone: "cyan" },
+];
+---
+
+<Section id="yield" index={4} total={10} label={t("yieldSection.eyebrow")}>
+  <SectionLead>
+    <Fragment slot="headline">
+      {t("yieldSection.title1")}{" "}
+      <span class="bg-accent-cyan px-1.5">{t("yieldSection.title2")}</span>
+    </Fragment>
+    <Fragment slot="lede">{t("yieldSection.lede")}</Fragment>
+  </SectionLead>
+
+  <Mosaic cols={3} band={2.65}>
+    <Tile col={3} row={1} colMd={6} tone="ink" class="justify-center">
+      <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-16">
+        <div class="md:flex-1">
+          <Cap tone="ink">{t("yieldSection.feeTitle")}</Cap>
+          <p class="ed-h2 mt-4">{t("yieldSection.feeHeadline")}</p>
+        </div>
+        <p class="ed-lede max-w-[42ch] text-background/60 md:flex-1">{t("yieldSection.feeDesc")}</p>
+      </div>
+    </Tile>
+
+    {
+      strategies.map((s, i) => (
+        <Tile col={1} row={1} colMd={3} tone={s.tone} class="gap-6 md:gap-8">
+          <div class="flex items-start justify-between gap-4">
+            <span class={`tile-num ${toneCap[s.tone]}`}>{`0${i + 1}`}</span>
+            <Icon name={s.icon} class="h-7 w-7 shrink-0 md:h-9 md:w-9" strokeWidth={1.75} />
+          </div>
+          <h3 class="tile-h">{s.title}</h3>
+          <p class={`tile-body max-w-[34ch] ${toneMuted[s.tone]}`}>{s.desc}</p>
+        </Tile>
+      ))
+    }
+  </Mosaic>
+</Section>

@@ -1,0 +1,126 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Icon from "@/components/Icon.astro";
+import Section from "@/components/landing/Section.astro";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+// The one section that isn't a mosaic: a stack of questions reads better than
+// a grid of them. It borrows the tile language — hairline borders, square
+// corners, the same caps — so it still belongs to the page.
+const faqs = Array.from({ length: 11 }, (_, i) => ({
+  question: t(`faq.q${i + 1}`),
+  // The first answer's key is a revision of the original copy.
+  answer: t(i === 0 ? "faq.a1r" : `faq.a${i + 1}`),
+}));
+---
+
+<Section
+  id="faq"
+  index={9}
+  total={10}
+  tall
+  label={t("faq.eyebrow")}
+  bodyClass="items-start"
+>
+  <div class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-[6%]">
+    <div class="lg:sticky lg:top-[calc(var(--nav-h)+2rem)] lg:col-span-4 lg:self-start">
+      <h2 class="ed-h2">
+        {t("faq.headline1")}{" "}
+        <span class="bg-accent-purple px-1.5 text-background">{t("faq.headline2")}</span>
+      </h2>
+      <p class="ed-lede mt-6 max-w-[38ch] text-muted-foreground">{t("faq.lede")}</p>
+    </div>
+
+    <div class="space-y-2 lg:col-span-8" data-faq>
+      {
+        faqs.map((faq, i) => (
+          <div
+            data-faq-item
+            data-open={i === 0 ? "true" : "false"}
+            class:list={[
+              "rounded-xl border transition-colors duration-200",
+              i === 0
+                ? "border-foreground/35 bg-tile-soft"
+                : "border-tile-line bg-background hover:border-foreground/25",
+            ]}
+          >
+            <button
+              type="button"
+              data-faq-toggle
+              aria-expanded={i === 0 ? "true" : "false"}
+              aria-controls={`faq-answer-${i}`}
+              class="flex w-full items-center gap-5 p-5 text-left md:px-7 md:py-6"
+            >
+              <span class="w-7 shrink-0 text-xs font-bold tabular-nums tracking-[0.16em] text-muted-foreground">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span class="ed-h3 flex-1 pr-4">{faq.question}</span>
+              <Icon
+                name="plus"
+                data-faq-mark
+                class:list={[
+                  "h-5 w-5 shrink-0 transition-transform duration-200",
+                  i === 0 && "rotate-45",
+                ]}
+                strokeWidth={2.5}
+              />
+            </button>
+
+            {/* 0fr → 1fr grid trick expands to the answer's real height, no clipping.
+                The answer stays in the document either way, which is what makes
+                these questions worth prerendering at all. */}
+            <div
+              id={`faq-answer-${i}`}
+              data-faq-panel
+              class:list={[
+                "grid transition-all duration-300 ease-out",
+                i === 0 ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+              ]}
+            >
+              <div class="overflow-hidden">
+                <p class="tile-body max-w-[80ch] pb-6 pl-[3.25rem] pr-5 text-muted-foreground md:pl-[4rem] md:pr-7">
+                  {faq.answer}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</Section>
+
+<script>
+  // One question open at a time, the first one to begin with — the same
+  // behaviour the React accordion had, minus the framework.
+  const OPEN_ITEM = ["border-foreground/35", "bg-tile-soft"];
+  const SHUT_ITEM = ["border-tile-line", "bg-background", "hover:border-foreground/25"];
+  const OPEN_PANEL = ["grid-rows-[1fr]", "opacity-100"];
+  const SHUT_PANEL = ["grid-rows-[0fr]", "opacity-0"];
+
+  document.querySelectorAll<HTMLElement>("[data-faq]").forEach((root) => {
+    const items = [...root.querySelectorAll<HTMLElement>("[data-faq-item]")];
+
+    const paint = (item: HTMLElement, open: boolean) => {
+      item.dataset.open = String(open);
+      item.classList.remove(...(open ? SHUT_ITEM : OPEN_ITEM));
+      item.classList.add(...(open ? OPEN_ITEM : SHUT_ITEM));
+      item.querySelector("[data-faq-toggle]")?.setAttribute("aria-expanded", String(open));
+      item.querySelector("[data-faq-mark]")?.classList.toggle("rotate-45", open);
+      const panel = item.querySelector<HTMLElement>("[data-faq-panel]");
+      panel?.classList.remove(...(open ? SHUT_PANEL : OPEN_PANEL));
+      panel?.classList.add(...(open ? OPEN_PANEL : SHUT_PANEL));
+    };
+
+    items.forEach((item) => {
+      item.querySelector("[data-faq-toggle]")?.addEventListener("click", () => {
+        const willOpen = item.dataset.open !== "true";
+        items.forEach((other) => paint(other, other === item && willOpen));
+      });
+    });
+  });
+</script>
