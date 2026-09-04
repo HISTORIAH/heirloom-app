@@ -8,6 +8,8 @@
     "directory": "./dist",
     "not_found_handling": "404-page"
   },
+  // The apex cannot be attached here until it is detached from the "heirloom"
+  // Worker, which serves it today. See README for the cutover order.
   "routes": [
     { "pattern": "heirlm.xyz", "custom_domain": true },
     { "pattern": "www.heirlm.xyz", "custom_domain": true }

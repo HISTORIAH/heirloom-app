@@ -1,0 +1,10 @@
+# Vite fingerprints everything under /assets, so those files can be cached
+# forever. index.html is the SPA shell and must always be revalidated, or a
+# deploy ships new assets that the cached shell never references.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

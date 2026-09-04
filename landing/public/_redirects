@@ -1,0 +1,12 @@
+# The app moved to its own origin. These five paths resolved on the apex until
+# the split (the SPA fallback served the shell for anything), so bookmarks and
+# any link already in the wild still point here. Send them across rather than
+# letting them hit the 404 page.
+/dashboard      https://app.heirlm.xyz/dashboard      301
+/create-vault   https://app.heirlm.xyz/create-vault   301
+/claim          https://app.heirlm.xyz/claim          301
+/defer          https://app.heirlm.xyz/defer          301
+/heartbeat      https://app.heirlm.xyz/heartbeat      301
+
+# The old sitemap path. @astrojs/sitemap emits an index instead.
+/sitemap.xml    /sitemap-index.xml                    301

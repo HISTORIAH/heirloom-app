@@ -34,6 +34,10 @@ export function initAnalytics() {
       capture_pageview: false,
       capture_pageleave: true,
       person_profiles: "identified_only",
+      // The app is a separate origin (app.heirlm.xyz) that this page links to.
+      // Scoping the cookie to .heirlm.xyz is what keeps a visitor one person
+      // across the hand-off instead of two.
+      cross_subdomain_cookie: true,
       mask_all_text: true,
       autocapture: {
         dom_event_allowlist: ["click"],
