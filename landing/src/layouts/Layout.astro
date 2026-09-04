@@ -1,0 +1,90 @@
+---
+import "@/styles/global.css";
+import { createLandingT, LANGUAGES, localeHref } from "@heirloom/i18n/landing";
+import { SITE_URL, OG_IMAGE } from "@/lib/site";
+import { OG_LOCALES, structuredData } from "@/lib/seo";
+
+interface Props {
+  locale: string;
+}
+const { locale } = Astro.props;
+
+const t = createLandingT(locale);
+const canonical = `${SITE_URL}${localeHref(locale)}`;
+const title = t("seo.homeTitle");
+const description = t("seo.homeDescription");
+const jsonLd = JSON.stringify(structuredData(t, canonical));
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    {/* Nine documents, one per locale, each pointing at the other eight. This
+        is the whole reason the landing left the SPA: a crawler can now be told
+        which language it is looking at and where the rest of them live. */}
+    <link rel="canonical" href={canonical} />
+    {
+      LANGUAGES.map((lang) => (
+        <link rel="alternate" hreflang={lang.code} href={`${SITE_URL}${localeHref(lang.code)}`} />
+      ))
+    }
+    <link rel="alternate" hreflang="x-default" href={`${SITE_URL}/`} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="author" content="Heirloom" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Heirloom" />
+    <meta property="og:locale" content={OG_LOCALES[locale] ?? "en_US"} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={OG_IMAGE} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="2373" />
+    <meta property="og:image:height" content="1326" />
+    <meta
+      property="og:image:alt"
+      content="Heirloom — your wallet should outlive you, even if your seed phrase doesn't."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@heirloom_app" />
+    <meta name="twitter:creator" content="@heirloom_app" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={OG_IMAGE} />
+    <meta name="twitter:image:alt" content="Heirloom — self-custody estates on Solana." />
+
+    <script type="application/ld+json" set:html={jsonLd} is:inline={false} />
+  </head>
+  <body>
+    <slot />
+    <script>
+      import { bindTrackedClicks, initAnalytics } from "@/lib/analytics";
+      initAnalytics();
+      bindTrackedClicks();
+    </script>
+  </body>
+</html>

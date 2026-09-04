@@ -1,9 +1,10 @@
 /**
- * Tile fills for the mosaic landing, kept out of Mosaic.tsx so that file only
- * exports components (react-refresh requires it).
+ * Panel fills, shared by every surface in the app. The set was cut for the
+ * landing's mosaic and stayed behind when that moved to its own package — the
+ * two are the same design system and should keep reading as one.
  *
- * Yellow is the one loud colour on the page; sage and sky are deliberately
- * low-chroma so they group tiles without competing with it.
+ * Yellow is the one loud colour; sage and sky are deliberately low-chroma so
+ * they group panels without competing with it.
  */
 export type TileTone =
   | "plain"

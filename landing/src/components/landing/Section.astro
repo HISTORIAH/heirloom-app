@@ -1,0 +1,52 @@
+---
+/**
+ * One landing section as an editorial spread: full window width, at least a
+ * full viewport tall, with a running head across the top and the section's
+ * mosaic centred in whatever height is left.
+ *
+ * The running head carries the eyebrow that used to sit inside the first tile.
+ * Moving it out to the page edge is the point — the section is announced at
+ * the margin, and the composition below it starts on the headline.
+ */
+import { cn } from "@/lib/cn";
+
+interface Props {
+  id?: string;
+  /** Position in the argument, printed as the folio. */
+  index: number;
+  /** Section name, uppercase in the running head. */
+  label: string;
+  total: number;
+  /** Opt out of the one-screen cap — for a section whose content genuinely runs long. */
+  tall?: boolean;
+  class?: string;
+  bodyClass?: string;
+}
+
+const { id, index, label, total, tall, class: className, bodyClass } = Astro.props;
+
+const folio = String(index).padStart(2, "0");
+---
+
+<section id={id} data-tall={tall ? "" : undefined} class={cn("section-full", className)}>
+  <div class="section-head">
+    <span
+      class="font-display text-[13px] font-bold leading-none tracking-[-0.01em] tabular-nums"
+      >{folio}</span
+    >
+    <span class="text-[11px] font-bold uppercase leading-none tracking-[0.18em]">{label}</span>
+    <span aria-hidden="true" class="section-head-rule"></span>
+    <span
+      class="hidden text-[11px] font-bold uppercase leading-none tracking-[0.18em] text-muted-foreground sm:block"
+      >Heirloom</span
+    >
+    <span
+      class="text-[11px] font-bold leading-none tracking-[0.14em] text-muted-foreground tabular-nums"
+      >{folio}/{String(total).padStart(2, "0")}</span
+    >
+  </div>
+
+  <div class={cn("section-body", bodyClass)}>
+    <div class="section-inner"><slot /></div>
+  </div>
+</section>

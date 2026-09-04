@@ -1,0 +1,178 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import { cn } from "@/lib/cn";
+import { APP_TOUR_URL } from "@/lib/site";
+import Button from "@/components/Button.astro";
+import Icon from "@/components/Icon.astro";
+import OrbitingVault from "@/components/landing/OrbitingVault.astro";
+import Cap from "@/components/surface/Cap.astro";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+const rail = [
+  { label: t("hero.rail1Label"), value: t("hero.rail1Value") },
+  { label: t("hero.rail2Label"), value: t("hero.rail2Value") },
+  { label: t("hero.rail3Label"), value: t("hero.rail3Value") },
+  { label: t("hero.rail4Label"), value: t("hero.rail4Value") },
+];
+---
+
+<section class="section-full text-foreground">
+  {/* The opening spread. Copy holds the left seven columns, the object the
+      right five, and the whole thing runs gutter to gutter — the headline
+      is set to the window, not to a measure. */}
+  <div class="section-body">
+    <div class="section-inner grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-8">
+      <div class="lg:col-span-7 lg:pr-[6%]">
+        <div class="flex items-center gap-4">
+          <Cap tone="plain">{t("hero.kicker")}</Cap>
+          <span aria-hidden="true" class="h-px flex-1 bg-tile-line"></span>
+        </div>
+        <h1 class="hero-display mt-7">
+          {t("hero.line1")}
+          <br />
+          {t("hero.line2")}
+          <br />
+          {t("hero.line3")}
+        </h1>
+        <p class="ed-lede mt-8 max-w-[42ch] text-muted-foreground">{t("hero.lede")}</p>
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          {/* The landing has no wallet of its own, so the disconnected CTA is
+              the only one it can honestly offer: the tour, started by the app
+              on arrival. */}
+          <Button href={APP_TOUR_URL} variant="flat" size="lg" data-track="launch_tour">
+            {t("hero.launchTour")}
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            class="gap-2 text-base font-bold hover:bg-transparent hover:underline"
+            data-demo-open
+          >
+            <Icon name="play" class="h-4 w-4" fill="currentColor" strokeWidth={0} />
+            {t("hero.viewDemo")}
+          </Button>
+        </div>
+      </div>
+
+      {/* The orbit throws discs a little outside its own box, so the
+          object is sized to 82% of its column — the ring stays clear of
+          the right rule instead of crossing it. */}
+      <div class="flex justify-center lg:col-span-5">
+        <OrbitingVault class="w-[86%] max-w-[26rem] sm:max-w-[32rem] lg:w-[95%] lg:max-w-none" />
+      </div>
+    </div>
+  </div>
+
+  {/* Facts worth reading before scrolling, set as a masthead strip: the
+      rule runs the full width of the window, the type stays in the
+      gutters, and a column rule stands between each fact. */}
+  <div class="w-full border-t border-tile-line bg-background">
+    <dl class="section-inner grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        rail.map((item, i) => (
+          <div
+            class={cn(
+              "py-7 md:py-9",
+              // Column rules between facts, following the grid as it folds:
+              // four across, then two, then one.
+              i > 0 && "border-t border-tile-line pt-6",
+              i % 2 === 1 && "sm:border-t-0 sm:border-l sm:pl-6 sm:pt-6",
+              i >= 2 && "sm:border-t sm:pt-6",
+              i > 0 && "lg:border-l lg:border-t-0 lg:pl-6 lg:pt-7",
+            )}
+          >
+            <dt class="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground md:text-xs">
+              {item.label}
+            </dt>
+            <dd class="ed-h3 mt-3 max-w-[22ch]">{item.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+{/* The demo. A native overlay rather than a dialog library: it is the only
+    modal on the page, and pulling in a framework to open one is the cost this
+    package exists to avoid. */}
+<div id="demo-modal" hidden>
+  <div class="fixed inset-0 z-50 bg-black/80" data-demo-close></div>
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="demo-modal-title"
+    aria-describedby="demo-modal-desc"
+    class="modal-rise fixed left-[50%] top-[50%] z-50 grid w-[calc(100vw-2rem)] max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-0 rounded-xl border border-tile-line bg-background p-0 shadow-lg"
+  >
+    <div
+      class="flex items-center justify-between rounded-t-xl border-b border-tile-line bg-accent-yellow px-5 py-3.5"
+    >
+      <h2 id="demo-modal-title" class="text-base font-bold uppercase tracking-tight sm:text-lg">
+        {t("hero.demoTitle")}
+      </h2>
+      <p id="demo-modal-desc" class="sr-only">{t("hero.demoDescription")}</p>
+    </div>
+    <div
+      class="relative w-full overflow-hidden rounded-b-xl bg-foreground"
+      style="aspect-ratio: 16 / 9"
+    >
+      <iframe
+        id="demo-modal-frame"
+        class="absolute inset-0 h-full w-full"
+        title={t("hero.demoVideoTitle")}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen></iframe>
+    </div>
+    <button
+      type="button"
+      data-demo-close
+      class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+    >
+      <Icon name="x" class="h-4 w-4" />
+      <span class="sr-only">{t("nav.close")}</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  // The iframe src is set on open and cleared on close so the video never
+  // loads (or keeps playing) behind a shut dialog — the same thing the React
+  // version got from rendering the iframe conditionally.
+  const SRC =
+    "https://www.youtube.com/embed/zqF4Pnm1G2w?si=NkN81t8zX3ZG1fNT&autoplay=1&rel=0";
+
+  const modal = document.getElementById("demo-modal");
+  const frame = document.getElementById("demo-modal-frame") as HTMLIFrameElement | null;
+  if (modal && frame) {
+    let restoreOverflow = "";
+
+    const open = () => {
+      restoreOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      frame.src = SRC;
+      modal.hidden = false;
+      window.heirloomTrack?.("demo_opened", { source: "hero" });
+    };
+
+    const close = () => {
+      modal.hidden = true;
+      frame.src = "";
+      document.body.style.overflow = restoreOverflow;
+    };
+
+    document
+      .querySelectorAll<HTMLElement>("[data-demo-open]")
+      .forEach((el) => el.addEventListener("click", open));
+    modal
+      .querySelectorAll<HTMLElement>("[data-demo-close]")
+      .forEach((el) => el.addEventListener("click", close));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.hidden) close();
+    });
+  }
+</script>

@@ -1,0 +1,51 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Icon from "@/components/Icon.astro";
+import Mosaic from "@/components/surface/Mosaic.astro";
+import Tile from "@/components/surface/Tile.astro";
+import Section from "@/components/landing/Section.astro";
+import SectionLead from "@/components/landing/SectionLead.astro";
+import { toneMuted, toneCap, type TileTone } from "@/lib/tones";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+// Four steps as a two-by-two block. Four across made columns too narrow for
+// the type; two across gives each step a landscape field it can fill.
+const steps: { icon: string; title: string; desc: string; tone: TileTone }[] = [
+  { icon: "wallet", title: t("howItWorks.s1Title"), desc: t("howItWorks.s1Desc"), tone: "yellow" },
+  { icon: "coins", title: t("howItWorks.s2Title"), desc: t("howItWorks.s2Desc"), tone: "paper" },
+  { icon: "circle-check-big", title: t("howItWorks.s3Title"), desc: t("howItWorks.s3Desc"), tone: "soft" },
+  { icon: "arrow-right-left", title: t("howItWorks.s4Title"), desc: t("howItWorks.s4Desc"), tone: "paper" },
+];
+---
+
+<Section id="how-it-works" index={3} total={10} label={t("howItWorks.eyebrow")}>
+  <SectionLead>
+    <Fragment slot="headline">
+      {t("howItWorks.title1")}
+      <br />
+      <span class="bg-accent-purple px-1.5 text-background">{t("howItWorks.title2")}</span>
+    </Fragment>
+    <Fragment slot="lede">{t("howItWorks.lede")}</Fragment>
+  </SectionLead>
+
+  <Mosaic cols={2} band={3}>
+    {
+      steps.map((s, i) => (
+        <Tile col={1} row={1} colMd={3} tone={s.tone} class="gap-6 md:gap-8">
+          <div class="flex items-start justify-between gap-4">
+            <span class={`tile-num ${toneCap[s.tone]}`}>{`0${i + 1}`}</span>
+            <Icon name={s.icon} class="h-7 w-7 shrink-0 md:h-9 md:w-9" strokeWidth={1.75} />
+          </div>
+          <div class="mt-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-10">
+            <h3 class="tile-h md:max-w-[9ch] md:flex-1">{s.title}</h3>
+            <p class={`tile-body max-w-[40ch] md:flex-1 ${toneMuted[s.tone]}`}>{s.desc}</p>
+          </div>
+        </Tile>
+      ))
+    }
+  </Mosaic>
+</Section>

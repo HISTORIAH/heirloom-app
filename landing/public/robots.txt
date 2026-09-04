@@ -1,0 +1,6 @@
+# https://heirlm.xyz — the marketing site. The app is a separate origin
+# (https://app.heirlm.xyz) and carries its own, stricter robots.txt.
+User-agent: *
+Allow: /
+
+Sitemap: https://heirlm.xyz/sitemap-index.xml

@@ -1,0 +1,66 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Button from "@/components/Button.astro";
+import Mosaic from "@/components/surface/Mosaic.astro";
+import Tile from "@/components/surface/Tile.astro";
+import Cap from "@/components/surface/Cap.astro";
+import Section from "@/components/landing/Section.astro";
+import HeroWordmark from "@/components/HeroWordmark.astro";
+import { APP_CREATE_VAULT_URL, DOCS_URL } from "@/lib/site";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+---
+
+<Section index={10} total={10} label={t("cta.cap")}>
+  <Mosaic cols={2} band={2.1}>
+    {/* The invitation and the exit, given equal width on purpose: the
+        offer is only as good as the way out of it. */}
+    <Tile col={1} row={3} colMd={6} tone="ink" class="justify-center">
+      <div>
+        <h2 class="ed-h2">
+          {t("cta.t1")}{" "}
+          <span class="whitespace-nowrap bg-accent-yellow px-1.5 text-foreground">{t("cta.t2")}</span>{" "}
+          {t("cta.t3")}
+        </h2>
+        <p class="ed-lede mt-6 max-w-[46ch] text-background/60">{t("cta.lede")}</p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <Button
+            href={APP_CREATE_VAULT_URL}
+            variant="flat-yellow"
+            size="lg"
+            data-track="launch_app_cta"
+          >
+            {t("cta.createVault")}
+          </Button>
+          <Button
+            href={DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="flat-outline"
+            size="lg"
+            data-track="docs_cta"
+            class="!border-background/40 text-background hover:!bg-background hover:!text-foreground"
+          >
+            {t("cta.readDocs")}
+          </Button>
+        </div>
+      </div>
+    </Tile>
+
+    <Tile col={1} row={3} colMd={6} tone="sage" class="justify-center">
+      <Cap tone="sage">{t("cta.exitCap")}</Cap>
+      <p class="tile-h mt-6 max-w-[24ch]">{t("cta.exit")}</p>
+    </Tile>
+
+    {/* Sign-off: the name set to the full width of the page, gutter to
+        gutter, sitting directly on the ruling with no box around it. */}
+    <Tile col={2} row={2} colMd={6} tone="plain" bare class="items-center justify-center">
+      <HeroWordmark
+        class="block w-full whitespace-nowrap text-center font-display text-[clamp(3rem,18.4vw,23rem)] font-bold leading-[0.82] tracking-[-0.045em] text-foreground"
+      />
+    </Tile>
+  </Mosaic>
+</Section>

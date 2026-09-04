@@ -1,0 +1,587 @@
+/* Space Grotesk is loaded via <link> in Layout.astro — an @import here would
+   delay discovery until this file downloads and parses. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent-pink: 313 100% 65%;
+    --accent-lime: 83 78% 55%;
+    --accent-cyan: 189 100% 50%;
+    --accent-orange: 29 100% 50%;
+    --accent-purple: 249 100% 69%;
+    --accent-yellow: 50 100% 50%;
+    --accent-red: 0 100% 61%;
+
+    /* Mosaic landing palette — muted companions to yellow, plus the hairline
+       and warm-neutral fill the tiles are built from. Deliberately low
+       chroma so yellow stays the only loud colour on the page. */
+    --accent-sage: 101 21% 80%;
+    --accent-sky: 203 41% 82%;
+    --tile-line: 60 9% 87%;
+    --tile-soft: 60 10% 94%;
+
+    /* Yellow is the primary accent. Lime is reserved for live/alive state,
+       success, and editorial highlights. */
+    --accent: 50 100% 50%;
+
+    /* Overridden per wizard step so controls match the card's shadow color;
+       falls back to the primary accent outside those flows. */
+    --step-accent: var(--accent-yellow);
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 61%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+
+    --radius: 0.75rem;
+
+    /* ------------------------------------------------- editorial full bleed
+       The page runs edge to edge, and two insets describe it. --rule-pad is
+       where the vertical rules are drawn; --page-pad is where content starts,
+       always --rule-gap clear of them. Nothing on the page touches a rule:
+       the ruling is the margin the page is written inside, not a border the
+       type is flush against. App routes (not landing) sit in --app-max. */
+    --rule-pad: 1.25rem;
+    --rule-gap: 1.25rem;
+    --page-pad: calc(var(--rule-pad) + var(--rule-gap));
+    --app-max: 1300px;
+    /* The running head is a fixed rule of the layout, so the height left for a
+       section's content can be solved exactly rather than estimated. */
+    --head-h: 2.75rem;
+    --row-unit: 5.5rem;
+    --mosaic-gap: 0.875rem;
+    --nav-h: 5rem;
+
+    --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
+    --shadow-md: 8px 8px 0px 0px hsl(0 0% 0%);
+    --shadow-lg: 12px 12px 0px 0px hsl(0 0% 0%);
+    --shadow-xl: 16px 16px 0px 0px hsl(0 0% 0%);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 50 100% 50%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 0 0% 0%;
+  }
+}
+
+@layer base {
+  /* Both insets open up with the viewport; the ruling follows automatically. */
+  @media (min-width: 640px) { :root { --rule-pad: 1.75rem; --rule-gap: 1.5rem; } }
+  @media (min-width: 1024px) {
+    :root {
+      --rule-pad: 2rem;
+      --rule-gap: 1.75rem;
+      --row-unit: clamp(5.5rem, 9vh, 9.5rem);
+      --mosaic-gap: 1rem;
+    }
+  }
+  @media (min-width: 1440px) { :root { --rule-pad: 2.5rem; --rule-gap: 2.25rem; --mosaic-gap: 1.125rem; } }
+  @media (min-width: 1800px) { :root { --rule-pad: 3.5rem; --rule-gap: 2.75rem; } }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent-lime));
+    color: hsl(var(--foreground));
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--secondary));
+    border-left: 4px solid hsl(var(--foreground));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground));
+    border: 2px solid hsl(var(--secondary));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+  button:focus-visible {
+    outline: 4px solid hsl(var(--foreground));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .ed-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+  .ed-field-label {
+    @apply text-xs font-bold uppercase tracking-[0.16em] text-foreground;
+  }
+
+  /* --------------------------------------------------- full-bleed sections
+     Every landing section is a spread: it runs the full width of the window
+     and stands at least a full viewport tall, with its mosaic centred in the
+     leftover height. The gutter is the only inset — there is no measure the
+     page is written inside any more. */
+  .section-full {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* The nav is sticky, so it owns the top of the window for the whole
+       scroll: a section's screen is what is left under it. */
+    min-height: calc(100svh - var(--nav-h));
+    /* Anchored jumps land on the running head, not under the sticky nav. */
+    scroll-margin-top: var(--nav-h);
+    --section-pad-y: clamp(2.5rem, 5vh, 5rem);
+  }
+  .section-body {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: stretch;
+    width: 100%;
+    padding-block: var(--section-pad-y);
+  }
+  .section-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(1.75rem, 3.6vh, 3.25rem);
+    width: 100%;
+    padding-inline: var(--page-pad);
+  }
+  /* Leads and notes are what they measure; only the band gives ground. */
+  .section-inner > :not(.mosaic) {
+    flex: 0 0 auto;
+  }
+  /* The band is shaped, not stretched. Left to fill the screen a three-up row
+     becomes three portrait columns with a hole in the middle of each; given a
+     ratio it stays a band of near-square tiles and the leftover height goes
+     to the page margins, where white space belongs. --band sets the ratio a
+     section's grid wants (width ÷ height); min-content keeps it honest when
+     the copy needs more room than the ratio allows. */
+  .section-inner > .mosaic {
+    flex: 0 1 auto;
+    min-height: min-content;
+  }
+  @media (min-width: 1025px) {
+    /* Exactly the screen a section has to work with. Making it definite is
+       what lets the band below shrink to fit instead of pushing the section
+       past the fold — a percentage cap could never resolve against a height
+       that was itself content-derived. Below this width sections stack and
+       are as tall as they need to be, so the cap would only clip them. */
+    .section-inner {
+      max-height: calc(100svh - var(--nav-h) - var(--head-h) - var(--section-pad-y) * 2);
+      /* min-height beats max-height in CSS, which is the whole point: the cap
+         is a preference, so on a wide, short window the section grows past
+         the fold rather than spilling its content over the rule above it. */
+      min-height: min-content;
+    }
+    /* One section genuinely does not fit a screen: eleven questions do not
+       compress. It opts out rather than overflowing its own box. */
+    .section-full[data-tall] .section-inner {
+      max-height: none;
+    }
+    .section-inner > .mosaic {
+      grid-auto-rows: minmax(min-content, 1fr);
+      aspect-ratio: var(--band, auto);
+    }
+  }
+
+  /* The running head: index, section name, then a rule that runs out to the
+     right margin. It is the device that makes the page read as an editorial
+     spread rather than a stack of cards — the type stops, the rule does not. */
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 1.4vw, 1.5rem);
+    width: 100%;
+    height: var(--head-h);
+    padding-inline: var(--page-pad);
+    border-top: 1px solid hsl(var(--tile-line));
+    border-bottom: 1px solid hsl(var(--tile-line));
+    background: hsl(var(--background));
+  }
+  .section-head-rule {
+    flex: 1 1 auto;
+    height: 1px;
+    background: hsl(var(--tile-line));
+  }
+
+  /* ------------------------------------------------------- editorial scale
+     Type is sized against the viewport, not a fixed column: at full bleed a
+     2.6rem headline that looked large in a 1300px measure reads as a caption.
+     Every section shares these three steps so the scale holds across the
+     scroll. */
+  /* The opening headline: sized against the window so it fills the left
+     seven columns at any width. Nothing else on the page is set this large. */
+  .hero-display {
+    @apply font-display font-semibold tracking-[-0.045em];
+    font-size: clamp(2.6rem, 5.2vw, 6.4rem);
+    line-height: 0.93;
+  }
+  .ed-h2 {
+    @apply font-display font-semibold tracking-[-0.035em];
+    font-size: clamp(2.15rem, 3.9vw, 4.75rem);
+    line-height: 0.96;
+  }
+  .ed-h3 {
+    @apply font-display font-semibold tracking-[-0.022em];
+    font-size: clamp(1.35rem, 1.75vw, 2.15rem);
+    line-height: 1.06;
+  }
+  .ed-lede {
+    @apply font-medium leading-relaxed;
+    font-size: clamp(1.0625rem, 1.15vw, 1.4rem);
+  }
+  .ed-body {
+    @apply font-medium leading-relaxed;
+    font-size: clamp(1rem, 0.95vw, 1.2rem);
+  }
+
+  /* ------------------------------------------------------------ tile scale
+     A tile is a large field at full bleed, and small type floating in one is
+     the whole reason the boxes read as empty. These three steps are what fill
+     them: an ordinal big enough to be a graphic element, a title at headline
+     weight, and body copy at reading size rather than caption size. */
+  .tile-num {
+    @apply font-display font-semibold tabular-nums tracking-[-0.03em];
+    font-size: clamp(2rem, 2.7vw, 3.5rem);
+    line-height: 0.85;
+  }
+  .tile-h {
+    @apply font-display font-semibold tracking-[-0.032em];
+    font-size: clamp(1.7rem, 2.6vw, 3.4rem);
+    line-height: 0.99;
+  }
+  /* The oversized mark a tile is signed with, sitting in its bottom corner.
+     Sized against the viewport like the type it shares the field with. */
+  .mark-lg {
+    width: clamp(4rem, 7.5vw, 10rem);
+    height: clamp(4rem, 7.5vw, 10rem);
+    flex-shrink: 0;
+  }
+  .tile-body {
+    @apply font-medium;
+    font-size: clamp(1rem, 1vw, 1.25rem);
+    line-height: 1.45;
+  }
+
+  /* --------------------------------------------------------- the state rail
+     The lifecycle reads left to right along one axis: a chip per state, joined
+     by a line that carries an arrowhead into the next chip. The segments are
+     flex items either side of the chip, pulled out over the cell padding by
+     --rail-reach so the two halves meet exactly on the column divider and the
+     axis crosses it as one continuous line. */
+  .state-chip {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: clamp(3.25rem, 4.2vw, 5rem);
+    height: clamp(3.25rem, 4.2vw, 5rem);
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--foreground) / 0.14);
+  }
+  .state-rail {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0.75rem;
+    height: 1px;
+    background: hsl(var(--foreground) / 0.32);
+  }
+  .state-rail-out { margin-right: calc(var(--rail-reach) * -1); }
+  .state-rail-in {
+    margin-left: calc(var(--rail-reach) * -1);
+  }
+  /* The arrowhead sits at the end of the incoming segment, immediately left of
+     the chip it points at — the same place the eye stops. */
+  .state-rail-in::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left: 0.45rem solid hsl(var(--foreground) / 0.55);
+    border-top: 0.33rem solid transparent;
+    border-bottom: 0.33rem solid transparent;
+  }
+
+  /* ------------------------------------------------------------ page ruling
+     Column rules drawn once behind the whole scroll: one on each gutter, and
+     two that fall exactly in the gaps of a three-up band — the same thirds
+     the grid is built on, so a rule reads as the divider between two tiles
+     rather than as a line cutting across one. The quarter marks they replaced
+     agreed with nothing on the page.
+
+     A tile boundary is not at W/3: with three tiles and two gaps the gap
+     centre sits g/6 short of it, which is what the offsets below correct. */
+  .page-rules {
+    position: relative;
+    height: 100%;
+  }
+  .page-rules > i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: hsl(var(--tile-line));
+  }
+  .page-rules > i[data-at="0"] { left: var(--rule-pad); }
+  .page-rules > i[data-at="1"] { right: var(--rule-pad); }
+  .page-rules > i[data-at="33"],
+  .page-rules > i[data-at="66"] { display: none; }
+  @media (min-width: 1025px) {
+    .page-rules > i[data-at="33"],
+    .page-rules > i[data-at="66"] {
+      display: block;
+      /* Half strength: in the gaps they divide tiles, but they also cross
+         open page, where a full hairline would read as an underline. */
+      background: hsl(var(--tile-line) / 0.55);
+    }
+    .page-rules > i[data-at="33"] {
+      left: calc(
+        var(--page-pad) + (100% - var(--page-pad) * 2) / 3 - var(--mosaic-gap) / 6
+      );
+    }
+    .page-rules > i[data-at="66"] {
+      left: calc(
+        var(--page-pad) + (100% - var(--page-pad) * 2) / 3 * 2 + var(--mosaic-gap) / 6
+      );
+    }
+  }
+
+  /* ---------------------------------------------------------------- mosaic
+     The landing is built from tiles of uneven size on a 12-column grid.
+     Span is passed per tile as --col / --row so the same component can be a
+     hero block or a one-line stat. Below lg the grid halves to 6 columns and
+     rows go auto — a fixed row height only makes sense while tiles sit
+     side by side. */
+  .mosaic {
+    display: grid;
+    /* 12 by default; a section that divides evenly into something else (the
+       lifecycle's five states) sets --cols instead of faking it with spans. */
+    grid-template-columns: repeat(var(--cols, 12), minmax(0, 1fr));
+    /* Rows are a floor, not a ceiling: a tile's span sets its proportion, but
+       a row still grows if the copy inside needs it. Fixed rows would clip. */
+    grid-auto-rows: minmax(var(--row-unit, 5.5rem), auto);
+    gap: var(--mosaic-gap, 0.875rem);
+  }
+  .mosaic > * {
+    grid-column: span var(--col, 4);
+    grid-row: span var(--row, 2);
+    min-width: 0;
+  }
+  /* The stagger index each tile carried inline on the React landing. The
+     tiles are emitted in reading order, so nth-child says the same thing
+     without any per-tile bookkeeping. */
+  .mosaic > *:nth-child(1) { --i: 0; }
+  .mosaic > *:nth-child(2) { --i: 1; }
+  .mosaic > *:nth-child(3) { --i: 2; }
+  .mosaic > *:nth-child(4) { --i: 3; }
+  .mosaic > *:nth-child(5) { --i: 4; }
+  .mosaic > *:nth-child(6) { --i: 5; }
+  .mosaic > *:nth-child(7) { --i: 6; }
+  .mosaic > *:nth-child(8) { --i: 7; }
+  .mosaic > *:nth-child(9) { --i: 8; }
+  .mosaic > *:nth-child(10) { --i: 9; }
+  .mosaic > *:nth-child(11) { --i: 10; }
+  .mosaic > *:nth-child(12) { --i: 11; }
+  @media (max-width: 1024px) {
+    .mosaic { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: auto; }
+    .mosaic > * { grid-column: span var(--col-md, 6); grid-row: auto; }
+  }
+  @media (max-width: 640px) {
+    .mosaic { grid-template-columns: minmax(0, 1fr); }
+    .mosaic > * { grid-column: 1 / -1; }
+  }
+
+  /* ------------------------------------------------------------ orbiting hero
+     Assets circling the vault: a ring of discs lying in one plane, tilted back
+     and turning slowly. The discs stay flat in the ring rather than being
+     counter-rotated to face the camera — a disc is a circle, so the only thing
+     the tilt changes is how much of an ellipse it reads as, and keeping them
+     in-plane makes the whole thing deterministic. Perspective does the rest:
+     discs at the far side of the ring are genuinely smaller. */
+  .orbit-scene {
+    perspective: 1250px;
+    perspective-origin: 50% 42%;
+    transform-style: preserve-3d;
+  }
+  .orbit-ring {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(54deg);
+    animation: orbitSpin 48s linear infinite;
+  }
+  @keyframes orbitSpin {
+    from { transform: rotateX(54deg) rotateZ(0deg); }
+    to { transform: rotateX(54deg) rotateZ(360deg); }
+  }
+  /* Each disc rides a full-size slot that rotates about the ring's centre. The
+     slot is what carries the angle: pinning the disc to the slot's top edge
+     means the orbit radius is a share of the *ring*, which a percentage
+     translate could never give — translateY(%) resolves against the element's
+     own height, not its parent's. */
+  .orbit-slot {
+    position: absolute;
+    inset: 0;
+    /* Without this the slot flattens its subtree and the face's counter-tilt
+       degrades into a vertical squash instead of a 3D rotation. */
+    transform-style: preserve-3d;
+    transform: rotate(var(--a));
+  }
+  .orbit-disc {
+    position: absolute;
+    top: var(--t, 8%);
+    left: 50%;
+    width: var(--d);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    transform-style: preserve-3d;
+  }
+  /* The face undoes the ring's tilt *and* its current rotation, so the disc
+     stays turned toward the viewer the whole way round instead of lying flat
+     on the turntable. The ring applies rotateX(54) then rotateZ(t), and the
+     slot adds rotateZ(a), so the exact inverse is rotateZ(-(t + a)) then
+     rotateX(-54). Both animations share one duration and start together, so
+     they stay in step. */
+  .orbit-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    animation: orbitFace 48s linear infinite;
+  }
+  @keyframes orbitFace {
+    from {
+      transform: rotateZ(calc(var(--a) * -1)) rotateX(-54deg);
+    }
+    to {
+      transform: rotateZ(calc(var(--a) * -1 - 360deg)) rotateX(-54deg);
+    }
+  }
+  /* Light falling across the face — without it the discs read as flat swatches
+     rather than objects sitting in a plane. */
+  .orbit-face::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(
+      160deg,
+      hsl(0 0% 100% / 0.34) 0%,
+      hsl(0 0% 100% / 0.04) 45%,
+      hsl(0 0% 0% / 0.12) 100%
+    );
+  }
+  /* The mark sits upright at the centre while the ring turns around it. */
+  .orbit-core {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    transform: translateZ(1px);
+  }
+
+  /* Tiles enter in reading order, close together — a mosaic that assembles
+     rather than one that fades in as a single sheet. */
+  /* `backwards` holds the from-state during the stagger delay. `both` would
+     also keep the to-state, and a leftover transform makes `position: fixed`
+     descendants (modals) sit inside the tile instead of the viewport. */
+  .tile-rise {
+    animation: tileRise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  @keyframes tileRise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* A dialog is already the only thing on screen once the overlay lands, so
+     it only needs to arrive — not slide the 24px `.neo-slide-up` travels. */
+  .modal-rise {
+    animation: modalRise 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes modalRise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Glyph-by-glyph reveal: each glyph sits in its own clip box and slides up
+     from the baseline. Then a light wave crosses the word every 9s — each
+     glyph lifts and lightens as the wave reaches it, and holds still for the
+     rest of the cycle. Used by the hero wordmark. */
+  .glyph-clip {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+  }
+  .glyph-rise {
+    display: inline-block;
+    will-change: transform;
+    animation:
+      glyphRise 620ms cubic-bezier(0.16, 0.84, 0.44, 1) both,
+      glyphLift 9s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+  }
+  @keyframes glyphRise {
+    from { transform: translateY(110%); }
+    to { transform: translateY(0); }
+  }
+  /* The lift travels one glyph at a time: each is in motion for 0–5.5% of the
+     cycle (~500ms) and still for the remaining 94%. */
+  @keyframes glyphLift {
+    0% { transform: translateY(0); }
+    2.2% { transform: translateY(-0.055em); }
+    5.5% { transform: translateY(0); }
+    100% { transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph-rise,
+  .tile-rise,
+  .orbit-ring,
+  .orbit-face,
+  .modal-rise {
+    animation: none !important;
+  }
+}

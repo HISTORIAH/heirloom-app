@@ -1,0 +1,27 @@
+---
+/**
+ * The band a section opens on: headline across the left of the page, lede set
+ * against the right margin. It sits above the mosaic rather than inside it —
+ * a headline is type on the page, and giving it grid rows of its own only
+ * bought empty space once sections started filling the screen.
+ */
+import { cn } from "@/lib/cn";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+const hasLede = Astro.slots.has("lede");
+---
+
+<div class={cn("grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-end lg:gap-8", className)}>
+  <h2 class="ed-h2 lg:col-span-7"><slot name="headline" /></h2>
+  {
+    hasLede && (
+      <p class="ed-lede max-w-[46ch] text-muted-foreground lg:col-span-5 lg:ml-auto lg:text-right">
+        <slot name="lede" />
+      </p>
+    )
+  }
+</div>

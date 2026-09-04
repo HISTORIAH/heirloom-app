@@ -7,7 +7,7 @@ import {
   type EventHandler,
   type Styles,
 } from "react-joyride";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTour } from "@/contexts/TourContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault } from "@/contexts/VaultContext";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { buildTourSteps } from "./tourSteps";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
+import { LANDING_URL } from "@/config";
 import { useTranslation } from "@heirloom/i18n";
 
 const BLACK = "hsl(0, 0%, 0%)";
@@ -79,13 +80,30 @@ const neoStyles: Partial<Styles> = {
  * Router and below the Wallet/Vault providers so it can navigate and read state.
  */
 const AppTour = () => {
-  const { active, run, stepIndex, vaultStep, setRun, setStepIndex, setVaultStep, stop } = useTour();
+  const { active, run, stepIndex, vaultStep, setRun, setStepIndex, setVaultStep, start, stop } =
+    useTour();
   const { isConnected } = useWallet();
   const { estates } = useVault();
   const navigate = useNavigate();
   const location = useLocation();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The landing's hero CTA used to call start() directly — it was the same
+  // bundle. It is a separate site now, so it links here with ?tour=1 and this
+  // picks the intent up on arrival. The param is dropped straight away so a
+  // reload or a shared URL does not replay the tour.
+  useEffect(() => {
+    if (searchParams.get("tour") !== "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("tour");
+    setSearchParams(next, { replace: true });
+    track("tour_started", { source: "landing" });
+    start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [finishPromptOpen, setFinishPromptOpen] = useState(false);
   const [connectPromptOpen, setConnectPromptOpen] = useState(false);
@@ -104,11 +122,12 @@ const AppTour = () => {
     if (!isConnected) setFinishPromptOpen(true);
   };
 
-  // Skipping returns the user to the landing page.
+  // Skipping hands the visitor back to the marketing site they came from.
+  // That is a different origin now, so it is a location change, not a route.
   const skipTour = () => {
     track("tour_skipped", { step_index: stepIndex });
     stop();
-    navigate("/");
+    window.location.href = LANDING_URL;
   };
 
   // Advance to a step, navigating first if it lives on another route.

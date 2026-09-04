@@ -1,0 +1,50 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Icon from "@/components/Icon.astro";
+import Mosaic from "@/components/surface/Mosaic.astro";
+import Tile from "@/components/surface/Tile.astro";
+import Cap from "@/components/surface/Cap.astro";
+import Section from "@/components/landing/Section.astro";
+import SectionLead from "@/components/landing/SectionLead.astro";
+import { toneMuted, type TileTone } from "@/lib/tones";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+// Six reasons on an even three-by-two block. One cyan tile is the section's
+// single accent — a deliberate echo of the yield section.
+const reasons: { icon: string; title: string; desc: string; tag: string; tone: TileTone }[] = [
+  { icon: "zap", title: t("whySolana.n1Title"), desc: t("whySolana.n1Desc"), tag: t("whySolana.n1Tag"), tone: "paper" },
+  { icon: "lock", title: t("whySolana.n2Title"), desc: t("whySolana.n2Desc"), tag: t("whySolana.n2Tag"), tone: "soft" },
+  { icon: "clock", title: t("whySolana.n3Title"), desc: t("whySolana.n3Desc"), tag: t("whySolana.n3Tag"), tone: "paper" },
+  { icon: "shield", title: t("whySolana.n4Title"), desc: t("whySolana.n4Desc"), tag: t("whySolana.n4Tag"), tone: "ink" },
+  { icon: "blocks", title: t("whySolana.n5Title"), desc: t("whySolana.n5Desc"), tag: t("whySolana.n5Tag"), tone: "cyan" },
+  { icon: "file-code", title: t("whySolana.n6Title"), desc: t("whySolana.n6Desc"), tag: t("whySolana.n6Tag"), tone: "paper" },
+];
+---
+
+<Section id="why-solana" index={7} total={10} label={t("whySolana.eyebrow")}>
+  <SectionLead>
+    <Fragment slot="headline">{t("whySolana.title")}</Fragment>
+    <Fragment slot="lede">{t("whySolana.lede")}</Fragment>
+  </SectionLead>
+
+  <Mosaic cols={3} band={2.95}>
+    {
+      reasons.map((r) => (
+        <Tile col={1} row={1} colMd={3} tone={r.tone} class="gap-6 md:gap-8">
+          <div class="flex items-start justify-between gap-4">
+            <Icon name={r.icon} class="h-7 w-7 shrink-0 md:h-9 md:w-9" strokeWidth={1.75} />
+            <Cap tone={r.tone}>{r.tag}</Cap>
+          </div>
+          <div>
+            <h3 class="ed-h3">{r.title}</h3>
+            <p class={`tile-body mt-3 max-w-[38ch] ${toneMuted[r.tone]}`}>{r.desc}</p>
+          </div>
+        </Tile>
+      ))
+    }
+  </Mosaic>
+</Section>

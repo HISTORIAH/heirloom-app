@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": [
     "app",
+    "landing",
     "app-ika",
     "waitlist",
     "packages/*",
@@ -14,6 +15,8 @@
     "dev:ika": "turbo run dev --filter=app-ika",
     "build:ui": "turbo run build --filter=app",
     "build:ika": "turbo run build --filter=app-ika",
+    "dev:landing": "turbo run dev --filter=landing",
+    "build:landing": "turbo run build --filter=landing",
     "dev:waitlist": "turbo run dev --filter=waitlist",
     "build:waitlist": "turbo run build --filter=waitlist",
     "generate:heirloom": "bunx codama run --all -c heirloom.codama.json",

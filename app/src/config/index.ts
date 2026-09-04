@@ -1,3 +1,9 @@
+// The marketing site is a separate Astro build on the apex domain; this app
+// serves app.heirlm.xyz. Anything in here that means "go back to the site"
+// leaves the origin, so it is a URL rather than a router path.
+export const LANDING_URL =
+  import.meta.env.VITE_LANDING_URL?.trim() || "https://heirlm.xyz";
+
 export const SOLANA_RPC_ENDPOINT =
   import.meta.env.VITE_SOLANA_RPC_ENDPOINT || "http://127.0.0.1:8899";
 

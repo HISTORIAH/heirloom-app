@@ -1,0 +1,21 @@
+---
+// The Heirloom mark: two vault walls with the beat between them. Shared by the
+// hero wordmark (where it stands in for the H) and the orbiting hero object.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<svg viewBox="16 14 88 92" fill="none" aria-hidden="true" class={className}>
+  <rect x="16" y="14" width="21" height="92" rx="7" fill="currentColor" />
+  <rect x="83" y="14" width="21" height="92" rx="7" fill="currentColor" />
+  <path
+    d="M37 60h9l7-17 14 34 7-17h9"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="13"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

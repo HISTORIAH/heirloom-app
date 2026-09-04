@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { toneStyles, type TileTone } from "@/components/surface/tones";
 
 /**
- * A tile that is not grid-positioned. `Tile` hands its span to the mosaic and
- * animates in on reading order;an app screen places its panels itself and 
- * re-renders them constantly, so a staggered entrance would fire on every state change.
+ * A tile that is not grid-positioned. The landing's Tile hands its span to a
+ * mosaic and animates in on reading order; an app screen places its panels
+ * itself and re-renders them constantly, so a staggered entrance would fire on
+ * every state change.
  */
 export interface PanelProps {
   tone?: TileTone;

@@ -1,12 +1,5 @@
-# https://heirlm.xyz
+# https://app.heirlm.xyz — the application. Every route is wallet-gated and
+# per-user, so there is nothing here to index. The public, indexable site is
+# https://heirlm.xyz, which serves its own robots.txt and sitemap.
 User-agent: *
-Allow: /
-
-# Wallet-gated, per-user app routes — no public/indexable content
-Disallow: /dashboard
-Disallow: /create-vault
-Disallow: /claim
-Disallow: /defer
-Disallow: /heartbeat
-
-Sitemap: https://heirlm.xyz/sitemap.xml
+Disallow: /

@@ -1,0 +1,20 @@
+---
+import { PREFIXED_LOCALES, localePath } from "@heirloom/i18n/landing";
+import LandingPage from "@/components/LandingPage.astro";
+
+/**
+ * Every locale but English gets a prefixed, prerendered document. English is
+ * served unprefixed from pages/index.astro so the root URL stays the canonical
+ * one it has always been.
+ */
+export function getStaticPaths() {
+  return PREFIXED_LOCALES.map((code) => ({
+    params: { locale: localePath(code) },
+    props: { locale: code },
+  }));
+}
+
+const { locale } = Astro.props;
+---
+
+<LandingPage locale={locale} />

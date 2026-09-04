@@ -1,0 +1,53 @@
+---
+import type { LandingT } from "@heirloom/i18n/landing";
+import Icon from "@/components/Icon.astro";
+import Mosaic from "@/components/surface/Mosaic.astro";
+import Tile from "@/components/surface/Tile.astro";
+import Section from "@/components/landing/Section.astro";
+import SectionLead from "@/components/landing/SectionLead.astro";
+import { toneMuted, toneCap, type TileTone } from "@/lib/tones";
+
+interface Props {
+  t: LandingT;
+}
+const { t } = Astro.props;
+
+// Three jobs, three equal columns. The tiles were uneven before and the page
+// read as drifting; at full bleed the symmetry is what makes the band land.
+const cases: { icon: string; tag: string; title: string; desc: string; tone: TileTone }[] = [
+  { icon: "trending-up", tag: t("useCases.c1Tag"), title: t("useCases.c1Title"), desc: t("useCases.c1Desc"), tone: "yellow" },
+  { icon: "key-round", tag: t("useCases.c2Tag"), title: t("useCases.c2Title"), desc: t("useCases.c2Desc"), tone: "sky" },
+  { icon: "users", tag: t("useCases.c3Tag"), title: t("useCases.c3Title"), desc: t("useCases.c3Desc"), tone: "sage" },
+];
+---
+
+<Section index={1} total={10} label={t("useCases.eyebrow")}>
+  <SectionLead>
+    <Fragment slot="headline">
+      {t("useCases.headline1")}{" "}
+      <span class="bg-accent-yellow px-1.5">{t("useCases.headline2")}</span>
+    </Fragment>
+    <Fragment slot="lede">{t("useCases.lede")}</Fragment>
+  </SectionLead>
+
+  <Mosaic cols={3} band={3.1}>
+    {
+      cases.map((c) => (
+        <Tile col={1} row={1} colMd={3} tone={c.tone} class="gap-8">
+          {/* Copy sits at the top of the field and the mark anchors the
+              bottom-right corner — the tile is read, then recognised. */}
+          <div>
+            <span
+              class={`text-[11px] font-bold uppercase tracking-[0.18em] md:text-xs ${toneCap[c.tone]}`}
+            >
+              {c.tag}
+            </span>
+            <h3 class="tile-h mt-4 min-h-[2em]">{c.title}</h3>
+            <p class={`tile-body mt-5 max-w-[34ch] ${toneMuted[c.tone]}`}>{c.desc}</p>
+          </div>
+          <Icon name={c.icon} aria-hidden="true" class="mark-lg self-end" strokeWidth={1.5} />
+        </Tile>
+      ))
+    }
+  </Mosaic>
+</Section>

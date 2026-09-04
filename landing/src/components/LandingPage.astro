@@ -1,0 +1,61 @@
+---
+import { createLandingT, localeHref } from "@heirloom/i18n/landing";
+import Layout from "@/layouts/Layout.astro";
+import NavBar from "@/components/nav/NavBar.astro";
+import GridRules from "@/components/landing/GridRules.astro";
+import HeroSection from "@/components/sections/HeroSection.astro";
+import UseCasesSection from "@/components/sections/UseCasesSection.astro";
+import IdleAssetsSection from "@/components/sections/IdleAssetsSection.astro";
+import HowItWorksSection from "@/components/sections/HowItWorksSection.astro";
+import YieldSection from "@/components/sections/YieldSection.astro";
+import RecoverySection from "@/components/sections/RecoverySection.astro";
+import VaultLifecycleSection from "@/components/sections/VaultLifecycleSection.astro";
+import WhySolanaSection from "@/components/sections/WhySolanaSection.astro";
+import ComparisonSection from "@/components/sections/ComparisonSection.astro";
+import FAQSection from "@/components/sections/FAQSection.astro";
+import CTASection from "@/components/sections/CTASection.astro";
+import FooterSection from "@/components/sections/FooterSection.astro";
+
+interface Props {
+  locale: string;
+}
+const { locale } = Astro.props;
+const t = createLandingT(locale);
+
+// Section order is the argument: what the vault is for, why holding alone is
+// not enough, how it runs, then the two jobs people underestimate — yield and
+// getting back in — before the protocol detail and the objections.
+//
+// Everything below the nav sits on one ruled page running edge to edge:
+// GridRules draws the column rules once for the whole scroll, each section is
+// a full-viewport spread that contributes a horizontal on its running head,
+// and the tiles are opaque so they mask the lines they cover. Anchors live on
+// the sections themselves — scrolling to one lands on its running head.
+---
+
+<Layout locale={locale}>
+  {/* overflow-x: clip, not hidden — the orbiting hero throws rotated boxes a
+      little past the right gutter, and clip stops them scrolling the page
+      without turning this into a scroll container, which would kill the
+      sticky nav. */}
+  <div class="min-h-screen overflow-x-clip bg-background">
+    <NavBar t={t} home={localeHref(locale)} />
+    <div class="relative">
+      <GridRules />
+      <div class="relative z-10">
+        <HeroSection t={t} />
+        <UseCasesSection t={t} />
+        <IdleAssetsSection t={t} />
+        <HowItWorksSection t={t} />
+        <YieldSection t={t} />
+        <RecoverySection t={t} />
+        <VaultLifecycleSection t={t} />
+        <WhySolanaSection t={t} />
+        <ComparisonSection t={t} />
+        <FAQSection t={t} />
+        <CTASection t={t} />
+        <FooterSection t={t} locale={locale} />
+      </div>
+    </div>
+  </div>
+</Layout>

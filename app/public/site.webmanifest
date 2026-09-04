@@ -1,8 +1,8 @@
 {
-  "name": "Heirloom — Digital Asset Inheritance on Solana",
+  "name": "Heirloom App",
   "short_name": "Heirloom",
-  "description": "Heartbeat-based inheritance vaults on Solana. Lock assets, check in periodically, or your heirs inherit automatically.",
-  "start_url": "/",
+  "description": "Open an estate, check in, route yield, and claim — the Heirloom app on Solana.",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",

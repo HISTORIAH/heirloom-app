@@ -1,0 +1,50 @@
+---
+/**
+ * A lucide glyph, inlined at build time.
+ *
+ * The React landing imported these from lucide-react; here the same SVGs come
+ * out of lucide-static (pinned to the identical version), read off disk while
+ * the page is being generated. Nothing about it reaches the browser except the
+ * markup, which is the point of moving the page to Astro at all.
+ */
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+interface Props {
+  /** kebab-case lucide icon name, e.g. "arrow-right". */
+  name: string;
+  class?: string;
+  strokeWidth?: number;
+  fill?: string;
+  [key: string]: unknown;
+}
+
+const {
+  name,
+  class: className,
+  strokeWidth = 2,
+  fill = "none",
+  ...rest
+} = Astro.props;
+
+const raw = readFileSync(require.resolve(`lucide-static/icons/${name}.svg`), "utf8");
+// Keep only the glyph itself; every presentation attribute is set below so a
+// caller's stroke weight and fill win, exactly as they did on the React icon.
+const body = raw
+  .slice(raw.indexOf(">", raw.indexOf("<svg")) + 1, raw.lastIndexOf("</svg>"))
+  .trim();
+---
+
+<svg
+  viewBox="0 0 24 24"
+  fill={fill}
+  stroke="currentColor"
+  stroke-width={strokeWidth}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class={className}
+  {...rest}
+  set:html={body}
+/>

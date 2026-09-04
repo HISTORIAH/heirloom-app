@@ -1,0 +1,36 @@
+---
+import { cn } from "@/lib/cn";
+import { toneStyles, type TileTone } from "@/lib/tones";
+
+interface Props {
+  /** Column span out of 12 at lg and up. */
+  col: number;
+  /** Row span, one row being 5.5rem. Ignored below lg, where rows go auto. */
+  row: number;
+  /** Column span out of 6 between sm and lg. Defaults to the full width. */
+  colMd?: number;
+  tone?: TileTone;
+  class?: string;
+  /** Drop the default padding — for tiles that manage their own. */
+  bare?: boolean;
+}
+
+const { col, row, colMd = 6, tone = "paper", class: className, bare = false } = Astro.props;
+---
+
+<div
+  style={`--col: ${col}; --row: ${row}; --col-md: ${colMd}`}
+  class={cn(
+    "tile-rise flex min-h-0 flex-col justify-between overflow-hidden",
+    // Boxes sit inside the ruling, so they are softened; a `plain` tile has
+    // no fill to round, and its type sits directly on the ruled page.
+    tone !== "plain" && "rounded-xl",
+    // Padding opens up with the page: at full bleed a tile is a large
+    // field, and 1.75rem of it reads as a hairline margin.
+    !bare && "p-6 md:p-8 xl:p-9 2xl:p-11",
+    toneStyles[tone],
+    className,
+  )}
+>
+  <slot />
+</div>

@@ -1,0 +1,62 @@
+---
+/**
+ * The hero object: assets circling the vault. It is the product's whole claim
+ * in one image — balances stay in orbit, earning, while the vault at the centre
+ * holds still.
+ *
+ * CSS 3D rather than a WebGL dependency. Nine discs sit in one plane that is
+ * tilted back and turned slowly; perspective makes the far side of the ring
+ * smaller on its own, and the discs pass in front of and behind the mark
+ * because the scene preserves 3D. Discs are not counter-rotated to face the
+ * camera — a disc is a circle, so the tilt only changes how much of an ellipse
+ * it reads as, and keeping them in-plane keeps the whole thing deterministic.
+ */
+import VaultMark from "@/components/landing/VaultMark.astro";
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+// `radius` is the disc centre's distance from the ring's top edge, so a smaller
+// number sits further out. Sizes vary so the ring reads as a handful of assets
+// rather than a dial.
+const DISCS: { tone: string; size: number; radius: number }[] = [
+  { tone: "bg-foreground", size: 19, radius: 7 },
+  { tone: "bg-accent-yellow", size: 23, radius: 6 },
+  { tone: "bg-tile-soft border border-tile-line", size: 16, radius: 8 },
+  { tone: "bg-accent-sage", size: 21, radius: 6 },
+  { tone: "bg-foreground", size: 15, radius: 9 },
+  { tone: "bg-accent-sky", size: 22, radius: 6 },
+  { tone: "bg-tile-soft border border-tile-line", size: 18, radius: 8 },
+  { tone: "bg-accent-yellow", size: 16, radius: 7 },
+  { tone: "bg-accent-sage", size: 20, radius: 7 },
+];
+
+const angle = (i: number) => `${(360 / DISCS.length) * i}deg`;
+---
+
+<div
+  class={`orbit-scene relative aspect-square w-full ${className ?? ""}`}
+  role="img"
+  aria-label="Assets orbiting a Heirloom estate"
+>
+  <div class="orbit-ring">
+    {
+      DISCS.map((disc, i) => (
+        <span class="orbit-slot" style={`--a: ${angle(i)}`}>
+          <span
+            class="orbit-disc"
+            style={`--d: ${disc.size}%; --t: ${disc.radius}%; --a: ${angle(i)}`}
+          >
+            <span class={`orbit-face ${disc.tone}`} />
+          </span>
+        </span>
+      ))
+    }
+  </div>
+
+  <div class="orbit-core">
+    <VaultMark class="h-[26%] w-auto text-foreground" />
+  </div>
+</div>

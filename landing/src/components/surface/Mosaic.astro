@@ -1,0 +1,35 @@
+---
+/**
+ * A mosaic is tiles of uneven size and weight placed on a 12-column grid,
+ * rather than equal cells in a rigid band. `Mosaic` owns the grid; `Tile` owns
+ * one block's span, fill, and padding.
+ *
+ * Span is handed to CSS as `--col` / `--row` custom properties so Tailwind
+ * never needs to see a dynamic class name. The responsive collapse lives in
+ * global.css alongside the grid itself, as does the entrance stagger — a
+ * static build has the tiles in reading order already, so `nth-child` says
+ * what the React version had to count out per tile.
+ */
+import { cn } from "@/lib/cn";
+
+interface Props {
+  class?: string;
+  /** Column count for the band. 12 unless the section divides evenly by something else. */
+  cols?: number;
+  /**
+   * Width ÷ height the band wants at desktop. Without it the grid stretches to
+   * whatever height is going, which turns wide tiles into tall empty ones.
+   */
+  band?: number;
+}
+
+const { class: className, cols, band } = Astro.props;
+
+const style = [cols ? `--cols: ${cols}` : "", band ? `--band: ${band}` : ""]
+  .filter(Boolean)
+  .join("; ");
+---
+
+<div style={style || undefined} class={cn("mosaic", className)}>
+  <slot />
+</div>

@@ -1,0 +1,29 @@
+---
+/**
+ * One 404 for the whole site. It is served for any path Cloudflare cannot
+ * match, including the locale prefixes, so it stays in the default language
+ * rather than pretending to know which one the visitor wanted.
+ */
+import { createLandingT, DEFAULT_LANGUAGE } from "@heirloom/i18n/landing";
+import Layout from "@/layouts/Layout.astro";
+import Button from "@/components/Button.astro";
+import Icon from "@/components/Icon.astro";
+
+const t = createLandingT(DEFAULT_LANGUAGE);
+---
+
+<Layout locale={DEFAULT_LANGUAGE}>
+  <div class="flex min-h-screen items-center justify-center bg-background px-[var(--page-pad)]">
+    <div class="max-w-md text-center">
+      <p class="ed-label">404</p>
+      <h1 class="hero-display mt-3">
+        {t("notFound.headline1")}{" "}{t("notFound.headline2")}
+      </h1>
+      <p class="ed-lede mt-4 text-muted-foreground">{t("notFound.description")}</p>
+      <Button href="/" variant="flat-yellow" size="lg" class="mt-8">
+        <Icon name="arrow-left" class="h-4 w-4" />
+        {t("notFound.returnHome")}
+      </Button>
+    </div>
+  </div>
+</Layout>
