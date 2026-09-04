@@ -1,0 +1,29 @@
+{
+  "name": "Heirloom — Digital Asset Inheritance on Solana",
+  "short_name": "Heirloom",
+  "description": "Heartbeat-based inheritance estates on Solana. Lock assets, check in periodically, or your heirs inherit automatically.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

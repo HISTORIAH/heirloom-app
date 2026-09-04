@@ -1,0 +1,23 @@
+{
+  // The marketing site: nine prerendered documents on the apex domain.
+  // Static assets only — there is no worker code, and no SPA fallback, because
+  // every URL that should exist has a real file behind it.
+  "name": "heirloom-landing",
+  "compatibility_date": "2026-04-18",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "heirlm.xyz", "custom_domain": true },
+    { "pattern": "www.heirlm.xyz", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    "preview": {
+      "name": "heirloom-landing-preview"
+    }
+  }
+}
