@@ -15,6 +15,10 @@ export const initializeAnalytics = (): boolean => {
     capture_pageview: false,
     capture_pageleave: true,
     person_profiles: "identified_only",
+    // The landing is a separate origin (heirlm.xyz) that links here. Without a
+    // cookie scoped to the parent domain, a visitor who clicks through becomes
+    // a second anonymous user and the landing → app funnel never joins up.
+    cross_subdomain_cookie: true,
     mask_all_text: true,
     autocapture: {
       dom_event_allowlist: ["click"],

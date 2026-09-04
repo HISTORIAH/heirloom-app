@@ -1,0 +1,12 @@
+# Cloudflare *appends* every matching rule rather than letting the most
+# specific one win, so `/*` must not set Cache-Control — a rule here plus a
+# rule below would emit both, and a comma-joined pair of conflicting max-ages
+# resolves to whichever came first. Documents therefore keep the platform
+# default (public, max-age=0, must-revalidate), which is what we want anyway.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Astro fingerprints these, so the filename changes whenever the bytes do.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -3,7 +3,11 @@
   // so it keeps the SPA fallback: any path is served the shell and the router
   // takes it from there. Nothing here is meant to be crawled — see
   // public/robots.txt.
-  "name": "heirloom-app",
+  //
+  // NOTE: this name must match the Worker that already exists in the account,
+  // or `wrangler deploy` creates a second one alongside it. It is deliberately
+  // "heirloom" rather than "heirloom-app" for that reason.
+  "name": "heirloom",
   "compatibility_date": "2026-04-18",
   "assets": {
     "directory": "./dist",
@@ -15,7 +19,7 @@
   },
   "env": {
     "preview": {
-      "name": "heirloom-app-preview"
+      "name": "heirloom-preview"
     }
   }
 }
