@@ -39,11 +39,11 @@ const t = createLandingT(locale);
       without turning this into a scroll container, which would kill the
       sticky nav. */}
   <div class="min-h-screen overflow-x-clip bg-background">
-    <NavBar t={t} home={localeHref(locale)} />
+    <NavBar t={t} locale={locale} home={localeHref(locale)} />
     <div class="relative">
       <GridRules />
       <div class="relative z-10">
-        <HeroSection t={t} />
+        <HeroSection t={t} locale={locale} />
         <UseCasesSection t={t} />
         <IdleAssetsSection t={t} />
         <HowItWorksSection t={t} />
@@ -51,9 +51,9 @@ const t = createLandingT(locale);
         <RecoverySection t={t} />
         <VaultLifecycleSection t={t} />
         <WhySolanaSection t={t} />
-        <ComparisonSection t={t} />
+        <ComparisonSection t={t} locale={locale} />
         <FAQSection t={t} />
-        <CTASection t={t} />
+        <CTASection t={t} locale={locale} />
         <FooterSection t={t} locale={locale} />
       </div>
     </div>

@@ -49,9 +49,18 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 - **Copy** lives in `@heirloom/i18n/landing`, not in the components. There is no
   React here, so it uses a plain `createLandingT(locale)` that falls back to
   English key by key — never the i18next entry point next door.
+- **Every link to the app carries the locale.** They are built by
+  `src/lib/site.ts` (`appPath`, `appUrl`, `appCreateVaultUrl`, `appTourUrl`),
+  never written out by hand, because the app is a separate origin and a path
+  prefix means nothing there. The parameter is `?lang=`, English omits it, and
+  the app reads it once on arrival and strips it. The tour link points straight
+  at `/dashboard?tour=1` so the hand-off costs one request rather than a
+  redirect. Both halves of the contract live in `@heirloom/i18n`
+  (`appHref` / `takeLocaleFromUrl`).
 - **`src/styles/global.css`** is duplicated from `app/src/index.css` on purpose.
   The two surfaces share a design system and have to line up; a change to one
-  usually belongs in both.
+  usually belongs in both. Only the mosaic's own metrics (`--head-h`,
+  `--row-unit`, `--mosaic-gap`) are meant to differ.
 - **`_headers` rules append**, they do not override. Two rules setting
   `Cache-Control` on overlapping paths emit both, and the first wins.
 - **Sections** are one `.astro` file each in `src/components/sections/`, 1:1

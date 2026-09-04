@@ -1,7 +1,7 @@
 ---
 import type { LandingT } from "@heirloom/i18n/landing";
 import { cn } from "@/lib/cn";
-import { APP_TOUR_URL } from "@/lib/site";
+import { appTourUrl } from "@/lib/site";
 import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
 import OrbitingVault from "@/components/landing/OrbitingVault.astro";
@@ -9,8 +9,9 @@ import Cap from "@/components/surface/Cap.astro";
 
 interface Props {
   t: LandingT;
+  locale: string;
 }
-const { t } = Astro.props;
+const { t, locale } = Astro.props;
 
 const rail = [
   { label: t("hero.rail1Label"), value: t("hero.rail1Value") },
@@ -43,7 +44,7 @@ const rail = [
           {/* The landing has no wallet of its own, so the disconnected CTA is
               the only one it can honestly offer: the tour, started by the app
               on arrival. */}
-          <Button href={APP_TOUR_URL} variant="flat" size="lg" data-track="launch_tour">
+          <Button href={appTourUrl(locale)} variant="flat" size="lg" data-track="launch_tour">
             {t("hero.launchTour")}
           </Button>
           <Button

@@ -71,19 +71,9 @@
     --app-max: 1300px;
     --nav-h: 5rem;
 
+    /* The one offset shadow the app still draws: the range thumb, which needs
+       to read as a physical control. Panels and dialogs use hairlines. */
     --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
-    --shadow-md: 8px 8px 0px 0px hsl(0 0% 0%);
-    --shadow-lg: 12px 12px 0px 0px hsl(0 0% 0%);
-    --shadow-xl: 16px 16px 0px 0px hsl(0 0% 0%);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 0 0% 0%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 50 100% 50%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 0%;
-    --sidebar-ring: 0 0% 0%;
   }
 }
 
@@ -210,73 +200,6 @@
     max-width: var(--app-max);
     margin-inline: auto;
   }
-  .neo-shadow-sm { box-shadow: var(--shadow-sm); }
-  .neo-shadow-md { box-shadow: var(--shadow-md); }
-  .neo-shadow-lg { box-shadow: var(--shadow-lg); }
-  .neo-shadow-xl { box-shadow: var(--shadow-xl); }
-  /* Color-matched card shadows (shadow color mirrors the card's accent). */
-  .neo-shadow-pink { box-shadow: 12px 12px 0px 0px hsl(var(--accent-pink)); }
-  .neo-shadow-lime { box-shadow: 12px 12px 0px 0px hsl(var(--accent-lime)); }
-  .neo-shadow-cyan { box-shadow: 12px 12px 0px 0px hsl(var(--accent-cyan)); }
-  .neo-shadow-orange { box-shadow: 12px 12px 0px 0px hsl(var(--accent-orange)); }
-  .neo-shadow-yellow { box-shadow: 12px 12px 0px 0px hsl(var(--accent-yellow)); }
-  .neo-shadow-purple { box-shadow: 12px 12px 0px 0px hsl(var(--accent-purple)); }
-  .neo-shadow-red { box-shadow: 12px 12px 0px 0px hsl(var(--accent-red)); }
-  .neo-border { @apply border-4 border-foreground; }
-  .neo-border-thick { @apply border-[6px] border-foreground; }
-  .neo-card {
-    @apply bg-card neo-border rounded-2xl p-8 transition-all duration-150 ease-out;
-    box-shadow: var(--shadow-lg);
-  }
-  .neo-card:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-xl);
-  }
-  .neo-card-static {
-    @apply bg-card neo-border rounded-2xl p-6;
-    box-shadow: var(--shadow-lg);
-  }
-  .neo-badge {
-    @apply inline-block neo-border rounded-full px-4 py-1 text-sm font-bold uppercase tracking-widest;
-    box-shadow: var(--shadow-sm);
-  }
-  .neo-section-pink { background-color: hsl(var(--accent-pink)); }
-  .neo-section-lime { background-color: hsl(var(--accent-lime)); }
-  .neo-section-cyan { background-color: hsl(var(--accent-cyan)); }
-  .neo-section-orange { background-color: hsl(var(--accent-orange)); }
-  .neo-section-yellow { background-color: hsl(var(--accent-yellow)); }
-  .neo-section-purple { background-color: hsl(var(--accent-purple)); }
-
-  .neo-input {
-    @apply w-full neo-border rounded-lg px-4 py-3 bg-background font-bold text-base transition-all duration-150;
-    box-shadow: var(--shadow-sm);
-  }
-  .neo-input:focus {
-    box-shadow: var(--shadow-md);
-    transform: translate(-2px, -2px);
-    outline: none;
-  }
-
-  .neo-digit {
-    @apply bg-secondary neo-border rounded-xl py-4 px-2 relative overflow-hidden transition-all duration-300;
-    box-shadow: var(--shadow-sm);
-  }
-  .neo-digit::after {
-    content: '';
-    @apply absolute left-0 right-0 h-[2px] bg-foreground/10;
-    top: 50%;
-  }
-
-  .neo-step-dot {
-    @apply w-10 h-10 md:w-12 md:h-12 neo-border rounded-full flex items-center justify-center font-bold text-sm md:text-base transition-all duration-300;
-  }
-  .neo-step-dot.active {
-    @apply bg-accent-yellow scale-110;
-    box-shadow: var(--shadow-md);
-  }
-  .neo-step-dot.complete { @apply bg-accent-yellow; }
-  .neo-step-dot.pending { @apply bg-secondary; }
-
   /* ------------------------------------------------------ editorial fields
      A hairline box, not an ink one. Hover and focus stay on tile-line so the
      field does not jump to a solid black outline. Keyboard focus uses a
@@ -352,7 +275,7 @@
     flex-shrink: 0;
   }
   /* A dialog is already the only thing on screen once the overlay lands, so
-     it only needs to arrive — not slide the 24px `.neo-slide-up` travels. */
+     it only needs to arrive rather than travel. */
   .modal-rise {
     animation: modalRise 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
@@ -360,64 +283,10 @@
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
-
-  .neo-slide-up { animation: slideUp 0.4s ease-out; }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .neo-shake { animation: shake 0.4s ease-out; }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    50% { transform: translateX(8px); }
-    75% { transform: translateX(-4px); }
-  }
-
-  .neo-glow-yellow { animation: glowYellow 2s ease-in-out infinite; }
-  @keyframes glowYellow {
-    0%, 100% { box-shadow: var(--shadow-md); }
-    50% { box-shadow: var(--shadow-lg), 0 0 20px hsl(var(--accent-yellow) / 0.35); }
-  }
-
-  /* --- Heartbeat motif --- */
-  .alive-dot { animation: aliveBeat 2.4s ease-in-out infinite; }
-  @keyframes aliveBeat {
-    0%, 100% { transform: scale(1); }
-    8% { transform: scale(1.4); }
-    16% { transform: scale(1); }
-    24% { transform: scale(1.25); }
-    32% { transform: scale(1); }
-  }
-
-  .grid-fade {
-    background-image:
-      linear-gradient(hsl(0 0% 100% / 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.05) 1px, transparent 1px);
-    background-size: 44px 44px;
-  }
-
-  /* Dark hairline grid for use on light backgrounds. */
-  .grid-fade-light {
-    background-image:
-      linear-gradient(hsl(0 0% 0% / 0.09) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 0% / 0.09) 1px, transparent 1px);
-    background-size: 44px 44px;
-  }
-
-  .neo-fade-in { animation: fadeIn 0.6s ease-out both; }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alive-dot,
-  .modal-rise,
-  .neo-slide-up,
-  .neo-fade-in {
+  .modal-rise {
     animation: none !important;
   }
 }

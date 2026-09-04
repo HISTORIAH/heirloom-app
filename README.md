@@ -17,6 +17,11 @@ The marketing page is a separate build on purpose: an SPA hands a crawler an
 empty shell, so the content-heavy half of the site is prerendered to static HTML
 instead. See [`landing/README.md`](./landing/README.md).
 
+Because the two are separate origins, everything that crosses between them is
+explicit: `?lang=` carries the reading language into the app, `?tour=1` starts
+the product tour, and a PostHog cookie scoped to `.heirlm.xyz` keeps one visitor
+one person. See [Crossing the Origin Boundary](./app/README.md#crossing-the-origin-boundary).
+
 ## Programs
 
 | Program | ID | Status |

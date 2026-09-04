@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -49,6 +48,17 @@ const clusters = isMainnet
 
 const walletUiConfig = createWalletUiConfig({ clusters });
 
+/**
+ * `/` is not a page here any more — the landing owns it, on the other origin.
+ * The redirect carries the query string over because the hand-off travels in
+ * it: a bookmark or an old link that still points at the app root with
+ * `?tour=1` would otherwise lose the tour on the way to the dashboard.
+ */
+const RootRedirect = () => {
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: "/dashboard", search, hash }} replace />;
+};
+
 const RouteAnalytics = () => {
   const location = useLocation();
   const { trackPageView } = useAnalytics();
@@ -95,7 +105,7 @@ const App = () => (
                     lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
                     dashboard — which already handles the disconnected case
                     with a connect prompt of its own. */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/" element={<RootRedirect />} />
                 <Route path="/create-vault" element={<CreateVault />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/claim" element={<Claim />} />

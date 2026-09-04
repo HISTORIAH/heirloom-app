@@ -82,7 +82,7 @@ app/
 ├── package.json
 ├── public/                     favicons, manifest, robots.txt (Disallow: /)
 └── src/
-    ├── main.tsx                Root: Helmet → i18n → Analytics → App
+    ├── main.tsx                Root: ErrorBoundary → Helmet → i18n → Analytics → App
     ├── App.tsx                 Providers + router + per-route <Seo>
     ├── index.css               Tailwind entry, design tokens, editorial scale
     ├── vite-env.d.ts
@@ -96,8 +96,9 @@ app/
     │   └── NotFound.tsx
     │
     ├── components/             Reusable view components
-    │   ├── PageHeader.tsx      App chrome; its Home link leaves for heirlm.xyz
-    │   ├── NavLink.tsx
+    │   ├── PageHeader.tsx      App chrome: nav, wallet, language switcher; its
+    │   │                       Home link leaves for heirlm.xyz, in-locale
+    │   ├── ErrorBoundary.tsx   Outermost boundary, mounted in main.tsx
     │   ├── VaultMark.tsx
     │   ├── WalletConnectDialog.tsx
     │   ├── WithWallet.tsx      Render-prop gate that supplies the signer
@@ -127,7 +128,6 @@ app/
     │   └── AnalyticsContext.tsx PostHog, dormant unless configured
     │
     ├── hooks/
-    │   ├── use-mobile.tsx
     │   ├── use-toast.ts
     │   ├── useTokenBalances.ts   SOL + USDC for the connected wallet
     │   ├── useTokenMetadata.ts   DAS metadata fetcher with in-memory cache
@@ -151,12 +151,10 @@ app/
     │   └── utils/              cn, format, math, solana, token
     │
     ├── config/
-    │   └── index.ts            RPC endpoints, landing URL, analytics, flags
+    │   └── index.ts            RPC endpoints, landing URL(s), analytics, flags
     │
     └── types/                  Shared types, analytics events, strategy UI
 ```
-
-Three files are currently orphaned and imported by nothing: `components/WalletPill.tsx`, `components/NavLink.tsx`, and `components/ErrorBoundary.tsx`.
 
 ## Routing
 
@@ -164,7 +162,7 @@ All routes are declared in `src/App.tsx`:
 
 | Path            | Component         | Purpose                                                                |
 | --------------- | ----------------- | ---------------------------------------------------------------------- |
-| `/`             | redirect          | Sends to `/dashboard`. The landing lives on `heirlm.xyz`.              |
+| `/`             | `RootRedirect`    | Sends to `/dashboard`, query string intact. The landing lives on `heirlm.xyz`. |
 | `/create-vault` | `CreateVault`     | Form to initialize a new estate and fund it with SOL and/or tokens.    |
 | `/dashboard`    | `Dashboard`       | Authority view: list of estates, state badges, heartbeat, revoke.      |
 | `/claim`        | `Claim`           | Heir view: auto-discover claimable estates and pull the assets.        |
@@ -174,10 +172,27 @@ All routes are declared in `src/App.tsx`:
 
 `RouteSeo` sets the title per path and stamps `noindex, nofollow` on every one of them.
 
+## Crossing the Origin Boundary
+
+The landing and the app are separate origins, which means nothing is shared
+between them implicitly — not a cookie, not localStorage, not a router. Three
+things have to be carried across explicitly, and each has one owner:
+
+| What | Direction | Carried by |
+|---|---|---|
+| Language | landing → app | `?lang=<code>` on every outbound link, built by `landing/src/lib/site.ts`. `getInitialLocale()` in `@heirloom/i18n` reads it once on boot, writes it to `localStorage`, and strips it from the URL so a reload or a shared link does not pin it. English is left bare — it is the app's own fallback. |
+| Language | app → landing | `landingUrl(locale)` in `src/config`, which appends the locale's path prefix (`/ja/`). Used by `PageHeader`'s Home control and by a skipped tour. |
+| The product tour | landing → app | `?tour=1`, read once by `AppTour` on mount and dropped from the URL. The landing links straight at `/dashboard?tour=1` rather than the app root, so the hand-off costs one request. `RootRedirect` preserves the query anyway, for links already in the wild. |
+| Analytics identity | both ways | A PostHog cookie scoped to `.heirlm.xyz` (`cross_subdomain_cookie`), set identically on both sides. Both must point at the same ingestion host or the funnel splits in two. |
+
+Old app paths that used to resolve on the apex (`/dashboard`, `/create-vault`,
+`/claim`, `/defer`, `/heartbeat`) are 301'd across by `landing/public/_redirects`.
+
 ## Provider Stack
 
 Composed across `main.tsx` and `App.tsx`, outer to inner:
 
+0. `ErrorBoundary` — outermost, so a throw anywhere below still renders something. It reads its copy through `getI18n()` rather than a hook, so it survives a failure in the provider under it.
 1. `HelmetProvider` — per-route head tags
 2. `I18nProvider` — i18next, from `@heirloom/i18n`
 3. `AnalyticsProvider` — PostHog, or an inert stub when unconfigured
@@ -247,9 +262,11 @@ There is no separate Helius key: DAS is served from whatever `VITE_SOLANA_RPC_EN
 
 ```ts
 LANDING_URL                     = VITE_LANDING_URL                      || "https://heirlm.xyz"
+landingUrl(locale)              = LANDING_URL + localeHref(locale)      // "…/ja/" — see Crossing the Origin Boundary
 SOLANA_RPC_ENDPOINT             = VITE_SOLANA_RPC_ENDPOINT              || "http://127.0.0.1:8899"
 SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT = VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT || "ws://127.0.0.1:8900"
 POSTHOG_PROJECT_TOKEN           = VITE_POSTHOG_PROJECT_TOKEN            || ""
+POSTHOG_HOST                    = VITE_POSTHOG_HOST                     || "https://us.i.posthog.com"
 ANALYTICS_ENABLED               = VITE_ANALYTICS_ENABLED === "true"
 FEATURE_YIELD_STAKING_UI        = VITE_FEATURE_YIELD_STAKING_UI !== "false"   // on by default
 FEATURE_NOTIFICATIONS_UI        = VITE_FEATURE_NOTIFICATIONS_UI === "true"    // off by default
@@ -274,7 +291,7 @@ VITE_POSTHOG_PROJECT_TOKEN=
 
 The base README introduces Alice, who wants her daughter Mia to inherit her SOL. Here is exactly what her fingers do:
 
-1. Opens `heirlm.xyz`, reads the landing (a separate Astro build — see [`landing/`](../landing/README.md)), and clicks **Launch App**, which brings her to `app.heirlm.xyz`. Had she taken **Launch Tour**, she would arrive at `?tour=1` and `AppTour` would open the walkthrough on the dashboard.
+1. Opens `heirlm.xyz`, reads the landing (a separate Astro build — see [`landing/`](../landing/README.md)), and clicks **Launch App**, which brings her to `app.heirlm.xyz/dashboard`. Had she taken **Launch Tour**, she would arrive at `/dashboard?tour=1` and `AppTour` would open the walkthrough. Had she been reading `/ja/`, both links would carry `?lang=ja` and the app would open in Japanese.
 2. Clicks **Connect Wallet** in `PageHeader`. `WalletConnectDialog` opens, powered by `@wallet-ui/react`. Once connected, the header shows her address with copy and change-wallet affordances.
 3. Navigates to `/create-vault`. The wizard runs four steps — **Heir** (address, label, optional delegate), **Deposit** (SOL amount and any token deposits), **Heartbeat** (interval, grace period, pause duration, optional `hb_signer`), **Review**. On submit it calls `vault.createEstateOnChain(input)`, which routes through `initializeWithTokens` to bundle `initialize` and every `register_asset` deposit into a single transaction.
 4. On `/dashboard`, `EstateCard` renders her estate: `state: active`, `secondsUntilGrace`, the vault SOL balance, and any SPL holdings discovered via `discoverVaultTokenAccounts`, with symbols and icons resolved in one `useTokenMetadata` batch. Destructive actions route through `ConfirmDialog`.
@@ -318,8 +335,11 @@ VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT=wss://devnet.helius-rpc.com/?api-key=<HEL
 VITE_LANDING_URL=https://heirlm.xyz
 
 # PostHog. Leave disabled unless privacy and consent controls are in place.
+# The host must match the landing's PUBLIC_POSTHOG_HOST — the two share a cookie
+# across .heirlm.xyz so one visitor stays one person across the hand-off.
 VITE_ANALYTICS_ENABLED=false
 VITE_POSTHOG_PROJECT_TOKEN=
+VITE_POSTHOG_HOST=https://us.i.posthog.com
 
 # Temporary feature flags — local only, the flows behind them are mocked
 VITE_FEATURE_YIELD_STAKING_UI=true

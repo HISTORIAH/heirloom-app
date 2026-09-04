@@ -1,4 +1,13 @@
-export { LANGUAGES, DEFAULT_LANGUAGE, SUPPORTED_LOCALES, findLanguage, shortFor } from "./languages";
+export {
+  LANGUAGES,
+  DEFAULT_LANGUAGE,
+  SUPPORTED_LOCALES,
+  findLanguage,
+  shortFor,
+  supportedLocale,
+  localeHref,
+  LOCALE_PARAM,
+} from "./languages";
 export type { Language } from "./languages";
 export { STORAGE_KEY, getInitialLocale, persistLocale, createI18n } from "./init";
 export { resources } from "./resources";

@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Link } from "react-router-dom";
 import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check, Menu, X } from "lucide-react";
-import { useTranslation } from "@heirloom/i18n";
+import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
 import { AppNavLinks } from "@/components/app/AppNavLinks";
-import { LANDING_URL } from "@/config";
+import { landingUrl } from "@/config";
 
 interface PageHeaderProps {
-  /** Where the back control goes. An absolute URL leaves the app entirely. */
+  /** Where the back control goes. An absolute URL leaves the app entirely.
+      Defaults to the landing, in the language this app is showing. */
   backTo?: string;
   backLabel?: string;
   onDisconnect?: () => void;
@@ -17,15 +18,17 @@ interface PageHeaderProps {
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
-  // Home is the marketing site, which is no longer part of this bundle.
-  backTo = LANDING_URL,
+  backTo,
   backLabel,
   onDisconnect,
   onConnectWallet,
   hideConnect = false,
 }) => {
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
+  // Home is the marketing site, which is no longer part of this bundle — and
+  // the visitor most likely arrived from it, in this language.
+  const home = backTo ?? landingUrl(i18n.resolvedLanguage ?? i18n.language);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -146,12 +149,25 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div className="sticky top-0 z-50 border-b border-tile-line bg-background">
       <div className="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
-        <BackControl to={backTo} label={homeLabel} className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`} />
+        <BackControl to={home} label={homeLabel} className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`} />
 
         <div className="flex items-center">
           <nav className="hidden items-center gap-1 md:flex">
             <AppNavLinks />
           </nav>
+          {/* The app is translated into the same nine languages as the landing
+              and, since the split, is where a visitor handed over from `/ja/`
+              spends the whole session — so the switcher has to be reachable
+              here too. Styled after the wallet dropdown beside it, not after
+              the landing's, because they share this bar. */}
+          <LanguageSwitcher
+            className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+            menuClassName="absolute right-0 top-full z-50 mt-2 w-44 space-y-1 rounded-xl border border-tile-line bg-background p-2 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]"
+            itemClassName="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+            activeItemClassName="!text-foreground bg-tile-soft"
+            globeClassName="h-4 w-4"
+            chevronClassName="h-3.5 w-3.5 opacity-60"
+          />
           {walletControl}
           <button
             type="button"
