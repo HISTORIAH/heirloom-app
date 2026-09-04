@@ -2,6 +2,11 @@
 
 **The only interface Alice ever sees. The one that turns a PDA into a promise.**
 
+> **The marketing site is not in this package.** It was extracted to
+> [`landing/`](../landing/README.md) as a prerendered Astro build and serves
+> `heirlm.xyz`; this app serves `app.heirlm.xyz`. Every route in here is
+> wallet-gated, per-user, and `noindex` — `/` redirects to `/dashboard`.
+
 ## Overview
 
 This package is the user-facing React application for Heirloom. It is a single-page app that lets anyone connect a Solana wallet, create an inheritance vault, keep it alive with periodic heartbeats (either from the authority key or from an optional hot signer wallet), pause the clock through a trusted delegate, and, when the time comes, claim the assets as the designated heir.
@@ -70,7 +75,6 @@ app/
     ├── vite-env.d.ts
     │
     ├── pages/                  Route-level components
-    │   ├── Index.tsx           Landing page (Hero, FAQ, CTA, etc.)
     │   ├── CreateVault.tsx     Estate creation form
     │   ├── Dashboard.tsx       Authority's estate list + actions
     │   ├── Claim.tsx           Heir flow with auto-discovery
@@ -79,16 +83,9 @@ app/
     │   └── NotFound.tsx
     │
     ├── components/             Reusable view components
-    │   ├── NavBar.tsx
+    │   ├── PageHeader.tsx      App chrome; its Home link leaves for heirlm.xyz
     │   ├── NavLink.tsx
-    │   ├── HeroSection.tsx
-    │   ├── HowItWorksSection.tsx
-    │   ├── VaultLifecycleSection.tsx
-    │   ├── ComparisonSection.tsx
-    │   ├── WhySolanaSection.tsx
-    │   ├── FAQSection.tsx
-    │   ├── CTASection.tsx
-    │   ├── FooterSection.tsx
+    │   ├── VaultMark.tsx
     │   ├── WalletConnectDialog.tsx
     │   ├── WalletPill.tsx      Connected-wallet pill: copy / change wallet
     │   ├── TokenAvatar.tsx     Token icon + symbol with Helius enrichment
@@ -130,7 +127,7 @@ All routes are declared in `src/App.tsx`:
 
 | Path            | Component         | Purpose                                                                |
 | --------------- | ----------------- | ---------------------------------------------------------------------- |
-| `/`             | `Index`           | Landing page. Hero, explainers, wallet connect CTA.                    |
+| `/`             | redirect          | Sends to `/dashboard`. The landing lives on `heirlm.xyz`.              |
 | `/create-vault` | `CreateVault`     | Form to initialize a new estate and fund it with SOL and/or tokens.    |
 | `/dashboard`    | `Dashboard`       | Authority view: list of estates, state badges, heartbeat, revoke.      |
 | `/claim`        | `Claim`           | Heir view: auto-discover claimable estates and pull the assets.        |
@@ -231,8 +228,8 @@ The PostHog ingestion host is a fixed application constant in `src/lib/constants
 
 The base README introduces Alice, who wants her daughter Mia to inherit her SOL. Here is exactly what her fingers do in this app:
 
-1. Opens `/`, sees the landing page (`Index` rendering `HeroSection`, `HowItWorksSection`, `VaultLifecycleSection`, `ComparisonSection`, `WhySolanaSection`, `FAQSection`, `CTASection`, `FooterSection`).
-2. Clicks **Connect Wallet** in `NavBar`. `WalletConnectDialog` opens, powered by `@wallet-ui/react`. Once connected, `WalletPill` shows her address with copy and change-wallet affordances.
+1. Opens `heirlm.xyz`, reads the landing (a separate Astro build — see `landing/`), and clicks **Launch App**, which brings her to `app.heirlm.xyz`. If she took **Launch Tour** instead, she arrives at `?tour=1` and `AppTour` opens the walkthrough on the dashboard.
+2. Clicks **Connect Wallet** in `PageHeader`. `WalletConnectDialog` opens, powered by `@wallet-ui/react`. Once connected, the header shows her address with copy and change-wallet affordances.
 3. Navigates to `/create-vault`. The `CreateVault` page collects heir address, label, timer values, optional delegate, optional heartbeat signer (the field auto-hides when left at 0/empty), initial SOL amount, and optional token deposits. On submit, it calls `vault.createEstateOnChain(input)`, which routes through `sendInitializeWithTokens` to bundle `initialize` and every `register_asset` deposit into a single transaction.
 4. On `/dashboard`, `VaultContext` renders her one estate card, showing `state: active`, the computed `secondsUntilGrace`, the vault SOL balance, and any SPL holdings discovered via `discoverVaultTokenAccounts` with `TokenAvatar`-rendered symbols and icons. Destructive actions (revoke, reassign heir) route through `ConfirmDialog`.
 5. She clicks **Send Heartbeat**, which calls `sendHeartbeatOnChain(heir)`, which calls `sendUpdate` with all update fields `null`. The program reads null-everything as "just reset `last_heartbeat`".
@@ -272,6 +269,7 @@ VITE_PROGRAM_ID=JE2LFHb9zAwSM533gd79XJXyByZvVwoy8nYxhCsiAnKN
 VITE_USDC_MINT=4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
 VITE_HELIUS_API_KEY=                  # optional, enables Helius RPC + DAS
 VITE_HELIUS_RPC_URL=                  # optional, overrides default Helius URL
+VITE_LANDING_URL=https://heirlm.xyz   # where "Home" and a skipped tour go
 ```
 
 Vite exposes any `VITE_`-prefixed variable through `import.meta.env`. See `.env.example` at the package root for a copy-pasteable template.

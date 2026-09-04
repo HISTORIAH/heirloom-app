@@ -2,6 +2,21 @@
 
 A Solana-native inheritance protocol. Lock assets into a programmatic estate that transfers to a designated heir if you stop checking in.
 
+## Packages
+
+| Package | What it is | Serves |
+|---------|------------|--------|
+| [`landing/`](./landing/README.md) | Astro, prerendered in 9 languages | `heirlm.xyz` |
+| [`app/`](./app/README.md) | Vite + React SPA, wallet-gated | `app.heirlm.xyz` |
+| [`app-ika/`](./app-ika/README.md) | The cross-chain IKA variant | — |
+| `waitlist/` | Standalone waitlist page | — |
+| `packages/i18n` | Shared copy for all of the above | — |
+| `programs/`, `clients/` | Anchor programs and their generated clients | — |
+
+The marketing page is a separate build on purpose: an SPA hands a crawler an
+empty shell, so the content-heavy half of the site is prerendered to static HTML
+instead. See [`landing/README.md`](./landing/README.md).
+
 ## Programs
 
 | Program | ID | Status |
@@ -21,6 +36,9 @@ bun generate
 
 # Run the app against localnet
 bun dev:ui
+
+# Run the marketing site
+bun dev:landing
 
 # Run tests (requires local validator)
 bun test

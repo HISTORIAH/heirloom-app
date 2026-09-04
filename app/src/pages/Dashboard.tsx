@@ -13,7 +13,7 @@ import {
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { EstateCard } from "@/components/dashboard/EstateCard";
 import { getEstateStripMeta } from "@/components/dashboard/estateState";
-import VaultMark from "@/components/landing/VaultMark";
+import VaultMark from "@/components/VaultMark";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { cn, getSolanaExplorerTxUrl } from "@/lib/utils";

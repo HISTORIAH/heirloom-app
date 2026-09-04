@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,7 +20,6 @@ import AppTour from "@/components/tour/AppTour";
 import Seo from "@/components/Seo";
 import { useTranslation } from "@heirloom/i18n";
 
-import Index from "@/pages/Index";
 import CreateVault from "@/pages/CreateVault";
 import Dashboard from "@/pages/Dashboard";
 import Claim from "@/pages/Claim";
@@ -61,29 +60,21 @@ const RouteAnalytics = () => {
   return null;
 };
 
-// Per-route head tags. Only the marketing homepage is indexable; every other
-// route is wallet-gated and per-user, so it carries a noindex directive.
+// Per-route head tags. Every route in here is wallet-gated and per-user, so
+// the whole origin is noindex — the indexable marketing page is its own Astro
+// build at https://heirlm.xyz and does not pass through this router.
 
 const RouteSeo = () => {
   const { pathname } = useLocation();
   const { t } = useTranslation("app");
-  const titles: Record<string, { title: string; description?: string; noindex?: boolean }> = {
-    "/": { title: t("seo.homeTitle"), description: t("seo.homeDescription") },
-    "/create-vault": { title: t("seo.createVaultTitle"), noindex: true },
-    "/dashboard": { title: t("seo.dashboardTitle"), noindex: true },
-    "/claim": { title: t("seo.claimTitle"), noindex: true },
-    "/defer": { title: t("seo.deferTitle"), noindex: true },
-    "/heartbeat": { title: t("seo.heartbeatTitle"), noindex: true },
+  const titles: Record<string, string> = {
+    "/create-vault": t("seo.createVaultTitle"),
+    "/dashboard": t("seo.dashboardTitle"),
+    "/claim": t("seo.claimTitle"),
+    "/defer": t("seo.deferTitle"),
+    "/heartbeat": t("seo.heartbeatTitle"),
   };
-  const meta = titles[pathname] ?? { title: t("seo.notFoundTitle"), noindex: true };
-  return (
-    <Seo
-      title={meta.title}
-      description={meta.description}
-      path={pathname}
-      noindex={meta.noindex}
-    />
-  );
+  return <Seo title={titles[pathname] ?? t("seo.notFoundTitle")} path={pathname} />;
 };
 
 const App = () => (
@@ -100,7 +91,11 @@ const App = () => (
               <TourProvider>
                 <AppTour />
                 <Routes>
-                <Route path="/" element={<Index />} />
+                {/* The root of this origin used to be the landing page. It
+                    lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
+                    dashboard — which already handles the disconnected case
+                    with a connect prompt of its own. */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/create-vault" element={<CreateVault />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/claim" element={<Claim />} />

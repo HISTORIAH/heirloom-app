@@ -18,13 +18,15 @@ export type TourStep = Step & { data: { route: string; vaultStep?: number } };
 export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): TourStep[] {
   const steps: TourStep[] = [];
 
-  // 1. Welcome — landing page.
+  // 1. Welcome. Centred on whatever page the tour opens on — the marketing
+  // landing is a different origin now, so the dashboard is where a visitor
+  // arriving from it lands.
   steps.push({
     target: "body",
     placement: "center",
     title: t("dashboard.tour.step1Title"),
     content: t("dashboard.tour.step1Content"),
-    data: { route: "/" },
+    data: { route: "/dashboard" },
   });
 
   // 2. Create Vault wizard — four sub-steps, each spotlighted in order.

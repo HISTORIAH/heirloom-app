@@ -19,6 +19,9 @@ build
 # turbo
 .turbo
 
+# astro generated types
+.astro
+
 # rust / cargo
 target
 Cargo.lock.bak

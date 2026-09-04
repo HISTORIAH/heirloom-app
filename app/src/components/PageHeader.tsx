@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check, Menu, X } from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
 import { AppNavLinks } from "@/components/app/AppNavLinks";
+import { LANDING_URL } from "@/config";
 
 interface PageHeaderProps {
+  /** Where the back control goes. An absolute URL leaves the app entirely. */
   backTo?: string;
   backLabel?: string;
   onDisconnect?: () => void;
@@ -15,7 +17,8 @@ interface PageHeaderProps {
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
-  backTo = "/",
+  // Home is the marketing site, which is no longer part of this bundle.
+  backTo = LANDING_URL,
   backLabel,
   onDisconnect,
   onConnectWallet,
@@ -23,7 +26,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const { t } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
-  const navigate = useNavigate();
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -144,18 +146,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div className="sticky top-0 z-50 border-b border-tile-line bg-background">
       <div className="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
-        <button
-          type="button"
-          onClick={() => navigate(backTo)}
-          aria-label={homeLabel}
-          className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`}
-        >
-          <ArrowLeft
-            className="h-4 w-4 transition-transform group-hover:-translate-x-1"
-            strokeWidth={2.25}
-          />
-          <span className="hidden text-sm font-semibold md:inline md:hover:underline">{homeLabel}</span>
-        </button>
+        <BackControl to={backTo} label={homeLabel} className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`} />
 
         <div className="flex items-center">
           <nav className="hidden items-center gap-1 md:flex">
@@ -185,6 +176,37 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
       )}
     </div>
+  );
+};
+
+/**
+ * The back control. It is a plain anchor when it points off-origin — which is
+ * the default now that home is heirlm.xyz — and a router link when a caller
+ * hands it an in-app path.
+ */
+const BackControl: React.FC<{ to: string; label: string; className: string }> = ({
+  to,
+  label,
+  className,
+}) => {
+  const inner = (
+    <>
+      <ArrowLeft
+        className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+        strokeWidth={2.25}
+      />
+      <span className="hidden text-sm font-semibold md:inline md:hover:underline">{label}</span>
+    </>
+  );
+
+  return /^https?:\/\//.test(to) ? (
+    <a href={to} aria-label={label} className={className}>
+      {inner}
+    </a>
+  ) : (
+    <Link to={to} aria-label={label} className={className}>
+      {inner}
+    </Link>
   );
 };
 
