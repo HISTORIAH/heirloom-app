@@ -88,16 +88,17 @@ app/
     ├── vite-env.d.ts
     │
     ├── pages/                  Route-level components
-    │   ├── CreateVault.tsx     Four-step estate creation wizard
-    │   ├── Dashboard.tsx       Owner's estate list, assets, management
+    │   ├── CreateVault.tsx     Estate creation form
+    │   ├── Dashboard.tsx       Authority's estate list + actions
     │   ├── Claim.tsx           Heir flow with auto-discovery
     │   ├── Defer.tsx           Delegate pause flow
     │   ├── Heartbeat.tsx       Hot signer (hb_signer) heartbeat flow
     │   └── NotFound.tsx
     │
-    ├── components/
+    ├── components/             Reusable view components
     │   ├── PageHeader.tsx      App chrome; its Home link leaves for heirlm.xyz
-    │   ├── VaultMark.tsx       The Heirloom mark, used as the empty state
+    │   ├── NavLink.tsx
+    │   ├── VaultMark.tsx
     │   ├── WalletConnectDialog.tsx
     │   ├── WithWallet.tsx      Render-prop gate that supplies the signer
     │   ├── TokenAvatar.tsx     Presentational token icon, initial, or fallback
@@ -164,8 +165,8 @@ All routes are declared in `src/App.tsx`:
 | Path            | Component         | Purpose                                                                |
 | --------------- | ----------------- | ---------------------------------------------------------------------- |
 | `/`             | redirect          | Sends to `/dashboard`. The landing lives on `heirlm.xyz`.              |
-| `/create-vault` | `CreateVault`     | Wizard to open an estate and fund it with SOL and/or tokens.           |
-| `/dashboard`    | `Dashboard`       | Owner view: estates, state, assets, yield, heartbeat, settings.        |
+| `/create-vault` | `CreateVault`     | Form to initialize a new estate and fund it with SOL and/or tokens.    |
+| `/dashboard`    | `Dashboard`       | Authority view: list of estates, state badges, heartbeat, revoke.      |
 | `/claim`        | `Claim`           | Heir view: auto-discover claimable estates and pull the assets.        |
 | `/defer`        | `Defer`           | Delegate view: pause an owner's heartbeat clock.                       |
 | `/heartbeat`    | `Heartbeat`       | Hot signer view: registered `hb_signer` refreshes the heartbeat.       |

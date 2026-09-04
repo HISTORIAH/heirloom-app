@@ -13,9 +13,6 @@
     "directory": "./dist",
     "not_found_handling": "single-page-application"
   },
-  // heirlm.xyz is deliberately absent: the apex belongs to the landing worker
-  // now. Detach it from this Worker in the dashboard — wrangler attaches the
-  // custom domains listed here but does not remove ones that disappear.
   "routes": [{ "pattern": "app.heirlm.xyz", "custom_domain": true }],
   "observability": {
     "enabled": true
