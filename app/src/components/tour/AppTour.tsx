@@ -22,26 +22,38 @@ import {
 } from "@/components/ui/dialog";
 import { buildTourSteps } from "./tourSteps";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { LANDING_URL } from "@/config";
+import { landingUrl } from "@/config";
 import { useTranslation } from "@heirloom/i18n";
 
-const BLACK = "hsl(0, 0%, 0%)";
-const WHITE = "hsl(0, 0%, 100%)";
-const LIME = "hsl(72, 100%, 50%)";
+// Joyride styles its tooltip inline, so the design tokens have to be read off
+// the document rather than applied as classes. These are the same variables
+// `surface/Panel` and `ui/dialog` use — the tour is the first surface a visitor
+// from the landing sees, and it has no business looking like a different
+// product.
+const token = (name: string, fallback: string) => {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value ? `hsl(${value})` : fallback;
+};
 
-// Neo-brutalist tooltip styling to match the rest of the app.
-const neoStyles: Partial<Styles> = {
+const FOREGROUND = token("--foreground", "hsl(0 0% 0%)");
+const BACKGROUND = token("--background", "hsl(0 0% 100%)");
+const MUTED = token("--muted-foreground", "hsl(0 0% 40%)");
+const LINE = token("--tile-line", "hsl(60 9% 87%)");
+const YELLOW = token("--accent-yellow", "hsl(50 100% 50%)");
+
+const tourStyles: Partial<Styles> = {
   tooltip: {
-    borderRadius: 0,
-    border: `4px solid ${BLACK}`,
-    boxShadow: `8px 8px 0 0 ${BLACK}`,
+    borderRadius: 12,
+    border: `1px solid ${LINE}`,
+    boxShadow: "0 8px 24px -12px hsl(0 0% 0% / 0.25)",
     padding: 24,
     fontFamily: "inherit",
   },
   tooltipTitle: {
-    fontWeight: 900,
-    fontSize: 22,
-    textTransform: "uppercase",
+    fontWeight: 700,
+    fontSize: 20,
+    letterSpacing: "-0.01em",
     margin: 0,
     marginBottom: 8,
     textAlign: "left",
@@ -50,28 +62,27 @@ const neoStyles: Partial<Styles> = {
     fontWeight: 500,
     fontSize: 15,
     lineHeight: 1.5,
+    color: MUTED,
     textAlign: "left",
     padding: "4px 0 0",
   },
   buttonPrimary: {
-    backgroundColor: LIME,
-    color: BLACK,
-    border: `3px solid ${BLACK}`,
-    borderRadius: 12,
-    fontWeight: 900,
+    backgroundColor: YELLOW,
+    color: FOREGROUND,
+    border: "none",
+    borderRadius: 8,
+    fontWeight: 700,
     textTransform: "uppercase",
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: "0.05em",
     padding: "10px 18px",
-    boxShadow: `3px 3px 0 0 ${BLACK}`,
   },
   buttonSkip: {
-    color: BLACK,
+    color: MUTED,
     fontWeight: 700,
-    fontSize: 13,
+    fontSize: 11,
     textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    textDecoration: "underline",
+    letterSpacing: "0.14em",
   },
 };
 
@@ -87,7 +98,7 @@ const AppTour = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { track } = useAnalytics();
-  const { t } = useTranslation("app");
+  const { t, i18n } = useTranslation("app");
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -122,12 +133,13 @@ const AppTour = () => {
     if (!isConnected) setFinishPromptOpen(true);
   };
 
-  // Skipping hands the visitor back to the marketing site they came from.
-  // That is a different origin now, so it is a location change, not a route.
+  // Skipping hands the visitor back to the marketing site they came from — in
+  // the language they were reading it in. That is a different origin now, so it
+  // is a location change, not a route.
   const skipTour = () => {
     track("tour_skipped", { step_index: stepIndex });
     stop();
-    window.location.href = LANDING_URL;
+    window.location.href = landingUrl(i18n.resolvedLanguage ?? i18n.language);
   };
 
   // Advance to a step, navigating first if it lives on another route.
@@ -224,13 +236,13 @@ const AppTour = () => {
           last: t("dashboard.tour.last"),
           back: t("dashboard.tour.back"),
         }}
-        styles={neoStyles}
+        styles={tourStyles}
         options={{
-          primaryColor: LIME,
-          backgroundColor: WHITE,
-          textColor: BLACK,
-          arrowColor: WHITE,
-          overlayColor: "rgba(0, 0, 0, 0.55)",
+          primaryColor: YELLOW,
+          backgroundColor: BACKGROUND,
+          textColor: FOREGROUND,
+          arrowColor: BACKGROUND,
+          overlayColor: "rgba(0, 0, 0, 0.8)",
           spotlightRadius: 8,
           spotlightPadding: 8,
           zIndex: 10000,
@@ -243,9 +255,9 @@ const AppTour = () => {
         }}
       />
       <Dialog open={finishPromptOpen} onOpenChange={setFinishPromptOpen}>
-        <DialogContent className="neo-card-static max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">{t("dashboard.tour.allSetTitle")}</DialogTitle>
+            <DialogTitle className="ed-h3">{t("dashboard.tour.allSetTitle")}</DialogTitle>
             <DialogDescription className="font-medium">
               {t("dashboard.tour.allSetDesc")}
             </DialogDescription>

@@ -7,7 +7,8 @@ import sitemap from "@astrojs/sitemap";
 // whole reason it lives outside the Vite app.
 //
 // Locale paths are lowercased BCP-47 codes ("zh-cn"), and English is served
-// unprefixed at the root. See src/lib/i18n.ts for the code <-> path mapping.
+// unprefixed at the root. The code <-> path mapping lives in the shared
+// package, at @heirloom/i18n/landing.
 export default defineConfig({
   site: "https://heirlm.xyz",
   trailingSlash: "always",

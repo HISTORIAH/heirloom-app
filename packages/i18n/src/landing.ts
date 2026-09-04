@@ -18,7 +18,17 @@ import commonPt from "./locales/common/pt";
 import commonVi from "./locales/common/vi";
 import commonTr from "./locales/common/tr";
 
-import { DEFAULT_LANGUAGE, LANGUAGES, SUPPORTED_LOCALES } from "./languages";
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGES,
+  SUPPORTED_LOCALES,
+  PREFIXED_LOCALES,
+  localePath,
+  localeFromPath,
+  localeHref,
+  appHref,
+  LOCALE_PARAM,
+} from "./languages";
 import type { LandingMessages } from "./messages";
 
 /**
@@ -52,30 +62,6 @@ const commonMessages: Record<string, { language: string }> = {
   tr: commonTr,
 };
 
-/**
- * URL segment for a locale. English is served unprefixed at the root; the rest
- * sit under a lowercased BCP-47 code, so `zh-CN` is reachable at `/zh-cn/`.
- * Lowercase because paths are compared case-sensitively by most crawlers and a
- * mixed-case path invites duplicate URLs for one document.
- */
-export function localePath(code: string): string {
-  return code.toLowerCase();
-}
-
-/** The locale a path segment stands for, or undefined if it is not one. */
-export function localeFromPath(segment: string): string | undefined {
-  const lower = segment.toLowerCase();
-  return SUPPORTED_LOCALES.find((code) => code.toLowerCase() === lower);
-}
-
-/** Every locale that gets its own prefixed route — i.e. all but the default. */
-export const PREFIXED_LOCALES = SUPPORTED_LOCALES.filter((c) => c !== DEFAULT_LANGUAGE);
-
-/** Site-root-relative href for a locale's landing page. */
-export function localeHref(code: string): string {
-  return code === DEFAULT_LANGUAGE ? "/" : `/${localePath(code)}/`;
-}
-
 type Dict = Record<string, unknown>;
 
 function lookup(source: Dict, key: string): string | undefined {
@@ -106,5 +92,15 @@ export function languageLabel(code: string): string {
   return (commonMessages[code] ?? commonMessages[DEFAULT_LANGUAGE]!).language;
 }
 
-export { LANGUAGES, DEFAULT_LANGUAGE, SUPPORTED_LOCALES };
+export {
+  LANGUAGES,
+  DEFAULT_LANGUAGE,
+  SUPPORTED_LOCALES,
+  PREFIXED_LOCALES,
+  localePath,
+  localeFromPath,
+  localeHref,
+  appHref,
+  LOCALE_PARAM,
+};
 export type { LandingMessages };

@@ -5,12 +5,13 @@ import Mosaic from "@/components/surface/Mosaic.astro";
 import Tile from "@/components/surface/Tile.astro";
 import Section from "@/components/landing/Section.astro";
 import SectionLead from "@/components/landing/SectionLead.astro";
-import { APP_CREATE_VAULT_URL } from "@/lib/site";
+import { appCreateVaultUrl } from "@/lib/site";
 
 interface Props {
   t: LandingT;
+  locale: string;
 }
-const { t } = Astro.props;
+const { t, locale } = Astro.props;
 
 type Attr = true | false | "partial";
 type Tone = "dark" | "light" | "highlight";
@@ -119,7 +120,7 @@ const srFor = (value: Attr) =>
             class={`group relative transition-colors duration-200 ${st.cell}`}
           >
             <Cell
-              href={s.best ? APP_CREATE_VAULT_URL : undefined}
+              href={s.best ? appCreateVaultUrl(locale) : undefined}
               data-track={s.best ? "launch_app_comparison" : undefined}
               class={`flex h-full w-full flex-col justify-between p-6 md:p-7 xl:p-8 2xl:p-10${s.best ? " text-left" : ""}`}
             >

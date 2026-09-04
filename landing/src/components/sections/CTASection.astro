@@ -6,12 +6,13 @@ import Tile from "@/components/surface/Tile.astro";
 import Cap from "@/components/surface/Cap.astro";
 import Section from "@/components/landing/Section.astro";
 import HeroWordmark from "@/components/HeroWordmark.astro";
-import { APP_CREATE_VAULT_URL, DOCS_URL } from "@/lib/site";
+import { appCreateVaultUrl, DOCS_URL } from "@/lib/site";
 
 interface Props {
   t: LandingT;
+  locale: string;
 }
-const { t } = Astro.props;
+const { t, locale } = Astro.props;
 ---
 
 <Section index={10} total={10} label={t("cta.cap")}>
@@ -28,7 +29,7 @@ const { t } = Astro.props;
         <p class="ed-lede mt-6 max-w-[46ch] text-background/60">{t("cta.lede")}</p>
         <div class="mt-8 flex flex-wrap gap-3">
           <Button
-            href={APP_CREATE_VAULT_URL}
+            href={appCreateVaultUrl(locale)}
             variant="flat-yellow"
             size="lg"
             data-track="launch_app_cta"

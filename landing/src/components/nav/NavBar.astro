@@ -6,23 +6,42 @@
  * a wallet is hand the visitor over to the app, so that is all it does.
  */
 import type { LandingT } from "@heirloom/i18n/landing";
-import { APP_URL } from "@/lib/site";
+import { appPath, appUrl } from "@/lib/site";
 import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
 import Logo from "@/components/Logo.astro";
 
 interface Props {
   t: LandingT;
+  locale: string;
   /** Site-root-relative home for the locale being rendered. */
   home: string;
 }
-const { t, home } = Astro.props;
+const { t, locale, home } = Astro.props;
 
+// Every one of these leaves the origin, and each carries the locale over with
+// it — see lib/site.ts.
 const destinations = [
-  { href: `${APP_URL}/dashboard`, label: t("nav.dashboard"), icon: "layout-dashboard" },
-  { href: `${APP_URL}/claim`, label: t("nav.claimInheritance"), icon: "gift" },
-  { href: `${APP_URL}/heartbeat`, label: t("nav.heartbeat"), icon: "heart" },
+  {
+    href: appPath("/dashboard", locale),
+    label: t("nav.dashboard"),
+    icon: "layout-dashboard",
+    track: "launch_app_nav_dashboard",
+  },
+  {
+    href: appPath("/claim", locale),
+    label: t("nav.claimInheritance"),
+    icon: "gift",
+    track: "launch_app_nav_claim",
+  },
+  {
+    href: appPath("/heartbeat", locale),
+    label: t("nav.heartbeat"),
+    icon: "heart",
+    track: "launch_app_nav_heartbeat",
+  },
 ];
+const launchHref = appUrl(locale);
 ---
 
 <nav class="sticky top-0 z-50 border-b border-tile-line bg-background" data-nav>
@@ -36,6 +55,7 @@ const destinations = [
         destinations.map((d) => (
           <a
             href={d.href}
+            data-track={d.track}
             class="flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft"
           >
             <Icon name={d.icon} class="h-4 w-4" strokeWidth={2} />
@@ -44,7 +64,7 @@ const destinations = [
         ))
       }
       <Button
-        href={APP_URL}
+        href={launchHref}
         variant="flat-yellow"
         size="sm"
         class="ml-3"
@@ -75,6 +95,7 @@ const destinations = [
         destinations.map((d) => (
           <a
             href={d.href}
+            data-track={d.track}
             class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
           >
             <Icon name={d.icon} class="h-4 w-4" strokeWidth={2} />
@@ -83,7 +104,7 @@ const destinations = [
         ))
       }
       <Button
-        href={APP_URL}
+        href={launchHref}
         variant="flat-yellow"
         size="lg"
         class="mt-3 w-full"

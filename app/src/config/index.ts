@@ -1,8 +1,21 @@
+import { localeHref } from "@heirloom/i18n";
+
 // The marketing site is a separate Astro build on the apex domain; this app
 // serves app.heirlm.xyz. Anything in here that means "go back to the site"
 // leaves the origin, so it is a URL rather than a router path.
-export const LANDING_URL =
-  import.meta.env.VITE_LANDING_URL?.trim() || "https://heirlm.xyz";
+export const LANDING_URL = (
+  import.meta.env.VITE_LANDING_URL?.trim() || "https://heirlm.xyz"
+).replace(/\/+$/, "");
+
+/**
+ * The landing, in the language the app is currently showing.
+ *
+ * The two origins each hold the locale their own way — a path prefix there, a
+ * localStorage key here — so a visitor who arrived from `/ja/` and clicks Home
+ * would otherwise be handed back the English page they never asked for. The
+ * inbound half of the same contract is `?lang=`; see `@heirloom/i18n`.
+ */
+export const landingUrl = (locale: string) => `${LANDING_URL}${localeHref(locale)}`;
 
 export const SOLANA_RPC_ENDPOINT =
   import.meta.env.VITE_SOLANA_RPC_ENDPOINT || "http://127.0.0.1:8899";

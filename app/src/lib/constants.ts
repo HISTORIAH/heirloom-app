@@ -10,7 +10,8 @@ export const SECONDS_PER_MINUTE = 60;
 export const SECONDS_PER_HOUR = 3600;
 export const SECONDS_PER_DAY = 86400;
 
-export const POSTHOG_HOST = "https://us.i.posthog.com";
+export const POSTHOG_HOST =
+  import.meta.env.VITE_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
 
 export const USDC_DEVNET_MINT =
   "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
