@@ -9,7 +9,7 @@ readme = "README.md"
 license-file = "../../LICENSE"
 
 [dependencies]
-anchor-lang = "1.2.0"
+anchor-lang = { version = "2.0.0-rc.1", features = [] }
 borsh = "1.8.1"
 num-derive = "0.5.1"
 num-traits = "0.2.19"

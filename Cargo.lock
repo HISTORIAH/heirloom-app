@@ -1975,7 +1975,7 @@ dependencies = [
 name = "heirloom-client"
 version = "0.0.1"
 dependencies = [
- "anchor-lang 1.2.0",
+ "anchor-lang 2.0.0-rc.1",
  "borsh",
  "num-derive 0.5.1",
  "num-traits",
