@@ -2,6 +2,7 @@
 members = [
     "programs/heirloom",
     "programs/heirloom-ika",
+    "clients/heirloom/rust"
 ]
 resolver = "2"
 

@@ -5,7 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-  pub(crate) mod r#deposit_type;
+pub(crate) mod r#deposit_type;
 
-  pub use self::r#deposit_type::*;
-
+pub use self::r#deposit_type::*;
