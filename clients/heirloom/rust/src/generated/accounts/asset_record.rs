@@ -5,78 +5,80 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
-
+use borsh::BorshSerialize;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 pub struct AssetRecord {
-pub discriminator: [u8; 8],
-pub bump: u8,
-pub principal_deployed: u64,
-/// ground truth for close-safety, refreshed from the actual Lulo LP
-/// balance after each withdrawal
-pub has_protected_exposure: bool,
-pub has_boosted_exposure: bool,
-/// count of in-flight `init_withdraw_regular_lulo` requests not yet completed
-pub pending_boosted_withdrawals: u16,
+    pub discriminator: [u8; 8],
+    pub bump: u8,
+    pub principal_deployed: u64,
+    /// ground truth for close-safety, refreshed from the actual Lulo LP
+    /// balance after each withdrawal
+    pub has_protected_exposure: bool,
+    pub has_boosted_exposure: bool,
+    /// count of in-flight `init_withdraw_regular_lulo` requests not yet completed
+    pub pending_boosted_withdrawals: u16,
 }
-
 
 pub const ASSET_RECORD_DISCRIMINATOR: [u8; 8] = [26, 40, 78, 169, 45, 6, 254, 10];
 
 impl AssetRecord {
-      pub const LEN: usize = 21;
-  
-  
-  
-  #[inline(always)]
-  pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
-    let mut data = data;
-    Self::deserialize(&mut data)
-  }
+    pub const LEN: usize = 21;
+
+    #[inline(always)]
+    pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
+        let mut data = data;
+        Self::deserialize(&mut data)
+    }
 }
 
 impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for AssetRecord {
-  type Error = std::io::Error;
+    type Error = std::io::Error;
 
-  fn try_from(account_info: &solana_account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
-      let mut data: &[u8] = &(*account_info.data).borrow();
-      Self::deserialize(&mut data)
-  }
+    fn try_from(account_info: &solana_account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
+        let mut data: &[u8] = &(*account_info.data).borrow();
+        Self::deserialize(&mut data)
+    }
 }
 
 #[cfg(feature = "fetch")]
 pub fn fetch_asset_record(
-  rpc: &solana_rpc_client::rpc_client::RpcClient,
-  address: &solana_address::Address,
+    rpc: &solana_rpc_client::rpc_client::RpcClient,
+    address: &solana_address::Address,
 ) -> Result<crate::shared::DecodedAccount<AssetRecord>, std::io::Error> {
-  let accounts = fetch_all_asset_record(rpc, &[*address])?;
-  Ok(accounts[0].clone())
+    let accounts = fetch_all_asset_record(rpc, &[*address])?;
+    Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
 pub fn fetch_all_asset_record(
-  rpc: &solana_rpc_client::rpc_client::RpcClient,
-  addresses: &[solana_address::Address],
+    rpc: &solana_rpc_client::rpc_client::RpcClient,
+    addresses: &[solana_address::Address],
 ) -> Result<Vec<crate::shared::DecodedAccount<AssetRecord>>, std::io::Error> {
-    let accounts = rpc.get_multiple_accounts(addresses)
-      .map_err(|e| std::io::Error::other(e.to_string()))?;
+    let accounts = rpc
+        .get_multiple_accounts(addresses)
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     let mut decoded_accounts: Vec<crate::shared::DecodedAccount<AssetRecord>> = Vec::new();
     for i in 0..addresses.len() {
-      let address = addresses[i];
-      let account = accounts[i].as_ref()
-        .ok_or(std::io::Error::other(format!("Account not found: {address}")))?;
-      let data = AssetRecord::from_bytes(&account.data)?;
-      decoded_accounts.push(crate::shared::DecodedAccount { address, account: account.clone(), data });
+        let address = addresses[i];
+        let account = accounts[i].as_ref().ok_or(std::io::Error::other(format!(
+            "Account not found: {address}"
+        )))?;
+        let data = AssetRecord::from_bytes(&account.data)?;
+        decoded_accounts.push(crate::shared::DecodedAccount {
+            address,
+            account: account.clone(),
+            data,
+        });
     }
     Ok(decoded_accounts)
 }
 
 #[cfg(feature = "fetch")]
 pub fn fetch_maybe_asset_record(
-  rpc: &solana_rpc_client::rpc_client::RpcClient,
-  address: &solana_address::Address,
+    rpc: &solana_rpc_client::rpc_client::RpcClient,
+    address: &solana_address::Address,
 ) -> Result<crate::shared::MaybeAccount<AssetRecord>, std::io::Error> {
     let accounts = fetch_all_maybe_asset_record(rpc, &[*address])?;
     Ok(accounts[0].clone())
@@ -84,49 +86,52 @@ pub fn fetch_maybe_asset_record(
 
 #[cfg(feature = "fetch")]
 pub fn fetch_all_maybe_asset_record(
-  rpc: &solana_rpc_client::rpc_client::RpcClient,
-  addresses: &[solana_address::Address],
+    rpc: &solana_rpc_client::rpc_client::RpcClient,
+    addresses: &[solana_address::Address],
 ) -> Result<Vec<crate::shared::MaybeAccount<AssetRecord>>, std::io::Error> {
-    let accounts = rpc.get_multiple_accounts(addresses)
-      .map_err(|e| std::io::Error::other(e.to_string()))?;
+    let accounts = rpc
+        .get_multiple_accounts(addresses)
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     let mut decoded_accounts: Vec<crate::shared::MaybeAccount<AssetRecord>> = Vec::new();
     for i in 0..addresses.len() {
-      let address = addresses[i];
-      if let Some(account) = accounts[i].as_ref() {
-        let data = AssetRecord::from_bytes(&account.data)?;
-        decoded_accounts.push(crate::shared::MaybeAccount::Exists(crate::shared::DecodedAccount { address, account: account.clone(), data }));
-      } else {
-        decoded_accounts.push(crate::shared::MaybeAccount::NotFound(address));
-      }
+        let address = addresses[i];
+        if let Some(account) = accounts[i].as_ref() {
+            let data = AssetRecord::from_bytes(&account.data)?;
+            decoded_accounts.push(crate::shared::MaybeAccount::Exists(
+                crate::shared::DecodedAccount {
+                    address,
+                    account: account.clone(),
+                    data,
+                },
+            ));
+        } else {
+            decoded_accounts.push(crate::shared::MaybeAccount::NotFound(address));
+        }
     }
-  Ok(decoded_accounts)
+    Ok(decoded_accounts)
 }
 
-  #[cfg(feature = "anchor")]
-  impl anchor_lang::AccountDeserialize for AssetRecord {
-      fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
+#[cfg(feature = "anchor")]
+impl anchor_lang::AccountDeserialize for AssetRecord {
+    fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
-      }
-  }
+    }
+}
 
-  #[cfg(feature = "anchor")]
-  impl anchor_lang::AccountSerialize for AssetRecord {}
+#[cfg(feature = "anchor")]
+impl anchor_lang::AccountSerialize for AssetRecord {}
 
-  #[cfg(feature = "anchor")]
-  impl anchor_lang::Owner for AssetRecord {
-      fn owner() -> anchor_lang::solana_program::pubkey::Pubkey {
-        anchor_lang::solana_program::pubkey::Pubkey::from(
-          crate::HEIRLOOM_ID.to_bytes()
-        )
-      }
-  }
+#[cfg(feature = "anchor")]
+impl anchor_lang::Owner for AssetRecord {
+    fn owner() -> anchor_lang::solana_program::pubkey::Pubkey {
+        anchor_lang::solana_program::pubkey::Pubkey::from(crate::HEIRLOOM_ID.to_bytes())
+    }
+}
 
-  #[cfg(feature = "anchor-idl-build")]
-  impl anchor_lang::IdlBuild for AssetRecord {}
+#[cfg(feature = "anchor-idl-build")]
+impl anchor_lang::IdlBuild for AssetRecord {}
 
-  
-  #[cfg(feature = "anchor-idl-build")]
-  impl anchor_lang::Discriminator for AssetRecord {
+#[cfg(feature = "anchor-idl-build")]
+impl anchor_lang::Discriminator for AssetRecord {
     const DISCRIMINATOR: &[u8] = &[0; 8];
-  }
-
+}

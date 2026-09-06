@@ -1,0 +1,28 @@
+[package]
+name = "heirloom-client"
+version = "0.0.1"
+edition.workspace = true
+rust-version = "1.98.0"
+description = "Heirloom client generated with Codama."
+repository = "https://github.com/smithii/mixoor"
+readme = "README.md"
+license-file = "../../LICENSE"
+
+[dependencies]
+anchor-lang = { version = "2.0.0-rc.1", optional = true }
+borsh = { version = "1.8.1", features = ["derive"] }
+num-derive = "0.5.1"
+num-traits = "0.2.19"
+solana-account = "4.7.0"
+solana-account-info = "3.1.1"
+solana-address = { version = "2.7.0", features = ["borsh"] }
+solana-cpi = "3.1.0"
+solana-instruction = "3.5.0"
+solana-program-error = "3.0.1"
+solana-rpc-client = { version = "4.4.0-alpha.3", optional = true }
+thiserror = "2.0.20"
+
+[features]
+fetch = ["dep:solana-rpc-client"]
+anchor = ["dep:anchor-lang"]
+anchor-idl-build = ["anchor"]
