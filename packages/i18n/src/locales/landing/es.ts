@@ -20,6 +20,19 @@ const landing: LandingMessages = {
     homeTitle: "Heirloom — Protocolo de herencia en Solana y bóveda cripto",
     homeDescription:
       "Un protocolo de herencia en Solana para continuidad de autocustodia. Bloquea SOL y tokens SPL en una bóveda de latidos, regístrate para demostrar que estás vivo, o tu heredero hereda en cadena.",
+    ogImageAlt:
+      "Heirloom — tu cartera debería sobrevivirte, aunque tu frase semilla no lo haga.",
+    twitterImageAlt: "Heirloom — patrimonios de autocustodia en Solana.",
+    orgDescription:
+      "Heirloom es un protocolo de herencia nativo de Solana. Bloquea activos digitales en un patrimonio que controlas, genera rendimiento sobre saldos inactivos, recupera una cartera perdida con un respaldo que tú nombras, y transfiere en cadena si dejas de registrarte: sin custodios ni compartir la frase semilla.",
+    websiteDescription:
+      "Patrimonios de autocustodia en Solana que generan rendimiento, recuperan carteras perdidas y se transfieren en cadena.",
+    appDescription:
+      "Un protocolo de patrimonio en cadena y sin confianza en Solana para continuidad de autocustodia. Bloquea activos digitales en un patrimonio, dirige saldos inactivos a préstamos Lulo o staking nativo de SOL para rendimiento, y nombra las carteras que pueden reclamar — incluido un respaldo propio para recuperar la cartera. Regístrate a tu ritmo; si los registros se detienen, corre un período de gracia y las carteras nombradas reclaman automáticamente: no custodial, sin compartir la frase semilla.",
+    appKeywords:
+      "protocolo de patrimonio Solana, patrimonio de autocustodia, planificación sucesoria en cadena, recuperación de cartera, recuperación de cartera perdida Solana, rendimiento sobre activos inactivos, préstamos Lulo, staking nativo de SOL, herencia en cadena, transferencia sin confianza, continuidad de autocustodia, bóveda SOL, bóveda de tokens SPL, bóveda de autocustodia, cartera de recuperación del tutor, beneficiarios programables, rendimiento no custodial",
+    offerDescription:
+      "Abrir un patrimonio y registrarte es gratis; aplican las comisiones de red de Solana. Las reclamaciones tienen una comisión de protocolo del 0,75 %, las retiradas de emergencia del 0,5 %, y las estrategias de rendimiento un 10 % solo sobre el rendimiento generado.",
   },
   hero: {
     kicker: "Bóvedas de autocustodia en Solana",

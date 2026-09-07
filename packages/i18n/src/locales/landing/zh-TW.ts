@@ -20,6 +20,17 @@ const landing: LandingMessages = {
     homeTitle: "Heirloom — Solana 繼承協議與加密金庫",
     homeDescription:
       "面向自託管延續的 Solana 繼承協議。把 SOL 和 SPL 代幣鎖進心跳金庫，簽到以證明還活著，否則繼承人將在鏈上繼承。",
+    ogImageAlt: "Heirloom — 即便助記詞沒了，你的錢包也應比你活得更久。",
+    twitterImageAlt: "Heirloom — Solana 上的自託管遺產。",
+    orgDescription:
+      "Heirloom 是原生部署在 Solana 上的繼承協議。把數位資產鎖進由你控制的遺產，閒置餘額可賺取收益，透過你指定的備份找回遺失錢包；若停止簽到，資產將在鏈上移交。沒有託管方，也不需要分享助記詞。",
+    websiteDescription: "Solana 上的自託管遺產：賺取收益、找回遺失錢包，並在鏈上移交。",
+    appDescription:
+      "一套無需信任的 Solana 鏈上遺產協議，用於自託管延續。把數位資產鎖進遺產，把閒置餘額接入 Lulo 借貸或原生 SOL 質押以賺取收益，並指定可領取的錢包——包括你自己的備份錢包。按自己的節奏簽到；一旦簽到停止，寬限期結束後，指定錢包會自動領取。非託管，無需分享助記詞。",
+    appKeywords:
+      "Solana 遺產協議, 自託管遺產, 鏈上遺產規劃, 錢包找回, Solana 遺失錢包找回, 閒置資產收益, Lulo 借貸, 原生 SOL 質押, 鏈上繼承, 無需信任的移交, 自託管延續, SOL 金庫, SPL 代幣金庫, 自託管金庫, 監護人找回錢包, 可程式受益人, 非託管收益",
+    offerDescription:
+      "開設遺產和簽到免費；需支付 Solana 網路手續費。領取收取 0.75% 協議費，緊急提取收取 0.5%，收益策略僅對已賺取收益收取 10%。",
   },
   hero: {
     kicker: "Solana 上的自託管金庫",

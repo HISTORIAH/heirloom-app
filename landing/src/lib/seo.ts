@@ -20,8 +20,9 @@ export const OG_LOCALES: Record<string, string> = {
  * already drifted from the FAQ it described — generating it is the only way
  * the two stay in step.
  *
- * Organization, WebSite and SoftwareApplication describe one entity each and
- * keep a stable @id across locales; only the FAQ is per-document.
+ * Organization, WebSite and SoftwareApplication keep a stable @id across
+ * locales so crawlers see one entity. Their copy is still per-document, from
+ * the same locale files as the page.
  */
 export function structuredData(t: LandingT, canonical: string) {
   const faqs = Array.from({ length: 11 }, (_, i) => ({
@@ -42,8 +43,7 @@ export function structuredData(t: LandingT, canonical: string) {
         name: "Heirloom",
         url: `${SITE_URL}/`,
         logo: `${SITE_URL}/favicon.png`,
-        description:
-          "Heirloom is a Solana-native inheritance protocol. Lock digital assets into an estate you control, earn yield on idle balances, recover a lost wallet through a backup you name, and hand off on-chain if you stop checking in — no custodians, no seed-phrase sharing.",
+        description: t("seo.orgDescription"),
         sameAs: [TWITTER_URL, GITHUB_URL, DOCS_URL],
       },
       {
@@ -51,8 +51,7 @@ export function structuredData(t: LandingT, canonical: string) {
         "@id": `${SITE_URL}/#website`,
         url: `${SITE_URL}/`,
         name: "Heirloom",
-        description:
-          "Self-custody estates on Solana that earn yield, recover lost wallets, and hand off on-chain.",
+        description: t("seo.websiteDescription"),
         publisher: { "@id": `${SITE_URL}/#organization` },
       },
       {
@@ -62,17 +61,14 @@ export function structuredData(t: LandingT, canonical: string) {
         url: `${SITE_URL}/`,
         applicationCategory: "FinanceApplication",
         operatingSystem: "Web, Solana",
-        description:
-          "A trustless, on-chain estate protocol on Solana for self-custody continuity. Lock digital assets into an estate, route idle balances into Lulo lending or native SOL staking for yield, and name the wallets that can claim — including a backup of your own for wallet recovery. Check in on your own schedule; if the check-ins stop, a grace period runs and the named wallets claim their splits automatically — non-custodial, with no seed-phrase sharing.",
-        keywords:
-          "Solana estate protocol, self-custody estate, on-chain estate planning, wallet recovery, lost wallet recovery Solana, yield on idle assets, Lulo lending, native SOL staking, on-chain inheritance, trustless handoff, self-custody continuity, SOL vault, SPL token vault, self-custody vault, guardian recovery wallet, programmable beneficiaries, non-custodial yield",
+        description: t("seo.appDescription"),
+        keywords: t("seo.appKeywords"),
         publisher: { "@id": `${SITE_URL}/#organization` },
         offers: {
           "@type": "Offer",
           price: "0",
           priceCurrency: "USD",
-          description:
-            "Free to open an estate and check in; standard Solana network fees apply. Claims incur a 0.75% protocol fee, emergency withdrawals a 0.5% fee, and yield strategies a 10% fee on yield earned only.",
+          description: t("seo.offerDescription"),
         },
       },
       {

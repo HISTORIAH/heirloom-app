@@ -20,6 +20,19 @@ const landing: LandingMessages = {
     homeTitle: "Heirloom — Giao thức Thừa kế Solana & Kho bạc Crypto",
     homeDescription:
       "Giao thức thừa kế Solana cho liên tục tự lưu ký. Khóa SOL và token SPL trong kho bạc nhịp tim, điểm danh để chứng minh còn sống, hoặc người thừa kế thừa hưởng on-chain.",
+    ogImageAlt:
+      "Heirloom — ví của bạn nên sống lâu hơn bạn, ngay cả khi cụm từ khôi phục thì không.",
+    twitterImageAlt: "Heirloom — di sản tự lưu ký trên Solana.",
+    orgDescription:
+      "Heirloom là giao thức thừa kế gốc Solana. Khóa tài sản số vào di sản bạn kiểm soát, kiếm lợi suất trên số dư nhàn rỗi, khôi phục ví mất qua bản sao lưu bạn chỉ định, và chuyển on-chain nếu bạn ngừng điểm danh — không bên lưu ký, không chia sẻ cụm từ khôi phục.",
+    websiteDescription:
+      "Di sản tự lưu ký trên Solana: kiếm lợi suất, khôi phục ví mất, và chuyển on-chain.",
+    appDescription:
+      "Giao thức di sản on-chain, không cần tin tưởng trên Solana cho liên tục tự lưu ký. Khóa tài sản số vào di sản, đưa số dư nhàn rỗi vào cho vay Lulo hoặc staking SOL gốc để lấy lợi suất, và chỉ định các ví được quyền nhận — kể cả ví sao lưu của chính bạn. Điểm danh theo lịch của bạn; nếu điểm danh dừng, thời gian ân hạn chạy rồi các ví được chỉ định tự nhận — không lưu ký, không chia sẻ cụm từ khôi phục.",
+    appKeywords:
+      "giao thức di sản Solana, di sản tự lưu ký, lập kế hoạch thừa kế on-chain, khôi phục ví, khôi phục ví mất Solana, lợi suất trên tài sản nhàn rỗi, cho vay Lulo, staking SOL gốc, thừa kế on-chain, chuyển giao không cần tin tưởng, liên tục tự lưu ký, kho SOL, kho token SPL, kho tự lưu ký, ví khôi phục người giám hộ, người thụ hưởng lập trình được, lợi suất không lưu ký",
+    offerDescription:
+      "Mở di sản và điểm danh miễn phí; phí mạng Solana vẫn áp dụng. Nhận thừa kế chịu phí giao thức 0,75%, rút khẩn cấp 0,5%, và chiến lược lợi suất 10% chỉ trên lợi suất đã kiếm được.",
   },
   hero: {
     kicker: "Kho bạc tự lưu ký trên Solana",
@@ -178,7 +191,7 @@ const landing: LandingMessages = {
     headline2: "sánh kịp.",
     attrSelfCustodial: "Tự lưu ký",
     attrTrustless: "Không tin cậy",
-    attrOnChain: "On-chain",
+    attrOnChain: "Trên chuỗi",
     attrEarns: "Sinh lời khi bị khóa",
     best: "Tốt nhất · 05",
     yes: "có",

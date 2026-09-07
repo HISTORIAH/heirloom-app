@@ -20,6 +20,19 @@ const landing: LandingMessages = {
     homeTitle: "Heirloom — Solana Miras Protokolü ve Kripto Kasası",
     homeDescription:
       "Kendi saklamalı süreklilik için bir Solana miras protokolü. SOL ve SPL tokenlarını bir kalp atışı kasasına kilitleyin, hayatta olduğunuzu kanıtlamak için check-in yapın, yoksa mirasçınız zincir üstünde miras alır.",
+    ogImageAlt:
+      "Heirloom — cüzdanınız sizden uzun yaşamalı, tohum cümleniz yaşamasın bile.",
+    twitterImageAlt: "Heirloom — Solana'da kendi saklamalı miraslar.",
+    orgDescription:
+      "Heirloom, Solana yerlisi bir miras protokolüdür. Dijital varlıkları sizin kontrol ettiğiniz bir mirasa kilitleyin, atıl bakiyelerde getiri kazanın, adlandırdığınız bir yedekle kayıp cüzdanı kurtarın ve check-in durursa zincir üstünde devredin — saklamacı yok, tohum cümlesi paylaşımı yok.",
+    websiteDescription:
+      "Getiri kazanan, kayıp cüzdanları kurtaran ve zincir üstünde devreden Solana kendi saklamalı mirasları.",
+    appDescription:
+      "Kendi saklamalı süreklilik için Solana'da güvensiz, zincir üstü bir miras protokolü. Dijital varlıkları bir mirasa kilitleyin, atıl bakiyeleri getiri için Lulo borç vermeye veya yerel SOL staking'e yönlendirin ve talep edebilecek cüzdanları adlandırın — cüzdan kurtarma için kendi yedeğiniz dahil. Kendi takviminizde check-in yapın; check-in durursa bir lütuf süresi işler ve adlandırılmış cüzdanlar otomatik talep eder — saklamasız, tohum cümlesi paylaşımı yok.",
+    appKeywords:
+      "Solana miras protokolü, kendi saklamalı miras, zincir üstü miras planlaması, cüzdan kurtarma, Solana kayıp cüzdan kurtarma, atıl varlıklarda getiri, Lulo borç verme, yerel SOL staking, zincir üstü miras, güvensiz devir, kendi saklamalı süreklilik, SOL kasası, SPL token kasası, kendi saklamalı kasa, vasi kurtarma cüzdanı, programlanabilir lehtarlar, saklamasız getiri",
+    offerDescription:
+      "Miras açmak ve check-in yapmak ücretsizdir; standart Solana ağ ücretleri geçerlidir. Talepler %0,75 protokol ücreti, acil çekimler %0,5, getiri stratejileri ise yalnızca kazanılan getiri üzerinden %10 alır.",
   },
   hero: {
     kicker: "Solana'da kendi saklamalı kasalar",
@@ -36,7 +49,7 @@ const landing: LandingMessages = {
     rail2Value: "Getirinin %10'u, anaparanın %0'ı",
     rail3Label: "Check-in'ler",
     rail3Value: "~400ms, bir cent'in küçük bir kısmı",
-    rail4Label: "Program",
+    rail4Label: "Yazılım",
     rail4Value: "Bağımsız olarak denetlendi",
     demoTitle: "Heirloom Demosu",
     demoDescription: "Heirloom'un nasıl çalıştığını gösteren gömülü YouTube videosu.",

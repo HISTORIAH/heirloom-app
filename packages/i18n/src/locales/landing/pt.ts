@@ -20,6 +20,19 @@ const landing: LandingMessages = {
     homeTitle: "Heirloom — Protocolo de Herança Solana e Cofre Cripto",
     homeDescription:
       "Um protocolo de herança na Solana para continuidade de autocustódia. Trave SOL e tokens SPL em um cofre de batimentos, faça check-in para provar vida, ou seu herdeiro herda on-chain.",
+    ogImageAlt:
+      "Heirloom — sua carteira deve sobreviver a você, mesmo que a frase-semente não sobreviva.",
+    twitterImageAlt: "Heirloom — patrimônios de autocustódia na Solana.",
+    orgDescription:
+      "Heirloom é um protocolo de herança nativo da Solana. Tranque ativos digitais em um patrimônio que você controla, rendam sobre saldos ociosos, recupere uma carteira perdida com um backup que você nomeia, e transfira on-chain se parar de fazer check-in — sem custodiante e sem compartilhar a frase-semente.",
+    websiteDescription:
+      "Patrimônios de autocustódia na Solana que rendem, recuperam carteiras perdidas e transferem on-chain.",
+    appDescription:
+      "Um protocolo de patrimônio on-chain e sem confiança na Solana para continuidade de autocustódia. Tranque ativos digitais em um patrimônio, direcione saldos ociosos para empréstimos Lulo ou staking nativo de SOL para rendimento, e nomeie as carteiras que podem reivindicar — inclusive um backup seu para recuperação. Faça check-in no seu ritmo; se os check-ins pararem, um período de graça corre e as carteiras nomeadas reivindicam automaticamente — sem custódia e sem compartilhar a frase-semente.",
+    appKeywords:
+      "protocolo de patrimônio Solana, patrimônio de autocustódia, planejamento sucessório on-chain, recuperação de carteira, recuperação de carteira perdida Solana, rendimento sobre ativos ociosos, empréstimos Lulo, staking nativo de SOL, herança on-chain, transferência sem confiança, continuidade de autocustódia, cofre SOL, cofre de tokens SPL, cofre de autocustódia, carteira de recuperação do tutor, beneficiários programáveis, rendimento não custodial",
+    offerDescription:
+      "Abrir um patrimônio e fazer check-in é grátis; aplicam-se as taxas de rede da Solana. Reivindicações têm taxa de protocolo de 0,75%, saques de emergência 0,5%, e estratégias de rendimento 10% apenas sobre o rendimento obtido.",
   },
   hero: {
     kicker: "Cofres de autocustódia na Solana",
@@ -34,7 +47,7 @@ const landing: LandingMessages = {
     rail1Value: "Só o programa move fundos",
     rail2Label: "Taxa",
     rail2Value: "10% do rendimento, 0% do principal",
-    rail3Label: "Check-ins",
+    rail3Label: "Confirmações",
     rail3Value: "~400ms, uma fração de centavo",
     rail4Label: "Programa",
     rail4Value: "Auditado de forma independente",
@@ -178,7 +191,7 @@ const landing: LandingMessages = {
     headline2: "chega perto.",
     attrSelfCustodial: "Autocustódia",
     attrTrustless: "Sem confiança",
-    attrOnChain: "On-chain",
+    attrOnChain: "Na cadeia",
     attrEarns: "Rende enquanto está travado",
     best: "Melhor · 05",
     yes: "sim",
