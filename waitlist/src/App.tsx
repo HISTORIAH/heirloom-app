@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
+import { LanguageSwitcher, localeHref, useTranslation } from "@heirloom/i18n";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function App() {
-  const { t } = useTranslation("waitlist");
+  const { t, i18n } = useTranslation("waitlist");
+  const landingHome = `https://heirlm.xyz${localeHref(i18n.resolvedLanguage ?? i18n.language)}`;
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -95,7 +96,7 @@ export default function App() {
                     <p className="success-inbox">{t("success.inbox")}</p>
                   </div>
                 </div>
-                <a className="success-devnet-action" href="https://heirlm.xyz">
+                <a className="success-devnet-action" href={landingHome}>
                   {t("success.devnetAction")}
                   <span aria-hidden="true">↗</span>
                 </a>

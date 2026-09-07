@@ -18,6 +18,19 @@ const landing = {
     homeTitle: "Heirloom — Solana Inheritance Protocol",
     homeDescription:
       "A Solana inheritance protocol for self-custody continuity. Lock digital assets in a heartbeat estate, check in to prove life, or your heir inherits on-chain.",
+    ogImageAlt:
+      "Heirloom — your wallet should outlive you, even if your seed phrase doesn't.",
+    twitterImageAlt: "Heirloom — self-custody estates on Solana.",
+    orgDescription:
+      "Heirloom is a Solana-native inheritance protocol. Lock digital assets into an estate you control, earn yield on idle balances, recover a lost wallet through a backup you name, and hand off on-chain if you stop checking in — no custodians, no seed-phrase sharing.",
+    websiteDescription:
+      "Self-custody estates on Solana that earn yield, recover lost wallets, and hand off on-chain.",
+    appDescription:
+      "A trustless, on-chain estate protocol on Solana for self-custody continuity. Lock digital assets into an estate, route idle balances into Lulo lending or native SOL staking for yield, and name the wallets that can claim — including a backup of your own for wallet recovery. Check in on your own schedule; if the check-ins stop, a grace period runs and the named wallets claim their splits automatically — non-custodial, with no seed-phrase sharing.",
+    appKeywords:
+      "Solana estate protocol, self-custody estate, on-chain estate planning, wallet recovery, lost wallet recovery Solana, yield on idle assets, Lulo lending, native SOL staking, on-chain inheritance, trustless handoff, self-custody continuity, SOL vault, SPL token vault, self-custody vault, guardian recovery wallet, programmable beneficiaries, non-custodial yield",
+    offerDescription:
+      "Free to open an estate and check in; standard Solana network fees apply. Claims incur a 0.75% protocol fee, emergency withdrawals a 0.5% fee, and yield strategies a 10% fee on yield earned only.",
   },
   hero: {
     kicker: "Self-custody estates on Solana",
