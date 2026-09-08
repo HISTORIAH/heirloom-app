@@ -17,7 +17,7 @@ analytics is off.
 | `/es/` `/pt/` `/ja/` `/ko/` `/vi/` `/tr/` `/zh-cn/` `/zh-tw/` | one document each, with `hreflang` alternates |
 | `/404.html` | not a SPA fallback — unknown paths 404 |
 | `/sitemap-index.xml` | generated, with per-locale alternates |
-| `_redirects` | old app paths 301 → `app.heirlm.xyz`, and `docs.heirlm.xyz` → `/docs/` |
+| `_redirects` | old app paths 301 → `app.heirlm.xyz` |
 | `docs/` | not built here — copied in from the `docs` package, see below |
 | `_headers` | immutable caching for `/_astro/*` |
 

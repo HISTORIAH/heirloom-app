@@ -9,8 +9,10 @@ a `docs.` subdomain. That, and the fact that every page is a finished document
 rather than a shell a crawler has to execute, is the whole reason it is built
 this way.
 
-It replaced a Mintlify site at `docs.heirlm.xyz`, which now 301s here — see
-`landing/public/_redirects`.
+It replaced a Mintlify site at `docs.heirlm.xyz`. That hostname is gone rather
+than redirected: Workers static assets reject an absolute source in
+`_redirects`, and the old site was never crawled, so there was nothing to
+preserve. See the note at the bottom of `landing/public/_redirects`.
 
 ## What it builds
 

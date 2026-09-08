@@ -15,10 +15,10 @@
   },
   "routes": [
     { "pattern": "heirlm.xyz", "custom_domain": true },
-    { "pattern": "www.heirlm.xyz", "custom_domain": true },
-    // The docs' old home. Bound here only so public/_redirects can 301 it to
-    // heirlm.xyz/docs; cut the DNS record Mintlify holds before deploying this.
-    { "pattern": "docs.heirlm.xyz", "custom_domain": true }
+    { "pattern": "www.heirlm.xyz", "custom_domain": true }
+    // docs.heirlm.xyz is deliberately absent. Binding it without a redirect
+    // would serve this same site on a second hostname — duplicate content on a
+    // domain whose whole point was to stop being separate.
   ],
   "observability": {
     "enabled": true
