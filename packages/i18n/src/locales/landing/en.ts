@@ -7,6 +7,7 @@ const landing = {
     dashboard: "Dashboard",
     claimInheritance: "Claim Inheritance",
     heartbeat: "Heartbeat",
+    docs: "Docs",
   },
   notFound: {
     headline1: "Page not",

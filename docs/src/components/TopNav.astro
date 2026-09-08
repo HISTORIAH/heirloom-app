@@ -1,0 +1,74 @@
+---
+/**
+ * The docs chrome. It mirrors the landing's bar — same height rule, same
+ * hairline, same yellow hand-off button — with one difference: "Docs" is a
+ * destination here rather than a link, so it carries the current-page rule.
+ *
+ * The sidebar toggle lives in here too. Below 900px the two rails collapse and
+ * this button is the only way back to the table of contents, so it is chrome,
+ * not a sidebar affordance.
+ */
+import { appPath, LANDING_URL, withBase } from "@/lib/site";
+import Button from "@/components/Button.astro";
+import Icon from "@/components/Icon.astro";
+import Logo from "@/components/Logo.astro";
+
+const destinations = [
+  { href: `${LANDING_URL}/`, label: "Home", external: false },
+  { href: appPath("/dashboard"), label: "Dashboard", external: true },
+  { href: appPath("/claim"), label: "Claim", external: true },
+  { href: appPath("/heartbeat"), label: "Heartbeat", external: true },
+];
+---
+
+<header class="sticky top-0 z-50 border-b border-tile-line bg-background/95 backdrop-blur">
+  <div class="flex h-[var(--nav-h)] items-center gap-4 px-[var(--page-pad)]">
+    <a href={`${LANDING_URL}/`} class="flex shrink-0 items-center" aria-label="Heirloom home">
+      <Logo class="h-7" />
+    </a>
+
+    <nav class="hidden flex-1 items-center justify-center gap-1 lg:flex" aria-label="Site">
+      {
+        destinations.map((d) => (
+          <a
+            href={d.href}
+            data-track={d.external ? "docs_nav_app" : undefined}
+            class="rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+          >
+            {d.label}
+          </a>
+        ))
+      }
+      <span
+        aria-current="page"
+        class="relative rounded-md px-3 py-2 text-[12.5px] font-bold text-foreground"
+      >
+        Docs
+        <span class="absolute inset-x-3 -bottom-[3px] h-[3px] bg-accent-yellow"></span>
+      </span>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2 lg:ml-0">
+      <a
+        href={withBase("/reference/faq/")}
+        class="hidden rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground sm:block"
+      >
+        FAQ
+      </a>
+      <Button href={appPath("/create-vault")} variant="flat-yellow" size="sm" data-track="docs_nav_launch_app">
+        Launch App
+      </Button>
+      <button
+        type="button"
+        class="rounded-md border border-tile-line p-2 transition-colors hover:bg-tile-soft lg:hidden"
+        data-sidebar-toggle
+        aria-expanded="false"
+        aria-controls="docs-sidebar"
+        aria-label="Open documentation menu"
+      >
+        <Icon name="menu" data-sidebar-icon-open class="h-4 w-4" strokeWidth={2} />
+        <Icon name="x" data-sidebar-icon-close class="h-4 w-4" strokeWidth={2} hidden />
+      </button>
+    </div>
+  </div>
+</header>

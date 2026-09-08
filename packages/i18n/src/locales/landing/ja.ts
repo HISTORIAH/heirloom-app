@@ -9,6 +9,7 @@ const landing: LandingMessages = {
     dashboard: "ダッシュボード",
     claimInheritance: "相続を請求",
     heartbeat: "ハートビート",
+    docs: "ドキュメント",
   },
   notFound: {
     headline1: "ページが",

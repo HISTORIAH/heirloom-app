@@ -17,6 +17,14 @@ export const LANDING_URL = (
  */
 export const landingUrl = (locale: string) => `${LANDING_URL}${localeHref(locale)}`;
 
+/**
+ * The documentation. It lives at /docs on the landing's origin — its own
+ * package, folded into that deploy — so it follows LANDING_URL rather than
+ * carrying a subdomain of its own. It is English-only, so no locale is
+ * attached.
+ */
+export const DOCS_URL = `${LANDING_URL}/docs/`;
+
 export const SOLANA_RPC_ENDPOINT =
   import.meta.env.VITE_SOLANA_RPC_ENDPOINT || "http://127.0.0.1:8899";
 

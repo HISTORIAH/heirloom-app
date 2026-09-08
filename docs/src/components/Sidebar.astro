@@ -1,0 +1,140 @@
+---
+/**
+ * The book's table of contents. Sections are editorial (see lib/nav.ts); the
+ * order inside one is the `order` field on each document.
+ *
+ * The filter above it is a filter, not a search: it matches page titles,
+ * section names and the keywords a document declares, and hides the groups
+ * that end up empty. Full-text search would need an index, a runtime and a
+ * request — three things a nine-page-a-section handbook does not need to earn
+ * its first click.
+ */
+import type { NavGroup } from "@/lib/nav";
+import Icon from "@/components/Icon.astro";
+
+interface Props {
+  groups: NavGroup[];
+  /** Entry id of the page being rendered, e.g. "concepts/estate". */
+  current: string;
+  keywords: Record<string, string[]>;
+}
+
+const { groups, current, keywords } = Astro.props;
+---
+
+<aside
+  id="docs-sidebar"
+  data-sidebar
+  class="docs-rail hidden border-b border-tile-line pb-6 lg:block lg:border-0"
+>
+  <div class="relative mb-6">
+    <Icon
+      name="search"
+      class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+      strokeWidth={2}
+    />
+    <input
+      type="search"
+      data-sidebar-filter
+      placeholder="Filter pages…"
+      aria-label="Filter documentation pages"
+      autocomplete="off"
+      class="h-9 w-full rounded-lg border border-tile-line bg-tile-soft pl-9 pr-3 text-[13px] font-medium text-foreground placeholder:text-muted-foreground focus:border-foreground focus:bg-background focus:outline-none"
+    />
+  </div>
+
+  <nav aria-label="Documentation">
+    {
+      groups.map((group) => (
+        <div class="side-group" data-group={group.id} data-group-label={group.label}>
+          <p class="ed-label mb-2 px-3">{group.label}</p>
+          <ul>
+            {group.items.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class="side-link"
+                  data-nav-item
+                  data-terms={[item.title, group.label, ...(keywords[item.id] ?? [])]
+                    .join(" ")
+                    .toLowerCase()}
+                  aria-current={item.id === current ? "page" : undefined}
+                >
+                  {item.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </nav>
+
+  <p data-filter-empty hidden class="px-3 pt-4 text-[13px] text-muted-foreground">
+    Nothing matches that.
+  </p>
+</aside>
+
+<script>
+  const sidebar = document.querySelector<HTMLElement>("[data-sidebar]");
+  const toggle = document.querySelector<HTMLElement>("[data-sidebar-toggle]");
+
+  // --- the toggle, for the widths where the rail is not always on screen
+  if (sidebar && toggle) {
+    const iconOpen = toggle.querySelector<HTMLElement>("[data-sidebar-icon-open]");
+    const iconClose = toggle.querySelector<HTMLElement>("[data-sidebar-icon-close]");
+
+    toggle.addEventListener("click", () => {
+      const open = sidebar.classList.toggle("!block");
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "Close documentation menu" : "Open documentation menu");
+      if (iconOpen) iconOpen.hidden = open;
+      if (iconClose) iconClose.hidden = !open;
+    });
+  }
+
+  // --- the filter
+  const input = document.querySelector<HTMLInputElement>("[data-sidebar-filter]");
+  const empty = document.querySelector<HTMLElement>("[data-filter-empty]");
+
+  if (input && sidebar) {
+    const items = Array.from(sidebar.querySelectorAll<HTMLElement>("[data-nav-item]"));
+    const groups = Array.from(sidebar.querySelectorAll<HTMLElement>("[data-group]"));
+
+    const apply = () => {
+      const q = input.value.trim().toLowerCase();
+      let hits = 0;
+
+      for (const item of items) {
+        const match = q === "" || (item.dataset.terms ?? "").includes(q);
+        const li = item.parentElement;
+        if (li) li.hidden = !match;
+        if (match) hits += 1;
+      }
+
+      for (const group of groups) {
+        const visible = group.querySelectorAll<HTMLElement>("li:not([hidden])").length;
+        group.hidden = visible === 0;
+      }
+
+      if (empty) empty.hidden = hits !== 0;
+    };
+
+    input.addEventListener("input", apply);
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      input.value = "";
+      apply();
+    });
+
+    // "/" focuses the filter, the one shortcut a docs site is expected to have.
+    document.addEventListener("keydown", (e) => {
+      const target = e.target as HTMLElement | null;
+      const typing = target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        input.focus();
+      }
+    });
+  }
+</script>

@@ -7,15 +7,20 @@ A Solana-native inheritance protocol. Lock assets into a programmatic estate tha
 | Package | What it is | Serves |
 |---------|------------|--------|
 | [`landing/`](./landing/README.md) | Astro, prerendered in 9 languages | `heirlm.xyz` |
+| [`docs/`](./docs/README.md) | Astro + MDX, prerendered handbook | `heirlm.xyz/docs` |
 | [`app/`](./app/README.md) | Vite + React SPA, wallet-gated | `app.heirlm.xyz` |
 | [`app-ika/`](./app-ika/README.md) | The cross-chain IKA variant | — |
 | `waitlist/` | Standalone waitlist page | — |
 | `packages/i18n` | Shared copy for all of the above | — |
 | `programs/`, `clients/` | Anchor programs and their generated clients | — |
 
-The marketing page is a separate build on purpose: an SPA hands a crawler an
-empty shell, so the content-heavy half of the site is prerendered to static HTML
-instead. See [`landing/README.md`](./landing/README.md).
+The marketing page and the docs are separate builds on purpose: an SPA hands a
+crawler an empty shell, so the content-heavy half of the site is prerendered to
+static HTML instead. See [`landing/README.md`](./landing/README.md).
+
+The docs are their own package but not their own origin — `docs/dist` is copied
+into `landing/dist/docs` at build time, so `heirlm.xyz` and `heirlm.xyz/docs`
+are one host served by one Worker. Deploy both with `bun deploy:site`.
 
 Because the two are separate origins, everything that crosses between them is
 explicit: `?lang=` carries the reading language into the app, `?tour=1` starts
@@ -44,6 +49,12 @@ bun dev:ui
 
 # Run the marketing site
 bun dev:landing
+
+# Run the docs
+bun dev:docs
+
+# Build both, assembled as they deploy
+bun build:site
 
 # Run tests (requires local validator)
 bun test

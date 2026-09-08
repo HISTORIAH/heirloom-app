@@ -1,0 +1,123 @@
+---
+title: JavaScript client
+description: "@historiah/heirloom — the generated client: PDA derivers, instruction builders, account codecs, and how to drive the program from TypeScript."
+section: reference
+order: 1
+keywords: ["client", "typescript", "sdk", "javascript", "codama", "kit", "integration"]
+---
+
+`@historiah/heirloom` is generated from the Anchor IDL by
+[Codama](https://github.com/codama-idl/codama). It ships typed instruction builders,
+account codecs, PDA derivers and error decoders, all matching the on-chain wire format by
+construction.
+
+Its runtime is [`@solana/kit`](https://github.com/anza-xyz/kit) v7, not `web3.js` — the
+builders return kit instructions and the address type is kit's `Address`.
+
+## Installing
+
+Inside this monorepo it is a workspace package:
+
+```json
+{ "dependencies": { "@historiah/heirloom": "workspace:*" } }
+```
+
+It is not published to npm today. Outside the repo, vendor the generated directory or
+regenerate it from the IDL in `idls/`.
+
+## Deriving addresses
+
+```ts
+import { findEstatePda, findVaultPda, findAssetRecordPda } from "@historiah/heirloom";
+
+const [estate] = await findEstatePda({ authority, heir });
+const [vault]  = await findVaultPda({ authority, heir });
+const [record] = await findAssetRecordPda({ estate, mint });
+```
+
+`findNewEstatePda` and `findNewVaultPda` derive the destination pair for a change-of-heir
+migration.
+
+<Callout type="note" title="findAssetRecordPda is hand-written">
+Codama does not emit a deriver for `AssetRecord` yet, so the client ships one alongside
+the generated code. It is marked `FIXME` in `src/main.ts` and derives from the same
+`["asset", estate, mint]` seeds the program uses.
+</Callout>
+
+## Building an instruction
+
+Every instruction has a builder, plus an `Async` variant that resolves derivable accounts
+for you:
+
+```ts
+import { getInitializeInstructionAsync } from "@historiah/heirloom";
+
+const ix = await getInitializeInstructionAsync({
+  authority: signer,
+  heir,
+  heartbeatInterval: 30n * 86_400n,
+  gracePeriod: 7n * 86_400n,
+  pauseDuration: 30n * 86_400n,
+  amount: 1_000_000_000n,   // 1 SOL, in lamports
+  label: "Family estate",
+});
+```
+
+The same shape holds for `getClaimInstruction`, `getRevokeInstruction`,
+`getUpdateFieldInstruction`, `getUpdateHeirInstruction`, `getRegisterAssetInstruction`,
+`getDelegateDeferInstruction`, `getDepositLuloInstruction`,
+`getWithdrawProtectedLuloInstruction`, `getInitWithdrawRegularLuloInstruction` and
+`getCompleteWithdrawRegularLuloInstruction`.
+
+## Reading accounts
+
+```ts
+import { fetchMaybeEstate, decodeEstate } from "@historiah/heirloom";
+
+const maybe = await fetchMaybeEstate(rpc, estate);
+if (maybe.exists) {
+  console.log(maybe.data.heir, maybe.data.lastHeartbeat);
+}
+```
+
+To find estates when you only hold one side of the pair, query the program with a
+`memcmp` filter on the discriminator plus the field offset, then `decodeEstate` the
+results. That is how the app lists an owner's estates (`authority` offset) and how the
+claim page discovers an heir's (`heir` offset) without them knowing the owner's address.
+
+## Constants
+
+```ts
+import { TREASURY_ADDRESS } from "@historiah/heirloom";
+// tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q
+```
+
+The program ID is baked into the generated builders. Neither is configurable at runtime.
+
+## The app's own layer
+
+The app does not call the client from components. Everything goes through
+`app/src/services/heirloom.ts`, which is worth reading as a reference implementation — it
+is the only file in the app that imports the generated client, and it handles the two
+things the client does not:
+
+- **Ordering.** `claimAll` and `revokeAll` bundle token instructions first and the SOL
+  instruction last, because the SOL leg closes the vault.
+- **Lifecycle.** `computeEstateState` derives `active | grace | claimable | distributed`
+  and both countdowns from the same fields the program checks.
+
+Under it, `lib/heirloom/client.ts` exposes one `sendTx(client, feePayer, ix | ix[])` that
+pipes a v0 transaction message through kit and returns a base58 signature.
+
+## Regenerating
+
+After any change to the program's IDL, from the repo root:
+
+```bash
+anchor build
+bun generate            # both programs
+bun generate:heirloom   # just this one
+```
+
+The client is a workspace dependency, so a shape change surfaces as a TypeScript error in
+the app before it surfaces as a failed transaction.

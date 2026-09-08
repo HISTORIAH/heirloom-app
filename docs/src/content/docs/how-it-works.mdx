@@ -1,0 +1,111 @@
+---
+title: How it works
+description: The whole lifecycle, from opening an estate to the moment an heir claims it — and every exit in between.
+section: getting-started
+order: 3
+keywords: ["lifecycle", "overview", "flow", "how", "mechanism"]
+---
+
+Heirloom has one moving part: **a deadline that you push forward by signing.** Everything
+else in the protocol is a consequence of that.
+
+## The clock
+
+When you open an estate you choose two durations. Together they define the moment the
+estate becomes claimable:
+
+<Code caption="The claim condition, from the program">
+```rust
+let claimable_at = estate.last_heartbeat
+    + estate.heartbeat_interval
+    + estate.grace_period;
+
+require!(now >= claimable_at.max(estate.paused_until), NotYetClaimable);
+```
+</Code>
+
+Every check-in writes `now` into `last_heartbeat`, which moves `claimable_at` forward by
+the same amount. As long as you keep signing, the condition is never true and the heir
+can do nothing at all.
+
+## Four states
+
+An estate is always in exactly one of these. The app derives them from the same three
+numbers the program uses, so the badge on your dashboard and the guard in the program
+never disagree.
+
+| State | When | What can happen |
+|---|---|---|
+| **Active** | Before `last_heartbeat + heartbeat_interval` | Business as usual. Fund it, route yield, change settings |
+| **Grace** | Interval lapsed, grace period still running | Same as active, plus: a guardian may defer, and the app starts warning |
+| **Claimable** | `now >= claimable_at` | The heir can claim. You can still withdraw first — whoever signs first wins |
+| **Distributed** | Vault empty, accounts closed | Nothing. The estate is gone and its rent has been returned |
+
+## The four ways assets leave
+
+There is no fifth. Nothing else in the program can move a lamport out of a vault.
+
+<Cards>
+  <Card title="You withdraw" icon="undo-2">
+    **Emergency withdraw**, any time, any state before distribution. Everything goes back
+    to your wallet minus a 0.5% fee.
+  </Card>
+  <Card title="Your heir claims" icon="gift">
+    Only once `claimable_at` has passed. Everything goes to the heir minus a 0.75% fee.
+  </Card>
+  <Card title="You reassign" icon="user-round-cog">
+    **Change heir** migrates the whole estate to a new PDA pair for the new heir. Assets
+    never touch an outside wallet.
+  </Card>
+  <Card title="A strategy recalls" icon="trending-up">
+    Yield withdrawals return principal and yield to the vault, not to anyone's wallet.
+  </Card>
+</Cards>
+
+## Who can do what
+
+Each of the three optional roles is deliberately narrow. A guardian is not a co-signer,
+and a hot signer is not a spare owner.
+
+| | Authority | Heir | Guardian | Hot signer |
+|---|---|---|---|---|
+| Send a check-in | ✓ | | | ✓ |
+| Change interval / grace / pause / label | ✓ | | | |
+| Add or fund assets | ✓ | | | |
+| Route or recall yield | ✓ | | | |
+| Change the heir | ✓ | | | |
+| Emergency withdraw | ✓ | | | |
+| Push the deadline out, once | | | ✓ | |
+| Claim, once claimable | | ✓ | | |
+
+A guardian's only power is to set `paused_until`, and they may use it **once per estate**.
+A hot signer's check-in resets the clock but cannot change a single setting, because the
+program only applies the settings arguments when the signer is the authority itself.
+
+## What happens if you never come back
+
+Nothing dramatic, and nothing automatic. The estate crosses into `claimable` and then
+waits — indefinitely, at no cost, earning whatever a strategy was earning. There is no
+keeper, no cron job, and no party with an incentive to act on your behalf. The heir has
+to show up and sign.
+
+When they do, the program pays out every registered asset in one transaction, tokens
+first and SOL last, skimming 0.75% per asset to the treasury. The SOL leg closes the
+estate and vault accounts and returns their rent, which is why it has to go last.
+
+<Callout type="tip" title="Your heir needs one thing from you">
+Their wallet address is already stored on-chain, so they do not need a document, a
+password, or your seed phrase. They need to know Heirloom exists. The claim page finds
+every estate that names them — they never need your address.
+</Callout>
+
+## Where the money goes
+
+| Event | Fee | Charged on |
+|---|---|---|
+| Open an estate, deposit, check in | **0** | — |
+| Claim | **0.75%** | Each asset paid out |
+| Emergency withdraw | **0.5%** | Each asset returned |
+| Yield | **10%** | The yield only, never the principal |
+
+Full detail, including how the split is rounded, is in [Fees](/docs/concepts/fees/).

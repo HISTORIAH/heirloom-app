@@ -1,0 +1,117 @@
+---
+title: Earn yield
+description: Routing estate balances into Lulo lending, recalling them, and the exposure flags that gate every exit.
+section: using
+order: 4
+keywords: ["yield", "lulo", "lending", "apy", "earn", "protected", "boosted", "strategy"]
+---
+
+Assets waiting in an estate are still assets. Heirloom can route them into
+[Lulo](https://lulo.fi) lending and pull them back whenever you want, with principal and
+yield returning to the vault rather than to anyone's wallet.
+
+The protocol takes **10% of the yield** and nothing from the principal.
+
+## Two deposit types
+
+Lulo offers two pools, and the program exposes both through a `DepositType` argument:
+
+| Type | What it is | Withdrawal |
+|---|---|---|
+| **Protected** | Lower rate, principal protection | One instruction, immediate |
+| **Boosted** | Higher rate, no protection | Two instructions: initiate, then complete |
+
+You choose per asset, at the moment you route.
+
+## Routing funds out
+
+<Code caption="The deposit instruction">
+```rust
+deposit_lulo(amount: u64, deposit_type: DepositType)
+```
+</Code>
+
+The vault's tokens move into a Lulo pool, `principal_deployed` on that asset's
+`AssetRecord` goes up by the amount, and the matching exposure flag is set from the LP
+receipt balance the deposit produced.
+
+## Recalling
+
+Protected positions come back in one step:
+
+```rust
+withdraw_protected_lulo(amount: u64)
+```
+
+Boosted positions are a two-phase withdrawal, because the pool needs to schedule the exit:
+
+```rust
+init_withdraw_regular_lulo(withdrawal_id: u16, amount: u64)
+complete_withdraw_regular_lulo(withdrawal_id: u16)
+```
+
+Between those two calls, `pending_boosted_withdrawals` on the `AssetRecord` is non-zero,
+and the asset counts as still deployed.
+
+## How the fee is taken
+
+On the way back in, the program compares what arrived against what went out:
+
+<Code caption="programs/heirloom/src/helpers.rs">
+```rust
+let principal_returned = returned.min(asset_record.principal_deployed);
+let yield_amount       = returned - principal_returned;
+
+asset_record.principal_deployed -= principal_returned;
+
+if yield_amount > 0 {
+    let (fee, _) = calculate_distribution(yield_amount, YIELD_FEE_BPS)?; // 10%
+    // fee → treasury, in the same token
+}
+```
+</Code>
+
+Principal is returned first and is never touched. Only the excess is yield, and only that
+excess is charged. A position that came back flat or down pays nothing.
+
+## Exposure gates every exit
+
+After each withdrawal the program re-reads the vault's LP receipt balance and refreshes
+the flags:
+
+<Code caption="programs/heirloom/src/helpers.rs">
+```rust
+match deposit_type {
+    DepositType::Protected => record.has_protected_exposure = lp_balance > 0,
+    DepositType::Boosted   => record.has_boosted_exposure =
+        lp_balance > 0 || record.pending_boosted_withdrawals > 0,
+}
+```
+</Code>
+
+While either flag is set, that asset cannot be claimed or withdrawn — the attempt fails
+with `FundsStillDeployed`. The flags are derived from the actual LP balance rather than
+from an internal counter, so they cannot drift out of step with reality.
+
+<Callout type="warning" title="Deployed funds block an inheritance too">
+This gate applies to the heir's claim, not just to your withdrawals. An estate that goes
+claimable with an open Lulo position needs that position recalled before the assets can
+move — and the heir cannot do that, because only the authority can call the withdrawal
+instructions. If you route balances into a strategy, recall them when you stop using the
+estate actively.
+</Callout>
+
+## In the app
+
+The yield surface sits behind a feature flag (`VITE_FEATURE_YIELD_STAKING_UI`, on by
+default in development). Today it renders against a placeholder strategy generator and
+placeholder APYs from a static token registry — **the numbers on screen are not live
+rates**, and the flows are not yet wired to the on-chain instructions above.
+
+The eligible-token registry currently lists USDC, USDT and PYUSD with per-network mints.
+
+<Callout type="note" title="Native SOL staking">
+The marketing site describes staking estate SOL with a validator of your choosing. That
+is on the roadmap; the on-chain program ships the Lulo integration described here and
+has no staking instruction yet. This page will say so when that changes.
+</Callout>

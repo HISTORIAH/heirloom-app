@@ -5,6 +5,7 @@ const app: AppMessages = {
     dashboard: "ダッシュボード",
     claimInheritance: "相続を請求",
     heartbeat: "ハートビート",
+    docs: "ドキュメント",
     connectWallet: "ウォレット接続",
     copied: "コピーしました",
     copyAddress: "アドレスをコピー",

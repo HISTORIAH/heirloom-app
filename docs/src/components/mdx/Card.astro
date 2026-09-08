@@ -1,0 +1,30 @@
+---
+import Icon from "@/components/Icon.astro";
+
+interface Props {
+  title: string;
+  href?: string;
+  icon?: string;
+}
+const { title, href, icon } = Astro.props;
+const Tag = href ? "a" : "div";
+const external = href?.startsWith("http") ?? false;
+---
+
+<Tag
+  href={href}
+  target={external ? "_blank" : undefined}
+  rel={external ? "noopener noreferrer" : undefined}
+  class:list={[
+    "block rounded-lg border border-tile-line p-4 transition-colors",
+    href && "hover:border-foreground hover:bg-tile-soft",
+  ]}
+>
+  <p class="flex items-center gap-2 font-display text-[15px] font-bold">
+    {icon && <Icon name={icon} class="h-4 w-4 shrink-0" strokeWidth={2} />}
+    {title}
+  </p>
+  <div class="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+    <slot />
+  </div>
+</Tag>

@@ -5,6 +5,7 @@ const app: AppMessages = {
     dashboard: "仪表盘",
     claimInheritance: "领取继承",
     heartbeat: "心跳",
+    docs: "文档",
     connectWallet: "连接钱包",
     copied: "已复制",
     copyAddress: "复制地址",

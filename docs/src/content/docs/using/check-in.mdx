@@ -1,0 +1,88 @@
+---
+title: Check in
+description: The one habit an estate asks of you — from the dashboard, from a phone, or from a script.
+section: using
+order: 3
+keywords: ["check in", "heartbeat", "keep alive", "hot signer", "phone", "reset clock"]
+---
+
+A check-in is a signed transaction that writes the current time into `last_heartbeat`.
+It pushes the deadline forward by your full interval and costs nothing but network fees.
+
+## From the dashboard
+
+Open [app.heirlm.xyz/dashboard](https://app.heirlm.xyz/dashboard), find the estate, and
+press **Send heartbeat**. The countdown resets while the transaction confirms.
+
+## From a phone, with a hot signer
+
+If the wallet that owns the estate is cold, checking in with it every month is exactly
+the friction that makes people stop. Register an `hb_signer` — a hot wallet you keep on
+your phone — and use the single-purpose page instead:
+
+<Steps>
+  <Step title="Open the heartbeat page">
+    [app.heirlm.xyz/heartbeat](https://app.heirlm.xyz/heartbeat), with the hot wallet
+    connected.
+  </Step>
+  <Step title="Enter the pair">
+    Your authority address and the heir's address. Those two derive the estate PDA, so
+    the page can look it up without knowing anything else.
+  </Step>
+  <Step title="Sign">
+    The page checks the connected wallet against the estate's registered `hb_signer` and
+    shows you both for comparison before it lets you sign.
+  </Step>
+</Steps>
+
+The hot signer can send check-ins and nothing else. It cannot change a duration, add an
+asset, reassign the heir, or move a lamport.
+
+## From a script
+
+A check-in is `update_field` with every optional argument set to null, so it is a
+two-line call against the generated client:
+
+<Code caption="Using @historiah/heirloom">
+```ts
+import { updateFields } from "@/services/heirloom";
+
+await updateFields(client, signer, {
+  heir,
+  heartbeatInterval: null,
+  gracePeriod: null,
+  pauseDuration: null,
+  label: null,
+});
+```
+</Code>
+
+Run it from a cron job with a hot signer key and the estate keeps itself alive. That is a
+deliberate design point rather than a loophole: the signer can only ever perform this one
+action, so the blast radius of that key leaking is "someone else keeps your estate
+alive".
+
+<Callout type="warning" title="Automating away the whole point">
+An estate that a script keeps alive forever will never reach your heir, which is the one
+thing it exists to do. If you automate check-ins, make sure the automation depends on
+something only you can renew — a key that expires, a bill you pay, a device you carry.
+</Callout>
+
+## Changing settings counts as a check-in
+
+`update_field` writes `last_heartbeat` unconditionally, before it looks at any of the
+optional arguments. Editing your interval, grace period, pause duration, or label
+therefore also resets the clock. There is no way to change a setting without checking in.
+
+## What does not count
+
+Depositing, registering an asset, routing yield, and recalling yield all leave
+`last_heartbeat` untouched. A busy estate can still lapse. Only `update_field` resets the
+clock.
+
+## After a pause
+
+If a guardian deferred the estate, `paused_until` holds a future timestamp. Checking in
+during that window updates `last_heartbeat` normally but leaves the pause in place. The
+pause is cleared by the first check-in sent **after** it expires — see
+[Heartbeats & the grace period](/docs/concepts/heartbeat/#checking-in-while-paused).

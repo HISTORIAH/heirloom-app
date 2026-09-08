@@ -4,3 +4,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://heirlm.xyz/sitemap-index.xml
+Sitemap: https://heirlm.xyz/docs/sitemap-index.xml

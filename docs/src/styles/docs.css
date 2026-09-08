@@ -1,0 +1,370 @@
+/* Space Grotesk is loaded via <link> in DocsLayout.astro — an @import here
+   would delay discovery until this file downloads and parses. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --ink: 0 0% 5%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    /* Yellow is the primary accent. Lime is reserved for live/active state —
+       the current page in the sidebar, the current heading in the table of
+       contents, and nothing else. */
+    --accent-yellow: 50 100% 50%;
+    --accent-lime: 83 78% 55%;
+    --accent-red: 0 100% 61%;
+    --accent-sage: 101 21% 80%;
+    --accent-sky: 203 41% 82%;
+
+    --tile-line: 60 9% 87%;
+    --tile-soft: 60 10% 94%;
+
+    --border: 60 9% 87%;
+    --radius: 0.75rem;
+
+    /* The three fixed metrics the whole page is solved against. */
+    --nav-h: 4rem;
+    --page-pad: clamp(1.25rem, 3.5vw, 3rem);
+    --sidebar-w: 16rem;
+    --toc-w: 14rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent-lime));
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--foreground));
+    outline-offset: 3px;
+  }
+
+  /* Anchored jumps land under the sticky bar, not behind it. */
+  :target {
+    scroll-margin-top: calc(var(--nav-h) + 1.5rem);
+  }
+}
+
+@layer components {
+  .ed-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  /* --------------------------------------------------------------- shell */
+  .docs-shell {
+    width: 100%;
+    max-width: 92rem;
+    margin-inline: auto;
+    padding-inline: var(--page-pad);
+  }
+
+  .docs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(2rem, 4vw, 4rem);
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .docs-grid {
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .docs-grid {
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--toc-w);
+    }
+  }
+
+  .docs-main {
+    max-width: 46rem;
+  }
+
+  .docs-rail {
+    position: sticky;
+    top: var(--nav-h);
+    max-height: calc(100svh - var(--nav-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: 2rem 3rem;
+    /* The rails carry no scrollbar chrome of their own; the page has enough
+       ruling already. */
+    scrollbar-width: thin;
+  }
+
+  /* ------------------------------------------------------------- sidebar */
+  .side-group + .side-group {
+    margin-top: 1.75rem;
+  }
+
+  .side-link {
+    @apply block rounded-md px-3 py-[7px] text-[13.5px] font-medium text-muted-foreground transition-colors;
+  }
+  .side-link:hover {
+    @apply bg-tile-soft text-foreground;
+  }
+  .side-link[aria-current="page"] {
+    /* Lime, because this is the one thing on the page that is "live". */
+    background-color: hsl(var(--accent-lime) / 0.3);
+    @apply font-bold text-foreground;
+  }
+
+  /* ------------------------------------------------------------ contents */
+  .toc-link {
+    @apply block border-l-2 border-transparent py-[5px] pl-3 text-[13px] leading-snug text-muted-foreground transition-colors;
+  }
+  .toc-link:hover {
+    @apply text-foreground;
+  }
+  .toc-link.is-active {
+    border-color: hsl(var(--foreground));
+    @apply font-semibold text-foreground;
+  }
+  .toc-link[data-depth="3"] {
+    @apply pl-6;
+  }
+}
+
+/* ----------------------------------------------------------------- prose
+   Written out rather than pulled from @tailwindcss/typography: the scale is
+   the landing's, not the plugin's, and the docs need table, callout and code
+   rules the plugin would have to be argued out of anyway. */
+@layer components {
+  .prose {
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: hsl(var(--foreground));
+  }
+
+  .prose > * + * {
+    margin-top: 1.15em;
+  }
+
+  .prose h2 {
+    margin-top: 3.25rem;
+    margin-bottom: 1.25rem;
+    font-size: clamp(1.375rem, 2.2vw, 1.6rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .prose h3 {
+    margin-top: 2.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.075rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .prose h4 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  /* A heading's anchor is revealed on hover, never printed into the line. */
+  .prose :is(h2, h3, h4) > a.heading-anchor::after {
+    content: "#";
+  }
+  .prose :is(h2, h3, h4) > a.heading-anchor {
+    margin-left: 0.4rem;
+    color: hsl(var(--muted-foreground));
+    opacity: 0;
+    font-weight: 400;
+    text-decoration: none;
+    transition: opacity 120ms ease-out;
+  }
+  .prose :is(h2, h3, h4):hover > a.heading-anchor {
+    opacity: 1;
+  }
+
+  .prose a:not(.heading-anchor, .not-prose a) {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    text-decoration-color: hsl(var(--accent-lime));
+    transition: background-color 120ms ease-out;
+  }
+  .prose a:not(.heading-anchor):hover {
+    background-color: hsl(var(--accent-lime) / 0.28);
+  }
+
+  .prose strong {
+    font-weight: 700;
+  }
+
+  .prose :is(ul, ol) {
+    padding-left: 1.15rem;
+  }
+  .prose ul { list-style: none; }
+  .prose ol { list-style: decimal; }
+  .prose li + li { margin-top: 0.4rem; }
+  .prose li::marker { color: hsl(var(--muted-foreground)); font-weight: 700; }
+
+  /* Square bullets, not discs — the page is ruled, not rounded. */
+  .prose ul > li {
+    position: relative;
+  }
+  .prose ul > li::before {
+    content: "";
+    position: absolute;
+    left: -1.15rem;
+    top: 0.66em;
+    width: 5px;
+    height: 5px;
+    background-color: hsl(var(--foreground));
+  }
+
+  .prose :is(ul, ol) :is(ul, ol) {
+    margin-top: 0.4rem;
+  }
+
+  /* Inline code. Not a pill — a tinted slug with a hairline. */
+  .prose :not(pre) > code {
+    font-family: theme("fontFamily.mono");
+    font-size: 0.86em;
+    font-weight: 500;
+    padding: 0.12em 0.36em;
+    border: 1px solid hsl(var(--tile-line));
+    border-radius: 3px;
+    background-color: hsl(var(--tile-soft));
+    word-break: break-word;
+  }
+
+  .prose pre {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.65;
+    tab-size: 2;
+  }
+  .prose pre code {
+    font-family: theme("fontFamily.mono");
+  }
+
+  /* A code block that carries a caption is wrapped by <Code>, which owns the
+     rounding; the <pre> inside it gives its corners up. */
+  .code-card pre {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .prose blockquote {
+    border-left: 3px solid hsl(var(--foreground));
+    padding-left: 1.1rem;
+    font-style: normal;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .prose hr {
+    margin-block: 2.75rem;
+    border: 0;
+    border-top: 1px solid hsl(var(--tile-line));
+  }
+
+  /* Tables scroll inside their own box; the page never scrolls sideways. */
+  .prose .table-scroll {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    border: 1px solid hsl(var(--tile-line));
+    border-radius: var(--radius);
+  }
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .prose thead th {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid hsl(var(--tile-line));
+    background-color: hsl(var(--tile-soft));
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: hsl(var(--muted-foreground));
+    white-space: nowrap;
+  }
+  .prose tbody td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid hsl(var(--tile-line));
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  .prose tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .prose td > code {
+    white-space: nowrap;
+  }
+
+  /* A bare fence, with its copy button hung over the top-right corner. */
+  .code-block {
+    position: relative;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .code-block > pre {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  .code-block + * {
+    margin-top: 1.5rem;
+  }
+  .code-copy {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgb(255 255 255 / 0.5);
+    background-color: rgb(255 255 255 / 0.06);
+    opacity: 0;
+    transition: opacity 120ms ease-out, color 120ms ease-out;
+  }
+  .code-block:hover .code-copy,
+  .code-copy:focus-visible {
+    opacity: 1;
+  }
+  .code-copy:hover {
+    color: rgb(255 255 255 / 0.95);
+  }
+
+  .prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+}

@@ -1,0 +1,76 @@
+---
+title: Change the heir
+description: Why reassigning an heir migrates the whole estate to new accounts, and what that means for your assets mid-flight.
+section: using
+order: 5
+keywords: ["change heir", "reassign", "update heir", "migrate", "beneficiary"]
+---
+
+The heir's address is a seed of the estate PDA. Changing it therefore cannot be an edit —
+it is a **migration**: the program opens a new estate and vault for the new pair, moves
+every asset across, and closes the old accounts.
+
+<Code caption="Before and after">
+```txt
+old   estate = PDA(["estate", authority, old_heir])
+      vault  = PDA(["vault",  authority, old_heir])
+
+new   estate = PDA(["estate", authority, new_heir])
+      vault  = PDA(["vault",  authority, new_heir])
+```
+</Code>
+
+## What carries over
+
+The new estate is the old one, re-keyed:
+
+| Carried | Reset |
+|---|---|
+| `heartbeat_interval` | `paused_until` → `0` |
+| `grace_period` | |
+| `last_heartbeat` — your clock is not restarted | |
+| `pause_duration` | |
+| `delegate` and `hb_signer` | |
+| `claimable_assets` | |
+
+Because `last_heartbeat` carries over, reassigning an heir does not buy you time and does
+not cost you any.
+
+## Migration is not atomic across assets
+
+`update_heir` moves one asset per call. Between the first call and the last, the estate is
+mid-flight: the new estate exists with `is_migrating: true`, and the old one still holds
+whatever has not moved yet. The program uses that flag to make sure the destination it is
+writing into is a half-built migration rather than an unrelated live estate.
+
+The app drives this for you with `updateHeirAll`, which derives both PDA pairs and
+sequences the asset moves. If you are calling the program directly, run the calls to
+completion — an abandoned migration leaves two estates where you meant to have one.
+
+## What it does not do
+
+- **It never sends assets to an outside wallet.** Everything moves PDA to PDA.
+- **It does not notify anyone.** The old heir is simply no longer named. They had no
+  entitlement to lose unless the estate was already claimable.
+- **It does not restart your clock.**
+
+## Guards
+
+| Requirement | Error if unmet |
+|---|---|
+| Signer is the authority | `Unauthorized` |
+| The estate is not paused (`now >= paused_until`) | `EstatePaused` |
+| The destination estate is the migration target | `InvalidAccount` |
+| The asset has no open yield exposure | `FundsStillDeployed` |
+
+<Callout type="warning" title="You cannot reassign a paused estate">
+A live guardian pause blocks the migration. Wait for `paused_until` to expire, check in
+once to clear it, then reassign.
+</Callout>
+
+## When to use it instead of a new estate
+
+Reassigning keeps your clock, your settings, and your assets in place — no exit fee, no
+re-deposit, no gap in coverage. Opening a fresh estate is the right move only when you
+want different terms, or when you need to change a guardian or hot signer, which
+migration carries over unchanged.

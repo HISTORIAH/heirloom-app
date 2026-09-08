@@ -34,7 +34,14 @@ export const appTourUrl = (locale: string) => {
   return `${url}${url.includes("?") ? "&" : "?"}tour=1`;
 };
 
-export const DOCS_URL = "https://docs.heirlm.xyz/";
+/**
+ * The documentation is its own package (`docs/`), an Astro build folded into
+ * this one's deploy artifact under /docs. It is a path rather than a subdomain
+ * on purpose: the handbook and the marketing page accumulate to one host
+ * instead of splitting authority across two.
+ */
+export const DOCS_PATH = "/docs/";
+export const DOCS_URL = `${SITE_URL}${DOCS_PATH}`;
 export const GITHUB_URL = "https://github.com/HISTORIAH/Heirloom-app";
 export const TWITTER_URL = "https://x.com/heirloom_app";
 export const OG_IMAGE = `${SITE_URL}/og-image.png`;

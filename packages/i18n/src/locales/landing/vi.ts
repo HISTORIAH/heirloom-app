@@ -9,6 +9,7 @@ const landing: LandingMessages = {
     dashboard: "Bảng điều khiển",
     claimInheritance: "Nhận Thừa Kế",
     heartbeat: "Nhịp tim",
+    docs: "Tài liệu",
   },
   notFound: {
     headline1: "Không tìm thấy",

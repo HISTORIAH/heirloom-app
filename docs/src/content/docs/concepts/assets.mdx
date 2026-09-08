@@ -1,0 +1,99 @@
+---
+title: Assets & the vault
+description: How SOL and SPL tokens get into an estate, why registration is a separate account, and which mints do not work.
+section: concepts
+order: 5
+keywords: ["assets", "tokens", "spl", "sol", "register", "deposit", "mint", "asset record"]
+---
+
+An estate holds **SOL** and **any number of SPL tokens**. SOL sits in the vault account
+as lamports. Each token lives in an associated token account owned by the vault, one per
+mint.
+
+## Registration is the entitlement
+
+Creating a token account is permissionless — anyone can create one for anyone. So a vault
+token account existing cannot be what makes an asset claimable, or a stranger could
+create accounts against your vault and skew the accounting.
+
+Instead, registering a mint creates a third account, an `AssetRecord` marker PDA:
+
+<Code caption="Derivation and contents">
+```rust
+// PDA(["asset", estate, mint], heirloom_program)
+pub struct AssetRecord {
+    pub bump: u8,
+    pub principal_deployed: u64,          // how much is out in a yield strategy
+    pub has_protected_exposure: bool,     // Lulo protected position open
+    pub has_boosted_exposure: bool,       // Lulo boosted position open
+    pub pending_boosted_withdrawals: u16, // in-flight two-step withdrawals
+}
+```
+</Code>
+
+Its **existence** is the proof that a mint was registered by the authority. Its contents
+are what the program checks before letting that asset leave: an asset with live exposure
+or a pending withdrawal cannot be claimed or withdrawn, and the attempt fails with
+`FundsStillDeployed`.
+
+## Register versus deposit
+
+Two different things, and the app does both from the same button.
+
+| | What it does | When |
+|---|---|---|
+| **Register** | Creates the `AssetRecord` and the vault token account, and moves an opening balance in | First time a mint enters the estate |
+| **Deposit** | A plain transfer into an account that already exists | Every top-up after that |
+
+Registering during creation is free of an extra transaction: `initialize` takes an
+optional mint and can bundle the first token in, and the app bundles any additional ones
+as `register_asset` instructions in the same transaction.
+
+## The order things leave in
+
+The SOL leg of a claim or a withdrawal **closes the vault account**. A closed account
+cannot own token accounts, so the program refuses to run the SOL leg while tokens remain:
+
+<Code caption="programs/heirloom/src/instructions/claim.rs">
+```rust
+require!(estate.claimable_assets <= 1, HeirloomError::TokensFirst);
+```
+</Code>
+
+The app handles this for you — `claimAll` and `revokeAll` order token instructions first
+and the SOL instruction last, in a single transaction. If you are building against the
+program directly, you have to do the same.
+
+## Mints that do not work
+
+Three trust assumptions worth knowing before you deposit something exotic.
+
+<Callout type="danger" title="Freeze authority">
+If a mint's issuer freezes the vault's token account, that asset is stuck until they
+unfreeze it. This applies to most regulated stablecoins, USDC and USDT included. It is a
+property of those tokens, not of Heirloom, and no program can route around it.
+</Callout>
+
+**Transfer hooks.** Every transfer uses plain `transfer_checked` with no hook accounts, so
+a mint with an active hook fails at deposit and never gets in. The narrow risk is a mint
+deposited hook-free whose authority later turns one on — that would block exits for that
+asset. Resolving hook accounts dynamically is a known fix and is not built yet.
+
+**Transfer fees.** Not handled specially. A fee-on-transfer mint just means a smaller
+amount arrives; nothing gets stuck. That is the depositor's choice of mint.
+
+## Token-2022
+
+Both the classic Token program and Token-2022 are accepted — the program constrains the
+token program account to one of the two and passes it through to every CPI. The
+extensions that break things are the ones above: freeze authority and transfer hooks.
+
+## What the app shows you
+
+Token symbols and icons come from the **Helius DAS API**, served from whatever RPC
+endpoint the app is configured with. Point it at a plain public RPC and DAS calls fail;
+the UI falls back to truncated mint addresses and a generic glyph. Nothing about the
+estate is affected — it is a display concern only.
+
+Vault token accounts with a zero balance are filtered out of the display, so an asset you
+have fully recalled from will not clutter the card.

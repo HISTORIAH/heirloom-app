@@ -3,6 +3,7 @@ const app = {
     dashboard: "Dashboard",
     claimInheritance: "Claim Inheritance",
     heartbeat: "Heartbeat",
+    docs: "Docs",
     connectWallet: "Connect Wallet",
     copied: "Copied",
     copyAddress: "Copy address",

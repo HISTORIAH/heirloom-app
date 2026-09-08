@@ -1,0 +1,89 @@
+---
+title: Claim an inheritance
+description: What an heir does, what they need to know in advance, and exactly when the program will let them sign.
+section: using
+order: 7
+keywords: ["claim", "heir", "inherit", "beneficiary", "receive", "payout"]
+---
+
+If you have been named as an heir, this is the only page you need. You do not need the
+owner's address, a document, a password, or anything they would have had to give you in
+advance.
+
+## What you need
+
+- The wallet whose address the owner named. That wallet is the entitlement.
+- A little SOL for network fees.
+- Enough time to have passed.
+
+## How to claim
+
+<Steps>
+  <Step title="Open the claim page">
+    [app.heirlm.xyz/claim](https://app.heirlm.xyz/claim), with your wallet connected.
+  </Step>
+  <Step title="Let it find you">
+    The page scans the program for every estate whose `heir` field is your address. You
+    do not enter anything — if an estate names you, it appears, along with its state and
+    what it holds.
+  </Step>
+  <Step title="Claim">
+    Pick the estate and sign once. The transaction pays out every registered asset:
+    tokens first, then SOL, which closes the vault and returns its rent.
+  </Step>
+</Steps>
+
+## When the program will allow it
+
+<Code caption="programs/heirloom/src/instructions/claim.rs">
+```rust
+let claimable_at = estate.last_heartbeat
+    + estate.heartbeat_interval
+    + estate.grace_period;
+
+require!(now >= claimable_at.max(estate.paused_until), NotYetClaimable);
+```
+</Code>
+
+Before that moment, a claim fails with `NotYetClaimable` — there is no partial state, no
+queue, and no way to register intent early. After it, the estate stays claimable
+indefinitely; nothing expires and nothing is forfeited by waiting.
+
+## What arrives
+
+Every registered asset, minus a **0.75%** protocol fee each. If the estate held 10 SOL
+and 5,000 USDC, you receive 9.925 SOL and 4,962.5 USDC.
+
+Token accounts are created for you if you do not already have one for a mint.
+
+## What can stop it
+
+| Error | What it means | What to do |
+|---|---|---|
+| `NotYetClaimable` | The deadline has not passed, or a guardian's pause is still live | Wait. The page shows the countdown |
+| `FundsStillDeployed` | An asset is out in a yield strategy | Only the owner can recall it. See below |
+| `TokensFirst` | The SOL leg was attempted while token accounts were still open | Use the app, which orders them correctly |
+| `InsufficientVaultBalance` | The vault is empty for that asset | It was already claimed or withdrawn |
+
+<Callout type="danger" title="Deployed funds are a real dead end">
+If an asset is sitting in a Lulo position when the owner goes quiet, only the authority
+can recall it — the heir has no instruction that can. Those funds stay in the strategy
+until the authority's key acts. If you are an owner reading this: recall your positions
+before you stop using the estate actively.
+</Callout>
+
+## The owner can still take it back
+
+Until you sign, the owner's emergency withdraw works, even while the estate is claimable.
+Whoever signs first wins. If the estate matters and it is claimable, claim it.
+
+## After the claim
+
+The estate and vault accounts are closed. The arrangement is over, and nothing further is
+owed to you or by you. The assets are in your wallet, held by your keys.
+
+<Callout type="tip" title="If you are an owner reading this page">
+Everything above is what your heir will face. The one thing they cannot work out for
+themselves is that Heirloom exists and that they were named. Tell them, and tell them
+nothing else is required — no seed phrase, no address, no paperwork.
+</Callout>

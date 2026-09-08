@@ -9,6 +9,7 @@ const landing: LandingMessages = {
     dashboard: "대시보드",
     claimInheritance: "상속 청구",
     heartbeat: "하트비트",
+    docs: "문서",
   },
   notFound: {
     headline1: "페이지를",

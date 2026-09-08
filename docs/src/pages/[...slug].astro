@@ -1,0 +1,60 @@
+---
+import { getCollection, render } from "astro:content";
+import { buildNav, flattenNav } from "@/lib/nav";
+import DocsLayout from "@/layouts/DocsLayout.astro";
+
+import Callout from "@/components/mdx/Callout.astro";
+import Cards from "@/components/mdx/Cards.astro";
+import Card from "@/components/mdx/Card.astro";
+import Code from "@/components/mdx/Code.astro";
+import Steps from "@/components/mdx/Steps.astro";
+import Step from "@/components/mdx/Step.astro";
+
+/**
+ * One route for the whole handbook. The overview is the entry with id
+ * "index", which lands on /docs/ itself; everything else takes its path from
+ * its file path, so moving a page is a `git mv`.
+ */
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  const groups = buildNav(entries);
+  const order = flattenNav(groups);
+  const keywords = Object.fromEntries(entries.map((e) => [e.id, e.data.keywords]));
+
+  return entries.map((entry) => {
+    const index = order.findIndex((item) => item.id === entry.id);
+    return {
+      params: { slug: entry.id === "index" ? undefined : entry.id },
+      props: {
+        entry,
+        groups,
+        keywords,
+        prev: index > 0 ? order[index - 1] : undefined,
+        next: index >= 0 && index < order.length - 1 ? order[index + 1] : undefined,
+      },
+    };
+  });
+}
+
+const { entry, groups, keywords, prev, next } = Astro.props;
+const { Content, headings } = await render(entry);
+
+// Passed to the MDX renderer so a document can use these without importing
+// them by hand — the frontmatter of 27 files is not the place to maintain an
+// import list.
+const components = { Callout, Cards, Card, Code, Steps, Step };
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  section={entry.data.section}
+  entryId={entry.id}
+  headings={headings}
+  groups={groups}
+  keywords={keywords}
+  prev={prev}
+  next={next}
+>
+  <Content components={components} />
+</DocsLayout>

@@ -1,7 +1,12 @@
 {
-  // The marketing site: nine prerendered documents on the apex domain.
-  // Static assets only — there is no worker code, and no SPA fallback, because
-  // every URL that should exist has a real file behind it.
+  // The marketing site and the documentation: nine prerendered documents on the
+  // apex domain, plus the handbook under /docs, which the `docs` package builds
+  // into this one's dist. Static assets only — there is no worker code, and no
+  // SPA fallback, because every URL that should exist has a real file behind it.
+  //
+  // Deploy with `bun deploy:site` from the repo root, never `wrangler deploy`
+  // from here: the landing's own build wipes dist/, so /docs has to be copied
+  // back in afterwards.
   "name": "heirloom-landing",
   "compatibility_date": "2026-04-18",
   "assets": {
@@ -10,7 +15,10 @@
   },
   "routes": [
     { "pattern": "heirlm.xyz", "custom_domain": true },
-    { "pattern": "www.heirlm.xyz", "custom_domain": true }
+    { "pattern": "www.heirlm.xyz", "custom_domain": true },
+    // The docs' old home. Bound here only so public/_redirects can 301 it to
+    // heirlm.xyz/docs; cut the DNS record Mintlify holds before deploying this.
+    { "pattern": "docs.heirlm.xyz", "custom_domain": true }
   ],
   "observability": {
     "enabled": true

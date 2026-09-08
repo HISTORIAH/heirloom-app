@@ -9,6 +9,7 @@ const landing: LandingMessages = {
     dashboard: "仪表盘",
     claimInheritance: "领取继承",
     heartbeat: "心跳",
+    docs: "文档",
   },
   notFound: {
     headline1: "页面未",

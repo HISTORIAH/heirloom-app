@@ -1,0 +1,25 @@
+---
+import { getCollection } from "astro:content";
+import { buildNav } from "@/lib/nav";
+import DocsLayout from "@/layouts/DocsLayout.astro";
+import { withBase } from "@/lib/site";
+
+const entries = await getCollection("docs");
+const groups = buildNav(entries);
+const keywords = Object.fromEntries(entries.map((e) => [e.id, e.data.keywords]));
+---
+
+<DocsLayout
+  title="Page not found"
+  description="That document does not exist. The handbook is in the rail on the left."
+  section="getting-started"
+  entryId="index"
+  headings={[]}
+  groups={groups}
+  keywords={keywords}
+>
+  <p>
+    Nothing lives at this path. Start from the <a href={withBase("/")}>overview</a>, or use the
+    filter above the contents to find what you were after.
+  </p>
+</DocsLayout>

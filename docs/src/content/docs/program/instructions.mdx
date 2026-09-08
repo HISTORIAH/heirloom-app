@@ -1,0 +1,112 @@
+---
+title: Instructions
+description: Every instruction the program exposes, who may sign it, and what it changes.
+section: program
+order: 2
+keywords: ["instructions", "api", "initialize", "claim", "revoke", "update_field", "deposit_lulo"]
+---
+
+Eleven instructions. No admin instruction exists.
+
+## The set
+
+| Instruction | Signer | What it does |
+|---|---|---|
+| `initialize` | Authority | Creates the estate and vault, optionally registers a first mint, moves opening deposits in |
+| `register_asset` | Authority | Creates an `AssetRecord` and vault token account for a mint, and deposits |
+| `update_field` | Authority **or** `hb_signer` | Writes `last_heartbeat`. Applies settings only for the authority |
+| `update_heir` | Authority | Migrates the estate to a new PDA pair for a new heir, one asset per call |
+| `claim` | Heir | Pays out one asset to the heir, minus 0.75% |
+| `revoke` | Authority | Returns one asset to the authority, minus 0.5% |
+| `delegate_defer` | `delegate` | Sets `paused_until` to `now + pause_duration`, once |
+| `deposit_lulo` | Authority | Routes an amount into a Lulo pool, protected or boosted |
+| `withdraw_protected_lulo` | Authority | Recalls a protected position |
+| `init_withdraw_regular_lulo` | Authority | Phase one of a boosted withdrawal |
+| `complete_withdraw_regular_lulo` | Authority | Phase two of a boosted withdrawal |
+
+## Signatures
+
+<Code caption="programs/heirloom/src/lib.rs">
+```rust
+pub fn initialize(
+    ctx: &mut Context<Initialize>,
+    heartbeat_interval: i64,
+    grace_period: i64,
+    pause_duration: i64,
+    amount: u64,
+    label: String,
+) -> Result<()>;
+
+pub fn register_asset(ctx: &mut Context<RegisterAsset>, amount: u64) -> Result<()>;
+
+pub fn update_field(
+    ctx: &mut Context<UpdateField>,
+    heartbeat_interval: Option<i64>,
+    grace_period: Option<i64>,
+    pause_duration: Option<i64>,
+    label: Option<String>,
+) -> Result<()>;
+
+pub fn update_heir(ctx: &mut Context<UpdateHeir>) -> Result<()>;
+pub fn claim(ctx: &mut Context<Claim>) -> Result<()>;
+pub fn revoke(ctx: &mut Context<Revoke>) -> Result<()>;
+pub fn delegate_defer(ctx: &mut Context<DelegateDefer>) -> Result<()>;
+
+pub fn deposit_lulo(
+    ctx: &mut Context<DepositLulo>,
+    amount: u64,
+    deposit_type: DepositType,
+) -> Result<()>;
+
+pub fn withdraw_protected_lulo(ctx: &mut Context<WithdrawProtected>, amount: u64) -> Result<()>;
+pub fn init_withdraw_regular_lulo(
+    ctx: &mut Context<InitWithdrawRegular>,
+    withdrawal_id: u16,
+    amount: u64,
+) -> Result<()>;
+pub fn complete_withdraw_regular_lulo(
+    ctx: &mut Context<CompleteWithdrawRegular>,
+    withdrawal_id: u16,
+) -> Result<()>;
+```
+</Code>
+
+## Notes that matter when you call these
+
+### `update_field` is both the heartbeat and the settings editor
+
+It writes `last_heartbeat = now` unconditionally, *then* applies the optional arguments —
+and only if the signer is the authority. Pass all four as `None` and it is a pure
+heartbeat. Pass settings as a hot signer and they are silently ignored while the heartbeat
+still lands.
+
+It is also the only instruction that clears `paused_until`, and only when the pause has
+already expired.
+
+### `claim` and `revoke` are per-asset
+
+Each call moves one asset. The SOL leg closes the vault, so it must come last:
+`claimable_assets <= 1` is required before the SOL branch will run, otherwise
+`TokensFirst`. Bundle token instructions first and the SOL instruction last in one
+transaction.
+
+Both also require the asset's `AssetRecord` to show no live exposure and no pending
+boosted withdrawal, or they fail with `FundsStillDeployed`.
+
+### `update_heir` is a multi-call migration
+
+One asset per call, with the new estate carrying `is_migrating: true` until the last one
+lands. Run it to completion.
+
+### Optional accounts
+
+`initialize` takes `delegate`, `hb_signer`, `mint`, `vault_token_account`,
+`authority_token_account` and `asset_record` as optional accounts. Omitting the mint
+group opens a SOL-only estate; omitting `delegate` or `hb_signer` leaves those roles
+unset for the life of the estate.
+
+<Callout type="tip" title="Do not hand-roll these">
+The generated client at `@historiah/heirloom` has a builder for every instruction above,
+with the account list and codecs derived from the IDL. See
+[JavaScript client](/docs/reference/js-client/).
+</Callout>

@@ -1,0 +1,93 @@
+---
+title: Architecture
+description: How the program, the generated client, and the app fit together — and which layer is allowed to know what.
+section: program
+order: 1
+keywords: ["architecture", "program", "anchor", "client", "codama", "stack", "design"]
+---
+
+Heirloom is one Anchor program, one generated TypeScript client, and one React app. Each
+layer knows less than the one below it, on purpose.
+
+<Code caption="The stack">
+```txt
+app  (React, app.heirlm.xyz)
+  └─ services/heirloom.ts        the only module that imports the client
+       └─ lib/heirloom/          PDAs, instruction builders, sign-and-send
+            └─ @historiah/heirloom      generated from the Anchor IDL
+                 └─ Solana RPC / wallet signer
+                      └─ heirloom program   heirRS7Lkn…ByGHukg
+```
+</Code>
+
+## The program
+
+An Anchor program with no admin. There is no upgrade-gated privileged instruction, no
+pause switch, no owner-only escape hatch, and no account that can be reassigned by a
+third party. Every instruction is signed by one of the four roles the estate itself
+names.
+
+Its state is three account types — [`Estate`, `Vault`, `AssetRecord`](/docs/program/accounts/)
+— and its integrations are Lulo v2 for lending, declared with `declare_program!` so the
+CPI is type-checked against Lulo's IDL rather than hand-rolled.
+
+The program publishes a `security_txt` block with contact and policy, so an on-chain
+explorer shows a disclosure route without anyone needing to find this page.
+
+## The generated client
+
+`clients/heirloom/js` is produced by [Codama](https://github.com/codama-idl/codama) from
+the Anchor IDL: typed instruction builders, account codecs, PDA derivers and error
+decoders. Because the codecs come from the IDL, they match the wire format by
+construction — there are no hand-written overrides to drift.
+
+Regenerating after a program change is one command from the repo root:
+
+```bash
+bun generate           # both programs
+bun generate:heirloom  # just this one
+```
+
+The app depends on the client as a workspace package, so a program change surfaces as a
+TypeScript error before it surfaces as a broken transaction.
+
+## The app
+
+Deliberately thin. It runs no business logic of its own, treats no cached state as
+authoritative, and hides nothing about the contract from the user. Every meaningful
+action becomes a transaction the user signs.
+
+Two rules keep it that way:
+
+- **All program access goes through `services/heirloom.ts`.** Components never import the
+  generated client.
+- **All RPC access goes through `WalletContext`'s singletons.** No component creates its
+  own connection.
+
+`VaultContext` polls estates every 15 seconds — every 5 while a create is confirming —
+and derives lifecycle state and countdowns from chain data on each pass, rather than
+ticking a local clock.
+
+## Two origins, three surfaces
+
+| Surface | Build | Serves |
+|---|---|---|
+| Marketing | Astro, prerendered, 9 locales | `heirlm.xyz` |
+| Docs | Astro, prerendered, English | `heirlm.xyz/docs` |
+| App | Vite + React SPA, `noindex` | `app.heirlm.xyz` |
+
+The split exists for crawlers: an SPA hands a crawler an empty shell, so everything
+content-heavy is prerendered static HTML and only the wallet-gated app is a bundle. The
+app carries `noindex` on every route because there is nothing on it a search engine
+should hold.
+
+Because the app is a separate origin, everything crossing the boundary is explicit:
+`?lang=` carries the reading language into the app, `?tour=1` starts the product tour, and
+a PostHog cookie scoped to `.heirlm.xyz` keeps one visitor one person.
+
+## The IKA variant
+
+`programs/heirloom-ika` is a second, smaller program exploring cross-chain estates via
+[Ika](https://ika.xyz) — `initialize`, `heartbeat`, `claim`, `revoke`, and nothing else.
+It is a separate deployment with its own client and its own app package, and it shares no
+accounts with the main program. Nothing on this site depends on it.

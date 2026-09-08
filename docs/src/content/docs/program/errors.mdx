@@ -1,0 +1,81 @@
+---
+title: Errors & guards
+description: Every error the program can return, what triggers it, and what to do about it.
+section: program
+order: 4
+keywords: ["errors", "error codes", "guards", "require", "failed", "debugging"]
+---
+
+The full `HeirloomError` set, in declaration order. The generated client decodes these
+into named errors, and the app surfaces them as toasts with an Explorer link.
+
+| Error | Raised when | Fix |
+|---|---|---|
+| `Unauthorized` | The signer is not the role the instruction requires | Connect the right wallet |
+| `NotYetClaimable` | A claim before `max(claimable_at, paused_until)` | Wait |
+| `MintMismatch` | A passed mint does not match the account being operated on | Rebuild the instruction |
+| `MissingTokenAccounts` | A token path was taken without the vault, heir, treasury or record account | Pass the full account set |
+| `InsufficientVaultBalance` | The vault holds zero of that asset | Already claimed or withdrawn |
+| `AlreadyDeferred` | `delegate_defer` when `paused_until != 0` | One deferral per estate |
+| `DeferWindowExpired` | `delegate_defer` after `claimable_at` | Too late — only the owner can act |
+| `MismatchedAddress` | A passed delegate does not match the stored one | Check the account list |
+| `EstatePaused` | `update_heir` while a pause is live | Wait for it to expire, check in, retry |
+| `InvalidAccount` | A vault token account is not owned by the vault, or a migration target is not the one in flight | Rebuild the instruction |
+| `ZeroDepositAmount` | A deposit or registration of zero | Pass a positive amount |
+| `TokensFirst` | The SOL leg ran while token accounts were still open | Order tokens first, SOL last |
+| `LabelTooLong` | A label over 32 **bytes** | Shorten it — multibyte characters count double or more |
+| `MathOverflow` / `MathUnderflow` | Checked arithmetic failed | Almost always a malformed amount |
+| `IntervalTooLong` | A duration above 365 days | Reduce it |
+| `IntervalNegative` | A negative duration | Durations are seconds, non-negative |
+| `FundsStillDeployed` | Claim, revoke or migrate on an asset with live Lulo exposure or a pending withdrawal | Recall the position first, as the authority |
+
+## The four guards worth internalising
+
+### The claim condition
+
+```rust
+require!(now >= claimable_at.max(estate.paused_until), NotYetClaimable);
+```
+
+Both terms matter. A guardian's pause is a floor: an estate long past its grace period is
+still not claimable while a pause is live.
+
+### Exit ordering
+
+```rust
+require!(estate.claimable_assets <= 1, TokensFirst);
+```
+
+The SOL leg closes the vault, so nothing may still hang off it. The app's `claimAll` and
+`revokeAll` bundle instructions in the right order for you.
+
+### Deployed funds
+
+```rust
+require!(
+    !asset_record.has_protected_exposure && !asset_record.has_boosted_exposure,
+    FundsStillDeployed
+);
+```
+
+Applies to the heir's claim as much as the owner's withdrawal, and only the authority can
+recall a position. This is the one failure mode that an heir cannot resolve alone.
+
+### Interval bounds
+
+```rust
+require!(value >= 0,                     IntervalNegative);
+require!(value <= MAX_INTERVAL_SECONDS,  IntervalTooLong);   // 365 days
+```
+
+Zero is legal. An estate with a zero interval and zero grace is claimable immediately —
+valid for testing, almost never what you want otherwise.
+
+## Anchor and runtime errors you will also see
+
+| Symptom | Usually |
+|---|---|
+| `AccountNotInitialized` | The estate does not exist for that (authority, heir) pair |
+| `ConstraintSeeds` | A PDA was derived with the wrong seeds — often the wrong heir |
+| A create failing right after a close | RPC lag on a garbage-collected PDA. Wait and retry |
+| A transfer failing on a specific mint | A freeze authority froze the account, or the mint has an active transfer hook |
