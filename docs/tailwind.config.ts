@@ -28,6 +28,7 @@ export default {
           red: "hsl(var(--accent-red))",
           sky: "hsl(var(--accent-sky))",
           sage: "hsl(var(--accent-sage))",
+          "sage-line": "hsl(var(--accent-sage-line))",
         },
         tile: {
           line: "hsl(var(--tile-line))",

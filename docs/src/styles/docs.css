@@ -13,13 +13,19 @@
     --muted: 0 0% 95%;
     --muted-foreground: 0 0% 40%;
 
-    /* Yellow is the primary accent. Lime is reserved for live/active state —
-       the current page in the sidebar, the current heading in the table of
-       contents, and nothing else. */
+    /* Yellow is the primary accent. Sage carries "active" here — the current
+       page in the sidebar, the underline under a link, the tip callout — and
+       nothing else. The landing reaches for lime in that role; a handbook is
+       read for minutes at a time rather than scrolled past, so the quieter
+       companion to yellow wins on this surface.
+
+       Two steps, because sage is a fill colour on the landing and has to do
+       stroke work here: --accent-sage sits behind things, --accent-sage-line
+       draws them. A 1.5px underline at the fill's lightness disappears. */
     --accent-yellow: 50 100% 50%;
-    --accent-lime: 83 78% 55%;
     --accent-red: 0 100% 61%;
     --accent-sage: 101 21% 80%;
+    --accent-sage-line: 101 25% 54%;
     --accent-sky: 203 41% 82%;
 
     --tile-line: 60 9% 87%;
@@ -53,7 +59,7 @@
   }
 
   ::selection {
-    background-color: hsl(var(--accent-lime));
+    background-color: hsl(var(--accent-sage));
     color: hsl(var(--foreground));
   }
 
@@ -128,8 +134,8 @@
     @apply bg-tile-soft text-foreground;
   }
   .side-link[aria-current="page"] {
-    /* Lime, because this is the one thing on the page that is "live". */
-    background-color: hsl(var(--accent-lime) / 0.3);
+    /* Sage, because this is the one thing in the rail that is "live". */
+    background-color: hsl(var(--accent-sage) / 0.7);
     @apply font-bold text-foreground;
   }
 
@@ -207,11 +213,11 @@
     text-decoration: underline;
     text-decoration-thickness: 1.5px;
     text-underline-offset: 3px;
-    text-decoration-color: hsl(var(--accent-lime));
+    text-decoration-color: hsl(var(--accent-sage-line));
     transition: background-color 120ms ease-out;
   }
   .prose a:not(.heading-anchor):hover {
-    background-color: hsl(var(--accent-lime) / 0.28);
+    background-color: hsl(var(--accent-sage) / 0.5);
   }
 
   .prose strong {
