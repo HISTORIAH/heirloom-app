@@ -5,6 +5,7 @@ const app: AppMessages = {
     dashboard: "대시보드",
     claimInheritance: "상속 청구",
     heartbeat: "하트비트",
+    docs: "문서",
     connectWallet: "지갑 연결",
     copied: "복사됨",
     copyAddress: "주소 복사",

@@ -10,3 +10,13 @@
 
 # The old sitemap path. @astrojs/sitemap emits an index instead.
 /sitemap.xml    /sitemap-index.xml                    301
+
+# The documentation left Mintlify and its own subdomain for /docs on the apex,
+# where it feeds the same host the marketing pages rank on. Everything that
+# ever resolved on docs.heirlm.xyz lands on the docs home: the old Mintlify
+# paths do not map one-to-one onto the new handbook, so sending them to a
+# section index beats sending them to a 404.
+#
+# This rule only fires if docs.heirlm.xyz is bound to this Worker — see the
+# route in wrangler.jsonc, and cut the DNS record Mintlify holds first.
+https://docs.heirlm.xyz/*   https://heirlm.xyz/docs/   301

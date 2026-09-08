@@ -1,0 +1,93 @@
+---
+title: Security & trust
+description: What Heirloom guarantees, what it explicitly does not, the trust assumptions you inherit from the assets you deposit, and how to report a vulnerability.
+section: reference
+order: 3
+keywords: ["security", "audit", "trust", "risk", "disclosure", "assumptions", "privacy"]
+---
+
+## What the program guarantees
+
+- **No admin.** There is no privileged instruction, no pause switch, and no address that
+  can move funds outside the four roles the estate itself names.
+- **No key to lose.** The estate, the vault, and every asset record are PDAs. No private
+  key exists for any of them.
+- **No custody.** Assets sit in an account the program signs for. Heirloom holds nothing.
+- **Fixed fee terms.** The three fee rates and the treasury address are compile-time
+  constants. Changing them means deploying a new program.
+- **Deterministic entitlement.** An heir can claim exactly when
+  `now >= max(last_heartbeat + interval + grace, paused_until)`, and never before.
+
+The program is deployed to devnet and has been **independently audited**.
+
+## What it does not guarantee
+
+<Callout type="danger" title="Freeze authority">
+If a registered mint's issuer freezes the vault's token account, that asset is stuck until
+they unfreeze it. This includes most regulated stablecoins. It is a property of the token,
+not of Heirloom, and no program design can route around it.
+</Callout>
+
+**Transfer hooks.** Transfers use plain `transfer_checked` with no hook accounts. A mint
+with an active hook fails at deposit and never enters an estate. The residual risk is a
+mint deposited hook-free whose authority later enables one, which would block exits for
+that asset. Resolving hook accounts dynamically is a known fix, not yet built.
+
+**Transfer fees.** Not handled specially. A fee-on-transfer mint means a smaller amount
+arrives; nothing gets stuck.
+
+**Deployed funds block an inheritance.** An asset with an open Lulo position cannot be
+claimed, and only the authority can recall it. If an estate goes claimable with a live
+position, those funds stay in the strategy until the owner's key acts. Recall your
+positions if you stop using an estate actively.
+
+**External protocol risk.** Routing into Lulo means accepting Lulo's risk, and Lulo's
+Kamino exposure, for as long as the position is open. Heirloom does not insure it.
+
+**Nothing happens automatically.** There is no keeper. An estate that becomes claimable
+stays claimable until an heir signs. If your heir does not know Heirloom exists, nothing
+in this protocol will tell them.
+
+## What is public
+
+Everything on-chain, which is the whole arrangement: your address, your heir's address,
+your guardian's address, your durations, your label, and every balance and transaction.
+Anyone can read it and anyone can correlate it.
+
+That is a property of Solana, not a Heirloom decision, but it is worth stating plainly
+before you write a name into a label.
+
+## What the app collects
+
+Analytics are **off unless explicitly enabled** at build time, and even then the
+integration is deliberately narrow. It records page views and clicks on links and
+buttons. It does not identify wallet owners and does not send wallet addresses, heir
+addresses, transaction signatures, asset amounts, form values, or error messages.
+Autocaptured text is masked and session recording is disabled.
+
+The app carries `noindex, nofollow` on every route and a `robots.txt` disallowing
+everything, because there is nothing on it a crawler should hold.
+
+## Operational advice
+
+<Cards>
+  <Card title="Use a hot signer" icon="smartphone">
+    Keep the owning key cold. A hot signer can only ever send check-ins.
+  </Card>
+  <Card title="Name a guardian" icon="shield">
+    The worst a hostile one can do is delay by your own pause duration, once.
+  </Card>
+  <Card title="Verify the heir address" icon="scan-line">
+    No name resolution, no undo. Send a small transfer first.
+  </Card>
+  <Card title="Recall before you go quiet" icon="trending-down">
+    Deployed funds are the one thing your heir cannot fix.
+  </Card>
+</Cards>
+
+## Reporting a vulnerability
+
+Email **info@heirlm.xyz** or DM **@heirloom_app**. The program publishes the same contact
+in an on-chain `security_txt` block, with the repository as its policy URL.
+
+Please do not open a public issue for anything that could put funds at risk.

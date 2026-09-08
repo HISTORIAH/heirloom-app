@@ -1,0 +1,21 @@
+---
+import { cn } from "@/lib/cn";
+import { withBase } from "@/lib/site";
+
+interface Props {
+  /** "ink" for light grounds, "paper" for dark ones. */
+  tone?: "ink" | "paper";
+  /** Set the height here (e.g. "h-8"); width follows the 391:120 ratio. */
+  class?: string;
+}
+
+const { tone = "ink", class: className } = Astro.props;
+---
+
+<img
+  src={withBase(tone === "paper" ? "/heirloom-wordmark-inverse.svg" : "/heirloom-wordmark.svg")}
+  alt="Heirloom"
+  width="391"
+  height="120"
+  class={cn("w-auto", className)}
+/>

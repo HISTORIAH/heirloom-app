@@ -1,0 +1,105 @@
+---
+title: Fees
+description: Every fee the protocol charges, when it applies, how it is rounded, and the things that are free.
+section: concepts
+order: 6
+keywords: ["fees", "cost", "pricing", "bps", "treasury", "protocol fee"]
+---
+
+Three fees, all of them defined as constants in the program, all of them paid to the
+treasury account at the moment value leaves.
+
+<Code caption="programs/heirloom/src/constants.rs">
+```rust
+pub const CLAIM_FEE_BPS: u16 = 75;           // 0.75%
+pub const EMERGENCY_EXIT_FEE_BPS: u16 = 50;  // 0.50%
+pub const YIELD_FEE_BPS: u16 = 1000;         // 10% — of yield only
+```
+</Code>
+
+## What is free
+
+- Opening an estate
+- Registering an asset
+- Depositing, at creation or any time after
+- Every check-in
+- Deferring, as a guardian
+- Changing the heir
+
+All of these still cost Solana network fees, which are a fraction of a cent. Heirloom
+takes nothing.
+
+## Claim — 0.75%
+
+Charged per asset, at payout. On a claim of 100 USDC the heir receives 99.25 USDC and
+0.75 USDC goes to the treasury. The SOL leg is charged the same way, on the vault's
+claimable lamports after the rent-exempt reserve.
+
+## Emergency withdraw — 0.5%
+
+Charged per asset when the owner pulls funds back out early. Lower than the claim fee
+because it is the exit you should never be discouraged from taking.
+
+## Yield — 10% of the yield
+
+Charged only on the profit a strategy returned, never on what you put in. When a
+withdrawal from Lulo lands back in the vault, the program splits it against
+`principal_deployed`:
+
+<Code caption="programs/heirloom/src/helpers.rs">
+```rust
+let principal_returned = returned.min(asset_record.principal_deployed);
+let yield_amount = returned - principal_returned;
+
+asset_record.principal_deployed -= principal_returned;
+
+if yield_amount > 0 {
+    let (fee, _) = calculate_distribution(yield_amount, YIELD_FEE_BPS)?;
+    // fee → treasury
+}
+```
+</Code>
+
+Principal comes back first. Only the excess is yield, and only that excess is charged. A
+strategy that lost value returns less than principal, so `yield_amount` is zero and the
+fee is zero.
+
+## The rounding
+
+Fees round **up**, by ceiling division, so the treasury is never short a lamport and the
+arithmetic can never underflow:
+
+<Code caption="programs/heirloom/src/helpers.rs">
+```rust
+let protocol_fee = ((gross * fee_bps + 9_999) / 10_000) as u64;
+let payout = gross_amount.checked_sub(protocol_fee)?;
+```
+</Code>
+
+On small amounts this matters: a 1-lamport claim pays a 1-lamport fee and the heir gets
+zero. On any realistic balance it is a rounding artefact of at most one base unit.
+
+## Where it goes
+
+<Code caption="programs/heirloom/src/constants.rs">
+```rust
+pub const TREASURY: Address =
+    address!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q");
+```
+</Code>
+
+The treasury address is a compile-time constant, not a configurable field — it cannot be
+changed by a transaction, only by deploying a new program. For token fees the treasury's
+associated token account for that mint must exist and be passed in; the app resolves it.
+
+<Callout type="note" title="This is the devnet treasury">
+The constant is marked temporary in the source and will be replaced before a mainnet
+deployment. See [Addresses & clusters](/docs/reference/addresses/).
+</Callout>
+
+## Rent, which is not a fee
+
+Creating an estate costs rent for three or more accounts: the estate, the vault, and one
+`AssetRecord` per registered mint, plus the associated token accounts. That SOL is not
+spent — it is held to keep the accounts alive and returned when they close. It is paid by
+the authority and refunded to whoever the closing instruction credits.

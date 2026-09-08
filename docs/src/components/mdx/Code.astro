@@ -1,0 +1,29 @@
+---
+/**
+ * A code block with a caption. The caption is what turns a snippet into
+ * evidence — it says where the code is from, which is usually the thing a
+ * reader needs and a bare fence never carries.
+ */
+interface Props {
+  caption: string;
+}
+const { caption } = Astro.props;
+---
+
+<figure class="code-card not-prose my-6 overflow-hidden rounded-lg border border-ink bg-ink">
+  <figcaption class="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-2.5">
+    <span class="truncate text-[10.5px] font-bold uppercase tracking-[0.16em] text-white/55">
+      {caption}
+    </span>
+    <button
+      type="button"
+      data-copy
+      class="shrink-0 rounded px-2 py-1 text-[11px] font-semibold text-white/55 transition-colors hover:bg-white/10 hover:text-white"
+    >
+      Copy
+    </button>
+  </figcaption>
+  <div class="prose">
+    <slot />
+  </div>
+</figure>

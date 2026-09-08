@@ -1,0 +1,105 @@
+---
+title: Troubleshooting
+description: The failures people actually hit, what causes each, and the fix.
+section: reference
+order: 4
+keywords: ["troubleshooting", "errors", "problems", "not working", "failed", "help", "fix"]
+---
+
+## Transactions
+
+### "Wallet not connected"
+
+An action ran with no signer. The app keeps every page viewable while disconnected and
+gates only the actions — connect a wallet and retry.
+
+### "Prior estate/vault PDAs not yet cleared on-chain"
+
+You closed an estate and are re-creating one for the same (authority, heir) pair. Solana
+garbage-collects zero-lamport accounts at the end of a transaction, but RPC snapshots lag.
+The app already polled for 20 seconds. Wait a few more and try again, or name a different
+heir.
+
+### `NotYetClaimable`
+
+The deadline has not passed. Remember the claim moment is
+`max(last_heartbeat + interval + grace, paused_until)` — a guardian's pause is a floor, so
+an estate past its grace period can still be blocked.
+
+### `TokensFirst`
+
+The SOL leg ran while vault token accounts were still open. The SOL branch closes the
+vault, so it has to go last. Use the app's bundled actions, or order your own
+instructions tokens-first.
+
+### `FundsStillDeployed`
+
+The asset has a live Lulo position, or a boosted withdrawal that has been initiated and
+not completed. Recall it — as the authority; an heir cannot — and retry.
+
+### `LabelTooLong`
+
+32 **bytes**, not characters. Emoji and non-Latin scripts cost several bytes each.
+
+### A deposit fails on one specific token
+
+Either the mint has an active transfer hook, in which case it cannot enter an estate at
+all, or its issuer has frozen the account. See
+[Assets & the vault](/docs/concepts/assets/#mints-that-do-not-work).
+
+## The app
+
+### Tokens are missing from an estate card
+
+`discoverVaultTokenAccounts` filters out zero-balance accounts. If you expect a balance,
+confirm the deposit landed via the Explorer link on the transaction toast.
+
+### Token icons are missing and symbols show as addresses
+
+The RPC endpoint is not DAS-capable. Metadata comes from the Helius DAS API served off
+the same URL — point `VITE_SOLANA_RPC_ENDPOINT` at Helius. Nothing about the estate is
+affected; this is display only.
+
+### A heartbeat from `/heartbeat` is rejected
+
+The connected wallet is not the estate's registered `hb_signer`. The page shows the
+registered signer under the lookup result — compare them.
+
+### The yield or notifications surface is missing
+
+Both sit behind feature flags. `VITE_FEATURE_YIELD_STAKING_UI` is on by default,
+`VITE_FEATURE_NOTIFICATIONS_UI` is off, and neither flow is wired to a live backend yet.
+
+### An estate does not appear on the claim page
+
+The page lists estates whose `heir` field is the connected wallet. If it is empty, the
+address you were given is not the one named — check with the owner, and check you are on
+the right cluster.
+
+## Local development
+
+### Nothing connects
+
+With no RPC configured the app targets a local validator at `127.0.0.1:8899`. Either run
+one, or set `VITE_SOLANA_RPC_ENDPOINT` to a devnet endpoint.
+
+### Types broke after a program change
+
+Regenerate the client:
+
+```bash
+anchor build
+bun generate
+```
+
+The app depends on it as a workspace package, so the new shape arrives as a TypeScript
+error rather than a runtime failure.
+
+### The docs or landing show raw translation keys
+
+A stale dev server holding a cached locale bundle. Restart it.
+
+## Still stuck
+
+Open an issue on [GitHub](https://github.com/HISTORIAH/Heirloom-app) with the failing
+transaction signature, or email **info@heirlm.xyz**.

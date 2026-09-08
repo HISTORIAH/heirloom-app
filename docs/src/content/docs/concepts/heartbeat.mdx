@@ -1,0 +1,112 @@
+---
+title: Heartbeats & the grace period
+description: The check-in that keeps an estate yours, the two durations that define the deadline, and exactly what resets what.
+section: concepts
+order: 2
+keywords: ["heartbeat", "check in", "grace period", "deadline", "interval", "timer"]
+---
+
+A heartbeat is a signed transaction that writes the current time into `last_heartbeat`.
+That is the whole mechanism. It carries no amount, moves nothing, and changes no setting
+unless you asked it to.
+
+## The deadline
+
+Two durations, both yours, both capped at 365 days:
+
+| Field | Meaning |
+|---|---|
+| `heartbeat_interval` | How long you may go quiet before the estate is considered at risk |
+| `grace_period` | Extra time after that, before the heir can claim |
+
+The program adds them to your last check-in:
+
+<Code caption="programs/heirloom/src/instructions/claim.rs">
+```rust
+let claimable_at = estate.last_heartbeat
+    + estate.heartbeat_interval
+    + estate.grace_period;
+
+require!(now >= claimable_at.max(estate.paused_until), NotYetClaimable);
+```
+</Code>
+
+So a 30-day interval with a 7-day grace gives an heir nothing to do until **37 days**
+after your last signature.
+
+## Why two numbers instead of one
+
+They mean different things to the person watching the dashboard. The interval is your
+normal cadence — miss it and you are late, not gone. The grace period is the alarm: the
+estate is visibly at risk, the app is warning you, and a guardian can still buy you more
+time. Only after both have run does anything become possible for the heir.
+
+Collapsing them into one number would work mechanically and would remove the state where
+you can be warned before anything is at stake.
+
+## What resets the clock
+
+Any successful `update_field` instruction, from either the authority **or** the registered
+hot signer. The app calls this "Send heartbeat" when it passes no settings at all.
+
+```ts
+// A heartbeat is an update with nothing to update.
+await updateFields(client, signer, {
+  heir,
+  heartbeatInterval: null,
+  gracePeriod: null,
+  pauseDuration: null,
+  label: null,
+});
+```
+
+Any *other* estate write — depositing, registering an asset, routing yield — does not
+reset it. Only `update_field` touches `last_heartbeat`.
+
+<Callout type="tip" title="Keep the cold key cold">
+Register a `hb_signer`: a hot wallet on your phone that may send check-ins and nothing
+else. It cannot change settings, move funds, or reassign the heir. If the signer's
+arguments include settings and the signer is not the authority, the program silently
+ignores them.
+</Callout>
+
+## Checking in while paused
+
+If a guardian has deferred the estate, `paused_until` holds a future timestamp. A
+heartbeat during that window updates `last_heartbeat` as normal but leaves `paused_until`
+alone — the pause is only cleared by a heartbeat sent **after** it has already expired.
+
+<Code caption="programs/heirloom/src/instructions/update_field.rs">
+```rust
+estate.last_heartbeat = now;
+
+// Clear deferred state when the authority returns and sends a heartbeat
+if estate.paused_until > 0 && now >= estate.paused_until {
+    estate.paused_until = 0;
+}
+```
+</Code>
+
+The consequence is worth knowing: while a pause is live it is a *floor* on the claim
+time, so the estate is safe regardless. Once it lapses, your next check-in clears the
+flag and frees the guardian to defer again should they ever need to.
+
+## Choosing the numbers
+
+There is no right answer, but there is a trade-off with exactly two sides.
+
+- **Short interval** — the estate reaches your heir sooner in the event that matters, and
+  you sign more often. Miss a few and you are relying on the grace period.
+- **Long interval** — you barely think about it, and an heir waits longer for something
+  they may urgently need.
+
+Most people start around **30 days interval / 7 days grace** and adjust after living with
+it for a month. Both are editable at any time from the dashboard, and editing them also
+counts as a check-in.
+
+<Callout type="warning" title="An interval of zero is legal">
+`validate_interval` rejects negative values and anything above 365 days, but zero passes.
+An estate with a zero interval and a zero grace is claimable the instant the clock ticks
+past your last heartbeat. That is a valid configuration for testing and almost never what
+you want in production.
+</Callout>

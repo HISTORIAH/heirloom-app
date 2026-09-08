@@ -17,7 +17,8 @@ analytics is off.
 | `/es/` `/pt/` `/ja/` `/ko/` `/vi/` `/tr/` `/zh-cn/` `/zh-tw/` | one document each, with `hreflang` alternates |
 | `/404.html` | not a SPA fallback — unknown paths 404 |
 | `/sitemap-index.xml` | generated, with per-locale alternates |
-| `_redirects` | old app paths 301 → `app.heirlm.xyz` |
+| `_redirects` | old app paths 301 → `app.heirlm.xyz`, and `docs.heirlm.xyz` → `/docs/` |
+| `docs/` | not built here — copied in from the `docs` package, see below |
 | `_headers` | immutable caching for `/_astro/*` |
 
 Ten documents, ~17 KB gzipped each, ~2.7 KB of JavaScript in total.
@@ -28,10 +29,21 @@ Ten documents, ~17 KB gzipped each, ~2.7 KB of JavaScript in total.
 bun run dev           # http://localhost:4321
 bun run build         # astro check && astro build → dist/
 bun run preview       # serve the production build
-bun run deploy        # build, then wrangler deploy
+bun run deploy        # build landing + docs, then wrangler deploy
 ```
 
 Or `bun dev:landing` / `bun build:landing` from the repo root.
+
+## The docs ride along
+
+`heirlm.xyz/docs` is a separate package ([`docs/`](../docs/README.md)) that
+builds to its own `dist` and is copied into `landing/dist/docs` afterwards. One
+origin, one Worker, one deploy — and the handbook feeds the same host the
+marketing pages rank on instead of a subdomain of its own.
+
+`bun run build` here wipes `dist/`, which is why deploying goes through
+`bun build:site` at the repo root rather than `astro build` alone. Deploy with
+`bun deploy:site`, or `bun run deploy` here, which calls it.
 
 ## Environment
 

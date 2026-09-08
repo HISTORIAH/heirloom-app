@@ -1,0 +1,59 @@
+---
+/**
+ * An aside. Four tones, each a tinted block with one solid edge — no icon
+ * badge, no rounded pill, nothing the rest of the page does not already do.
+ */
+import { cn } from "@/lib/cn";
+import Icon from "@/components/Icon.astro";
+
+type Tone = "note" | "tip" | "warning" | "danger";
+
+interface Props {
+  type?: Tone;
+  title?: string;
+  class?: string;
+}
+
+const { type = "note", title, class: className } = Astro.props;
+
+const tones: Record<Tone, { edge: string; fill: string; icon: string; label: string }> = {
+  note: { edge: "border-l-foreground", fill: "bg-tile-soft", icon: "info", label: "Note" },
+  tip: {
+    edge: "border-l-[hsl(var(--accent-lime))]",
+    fill: "bg-[hsl(var(--accent-lime)/0.14)]",
+    icon: "lightbulb",
+    label: "Tip",
+  },
+  warning: {
+    edge: "border-l-[hsl(var(--accent-yellow))]",
+    fill: "bg-[hsl(var(--accent-yellow)/0.14)]",
+    icon: "triangle-alert",
+    label: "Careful",
+  },
+  danger: {
+    edge: "border-l-[hsl(var(--accent-red))]",
+    fill: "bg-[hsl(var(--accent-red)/0.08)]",
+    icon: "octagon-alert",
+    label: "Irreversible",
+  },
+};
+
+const tone = tones[type];
+---
+
+<aside
+  class={cn(
+    "not-prose my-6 rounded-r-lg border-l-[3px] px-5 py-4 text-[14.5px] leading-relaxed",
+    tone.edge,
+    tone.fill,
+    className,
+  )}
+>
+  <p class="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em]">
+    <Icon name={tone.icon} class="h-3.5 w-3.5" strokeWidth={2.5} />
+    {title ?? tone.label}
+  </p>
+  <div class="callout-body [&>*+*]:mt-2.5">
+    <slot />
+  </div>
+</aside>

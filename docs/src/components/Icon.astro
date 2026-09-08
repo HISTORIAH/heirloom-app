@@ -1,0 +1,39 @@
+---
+/**
+ * A lucide glyph, inlined at build time — the landing's component, unchanged,
+ * so both surfaces draw from the same pinned icon set and neither ships an
+ * icon runtime.
+ */
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+interface Props {
+  /** kebab-case lucide icon name, e.g. "arrow-right". */
+  name: string;
+  class?: string;
+  strokeWidth?: number;
+  fill?: string;
+  [key: string]: unknown;
+}
+
+const { name, class: className, strokeWidth = 2, fill = "none", ...rest } = Astro.props;
+
+const raw = readFileSync(require.resolve(`lucide-static/icons/${name}.svg`), "utf8");
+const body = raw
+  .slice(raw.indexOf(">", raw.indexOf("<svg")) + 1, raw.lastIndexOf("</svg>"))
+  .trim();
+---
+
+<svg
+  viewBox="0 0 24 24"
+  fill={fill}
+  stroke="currentColor"
+  stroke-width={strokeWidth}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class={className}
+  {...rest}
+  set:html={body}
+/>

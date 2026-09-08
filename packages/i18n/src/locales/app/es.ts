@@ -5,6 +5,7 @@ const app: AppMessages = {
     dashboard: "Panel",
     claimInheritance: "Reclamar herencia",
     heartbeat: "Latido",
+    docs: "Docs",
     connectWallet: "Conectar wallet",
     copied: "Copiado",
     copyAddress: "Copiar dirección",

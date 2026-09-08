@@ -1,0 +1,74 @@
+---
+title: Fund an estate
+description: Adding SOL and new tokens to a live estate, topping up what is already registered, and what each costs.
+section: using
+order: 2
+keywords: ["fund", "deposit", "top up", "add tokens", "register asset", "sol"]
+---
+
+A live estate takes deposits at any time, from the authority wallet. Nothing about
+funding touches the clock — a deposit is not a check-in.
+
+## Adding a new token
+
+The first time a mint enters an estate it has to be registered. That single instruction
+does three things: creates the `AssetRecord` marker PDA, creates the vault's associated
+token account for that mint, and moves your opening balance in.
+
+```ts
+await registerAsset(client, signer, { heir, mint, amount });
+```
+
+From the dashboard: open the estate card, choose **Add asset**, pick a token from your
+wallet's holdings, and enter an amount.
+
+## Topping up
+
+Once a mint is registered, adding more is a plain transfer into an account that already
+exists:
+
+```ts
+await depositToken(client, signer, { heir, mint, amount });
+await depositSol(client, signer, { heir, lamports });
+```
+
+There is no protocol fee on either, and no limit on how many times you do it.
+
+## Topping up SOL
+
+SOL is slightly different because it has no token account. `registerSolDeposit` is what
+the app uses when an estate's SOL leg needs to be established, and `depositSol` is a
+plain lamport transfer into the vault after that.
+
+<Callout type="note" title="The rent reserve">
+The vault must stay rent-exempt, so a small SOL balance is always locked. The app
+subtracts it when displaying a claimable balance — a vault holding exactly the reserve
+reports zero, correctly. The reserve is returned when the estate closes.
+</Callout>
+
+## What it costs
+
+Nothing, to Heirloom. You pay Solana network fees, plus rent for any account the
+transaction creates — the `AssetRecord` and the vault token account on a first
+registration. Rent is refunded when those accounts close.
+
+## What you cannot deposit
+
+- **NFTs and compressed assets.** The program moves fungible balances with
+  `transfer_checked`; there is no NFT path.
+- **Mints with an active transfer hook.** They fail at deposit and never enter the
+  estate. See [Assets & the vault](/docs/concepts/assets/#mints-that-do-not-work).
+- **Zero.** `ZeroDepositAmount` rejects it.
+
+## Removing an asset
+
+There is no "unregister" instruction. Funds leave through
+[emergency withdraw](/docs/using/emergency-withdraw/), which returns the balance and
+closes the asset's accounts. Withdrawing one asset does not close the estate — only
+clearing the last one does, because the SOL leg is what closes the vault.
+
+<Callout type="warning" title="Recall yield first">
+An asset with an open Lulo position cannot be withdrawn or claimed: the program checks
+the exposure flags on its `AssetRecord` and fails with `FundsStillDeployed`. Recall the
+strategy first, then withdraw.
+</Callout>

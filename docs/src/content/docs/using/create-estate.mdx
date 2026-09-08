@@ -1,0 +1,99 @@
+---
+title: Create an estate
+description: The four steps of the creation wizard, what each field does on-chain, and what the single transaction actually contains.
+section: using
+order: 1
+keywords: ["create", "new estate", "open", "wizard", "initialize", "create vault"]
+---
+
+Creating an estate is one transaction. The app's wizard collects four screens of input
+and then sends `initialize` — plus one `register_asset` per additional token — as a
+single atomic instruction bundle.
+
+Open [app.heirlm.xyz/create-vault](https://app.heirlm.xyz/create-vault) with a wallet
+connected.
+
+## Step 1 — Heir
+
+| Field | On-chain | Notes |
+|---|---|---|
+| Heir address | `heir` | A raw address. It is a PDA seed, so it fixes the estate's identity |
+| Label | `label` | Up to 32 bytes, public, purely for your own bookkeeping |
+| Guardian *(optional)* | `delegate` | May defer the deadline once. Cannot move funds |
+
+<Callout type="warning" title="Check the heir address twice">
+There is no name resolution and no undo. If you mistype it, the estate belongs to a
+wallet nobody controls, and your only exit is an emergency withdraw. Paste from the
+wallet, and consider sending a small transfer first to confirm it arrives.
+</Callout>
+
+## Step 2 — Deposit
+
+Choose an opening SOL amount, any SPL tokens, or both. Every token you pick here is
+registered, which creates its `AssetRecord` marker and the vault's token account in this
+same transaction.
+
+You are not committing to a final amount. Assets can be added and topped up at any time
+— see [Fund an estate](/docs/using/fund-estate/).
+
+## Step 3 — Heartbeat
+
+| Field | On-chain | Cap |
+|---|---|---|
+| Heartbeat interval | `heartbeat_interval` | 365 days |
+| Grace period | `grace_period` | 365 days |
+| Pause duration | `pause_duration` | 365 days |
+| Hot signer *(optional)* | `hb_signer` | — |
+
+The first two define the deadline; the third is how much time a guardian may add. All
+three are editable later, and editing them counts as a check-in.
+
+A **hot signer** is a second wallet of yours that may send check-ins and nothing else. If
+the wallet that owns the estate is a hardware or cold wallet, register one — it is the
+difference between a monthly ritual with a Ledger and tapping a button on your phone.
+
+## Step 4 — Review
+
+The review screen is the estate as it will exist. Read the two durations back to yourself
+in days, confirm the heir, and sign.
+
+## What the transaction does
+
+<Code caption="One transaction, in order">
+```txt
+initialize(heartbeat_interval, grace_period, pause_duration, amount, label)
+  ├─ create estate PDA          seeds ["estate", authority, heir]
+  ├─ create vault PDA           seeds ["vault",  authority, heir]
+  ├─ create asset record        seeds ["asset", estate, mint]      (if a mint was given)
+  ├─ create vault token account                                    (if a mint was given)
+  ├─ transfer the token deposit into the vault
+  └─ transfer the SOL deposit into the vault
+
+register_asset(amount)   ×N     one per additional token
+```
+</Code>
+
+Because it is one transaction, it either all happens or none of it does. There is no
+state where an estate exists but its funding failed.
+
+## After it lands
+
+The clock starts immediately — `last_heartbeat` is set to the transaction's timestamp,
+not to zero. Your estate appears on the dashboard as **active**, with a countdown to the
+grace window.
+
+<Callout type="note" title="Re-creating an estate you just closed">
+The estate PDA is derived from your address and your heir's, so closing one and
+immediately reopening the same pair can fail while RPC snapshots still show the old
+account. The app polls for up to 20 seconds and retries before surfacing
+`Prior estate/vault PDAs not yet cleared on-chain.` — wait a few seconds and try again.
+</Callout>
+
+## Common failures
+
+| Error | Cause |
+|---|---|
+| `IntervalTooLong` | A duration above 365 days |
+| `IntervalNegative` | A negative duration |
+| `LabelTooLong` | Label over 32 bytes — note bytes, not characters |
+| `ZeroDepositAmount` | A registration with an amount of zero |

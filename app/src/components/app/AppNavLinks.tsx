@@ -1,7 +1,9 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Gift, Heart, LayoutDashboard } from "lucide-react";
+import { BookOpen, Gift, Heart, LayoutDashboard } from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
+import { DOCS_URL } from "@/config";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const APP_DESTINATIONS = [
@@ -43,6 +45,24 @@ export const AppNavLinks: React.FC<{
           </button>
         );
       })}
+
+      {/* The docs are on the landing's origin, so this is an anchor rather
+          than a router push — the router has no route to give it. */}
+      <a
+        href={DOCS_URL}
+        onClick={() => {
+          trackAnalyticsEvent("docs_link_clicked");
+          onNavigate?.();
+        }}
+        className={cn(
+          variant === "drawer"
+            ? "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+            : "flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft",
+        )}
+      >
+        <BookOpen className="h-4 w-4" strokeWidth={2} />
+        {t("nav.docs")}
+      </a>
     </>
   );
 };

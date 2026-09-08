@@ -1,0 +1,89 @@
+---
+title: Estate states
+description: Active, grace, claimable, distributed — where each boundary sits, and what changes when one is crossed.
+section: concepts
+order: 3
+keywords: ["states", "active", "grace", "claimable", "distributed", "status", "lifecycle"]
+---
+
+An estate is always in exactly one state, and the state is derived — not stored. The app
+computes it from the same fields the program checks, so a badge on your dashboard can
+never disagree with what a transaction would do.
+
+<Code caption="app/src/services/heirloom.ts">
+```ts
+computeEstateState({
+  lastHeartbeat,
+  heartbeatInterval,
+  gracePeriod,
+  pausedUntil,
+  createdAt,
+  vaultEmpty,
+}); // → "active" | "grace" | "claimable" | "distributed"
+```
+</Code>
+
+When an estate has never been checked in, the computation anchors on `created_at` instead
+of `last_heartbeat`, so a fresh estate is active from the moment it exists.
+
+## Active
+
+`now < last_heartbeat + heartbeat_interval`
+
+Normal operation. You can do everything: add assets, deposit, route yield, change the
+interval, change the heir, withdraw. The heir can do nothing. A guardian can defer, though
+there is no reason to yet.
+
+## Grace
+
+`last_heartbeat + heartbeat_interval <= now < claimable_at`
+
+The interval has lapsed. Nothing has changed about what anyone is *allowed* to do — the
+owner still has every power, the heir still has none — but the estate is now visibly at
+risk and the app says so.
+
+This is the window a guardian exists for. A deferral is only accepted before
+`claimable_at`, so grace is the last moment anyone other than you can add time.
+
+## Claimable
+
+`now >= max(claimable_at, paused_until)`
+
+The heir can sign a claim. Nothing has moved yet and nothing will move on its own — there
+is no keeper, no automation, and nobody paid to act. An estate can sit claimable
+indefinitely.
+
+You have not lost anything at this point either. Your emergency withdraw still works, and
+if you get there first the estate closes and the heir's claim fails on an empty vault.
+Whoever signs first, wins.
+
+<Callout type="note" title="A pause is a floor, not a state">
+`paused_until` does not create a fifth state. It raises the claimable moment:
+`max(claimable_at, paused_until)`. An estate deep into its grace period with a live pause
+is not claimable until the pause expires, even if the grace period ran out days ago.
+</Callout>
+
+## Distributed
+
+The vault is empty and the estate and vault accounts are closed.
+
+This is terminal for that pair of addresses in their current incarnation, and it is what
+every exit path converges on: a claim, an emergency withdraw, or the old half of a
+change-of-heir migration. Rent from both accounts is returned as part of the transaction
+that empties them.
+
+The same wallet pair can open a new estate afterwards, though see the note about RPC lag
+in [The estate](/docs/concepts/estate/#closing).
+
+## The countdowns
+
+The app exposes two, and they are what the dashboard's timers count:
+
+| Countdown | Reaches zero at |
+|---|---|
+| `secondsUntilGrace` | `last_heartbeat + heartbeat_interval` |
+| `secondsUntilClaimable` | `max(claimable_at, paused_until)` |
+
+Both are recomputed from chain state on every poll — every 15 seconds, or every 5 while a
+create is confirming — rather than ticked locally, so a clock that drifts in your browser
+cannot make an estate look safer than it is.

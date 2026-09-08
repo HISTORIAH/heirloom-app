@@ -1,0 +1,49 @@
+---
+/**
+ * The landing's Button, narrowed to the two variants the docs chrome uses.
+ * Class strings are copied rather than rewritten, so the three surfaces cannot
+ * drift apart.
+ */
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/cn";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-center font-bold uppercase tracking-wide transition-all duration-150 ease-out focus-visible:outline-4 focus-visible:outline-foreground focus-visible:outline-offset-4 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        flat: "bg-foreground text-background hover:bg-foreground/85",
+        "flat-yellow": "bg-accent-yellow text-foreground hover:brightness-95",
+        "flat-outline":
+          "border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background",
+      },
+      size: {
+        default: "h-11 px-5 py-3 text-sm",
+        sm: "h-9 px-4 py-2 text-[11px] tracking-[0.12em]",
+      },
+    },
+    defaultVariants: { variant: "flat", size: "default" },
+  },
+);
+
+interface Props extends VariantProps<typeof buttonVariants> {
+  href?: string;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { href, variant, size, class: className, ...rest } = Astro.props;
+const classes = cn(buttonVariants({ variant, size }), className);
+---
+
+{
+  href ? (
+    <a href={href} class={classes} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type="button" class={classes} {...rest}>
+      <slot />
+    </button>
+  )
+}

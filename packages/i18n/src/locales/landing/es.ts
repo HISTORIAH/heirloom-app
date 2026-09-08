@@ -9,6 +9,7 @@ const landing: LandingMessages = {
     dashboard: "Panel",
     claimInheritance: "Reclamar herencia",
     heartbeat: "Latido",
+    docs: "Docs",
   },
   notFound: {
     headline1: "Página no",

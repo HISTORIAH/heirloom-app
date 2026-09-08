@@ -1,0 +1,71 @@
+---
+title: Wallet recovery
+description: Point an estate at your own second wallet and a lost key stops being permanent — without sharing a seed phrase with anyone.
+section: using
+order: 9
+keywords: ["recovery", "lost wallet", "backup wallet", "lost keys", "self recovery", "seed phrase"]
+---
+
+An heir does not have to be another person. Name a **second wallet you control** and the
+same machinery becomes a recovery path for yourself.
+
+## The arrangement
+
+<Steps>
+  <Step title="Today">
+    The estate answers to your main wallet. Balances sit inside it, earning if you routed
+    them. You check in on your schedule and nothing moves.
+  </Step>
+  <Step title="The bad day">
+    Device gone, phrase gone, main wallet unreachable. The check-ins stop — not because
+    you chose to stop, but because you cannot sign any more.
+  </Step>
+  <Step title="The way back">
+    The interval lapses, the grace period runs, and your backup wallet claims the estate
+    on-chain. No seed phrase was ever shared with anyone, and no third party was ever
+    involved.
+  </Step>
+</Steps>
+
+The cost of that recovery is time — your interval plus your grace period — and the 0.75%
+claim fee.
+
+## Setting it up
+
+Identical to any other estate: open one and name your backup wallet's address as the
+heir. What makes it recovery rather than inheritance is only who holds that second key.
+
+<Callout type="tip" title="Keep the two apart">
+The whole point is that one failure cannot take both. Different device, different seed
+phrase, different physical location. A backup wallet stored beside the main one recovers
+you from a lost key and not from a lost bag.
+</Callout>
+
+## Tuning the clock for recovery
+
+Recovery pulls the trade-off the opposite way from inheritance.
+
+- **Shorter is better here.** The interval is how long you are locked out before the
+  recovery path opens. A 30-day interval plus 7-day grace means a five-week wait after a
+  bad day.
+- **But not too short.** The same window is how quickly the backup wallet gains the power
+  to take everything — if that key is stolen, the thief only has to wait.
+
+A common shape is a short interval with a longer grace period: you notice a missed
+check-in quickly, but there is real time to recover the main wallet before the backup can
+act.
+
+## What this does not protect against
+
+- **Both keys lost.** There is no third path. Heirloom moves entitlement from one key to
+  another; it never removes the requirement for a key.
+- **A compromised backup.** Whoever holds the backup key can claim the estate once the
+  window passes. Treat it exactly as seriously as the main one.
+- **Assets outside the estate.** Only what is in the vault is recoverable. Balances left
+  in the main wallet go with the key.
+
+## Recovery and inheritance in one estate
+
+They do not combine — an estate has exactly one heir. If you want both, open two: one
+naming your backup wallet with a short clock, one naming a person with a long one, and
+fund each with what belongs there. They run independently.

@@ -1,0 +1,242 @@
+---
+/**
+ * Every document is the same page: a fixed bar, a rail of contents, the
+ * article, and a rail of headings. It is rendered at build time and served as
+ * finished HTML — the docs are the most crawlable surface Heirloom has, and
+ * they live on the apex domain rather than a subdomain so that the marketing
+ * page and the handbook accumulate to one host.
+ */
+import type { MarkdownHeading } from "astro";
+import type { NavGroup, NavItem } from "@/lib/nav";
+import { sectionLabel } from "@/lib/nav";
+import {
+  CONTACT_EMAIL,
+  GITHUB_EDIT_BASE,
+  GITHUB_URL,
+  LANDING_URL,
+  OG_IMAGE,
+  SITE_URL,
+  TWITTER_URL,
+  withBase,
+} from "@/lib/site";
+import "@/styles/docs.css";
+
+import TopNav from "@/components/TopNav.astro";
+import Sidebar from "@/components/Sidebar.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
+import PageNav from "@/components/PageNav.astro";
+import Icon from "@/components/Icon.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  section: string;
+  entryId: string;
+  headings: MarkdownHeading[];
+  groups: NavGroup[];
+  keywords: Record<string, string[]>;
+  prev?: NavItem;
+  next?: NavItem;
+}
+
+const { title, description, section, entryId, headings, groups, keywords, prev, next } =
+  Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE_URL).href;
+const docsHome = new URL(withBase("/"), SITE_URL).href;
+const pageTitle = entryId === "index" ? `${title} — Heirloom Docs` : `${title} — Heirloom Docs`;
+const editUrl = `${GITHUB_EDIT_BASE}/${entryId}.mdx`;
+
+/* Structured data. TechArticle rather than Article: these are reference pages
+   for a protocol, and the breadcrumb is what tells a crawler that /docs is a
+   section of heirlm.xyz and not a site of its own. */
+const jsonLd = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "@id": `${canonical}#article`,
+    headline: title,
+    description,
+    inLanguage: "en",
+    url: canonical,
+    isPartOf: { "@type": "WebSite", "@id": `${SITE_URL}/#website` },
+    publisher: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "Heirloom" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Heirloom", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Docs", item: docsHome },
+      ...(entryId === "index"
+        ? []
+        : [
+            { "@type": "ListItem", position: 3, name: sectionLabel(section) },
+            { "@type": "ListItem", position: 4, name: title, item: canonical },
+          ]),
+    ],
+  },
+]);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
+    <link rel="icon" type="image/png" sizes="512x512" href={withBase("/favicon.png")} />
+    <link rel="apple-touch-icon" sizes="180x180" href={withBase("/apple-touch-icon.png")} />
+    <meta name="theme-color" content="#ffffff" />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="author" content="Heirloom" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Heirloom" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={OG_IMAGE} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="2373" />
+    <meta property="og:image:height" content="1326" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@heirloom_app" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={OG_IMAGE} />
+
+    <script type="application/ld+json" set:html={jsonLd} is:inline={false} />
+  </head>
+
+  <body>
+    <a
+      href="#docs-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-foreground focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-background"
+    >
+      Skip to content
+    </a>
+
+    <TopNav />
+
+    <div class="docs-shell">
+      <div class="docs-grid">
+        <Sidebar groups={groups} current={entryId} keywords={keywords} />
+
+        <main id="docs-content" class="docs-main min-w-0 py-10 lg:py-14">
+          <article>
+            <header class="border-b border-tile-line pb-8">
+              <p class="ed-label">{sectionLabel(section)}</p>
+              <h1
+                class="mt-3 font-display text-[clamp(2rem,4.5vw,2.9rem)] font-bold leading-[1.05] tracking-[-0.03em]"
+              >
+                {title}
+              </h1>
+              <p class="mt-4 text-[16px] leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            </header>
+
+            <div class="prose pt-8">
+              <slot />
+            </div>
+          </article>
+
+          <PageNav prev={prev} next={next} />
+
+          <footer
+            class="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-tile-line pt-6"
+          >
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <a
+                href={editUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Icon name="pencil" class="h-3.5 w-3.5" strokeWidth={2} />
+                Edit this page
+              </a>
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Icon name="github" class="h-3.5 w-3.5" strokeWidth={2} />
+                GitHub
+              </a>
+              <a
+                href={TWITTER_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Icon name="twitter" class="h-3.5 w-3.5" strokeWidth={2} />
+                @heirloom_app
+              </a>
+            </div>
+            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              <a href={`${LANDING_URL}/`} class="hover:text-foreground">heirlm.xyz</a>
+              <span class="mx-2 text-tile-line">/</span>
+              <a href={`mailto:${CONTACT_EMAIL}`} class="hover:text-foreground">{CONTACT_EMAIL}</a>
+            </p>
+          </footer>
+        </main>
+
+        <TableOfContents headings={headings} />
+      </div>
+    </div>
+
+    <script>
+      // Copy buttons. A captioned block (<Code>) already has one in its bar;
+      // every other fence gets one placed over its top-right corner.
+      const flash = (button: HTMLElement, text: string) => {
+        const original = button.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          button.textContent = "Copied";
+          window.setTimeout(() => {
+            button.textContent = original;
+          }, 1400);
+        });
+      };
+
+      for (const button of document.querySelectorAll<HTMLElement>("[data-copy]")) {
+        const pre = button.closest(".code-card")?.querySelector("pre");
+        if (!pre) continue;
+        button.addEventListener("click", () => flash(button, pre.textContent ?? ""));
+      }
+
+      for (const pre of document.querySelectorAll<HTMLPreElement>(".prose pre")) {
+        if (pre.closest(".code-card")) continue;
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block";
+        pre.parentNode?.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "code-copy";
+        button.textContent = "Copy";
+        button.addEventListener("click", () => flash(button, pre.textContent ?? ""));
+        wrapper.appendChild(button);
+      }
+    </script>
+  </body>
+</html>

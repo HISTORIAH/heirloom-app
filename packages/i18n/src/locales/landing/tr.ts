@@ -9,6 +9,7 @@ const landing: LandingMessages = {
     dashboard: "Panel",
     claimInheritance: "Mirası Talep Et",
     heartbeat: "Kalp Atışı",
+    docs: "Dokümanlar",
   },
   notFound: {
     headline1: "Sayfa",

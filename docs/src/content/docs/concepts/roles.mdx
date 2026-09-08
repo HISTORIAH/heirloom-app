@@ -1,0 +1,120 @@
+---
+title: Roles & permissions
+description: Authority, heir, guardian, hot signer — what each one can sign for, and what the program refuses them.
+section: concepts
+order: 4
+keywords: ["roles", "permissions", "authority", "heir", "guardian", "delegate", "hb_signer", "hot signer"]
+---
+
+Four roles, two of them optional. Each is a public key stored on the estate account, and
+each is checked by the program on every instruction that names it.
+
+## Authority
+
+The wallet that opened the estate. It is stored as `authority` and it is a seed of the
+estate PDA, so it can never be changed — an estate belongs to the key that created it for
+its whole life.
+
+The authority can:
+
+- register assets and deposit into them
+- send check-ins and edit the interval, grace period, pause duration, and label
+- route balances into a yield strategy and recall them
+- reassign the heir, which migrates the estate to a new PDA pair
+- withdraw everything at any time
+
+Losing this key is what [wallet recovery](/docs/using/wallet-recovery/) is for: an estate
+whose heir is your own second wallet survives the loss of its authority.
+
+## Heir
+
+One wallet, stored as `heir`, also a seed of the PDA. It can do exactly one thing —
+claim — and only once `claimable_at` has passed.
+
+The heir has no read privileges to protect and no action to prepare. They do not need
+your address, because the claim page scans the program for estates naming their wallet.
+They do not need a document, because the entitlement is the chain state. They need to
+know Heirloom exists.
+
+<Callout type="warning" title="An heir cannot be a nickname">
+The heir is a raw address. There is no name service resolution, no recovery if you type
+it wrong, and no confirmation that the wallet is controlled by the person you meant. Paste
+it from the wallet itself, and consider sending them a token first to prove the address
+lands where you think it does.
+</Callout>
+
+## Guardian (`delegate`)
+
+Optional. A wallet you name that may **defer the deadline once**, pushing `paused_until`
+to `now + pause_duration`.
+
+That is the entire power. A guardian cannot move funds, cannot see anything you cannot,
+cannot change the heir, cannot alter a single duration, and cannot defer twice — the
+program requires `paused_until == 0` on entry, so once used it stays used until you come
+back and check in after it has expired.
+
+<Code caption="programs/heirloom/src/instructions/defer.rs">
+```rust
+#[account(
+    mut,
+    address = estate.delegate.ok_or(HeirloomError::Unauthorized)?
+        @ HeirloomError::Unauthorized
+)]
+pub delegate: Signer,
+```
+</Code>
+
+Naming one is a real reduction in your own risk and costs you nothing in control. The
+worst a hostile guardian can do is delay an inheritance by your own `pause_duration`.
+
+## Hot signer (`hb_signer`)
+
+Optional. A second wallet of yours that may send check-ins — and only check-ins.
+
+The permission check accepts either the authority or the hot signer, but the settings
+branch is gated separately on the signer being the authority:
+
+<Code caption="programs/heirloom/src/instructions/update_field.rs">
+```rust
+estate.last_heartbeat = now;
+
+if *authority_key == estate.authority {
+    // interval / grace / pause_duration / label are applied here only
+}
+```
+</Code>
+
+A hot signer passing settings arguments therefore gets a heartbeat and nothing else — no
+error, no partial write. The point is that a phone wallet can keep an estate alive without
+being able to reshape it.
+
+## The matrix
+
+| | Authority | Heir | Guardian | Hot signer |
+|---|---|---|---|---|
+| `initialize` | ✓ | | | |
+| `register_asset`, deposits | ✓ | | | |
+| `update_field` — heartbeat | ✓ | | | ✓ |
+| `update_field` — settings | ✓ | | | |
+| `update_heir` | ✓ | | | |
+| `deposit_lulo`, withdrawals | ✓ | | | |
+| `revoke` | ✓ | | | |
+| `delegate_defer` | | | ✓ | |
+| `claim` | | ✓ | | |
+
+## Changing who is who
+
+| Role | Changeable? | How |
+|---|---|---|
+| Authority | No | It is a PDA seed. Open a new estate |
+| Heir | Yes | [`update_heir`](/docs/using/change-heir/) migrates to a new PDA pair |
+| Guardian | Not yet | Set once, at creation |
+| Hot signer | Not yet | Set once, at creation |
+
+<Callout type="warning" title="Guardian and hot signer are set once">
+Both are written by `initialize` and carried across a change-of-heir migration unchanged.
+No instruction replaces either on a live estate. To swap a guardian or retire a hot
+signer today, [withdraw everything](/docs/using/emergency-withdraw/) and open a new
+estate — the assets return to your wallet minus the 0.5% exit fee, and the new estate can
+name whoever you want.
+</Callout>

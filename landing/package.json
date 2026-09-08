@@ -9,8 +9,8 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy": "bun run build && wrangler deploy",
-    "deploy:preview": "bun run build && wrangler deploy --env preview"
+    "deploy": "bun run --cwd .. build:site && wrangler deploy",
+    "deploy:preview": "bun run --cwd .. build:site && wrangler deploy --env preview"
   },
   "dependencies": {
     "@heirloom/i18n": "workspace:*",

@@ -1,0 +1,81 @@
+---
+title: Defer as a guardian
+description: The one action a guardian can take, how far it moves the deadline, and why it can only be used once.
+section: using
+order: 8
+keywords: ["defer", "guardian", "delegate", "pause", "extend", "buy time"]
+---
+
+A guardian — `delegate` on the estate — exists for one situation: the owner is fine but
+unreachable. In hospital, off-grid, mid-move, locked out of a device. The check-ins have
+stopped and the estate is drifting toward a handover nobody wants yet.
+
+The guardian can push the deadline out. That is all they can do.
+
+## How to defer
+
+<Steps>
+  <Step title="Open the defer page">
+    [app.heirlm.xyz/defer](https://app.heirlm.xyz/defer), with the guardian wallet
+    connected.
+  </Step>
+  <Step title="Enter the pair">
+    The owner's address and the heir's address — those two derive the estate PDA.
+  </Step>
+  <Step title="Sign">
+    One transaction. `paused_until` is set to `now + pause_duration`.
+  </Step>
+</Steps>
+
+## What it does, exactly
+
+<Code caption="programs/heirloom/src/instructions/defer.rs">
+```rust
+estate.paused_until = now + estate.pause_duration;
+```
+</Code>
+
+`paused_until` acts as a floor on the claim time: the estate is claimable at
+`max(claimable_at, paused_until)`. So even if the grace period ran out days ago, a live
+pause keeps the heir out until it expires.
+
+## Two conditions
+
+<Code caption="The validate step">
+```rust
+require!(estate.paused_until == 0, AlreadyDeferred);
+require!(now < claimable_at,       DeferWindowExpired);
+```
+</Code>
+
+- **Once per estate.** `paused_until` has to be zero on entry. After a deferral it stays
+  non-zero until the owner returns and checks in *after* it expires, which is what resets
+  it to zero and frees the guardian to act again.
+- **Before the deadline.** A deferral is only accepted while the estate is still active or
+  in grace. Once it is claimable, it is too late — `DeferWindowExpired`.
+
+<Callout type="warning" title="A guardian is a one-shot, not a subscription">
+The window closes at `claimable_at`, not at the end of the grace period, so a guardian has
+the whole interval plus the grace period to act. Once the estate is claimable, no power on
+the estate can pull it back except the owner's own withdrawal.
+</Callout>
+
+## What a guardian cannot do
+
+- Move, spend or see any funds
+- Change the heir, the durations, or the label
+- Claim anything
+- Defer twice
+- Stop the owner from doing anything at all
+
+The worst a hostile guardian can do is delay an inheritance by exactly the
+`pause_duration` the owner chose — once.
+
+## Choosing one
+
+Pick someone who would notice you were unreachable and could be bothered to sign a
+transaction. They need a Solana wallet and nothing else: no funds beyond a few cents of
+network fees, no ongoing role, and no knowledge of your keys.
+
+Naming a guardian is set at creation and cannot be changed on a live estate — see
+[Roles & permissions](/docs/concepts/roles/#the-matrix).

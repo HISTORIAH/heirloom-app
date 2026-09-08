@@ -5,6 +5,7 @@ const app: AppMessages = {
     dashboard: "Bảng điều khiển",
     claimInheritance: "Nhận Thừa Kế",
     heartbeat: "Nhịp tim",
+    docs: "Tài liệu",
     connectWallet: "Kết nối Ví",
     copied: "Đã sao chép",
     copyAddress: "Sao chép địa chỉ",

@@ -1,0 +1,111 @@
+---
+title: The estate
+description: The account that holds your rules, the vault that holds your assets, and why neither of them has a private key.
+section: concepts
+order: 1
+keywords: ["estate", "vault", "pda", "account", "seeds", "label"]
+---
+
+An estate is a pair of program-derived accounts. One holds the rules, one holds the
+assets, and both are derived from the same two public keys: yours and your heir's.
+
+<Code caption="Derivation">
+```txt
+estate = PDA(["estate", authority, heir], heirloom_program)
+vault  = PDA(["vault",  authority, heir], heirloom_program)
+```
+</Code>
+
+Because the seeds include both keys, **one pair of wallets can have exactly one estate**.
+Opening a second estate means naming a different heir. That is also what makes an heir's
+claim page work without them knowing your address: the program can be scanned for every
+estate whose `heir` field matches their wallet.
+
+## No key, ever
+
+Neither account has a private key — a PDA is an address deliberately derived off the
+ed25519 curve, so no keypair can produce it. Nothing signs for the vault except the
+program, using the seeds above.
+
+The practical consequence: there is no seed phrase to share, no multisig to coordinate,
+and no key material anywhere that a leak could expose. The only credentials in the
+system are the wallets you already have.
+
+## What the estate account stores
+
+<Code caption="programs/heirloom/src/state.rs">
+```rust
+pub struct Estate {
+    pub authority: Address,          // owner
+    pub heir: Address,               // the one wallet that can claim
+    pub heartbeat_interval: i64,     // seconds you may go quiet
+    pub grace_period: i64,           // seconds after that, before claim opens
+    pub last_heartbeat: i64,         // unix time of the last check-in
+    pub created_at: i64,
+    pub bump: u8,
+    pub pause_duration: i64,         // how far a guardian may push the deadline
+    pub paused_until: i64,           // 0 when not paused
+    pub is_migrating: bool,          // set only during a change-heir migration
+    pub delegate: Option<Address>,   // guardian
+    pub hb_signer: Option<Address>,  // hot wallet allowed to check in
+    pub claimable_assets: u8,        // vault token accounts still open
+    pub label: String,               // up to 32 bytes
+}
+```
+</Code>
+
+Nothing in there is a balance. The estate describes the arrangement; the vault holds the
+value.
+
+## What the vault holds
+
+The vault account itself holds **SOL**, as lamports sitting in the account. SPL tokens
+live in associated token accounts owned by the vault — one per mint, created when you
+register that asset.
+
+`claimable_assets` counts what is still owed: one per open vault token account, plus one
+for the SOL leg. It starts at `1` on a fresh estate and rises with each registered mint.
+It is what lets the program insist on the right order at exit — the SOL leg closes the
+vault, so it cannot run while token accounts still hang off it. Try it and the
+instruction fails with `TokensFirst`.
+
+<Callout type="note" title="Rent is not a balance">
+A PDA has to stay rent-exempt to exist, so the vault always carries a small SOL reserve
+that is not yours to spend. The app subtracts it before showing a balance, which is why
+a vault you funded with 1 SOL reports slightly less than 1 SOL claimable. The reserve is
+returned when the estate closes.
+</Callout>
+
+## The label
+
+`label` is up to 32 bytes of your own text, stored on-chain. It exists because a wallet
+with three estates otherwise shows three identical rows of base58. It has no effect on
+anything the program does, and it is public — do not write anything into it you would not
+publish.
+
+Longer than 32 bytes and the instruction fails with `LabelTooLong`.
+
+## One estate, one heir
+
+This is the constraint people ask about most. An estate pays out to a single wallet,
+and every asset registered under it goes to that wallet.
+
+To split an inheritance, open one estate per heir and fund each with what that person
+should receive. They are independent: separate clocks, separate assets, separate claims.
+The alternative — proportional splits inside one estate — would mean the program deciding
+how to divide assets whose value it cannot see, so Heirloom does not pretend to.
+
+## Closing
+
+An estate is not deleted by an instruction of its own. It closes as a side effect of the
+last asset leaving, whether that was a [claim](/docs/using/claim/), an
+[emergency withdraw](/docs/using/emergency-withdraw/), or the migration half of a
+[change of heir](/docs/using/change-heir/). Rent from the estate and vault accounts goes
+back to whoever is owed it, and the addresses become free to derive again.
+
+<Callout type="warning" title="Reopening the same pair">
+Solana garbage-collects zero-lamport accounts at the end of a transaction, but RPC
+snapshots lag behind. Re-creating an estate for the same wallet pair seconds after
+closing one can fail because the old PDA still appears to exist. The app waits up to 20
+seconds and retries; if it gives up, wait a moment and try again.
+</Callout>

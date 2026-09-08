@@ -1,0 +1,78 @@
+---
+/**
+ * "On this page", built from the headings Astro extracted while rendering the
+ * MDX. Only h2 and h3 are listed: a fourth level in the rail turns a map into
+ * a second copy of the document.
+ */
+import type { MarkdownHeading } from "astro";
+import Icon from "@/components/Icon.astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const headings = Astro.props.headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+{
+  headings.length > 0 && (
+    <aside class="docs-rail hidden xl:block" aria-labelledby="toc-heading">
+      <p id="toc-heading" class="ed-label mb-3 flex items-center gap-1.5 pl-3">
+        <Icon name="list" class="h-3.5 w-3.5" strokeWidth={2} />
+        On this page
+      </p>
+      <nav data-toc>
+        <ul>
+          {headings.map((h) => (
+            <li>
+              <a href={`#${h.slug}`} class="toc-link" data-depth={h.depth} data-toc-link={h.slug}>
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
+  )
+}
+
+<script>
+  // Scroll-spy. One observer over the headings themselves; the topmost heading
+  // that has passed under the sticky bar is the one the reader is inside.
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]"));
+  if (links.length > 0) {
+    const bySlug = new Map(links.map((l) => [l.dataset.tocLink ?? "", l]));
+    const targets = links
+      .map((l) => document.getElementById(l.dataset.tocLink ?? ""))
+      .filter((el): el is HTMLElement => el !== null);
+
+    const seen = new Map<string, boolean>();
+
+    const paint = () => {
+      // The last heading whose top is above the fold line wins; before the
+      // first one, the first heading is highlighted so the rail is never blank.
+      const fold = 140;
+      let active = targets[0]?.id ?? "";
+      for (const el of targets) {
+        if (el.getBoundingClientRect().top <= fold) active = el.id;
+      }
+      for (const [slug, link] of bySlug) {
+        link.classList.toggle("is-active", slug === active);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) seen.set(entry.target.id, entry.isIntersecting);
+        paint();
+      },
+      { rootMargin: "-120px 0px -60% 0px", threshold: 0 },
+    );
+    for (const el of targets) observer.observe(el);
+
+    // The observer alone goes quiet at the bottom of a page, where no heading
+    // crosses the band any more. A passive scroll listener keeps it honest.
+    document.addEventListener("scroll", paint, { passive: true });
+    paint();
+  }
+</script>

@@ -1,0 +1,113 @@
+---
+title: Overview
+description: What Heirloom is, what it does with your assets while you hold them, and what it does with them if you stop checking in.
+section: getting-started
+order: 1
+keywords: ["introduction", "what is heirloom", "inheritance", "solana", "start here"]
+---
+
+Heirloom is a **Solana-native inheritance protocol**. You lock assets into an on-chain
+estate that only you control, you check in on a schedule you set, and if the check-ins
+ever stop, the heir you named can claim what is inside — on-chain, without a custodian,
+a lawyer, or a shared seed phrase.
+
+Nothing about that arrangement is held by a company. The estate is a program-derived
+account. The rules are in the program. The only party that can move funds out of an
+estate is the program itself, executing a condition you wrote when you opened it.
+
+## The problem
+
+Self-custody is the right call and it has one unsolved failure mode: **the keys are the
+asset**. Lose them and the balance is still there, visibly, permanently, and out of
+reach. Die with them and your family inherits a public key they cannot open.
+
+The workarounds are all worse than the problem. Splitting a seed phrase between people
+makes each of them a threat. Handing it to a custodian gives back the thing self-custody
+was for. Writing an address into a will asks a court to compel an act only a private key
+can perform.
+
+Heirloom replaces the shared secret with a **condition the chain can check**: has this
+wallet signed anything in the last N days? While the answer is yes, nothing moves and
+nobody but you can touch the vault. When the answer becomes no, and stays no through a
+grace period you chose, one named wallet — and only that wallet — can pull the assets
+out.
+
+## An estate, in one account
+
+Everything a Heirloom estate knows about itself lives in one account, derived from your
+wallet and your heir's.
+
+<Code caption="An Estate account, decoded">
+```txt
+authority           7xKX…9Wm2     the wallet that opened it — yours
+heir                4Bn8…Qp1a     the one wallet that can claim
+heartbeat_interval  2592000       30 days, in seconds
+grace_period        604800        7 more days after the interval lapses
+last_heartbeat      1757260800    the check-in that reset the clock
+pause_duration      2592000       how far a guardian may push the deadline
+paused_until        0             not paused
+delegate            Some(9fR2…)   the guardian, optional
+hb_signer           Some(2dLp…)   a hot wallet allowed to check in, optional
+claimable_assets    3             vault token accounts still open
+label               "Family estate"
+```
+</Code>
+
+The vault that actually holds the assets is a second account beside it. Both are PDAs:
+no private key exists for either, so no key can ever be leaked, seized, or lost.
+
+## What is inside
+
+An estate holds **SOL and any SPL tokens** you register. Registering an asset creates a
+marker account for that mint, which is what makes it claimable — the token account alone
+is not enough, since anyone can create one of those for anyone.
+
+Balances do not have to sit still while they wait. Estate funds can be routed into
+[Lulo lending](/docs/using/yield/) and pulled back at any time, with principal and yield
+returning to the estate itself. Heirloom takes 10% of the yield a strategy earns and
+nothing at all from the principal.
+
+## Four roles
+
+| Role | Who it is | What they can do |
+|---|---|---|
+| **Authority** | You, the owner | Everything: fund, check in, change settings and heir, route yield, withdraw early |
+| **Heir** | One wallet you name | Claim the estate — and only once it is claimable |
+| **Guardian** *(optional)* | A person you trust, stored as `delegate` | Push the deadline out once, by your `pause_duration`. Cannot move funds or change anything else |
+| **Hot signer** *(optional)* | A second wallet of your own, stored as `hb_signer` | Send check-ins, so your cold key can stay cold. Nothing else |
+
+The heir does not have to be another person. Point an estate at a **second wallet you
+control** and Heirloom becomes wallet recovery: a lost key stops being the end of the
+story. See [Wallet recovery](/docs/using/wallet-recovery/).
+
+## Where things live
+
+| Surface | Address | What it is |
+|---|---|---|
+| Marketing site | `heirlm.xyz` | Prerendered, nine languages |
+| These docs | `heirlm.xyz/docs` | Prerendered, English |
+| The app | `app.heirlm.xyz` | Wallet-gated React app; every route is `noindex` |
+| The program | `heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg` | Anchor program, currently on **devnet** |
+
+<Callout type="warning" title="Devnet">
+The `heirloom` program is deployed to devnet and has been independently audited, but it
+is not on mainnet-beta yet. Treat balances on devnet as test balances. Addresses and
+cluster details are in [Addresses & clusters](/docs/reference/addresses/).
+</Callout>
+
+## Where to go next
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart/" icon="rocket">
+    Open your first estate, fund it, and check in — about five minutes.
+  </Card>
+  <Card title="How it works" href="/docs/how-it-works/" icon="workflow">
+    The whole lifecycle end to end, before you sign anything.
+  </Card>
+  <Card title="Heartbeats & grace" href="/docs/concepts/heartbeat/" icon="activity">
+    The one mechanism everything else hangs off.
+  </Card>
+  <Card title="On-chain program" href="/docs/program/architecture/" icon="box">
+    Accounts, instructions, guards, and the exact claim condition.
+  </Card>
+</Cards>

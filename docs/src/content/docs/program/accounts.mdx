@@ -1,0 +1,105 @@
+---
+title: Accounts & PDAs
+description: The three account types, their seeds, their fields, and what each field is load-bearing for.
+section: program
+order: 3
+keywords: ["accounts", "pda", "seeds", "estate", "vault", "asset record", "state", "layout"]
+---
+
+Three account types, all program-derived. No account in the system has a private key.
+
+## Seeds
+
+<Code caption="Derivation">
+```txt
+estate       ["estate", authority, heir]
+vault        ["vault",  authority, heir]
+AssetRecord  ["asset",  estate, mint]
+```
+</Code>
+
+The vault's token accounts are ordinary associated token accounts owned by the vault PDA,
+one per registered mint.
+
+## Estate
+
+The rules. One per (authority, heir) pair.
+
+| Field | Type | Purpose |
+|---|---|---|
+| `authority` | `Address` | Owner. Also a seed — immutable |
+| `heir` | `Address` | The only wallet that can claim. Also a seed |
+| `heartbeat_interval` | `i64` | Seconds of silence allowed. Max 365 days |
+| `grace_period` | `i64` | Seconds after the interval, before claim opens |
+| `last_heartbeat` | `i64` | Unix time of the last `update_field` |
+| `created_at` | `i64` | Unix time of `initialize` |
+| `bump` | `u8` | PDA bump |
+| `pause_duration` | `i64` | How far a guardian may push the deadline |
+| `paused_until` | `i64` | Floor on the claim time. `0` when not paused |
+| `is_migrating` | `bool` | True on a half-built change-of-heir destination |
+| `delegate` | `Option<Address>` | Guardian |
+| `hb_signer` | `Option<Address>` | Hot wallet allowed to check in |
+| `claimable_assets` | `u8` | Open vault token accounts, plus one for the SOL leg |
+| `label` | `String` | Up to 32 bytes, public |
+
+`claimable_assets` starts at `1` and rises with each registered mint. It is what enforces
+exit ordering: the SOL branch of `claim` and `revoke` requires it to be at most `1`.
+
+## Vault
+
+The assets. Holds SOL as lamports and owns the token accounts.
+
+| Field | Type | Purpose |
+|---|---|---|
+| `estate` | `Address` | Back-reference |
+| `bump` | `u8` | PDA bump — used to sign every CPI out of the vault |
+
+The vault must stay rent-exempt, so its lamport balance always exceeds its claimable
+balance by the reserve. The app subtracts it before display.
+
+## AssetRecord
+
+One per registered mint. Its **existence** is what proves the authority registered that
+mint — a vault token account cannot serve that purpose, because creating one is
+permissionless and would let a stranger inflate `claimable_assets` or front-run
+registration.
+
+| Field | Type | Purpose |
+|---|---|---|
+| `bump` | `u8` | PDA bump |
+| `principal_deployed` | `u64` | Amount currently out in a Lulo position |
+| `has_protected_exposure` | `bool` | Refreshed from the LP receipt balance after each withdrawal |
+| `has_boosted_exposure` | `bool` | Same, plus true while a boosted withdrawal is pending |
+| `pending_boosted_withdrawals` | `u16` | In-flight `init_withdraw_regular_lulo` calls |
+
+Both exposure flags are derived from the actual LP balance rather than from an internal
+counter, so they cannot drift from reality. While either is set, the asset cannot be
+claimed or withdrawn.
+
+## DepositType
+
+```rust
+pub enum DepositType {
+    Protected,  // tag 0
+    Boosted,    // tag 1
+}
+```
+
+## Reading them
+
+The generated client exposes a decoder and a fetcher for each:
+
+```ts
+import { fetchMaybeEstate, decodeEstate } from "@historiah/heirloom";
+```
+
+To find estates without knowing both keys, use `getProgramAccounts` with a `memcmp`
+filter on the discriminator plus the offset of the field you have — `authority` for an
+owner's estates, `heir` for an heir's. That second query is what makes the claim page
+work without an heir knowing the owner's address.
+
+<Callout type="note" title="findAssetRecordPda is hand-written">
+Codama does not emit a deriver for the `AssetRecord` PDA yet, so the client ships one by
+hand alongside the generated code. It is marked `FIXME` in the source and will be
+generated when the toolchain supports it.
+</Callout>

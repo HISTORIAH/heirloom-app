@@ -1,0 +1,153 @@
+---
+title: FAQ
+description: Short answers to the questions people ask before they open an estate.
+section: reference
+order: 5
+keywords: ["faq", "questions", "answers", "common", "help"]
+---
+
+## The basics
+
+### Is this a legal will?
+
+No. Heirloom is programmable self-custody continuity — it moves control of on-chain assets
+from one key to another under a condition the chain can check. It is not a testamentary
+instrument, it is not filed anywhere, and it does not interact with probate. Talk to a
+lawyer about your estate; use this for your keys.
+
+### Do I have to give anyone my seed phrase?
+
+Never. Nothing in Heirloom requires sharing key material with anyone, including your heir
+and your guardian. The only credentials involved are wallets people already control.
+
+### Can Heirloom take my assets?
+
+No. There is no admin instruction, no privileged address, and no upgrade path that moves
+funds. The four roles the estate names are the only signers any instruction accepts, and
+the treasury address is a compile-time constant that only receives fees.
+
+### What if Heirloom the company disappears?
+
+The program stays on-chain and keeps working. The app is a convenience layer over it —
+the source is public, the client is generated from the IDL, and every instruction can be
+built without the interface.
+
+## Setting one up
+
+### Can I have more than one heir?
+
+Not in one estate. An estate has exactly one heir, and every registered asset goes to
+that wallet. Open one estate per heir and fund each with what belongs there — they run
+independently.
+
+### Can I change my heir later?
+
+Yes. [`update_heir`](/docs/using/change-heir/) migrates the whole estate to a new PDA
+pair. Your clock, settings, guardian and hot signer carry over; assets never leave the
+program.
+
+### Can I change my guardian or hot signer?
+
+Not on a live estate. Both are set at creation and carried across migrations unchanged.
+Changing one means withdrawing and opening a new estate.
+
+### What is the longest interval I can set?
+
+365 days, for the interval, the grace period, and the pause duration each.
+
+### What happens if I set a very short interval?
+
+It works, and the estate becomes claimable that much sooner. Zero is legal — an estate
+with a zero interval and zero grace is claimable immediately. Almost never what you want
+outside testing.
+
+## Living with it
+
+### What happens if I forget to check in?
+
+The interval lapses and the estate enters its grace period. Nothing has happened yet —
+you still have every power, and a check-in resets the clock completely. Only after the
+grace period also runs does the heir gain the ability to claim.
+
+### Can I get my assets back?
+
+Any time, in any state before distribution, including after the estate has become
+claimable. [Emergency withdraw](/docs/using/emergency-withdraw/) returns everything to
+your wallet minus 0.5%.
+
+### Does depositing count as a check-in?
+
+No. Only `update_field` resets `last_heartbeat`. Deposits, registrations and yield
+operations leave the clock untouched.
+
+### Can I automate my check-ins?
+
+Yes — register a hot signer and run the call from a script. But an estate that a script
+keeps alive forever never reaches its heir, which defeats the point. Tie the automation
+to something only you can renew.
+
+## Claiming
+
+### How does my heir know what to do?
+
+They connect their wallet to [app.heirlm.xyz/claim](https://app.heirlm.xyz/claim) and the
+page finds every estate naming their address. They do not need your address, a document,
+or a password. The one thing they cannot work out alone is that Heirloom exists — tell
+them.
+
+### What if my heir claims too early?
+
+They cannot. The program rejects it with `NotYetClaimable` until
+`now >= max(last_heartbeat + interval + grace, paused_until)`.
+
+### What if we both sign at once?
+
+Whoever lands first wins; the second transaction fails on an empty vault. There is no
+lock and no priority rule, deliberately — an heir who could freeze your withdrawal would
+have a power the design does not give them.
+
+### Does anything happen automatically when the deadline passes?
+
+No. There is no keeper and no automation. The estate becomes claimable and waits
+indefinitely until the heir signs.
+
+## Money
+
+### What does it cost?
+
+Opening, funding, checking in, deferring and changing your heir are free of protocol fees
+— you pay only Solana network fees. Claims cost 0.75%, emergency withdrawals 0.5%, and
+yield strategies 10% of the yield earned. See [Fees](/docs/concepts/fees/).
+
+### Is the 10% taken from my deposit?
+
+No. Only from the yield a strategy returned above the principal that went out. A position
+that came back flat pays nothing.
+
+### Why does my vault show slightly less than I deposited?
+
+The rent-exempt reserve. A PDA has to hold a small SOL balance to exist; the app
+subtracts it from the displayed claimable balance. It is returned when the estate closes.
+
+## Practicalities
+
+### Which tokens can I use?
+
+SOL and SPL tokens, on both the classic Token program and Token-2022. NFTs are not
+supported. Mints with an active transfer hook are rejected at deposit, and mints with a
+freeze authority carry that issuer's freeze risk into the vault.
+
+### Is it on mainnet?
+
+Not yet. The program is deployed to devnet and has been independently audited. See
+[Addresses & clusters](/docs/reference/addresses/).
+
+### Can I use it to recover my own lost wallet?
+
+Yes — that is [wallet recovery](/docs/using/wallet-recovery/). Name a second wallet you
+control as the heir, and a lost key stops being permanent.
+
+### Is any of this private?
+
+No. Every address, duration, label and balance is public on-chain, and anyone can
+correlate them. Do not write anything into a label you would not publish.

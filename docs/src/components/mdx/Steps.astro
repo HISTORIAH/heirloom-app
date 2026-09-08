@@ -1,0 +1,51 @@
+---
+/**
+ * A numbered procedure. The rule down the left is what makes it one thing
+ * rather than a list of headings that happen to be adjacent.
+ */
+---
+
+<ol class="not-prose steps my-7 list-none space-y-7 border-l border-tile-line pl-0">
+  <slot />
+</ol>
+
+<style is:global>
+  .steps {
+    counter-reset: step;
+  }
+  .steps > .step {
+    position: relative;
+    padding-left: 2.25rem;
+    counter-increment: step;
+  }
+  .steps > .step::before {
+    content: counter(step);
+    position: absolute;
+    left: -0.875rem;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.375rem;
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+    font-size: 12px;
+    font-weight: 700;
+    font-family: theme("fontFamily.display");
+  }
+  .steps > .step > .step-title {
+    font-family: theme("fontFamily.display");
+    font-weight: 700;
+    font-size: 15.5px;
+    line-height: 1.75rem;
+  }
+  .steps > .step > .step-body {
+    margin-top: 0.5rem;
+    font-size: 14.5px;
+    line-height: 1.7;
+  }
+  .steps > .step > .step-body > * + * {
+    margin-top: 0.75rem;
+  }
+</style>

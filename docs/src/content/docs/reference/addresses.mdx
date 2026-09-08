@@ -1,0 +1,92 @@
+---
+title: Addresses & clusters
+description: Program IDs, the treasury, the external programs Heirloom talks to, and which cluster any of it is on.
+section: reference
+order: 2
+keywords: ["addresses", "program id", "devnet", "mainnet", "cluster", "treasury", "rpc"]
+---
+
+<Callout type="warning" title="Devnet only, today">
+The `heirloom` program is deployed to **devnet**. It has been independently audited, but
+there is no mainnet-beta deployment yet. Balances on devnet are test balances.
+</Callout>
+
+## Programs
+
+| Program | Address | Cluster |
+|---|---|---|
+| `heirloom` | `heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg` | devnet |
+| `heirloom-ika` | `9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf` | devnet |
+
+`heirloom-ika` is a separate cross-chain experiment with its own app. It shares no
+accounts with the main program — see
+[Architecture](/docs/program/architecture/#the-ika-variant).
+
+## Treasury
+
+| | |
+|---|---|
+| Address | `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q` |
+| Set by | A compile-time constant in the program |
+| Changeable by | Deploying a new program. No instruction can change it |
+
+It is marked temporary in the source and will be replaced before a mainnet deployment.
+
+## External programs
+
+Heirloom CPIs into these. Addresses are pinned as constants and constrained on every
+call.
+
+| Program | Address |
+|---|---|
+| Lulo v2 | Declared via `declare_program!(lulo_v2)` |
+| Kamino Lend | `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD` |
+| Kamino Farms | `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr` |
+| Scope Prices | `HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ` |
+| Kamino protocol authority | `4dg3naKuGezNCzNY2qrTFCzsNZG8hcdkzzNT5PFLZFLR` |
+| Kamino protocol token account | `mZovrHTXASkL3jUE5Usqtgtau7iKF5dXStAwbAu1wyx` |
+
+Both the classic SPL Token program and Token-2022 are accepted wherever a token program
+is passed.
+
+## Protocol constants
+
+| Constant | Value |
+|---|---|
+| `CLAIM_FEE_BPS` | 75 — 0.75% |
+| `EMERGENCY_EXIT_FEE_BPS` | 50 — 0.50% |
+| `YIELD_FEE_BPS` | 1000 — 10% of yield |
+| `MAX_INTERVAL_SECONDS` | 31,536,000 — 365 days |
+| Label maximum | 32 bytes |
+
+## Test mints
+
+The app's yield registry carries per-network mints. Devnet values it ships with:
+
+| Token | Devnet mint |
+|---|---|
+| USDC | `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` |
+| USDT | `BQcdHdAD9ezThQqtCYZbP5THTVHTZnA1FmQ1aY8qB7w` |
+
+## RPC
+
+The app needs a **DAS-capable** endpoint for token metadata — symbols and icons come from
+the Helius DAS API served off the same RPC URL. Against a plain public RPC the DAS calls
+fail and the UI falls back to truncated mint addresses; nothing else is affected.
+
+```ini
+VITE_SOLANA_RPC_ENDPOINT=https://devnet.helius-rpc.com/?api-key=<KEY>
+VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT=wss://devnet.helius-rpc.com/?api-key=<KEY>
+```
+
+With neither set, the app targets a local validator at `127.0.0.1:8899`.
+
+## Surfaces
+
+| | |
+|---|---|
+| Marketing site | `https://heirlm.xyz` |
+| Documentation | `https://heirlm.xyz/docs` |
+| Application | `https://app.heirlm.xyz` |
+| Source | `https://github.com/HISTORIAH/Heirloom-app` |
+| Contact | `info@heirlm.xyz` · `@heirloom_app` |

@@ -1,0 +1,64 @@
+---
+title: Emergency withdraw
+description: The owner's exit. Available in every state before distribution, at any time, for any reason.
+section: using
+order: 6
+keywords: ["withdraw", "revoke", "emergency", "exit", "cancel", "close estate", "get funds back"]
+---
+
+An emergency withdraw — `revoke` in the program — returns everything in the vault to the
+authority's wallet and closes the estate.
+
+It works in **every state before distribution**: active, grace, and claimable. There is no
+window in which your own funds are out of reach, including after an estate has become
+claimable but before the heir has signed.
+
+## The fee
+
+**0.5%** per asset, to the treasury. Lower than the claim fee on purpose: the exit that
+gets your money back should never be the expensive one.
+
+## Order matters
+
+The SOL leg closes the vault, so it cannot run while token accounts are still open. The
+program enforces it:
+
+```rust
+require!(estate.claimable_assets <= 1, HeirloomError::TokensFirst);
+```
+
+The app's `revokeAll` bundles token withdrawals first and the SOL withdrawal last into a
+single transaction. Calling the program directly, you have to do the same.
+
+## Partial withdrawals
+
+`revoke` operates per asset. Pulling one token out does not close the estate — the estate
+and vault survive until the SOL leg runs and `claimable_assets` reaches zero. So you can
+use it to remove a single asset and leave the rest of the arrangement intact.
+
+<Callout type="warning" title="Recall yield first">
+An asset with an open Lulo position fails with `FundsStillDeployed`. Recall the strategy,
+then withdraw. For a boosted position, both phases of the withdrawal have to complete —
+a pending withdrawal counts as exposure.
+</Callout>
+
+## Racing an heir
+
+Once an estate is claimable, both you and the heir can sign. There is no priority rule
+and no lock: whichever transaction lands first wins, and the second fails on an empty
+vault or a closed account.
+
+This is intentional. An estate that could be frozen by an heir's pending intent would
+hand them a power the design does not want them to have.
+
+## What you get back
+
+Every registered asset's balance, minus 0.5% each, plus the rent from the estate, vault,
+`AssetRecord` and token accounts as they close. The addresses become free to derive again
+— see the note about RPC lag in [Create an estate](/docs/using/create-estate/).
+
+<Callout type="danger" title="Withdrawing ends the arrangement">
+Once the last asset is out, the estate is gone: settings, clock, guardian, hot signer, and
+the heir's entitlement. Reopening means a new transaction, new rent, and a clock that
+starts from zero.
+</Callout>

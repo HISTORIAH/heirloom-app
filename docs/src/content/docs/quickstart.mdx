@@ -1,0 +1,105 @@
+---
+title: Quickstart
+description: Open an estate, fund it, and send your first check-in. Five minutes and three signatures.
+section: getting-started
+order: 2
+keywords: ["get started", "first estate", "create vault", "tutorial", "setup"]
+---
+
+You need a Solana wallet, a little SOL for fees, and the address of the wallet that
+should inherit. Everything below happens in [app.heirlm.xyz](https://app.heirlm.xyz/dashboard);
+every step is one transaction you sign yourself.
+
+<Callout type="note" title="You are on devnet">
+The program is deployed to devnet. Set your wallet to devnet and get test SOL from a
+faucet before you start. See [Addresses & clusters](/docs/reference/addresses/).
+</Callout>
+
+<Steps>
+  <Step title="Connect a wallet">
+    Open the app and hit **Connect Wallet**. The connected wallet becomes the estate's
+    `authority` — the owner. It is the only wallet that can change settings, add assets,
+    or withdraw early, so connect the one you actually want to own this.
+  </Step>
+
+  <Step title="Name an heir">
+    Go to **Create Estate**. Paste the address of the wallet that should inherit, and give
+    the estate a label (up to 32 characters — it is stored on-chain and it is how you tell
+    two estates apart).
+
+    One estate has exactly one heir. If you want two people to inherit different things,
+    open two estates. If you want a way back into your own funds, name a second wallet of
+    your own — that is [wallet recovery](/docs/using/wallet-recovery/).
+  </Step>
+
+  <Step title="Deposit">
+    Add SOL, SPL tokens, or both. Each token you pick is *registered* as a claimable
+    asset, which creates its marker account and the vault's token account in the same
+    transaction as the deposit.
+
+    You can add more later, and you can always take everything back with an
+    [emergency withdraw](/docs/using/emergency-withdraw/).
+  </Step>
+
+  <Step title="Set the clock">
+    Three numbers, all of them yours to pick:
+
+    - **Heartbeat interval** — how long you may go quiet before the estate is considered
+      at risk. 30 days is a common choice.
+    - **Grace period** — extra time after the interval lapses, before the heir can claim.
+      This is the window where the app is warning you and nothing has happened yet.
+    - **Pause duration** — how far a guardian may push the deadline out, once, if you name
+      one.
+
+    Each is capped at 365 days. Optionally register a **hot signer**: a second wallet of
+    yours that is allowed to send check-ins and nothing else, so the cold key that owns the
+    estate can stay offline.
+  </Step>
+
+  <Step title="Review and sign">
+    The review step shows the exact estate that is about to exist. Signing sends one
+    transaction that creates the estate, creates the vault, registers every asset you
+    chose, and moves the deposits in.
+
+    The clock starts at the moment the transaction lands.
+  </Step>
+
+  <Step title="Check in">
+    On the dashboard, press **Send heartbeat**. That writes the current time to
+    `last_heartbeat` and pushes the whole deadline forward by your interval. It costs a
+    signature and network fees — there is no protocol fee on a check-in.
+
+    Do this whenever the dashboard says the window is closing. If you would rather not
+    remember, use the hot signer from a phone wallet at [/heartbeat](https://app.heirlm.xyz/heartbeat).
+  </Step>
+</Steps>
+
+## What you just built
+
+<Code caption="After the quickstart">
+```txt
+estate    PDA   seeds ["estate", your_wallet, heir_wallet]   ← the rules
+vault     PDA   seeds ["vault",  your_wallet, heir_wallet]   ← the assets
+asset     PDA   seeds ["asset",  estate, mint]               ← one per token
+```
+</Code>
+
+No private key exists for any of these. Your wallet is the only signer that can direct
+the estate, and the program is the only thing that can move what is inside the vault.
+
+## Then what
+
+<Cards>
+  <Card title="Put it to work" href="/docs/using/yield/" icon="trending-up">
+    Route idle balances into Lulo lending. Recall them whenever you like.
+  </Card>
+  <Card title="Name a guardian" href="/docs/using/defer/" icon="shield">
+    Someone who can buy you 30 days without ever touching the funds.
+  </Card>
+  <Card title="Understand the clock" href="/docs/concepts/heartbeat/" icon="activity">
+    Exactly when an estate becomes claimable, and what resets it.
+  </Card>
+  <Card title="Tell your heir" href="/docs/using/claim/" icon="gift">
+    What they do, and what they need to know in advance. Not much.
+  </Card>
+</Cards>

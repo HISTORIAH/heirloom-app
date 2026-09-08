@@ -5,6 +5,7 @@ const app: AppMessages = {
     dashboard: "Panel",
     claimInheritance: "Mirası Talep Et",
     heartbeat: "Kalp Atışı",
+    docs: "Dokümanlar",
     connectWallet: "Cüzdanı Bağla",
     copied: "Kopyalandı",
     copyAddress: "Adresi kopyala",
