@@ -5,412 +5,407 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
 
 pub const DELEGATE_DEFER_DISCRIMINATOR: [u8; 8] = [33, 210, 53, 248, 236, 243, 59, 4];
 
 /// Accounts.
 #[derive(Debug)]
 pub struct DelegateDefer {
-      
-              
-          pub delegate: solana_address::Address,
-                /// CHECK: authority verified via estate
+    pub delegate: solana_address::Address,
+    /// CHECK: authority verified via estate
+    pub authority: solana_address::Address,
+    /// CHECK: heir verified via estate
+    pub heir: solana_address::Address,
 
-    
-              
-          pub authority: solana_address::Address,
-                /// CHECK: heir verified via estate
+    pub estate: solana_address::Address,
 
-    
-              
-          pub heir: solana_address::Address,
-          
-              
-          pub estate: solana_address::Address,
-          
-              
-          pub system_program: solana_address::Address,
-      }
+    pub system_program: solana_address::Address,
+}
 
 impl DelegateDefer {
-  pub fn instruction(&self) -> solana_instruction::Instruction {
-    self.instruction_with_remaining_accounts(&[])
-  }
-  #[allow(clippy::arithmetic_side_effects)]
-  #[allow(clippy::vec_init_then_push)]
-  pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(5+ remaining_accounts.len());
-                            accounts.push(solana_instruction::AccountMeta::new(
-            self.delegate,
-            true
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.authority,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.heir,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.estate,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false
-          ));
-                      accounts.extend_from_slice(remaining_accounts);
-    let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
-    
-    solana_instruction::Instruction {
-      program_id: crate::HEIRLOOM_ID,
-      accounts,
-      data,
+    pub fn instruction(&self) -> solana_instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
     }
-  }
+    #[allow(clippy::arithmetic_side_effects)]
+    #[allow(clippy::vec_init_then_push)]
+    pub fn instruction_with_remaining_accounts(
+        &self,
+        remaining_accounts: &[solana_instruction::AccountMeta],
+    ) -> solana_instruction::Instruction {
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_instruction::AccountMeta::new(self.delegate, true));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.authority,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.heir, false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new(self.estate, false));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.system_program,
+            false,
+        ));
+        accounts.extend_from_slice(remaining_accounts);
+        let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
+
+        solana_instruction::Instruction {
+            program_id: crate::HEIRLOOM_ID,
+            accounts,
+            data,
+        }
+    }
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
- pub struct DelegateDeferInstructionData {
-            discriminator: [u8; 8],
-      }
-
-impl DelegateDeferInstructionData {
-  pub fn new() -> Self {
-    Self {
-                        discriminator: [33, 210, 53, 248, 236, 243, 59, 4],
-                  }
-  }
-
-    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
-    borsh::to_vec(self)
-  }
-  }
-
-impl Default for DelegateDeferInstructionData {
-  fn default() -> Self {
-    Self::new()
-  }
+pub struct DelegateDeferInstructionData {
+    discriminator: [u8; 8],
 }
 
+impl DelegateDeferInstructionData {
+    pub fn new() -> Self {
+        Self {
+            discriminator: [33, 210, 53, 248, 236, 243, 59, 4],
+        }
+    }
 
+    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
+        borsh::to_vec(self)
+    }
+}
+
+impl Default for DelegateDeferInstructionData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 /// Instruction builder for `DelegateDefer`.
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` delegate
-          ///   1. `[]` authority
-          ///   2. `[]` heir
-                ///   3. `[writable]` estate
-                ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   0. `[writable, signer]` delegate
+///   1. `[]` authority
+///   2. `[]` heir
+///   3. `[writable]` estate
+///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct DelegateDeferBuilder {
-            delegate: Option<solana_address::Address>,
-                authority: Option<solana_address::Address>,
-                heir: Option<solana_address::Address>,
-                estate: Option<solana_address::Address>,
-                system_program: Option<solana_address::Address>,
-                __remaining_accounts: Vec<solana_instruction::AccountMeta>,
+    delegate: Option<solana_address::Address>,
+    authority: Option<solana_address::Address>,
+    heir: Option<solana_address::Address>,
+    estate: Option<solana_address::Address>,
+    system_program: Option<solana_address::Address>,
+    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
 impl DelegateDeferBuilder {
-  pub fn new() -> Self {
-    Self::default()
-  }
-            #[inline(always)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+    #[inline(always)]
     pub fn delegate(&mut self, delegate: solana_address::Address) -> &mut Self {
-                        self.delegate = Some(delegate);
-                    self
+        self.delegate = Some(delegate);
+        self
     }
-            /// CHECK: authority verified via estate
-#[inline(always)]
+    /// CHECK: authority verified via estate
+    #[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
-                        self.authority = Some(authority);
-                    self
+        self.authority = Some(authority);
+        self
     }
-            /// CHECK: heir verified via estate
-#[inline(always)]
+    /// CHECK: heir verified via estate
+    #[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
-                        self.heir = Some(heir);
-                    self
+        self.heir = Some(heir);
+        self
     }
-            #[inline(always)]
+    #[inline(always)]
     pub fn estate(&mut self, estate: solana_address::Address) -> &mut Self {
-                        self.estate = Some(estate);
-                    self
+        self.estate = Some(estate);
+        self
     }
-            /// `[optional account, default to '11111111111111111111111111111111']`
-#[inline(always)]
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
-                        self.system_program = Some(system_program);
-                    self
+        self.system_program = Some(system_program);
+        self
     }
-            /// Add an additional account to the instruction.
-  #[inline(always)]
-  pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
-    self.__remaining_accounts.push(account);
-    self
-  }
-  /// Add additional accounts to the instruction.
-  #[inline(always)]
-  pub fn add_remaining_accounts(&mut self, accounts: &[solana_instruction::AccountMeta]) -> &mut Self {
-    self.__remaining_accounts.extend_from_slice(accounts);
-    self
-  }
-  #[allow(clippy::clone_on_copy)]
-  pub fn instruction(&self) -> solana_instruction::Instruction {
-    let accounts = DelegateDefer {
-                              delegate: self.delegate.expect("delegate is not set"),
-                                        authority: self.authority.expect("authority is not set"),
-                                        heir: self.heir.expect("heir is not set"),
-                                        estate: self.estate.expect("estate is not set"),
-                                        system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
-                      };
-    
-    accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
-  }
+    /// Add an additional account to the instruction.
+    #[inline(always)]
+    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
+        self.__remaining_accounts.push(account);
+        self
+    }
+    /// Add additional accounts to the instruction.
+    #[inline(always)]
+    pub fn add_remaining_accounts(
+        &mut self,
+        accounts: &[solana_instruction::AccountMeta],
+    ) -> &mut Self {
+        self.__remaining_accounts.extend_from_slice(accounts);
+        self
+    }
+    #[allow(clippy::clone_on_copy)]
+    pub fn instruction(&self) -> solana_instruction::Instruction {
+        let accounts = DelegateDefer {
+            delegate: self.delegate.expect("delegate is not set"),
+            authority: self.authority.expect("authority is not set"),
+            heir: self.heir.expect("heir is not set"),
+            estate: self.estate.expect("estate is not set"),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_address::address!("11111111111111111111111111111111")),
+        };
+
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
+    }
 }
 
-  /// `delegate_defer` CPI accounts.
-  pub struct DelegateDeferCpiAccounts<'a, 'b> {
-          
-                    
-              pub delegate: &'b solana_account_info::AccountInfo<'a>,
-                        /// CHECK: authority verified via estate
+/// `delegate_defer` CPI accounts.
+pub struct DelegateDeferCpiAccounts<'a, 'b> {
+    pub delegate: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: authority verified via estate
+    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: heir verified via estate
+    pub heir: &'b solana_account_info::AccountInfo<'a>,
 
-      
-                    
-              pub authority: &'b solana_account_info::AccountInfo<'a>,
-                        /// CHECK: heir verified via estate
+    pub estate: &'b solana_account_info::AccountInfo<'a>,
 
-      
-                    
-              pub heir: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub estate: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub system_program: &'b solana_account_info::AccountInfo<'a>,
-            }
+    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+}
 
 /// `delegate_defer` CPI instruction.
 pub struct DelegateDeferCpi<'a, 'b> {
-  /// The program to invoke.
-  pub __program: &'b solana_account_info::AccountInfo<'a>,
-      
-              
-          pub delegate: &'b solana_account_info::AccountInfo<'a>,
-                /// CHECK: authority verified via estate
+    /// The program to invoke.
+    pub __program: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub authority: &'b solana_account_info::AccountInfo<'a>,
-                /// CHECK: heir verified via estate
+    pub delegate: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: authority verified via estate
+    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: heir verified via estate
+    pub heir: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub heir: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub estate: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub system_program: &'b solana_account_info::AccountInfo<'a>,
-        }
+    pub estate: &'b solana_account_info::AccountInfo<'a>,
+
+    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+}
 
 impl<'a, 'b> DelegateDeferCpi<'a, 'b> {
-  pub fn new(
-    program: &'b solana_account_info::AccountInfo<'a>,
-          accounts: DelegateDeferCpiAccounts<'a, 'b>,
-          ) -> Self {
-    Self {
-      __program: program,
-              delegate: accounts.delegate,
-              authority: accounts.authority,
-              heir: accounts.heir,
-              estate: accounts.estate,
-              system_program: accounts.system_program,
-                }
-  }
-  #[inline(always)]
-  pub fn invoke(&self) -> solana_program_error::ProgramResult {
-    self.invoke_signed_with_remaining_accounts(&[], &[])
-  }
-  #[inline(always)]
-  pub fn invoke_with_remaining_accounts(&self, remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]) -> solana_program_error::ProgramResult {
-    self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
-  }
-  #[inline(always)]
-  pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
-    self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
-  }
-  #[allow(clippy::arithmetic_side_effects)]
-  #[allow(clippy::clone_on_copy)]
-  #[allow(clippy::vec_init_then_push)]
-  pub fn invoke_signed_with_remaining_accounts(
-    &self,
-    signers_seeds: &[&[&[u8]]],
-    remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
-  ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(5+ remaining_accounts.len());
-                            accounts.push(solana_instruction::AccountMeta::new(
-            *self.delegate.key,
-            true
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.authority.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.heir.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.estate.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false
-          ));
-                      remaining_accounts.iter().for_each(|remaining_account| {
-      accounts.push(solana_instruction::AccountMeta {
-          pubkey: *remaining_account.0.key,
-          is_writable: remaining_account.1,
-          is_signer: remaining_account.2,
-      })
-    });
-    let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
-    
-    let instruction = solana_instruction::Instruction {
-      program_id: crate::HEIRLOOM_ID,
-      accounts,
-      data,
-    };
-    let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
-    account_infos.push(self.__program.clone());
-                  account_infos.push(self.delegate.clone());
-                        account_infos.push(self.authority.clone());
-                        account_infos.push(self.heir.clone());
-                        account_infos.push(self.estate.clone());
-                        account_infos.push(self.system_program.clone());
-              remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
-
-    if signers_seeds.is_empty() {
-      solana_cpi::invoke(&instruction, &account_infos)
-    } else {
-      solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
+    pub fn new(
+        program: &'b solana_account_info::AccountInfo<'a>,
+        accounts: DelegateDeferCpiAccounts<'a, 'b>,
+    ) -> Self {
+        Self {
+            __program: program,
+            delegate: accounts.delegate,
+            authority: accounts.authority,
+            heir: accounts.heir,
+            estate: accounts.estate,
+            system_program: accounts.system_program,
+        }
     }
-  }
+    #[inline(always)]
+    pub fn invoke(&self) -> solana_program_error::ProgramResult {
+        self.invoke_signed_with_remaining_accounts(&[], &[])
+    }
+    #[inline(always)]
+    pub fn invoke_with_remaining_accounts(
+        &self,
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_error::ProgramResult {
+        self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
+    }
+    #[inline(always)]
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
+        self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
+    }
+    #[allow(clippy::arithmetic_side_effects)]
+    #[allow(clippy::clone_on_copy)]
+    #[allow(clippy::vec_init_then_push)]
+    pub fn invoke_signed_with_remaining_accounts(
+        &self,
+        signers_seeds: &[&[&[u8]]],
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_error::ProgramResult {
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_instruction::AccountMeta::new(
+            *self.delegate.key,
+            true,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.authority.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.heir.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new(
+            *self.estate.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.system_program.key,
+            false,
+        ));
+        remaining_accounts.iter().for_each(|remaining_account| {
+            accounts.push(solana_instruction::AccountMeta {
+                pubkey: *remaining_account.0.key,
+                is_writable: remaining_account.1,
+                is_signer: remaining_account.2,
+            })
+        });
+        let data = DelegateDeferInstructionData::new().try_to_vec().unwrap();
+
+        let instruction = solana_instruction::Instruction {
+            program_id: crate::HEIRLOOM_ID,
+            accounts,
+            data,
+        };
+        let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
+        account_infos.push(self.__program.clone());
+        account_infos.push(self.delegate.clone());
+        account_infos.push(self.authority.clone());
+        account_infos.push(self.heir.clone());
+        account_infos.push(self.estate.clone());
+        account_infos.push(self.system_program.clone());
+        remaining_accounts
+            .iter()
+            .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
+
+        if signers_seeds.is_empty() {
+            solana_cpi::invoke(&instruction, &account_infos)
+        } else {
+            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
+        }
+    }
 }
 
 /// Instruction builder for `DelegateDefer` via CPI.
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` delegate
-          ///   1. `[]` authority
-          ///   2. `[]` heir
-                ///   3. `[writable]` estate
-          ///   4. `[]` system_program
+///   0. `[writable, signer]` delegate
+///   1. `[]` authority
+///   2. `[]` heir
+///   3. `[writable]` estate
+///   4. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct DelegateDeferCpiBuilder<'a, 'b> {
-  instruction: Box<DelegateDeferCpiBuilderInstruction<'a, 'b>>,
+    instruction: Box<DelegateDeferCpiBuilderInstruction<'a, 'b>>,
 }
 
 impl<'a, 'b> DelegateDeferCpiBuilder<'a, 'b> {
-  pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
-    let instruction = Box::new(DelegateDeferCpiBuilderInstruction {
-      __program: program,
-              delegate: None,
-              authority: None,
-              heir: None,
-              estate: None,
-              system_program: None,
-                                __remaining_accounts: Vec::new(),
-    });
-    Self { instruction }
-  }
-      #[inline(always)]
+    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
+        let instruction = Box::new(DelegateDeferCpiBuilderInstruction {
+            __program: program,
+            delegate: None,
+            authority: None,
+            heir: None,
+            estate: None,
+            system_program: None,
+            __remaining_accounts: Vec::new(),
+        });
+        Self { instruction }
+    }
+    #[inline(always)]
     pub fn delegate(&mut self, delegate: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.delegate = Some(delegate);
-                    self
+        self.instruction.delegate = Some(delegate);
+        self
     }
-      /// CHECK: authority verified via estate
-#[inline(always)]
+    /// CHECK: authority verified via estate
+    #[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.authority = Some(authority);
-                    self
+        self.instruction.authority = Some(authority);
+        self
     }
-      /// CHECK: heir verified via estate
-#[inline(always)]
+    /// CHECK: heir verified via estate
+    #[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.heir = Some(heir);
-                    self
+        self.instruction.heir = Some(heir);
+        self
     }
-      #[inline(always)]
+    #[inline(always)]
     pub fn estate(&mut self, estate: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.estate = Some(estate);
-                    self
+        self.instruction.estate = Some(estate);
+        self
     }
-      #[inline(always)]
-    pub fn system_program(&mut self, system_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.system_program = Some(system_program);
-                    self
+    #[inline(always)]
+    pub fn system_program(
+        &mut self,
+        system_program: &'b solana_account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.system_program = Some(system_program);
+        self
     }
-            /// Add an additional account to the instruction.
-  #[inline(always)]
-  pub fn add_remaining_account(&mut self, account: &'b solana_account_info::AccountInfo<'a>, is_writable: bool, is_signer: bool) -> &mut Self {
-    self.instruction.__remaining_accounts.push((account, is_writable, is_signer));
-    self
-  }
-  /// Add additional accounts to the instruction.
-  ///
-  /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
-  /// and a `bool` indicating whether the account is a signer or not.
-  #[inline(always)]
-  pub fn add_remaining_accounts(&mut self, accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]) -> &mut Self {
-    self.instruction.__remaining_accounts.extend_from_slice(accounts);
-    self
-  }
-  #[inline(always)]
-  pub fn invoke(&self) -> solana_program_error::ProgramResult {
-    self.invoke_signed(&[])
-  }
-  #[allow(clippy::clone_on_copy)]
-  #[allow(clippy::vec_init_then_push)]
-  pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
+    /// Add an additional account to the instruction.
+    #[inline(always)]
+    pub fn add_remaining_account(
+        &mut self,
+        account: &'b solana_account_info::AccountInfo<'a>,
+        is_writable: bool,
+        is_signer: bool,
+    ) -> &mut Self {
+        self.instruction
+            .__remaining_accounts
+            .push((account, is_writable, is_signer));
+        self
+    }
+    /// Add additional accounts to the instruction.
+    ///
+    /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
+    /// and a `bool` indicating whether the account is a signer or not.
+    #[inline(always)]
+    pub fn add_remaining_accounts(
+        &mut self,
+        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> &mut Self {
+        self.instruction
+            .__remaining_accounts
+            .extend_from_slice(accounts);
+        self
+    }
+    #[inline(always)]
+    pub fn invoke(&self) -> solana_program_error::ProgramResult {
+        self.invoke_signed(&[])
+    }
+    #[allow(clippy::clone_on_copy)]
+    #[allow(clippy::vec_init_then_push)]
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
         let instruction = DelegateDeferCpi {
-        __program: self.instruction.__program,
-                  
-          delegate: self.instruction.delegate.expect("delegate is not set"),
-                  
-          authority: self.instruction.authority.expect("authority is not set"),
-                  
-          heir: self.instruction.heir.expect("heir is not set"),
-                  
-          estate: self.instruction.estate.expect("estate is not set"),
-                  
-          system_program: self.instruction.system_program.expect("system_program is not set"),
-                    };
-    instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
-  }
+            __program: self.instruction.__program,
+
+            delegate: self.instruction.delegate.expect("delegate is not set"),
+
+            authority: self.instruction.authority.expect("authority is not set"),
+
+            heir: self.instruction.heir.expect("heir is not set"),
+
+            estate: self.instruction.estate.expect("estate is not set"),
+
+            system_program: self
+                .instruction
+                .system_program
+                .expect("system_program is not set"),
+        };
+        instruction.invoke_signed_with_remaining_accounts(
+            signers_seeds,
+            &self.instruction.__remaining_accounts,
+        )
+    }
 }
 
 #[derive(Clone, Debug)]
 struct DelegateDeferCpiBuilderInstruction<'a, 'b> {
-  __program: &'b solana_account_info::AccountInfo<'a>,
-            delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-                heir: Option<&'b solana_account_info::AccountInfo<'a>>,
-                estate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-  __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
+    __program: &'b solana_account_info::AccountInfo<'a>,
+    delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+    heir: Option<&'b solana_account_info::AccountInfo<'a>>,
+    estate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
+    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }
-

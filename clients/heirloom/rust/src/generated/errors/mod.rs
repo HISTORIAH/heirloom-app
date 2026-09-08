@@ -5,7 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-      pub(crate) mod heirloom;
-  
-      pub use self::heirloom::HeirloomError;
-  
+pub(crate) mod heirloom;
+
+pub use self::heirloom::HeirloomError;

@@ -5,901 +5,858 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
 
 pub const CLAIM_DISCRIMINATOR: [u8; 8] = [62, 198, 214, 193, 213, 159, 108, 210];
 
 /// Accounts.
 #[derive(Debug)]
 pub struct Claim {
-      
-              
-          pub heir: solana_address::Address,
-                /// CHECK: authority verified via estate.authority
+    pub heir: solana_address::Address,
+    /// CHECK: authority verified via estate.authority
+    pub authority: solana_address::Address,
+    /// CHECK: optional delegate
+    pub delegate: Option<solana_address::Address>,
+    /// CHECK: heir's ATA, created idempotently if needed
+    pub heir_token_account: Option<solana_address::Address>,
 
-    
-              
-          pub authority: solana_address::Address,
-                /// CHECK: optional delegate
+    pub estate: solana_address::Address,
 
-    
-              
-          pub delegate: Option<solana_address::Address>,
-                /// CHECK: heir's ATA, created idempotently if needed
+    pub vault: solana_address::Address,
 
-    
-              
-          pub heir_token_account: Option<solana_address::Address>,
-          
-              
-          pub estate: solana_address::Address,
-          
-              
-          pub vault: solana_address::Address,
-          
-              
-          pub vault_token_account: Option<solana_address::Address>,
-          
-              
-          pub mint: Option<solana_address::Address>,
-                /// Proves `mint` was actually registered as a claimable asset for this
-/// estate, rather than an arbitrary vault-owned token account.
+    pub vault_token_account: Option<solana_address::Address>,
 
-    
-              
-          pub asset_record: Option<solana_address::Address>,
-                /// CHECK: treasury address
+    pub mint: Option<solana_address::Address>,
+    /// Proves `mint` was actually registered as a claimable asset for this
+    /// estate, rather than an arbitrary vault-owned token account.
+    pub asset_record: Option<solana_address::Address>,
+    /// CHECK: treasury address
+    pub treasury: solana_address::Address,
+    /// CHECK: treasury ATA, created idempotently if needed
+    pub treasury_token_account: Option<solana_address::Address>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    pub token_program: solana_address::Address,
 
-    
-              
-          pub treasury: solana_address::Address,
-                /// CHECK: treasury ATA, created idempotently if needed
+    pub associated_token_program: solana_address::Address,
 
-    
-              
-          pub treasury_token_account: Option<solana_address::Address>,
-                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
-
-    
-              
-          pub token_program: solana_address::Address,
-          
-              
-          pub associated_token_program: solana_address::Address,
-          
-              
-          pub system_program: solana_address::Address,
-      }
+    pub system_program: solana_address::Address,
+}
 
 impl Claim {
-  pub fn instruction(&self) -> solana_instruction::Instruction {
-    self.instruction_with_remaining_accounts(&[])
-  }
-  #[allow(clippy::arithmetic_side_effects)]
-  #[allow(clippy::vec_init_then_push)]
-  pub fn instruction_with_remaining_accounts(&self, remaining_accounts: &[solana_instruction::AccountMeta]) -> solana_instruction::Instruction {
-    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
-                            accounts.push(solana_instruction::AccountMeta::new(
-            self.heir,
-            true
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+    pub fn instruction(&self) -> solana_instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
+    }
+    #[allow(clippy::arithmetic_side_effects)]
+    #[allow(clippy::vec_init_then_push)]
+    pub fn instruction_with_remaining_accounts(
+        &self,
+        remaining_accounts: &[solana_instruction::AccountMeta],
+    ) -> solana_instruction::Instruction {
+        let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
+        accounts.push(solana_instruction::AccountMeta::new(self.heir, true));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.authority,
-            false
-          ));
-                                                      if let Some(delegate) = self.delegate {
-              accounts.push(solana_instruction::AccountMeta::new(
-                delegate,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
+            false,
+        ));
+        if let Some(delegate) = self.delegate {
+            accounts.push(solana_instruction::AccountMeta::new(delegate, false));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
                 crate::HEIRLOOM_ID,
                 false,
-              ));
-            }
-                                                                if let Some(heir_token_account) = self.heir_token_account {
-              accounts.push(solana_instruction::AccountMeta::new(
+            ));
+        }
+        if let Some(heir_token_account) = self.heir_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
                 heir_token_account,
                 false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
                 crate::HEIRLOOM_ID,
                 false,
-              ));
-            }
-                                                    accounts.push(solana_instruction::AccountMeta::new(
-            self.estate,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            self.vault,
-            false
-          ));
-                                                      if let Some(vault_token_account) = self.vault_token_account {
-              accounts.push(solana_instruction::AccountMeta::new(
+            ));
+        }
+        accounts.push(solana_instruction::AccountMeta::new(self.estate, false));
+        accounts.push(solana_instruction::AccountMeta::new(self.vault, false));
+        if let Some(vault_token_account) = self.vault_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
                 vault_token_account,
                 false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
                 crate::HEIRLOOM_ID,
                 false,
-              ));
-            }
-                                                                if let Some(mint) = self.mint {
-              accounts.push(solana_instruction::AccountMeta::new(
-                mint,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
+            ));
+        }
+        if let Some(mint) = self.mint {
+            accounts.push(solana_instruction::AccountMeta::new(mint, false));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
                 crate::HEIRLOOM_ID,
                 false,
-              ));
-            }
-                                                                if let Some(asset_record) = self.asset_record {
-              accounts.push(solana_instruction::AccountMeta::new(
-                asset_record,
-                false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
+            ));
+        }
+        if let Some(asset_record) = self.asset_record {
+            accounts.push(solana_instruction::AccountMeta::new(asset_record, false));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
                 crate::HEIRLOOM_ID,
                 false,
-              ));
-            }
-                                                    accounts.push(solana_instruction::AccountMeta::new(
-            self.treasury,
-            false
-          ));
-                                                      if let Some(treasury_token_account) = self.treasury_token_account {
-              accounts.push(solana_instruction::AccountMeta::new(
+            ));
+        }
+        accounts.push(solana_instruction::AccountMeta::new(self.treasury, false));
+        if let Some(treasury_token_account) = self.treasury_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
                 treasury_token_account,
                 false,
-              ));
-            } else {
-              accounts.push(solana_instruction::AccountMeta::new_readonly(
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
                 crate::HEIRLOOM_ID,
                 false,
-              ));
-            }
-                                                    accounts.push(solana_instruction::AccountMeta::new_readonly(
+            ));
+        }
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.associated_token_program,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.system_program,
-            false
-          ));
-                      accounts.extend_from_slice(remaining_accounts);
-    let data = ClaimInstructionData::new().try_to_vec().unwrap();
-    
-    solana_instruction::Instruction {
-      program_id: crate::HEIRLOOM_ID,
-      accounts,
-      data,
+            false,
+        ));
+        accounts.extend_from_slice(remaining_accounts);
+        let data = ClaimInstructionData::new().try_to_vec().unwrap();
+
+        solana_instruction::Instruction {
+            program_id: crate::HEIRLOOM_ID,
+            accounts,
+            data,
+        }
     }
-  }
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
- pub struct ClaimInstructionData {
-            discriminator: [u8; 8],
-      }
-
-impl ClaimInstructionData {
-  pub fn new() -> Self {
-    Self {
-                        discriminator: [62, 198, 214, 193, 213, 159, 108, 210],
-                  }
-  }
-
-    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
-    borsh::to_vec(self)
-  }
-  }
-
-impl Default for ClaimInstructionData {
-  fn default() -> Self {
-    Self::new()
-  }
+pub struct ClaimInstructionData {
+    discriminator: [u8; 8],
 }
 
+impl ClaimInstructionData {
+    pub fn new() -> Self {
+        Self {
+            discriminator: [62, 198, 214, 193, 213, 159, 108, 210],
+        }
+    }
 
+    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
+        borsh::to_vec(self)
+    }
+}
+
+impl Default for ClaimInstructionData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 /// Instruction builder for `Claim`.
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` heir
-          ///   1. `[]` authority
-                      ///   2. `[writable, optional]` delegate
-                      ///   3. `[writable, optional]` heir_token_account
-                ///   4. `[writable]` estate
-                ///   5. `[writable]` vault
-                      ///   6. `[writable, optional]` vault_token_account
-                      ///   7. `[writable, optional]` mint
-                      ///   8. `[writable, optional]` asset_record
-                      ///   9. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
-                      ///   10. `[writable, optional]` treasury_token_account
-                ///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-                ///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-                ///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   0. `[writable, signer]` heir
+///   1. `[]` authority
+///   2. `[writable, optional]` delegate
+///   3. `[writable, optional]` heir_token_account
+///   4. `[writable]` estate
+///   5. `[writable]` vault
+///   6. `[writable, optional]` vault_token_account
+///   7. `[writable, optional]` mint
+///   8. `[writable, optional]` asset_record
+///   9. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
+///   10. `[writable, optional]` treasury_token_account
+///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ClaimBuilder {
-            heir: Option<solana_address::Address>,
-                authority: Option<solana_address::Address>,
-                delegate: Option<solana_address::Address>,
-                heir_token_account: Option<solana_address::Address>,
-                estate: Option<solana_address::Address>,
-                vault: Option<solana_address::Address>,
-                vault_token_account: Option<solana_address::Address>,
-                mint: Option<solana_address::Address>,
-                asset_record: Option<solana_address::Address>,
-                treasury: Option<solana_address::Address>,
-                treasury_token_account: Option<solana_address::Address>,
-                token_program: Option<solana_address::Address>,
-                associated_token_program: Option<solana_address::Address>,
-                system_program: Option<solana_address::Address>,
-                __remaining_accounts: Vec<solana_instruction::AccountMeta>,
+    heir: Option<solana_address::Address>,
+    authority: Option<solana_address::Address>,
+    delegate: Option<solana_address::Address>,
+    heir_token_account: Option<solana_address::Address>,
+    estate: Option<solana_address::Address>,
+    vault: Option<solana_address::Address>,
+    vault_token_account: Option<solana_address::Address>,
+    mint: Option<solana_address::Address>,
+    asset_record: Option<solana_address::Address>,
+    treasury: Option<solana_address::Address>,
+    treasury_token_account: Option<solana_address::Address>,
+    token_program: Option<solana_address::Address>,
+    associated_token_program: Option<solana_address::Address>,
+    system_program: Option<solana_address::Address>,
+    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
 impl ClaimBuilder {
-  pub fn new() -> Self {
-    Self::default()
-  }
-            #[inline(always)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+    #[inline(always)]
     pub fn heir(&mut self, heir: solana_address::Address) -> &mut Self {
-                        self.heir = Some(heir);
-                    self
+        self.heir = Some(heir);
+        self
     }
-            /// CHECK: authority verified via estate.authority
-#[inline(always)]
+    /// CHECK: authority verified via estate.authority
+    #[inline(always)]
     pub fn authority(&mut self, authority: solana_address::Address) -> &mut Self {
-                        self.authority = Some(authority);
-                    self
+        self.authority = Some(authority);
+        self
     }
-            /// `[optional account]`
-/// CHECK: optional delegate
-#[inline(always)]
+    /// `[optional account]`
+    /// CHECK: optional delegate
+    #[inline(always)]
     pub fn delegate(&mut self, delegate: Option<solana_address::Address>) -> &mut Self {
-                        self.delegate = delegate;
-                    self
+        self.delegate = delegate;
+        self
     }
-            /// `[optional account]`
-/// CHECK: heir's ATA, created idempotently if needed
-#[inline(always)]
-    pub fn heir_token_account(&mut self, heir_token_account: Option<solana_address::Address>) -> &mut Self {
-                        self.heir_token_account = heir_token_account;
-                    self
+    /// `[optional account]`
+    /// CHECK: heir's ATA, created idempotently if needed
+    #[inline(always)]
+    pub fn heir_token_account(
+        &mut self,
+        heir_token_account: Option<solana_address::Address>,
+    ) -> &mut Self {
+        self.heir_token_account = heir_token_account;
+        self
     }
-            #[inline(always)]
+    #[inline(always)]
     pub fn estate(&mut self, estate: solana_address::Address) -> &mut Self {
-                        self.estate = Some(estate);
-                    self
+        self.estate = Some(estate);
+        self
     }
-            #[inline(always)]
+    #[inline(always)]
     pub fn vault(&mut self, vault: solana_address::Address) -> &mut Self {
-                        self.vault = Some(vault);
-                    self
+        self.vault = Some(vault);
+        self
     }
-            /// `[optional account]`
-#[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: Option<solana_address::Address>) -> &mut Self {
-                        self.vault_token_account = vault_token_account;
-                    self
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn vault_token_account(
+        &mut self,
+        vault_token_account: Option<solana_address::Address>,
+    ) -> &mut Self {
+        self.vault_token_account = vault_token_account;
+        self
     }
-            /// `[optional account]`
-#[inline(always)]
+    /// `[optional account]`
+    #[inline(always)]
     pub fn mint(&mut self, mint: Option<solana_address::Address>) -> &mut Self {
-                        self.mint = mint;
-                    self
+        self.mint = mint;
+        self
     }
-            /// `[optional account]`
-/// Proves `mint` was actually registered as a claimable asset for this
-/// estate, rather than an arbitrary vault-owned token account.
-#[inline(always)]
+    /// `[optional account]`
+    /// Proves `mint` was actually registered as a claimable asset for this
+    /// estate, rather than an arbitrary vault-owned token account.
+    #[inline(always)]
     pub fn asset_record(&mut self, asset_record: Option<solana_address::Address>) -> &mut Self {
-                        self.asset_record = asset_record;
-                    self
+        self.asset_record = asset_record;
+        self
     }
-            /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
-/// CHECK: treasury address
-#[inline(always)]
+    /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
+    /// CHECK: treasury address
+    #[inline(always)]
     pub fn treasury(&mut self, treasury: solana_address::Address) -> &mut Self {
-                        self.treasury = Some(treasury);
-                    self
+        self.treasury = Some(treasury);
+        self
     }
-            /// `[optional account]`
-/// CHECK: treasury ATA, created idempotently if needed
-#[inline(always)]
-    pub fn treasury_token_account(&mut self, treasury_token_account: Option<solana_address::Address>) -> &mut Self {
-                        self.treasury_token_account = treasury_token_account;
-                    self
+    /// `[optional account]`
+    /// CHECK: treasury ATA, created idempotently if needed
+    #[inline(always)]
+    pub fn treasury_token_account(
+        &mut self,
+        treasury_token_account: Option<solana_address::Address>,
+    ) -> &mut Self {
+        self.treasury_token_account = treasury_token_account;
+        self
     }
-            /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
-/// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
-#[inline(always)]
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_address::Address) -> &mut Self {
-                        self.token_program = Some(token_program);
-                    self
+        self.token_program = Some(token_program);
+        self
     }
-            /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
-#[inline(always)]
-    pub fn associated_token_program(&mut self, associated_token_program: solana_address::Address) -> &mut Self {
-                        self.associated_token_program = Some(associated_token_program);
-                    self
+    /// `[optional account, default to 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL']`
+    #[inline(always)]
+    pub fn associated_token_program(
+        &mut self,
+        associated_token_program: solana_address::Address,
+    ) -> &mut Self {
+        self.associated_token_program = Some(associated_token_program);
+        self
     }
-            /// `[optional account, default to '11111111111111111111111111111111']`
-#[inline(always)]
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_address::Address) -> &mut Self {
-                        self.system_program = Some(system_program);
-                    self
+        self.system_program = Some(system_program);
+        self
     }
-            /// Add an additional account to the instruction.
-  #[inline(always)]
-  pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
-    self.__remaining_accounts.push(account);
-    self
-  }
-  /// Add additional accounts to the instruction.
-  #[inline(always)]
-  pub fn add_remaining_accounts(&mut self, accounts: &[solana_instruction::AccountMeta]) -> &mut Self {
-    self.__remaining_accounts.extend_from_slice(accounts);
-    self
-  }
-  #[allow(clippy::clone_on_copy)]
-  pub fn instruction(&self) -> solana_instruction::Instruction {
-    let accounts = Claim {
-                              heir: self.heir.expect("heir is not set"),
-                                        authority: self.authority.expect("authority is not set"),
-                                        delegate: self.delegate,
-                                        heir_token_account: self.heir_token_account,
-                                        estate: self.estate.expect("estate is not set"),
-                                        vault: self.vault.expect("vault is not set"),
-                                        vault_token_account: self.vault_token_account,
-                                        mint: self.mint,
-                                        asset_record: self.asset_record,
-                                        treasury: self.treasury.unwrap_or(solana_address::address!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q")),
-                                        treasury_token_account: self.treasury_token_account,
-                                        token_program: self.token_program.unwrap_or(solana_address::address!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")),
-                                        associated_token_program: self.associated_token_program.unwrap_or(solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")),
-                                        system_program: self.system_program.unwrap_or(solana_address::address!("11111111111111111111111111111111")),
-                      };
-    
-    accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
-  }
+    /// Add an additional account to the instruction.
+    #[inline(always)]
+    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
+        self.__remaining_accounts.push(account);
+        self
+    }
+    /// Add additional accounts to the instruction.
+    #[inline(always)]
+    pub fn add_remaining_accounts(
+        &mut self,
+        accounts: &[solana_instruction::AccountMeta],
+    ) -> &mut Self {
+        self.__remaining_accounts.extend_from_slice(accounts);
+        self
+    }
+    #[allow(clippy::clone_on_copy)]
+    pub fn instruction(&self) -> solana_instruction::Instruction {
+        let accounts = Claim {
+            heir: self.heir.expect("heir is not set"),
+            authority: self.authority.expect("authority is not set"),
+            delegate: self.delegate,
+            heir_token_account: self.heir_token_account,
+            estate: self.estate.expect("estate is not set"),
+            vault: self.vault.expect("vault is not set"),
+            vault_token_account: self.vault_token_account,
+            mint: self.mint,
+            asset_record: self.asset_record,
+            treasury: self.treasury.unwrap_or(solana_address::address!(
+                "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q"
+            )),
+            treasury_token_account: self.treasury_token_account,
+            token_program: self.token_program.unwrap_or(solana_address::address!(
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            )),
+            associated_token_program: self.associated_token_program.unwrap_or(
+                solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+            ),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_address::address!("11111111111111111111111111111111")),
+        };
+
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
+    }
 }
 
-  /// `claim` CPI accounts.
-  pub struct ClaimCpiAccounts<'a, 'b> {
-          
-                    
-              pub heir: &'b solana_account_info::AccountInfo<'a>,
-                        /// CHECK: authority verified via estate.authority
+/// `claim` CPI accounts.
+pub struct ClaimCpiAccounts<'a, 'b> {
+    pub heir: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: authority verified via estate.authority
+    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: optional delegate
+    pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: heir's ATA, created idempotently if needed
+    pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
 
-      
-                    
-              pub authority: &'b solana_account_info::AccountInfo<'a>,
-                        /// CHECK: optional delegate
+    pub estate: &'b solana_account_info::AccountInfo<'a>,
 
-      
-                    
-              pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                        /// CHECK: heir's ATA, created idempotently if needed
+    pub vault: &'b solana_account_info::AccountInfo<'a>,
 
-      
-                    
-              pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
-                    
-              pub estate: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub vault: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                
-                    
-              pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-                        /// Proves `mint` was actually registered as a claimable asset for this
-/// estate, rather than an arbitrary vault-owned token account.
+    pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
 
-      
-                    
-              pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                        /// CHECK: treasury address
+    pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// Proves `mint` was actually registered as a claimable asset for this
+    /// estate, rather than an arbitrary vault-owned token account.
+    pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: treasury address
+    pub treasury: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: treasury ATA, created idempotently if needed
+    pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    pub token_program: &'b solana_account_info::AccountInfo<'a>,
 
-      
-                    
-              pub treasury: &'b solana_account_info::AccountInfo<'a>,
-                        /// CHECK: treasury ATA, created idempotently if needed
+    pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
 
-      
-                    
-              pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                        /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
-
-      
-                    
-              pub token_program: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
-                
-                    
-              pub system_program: &'b solana_account_info::AccountInfo<'a>,
-            }
+    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+}
 
 /// `claim` CPI instruction.
 pub struct ClaimCpi<'a, 'b> {
-  /// The program to invoke.
-  pub __program: &'b solana_account_info::AccountInfo<'a>,
-      
-              
-          pub heir: &'b solana_account_info::AccountInfo<'a>,
-                /// CHECK: authority verified via estate.authority
+    /// The program to invoke.
+    pub __program: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub authority: &'b solana_account_info::AccountInfo<'a>,
-                /// CHECK: optional delegate
+    pub heir: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: authority verified via estate.authority
+    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: optional delegate
+    pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: heir's ATA, created idempotently if needed
+    pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
 
-    
-              
-          pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// CHECK: heir's ATA, created idempotently if needed
+    pub estate: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
-              
-          pub estate: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub vault: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-          
-              
-          pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// Proves `mint` was actually registered as a claimable asset for this
-/// estate, rather than an arbitrary vault-owned token account.
+    pub vault: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// CHECK: treasury address
+    pub vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
 
-    
-              
-          pub treasury: &'b solana_account_info::AccountInfo<'a>,
-                /// CHECK: treasury ATA, created idempotently if needed
+    pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// Proves `mint` was actually registered as a claimable asset for this
+    /// estate, rather than an arbitrary vault-owned token account.
+    pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: treasury address
+    pub treasury: &'b solana_account_info::AccountInfo<'a>,
+    /// CHECK: treasury ATA, created idempotently if needed
+    pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    pub token_program: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
 
-    
-              
-          pub token_program: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub associated_token_program: &'b solana_account_info::AccountInfo<'a>,
-          
-              
-          pub system_program: &'b solana_account_info::AccountInfo<'a>,
-        }
+    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+}
 
 impl<'a, 'b> ClaimCpi<'a, 'b> {
-  pub fn new(
-    program: &'b solana_account_info::AccountInfo<'a>,
-          accounts: ClaimCpiAccounts<'a, 'b>,
-          ) -> Self {
-    Self {
-      __program: program,
-              heir: accounts.heir,
-              authority: accounts.authority,
-              delegate: accounts.delegate,
-              heir_token_account: accounts.heir_token_account,
-              estate: accounts.estate,
-              vault: accounts.vault,
-              vault_token_account: accounts.vault_token_account,
-              mint: accounts.mint,
-              asset_record: accounts.asset_record,
-              treasury: accounts.treasury,
-              treasury_token_account: accounts.treasury_token_account,
-              token_program: accounts.token_program,
-              associated_token_program: accounts.associated_token_program,
-              system_program: accounts.system_program,
-                }
-  }
-  #[inline(always)]
-  pub fn invoke(&self) -> solana_program_error::ProgramResult {
-    self.invoke_signed_with_remaining_accounts(&[], &[])
-  }
-  #[inline(always)]
-  pub fn invoke_with_remaining_accounts(&self, remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]) -> solana_program_error::ProgramResult {
-    self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
-  }
-  #[inline(always)]
-  pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
-    self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
-  }
-  #[allow(clippy::arithmetic_side_effects)]
-  #[allow(clippy::clone_on_copy)]
-  #[allow(clippy::vec_init_then_push)]
-  pub fn invoke_signed_with_remaining_accounts(
-    &self,
-    signers_seeds: &[&[&[u8]]],
-    remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]
-  ) -> solana_program_error::ProgramResult {
-    let mut accounts = Vec::with_capacity(14+ remaining_accounts.len());
-                            accounts.push(solana_instruction::AccountMeta::new(
-            *self.heir.key,
-            true
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.authority.key,
-            false
-          ));
-                                          if let Some(delegate) = self.delegate {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *delegate.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_ID,
-              false,
-            ));
-          }
-                                          if let Some(heir_token_account) = self.heir_token_account {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *heir_token_account.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_ID,
-              false,
-            ));
-          }
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.estate.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.vault.key,
-            false
-          ));
-                                          if let Some(vault_token_account) = self.vault_token_account {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *vault_token_account.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_ID,
-              false,
-            ));
-          }
-                                          if let Some(mint) = self.mint {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *mint.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_ID,
-              false,
-            ));
-          }
-                                          if let Some(asset_record) = self.asset_record {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *asset_record.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_ID,
-              false,
-            ));
-          }
-                                          accounts.push(solana_instruction::AccountMeta::new(
-            *self.treasury.key,
-            false
-          ));
-                                          if let Some(treasury_token_account) = self.treasury_token_account {
-            accounts.push(solana_instruction::AccountMeta::new(
-              *treasury_token_account.key,
-              false,
-            ));
-          } else {
-            accounts.push(solana_instruction::AccountMeta::new_readonly(
-              crate::HEIRLOOM_ID,
-              false,
-            ));
-          }
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.token_program.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.associated_token_program.key,
-            false
-          ));
-                                          accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false
-          ));
-                      remaining_accounts.iter().for_each(|remaining_account| {
-      accounts.push(solana_instruction::AccountMeta {
-          pubkey: *remaining_account.0.key,
-          is_writable: remaining_account.1,
-          is_signer: remaining_account.2,
-      })
-    });
-    let data = ClaimInstructionData::new().try_to_vec().unwrap();
-    
-    let instruction = solana_instruction::Instruction {
-      program_id: crate::HEIRLOOM_ID,
-      accounts,
-      data,
-    };
-    let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
-    account_infos.push(self.__program.clone());
-                  account_infos.push(self.heir.clone());
-                        account_infos.push(self.authority.clone());
-                        if let Some(delegate) = self.delegate {
-          account_infos.push(delegate.clone());
+    pub fn new(
+        program: &'b solana_account_info::AccountInfo<'a>,
+        accounts: ClaimCpiAccounts<'a, 'b>,
+    ) -> Self {
+        Self {
+            __program: program,
+            heir: accounts.heir,
+            authority: accounts.authority,
+            delegate: accounts.delegate,
+            heir_token_account: accounts.heir_token_account,
+            estate: accounts.estate,
+            vault: accounts.vault,
+            vault_token_account: accounts.vault_token_account,
+            mint: accounts.mint,
+            asset_record: accounts.asset_record,
+            treasury: accounts.treasury,
+            treasury_token_account: accounts.treasury_token_account,
+            token_program: accounts.token_program,
+            associated_token_program: accounts.associated_token_program,
+            system_program: accounts.system_program,
         }
-                        if let Some(heir_token_account) = self.heir_token_account {
-          account_infos.push(heir_token_account.clone());
-        }
-                        account_infos.push(self.estate.clone());
-                        account_infos.push(self.vault.clone());
-                        if let Some(vault_token_account) = self.vault_token_account {
-          account_infos.push(vault_token_account.clone());
-        }
-                        if let Some(mint) = self.mint {
-          account_infos.push(mint.clone());
-        }
-                        if let Some(asset_record) = self.asset_record {
-          account_infos.push(asset_record.clone());
-        }
-                        account_infos.push(self.treasury.clone());
-                        if let Some(treasury_token_account) = self.treasury_token_account {
-          account_infos.push(treasury_token_account.clone());
-        }
-                        account_infos.push(self.token_program.clone());
-                        account_infos.push(self.associated_token_program.clone());
-                        account_infos.push(self.system_program.clone());
-              remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
-
-    if signers_seeds.is_empty() {
-      solana_cpi::invoke(&instruction, &account_infos)
-    } else {
-      solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
     }
-  }
+    #[inline(always)]
+    pub fn invoke(&self) -> solana_program_error::ProgramResult {
+        self.invoke_signed_with_remaining_accounts(&[], &[])
+    }
+    #[inline(always)]
+    pub fn invoke_with_remaining_accounts(
+        &self,
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_error::ProgramResult {
+        self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
+    }
+    #[inline(always)]
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
+        self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
+    }
+    #[allow(clippy::arithmetic_side_effects)]
+    #[allow(clippy::clone_on_copy)]
+    #[allow(clippy::vec_init_then_push)]
+    pub fn invoke_signed_with_remaining_accounts(
+        &self,
+        signers_seeds: &[&[&[u8]]],
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_error::ProgramResult {
+        let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
+        accounts.push(solana_instruction::AccountMeta::new(*self.heir.key, true));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.authority.key,
+            false,
+        ));
+        if let Some(delegate) = self.delegate {
+            accounts.push(solana_instruction::AccountMeta::new(*delegate.key, false));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+            ));
+        }
+        if let Some(heir_token_account) = self.heir_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+                *heir_token_account.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+            ));
+        }
+        accounts.push(solana_instruction::AccountMeta::new(
+            *self.estate.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new(*self.vault.key, false));
+        if let Some(vault_token_account) = self.vault_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+                *vault_token_account.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+            ));
+        }
+        if let Some(mint) = self.mint {
+            accounts.push(solana_instruction::AccountMeta::new(*mint.key, false));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+            ));
+        }
+        if let Some(asset_record) = self.asset_record {
+            accounts.push(solana_instruction::AccountMeta::new(
+                *asset_record.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+            ));
+        }
+        accounts.push(solana_instruction::AccountMeta::new(
+            *self.treasury.key,
+            false,
+        ));
+        if let Some(treasury_token_account) = self.treasury_token_account {
+            accounts.push(solana_instruction::AccountMeta::new(
+                *treasury_token_account.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_instruction::AccountMeta::new_readonly(
+                crate::HEIRLOOM_ID,
+                false,
+            ));
+        }
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.token_program.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.associated_token_program.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.system_program.key,
+            false,
+        ));
+        remaining_accounts.iter().for_each(|remaining_account| {
+            accounts.push(solana_instruction::AccountMeta {
+                pubkey: *remaining_account.0.key,
+                is_writable: remaining_account.1,
+                is_signer: remaining_account.2,
+            })
+        });
+        let data = ClaimInstructionData::new().try_to_vec().unwrap();
+
+        let instruction = solana_instruction::Instruction {
+            program_id: crate::HEIRLOOM_ID,
+            accounts,
+            data,
+        };
+        let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
+        account_infos.push(self.__program.clone());
+        account_infos.push(self.heir.clone());
+        account_infos.push(self.authority.clone());
+        if let Some(delegate) = self.delegate {
+            account_infos.push(delegate.clone());
+        }
+        if let Some(heir_token_account) = self.heir_token_account {
+            account_infos.push(heir_token_account.clone());
+        }
+        account_infos.push(self.estate.clone());
+        account_infos.push(self.vault.clone());
+        if let Some(vault_token_account) = self.vault_token_account {
+            account_infos.push(vault_token_account.clone());
+        }
+        if let Some(mint) = self.mint {
+            account_infos.push(mint.clone());
+        }
+        if let Some(asset_record) = self.asset_record {
+            account_infos.push(asset_record.clone());
+        }
+        account_infos.push(self.treasury.clone());
+        if let Some(treasury_token_account) = self.treasury_token_account {
+            account_infos.push(treasury_token_account.clone());
+        }
+        account_infos.push(self.token_program.clone());
+        account_infos.push(self.associated_token_program.clone());
+        account_infos.push(self.system_program.clone());
+        remaining_accounts
+            .iter()
+            .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
+
+        if signers_seeds.is_empty() {
+            solana_cpi::invoke(&instruction, &account_infos)
+        } else {
+            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
+        }
+    }
 }
 
 /// Instruction builder for `Claim` via CPI.
 ///
 /// ### Accounts:
 ///
-                      ///   0. `[writable, signer]` heir
-          ///   1. `[]` authority
-                      ///   2. `[writable, optional]` delegate
-                      ///   3. `[writable, optional]` heir_token_account
-                ///   4. `[writable]` estate
-                ///   5. `[writable]` vault
-                      ///   6. `[writable, optional]` vault_token_account
-                      ///   7. `[writable, optional]` mint
-                      ///   8. `[writable, optional]` asset_record
-                ///   9. `[writable]` treasury
-                      ///   10. `[writable, optional]` treasury_token_account
-          ///   11. `[]` token_program
-          ///   12. `[]` associated_token_program
-          ///   13. `[]` system_program
+///   0. `[writable, signer]` heir
+///   1. `[]` authority
+///   2. `[writable, optional]` delegate
+///   3. `[writable, optional]` heir_token_account
+///   4. `[writable]` estate
+///   5. `[writable]` vault
+///   6. `[writable, optional]` vault_token_account
+///   7. `[writable, optional]` mint
+///   8. `[writable, optional]` asset_record
+///   9. `[writable]` treasury
+///   10. `[writable, optional]` treasury_token_account
+///   11. `[]` token_program
+///   12. `[]` associated_token_program
+///   13. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct ClaimCpiBuilder<'a, 'b> {
-  instruction: Box<ClaimCpiBuilderInstruction<'a, 'b>>,
+    instruction: Box<ClaimCpiBuilderInstruction<'a, 'b>>,
 }
 
 impl<'a, 'b> ClaimCpiBuilder<'a, 'b> {
-  pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
-    let instruction = Box::new(ClaimCpiBuilderInstruction {
-      __program: program,
-              heir: None,
-              authority: None,
-              delegate: None,
-              heir_token_account: None,
-              estate: None,
-              vault: None,
-              vault_token_account: None,
-              mint: None,
-              asset_record: None,
-              treasury: None,
-              treasury_token_account: None,
-              token_program: None,
-              associated_token_program: None,
-              system_program: None,
-                                __remaining_accounts: Vec::new(),
-    });
-    Self { instruction }
-  }
-      #[inline(always)]
+    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
+        let instruction = Box::new(ClaimCpiBuilderInstruction {
+            __program: program,
+            heir: None,
+            authority: None,
+            delegate: None,
+            heir_token_account: None,
+            estate: None,
+            vault: None,
+            vault_token_account: None,
+            mint: None,
+            asset_record: None,
+            treasury: None,
+            treasury_token_account: None,
+            token_program: None,
+            associated_token_program: None,
+            system_program: None,
+            __remaining_accounts: Vec::new(),
+        });
+        Self { instruction }
+    }
+    #[inline(always)]
     pub fn heir(&mut self, heir: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.heir = Some(heir);
-                    self
+        self.instruction.heir = Some(heir);
+        self
     }
-      /// CHECK: authority verified via estate.authority
-#[inline(always)]
+    /// CHECK: authority verified via estate.authority
+    #[inline(always)]
     pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.authority = Some(authority);
-                    self
+        self.instruction.authority = Some(authority);
+        self
     }
-      /// `[optional account]`
-/// CHECK: optional delegate
-#[inline(always)]
-    pub fn delegate(&mut self, delegate: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.delegate = delegate;
-                    self
+    /// `[optional account]`
+    /// CHECK: optional delegate
+    #[inline(always)]
+    pub fn delegate(
+        &mut self,
+        delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.delegate = delegate;
+        self
     }
-      /// `[optional account]`
-/// CHECK: heir's ATA, created idempotently if needed
-#[inline(always)]
-    pub fn heir_token_account(&mut self, heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.heir_token_account = heir_token_account;
-                    self
+    /// `[optional account]`
+    /// CHECK: heir's ATA, created idempotently if needed
+    #[inline(always)]
+    pub fn heir_token_account(
+        &mut self,
+        heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.heir_token_account = heir_token_account;
+        self
     }
-      #[inline(always)]
+    #[inline(always)]
     pub fn estate(&mut self, estate: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.estate = Some(estate);
-                    self
+        self.instruction.estate = Some(estate);
+        self
     }
-      #[inline(always)]
+    #[inline(always)]
     pub fn vault(&mut self, vault: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.vault = Some(vault);
-                    self
+        self.instruction.vault = Some(vault);
+        self
     }
-      /// `[optional account]`
-#[inline(always)]
-    pub fn vault_token_account(&mut self, vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.vault_token_account = vault_token_account;
-                    self
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn vault_token_account(
+        &mut self,
+        vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.vault_token_account = vault_token_account;
+        self
     }
-      /// `[optional account]`
-#[inline(always)]
+    /// `[optional account]`
+    #[inline(always)]
     pub fn mint(&mut self, mint: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.mint = mint;
-                    self
+        self.instruction.mint = mint;
+        self
     }
-      /// `[optional account]`
-/// Proves `mint` was actually registered as a claimable asset for this
-/// estate, rather than an arbitrary vault-owned token account.
-#[inline(always)]
-    pub fn asset_record(&mut self, asset_record: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.asset_record = asset_record;
-                    self
+    /// `[optional account]`
+    /// Proves `mint` was actually registered as a claimable asset for this
+    /// estate, rather than an arbitrary vault-owned token account.
+    #[inline(always)]
+    pub fn asset_record(
+        &mut self,
+        asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.asset_record = asset_record;
+        self
     }
-      /// CHECK: treasury address
-#[inline(always)]
+    /// CHECK: treasury address
+    #[inline(always)]
     pub fn treasury(&mut self, treasury: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.treasury = Some(treasury);
-                    self
+        self.instruction.treasury = Some(treasury);
+        self
     }
-      /// `[optional account]`
-/// CHECK: treasury ATA, created idempotently if needed
-#[inline(always)]
-    pub fn treasury_token_account(&mut self, treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>) -> &mut Self {
-                        self.instruction.treasury_token_account = treasury_token_account;
-                    self
+    /// `[optional account]`
+    /// CHECK: treasury ATA, created idempotently if needed
+    #[inline(always)]
+    pub fn treasury_token_account(
+        &mut self,
+        treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.treasury_token_account = treasury_token_account;
+        self
     }
-      /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
-#[inline(always)]
-    pub fn token_program(&mut self, token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.token_program = Some(token_program);
-                    self
+    /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
+    #[inline(always)]
+    pub fn token_program(
+        &mut self,
+        token_program: &'b solana_account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.token_program = Some(token_program);
+        self
     }
-      #[inline(always)]
-    pub fn associated_token_program(&mut self, associated_token_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.associated_token_program = Some(associated_token_program);
-                    self
+    #[inline(always)]
+    pub fn associated_token_program(
+        &mut self,
+        associated_token_program: &'b solana_account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.associated_token_program = Some(associated_token_program);
+        self
     }
-      #[inline(always)]
-    pub fn system_program(&mut self, system_program: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-                        self.instruction.system_program = Some(system_program);
-                    self
+    #[inline(always)]
+    pub fn system_program(
+        &mut self,
+        system_program: &'b solana_account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.system_program = Some(system_program);
+        self
     }
-            /// Add an additional account to the instruction.
-  #[inline(always)]
-  pub fn add_remaining_account(&mut self, account: &'b solana_account_info::AccountInfo<'a>, is_writable: bool, is_signer: bool) -> &mut Self {
-    self.instruction.__remaining_accounts.push((account, is_writable, is_signer));
-    self
-  }
-  /// Add additional accounts to the instruction.
-  ///
-  /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
-  /// and a `bool` indicating whether the account is a signer or not.
-  #[inline(always)]
-  pub fn add_remaining_accounts(&mut self, accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)]) -> &mut Self {
-    self.instruction.__remaining_accounts.extend_from_slice(accounts);
-    self
-  }
-  #[inline(always)]
-  pub fn invoke(&self) -> solana_program_error::ProgramResult {
-    self.invoke_signed(&[])
-  }
-  #[allow(clippy::clone_on_copy)]
-  #[allow(clippy::vec_init_then_push)]
-  pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
+    /// Add an additional account to the instruction.
+    #[inline(always)]
+    pub fn add_remaining_account(
+        &mut self,
+        account: &'b solana_account_info::AccountInfo<'a>,
+        is_writable: bool,
+        is_signer: bool,
+    ) -> &mut Self {
+        self.instruction
+            .__remaining_accounts
+            .push((account, is_writable, is_signer));
+        self
+    }
+    /// Add additional accounts to the instruction.
+    ///
+    /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
+    /// and a `bool` indicating whether the account is a signer or not.
+    #[inline(always)]
+    pub fn add_remaining_accounts(
+        &mut self,
+        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> &mut Self {
+        self.instruction
+            .__remaining_accounts
+            .extend_from_slice(accounts);
+        self
+    }
+    #[inline(always)]
+    pub fn invoke(&self) -> solana_program_error::ProgramResult {
+        self.invoke_signed(&[])
+    }
+    #[allow(clippy::clone_on_copy)]
+    #[allow(clippy::vec_init_then_push)]
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
         let instruction = ClaimCpi {
-        __program: self.instruction.__program,
-                  
-          heir: self.instruction.heir.expect("heir is not set"),
-                  
-          authority: self.instruction.authority.expect("authority is not set"),
-                  
-          delegate: self.instruction.delegate,
-                  
-          heir_token_account: self.instruction.heir_token_account,
-                  
-          estate: self.instruction.estate.expect("estate is not set"),
-                  
-          vault: self.instruction.vault.expect("vault is not set"),
-                  
-          vault_token_account: self.instruction.vault_token_account,
-                  
-          mint: self.instruction.mint,
-                  
-          asset_record: self.instruction.asset_record,
-                  
-          treasury: self.instruction.treasury.expect("treasury is not set"),
-                  
-          treasury_token_account: self.instruction.treasury_token_account,
-                  
-          token_program: self.instruction.token_program.expect("token_program is not set"),
-                  
-          associated_token_program: self.instruction.associated_token_program.expect("associated_token_program is not set"),
-                  
-          system_program: self.instruction.system_program.expect("system_program is not set"),
-                    };
-    instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
-  }
+            __program: self.instruction.__program,
+
+            heir: self.instruction.heir.expect("heir is not set"),
+
+            authority: self.instruction.authority.expect("authority is not set"),
+
+            delegate: self.instruction.delegate,
+
+            heir_token_account: self.instruction.heir_token_account,
+
+            estate: self.instruction.estate.expect("estate is not set"),
+
+            vault: self.instruction.vault.expect("vault is not set"),
+
+            vault_token_account: self.instruction.vault_token_account,
+
+            mint: self.instruction.mint,
+
+            asset_record: self.instruction.asset_record,
+
+            treasury: self.instruction.treasury.expect("treasury is not set"),
+
+            treasury_token_account: self.instruction.treasury_token_account,
+
+            token_program: self
+                .instruction
+                .token_program
+                .expect("token_program is not set"),
+
+            associated_token_program: self
+                .instruction
+                .associated_token_program
+                .expect("associated_token_program is not set"),
+
+            system_program: self
+                .instruction
+                .system_program
+                .expect("system_program is not set"),
+        };
+        instruction.invoke_signed_with_remaining_accounts(
+            signers_seeds,
+            &self.instruction.__remaining_accounts,
+        )
+    }
 }
 
 #[derive(Clone, Debug)]
 struct ClaimCpiBuilderInstruction<'a, 'b> {
-  __program: &'b solana_account_info::AccountInfo<'a>,
-            heir: Option<&'b solana_account_info::AccountInfo<'a>>,
-                authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-                delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                estate: Option<&'b solana_account_info::AccountInfo<'a>>,
-                vault: Option<&'b solana_account_info::AccountInfo<'a>>,
-                vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-                asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-                treasury: Option<&'b solana_account_info::AccountInfo<'a>>,
-                treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-                token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-                associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-                system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-                /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-  __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
+    __program: &'b solana_account_info::AccountInfo<'a>,
+    heir: Option<&'b solana_account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+    delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    heir_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    estate: Option<&'b solana_account_info::AccountInfo<'a>>,
+    vault: Option<&'b solana_account_info::AccountInfo<'a>>,
+    vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+    asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
+    treasury: Option<&'b solana_account_info::AccountInfo<'a>>,
+    treasury_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
+    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }
-
