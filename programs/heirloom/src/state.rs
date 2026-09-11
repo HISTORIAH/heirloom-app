@@ -7,11 +7,15 @@ pub struct Estate {
 
     pub heir: Address,
 
-    pub heartbeat_interval: i64,
+    // TODO: RENAME TO checkin_interval_secs
+    pub heartbeat_interval: i64, // checkin_interval_secs
 
-    pub grace_period: i64,
+    // TODO: RENAME TO grace_period_secs
+    pub grace_period: i64, // grace_period_secs
 
-    pub last_heartbeat: i64,
+    // last check in seconds
+    // TODO: RENAME TO last_checkin_ts
+    pub last_heartbeat: i64, // last_checkin_ts
 
     pub created_at: i64,
 
@@ -19,18 +23,25 @@ pub struct Estate {
 
     pub pause_duration: i64,
 
+    // TODO: USE BOOLEAN FOR PAUSES, E.G IS_PAUSED E.T.C
     pub paused_until: i64,
 
+    // TODO: RENAME TO is_moving_funds
     pub is_migrating: bool,
 
     pub delegate: Option<Address>,
 
+    // TODO: RENAME TO checkin_signer
     /// hot signer wallet
     pub hb_signer: Option<Address>,
 
     /// number of vault token accounts (ATAs) still open under this estate
     pub claimable_assets: u8,
 
+    // TODO:  ADD THE VERSIONING FOR ACCOUNTS BELOW
+    // version: u8
+
+    // TODO: GET RID OF ME, wasted space
     #[max_len(32)]
     pub label: String,
 }

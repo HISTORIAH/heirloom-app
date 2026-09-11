@@ -1,3 +1,7 @@
+/**
+ * @deprecated This entire file/module is legacy. Please use `reminder.ts` instead.
+ */
+
 export type NotificationChannel = "email" | "telegram" | "whatsapp" | "sms";
 
 export interface ChannelSelection {
@@ -17,12 +21,16 @@ export interface NotificationsConfig {
 }
 
 /** Dashboard card state — distinct from the config itself, since "not yet authorized" and "confirmed off" must never look the same. */
-export type NotificationsCardStatus = "loading" | "locked" | "off" | "authorized" | "expired" | "error";
+export type NotificationsCardStatus =
+  "loading" | "locked" | "off" | "authorized" | "expired" | "error";
 
 export const CREATOR_CHANNELS: NotificationChannel[] = ["email", "telegram", "whatsapp"];
 export const HEIR_CHANNELS: NotificationChannel[] = ["email", "sms", "whatsapp", "telegram"];
 
-export const CHANNEL_META: Record<NotificationChannel, { label: string; placeholder: string; inputType: "email" | "text" | "tel" }> = {
+export const CHANNEL_META: Record<
+  NotificationChannel,
+  { label: string; placeholder: string; inputType: "email" | "text" | "tel" }
+> = {
   email: { label: "Email", placeholder: "you@email.com", inputType: "email" },
   telegram: { label: "Telegram", placeholder: "@username", inputType: "text" },
   whatsapp: { label: "WhatsApp", placeholder: "+1 234 567 8900", inputType: "tel" },
@@ -58,7 +66,9 @@ export function summarizeNotifications(
   if (config.creator.enabled) {
     const channel = t(CHANNEL_KEYS[config.creator.primary.channel]);
     parts.push(
-      t(config.creator.backup ? "notifications.summaryYouPlus" : "notifications.summaryYou", { channel }),
+      t(config.creator.backup ? "notifications.summaryYouPlus" : "notifications.summaryYou", {
+        channel,
+      }),
     );
   }
   if (config.heir.enabled) {
