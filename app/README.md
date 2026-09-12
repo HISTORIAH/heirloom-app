@@ -49,7 +49,7 @@ The app never imports Solana program logic directly. It imports the **generated 
 
 ## Technology Stack
 
-- **React 18** with function components and hooks throughout.
+- **React 19** with function components and hooks throughout.
 - **TypeScript 5.6**, strict mode.
 - **Vite 6** for dev server and production bundling; **Bun** as package manager, **Turborepo** for the workspace.
 - **React Router v6** for routing.
