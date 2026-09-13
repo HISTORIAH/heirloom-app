@@ -18,15 +18,7 @@ import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
 import { RecallConfirmDialog } from "@/components/dashboard/RecallConfirmDialog";
 import { StakingEnableDialog } from "@/components/dashboard/StakingEnableDialog";
 import { StrategyProgressOverlay } from "@/components/dashboard/StrategyProgressOverlay";
-import NotificationsCard from "@/components/dashboard/NotificationsCard";
-import NotificationsSignInPanel from "@/components/dashboard/NotificationsSignInPanel";
-import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
-import {
-  defaultNotificationsConfig,
-  summarizeNotifications,
-  type NotificationsCardStatus,
-  type NotificationsConfig,
-} from "@/types/notifications";
+import { EstateNotifications } from "@/components/dashboard/EstateNotifications";
 import { makePlaceholderLuloStrategy, makePlaceholderStakingStrategy } from "@/lib/strategies";
 import type { Strategy, StrategyProgressStep } from "@/types/strategy-ui";
 import type { VaultTokenHolding } from "@/types";
@@ -43,7 +35,7 @@ import { useTranslation } from "@heirloom/i18n";
  */
 export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
   const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
-  const { publicKey, isConnected } = useWallet();
+  const { publicKey, isConnected, account } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
@@ -71,50 +63,6 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
   const [stakingStrategy, setStakingStrategy] = useState<Strategy | null>(null);
   const [topUpOpen, setTopUpOpen] = useState<"sol" | string | null>(null);
   const [topUpLoading, setTopUpLoading] = useState(false);
-
-  // TODO: Placeholder notifications state — per-estate local state (replace with real fetch/sign/save later)
-  const [notifStatus, setNotifStatus] = useState<NotificationsCardStatus>("locked");
-  const [notifSummary, setNotifSummary] = useState<string | undefined>(undefined);
-  const [notifConfig, setNotifConfig] = useState<NotificationsConfig>(defaultNotificationsConfig());
-  const [notifSignInOpen, setNotifSignInOpen] = useState(false);
-  const [notifEditOpen, setNotifEditOpen] = useState(false);
-  const [notifSigning, setNotifSigning] = useState(false);
-  const [notifSaving, setNotifSaving] = useState(false);
-
-  const handleNotifAction = () => {
-    if (notifStatus === "authorized") {
-      setNotifEditOpen(true);
-      return;
-    }
-    setNotifSignInOpen(true);
-  };
-
-  // TODO: replace with a real challenge fetch (POST /challenge) + wallet signMessage/signIn + backend verification
-  const handleNotifSign = () => {
-    setNotifSigning(true);
-    setTimeout(() => {
-      setNotifSigning(false);
-      setNotifSignInOpen(false);
-      setNotifStatus("authorized");
-      setNotifEditOpen(true);
-    }, 600);
-  };
-
-  // TODO: replace with a real save call (PUT /estates/:pda/notifications) reusing the active session
-  const handleNotifSave = (next: NotificationsConfig) => {
-    setNotifSaving(true);
-    setTimeout(() => {
-      setNotifSaving(false);
-      setNotifConfig(next);
-      setNotifEditOpen(false);
-      setNotifSummary(summarizeNotifications(next, estate.label, t));
-    }, 400);
-  };
-
-  const notifSignMessage = t("notifications.signMessageBody", {
-    estate: estate.estatePda,
-    wallet: publicKey ?? "",
-  });
 
   const { data: walletSplTokens } = useWalletSplTokens(
     topUpOpen !== null && isConnected ? publicKey : null,
@@ -351,14 +299,8 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
           <EstateManagePanel estate={estate} onTx={setLastTxId} className="lg:col-span-5" />
         )}
         <EstateFactsBand estate={estate} lastTxId={lastTxId} className="lg:col-span-12" />
-        {FEATURE_NOTIFICATIONS_UI && (
-          <div className="lg:col-span-12">
-            <NotificationsCard
-              status={notifStatus}
-              summary={notifSummary}
-              onAction={handleNotifAction}
-            />
-          </div>
+        {FEATURE_NOTIFICATIONS_UI && account && (
+          <EstateNotifications estate={estate} account={account} />
         )}
       </div>
 
@@ -418,26 +360,6 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
         />
       )}
 
-      {FEATURE_NOTIFICATIONS_UI && (
-        <>
-          <NotificationsSignInPanel
-            open={notifSignInOpen}
-            message={notifSignMessage}
-            signing={notifSigning}
-            onClose={() => setNotifSignInOpen(false)}
-            onSign={handleNotifSign}
-          />
-
-          <NotificationsDialog
-            open={notifEditOpen}
-            heirLabel={estate.label}
-            initialConfig={notifConfig}
-            saving={notifSaving}
-            onClose={() => setNotifEditOpen(false)}
-            onSave={handleNotifSave}
-          />
-        </>
-      )}
     </>
   );
 };
