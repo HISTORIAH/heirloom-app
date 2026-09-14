@@ -9,6 +9,14 @@
       "cache": false,
       "persistent": true
     },
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
+    "android": {
+      "cache": false,
+      "persistent": true
+    },
     "test": {
       "dependsOn": ["build"]
     }
