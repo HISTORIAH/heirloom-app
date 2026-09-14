@@ -7,6 +7,7 @@
     "docs",
     "app-ika",
     "waitlist",
+    "heirloom-mobile",
     "packages/*",
     "clients/heirloom/js",
     "clients/heirloom-ika/js"
@@ -24,6 +25,8 @@
     "deploy:site": "bun run build:site && bunx wrangler deploy --config landing/wrangler.jsonc",
     "dev:waitlist": "turbo run dev --filter=waitlist",
     "build:waitlist": "turbo run build --filter=waitlist",
+    "dev:mobile": "turbo run start --filter=heirloom-mobile",
+    "android": "turbo run android --filter=heirloom-mobile",
     "generate:heirloom": "bunx codama run --all -c heirloom.codama.json",
     "generate:heirloom-ika": "bunx codama run --all -c heirloom-ika.codama.json",
     "generate": "bun run generate:heirloom && bun run generate:heirloom-ika",

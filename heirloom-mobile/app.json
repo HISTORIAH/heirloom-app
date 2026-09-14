@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Heirloom",
+    "slug": "heirloom-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "heirloom",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "xyz.heirlm.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFD400",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#FFD400",
+      "barStyle": "dark-content"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFD400",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 100,
+          "dark": {
+            "backgroundColor": "#FFD400",
+            "image": "./assets/images/splash-icon.png"
+          }
+        }
+      ],
+      "./plugins/with-splash-icon-background"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
