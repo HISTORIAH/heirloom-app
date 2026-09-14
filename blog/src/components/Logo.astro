@@ -1,0 +1,24 @@
+---
+interface Props {
+  tone?: "ink" | "paper";
+  class?: string;
+}
+
+const { tone = "ink", class: className } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<img
+  src={`${base}${tone === "paper" ? "heirloom-wordmark-inverse.svg" : "heirloom-wordmark.svg"}`}
+  alt="Heirloom"
+  width="391"
+  height="120"
+  class={`logo-img ${className ?? ""}`}
+/>
+
+<style>
+  .logo-img {
+    width: auto;
+    height: 2rem;
+  }
+</style>
