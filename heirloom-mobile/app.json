@@ -23,6 +23,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-quick-crypto",
       [
         "expo-splash-screen",
         {

@@ -1,6 +1,6 @@
 # heirloom-mobile
 
-Android client. Expo 57, Tamagui, Expo Router. Slice 1: workspace + metro. Wallet, Kit, and NFC are later slices.
+Android client. Expo 57, Tamagui, Expo Router.
 
 ```bash
 bun install          # from repo root
