@@ -9,7 +9,11 @@ import {
   TREASURY_ADDRESS,
   type InitializeAsyncInput,
 } from "@historiah/heirloom";
-import { findAssociatedTokenPda, getTransferCheckedInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import {
+  findAssociatedTokenPda,
+  getTransferCheckedInstruction,
+  TOKEN_PROGRAM_ADDRESS,
+} from "@solana-program/token";
 import { getTransferSolInstruction } from "@solana-program/system";
 import { type Address, type Instruction, type TransactionSigner } from "@solana/kit";
 import type { VaultTokenHolding } from "@/types";
@@ -203,7 +207,11 @@ export async function buildTransferTokenIx(
 ): Promise<Instruction> {
   const mint = holding.mint as Address;
   const tokenProgram = holding.tokenProgram as Address;
-  const [authorityAta] = await findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram });
+  const [authorityAta] = await findAssociatedTokenPda({
+    owner: authority.address,
+    mint,
+    tokenProgram,
+  });
   return getTransferCheckedInstruction(
     {
       source: authorityAta,
