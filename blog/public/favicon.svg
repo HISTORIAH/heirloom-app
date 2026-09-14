@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="Heirloom">
+  <title>Heirloom — yellow tile, ink mark</title>
+  <rect width="120" height="120" rx="28" fill="#FFD400"/>
+  <g transform="translate(60 60) scale(0.86) translate(-60 -60)">
+    <rect x="16" y="14" width="21" height="92" rx="7" fill="#0A0A0A"/>
+    <rect x="83" y="14" width="21" height="92" rx="7" fill="#0A0A0A"/>
+    <path d="M37 60h9l7-17 14 34 7-17h9"
+          stroke="#0A0A0A" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

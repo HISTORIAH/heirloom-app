@@ -1,0 +1,46 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  tags: string[];
+  slug: string;
+  draft?: boolean;
+  featured?: boolean;
+  readingTime?: number;
+}
+
+const { title, description, pubDate, tags, slug, draft, featured, readingTime } = Astro.props;
+
+const tagColors: Record<string, string> = {
+  announcement: "post-tag--outline",
+  essay: "post-tag--sage",
+  technical: "post-tag--sky",
+  guide: "post-tag--sage",
+  update: "post-tag--yellow",
+};
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+---
+
+<a href={`/blog/${slug}/`} class:list={["post-card", { "post-card--featured": featured }]}>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+    {tags.map((tag) => (
+      <span class:list={["post-tag", tagColors[tag] || "post-tag--outline"]}>{tag}</span>
+    ))}
+    {draft && <span class="draft-badge">Draft</span>}
+  </div>
+  <h3>{title}</h3>
+  <p class="post-excerpt">{description}</p>
+  <div class="post-meta">
+    <span>{formatDate(pubDate)}</span>
+    <span class="dot"></span>
+    <span>{readingTime || 5} min read</span>
+  </div>
+</a>

@@ -1,0 +1,102 @@
+---
+import BlogLayout from "./BlogLayout.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
+
+interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    pubDate: Date;
+    updatedDate?: Date;
+    tags: string[];
+    author: string;
+    authorBio?: string;
+    draft?: boolean;
+  };
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { frontmatter, headings } = Astro.props;
+const base = import.meta.env.BASE_URL;
+
+const tagColors: Record<string, string> = {
+  announcement: "post-tag--outline",
+  essay: "post-tag--sage",
+  technical: "post-tag--sky",
+  guide: "post-tag--sage",
+  update: "post-tag--yellow",
+};
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+---
+
+<BlogLayout title={frontmatter.title} description={frontmatter.description}>
+  <div class="shell article-layout">
+    <!-- Left sidebar -->
+    <aside class="post-sidebar">
+      <a href={base} class="back-link">&larr; All posts</a>
+
+      <div class="sidebar-block">
+        <span class="ed-label">Author</span>
+        <p class="author-name">{frontmatter.author}</p>
+        {frontmatter.authorBio && <p class="author-bio">{frontmatter.authorBio}</p>}
+      </div>
+
+      <div class="sidebar-block">
+        <span class="ed-label">Published</span>
+        <p>{formatDate(frontmatter.pubDate)}</p>
+      </div>
+
+      {frontmatter.updatedDate && (
+        <div class="sidebar-block">
+          <span class="ed-label">Updated</span>
+          <p>{formatDate(frontmatter.updatedDate)}</p>
+        </div>
+      )}
+
+      <div class="sidebar-block">
+        <span class="ed-label">Tags</span>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          {frontmatter.tags.map((tag) => (
+            <a href={`${base}tag/${tag}/`} class:list={["post-tag", tagColors[tag] || "post-tag--outline"]}>
+              {tag}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {frontmatter.draft && (
+        <div class="sidebar-block">
+          <span class="draft-badge">Draft</span>
+          <p style="font-size:12px;color:hsl(var(--muted-foreground));">This post is not yet published.</p>
+        </div>
+      )}
+    </aside>
+
+    <!-- Article -->
+    <article>
+      <header class="article-header">
+        <div class="article-tags">
+          {frontmatter.tags.map((tag) => (
+            <span class:list={["post-tag", tagColors[tag] || "post-tag--outline"]}>{tag}</span>
+          ))}
+        </div>
+        <h1 class="hero-display" style="font-size:clamp(1.8rem,3.5vw,3.2rem);">{frontmatter.title}</h1>
+        <p class="article-sub">{frontmatter.description}</p>
+      </header>
+
+      <div class="prose">
+        <slot />
+      </div>
+    </article>
+
+    <!-- TOC -->
+    <TableOfContents headings={headings} />
+  </div>
+</BlogLayout>

@@ -1,0 +1,149 @@
+---
+import Logo from "./Logo.astro";
+
+const isDev = import.meta.env.DEV;
+const base = import.meta.env.BASE_URL;
+
+// In dev, link to local ports. In prod, link to live domains.
+const links = isDev
+  ? [
+      { label: "Home", href: "http://localhost:4321" },
+      { label: "Docs", href: "http://localhost:4322/docs/" },
+      { label: "Blog", href: base, current: true },
+    ]
+  : [
+      { label: "Home", href: "https://heirlm.xyz" },
+      { label: "Docs", href: "https://heirlm.xyz/docs/" },
+      { label: "Blog", href: base, current: true },
+    ];
+---
+
+<nav class="topnav">
+  <div class="shell topnav-inner">
+    <a href={isDev ? "http://localhost:4321" : "https://heirlm.xyz"} class="topnav-logo">
+      <Logo />
+    </a>
+
+    <div class="topnav-center">
+      {
+        links.map((link) => (
+          <a
+            href={link.href}
+            class:list={["topnav-link", { active: link.current }]}
+            {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="topnav-right">
+      <a href={isDev ? "http://localhost:5173" : "https://app.heirlm.xyz"} class="btn-flat-yellow">Launch App</a>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: var(--nav-h);
+    border-bottom: 1px solid hsl(var(--tile-line));
+    background: hsl(var(--background) / 0.95);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+  }
+
+  .topnav-inner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .topnav-logo {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .topnav-center {
+    display: none;
+    flex: 1;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  @media (min-width: 1024px) {
+    .topnav-center {
+      display: flex;
+    }
+  }
+
+  .topnav-link {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  .topnav-link:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--tile-soft));
+  }
+
+  .topnav-link.active {
+    color: hsl(var(--foreground));
+  }
+
+  .topnav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -3px;
+    left: 12px;
+    right: 12px;
+    height: 3px;
+    background: hsl(var(--accent-yellow));
+  }
+
+  .topnav-right {
+    margin-left: auto;
+  }
+
+  @media (min-width: 1024px) {
+    .topnav-right {
+      margin-left: 0;
+    }
+  }
+
+  .btn-flat-yellow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: hsl(var(--accent-yellow));
+    color: hsl(var(--foreground));
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+
+  .btn-flat-yellow:hover {
+    filter: brightness(0.95);
+  }
+</style>
