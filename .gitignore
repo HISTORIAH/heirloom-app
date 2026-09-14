@@ -68,3 +68,16 @@ relayer
 
 # temp, get rid of me
 mockups/
+
+# blog posts, local
+blog/src/content/blog/audit-results-three-firms.mdx
+blog/src/content/blog/heirloom-v1-introducing.mdx
+blog/src/content/blog/heirloom-v2-live.mdx
+blog/src/content/blog/inheritance-is-a-ux-problem.mdx
+blog/src/content/blog/nft-inheritance-design.mdx
+blog/src/content/blog/paradox-of-permanence.mdx
+blog/src/content/blog/setting-up-first-estate.mdx
+blog/src/content/blog/spl-token-support-roadmap.mdx
+blog/src/content/blog/timelocked-vaults-clock-sysvar.mdx
+blog/src/content/blog/what-happens-to-crypto-when-you-die.mdx
+blog/src/content/blog/why-pdas-for-beneficiary-claims.mdx

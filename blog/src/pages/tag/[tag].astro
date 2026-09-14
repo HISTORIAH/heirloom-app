@@ -1,0 +1,67 @@
+---
+import { getCollection } from "astro:content";
+import BlogLayout from "@/layouts/BlogLayout.astro";
+import PostCard from "@/components/PostCard.astro";
+import FilterBar from "@/components/FilterBar.astro";
+
+export async function getStaticPaths() {
+  const isDev = import.meta.env.DEV;
+  const posts = (await getCollection("blog")).filter(
+    (p) => isDev || !p.data.draft
+  );
+  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+
+  return tags.map((tag) => ({
+    params: { tag },
+    props: { tag },
+  }));
+}
+
+const { tag } = Astro.props;
+const isDev = import.meta.env.DEV;
+
+const posts = (await getCollection("blog"))
+  .filter((p) => (isDev || !p.data.draft) && p.data.tags.includes(tag))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const allTags = [
+  ...new Set(
+    (await getCollection("blog"))
+      .filter((p) => isDev || !p.data.draft)
+      .flatMap((p) => p.data.tags)
+  ),
+].sort();
+---
+
+<BlogLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`}>
+  <section class="hero">
+    <div class="shell">
+      <div class="hero-label">
+        <span class="ed-label">The Heirloom Blog</span>
+      </div>
+      <h1 class="hero-display">
+        Posts tagged<br />
+        <em>{tag}</em>
+      </h1>
+    </div>
+  </section>
+
+  <div class="shell">
+    <FilterBar tags={allTags} activeTag={tag} />
+
+    <div class="post-grid">
+      {
+        posts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            pubDate={post.data.pubDate}
+            tags={post.data.tags}
+            slug={post.id}
+            draft={post.data.draft}
+          />
+        ))
+      }
+    </div>
+  </div>
+</BlogLayout>

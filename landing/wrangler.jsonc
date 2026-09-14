@@ -1,12 +1,11 @@
 {
-  // The marketing site and the documentation: nine prerendered documents on the
-  // apex domain, plus the handbook under /docs, which the `docs` package builds
-  // into this one's dist. Static assets only — there is no worker code, and no
-  // SPA fallback, because every URL that should exist has a real file behind it.
+  // The public-facing web: marketing site, docs handbook, and blog — all
+  // prerendered static assets served from the apex domain. The `docs` and
+  // `blog` packages build into this one's dist at the root level via
+  // `bun run build:web`. No worker code, no SPA fallback — every URL has a
+  // real file behind it.
   //
-  // Deploy with `bun deploy:site` from the repo root, never `wrangler deploy`
-  // from here: the landing's own build wipes dist/, so /docs has to be copied
-  // back in afterwards.
+  // Deployed automatically via CI/CD on push or merge to main.
   "name": "heirloom-landing",
   "compatibility_date": "2026-04-18",
   "assets": {

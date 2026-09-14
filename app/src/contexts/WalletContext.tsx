@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useWalletUi } from "@wallet-ui/react";
+import type { UiWalletAccount } from "@wallet-standard/ui";
 import { createSolanaRpc, createSolanaRpcSubscriptions, type Address, } from "@solana/kit";
 import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
 
@@ -13,6 +14,8 @@ interface WalletState {
   isConnected: boolean;
   publicKey: string | null;
   address: Address | null;
+  /** Raw wallet-standard account handle — needed to invoke features like signMessage. */
+  account: UiWalletAccount | null;
   rpc: AppRpc;
   rpcSubscriptions: AppRpcSubscriptions;
   disconnectWallet: () => Promise<void>;
@@ -21,13 +24,9 @@ interface WalletState {
 const WalletContext = createContext<WalletState | null>(null);
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const walletUi = useWalletUi() as unknown as {
-    account?: { address: string } | null;
-    connected?: boolean;
-    disconnect?: () => Promise<void> | void;
-  };
+  const walletUi = useWalletUi();
 
-  const account = walletUi?.account ?? null;
+  const account = walletUi.account ?? null;
   const addressStr: string | null = account?.address ?? null;
 
   const value: WalletState = useMemo(
@@ -35,10 +34,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isConnected: !!account,
       publicKey: addressStr,
       address: addressStr as Address | null,
+      account,
       rpc: rpcSingleton,
       rpcSubscriptions: rpcSubscriptionsSingleton,
       disconnectWallet: async () => {
-        await walletUi?.disconnect?.();
+        await walletUi.disconnect();
       },
     }),
     [account, addressStr, walletUi],
