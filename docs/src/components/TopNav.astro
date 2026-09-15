@@ -3,6 +3,7 @@
  * The docs chrome. It mirrors the landing's bar — same height rule, same
  * hairline, same yellow hand-off button — with one difference: "Docs" is a
  * destination here rather than a link, so it carries the current-page rule.
+ * The nav matches the blog header: Home, Docs, Blog.
  *
  * The sidebar toggle lives in here too. Below 900px the two rails collapse and
  * this button is the only way back to the table of contents, so it is chrome,
@@ -13,12 +14,8 @@ import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
 import Logo from "@/components/Logo.astro";
 
-const destinations = [
-  { href: `${LANDING_URL}/`, label: "Home", external: false },
-  { href: appPath("/dashboard"), label: "Dashboard", external: true },
-  { href: appPath("/claim"), label: "Claim", external: true },
-  { href: appPath("/heartbeat"), label: "Heartbeat", external: true },
-];
+const homeHref = `${LANDING_URL}/`;
+const blogHref = `${LANDING_URL}/blog/`;
 ---
 
 <header class="sticky top-0 z-50 border-b border-tile-line bg-background/95 backdrop-blur">
@@ -28,17 +25,12 @@ const destinations = [
     </a>
 
     <nav class="hidden flex-1 items-center justify-center gap-1 lg:flex" aria-label="Site">
-      {
-        destinations.map((d) => (
-          <a
-            href={d.href}
-            data-track={d.external ? "docs_nav_app" : undefined}
-            class="rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
-          >
-            {d.label}
-          </a>
-        ))
-      }
+      <a
+        href={homeHref}
+        class="rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+      >
+        Home
+      </a>
       <span
         aria-current="page"
         class="relative rounded-md px-3 py-2 text-[12.5px] font-bold text-foreground"
@@ -46,6 +38,12 @@ const destinations = [
         Docs
         <span class="absolute inset-x-3 -bottom-[3px] h-[3px] bg-accent-yellow"></span>
       </span>
+      <a
+        href={blogHref}
+        class="rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+      >
+        Blog
+      </a>
     </nav>
 
     <div class="ml-auto flex items-center gap-2 lg:ml-0">
