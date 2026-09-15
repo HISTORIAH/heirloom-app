@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Heirloom",
-    "slug": "heirloom-mobile",
+    "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -23,6 +23,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-quick-crypto",
       [
         "expo-splash-screen",
         {

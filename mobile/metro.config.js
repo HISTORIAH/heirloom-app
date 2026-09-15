@@ -18,6 +18,8 @@ config.resolver.extraNodeModules = {
   react: path.resolve(projectModules, "react"),
   "react-dom": path.resolve(projectModules, "react-dom"),
   "react-native": path.resolve(projectModules, "react-native"),
+  // Kit imports Node `crypto`. Route it to react-native-quick-crypto.
+  crypto: require.resolve("react-native-quick-crypto"),
 };
 config.resolver.unstable_enablePackageExports = true;
 config.resolver.unstable_conditionNames = ["react-native", "require", "default"];
