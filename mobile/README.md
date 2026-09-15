@@ -1,4 +1,4 @@
-# heirloom-mobile
+# mobile
 
 Android client. Expo 57, Tamagui, Expo Router.
 
