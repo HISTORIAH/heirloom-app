@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 import {
   type NotificationsConfig,
   type RoleNotificationConfig,
-  type NotificationChannel,
+  type ReminderChannel,
   CREATOR_CHANNELS,
   HEIR_CHANNELS,
   CHANNEL_META,
-} from "@/types/notifications";
+} from "@/types/reminders";
 import { useTranslation } from "@heirloom/i18n";
 
 const ChannelChip: React.FC<{
@@ -34,14 +34,14 @@ const ChannelChip: React.FC<{
 interface RoleSectionProps {
   title: string;
   description: string;
-  channels: NotificationChannel[];
+  channels: ReminderChannel[];
   config: RoleNotificationConfig;
   onChange: (next: RoleNotificationConfig) => void;
   backupLabel: string;
   removeLabel: string;
   addBackupLabel: string;
-  channelLabel: (c: NotificationChannel) => string;
-  channelPlaceholder: (c: NotificationChannel) => string;
+  channelLabel: (c: ReminderChannel) => string;
+  channelPlaceholder: (c: ReminderChannel) => string;
 }
 
 const RoleSection: React.FC<RoleSectionProps> = ({
@@ -176,13 +176,13 @@ const NotificationsDialog: React.FC<Props> = ({
     if (open) setConfig(initialConfig);
   }, [open, initialConfig]);
 
-  const channelLabel = (c: NotificationChannel) => {
+  const channelLabel = (c: ReminderChannel) => {
     if (c === "email") return t("notifications.channelEmail");
     if (c === "telegram") return t("notifications.channelTelegram");
     if (c === "whatsapp") return t("notifications.channelWhatsapp");
     return t("notifications.channelSms");
   };
-  const channelPlaceholder = (c: NotificationChannel) => {
+  const channelPlaceholder = (c: ReminderChannel) => {
     if (c === "email") return t("notifications.placeholderEmail");
     if (c === "telegram") return t("notifications.placeholderTelegram");
     return t("notifications.placeholderPhone");

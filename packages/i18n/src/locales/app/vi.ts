@@ -78,7 +78,7 @@ const app: AppMessages = {
       whatProtecting: "Bạn đang bảo vệ gì?",
       howOften: "Bạn điểm danh bao lâu một lần?",
       reviewConfirm: "Xem lại và xác nhận",
-      labelLabel: "NHÃN (VD. \"CON TRAI\", \"VỢ/CHỒNG\")",
+      labelLabel: 'NHÃN (VD. "CON TRAI", "VỢ/CHỒNG")',
       labelPlaceholder: "vd. vợ/chồng",
       heirAddressLabel: "ĐỊA CHỈ SOLANA NGƯỜI THỪA KẾ",
       heirAddressPlaceholder: "Nhập địa chỉ ví Solana…",
@@ -122,7 +122,8 @@ const app: AppMessages = {
       ifNoCheckin: "Nếu bạn không điểm danh trong khoảng thời gian này, người thừa kế có thể nhận.",
       neverCheckin: "→ Nếu bạn không bao giờ điểm danh, ngày nhận sớm nhất là",
       graceUndo: "Thời gian ân hạn là nút hoàn tác của bạn.",
-      graceUndoDesc: "Lỡ khoảng của bạn? Bạn vẫn có thể điểm danh trong thời gian ân hạn và đặt lại toàn bộ đồng hồ. Chỉ sau đủ {{days}} ngày người thừa kế mới có thể nhận.",
+      graceUndoDesc:
+        "Lỡ khoảng của bạn? Bạn vẫn có thể điểm danh trong thời gian ân hạn và đặt lại toàn bộ đồng hồ. Chỉ sau đủ {{days}} ngày người thừa kế mới có thể nhận.",
       timing: "THỜI GIAN",
       deposits: "NẠP",
       heir: "NGƯỜI THỪA KẾ",
@@ -168,8 +169,7 @@ const app: AppMessages = {
       youCheckInEvery: "Bạn check-in mỗi",
       heirThenWaits: "Người thừa kế rồi chờ",
       checkInFeeNote: "Một chữ ký trong ví. Không phí mạng.",
-      graceWaitNote:
-        "Họ được báo lúc bắt đầu. Bạn có thể dừng bất cứ lúc nào trước khi kết thúc.",
+      graceWaitNote: "Họ được báo lúc bắt đầu. Bạn có thể dừng bất cứ lúc nào trước khi kết thúc.",
       timelineToday: "Hôm nay",
       timelineHorizon: "Tối đa 15 tháng",
       timelinePending: "Đặt ở bước tiếp theo",
@@ -188,15 +188,12 @@ const app: AppMessages = {
       labelOnlyYou: "Chỉ bạn thấy. Để phân biệt các di sản trên bảng điều khiển.",
       labelPlaceholderMum: "Di sản của mẹ",
       heirWalletLabel: "Địa chỉ ví Solana của họ",
-      heirWalletHint:
-        "Dán từ ví của người thừa kế. Tài sản chỉ đến đây, không đi nơi khác.",
+      heirWalletHint: "Dán từ ví của người thừa kế. Tài sản chỉ đến đây, không đi nơi khác.",
       pasteAddress: "Dán một địa chỉ",
-      guardianHint:
-        "Người bạn tin, có thể bắt đầu chuyển sớm nếu biết bạn đã mất.",
+      guardianHint: "Người bạn tin, có thể bắt đầu chuyển sớm nếu biết bạn đã mất.",
       leaveBlank: "Để trống để bỏ qua",
       signerLabelPlain: "Người ký check-in",
-      signerHint:
-        "Ví thứ hai được phép check-in thay bạn, nếu bạn không muốn dùng ví này.",
+      signerHint: "Ví thứ hai được phép check-in thay bạn, nếu bạn không muốn dùng ví này.",
       goingIntoEstate: "Đưa vào di sản",
       nothingYetShort: "Chưa có gì",
       skipDepositHint: "Bạn có thể bỏ qua và nạp từ bảng điều khiển bất cứ lúc nào.",
@@ -213,8 +210,7 @@ const app: AppMessages = {
       estFeeTilde: "Phí mạng ước tính ~0.002 SOL",
       nothingAddedYet: "Chưa thêm gì",
       tipCheckAddressTitle: "Kiểm tra lại địa chỉ",
-      tipCheckAddress:
-        "Tài sản chỉ đến địa chỉ này. Dán từ ví người thừa kế, đừng gõ tay.",
+      tipCheckAddress: "Tài sản chỉ đến địa chỉ này. Dán từ ví người thừa kế, đừng gõ tay.",
       tipAddLaterTitle: "Bạn có thể thêm sau",
       tipAddLater:
         "Chưa có gì là chốt. Bạn có thể nạp vào di sản bất cứ lúc nào từ bảng điều khiển.",
@@ -342,25 +338,35 @@ const app: AppMessages = {
       last: "Hoàn tất",
       back: "Quay lại",
       step1Title: "Chào mừng đến Heirloom",
-      step1Content: "Xem nhanh ứng dụng — chưa cần ví. Bạn chỉ kết nối khi sẵn sàng di chuyển tài sản.",
+      step1Content:
+        "Xem nhanh ứng dụng — chưa cần ví. Bạn chỉ kết nối khi sẵn sàng di chuyển tài sản.",
       step2Title: "Đặt tên người thừa kế",
-      step2Content: "Đặt người thừa hưởng: nhập địa chỉ Solana của họ, gắn nhãn mối quan hệ, và tùy chọn chỉ định người ủy quyền hoặc người ký nhịp tim.",
+      step2Content:
+        "Đặt người thừa hưởng: nhập địa chỉ Solana của họ, gắn nhãn mối quan hệ, và tùy chọn chỉ định người ủy quyền hoặc người ký nhịp tim.",
       step3Title: "Chọn tài sản của bạn",
-      step3Content: "Nạp SOL và/hoặc token SPL vào kho bạc. Bạn có thể bỏ qua bây giờ và thêm tài sản sau.",
+      step3Content:
+        "Nạp SOL và/hoặc token SPL vào kho bạc. Bạn có thể bỏ qua bây giờ và thêm tài sản sau.",
       step4Title: "Đặt bộ đếm điểm danh",
-      step4Content: "Chọn tần suất bạn xác nhận còn hoạt động, và thời gian ân hạn người thừa kế chờ sau khi bạn lỡ điểm danh trước khi họ có thể nhận.",
+      step4Content:
+        "Chọn tần suất bạn xác nhận còn hoạt động, và thời gian ân hạn người thừa kế chờ sau khi bạn lỡ điểm danh trước khi họ có thể nhận.",
       step5Title: "Xem lại & tạo",
-      step5Content: "Kiểm tra kế hoạch đầy đủ — người thừa kế, tài sản, bộ đếm — rồi xác nhận và nhấn Tạo Di sản. Đây là nơi bạn kết nối ví để nạp và ký.",
+      step5Content:
+        "Kiểm tra kế hoạch đầy đủ — người thừa kế, tài sản, bộ đếm — rồi xác nhận và nhấn Tạo Di sản. Đây là nơi bạn kết nối ví để nạp và ký.",
       step6Title: "Bảng điều khiển kho bạc",
-      step6Content: "Mỗi kho bạc hiển thị trạng thái trực tiếp, đếm ngược, số dư khóa và người thừa kế. Gửi nhịp tim ở đây để đặt lại bộ đếm và giữ tài sản bên bạn.",
+      step6Content:
+        "Mỗi kho bạc hiển thị trạng thái trực tiếp, đếm ngược, số dư khóa và người thừa kế. Gửi nhịp tim ở đây để đặt lại bộ đếm và giữ tài sản bên bạn.",
       step7Title: "Bảng điều khiển của bạn",
-      step7Content: "Trước khi có bất kỳ kho bạc nào, bảng điều khiển cho phép tạo di sản mới hoặc — nếu bạn được chỉ định là người thừa kế — nhận thừa kế.",
+      step7Content:
+        "Trước khi có bất kỳ kho bạc nào, bảng điều khiển cho phép tạo di sản mới hoặc — nếu bạn được chỉ định là người thừa kế — nhận thừa kế.",
       step8Title: "Nhận thừa kế",
-      step8Content: "Người thừa kế đến đây để tra cứu và nhận tài sản để lại cho họ. Bạn sẽ kết nối ví để nhận những gì thuộc về mình.",
+      step8Content:
+        "Người thừa kế đến đây để tra cứu và nhận tài sản để lại cho họ. Bạn sẽ kết nối ví để nhận những gì thuộc về mình.",
       step9Title: "Tra cứu theo chủ sở hữu",
-      step9Content: "Nếu quét tự động không tìm thấy thừa kế của bạn, mở rộng mục này để tra cứu di sản theo địa chỉ chủ sở hữu kho bạc.",
+      step9Content:
+        "Nếu quét tự động không tìm thấy thừa kế của bạn, mở rộng mục này để tra cứu di sản theo địa chỉ chủ sở hữu kho bạc.",
       step10Title: "Cổng người ký nhịp tim",
-      step10Content: "Người ký tin cậy có thể làm mới nhịp tim của kho bạc tại đây — giữ nó hoạt động mà không nắm toàn quyền với tài sản của bạn.",
+      step10Content:
+        "Người ký tin cậy có thể làm mới nhịp tim của kho bạc tại đây — giữ nó hoạt động mà không nắm toàn quyền với tài sản của bạn.",
       step11Title: "Đó là Heirloom",
       step11Content: "Đó là toàn bộ ứng dụng. Nhấn Hoàn tất và kết nối ví để tạo kho bạc đầu tiên.",
       allSetTitle: "Bạn đã sẵn sàng",
@@ -371,7 +377,8 @@ const app: AppMessages = {
       changeHeir: "Đổi Người thừa kế",
       changeHeirDesc: "Chuyển di sản sang một địa chỉ người thừa kế khác.",
       newHeirPlaceholder: "Địa chỉ Solana người thừa kế mới...",
-      changeHeirWarning: "Cảnh báo: điều này chuyển PDA di sản + tài sản kho bạc sang người thừa kế mới. Người thừa kế cũ không thể nhận nữa.",
+      changeHeirWarning:
+        "Cảnh báo: điều này chuyển PDA di sản + tài sản kho bạc sang người thừa kế mới. Người thừa kế cũ không thể nhận nữa.",
       cancel: "Hủy",
       sameHeirTitle: "Cùng người thừa kế",
       sameHeirDesc: "Địa chỉ người thừa kế mới trùng với người thừa kế hiện tại.",
@@ -379,7 +386,8 @@ const app: AppMessages = {
       heirUpdatedDesc: "Di sản đã gán lại cho người thừa kế mới.",
       updateFailedTitle: "Cập nhật Thất bại",
       changeHeirConfirmTitle: "Đổi Người thừa kế?",
-      changeHeirConfirmDesc: "PDA di sản và tài sản kho bạc chuyển sang người thừa kế mới. Người thừa kế hiện tại không thể nhận nữa.",
+      changeHeirConfirmDesc:
+        "PDA di sản và tài sản kho bạc chuyển sang người thừa kế mới. Người thừa kế hiện tại không thể nhận nữa.",
       from: "Từ",
       to: "Đến",
       addAsset: "Thêm Tài sản",
@@ -402,7 +410,8 @@ const app: AppMessages = {
       vaultClosedDesc: "Tài sản đã trả về ví của bạn.",
       withdrawFailedTitle: "Rút Thất bại",
       closeEstateConfirmTitle: "Đóng Di sản & Rút?",
-      closeEstateConfirmDesc: "Điều này trả tất cả SOL và token về ví của bạn và hủy kho bạc vĩnh viễn. Người thừa kế sẽ không thể nhận nữa.",
+      closeEstateConfirmDesc:
+        "Điều này trả tất cả SOL và token về ví của bạn và hủy kho bạc vĩnh viễn. Người thừa kế sẽ không thể nhận nữa.",
       withdrawCancelLabel: "Rút & Hủy",
       keepEstate: "Giữ Di sản",
       updateEstate: "Cập nhật Di sản",
@@ -417,7 +426,8 @@ const app: AppMessages = {
       settingsUpdatedTitle: "Đã cập nhật cài đặt",
       settingsUpdatedDesc: "Cấu hình di sản đã lưu on-chain.",
       updateEstateConfirmTitle: "Cập nhật Di sản?",
-      updateEstateConfirmDesc: "Đổi khoảng, ân hạn hoặc tạm dừng sẽ thay đổi hạn nhịp tim. Đảm bảo người thừa kế biết trước khi lưu.",
+      updateEstateConfirmDesc:
+        "Đổi khoảng, ân hạn hoặc tạm dừng sẽ thay đổi hạn nhịp tim. Đảm bảo người thừa kế biết trước khi lưu.",
       save: "Lưu",
       label: "Nhãn",
       interval: "Khoảng",
@@ -436,12 +446,10 @@ const app: AppMessages = {
       saveCountsCheckIn: "Lưu cũng tính là một lần check-in và đẩy cửa sổ nhận về sau.",
       noNewTokensWallet: "Không có token mới trong ví này",
       noTokensToAdd: "Không có token để thêm.",
-      addAssetEditorialDesc:
-        "Đăng ký token SPL mới với di sản và nạp số dư ban đầu.",
+      addAssetEditorialDesc: "Đăng ký token SPL mới với di sản và nạp số dư ban đầu.",
       nowUsesTimings: "Di sản hiện dùng lịch mới.",
       changeHeirShort: "Đổi người thừa kế",
-      changeHeirMigrateDesc:
-        "Tài sản chuyển sang di sản và vault mới suy ra từ người thừa kế mới.",
+      changeHeirMigrateDesc: "Tài sản chuyển sang di sản và vault mới suy ra từ người thừa kế mới.",
       changeHeirQuestion: "Đổi người thừa kế?",
       changeHeirMovesDesc:
         "Mọi tài sản chuyển sang di sản và vault mới. Người thừa kế hiện tại không còn nhận được.",
@@ -457,8 +465,7 @@ const app: AppMessages = {
         "Người thừa kế hiện tại mất toàn bộ quyền với di sản này. Không làm được khi đang tạm dừng giám hộ.",
       tokenLabel: "Token",
       scanningWallet: "Đang quét ví…",
-      registerTokenNote:
-        "Đăng ký token sẽ tạo tài khoản vault và thêm vào tập có thể nhận.",
+      registerTokenNote: "Đăng ký token sẽ tạo tài khoản vault và thêm vào tập có thể nhận.",
       assetAddedEstateDesc: "Token hiện là một phần của di sản.",
       couldNotAddAsset: "Không thêm được tài sản",
       labelMaxN: "Nhãn (tối đa {{max}})",
@@ -481,7 +488,8 @@ const app: AppMessages = {
     autoFetchDesc: "RPC từ chối quét on-chain. Dùng tra cứu thủ công bên dưới.",
     noEstates: "Không Tìm thấy Di sản",
     noEstatesDesc1: "Tra cứu di sản theo địa chỉ Solana của chủ sở hữu kho bạc.",
-    noEstatesDesc2: "Không di sản nào chỉ định ví của bạn là người thừa kế. Thử tra cứu thủ công nếu bạn mong đợi một di sản.",
+    noEstatesDesc2:
+      "Không di sản nào chỉ định ví của bạn là người thừa kế. Thử tra cứu thủ công nếu bạn mong đợi một di sản.",
     manualLookup: "Tra cứu thủ công",
     owner: "Chủ sở hữu",
     status: "Trạng thái",
@@ -528,12 +536,14 @@ const app: AppMessages = {
     notDelegate: "Không phải Người ủy quyền",
     deferClaimWindow: "Hoãn Cửa sổ Nhận",
     confirmTitle: "Kéo dài Cửa sổ Nhận?",
-    confirmDesc: "Kéo dài cửa sổ nhận thêm {{duration}}. Lần tạm dừng của người giám hộ này chỉ dùng một lần cho mỗi di sản.",
+    confirmDesc:
+      "Kéo dài cửa sổ nhận thêm {{duration}}. Lần tạm dừng của người giám hộ này chỉ dùng một lần cho mỗi di sản.",
     confirmLabel: "Hoãn",
     cancelLabel: "Hủy",
     notFoundError: "Không tìm thấy di sản cho cặp quyền + người thừa kế này.",
     noDelegateError: "Di sản không có người ủy quyền được chỉ định. Không thể hoãn.",
-    wrongDelegateError: "Bạn không phải người ủy quyền của di sản này. Người ủy quyền là {{delegate}}...",
+    wrongDelegateError:
+      "Bạn không phải người ủy quyền của di sản này. Người ủy quyền là {{delegate}}...",
     toastAlreadyTitle: "Đã hoãn",
     toastAlreadyDesc: "Tạm dừng đã được dùng trên di sản này.",
     toastDeferTitle: "Đã gửi hoãn",
@@ -546,8 +556,7 @@ const app: AppMessages = {
     hotSignerPortal: "Cổng Người ký Nóng",
     headline1: "Làm mới",
     headline2: "nhịp tim.",
-    description:
-      "Là người ký nhịp tim đã đăng ký, bạn có thể ping di sản mà không nắm toàn quyền.",
+    description: "Là người ký nhịp tim đã đăng ký, bạn có thể ping di sản mà không nắm toàn quyền.",
     authorityLabel: "Địa chỉ Quyền (Chủ sở hữu)",
     authorityPlaceholder: "Địa chỉ Solana chủ sở hữu kho bạc...",
     heirLabel: "Địa chỉ Người thừa kế",
@@ -606,8 +615,7 @@ const app: AppMessages = {
     youWillSign: "Bạn sẽ được yêu cầu ký",
     addBackupPlain: "Thêm kênh dự phòng",
     notifyName: "Báo {{name}}",
-    signCostsNothing:
-      "Ký không tốn gì và không chuyển tiền. Chỉ chứng minh bạn giữ khóa.",
+    signCostsNothing: "Ký không tốn gì và không chuyển tiền. Chỉ chứng minh bạn giữ khóa.",
     remindTitle: "Nhắc tôi trước khi hết hạn",
     remindDesc: "Một lời nhắc trước khi nhịp tim đến hạn",
     notifyTitle: "Báo {{name}} khi mở khóa",
@@ -619,9 +627,11 @@ const app: AppMessages = {
     saving: "Đang lưu…",
     cancel: "Hủy",
     signInTitle: "Đăng nhập để quản lý thông báo",
-    signInDesc: "Thông tin liên hệ riêng tư với di sản này. Chứng minh bạn sở hữu ví này — không gì hơn.",
+    signInDesc:
+      "Thông tin liên hệ riêng tư với di sản này. Chứng minh bạn sở hữu ví này — không gì hơn.",
     signPrompt: "Bạn sẽ được yêu cầu ký đúng thông điệp này",
-    signNote: "Không giao dịch, không gas, không yêu cầu kết nối ví — chỉ một chữ ký, chỉ có hiệu lực trong phiên này.",
+    signNote:
+      "Không giao dịch, không gas, không yêu cầu kết nối ví — chỉ một chữ ký, chỉ có hiệu lực trong phiên này.",
     signMessage: "Ký thông điệp",
     signMessageBody:
       "heirlm.xyz wants you to manage notification settings.\n\nEstate:  {{estate}}\nWallet:  {{wallet}}\n\nThis does not cost gas and does not authorize any on-chain transaction.",
@@ -635,6 +645,10 @@ const app: AppMessages = {
     edit: "Sửa",
     signIn: "Đăng nhập",
     retry: "Thử lại",
+    saveFailed: "Không thể lưu nhắc nhở",
+    saveFailedDesc: "Đã xảy ra lỗi. Vui lòng thử lại.",
+    signInFailed: "Không thể xác minh ví",
+    signInFailedDesc: "Xác minh chữ ký thất bại. Vui lòng thử lại.",
     summaryYou: "Bạn: {{channel}}",
     summaryYouPlus: "Bạn: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -726,16 +740,14 @@ const app: AppMessages = {
       "Ủy thác có hiệu lực ở ranh epoch tiếp theo, và hủy stake mất một epoch để tất toán. Kéo về trước khi cửa sổ nhận mở.",
     jitoEditorial: "Stake tăng MEV. Lợi suất hiện tại cao hơn trong hai lựa chọn.",
     marinadeEditorial: "Stake rải trên một nhóm validator. Ổn hơn, hơi thấp hơn.",
-    pullBackEarned:
-      "Kéo {{amount}} {{unit}} về vault, kèm phần đã kiếm được.",
+    pullBackEarned: "Kéo {{amount}} {{unit}} về vault, kèm phần đã kiếm được.",
     oneSigLuloEditorial:
       "Một chữ ký rút khỏi Lulo và trả về vault. Phí 10% trên lợi suất, không bao giờ trên gốc.",
     oneSigStakeEditorial:
       "Một chữ ký hủy ủy thác và trả SOL về vault. Stake tất toán ở ranh epoch tiếp theo.",
     deployed: "Đã triển khai",
     fundsOutEarning: "Tiền đang ở ngoài sinh lời",
-    beforeAction:
-      "Trước khi {{action}}, mọi thứ phải về vault. Diễn ra trong cùng giao dịch.",
+    beforeAction: "Trước khi {{action}}, mọi thứ phải về vault. Diễn ra trong cùng giao dịch.",
     preparing: "Đang chuẩn bị…",
     recallAndAction: "Kéo về và {{action}}",
     tokensInLulo: "token trong Lulo",

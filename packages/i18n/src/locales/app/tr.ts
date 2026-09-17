@@ -78,7 +78,7 @@ const app: AppMessages = {
       whatProtecting: "Neyi koruyorsunuz?",
       howOften: "Ne sıklıkla check-in yapıyorsunuz?",
       reviewConfirm: "İncele ve onayla",
-      labelLabel: "ETİKET (ÖRN. \"OĞUL\", \"EŞ\")",
+      labelLabel: 'ETİKET (ÖRN. "OĞUL", "EŞ")',
       labelPlaceholder: "örn. eş",
       heirAddressLabel: "MİRASÇI SOLANA ADRESİ",
       heirAddressPlaceholder: "Solana cüzdan adresini girin…",
@@ -113,7 +113,8 @@ const app: AppMessages = {
       assets: "varlık",
       and: "ve",
       oneHeir: "1 mirasçı",
-      chooseHowOften: "bu terekede var. Hayatta olduğunuzu ne sıklıkla kanıtlamanız gerektiğini seçin.",
+      chooseHowOften:
+        "bu terekede var. Hayatta olduğunuzu ne sıklıkla kanıtlamanız gerektiğini seçin.",
       heartbeatInterval: "KALP ATIŞI ARALIĞI",
       gracePeriod: "EK SÜRE",
       days: "GÜN",
@@ -122,7 +123,8 @@ const app: AppMessages = {
       ifNoCheckin: "Bu süre boyunca check-in yapmazsanız, mirasçınız talep edebilir.",
       neverCheckin: "→ Hiç check-in yapmazsanız, en erken talep tarihi",
       graceUndo: "Ek süre, geri alma düğmenizdir.",
-      graceUndoDesc: "Aralığınızı mı kaçırdınız? Ek süre içinde yine de check-in yapıp tüm saati sıfırlayabilirsiniz. Ancak tam {{days}} gün geçtikten sonra mirasçınız talep edebilir.",
+      graceUndoDesc:
+        "Aralığınızı mı kaçırdınız? Ek süre içinde yine de check-in yapıp tüm saati sıfırlayabilirsiniz. Ancak tam {{days}} gün geçtikten sonra mirasçınız talep edebilir.",
       timing: "ZAMANLAMA",
       deposits: "YATIRMALAR",
       heir: "MİRASÇI",
@@ -168,8 +170,7 @@ const app: AppMessages = {
       youCheckInEvery: "Check-in sıklığın",
       heirThenWaits: "Varisin beklediği süre",
       checkInFeeNote: "Cüzdanında bir imza. Ağ ücreti yok.",
-      graceWaitNote:
-        "Başında haberdar edilirler. Bitmeden istediğin zaman durdurabilirsin.",
+      graceWaitNote: "Başında haberdar edilirler. Bitmeden istediğin zaman durdurabilirsin.",
       timelineToday: "Bugün",
       timelineHorizon: "15 aya kadar",
       timelinePending: "Sonraki adımda ayarlanır",
@@ -188,15 +189,12 @@ const app: AppMessages = {
       labelOnlyYou: "Sadece sen görürsün. Panelde terekeleri ayırmak için.",
       labelPlaceholderMum: "Annemin terekesi",
       heirWalletLabel: "Solana cüzdan adresi",
-      heirWalletHint:
-        "Varisin cüzdanından yapıştır. Varlıklar buraya gider, başka yere değil.",
+      heirWalletHint: "Varisin cüzdanından yapıştır. Varlıklar buraya gider, başka yere değil.",
       pasteAddress: "Bir adres yapıştır",
-      guardianHint:
-        "Öldüğünü biliyorsa transferi erken başlatabilecek güvendiğin biri.",
+      guardianHint: "Öldüğünü biliyorsa transferi erken başlatabilecek güvendiğin biri.",
       leaveBlank: "Atlamak için boş bırak",
       signerLabelPlain: "Check-in imzalayan",
-      signerHint:
-        "Bunu kullanmak istemezsen senin yerine check-in yapabilecek ikinci bir cüzdan.",
+      signerHint: "Bunu kullanmak istemezsen senin yerine check-in yapabilecek ikinci bir cüzdan.",
       goingIntoEstate: "Terekeye girenler",
       nothingYetShort: "Henüz yok",
       skipDepositHint: "Bunu atlayıp panelden istediğin zaman yatırabilirsin.",
@@ -342,36 +340,49 @@ const app: AppMessages = {
       last: "Bitir",
       back: "Geri",
       step1Title: "Heirloom'a Hoş Geldiniz",
-      step1Content: "Uygulamayı hızlıca gezin — henüz cüzdan gerekmez. Yalnızca varlık taşımaya hazır olduğunuzda bağlarsınız.",
+      step1Content:
+        "Uygulamayı hızlıca gezin — henüz cüzdan gerekmez. Yalnızca varlık taşımaya hazır olduğunuzda bağlarsınız.",
       step2Title: "Mirasçınızı adlandırın",
-      step2Content: "Kimin miras alacağını ayarlayın: Solana adreslerini girin, ilişkiye bir etiket verin ve isteğe bağlı olarak bir delege veya kalp atışı imzalayıcısı atayın.",
+      step2Content:
+        "Kimin miras alacağını ayarlayın: Solana adreslerini girin, ilişkiye bir etiket verin ve isteğe bağlı olarak bir delege veya kalp atışı imzalayıcısı atayın.",
       step3Title: "Varlıklarınızı seçin",
-      step3Content: "Kasaya SOL ve/veya SPL token yatırın. Bunu şimdi atlayıp varlıkları sonra ekleyebilirsiniz.",
+      step3Content:
+        "Kasaya SOL ve/veya SPL token yatırın. Bunu şimdi atlayıp varlıkları sonra ekleyebilirsiniz.",
       step4Title: "Check-in sayacınızı ayarlayın",
-      step4Content: "Ne sıklıkla aktif olduğunuzu onaylayacağınızı ve bir check-in'i kaçırdıktan sonra mirasçıların talep etmeden önce bekleyeceği ek süreyi seçin.",
+      step4Content:
+        "Ne sıklıkla aktif olduğunuzu onaylayacağınızı ve bir check-in'i kaçırdıktan sonra mirasçıların talep etmeden önce bekleyeceği ek süreyi seçin.",
       step5Title: "İncele ve oluştur",
-      step5Content: "Tam planı — mirasçı, varlıklar, sayaçlar — kontrol edin, ardından onaylayın ve Tereke Oluştur'a tıklayın. Yatırma ve imzalama için cüzdanınızı burada bağlarsınız.",
+      step5Content:
+        "Tam planı — mirasçı, varlıklar, sayaçlar — kontrol edin, ardından onaylayın ve Tereke Oluştur'a tıklayın. Yatırma ve imzalama için cüzdanınızı burada bağlarsınız.",
       step6Title: "Kasa paneliniz",
-      step6Content: "Her kasa canlı durumunu, geri sayımını, kilitli bakiyelerini ve mirasçısını gösterir. Sayacı sıfırlamak ve varlıkları sizinle tutmak için buradan kalp atışı gönderin.",
+      step6Content:
+        "Her kasa canlı durumunu, geri sayımını, kilitli bakiyelerini ve mirasçısını gösterir. Sayacı sıfırlamak ve varlıkları sizinle tutmak için buradan kalp atışı gönderin.",
       step7Title: "Paneliniz",
-      step7Content: "Henüz bir kasa yokken panel, yeni bir tereke oluşturmanıza veya — mirasçı olarak adlandırıldıysanız — bir mirası talep etmenize olanak tanır.",
+      step7Content:
+        "Henüz bir kasa yokken panel, yeni bir tereke oluşturmanıza veya — mirasçı olarak adlandırıldıysanız — bir mirası talep etmenize olanak tanır.",
       step8Title: "Bir mirası talep edin",
-      step8Content: "Mirasçılar kendilerine bırakılan varlıkları aramak ve talep etmek için buraya gelir. Size ait olanı talep etmek için bir cüzdan bağlarsınız.",
+      step8Content:
+        "Mirasçılar kendilerine bırakılan varlıkları aramak ve talep etmek için buraya gelir. Size ait olanı talep etmek için bir cüzdan bağlarsınız.",
       step9Title: "Sahibe göre ara",
-      step9Content: "Otomatik tarama mirasınızı bulamazsa, kasa sahibinin adresine göre bir tereke aramak için bunu genişletin.",
+      step9Content:
+        "Otomatik tarama mirasınızı bulamazsa, kasa sahibinin adresine göre bir tereke aramak için bunu genişletin.",
       step10Title: "Kalp atışı imzalayıcı portalı",
-      step10Content: "Güvenilir bir imzalayıcı, buradan bir kasanın kalp atışını yenileyebilir — varlıklarınız üzerinde tam yetkiye sahip olmadan kasayı aktif tutar.",
+      step10Content:
+        "Güvenilir bir imzalayıcı, buradan bir kasanın kalp atışını yenileyebilir — varlıklarınız üzerinde tam yetkiye sahip olmadan kasayı aktif tutar.",
       step11Title: "İşte Heirloom",
-      step11Content: "Uygulamanın tamamı bu. Bitir'e tıklayın ve ilk kasanızı oluşturmak için cüzdanınızı bağlayın.",
+      step11Content:
+        "Uygulamanın tamamı bu. Bitir'e tıklayın ve ilk kasanızı oluşturmak için cüzdanınızı bağlayın.",
       allSetTitle: "Hazırsınız",
-      allSetDesc: "İlk kasanızı oluşturmak için cüzdanınızı bağlayın — sizi doğrudan oluşturucuya götüreceğiz.",
+      allSetDesc:
+        "İlk kasanızı oluşturmak için cüzdanınızı bağlayın — sizi doğrudan oluşturucuya götüreceğiz.",
       connectWallet: "Cüzdanı Bağla",
     },
     manage: {
       changeHeir: "Mirasçıyı Değiştir",
       changeHeirDesc: "Terekeyi farklı bir mirasçı adresine taşıyın.",
       newHeirPlaceholder: "Yeni mirasçı Solana adresi...",
-      changeHeirWarning: "Uyarı: Bu, tereke PDA'sını + kasa varlıklarını yeni mirasçıya taşır. Eski mirasçı artık talep edemez.",
+      changeHeirWarning:
+        "Uyarı: Bu, tereke PDA'sını + kasa varlıklarını yeni mirasçıya taşır. Eski mirasçı artık talep edemez.",
       cancel: "İptal",
       sameHeirTitle: "Aynı mirasçı",
       sameHeirDesc: "Yeni mirasçı adresi mevcut mirasçıyla eşleşiyor.",
@@ -379,7 +390,8 @@ const app: AppMessages = {
       heirUpdatedDesc: "Tereke yeni mirasçıya yeniden atandı.",
       updateFailedTitle: "Güncelleme Başarısız",
       changeHeirConfirmTitle: "Mirasçı Değiştirilsin mi?",
-      changeHeirConfirmDesc: "Tereke PDA'sı ve kasa varlıkları yeni mirasçıya taşınır. Mevcut mirasçı artık talep edemez.",
+      changeHeirConfirmDesc:
+        "Tereke PDA'sı ve kasa varlıkları yeni mirasçıya taşınır. Mevcut mirasçı artık talep edemez.",
       from: "Kimden",
       to: "Kime",
       addAsset: "Varlık Ekle",
@@ -402,7 +414,8 @@ const app: AppMessages = {
       vaultClosedDesc: "Varlıklar cüzdanınıza döndü.",
       withdrawFailedTitle: "Çekim Başarısız",
       closeEstateConfirmTitle: "Tereke Kapatılsın ve Çekilsin mi?",
-      closeEstateConfirmDesc: "Bu, tüm SOL ve tokenları cüzdanınıza döndürür ve kasayı kalıcı olarak iptal eder. Mirasçı artık talep edemez.",
+      closeEstateConfirmDesc:
+        "Bu, tüm SOL ve tokenları cüzdanınıza döndürür ve kasayı kalıcı olarak iptal eder. Mirasçı artık talep edemez.",
       withdrawCancelLabel: "Çek ve İptal Et",
       keepEstate: "Terekeyi Sakla",
       updateEstate: "Terekeyi Güncelle",
@@ -417,7 +430,8 @@ const app: AppMessages = {
       settingsUpdatedTitle: "Ayarlar güncellendi",
       settingsUpdatedDesc: "Tereke yapılandırması zincir üstüne kaydedildi.",
       updateEstateConfirmTitle: "Tereke Güncellensin mi?",
-      updateEstateConfirmDesc: "Aralığı, ek süreyi veya duraklatmayı değiştirmek kalp atışı süresini değiştirir. Kaydetmeden önce mirasçıların haberdar olduğundan emin olun.",
+      updateEstateConfirmDesc:
+        "Aralığı, ek süreyi veya duraklatmayı değiştirmek kalp atışı süresini değiştirir. Kaydetmeden önce mirasçıların haberdar olduğundan emin olun.",
       save: "Kaydet",
       label: "Etiket",
       interval: "Aralık",
@@ -436,12 +450,10 @@ const app: AppMessages = {
       saveCountsCheckIn: "Kaydetmek aynı zamanda check-in sayılır ve talep penceresini ileri iter.",
       noNewTokensWallet: "Bu cüzdanda yeni token yok",
       noTokensToAdd: "Eklenecek token yok.",
-      addAssetEditorialDesc:
-        "Terekeye yeni bir SPL token kaydet ve açılış bakiyesi yatır.",
+      addAssetEditorialDesc: "Terekeye yeni bir SPL token kaydet ve açılış bakiyesi yatır.",
       nowUsesTimings: "Tereke artık yeni zamanlamayı kullanıyor.",
       changeHeirShort: "Varisi değiştir",
-      changeHeirMigrateDesc:
-        "Varlıklar yeni varisten türetilen yeni tereke ve kasaya taşınır.",
+      changeHeirMigrateDesc: "Varlıklar yeni varisten türetilen yeni tereke ve kasaya taşınır.",
       changeHeirQuestion: "Varis değiştirilsin mi?",
       changeHeirMovesDesc:
         "Her varlık yeni tereke ve kasaya taşınır. Mevcut varis artık talep edemez.",
@@ -481,7 +493,8 @@ const app: AppMessages = {
     autoFetchDesc: "RPC zincir üstü taramayı reddetti. Aşağıdaki manuel aramayı kullanın.",
     noEstates: "Tereke Bulunamadı",
     noEstatesDesc1: "Kasa sahibinin Solana adresine göre bir tereke arayın.",
-    noEstatesDesc2: "Cüzdanınızı mirasçı olarak adlandıran tereke yok. Bir tane bekliyorsanız manuel aramayı deneyin.",
+    noEstatesDesc2:
+      "Cüzdanınızı mirasçı olarak adlandıran tereke yok. Bir tane bekliyorsanız manuel aramayı deneyin.",
     manualLookup: "Manuel arama",
     owner: "Sahip",
     status: "Durum",
@@ -528,7 +541,8 @@ const app: AppMessages = {
     notDelegate: "Delege Değil",
     deferClaimWindow: "Talep Penceresini Ertele",
     confirmTitle: "Talep Penceresi Uzatılsın mı?",
-    confirmDesc: "Talep penceresini {{duration}} kadar uzatın. Bu vasi duraklatması tereke başına yalnızca bir kez kullanılabilir.",
+    confirmDesc:
+      "Talep penceresini {{duration}} kadar uzatın. Bu vasi duraklatması tereke başına yalnızca bir kez kullanılabilir.",
     confirmLabel: "Ertele",
     cancelLabel: "İptal",
     notFoundError: "Bu yetki + mirasçı çifti için tereke bulunamadı.",
@@ -619,9 +633,11 @@ const app: AppMessages = {
     saving: "Kaydediliyor…",
     cancel: "İptal",
     signInTitle: "Bildirimleri yönetmek için giriş yapın",
-    signInDesc: "İletişim bilgileri bu terekeye özeldir. Bu cüzdanın size ait olduğunu kanıtlayın — başka bir şey değil.",
+    signInDesc:
+      "İletişim bilgileri bu terekeye özeldir. Bu cüzdanın size ait olduğunu kanıtlayın — başka bir şey değil.",
     signPrompt: "Tam olarak bu mesajı imzalamanız istenecek",
-    signNote: "İşlem yok, gas yok, cüzdan bağlantı isteği yok — yalnızca bir imza, yalnızca bu oturum için geçerli.",
+    signNote:
+      "İşlem yok, gas yok, cüzdan bağlantı isteği yok — yalnızca bir imza, yalnızca bu oturum için geçerli.",
     signMessage: "Mesajı imzala",
     signMessageBody:
       "heirlm.xyz wants you to manage notification settings.\n\nEstate:  {{estate}}\nWallet:  {{wallet}}\n\nThis does not cost gas and does not authorize any on-chain transaction.",
@@ -635,6 +651,10 @@ const app: AppMessages = {
     edit: "Düzenle",
     signIn: "Giriş yap",
     retry: "Yeniden dene",
+    saveFailed: "Hatırlatıcılar kaydedilemedi",
+    saveFailedDesc: "Bir sorun oluştu. Lütfen tekrar deneyin.",
+    signInFailed: "Cüzdan doğrulanamadı",
+    signInFailedDesc: "İmza doğrulama başarısız oldu. Lütfen tekrar deneyin.",
     summaryYou: "Siz: {{channel}}",
     summaryYouPlus: "Siz: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -655,9 +675,11 @@ const app: AppMessages = {
     doneShort: "Bitti",
     protected: "Korumalı",
     recommended: "Önerilen",
-    protectedDesc: "Fonlar platform riskine karşı sigortalıdır. Daha düşük getiri, daha yüksek güvenlik.",
+    protectedDesc:
+      "Fonlar platform riskine karşı sigortalıdır. Daha düşük getiri, daha yüksek güvenlik.",
     unprotected: "Korumasız",
-    unprotectedDesc: "Sigortasız daha yüksek getiri. Risk toleransı yüksek yatırmalar için en iyisi.",
+    unprotectedDesc:
+      "Sigortasız daha yüksek getiri. Risk toleransı yüksek yatırmalar için en iyisi.",
     apy: "%{{apy}} APY",
     confirming: "Onaylanıyor…",
     routeButton: "Lulo'ya yönlendir",
@@ -719,23 +741,22 @@ const app: AppMessages = {
     yieldFeeNote:
       "%10 ücret kazanılan getiriye uygulanır, anaparaya değil. Varis talep etmeden önce dağıtılan fonların geri çağrılması gerekir.",
     stakeVaultSol: "Kasadaki SOL'u stake et",
-    stakeVaultDesc: "{{amount}} SOL'u bir doğrulayıcıya delege et. Tereke beklerken getiri devam eder.",
+    stakeVaultDesc:
+      "{{amount}} SOL'u bir doğrulayıcıya delege et. Tereke beklerken getiri devam eder.",
     commissionPct: "%{{pct}} komisyon",
     selectedDot: "{{name}} · %{{apy}} APY",
     epochRecallNote:
       "Delegasyon sonraki epoch sınırında aktif olur, unstake ise bir epoch'ta oturur. Talep penceresi açılmadan geri çağır.",
     jitoEditorial: "MEV destekli stake. İkisinden şu an getirisi yüksek olan.",
     marinadeEditorial: "Doğrulayıcı setine yayılmış stake. Daha durağan, biraz daha düşük.",
-    pullBackEarned:
-      "{{amount}} {{unit}} ile kazandığını kasaya geri çek.",
+    pullBackEarned: "{{amount}} {{unit}} ile kazandığını kasaya geri çek.",
     oneSigLuloEditorial:
       "Bir imza Lulo'dan çeker ve fonları kasaya döndürür. %10 ücret kazanılan getiriye uygulanır, anaparaya değil.",
     oneSigStakeEditorial:
       "Bir imza delegasyonu kaldırır ve SOL'u kasaya döndürür. Stake sonraki epoch sınırında oturur.",
     deployed: "Dağıtıldı",
     fundsOutEarning: "Fonlar dışarıda getiri kazanıyor",
-    beforeAction:
-      "{{action}} öncesi her şey kasaya dönmeli. Aynı işlemde olur.",
+    beforeAction: "{{action}} öncesi her şey kasaya dönmeli. Aynı işlemde olur.",
     preparing: "Hazırlanıyor…",
     recallAndAction: "Geri çağır ve {{action}}",
     tokensInLulo: "Lulo'daki tokenlar",

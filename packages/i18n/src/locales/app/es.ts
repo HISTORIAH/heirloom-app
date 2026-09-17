@@ -78,7 +78,7 @@ const app: AppMessages = {
       whatProtecting: "¿Qué estás protegiendo?",
       howOften: "¿Con qué frecuencia te registras?",
       reviewConfirm: "Revisar y confirmar",
-      labelLabel: "ETIQUETA (P. EJ. \"HIJO\", \"CÓNYUGE\")",
+      labelLabel: 'ETIQUETA (P. EJ. "HIJO", "CÓNYUGE")',
       labelPlaceholder: "p. ej. cónyuge",
       heirAddressLabel: "DIRECCIÓN DE SOLANA DEL HEREDERO",
       heirAddressPlaceholder: "Ingresa la dirección de Solana…",
@@ -113,7 +113,8 @@ const app: AppMessages = {
       assets: "activos",
       and: "y",
       oneHeir: "1 heredero",
-      chooseHowOften: "en este estado. Elige con qué frecuencia necesitas demostrar que estás vivo.",
+      chooseHowOften:
+        "en este estado. Elige con qué frecuencia necesitas demostrar que estás vivo.",
       heartbeatInterval: "INTERVALO DE LATIDOS",
       gracePeriod: "PERÍODO DE GRACIA",
       days: "DÍAS",
@@ -122,7 +123,8 @@ const app: AppMessages = {
       ifNoCheckin: "Si no te registras durante este tiempo, tu heredero puede reclamar.",
       neverCheckin: "→ Si nunca te registras, la fecha de reclamo más temprana es",
       graceUndo: "El período de gracia es tu botón de deshacer.",
-      graceUndoDesc: "¿Perdiste tu intervalo? Aún puedes registrarte durante la gracia y reiniciar todo el reloj. Solo después de {{days}} días completos puede reclamar tu heredero.",
+      graceUndoDesc:
+        "¿Perdiste tu intervalo? Aún puedes registrarte durante la gracia y reiniciar todo el reloj. Solo después de {{days}} días completos puede reclamar tu heredero.",
       timing: "TIEMPOS",
       deposits: "DEPÓSITOS",
       heir: "HEREDERO",
@@ -195,8 +197,7 @@ const app: AppMessages = {
         "Alguien de confianza que puede iniciar la transferencia antes si sabe que has fallecido.",
       leaveBlank: "Déjalo en blanco para omitir",
       signerLabelPlain: "Firmante de check-in",
-      signerHint:
-        "Una segunda wallet autorizada a registrarse por ti, si prefieres no usar esta.",
+      signerHint: "Una segunda wallet autorizada a registrarse por ti, si prefieres no usar esta.",
       goingIntoEstate: "Entra en el estado",
       nothingYetShort: "Nada aún",
       skipDepositHint: "Puedes saltarte esto y depositar desde el panel cuando quieras.",
@@ -342,36 +343,49 @@ const app: AppMessages = {
       last: "Terminar",
       back: "Atrás",
       step1Title: "Bienvenido a Heirloom",
-      step1Content: "Haz un recorrido rápido por la app — aún no necesitas wallet. Solo te conectas cuando estés listo para mover activos.",
+      step1Content:
+        "Haz un recorrido rápido por la app — aún no necesitas wallet. Solo te conectas cuando estés listo para mover activos.",
       step2Title: "Nombra a tu heredero",
-      step2Content: "Establece quién hereda: ingresa su dirección de Solana, dale una etiqueta a la relación y opcionalmente asigna un delegado o un firmante de latidos.",
+      step2Content:
+        "Establece quién hereda: ingresa su dirección de Solana, dale una etiqueta a la relación y opcionalmente asigna un delegado o un firmante de latidos.",
       step3Title: "Elige tus activos",
-      step3Content: "Deposita SOL y/o tokens SPL en la bóveda. Puedes omitir esto ahora y agregar activos más tarde.",
+      step3Content:
+        "Deposita SOL y/o tokens SPL en la bóveda. Puedes omitir esto ahora y agregar activos más tarde.",
       step4Title: "Configura tu temporizador de registro",
-      step4Content: "Elige con qué frecuencia confirmarás que estás activo, y el período de gracia que los herederos esperan después de que pierdas un registro antes de poder reclamar.",
+      step4Content:
+        "Elige con qué frecuencia confirmarás que estás activo, y el período de gracia que los herederos esperan después de que pierdas un registro antes de poder reclamar.",
       step5Title: "Revisa y crea",
-      step5Content: "Revisa el plan completo — heredero, activos, temporizadores — luego reconoce y pulsa Crear estado. Aquí conectas tu wallet para depositar y firmar.",
+      step5Content:
+        "Revisa el plan completo — heredero, activos, temporizadores — luego reconoce y pulsa Crear estado. Aquí conectas tu wallet para depositar y firmar.",
       step6Title: "Tu panel de bóvedas",
-      step6Content: "Cada bóveda muestra su estado en vivo, cuenta regresiva, saldos bloqueados y heredero. Envía un latido aquí para reiniciar el temporizador y mantener los activos contigo.",
+      step6Content:
+        "Cada bóveda muestra su estado en vivo, cuenta regresiva, saldos bloqueados y heredero. Envía un latido aquí para reiniciar el temporizador y mantener los activos contigo.",
       step7Title: "Tu panel",
-      step7Content: "Antes de que exista una bóveda, el panel te permite crear un nuevo estado o — si te nombraron heredero — reclamar una herencia.",
+      step7Content:
+        "Antes de que exista una bóveda, el panel te permite crear un nuevo estado o — si te nombraron heredero — reclamar una herencia.",
       step8Title: "Reclama una herencia",
-      step8Content: "Los herederos vienen aquí para buscar y reclamar los activos que les dejaron. Conectarás una wallet para reclamar lo que es tuyo.",
+      step8Content:
+        "Los herederos vienen aquí para buscar y reclamar los activos que les dejaron. Conectarás una wallet para reclamar lo que es tuyo.",
       step9Title: "Buscar por dueño",
-      step9Content: "Si el escaneo automático no encuentra tu herencia, expande esto para buscar un estado por la dirección del dueño de la bóveda.",
+      step9Content:
+        "Si el escaneo automático no encuentra tu herencia, expande esto para buscar un estado por la dirección del dueño de la bóveda.",
       step10Title: "Portal del firmante de latidos",
-      step10Content: "Un firmante de confianza puede refrescar el latido de una bóveda aquí — manteniéndola activa sin tener autoridad total sobre tus activos.",
+      step10Content:
+        "Un firmante de confianza puede refrescar el latido de una bóveda aquí — manteniéndola activa sin tener autoridad total sobre tus activos.",
       step11Title: "Eso es Heirloom",
-      step11Content: "Esa es toda la app. Pulsa Terminar y conecta tu wallet para crear tu primera bóveda.",
+      step11Content:
+        "Esa es toda la app. Pulsa Terminar y conecta tu wallet para crear tu primera bóveda.",
       allSetTitle: "Todo listo",
-      allSetDesc: "Conecta tu wallet para crear tu primera bóveda — te llevaremos directo al constructor.",
+      allSetDesc:
+        "Conecta tu wallet para crear tu primera bóveda — te llevaremos directo al constructor.",
       connectWallet: "Conectar wallet",
     },
     manage: {
       changeHeir: "Cambiar heredero",
       changeHeirDesc: "Transfiere el estado a una dirección de heredero diferente.",
       newHeirPlaceholder: "Nueva dirección de Solana del heredero...",
-      changeHeirWarning: "Advertencia: esto mueve el PDA del estado + los activos de la bóveda al nuevo heredero. El heredero anterior ya no puede reclamar.",
+      changeHeirWarning:
+        "Advertencia: esto mueve el PDA del estado + los activos de la bóveda al nuevo heredero. El heredero anterior ya no puede reclamar.",
       cancel: "Cancelar",
       sameHeirTitle: "Mismo heredero",
       sameHeirDesc: "La nueva dirección coincide con el heredero actual.",
@@ -379,7 +393,8 @@ const app: AppMessages = {
       heirUpdatedDesc: "Estado reasignado al nuevo heredero.",
       updateFailedTitle: "Actualización fallida",
       changeHeirConfirmTitle: "¿Cambiar heredero?",
-      changeHeirConfirmDesc: "El PDA del estado y los activos de la bóveda se mueven al nuevo heredero. El heredero actual ya no puede reclamar.",
+      changeHeirConfirmDesc:
+        "El PDA del estado y los activos de la bóveda se mueven al nuevo heredero. El heredero actual ya no puede reclamar.",
       from: "De",
       to: "A",
       addAsset: "Agregar activo",
@@ -390,7 +405,8 @@ const app: AppMessages = {
       amount: "Cantidad",
       walletBalance: "Saldo de la wallet:",
       noTokensAvailable: "No hay tokens disponibles en la wallet",
-      addAssetNote: "Agrega un nuevo tipo de token SPL a la bóveda. El token ya debe existir en tu wallet.",
+      addAssetNote:
+        "Agrega un nuevo tipo de token SPL a la bóveda. El token ya debe existir en tu wallet.",
       depositing: "Depositando...",
       deposit: "Depositar",
       assetAddedTitle: "Activo agregado",
@@ -402,11 +418,13 @@ const app: AppMessages = {
       vaultClosedDesc: "Activos devueltos a tu wallet.",
       withdrawFailedTitle: "Retiro fallido",
       closeEstateConfirmTitle: "¿Cerrar estado y retirar?",
-      closeEstateConfirmDesc: "Esto devuelve todo el SOL y los tokens a tu wallet y cancela permanentemente la bóveda. El heredero ya no podrá reclamar.",
+      closeEstateConfirmDesc:
+        "Esto devuelve todo el SOL y los tokens a tu wallet y cancela permanentemente la bóveda. El heredero ya no podrá reclamar.",
       withdrawCancelLabel: "Retirar y cancelar",
       keepEstate: "Mantener estado",
       updateEstate: "Actualizar estado",
-      updateEstateDesc: "Ajusta tu calendario de registros, período de gracia o etiqueta del estado.",
+      updateEstateDesc:
+        "Ajusta tu calendario de registros, período de gracia o etiqueta del estado.",
       labelMax: "Etiqueta (máx. {{max}} caracteres)",
       estateLabelPlaceholder: "Etiqueta del estado",
       intervalSec: "Intervalo (seg)",
@@ -417,7 +435,8 @@ const app: AppMessages = {
       settingsUpdatedTitle: "Configuración actualizada",
       settingsUpdatedDesc: "Configuración del estado guardada en cadena.",
       updateEstateConfirmTitle: "¿Actualizar estado?",
-      updateEstateConfirmDesc: "Cambiar intervalo, gracia o pausa desplaza el plazo del latido. Asegúrate de que los herederos estén al tanto antes de guardar.",
+      updateEstateConfirmDesc:
+        "Cambiar intervalo, gracia o pausa desplaza el plazo del latido. Asegúrate de que los herederos estén al tanto antes de guardar.",
       save: "Guardar",
       label: "Etiqueta",
       interval: "Intervalo",
@@ -433,7 +452,8 @@ const app: AppMessages = {
       updateEstateEditorialDesc:
         "Cambia la etiqueta, el calendario de registros y cuánto dura una pausa del guardián.",
       saveChangesQuestion: "¿Guardar estos cambios?",
-      saveCountsCheckIn: "Guardar también cuenta como un registro y empuja la ventana de reclamo hacia adelante.",
+      saveCountsCheckIn:
+        "Guardar también cuenta como un registro y empuja la ventana de reclamo hacia adelante.",
       noNewTokensWallet: "No hay tokens nuevos en esta wallet",
       noTokensToAdd: "No hay tokens para añadir.",
       addAssetEditorialDesc:
@@ -481,7 +501,8 @@ const app: AppMessages = {
     autoFetchDesc: "El RPC rechazó el escaneo en cadena. Usa la búsqueda manual abajo.",
     noEstates: "No se encontraron estados",
     noEstatesDesc1: "Busca un estado por la dirección de Solana del dueño de la bóveda.",
-    noEstatesDesc2: "Ningún estado nombra tu wallet como heredero. Prueba la búsqueda manual si esperas uno.",
+    noEstatesDesc2:
+      "Ningún estado nombra tu wallet como heredero. Prueba la búsqueda manual si esperas uno.",
     manualLookup: "Búsqueda manual",
     owner: "Dueño",
     status: "Estado",
@@ -528,7 +549,8 @@ const app: AppMessages = {
     notDelegate: "No es el delegado",
     deferClaimWindow: "Diferir ventana de reclamo",
     confirmTitle: "¿Extender la ventana de reclamo?",
-    confirmDesc: "Extiende la ventana de reclamo por {{duration}}. Esta pausa de guardián solo se puede usar una vez por estado.",
+    confirmDesc:
+      "Extiende la ventana de reclamo por {{duration}}. Esta pausa de guardián solo se puede usar una vez por estado.",
     confirmLabel: "Diferir",
     cancelLabel: "Cancelar",
     notFoundError: "Estado no encontrado para este par de autoridad + heredero.",
@@ -619,9 +641,11 @@ const app: AppMessages = {
     saving: "Guardando…",
     cancel: "Cancelar",
     signInTitle: "Inicia sesión para gestionar notificaciones",
-    signInDesc: "Los datos de contacto son privados de este estado. Demuestra que eres dueño de esta wallet — nada más.",
+    signInDesc:
+      "Los datos de contacto son privados de este estado. Demuestra que eres dueño de esta wallet — nada más.",
     signPrompt: "Te pedirán firmar exactamente este mensaje",
-    signNote: "Sin transacción, sin gas, sin solicitud de conexión de wallet — solo una firma, válida solo para esta sesión.",
+    signNote:
+      "Sin transacción, sin gas, sin solicitud de conexión de wallet — solo una firma, válida solo para esta sesión.",
     signMessage: "Firmar mensaje",
     signMessageBody:
       "heirlm.xyz wants you to manage notification settings.\n\nEstate:  {{estate}}\nWallet:  {{wallet}}\n\nThis does not cost gas and does not authorize any on-chain transaction.",
@@ -635,6 +659,10 @@ const app: AppMessages = {
     edit: "Editar",
     signIn: "Iniciar sesión",
     retry: "Reintentar",
+    saveFailed: "No se pudieron guardar los recordatorios",
+    saveFailedDesc: "Algo salió mal. Inténtalo de nuevo.",
+    signInFailed: "No se pudo verificar la cartera",
+    signInFailedDesc: "Error al verificar la firma. Inténtalo de nuevo.",
     summaryYou: "Tú: {{channel}}",
     summaryYouPlus: "Tú: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -655,7 +683,8 @@ const app: AppMessages = {
     doneShort: "Listo",
     protected: "Protegido",
     recommended: "Recomendado",
-    protectedDesc: "Los fondos están asegurados contra el riesgo de la plataforma. Menor rendimiento, mayor seguridad.",
+    protectedDesc:
+      "Los fondos están asegurados contra el riesgo de la plataforma. Menor rendimiento, mayor seguridad.",
     unprotected: "Sin protección",
     unprotectedDesc: "Mayor rendimiento sin seguro. Ideal para depósitos que toleran más riesgo.",
     apy: "{{apy}}% APY",
@@ -677,8 +706,10 @@ const app: AppMessages = {
     unstakeSol: "Unstake de SOL",
     pullBack: "Trae {{amount}} {{unit}} de vuelta a tu bóveda.",
     oneSigTitle: "Recuperación con una firma",
-    oneSigLulo: "El backend gestiona el retiro de Lulo y devuelve los fondos a tu bóveda automáticamente.",
-    oneSigStake: "El backend gestiona el retiro del staking y devuelve los fondos a tu bóveda automáticamente.",
+    oneSigLulo:
+      "El backend gestiona el retiro de Lulo y devuelve los fondos a tu bóveda automáticamente.",
+    oneSigStake:
+      "El backend gestiona el retiro del staking y devuelve los fondos a tu bóveda automáticamente.",
     recalling: "Recuperando…",
     tokens: "tokens",
     done: "¡Listo!",
@@ -719,15 +750,16 @@ const app: AppMessages = {
     yieldFeeNote:
       "Se aplica un 10 % al rendimiento ganado, nunca al principal. Hay que recuperar los fondos desplegados antes de que un heredero pueda reclamar.",
     stakeVaultSol: "Apuesta el SOL de la bóveda",
-    stakeVaultDesc: "Delega {{amount}} SOL a un validador. Sigue rindiendo mientras el estado espera.",
+    stakeVaultDesc:
+      "Delega {{amount}} SOL a un validador. Sigue rindiendo mientras el estado espera.",
     commissionPct: "{{pct}}% de comisión",
     selectedDot: "{{name}} · {{apy}}% APY",
     epochRecallNote:
       "La delegación se activa en el siguiente límite de época, y quitar el stake tarda una época en liquidarse. Recupera antes de que se abra la ventana de reclamo.",
     jitoEditorial: "Staking con MEV. El mayor rendimiento actual de los dos.",
-    marinadeEditorial: "Stake repartido en un conjunto de validadores. Más estable, un poco más bajo.",
-    pullBackEarned:
-      "Trae {{amount}} {{unit}} de vuelta a la bóveda, junto con lo que haya ganado.",
+    marinadeEditorial:
+      "Stake repartido en un conjunto de validadores. Más estable, un poco más bajo.",
+    pullBackEarned: "Trae {{amount}} {{unit}} de vuelta a la bóveda, junto con lo que haya ganado.",
     oneSigLuloEditorial:
       "Una firma retira de Lulo y devuelve los fondos a la bóveda. Un 10 % se aplica al rendimiento ganado, nunca al principal.",
     oneSigStakeEditorial:

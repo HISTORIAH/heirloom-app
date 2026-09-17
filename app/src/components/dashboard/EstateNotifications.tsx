@@ -10,9 +10,13 @@ import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
 import {
   defaultNotificationsConfig,
   summarizeNotifications,
+  toAddRecipientRequests,
   type NotificationsCardStatus,
   type NotificationsConfig,
-} from "@/types/notifications";
+} from "@/types/reminders";
+import { addContact, fetchReminders, saveReminder } from "@/services/api/reminders";
+import { useToast } from "@/hooks/use-toast";
+import { errMsg } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -30,6 +34,7 @@ const textEncoder = new TextEncoder();
  */
 export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const { t } = useTranslation("app");
+  const { toast } = useToast();
   const signMessage = useSignMessage(account);
 
   const [notifStatus, setNotifStatus] = useState<NotificationsCardStatus>("locked");
@@ -39,6 +44,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const [notifEditOpen, setNotifEditOpen] = useState(false);
   const [notifSigning, setNotifSigning] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   const handleNotifAction = () => {
     if (notifStatus === "authorized") {
@@ -56,25 +62,54 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
       await verifyChallenge(account.address, bs58.encode(signature));
       setNotifSignInOpen(false);
       setNotifStatus("authorized");
+
+      // Load existing reminders to determine save vs add-contact
+      try {
+        const existing = await fetchReminders(estate.estatePda);
+        if (existing.recipients.length > 0) {
+          setHasSubscription(true);
+        }
+      } catch {
+        // No existing reminders or fetch failed — treat as new subscription
+      }
+
       setNotifEditOpen(true);
-    } catch {
+    } catch (err) {
       setNotifSignInOpen(false);
       setNotifStatus("error");
+      toast({
+        title: t("notifications.signInFailed"),
+        description: errMsg(err, t("notifications.signInFailedDesc")),
+        variant: "destructive",
+      });
     } finally {
       setNotifSigning(false);
     }
   };
 
-  // TODO: replace with a real save call (services/api/reminders saveNotifications) once
-  // recipients get mapped from this creator/heir shape to the backend's flat list.
-  const handleNotifSave = (next: NotificationsConfig) => {
+  const handleNotifSave = async (next: NotificationsConfig) => {
     setNotifSaving(true);
-    setTimeout(() => {
-      setNotifSaving(false);
+    try {
+      const recipients = toAddRecipientRequests(next);
+      if (hasSubscription) {
+        await addContact(estate.estatePda, recipients);
+      } else {
+        await saveReminder(estate.estatePda, "heirloom", recipients);
+        setHasSubscription(true);
+      }
       setNotifConfig(next);
       setNotifEditOpen(false);
       setNotifSummary(summarizeNotifications(next, estate.label, t));
-    }, 400);
+    } catch (err) {
+      setNotifStatus("error");
+      toast({
+        title: t("notifications.saveFailed"),
+        description: errMsg(err, t("notifications.saveFailedDesc")),
+        variant: "destructive",
+      });
+    } finally {
+      setNotifSaving(false);
+    }
   };
 
   const notifSignMessage = t("notifications.signMessageBody", {
@@ -85,7 +120,11 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   return (
     <>
       <div className="lg:col-span-12">
-        <NotificationsCard status={notifStatus} summary={notifSummary} onAction={handleNotifAction} />
+        <NotificationsCard
+          status={notifStatus}
+          summary={notifSummary}
+          onAction={handleNotifAction}
+        />
       </div>
 
       <NotificationsSignInPanel

@@ -78,7 +78,7 @@ const app: AppMessages = {
       whatProtecting: "何を守りますか？",
       howOften: "どのくらいの頻度でチェックインしますか？",
       reviewConfirm: "確認して確定",
-      labelLabel: "ラベル（例: \"息子\"、\"配偶者\"）",
+      labelLabel: 'ラベル（例: "息子"、"配偶者"）',
       labelPlaceholder: "例: 配偶者",
       heirAddressLabel: "相続人の SOLANA アドレス",
       heirAddressPlaceholder: "Solana ウォレットアドレスを入力…",
@@ -122,7 +122,8 @@ const app: AppMessages = {
       ifNoCheckin: "この期間チェックインしなければ、相続人が請求できます。",
       neverCheckin: "→ 一度もチェックインしなければ、最も早い請求日は",
       graceUndo: "猶予期間は取り消しボタンです。",
-      graceUndoDesc: "間隔を逃しましたか？猶予期間中でもチェックインして時計全体をリセットできます。完全な {{days}} 日が経過して初めて相続人が請求できます。",
+      graceUndoDesc:
+        "間隔を逃しましたか？猶予期間中でもチェックインして時計全体をリセットできます。完全な {{days}} 日が経過して初めて相続人が請求できます。",
       timing: "タイミング",
       deposits: "入金",
       heir: "相続人",
@@ -168,8 +169,7 @@ const app: AppMessages = {
       youCheckInEvery: "チェックイン間隔",
       heirThenWaits: "その後、相続人が待つ期間",
       checkInFeeNote: "ウォレットで署名するだけ。ネットワーク手数料はかかりません。",
-      graceWaitNote:
-        "開始時に通知されます。終わる前ならいつでも止められます。",
+      graceWaitNote: "開始時に通知されます。終わる前ならいつでも止められます。",
       timelineToday: "今日",
       timelineHorizon: "最長15か月",
       timelinePending: "次のステップで設定",
@@ -188,15 +188,12 @@ const app: AppMessages = {
       labelOnlyYou: "あなたにだけ見えます。ダッシュボードでエステートを見分けやすくします。",
       labelPlaceholderMum: "母のエステート",
       heirWalletLabel: "相手のSolanaウォレットアドレス",
-      heirWalletHint:
-        "相続人のウォレットから貼り付けてください。資産はここ以外には行きません。",
+      heirWalletHint: "相続人のウォレットから貼り付けてください。資産はここ以外には行きません。",
       pasteAddress: "アドレスを貼り付け",
-      guardianHint:
-        "あなたが亡くなったと分かったとき、移転を早めに始められる信頼できる人。",
+      guardianHint: "あなたが亡くなったと分かったとき、移転を早めに始められる信頼できる人。",
       leaveBlank: "空欄のままスキップ",
       signerLabelPlain: "チェックイン署名者",
-      signerHint:
-        "このウォレットを使いたくないとき、代わりにチェックインできる別のウォレット。",
+      signerHint: "このウォレットを使いたくないとき、代わりにチェックインできる別のウォレット。",
       goingIntoEstate: "エステートに入れるもの",
       nothingYetShort: "まだ何もなし",
       skipDepositHint: "今はスキップして、後からダッシュボードで入金できます。",
@@ -216,8 +213,7 @@ const app: AppMessages = {
       tipCheckAddress:
         "資産はこのアドレス以外には行きません。手入力せず、相続人のウォレットから貼り付けてください。",
       tipAddLaterTitle: "後から追加できます",
-      tipAddLater:
-        "ここで決めたことは最終ではありません。ダッシュボードからいつでも入金できます。",
+      tipAddLater: "ここで決めたことは最終ではありません。ダッシュボードからいつでも入金できます。",
       tipKeepIntervalTitle: "続けられる間隔を選ぶ",
       tipKeepInterval:
         "間隔が短いほど何かあったときに早く移りますが、チェックインの回数は増えます。",
@@ -342,36 +338,49 @@ const app: AppMessages = {
       last: "完了",
       back: "戻る",
       step1Title: "Heirloom へようこそ",
-      step1Content: "アプリを簡単に見て回りましょう — まだウォレットは不要です。資産を動かす準備ができたときだけ接続します。",
+      step1Content:
+        "アプリを簡単に見て回りましょう — まだウォレットは不要です。資産を動かす準備ができたときだけ接続します。",
       step2Title: "相続人を指名",
-      step2Content: "相続する人を設定します: Solana アドレスを入力し、関係にラベルを付け、任意で代理人やハートビート署名者を指定します。",
+      step2Content:
+        "相続する人を設定します: Solana アドレスを入力し、関係にラベルを付け、任意で代理人やハートビート署名者を指定します。",
       step3Title: "資産を選択",
-      step3Content: "SOL や SPL トークンをボルトに入金します。今はスキップして後で資産を追加できます。",
+      step3Content:
+        "SOL や SPL トークンをボルトに入金します。今はスキップして後で資産を追加できます。",
       step4Title: "チェックインタイマーを設定",
-      step4Content: "アクティブを確認する頻度と、チェックインを逃した後に相続人が請求前に待つ猶予期間を選びます。",
+      step4Content:
+        "アクティブを確認する頻度と、チェックインを逃した後に相続人が請求前に待つ猶予期間を選びます。",
       step5Title: "確認して作成",
-      step5Content: "全体計画 — 相続人、資産、タイマー — を確認し、承認してエステート作成をクリックします。ここで入金と署名のためにウォレットを接続します。",
+      step5Content:
+        "全体計画 — 相続人、資産、タイマー — を確認し、承認してエステート作成をクリックします。ここで入金と署名のためにウォレットを接続します。",
       step6Title: "ボルトダッシュボード",
-      step6Content: "各ボルトはライブ状態、カウントダウン、ロックされた残高、相続人を表示します。ここでハートビートを送信してタイマーをリセットし、資産を維持します。",
+      step6Content:
+        "各ボルトはライブ状態、カウントダウン、ロックされた残高、相続人を表示します。ここでハートビートを送信してタイマーをリセットし、資産を維持します。",
       step7Title: "ダッシュボード",
-      step7Content: "ボルトがまだない場合、ダッシュボードで新しいエステートを作成するか、相続人に指名されていれば相続を請求できます。",
+      step7Content:
+        "ボルトがまだない場合、ダッシュボードで新しいエステートを作成するか、相続人に指名されていれば相続を請求できます。",
       step8Title: "相続を請求",
-      step8Content: "相続人はここで自分に残された資産を調べて請求します。自分のものを請求するにはウォレットを接続する必要があります。",
+      step8Content:
+        "相続人はここで自分に残された資産を調べて請求します。自分のものを請求するにはウォレットを接続する必要があります。",
       step9Title: "所有者で検索",
-      step9Content: "自動スキャンで相続が見つからない場合は、これを展開してボルト所有者のアドレスでエステートを検索します。",
+      step9Content:
+        "自動スキャンで相続が見つからない場合は、これを展開してボルト所有者のアドレスでエステートを検索します。",
       step10Title: "ハートビート署名者ポータル",
-      step10Content: "信頼された署名者はここでボルトのハートビートを更新できます — 資産への完全な権限なしでアクティブを維持します。",
+      step10Content:
+        "信頼された署名者はここでボルトのハートビートを更新できます — 資産への完全な権限なしでアクティブを維持します。",
       step11Title: "これが Heirloom です",
-      step11Content: "これがアプリ全体です。完了をクリックしてウォレットを接続し、最初のボルトを作成してください。",
+      step11Content:
+        "これがアプリ全体です。完了をクリックしてウォレットを接続し、最初のボルトを作成してください。",
       allSetTitle: "準備完了です",
-      allSetDesc: "最初のボルトを作成するにはウォレットを接続してください — ビルダーへ直接案内します。",
+      allSetDesc:
+        "最初のボルトを作成するにはウォレットを接続してください — ビルダーへ直接案内します。",
       connectWallet: "ウォレット接続",
     },
     manage: {
       changeHeir: "相続人を変更",
       changeHeirDesc: "エステートを別の相続人アドレスに移します。",
       newHeirPlaceholder: "新しい相続人の Solana アドレス...",
-      changeHeirWarning: "警告: エステート PDA + ボルト資産が新しい相続人に移動します。以前の相続人は請求できなくなります。",
+      changeHeirWarning:
+        "警告: エステート PDA + ボルト資産が新しい相続人に移動します。以前の相続人は請求できなくなります。",
       cancel: "キャンセル",
       sameHeirTitle: "同じ相続人",
       sameHeirDesc: "新しい相続人アドレスが現在の相続人と一致します。",
@@ -379,7 +388,8 @@ const app: AppMessages = {
       heirUpdatedDesc: "エステートが新しい相続人に再割り当てされました。",
       updateFailedTitle: "更新に失敗しました",
       changeHeirConfirmTitle: "相続人を変更しますか？",
-      changeHeirConfirmDesc: "エステート PDA とボルト資産が新しい相続人に移動します。現在の相続人は請求できなくなります。",
+      changeHeirConfirmDesc:
+        "エステート PDA とボルト資産が新しい相続人に移動します。現在の相続人は請求できなくなります。",
       from: "から",
       to: "へ",
       addAsset: "資産を追加",
@@ -390,7 +400,8 @@ const app: AppMessages = {
       amount: "数量",
       walletBalance: "ウォレット残高:",
       noTokensAvailable: "ウォレットに利用可能なトークンがありません",
-      addAssetNote: "ボルトに新しい SPL トークンタイプを追加します。トークンはすでにウォレットに存在する必要があります。",
+      addAssetNote:
+        "ボルトに新しい SPL トークンタイプを追加します。トークンはすでにウォレットに存在する必要があります。",
       depositing: "入金中...",
       deposit: "入金",
       assetAddedTitle: "資産を追加しました",
@@ -402,7 +413,8 @@ const app: AppMessages = {
       vaultClosedDesc: "資産がウォレットに戻りました。",
       withdrawFailedTitle: "引き出しに失敗しました",
       closeEstateConfirmTitle: "エステートを閉じて引き出しますか？",
-      closeEstateConfirmDesc: "すべての SOL とトークンをウォレットに返し、ボルトを恒久的にキャンセルします。相続人は請求できなくなります。",
+      closeEstateConfirmDesc:
+        "すべての SOL とトークンをウォレットに返し、ボルトを恒久的にキャンセルします。相続人は請求できなくなります。",
       withdrawCancelLabel: "引き出してキャンセル",
       keepEstate: "エステートを維持",
       updateEstate: "エステートを更新",
@@ -417,7 +429,8 @@ const app: AppMessages = {
       settingsUpdatedTitle: "設定を更新しました",
       settingsUpdatedDesc: "エステート設定がオンチェーンに保存されました。",
       updateEstateConfirmTitle: "エステートを更新しますか？",
-      updateEstateConfirmDesc: "間隔、猶予、一時停止を変更するとハートビート期限が変わります。保存前に相続人が認識していることを確認してください。",
+      updateEstateConfirmDesc:
+        "間隔、猶予、一時停止を変更するとハートビート期限が変わります。保存前に相続人が認識していることを確認してください。",
       save: "保存",
       label: "ラベル",
       interval: "間隔",
@@ -436,12 +449,10 @@ const app: AppMessages = {
       saveCountsCheckIn: "保存はチェックインにもなり、請求ウィンドウが先に延びます。",
       noNewTokensWallet: "このウォレットに新しいトークンはありません",
       noTokensToAdd: "追加できるトークンがありません。",
-      addAssetEditorialDesc:
-        "新しいSPLトークンをエステートに登録し、初期残高を入金します。",
+      addAssetEditorialDesc: "新しいSPLトークンをエステートに登録し、初期残高を入金します。",
       nowUsesTimings: "エステートは新しいタイミングを使っています。",
       changeHeirShort: "相続人を変更",
-      changeHeirMigrateDesc:
-        "資産は新しい相続人から導出されるエステートとボルトに移ります。",
+      changeHeirMigrateDesc: "資産は新しい相続人から導出されるエステートとボルトに移ります。",
       changeHeirQuestion: "相続人を変更しますか？",
       changeHeirMovesDesc:
         "資産はすべて新しいエステートとボルトに移ります。現在の相続人は請求できなくなります。",
@@ -457,8 +468,7 @@ const app: AppMessages = {
         "現在の相続人はこのエステートへの請求権をすべて失います。ガーディアンの一時停止中は実行できません。",
       tokenLabel: "トークン",
       scanningWallet: "ウォレットをスキャン中…",
-      registerTokenNote:
-        "トークンを登録するとボルト口座が作られ、請求可能なセットに入ります。",
+      registerTokenNote: "トークンを登録するとボルト口座が作られ、請求可能なセットに入ります。",
       assetAddedEstateDesc: "そのトークンはエステートの一部になりました。",
       couldNotAddAsset: "資産を追加できませんでした",
       labelMaxN: "ラベル（最大{{max}}文字）",
@@ -481,7 +491,8 @@ const app: AppMessages = {
     autoFetchDesc: "RPC がオンチェーンスキャンを拒否しました。下の手動検索を使用してください。",
     noEstates: "エステートが見つかりません",
     noEstatesDesc1: "ボルト所有者の Solana アドレスでエステートを検索します。",
-    noEstatesDesc2: "あなたのウォレットを相続人に指名したエステートはありません。予期している場合は手動検索を試してください。",
+    noEstatesDesc2:
+      "あなたのウォレットを相続人に指名したエステートはありません。予期している場合は手動検索を試してください。",
     manualLookup: "手動検索",
     owner: "所有者",
     status: "状態",
@@ -528,7 +539,8 @@ const app: AppMessages = {
     notDelegate: "代理人ではありません",
     deferClaimWindow: "請求ウィンドウを延期",
     confirmTitle: "請求ウィンドウを延長しますか？",
-    confirmDesc: "請求ウィンドウを {{duration}} 延長します。このガーディアン一時停止はエステートごとに一度だけ使用できます。",
+    confirmDesc:
+      "請求ウィンドウを {{duration}} 延長します。このガーディアン一時停止はエステートごとに一度だけ使用できます。",
     confirmLabel: "延期",
     cancelLabel: "キャンセル",
     notFoundError: "この権限 + 相続人の組み合わせのエステートが見つかりません。",
@@ -567,7 +579,8 @@ const app: AppMessages = {
     sendHeartbeat: "ハートビートを送信",
     notFoundError: "この権限 + 相続人の組み合わせのエステートが見つかりません。",
     noSignerError: "エステートにハートビート署名者が指定されていません。",
-    wrongSignerError: "あなたはこのエステートのハートビート署名者ではありません。署名者は {{signer}}...",
+    wrongSignerError:
+      "あなたはこのエステートのハートビート署名者ではありません。署名者は {{signer}}...",
     toastSentTitle: "ハートビートを送信しました",
     toastSentDesc: "ボルトタイマーがリセットされました。",
     toastFailTitle: "ハートビートに失敗しました",
@@ -595,7 +608,8 @@ const app: AppMessages = {
   },
   notifications: {
     title: "通知",
-    dialogDesc: "欲しいものだけオンにしてください。ここにあるものはエステート自体には影響しません。",
+    dialogDesc:
+      "欲しいものだけオンにしてください。ここにあるものはエステート自体には影響しません。",
     dialogTitle: "リマインダーと通知",
     dialogLead: "あなたへの連絡先と、相続人への連絡先。",
     remindCheckIn: "チェックインをリマインド",
@@ -606,8 +620,7 @@ const app: AppMessages = {
     youWillSign: "署名を求められます",
     addBackupPlain: "予備チャネルを追加",
     notifyName: "{{name}}に通知",
-    signCostsNothing:
-      "署名に費用はかからず、資金も動きません。鍵を持っていることの証明だけです。",
+    signCostsNothing: "署名に費用はかからず、資金も動きません。鍵を持っていることの証明だけです。",
     remindTitle: "期限前にリマインド",
     remindDesc: "ハートビート期限の前に知らせます",
     notifyTitle: "解除時に {{name}} に通知",
@@ -621,7 +634,8 @@ const app: AppMessages = {
     signInTitle: "通知を管理するにはサインイン",
     signInDesc: "連絡先はこのエステートに非公開です。このウォレットの所有を証明するだけです。",
     signPrompt: "このメッセージそのものに署名するよう求められます",
-    signNote: "取引なし、ガスなし、ウォレット接続リクエストなし。署名だけで、このセッションのみ有効です。",
+    signNote:
+      "取引なし、ガスなし、ウォレット接続リクエストなし。署名だけで、このセッションのみ有効です。",
     signMessage: "メッセージに署名",
     signMessageBody:
       "heirlm.xyz wants you to manage notification settings.\n\nEstate:  {{estate}}\nWallet:  {{wallet}}\n\nThis does not cost gas and does not authorize any on-chain transaction.",
@@ -635,6 +649,10 @@ const app: AppMessages = {
     edit: "編集",
     signIn: "サインイン",
     retry: "再試行",
+    saveFailed: "リマインダーを保存できませんでした",
+    saveFailedDesc: "問題が発生しました。もう一度お試しください。",
+    signInFailed: "ウォレットを確認できませんでした",
+    signInFailedDesc: "署名の検証に失敗しました。もう一度お試しください。",
     summaryYou: "あなた: {{channel}}",
     summaryYouPlus: "あなた: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -719,23 +737,22 @@ const app: AppMessages = {
     yieldFeeNote:
       "手数料は得た利回りの10%のみ。元本にはかかりません。相続人が請求する前に展開中の資金を戻す必要があります。",
     stakeVaultSol: "ボルトのSOLをステーク",
-    stakeVaultDesc: "{{amount}} SOLをバリデータに委任。エステートが待っている間も利回りが続きます。",
+    stakeVaultDesc:
+      "{{amount}} SOLをバリデータに委任。エステートが待っている間も利回りが続きます。",
     commissionPct: "手数料{{pct}}%",
     selectedDot: "{{name}} · {{apy}}% APY",
     epochRecallNote:
       "委任は次のエポック境界で有効になり、解除の清算にも1エポックかかります。請求ウィンドウが開く前に戻してください。",
     jitoEditorial: "MEV強化ステーキング。いま両者のうち利回りが高い方。",
     marinadeEditorial: "バリデータ集合に分散。安定していて、やや低め。",
-    pullBackEarned:
-      "{{amount}} {{unit}}を、得た分ごとボルトに戻します。",
+    pullBackEarned: "{{amount}} {{unit}}を、得た分ごとボルトに戻します。",
     oneSigLuloEditorial:
       "署名一度でLuloから引き出し、ボルトに戻します。手数料は得た利回りの10%のみ。",
     oneSigStakeEditorial:
       "署名一度で委任を解除し、SOLをボルトに戻します。清算は次のエポック境界です。",
     deployed: "展開中",
     fundsOutEarning: "資金は外で利回り中",
-    beforeAction:
-      "{{action}}の前に、すべてボルトへ戻します。同じトランザクションで行われます。",
+    beforeAction: "{{action}}の前に、すべてボルトへ戻します。同じトランザクションで行われます。",
     preparing: "準備中…",
     recallAndAction: "戻して{{action}}",
     tokensInLulo: "Lulo内のトークン",
@@ -760,8 +777,7 @@ const app: AppMessages = {
     withdrawFromVault: "ボルトから引き出す",
     returnToVault: "ボルトに戻す",
     depositToLulo: "Luloに入金",
-    epochActiveNote:
-      "委任は次のエポック境界で有効になります。そこから報酬が積み上がります。",
+    epochActiveNote: "委任は次のエポック境界で有効になります。そこから報酬が積み上がります。",
     topUpSymbol: "{{symbol}}を追加",
     moveIntoVault: "ウォレットからボルトへ{{symbol}}を移します。",
     inVault: "ボルト内",

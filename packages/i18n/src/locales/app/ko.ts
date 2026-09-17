@@ -78,7 +78,7 @@ const app: AppMessages = {
       whatProtecting: "무엇을 보호하나요?",
       howOften: "얼마나 자주 체크인하나요?",
       reviewConfirm: "검토 및 확인",
-      labelLabel: "라벨 (예: \"아들\", \"배우자\")",
+      labelLabel: '라벨 (예: "아들", "배우자")',
       labelPlaceholder: "예: 배우자",
       heirAddressLabel: "상속인 솔라나 주소",
       heirAddressPlaceholder: "솔라나 지갑 주소 입력…",
@@ -122,7 +122,8 @@ const app: AppMessages = {
       ifNoCheckin: "이 기간 동안 체크인하지 않으면 상속인이 청구할 수 있습니다.",
       neverCheckin: "→ 체크인하지 않으면 가장 이른 청구일은",
       graceUndo: "유예 기간은 실행 취소 버튼입니다.",
-      graceUndoDesc: "간격을 놓쳤나요? 유예 기간 중에도 체크인하여 전체 시계를 재설정할 수 있습니다. 전체 {{days}}일이 지나야만 상속인이 청구할 수 있습니다.",
+      graceUndoDesc:
+        "간격을 놓쳤나요? 유예 기간 중에도 체크인하여 전체 시계를 재설정할 수 있습니다. 전체 {{days}}일이 지나야만 상속인이 청구할 수 있습니다.",
       timing: "타이밍",
       deposits: "입금",
       heir: "상속인",
@@ -168,8 +169,7 @@ const app: AppMessages = {
       youCheckInEvery: "체크인 주기",
       heirThenWaits: "그다음 상속인이 기다립니다",
       checkInFeeNote: "지갑에서 서명 한 번. 네트워크 수수료 없음.",
-      graceWaitNote:
-        "시작 시점에 알림이 갑니다. 끝나기 전이면 언제든 멈출 수 있습니다.",
+      graceWaitNote: "시작 시점에 알림이 갑니다. 끝나기 전이면 언제든 멈출 수 있습니다.",
       timelineToday: "오늘",
       timelineHorizon: "최대 15개월",
       timelinePending: "다음 단계에서 정합니다",
@@ -188,15 +188,12 @@ const app: AppMessages = {
       labelOnlyYou: "당신만 봅니다. 대시보드에서 에스테이트를 구분합니다.",
       labelPlaceholderMum: "엄마의 에스테이트",
       heirWalletLabel: "상대의 Solana 지갑 주소",
-      heirWalletHint:
-        "상속인 지갑에서 붙여넣으세요. 자산은 여기로만 갑니다.",
+      heirWalletHint: "상속인 지갑에서 붙여넣으세요. 자산은 여기로만 갑니다.",
       pasteAddress: "주소를 붙여넣으세요",
-      guardianHint:
-        "당신이 세상을 떠난 걸 알면 이전을 일찍 시작할 수 있는, 믿는 사람.",
+      guardianHint: "당신이 세상을 떠난 걸 알면 이전을 일찍 시작할 수 있는, 믿는 사람.",
       leaveBlank: "건너뛰려면 비워 두세요",
       signerLabelPlain: "체크인 서명자",
-      signerHint:
-        "이 지갑 대신 체크인할 수 있는 두 번째 지갑.",
+      signerHint: "이 지갑 대신 체크인할 수 있는 두 번째 지갑.",
       goingIntoEstate: "에스테이트에 들어가는 것",
       nothingYetShort: "아직 없음",
       skipDepositHint: "지금은 건너뛰고 대시보드에서 나중에 입금해도 됩니다.",
@@ -213,11 +210,9 @@ const app: AppMessages = {
       estFeeTilde: "예상 네트워크 수수료 ~0.002 SOL",
       nothingAddedYet: "아직 추가된 것 없음",
       tipCheckAddressTitle: "주소를 다시 확인하세요",
-      tipCheckAddress:
-        "자산은 이 주소로만 갑니다. 타이핑하지 말고 상속인 지갑에서 붙여넣으세요.",
+      tipCheckAddress: "자산은 이 주소로만 갑니다. 타이핑하지 말고 상속인 지갑에서 붙여넣으세요.",
       tipAddLaterTitle: "나중에 더 넣을 수 있습니다",
-      tipAddLater:
-        "여기 있는 것은 최종이 아닙니다. 대시보드에서 언제든 입금할 수 있습니다.",
+      tipAddLater: "여기 있는 것은 최종이 아닙니다. 대시보드에서 언제든 입금할 수 있습니다.",
       tipKeepIntervalTitle: "지킬 수 있는 주기를 고르세요",
       tipKeepInterval:
         "주기가 짧을수록 일이 생겼을 때 더 빨리 이전되지만, 체크인을 더 자주 해야 합니다.",
@@ -342,25 +337,35 @@ const app: AppMessages = {
       last: "완료",
       back: "뒤로",
       step1Title: "Heirloom에 오신 것을 환영합니다",
-      step1Content: "앱을 빠르게 둘러보세요 — 아직 지갑이 필요 없습니다. 자산을 이동할 준비가 되었을 때만 연결하면 됩니다.",
+      step1Content:
+        "앱을 빠르게 둘러보세요 — 아직 지갑이 필요 없습니다. 자산을 이동할 준비가 되었을 때만 연결하면 됩니다.",
       step2Title: "상속인 지정",
-      step2Content: "상속받을 사람을 설정하세요: 솔라나 주소를 입력하고, 관계에 라벨을 붙이고, 선택적으로 대리인이나 하트비트 서명자를 지정하세요.",
+      step2Content:
+        "상속받을 사람을 설정하세요: 솔라나 주소를 입력하고, 관계에 라벨을 붙이고, 선택적으로 대리인이나 하트비트 서명자를 지정하세요.",
       step3Title: "자산 선택",
-      step3Content: "SOL 및/또는 SPL 토큰을 볼트에 입금하세요. 지금 건너뛰고 나중에 자산을 추가할 수 있습니다.",
+      step3Content:
+        "SOL 및/또는 SPL 토큰을 볼트에 입금하세요. 지금 건너뛰고 나중에 자산을 추가할 수 있습니다.",
       step4Title: "체크인 타이머 설정",
-      step4Content: "활동 상태를 확인할 주기와, 체크인을 놓친 후 상속인이 청구 전에 기다릴 유예 기간을 선택하세요.",
+      step4Content:
+        "활동 상태를 확인할 주기와, 체크인을 놓친 후 상속인이 청구 전에 기다릴 유예 기간을 선택하세요.",
       step5Title: "검토 및 생성",
-      step5Content: "전체 계획 — 상속인, 자산, 타이머 — 을 확인한 후 승인하고 에스테이트 생성을 클릭하세요. 여기서 입금과 서명을 위해 지갑을 연결합니다.",
+      step5Content:
+        "전체 계획 — 상속인, 자산, 타이머 — 을 확인한 후 승인하고 에스테이트 생성을 클릭하세요. 여기서 입금과 서명을 위해 지갑을 연결합니다.",
       step6Title: "볼트 대시보드",
-      step6Content: "각 볼트는 실시간 상태, 카운트다운, 잠긴 잔액, 상속인을 표시합니다. 여기서 하트비트를 보내 타이머를 재설정하고 자산을 유지하세요.",
+      step6Content:
+        "각 볼트는 실시간 상태, 카운트다운, 잠긴 잔액, 상속인을 표시합니다. 여기서 하트비트를 보내 타이머를 재설정하고 자산을 유지하세요.",
       step7Title: "대시보드",
-      step7Content: "볼트가 아직 없으면 대시보드에서 새 에스테이트를 생성하거나 — 상속인으로 지정되었다면 — 상속을 청구할 수 있습니다.",
+      step7Content:
+        "볼트가 아직 없으면 대시보드에서 새 에스테이트를 생성하거나 — 상속인으로 지정되었다면 — 상속을 청구할 수 있습니다.",
       step8Title: "상속 청구",
-      step8Content: "상속인은 여기서 자신에게 남겨진 자산을 조회하고 청구합니다. 당신의 것을 청구하려면 지갑을 연결해야 합니다.",
+      step8Content:
+        "상속인은 여기서 자신에게 남겨진 자산을 조회하고 청구합니다. 당신의 것을 청구하려면 지갑을 연결해야 합니다.",
       step9Title: "소유자로 조회",
-      step9Content: "자동 스캔이 상속을 찾지 못하면 이를 펼쳐 볼트 소유자 주소로 에스테이트를 조회하세요.",
+      step9Content:
+        "자동 스캔이 상속을 찾지 못하면 이를 펼쳐 볼트 소유자 주소로 에스테이트를 조회하세요.",
       step10Title: "하트비트 서명자 포털",
-      step10Content: "신뢰받는 서명자는 여기서 볼트의 하트비트를 갱신할 수 있습니다 — 자산에 대한 완전한 권한 없이 활성 상태를 유지합니다.",
+      step10Content:
+        "신뢰받는 서명자는 여기서 볼트의 하트비트를 갱신할 수 있습니다 — 자산에 대한 완전한 권한 없이 활성 상태를 유지합니다.",
       step11Title: "이것이 Heirloom입니다",
       step11Content: "이것이 전체 앱입니다. 완료를 클릭하고 지갑을 연결하여 첫 볼트를 생성하세요.",
       allSetTitle: "모두 준비되었습니다",
@@ -371,7 +376,8 @@ const app: AppMessages = {
       changeHeir: "상속인 변경",
       changeHeirDesc: "에스테이트를 다른 상속인 주소로 이전합니다.",
       newHeirPlaceholder: "새 상속인 솔라나 주소...",
-      changeHeirWarning: "경고: 에스테이트 PDA + 볼트 자산이 새 상속인으로 이동합니다. 이전 상속인은 더 이상 청구할 수 없습니다.",
+      changeHeirWarning:
+        "경고: 에스테이트 PDA + 볼트 자산이 새 상속인으로 이동합니다. 이전 상속인은 더 이상 청구할 수 없습니다.",
       cancel: "취소",
       sameHeirTitle: "동일한 상속인",
       sameHeirDesc: "새 상속인 주소가 현재 상속인과 일치합니다.",
@@ -379,7 +385,8 @@ const app: AppMessages = {
       heirUpdatedDesc: "에스테이트가 새 상속인에게 재할당되었습니다.",
       updateFailedTitle: "업데이트 실패",
       changeHeirConfirmTitle: "상속인을 변경할까요?",
-      changeHeirConfirmDesc: "에스테이트 PDA와 볼트 자산이 새 상속인으로 이동합니다. 현재 상속인은 더 이상 청구할 수 없습니다.",
+      changeHeirConfirmDesc:
+        "에스테이트 PDA와 볼트 자산이 새 상속인으로 이동합니다. 현재 상속인은 더 이상 청구할 수 없습니다.",
       from: "에서",
       to: "으로",
       addAsset: "자산 추가",
@@ -402,7 +409,8 @@ const app: AppMessages = {
       vaultClosedDesc: "자산이 지갑으로 반환되었습니다.",
       withdrawFailedTitle: "출금 실패",
       closeEstateConfirmTitle: "에스테이트 종료 및 출금?",
-      closeEstateConfirmDesc: "모든 SOL과 토큰을 지갑으로 반환하고 볼트를 영구적으로 취소합니다. 상속인은 더 이상 청구할 수 없습니다.",
+      closeEstateConfirmDesc:
+        "모든 SOL과 토큰을 지갑으로 반환하고 볼트를 영구적으로 취소합니다. 상속인은 더 이상 청구할 수 없습니다.",
       withdrawCancelLabel: "출금 및 취소",
       keepEstate: "에스테이트 유지",
       updateEstate: "에스테이트 업데이트",
@@ -417,7 +425,8 @@ const app: AppMessages = {
       settingsUpdatedTitle: "설정 업데이트됨",
       settingsUpdatedDesc: "에스테이트 설정이 온체인에 저장되었습니다.",
       updateEstateConfirmTitle: "에스테이트를 업데이트할까요?",
-      updateEstateConfirmDesc: "간격, 유예 또는 일시 중지를 변경하면 하트비트 마감이 바뀝니다. 저장 전에 상속인이 알고 있는지 확인하세요.",
+      updateEstateConfirmDesc:
+        "간격, 유예 또는 일시 중지를 변경하면 하트비트 마감이 바뀝니다. 저장 전에 상속인이 알고 있는지 확인하세요.",
       save: "저장",
       label: "라벨",
       interval: "간격",
@@ -430,18 +439,15 @@ const app: AppMessages = {
       closeEstateDescEditorial:
         "모든 자산이 지갑으로 돌아오고(0.5% 수수료 제외) 에스테이트가 닫힙니다. 상속인은 청구권을 잃습니다.",
       closeEstateShort: "에스테이트 닫기",
-      updateEstateEditorialDesc:
-        "이름표, 체크인 주기, 가디언 일시 중지 길이를 바꿉니다.",
+      updateEstateEditorialDesc: "이름표, 체크인 주기, 가디언 일시 중지 길이를 바꿉니다.",
       saveChangesQuestion: "이 변경을 저장할까요?",
       saveCountsCheckIn: "저장은 체크인으로도 잡혀 청구 창이 밀립니다.",
       noNewTokensWallet: "이 지갑에 새 토큰이 없습니다",
       noTokensToAdd: "추가할 토큰이 없습니다.",
-      addAssetEditorialDesc:
-        "새 SPL 토큰을 에스테이트에 등록하고 초기 잔액을 입금합니다.",
+      addAssetEditorialDesc: "새 SPL 토큰을 에스테이트에 등록하고 초기 잔액을 입금합니다.",
       nowUsesTimings: "에스테이트가 새 일정을 씁니다.",
       changeHeirShort: "상속인 변경",
-      changeHeirMigrateDesc:
-        "자산이 새 상속인에서 파생된 에스테이트와 볼트로 이전됩니다.",
+      changeHeirMigrateDesc: "자산이 새 상속인에서 파생된 에스테이트와 볼트로 이전됩니다.",
       changeHeirQuestion: "상속인을 바꿀까요?",
       changeHeirMovesDesc:
         "모든 자산이 새 에스테이트와 볼트로 이동합니다. 현재 상속인은 더 이상 청구할 수 없습니다.",
@@ -457,8 +463,7 @@ const app: AppMessages = {
         "현재 상속인은 이 에스테이트에 대한 모든 권리를 잃습니다. 가디언 일시 중지가 켜져 있으면 할 수 없습니다.",
       tokenLabel: "토큰",
       scanningWallet: "지갑을 스캔하는 중…",
-      registerTokenNote:
-        "토큰을 등록하면 볼트 계정이 생기고 청구 가능한 집합에 추가됩니다.",
+      registerTokenNote: "토큰을 등록하면 볼트 계정이 생기고 청구 가능한 집합에 추가됩니다.",
       assetAddedEstateDesc: "토큰이 이제 에스테이트에 포함됩니다.",
       couldNotAddAsset: "자산을 추가하지 못했습니다",
       labelMaxN: "이름표 (최대 {{max}})",
@@ -481,7 +486,8 @@ const app: AppMessages = {
     autoFetchDesc: "RPC가 온체인 스캔을 거부했습니다. 아래 수동 조회를 사용하세요.",
     noEstates: "에스테이트를 찾지 못함",
     noEstatesDesc1: "볼트 소유자의 솔라나 주소로 에스테이트를 조회하세요.",
-    noEstatesDesc2: "지갑을 상속인으로 지정한 에스테이트가 없습니다. 예상되는 것이 있다면 수동 조회를 시도하세요.",
+    noEstatesDesc2:
+      "지갑을 상속인으로 지정한 에스테이트가 없습니다. 예상되는 것이 있다면 수동 조회를 시도하세요.",
     manualLookup: "수동 조회",
     owner: "소유자",
     status: "상태",
@@ -528,7 +534,8 @@ const app: AppMessages = {
     notDelegate: "대리인 아님",
     deferClaimWindow: "청구 창 연기",
     confirmTitle: "청구 창을 연장할까요?",
-    confirmDesc: "청구 창을 {{duration}}만큼 연장합니다. 이 가디언 일시 중지는 에스테이트당 한 번만 사용할 수 있습니다.",
+    confirmDesc:
+      "청구 창을 {{duration}}만큼 연장합니다. 이 가디언 일시 중지는 에스테이트당 한 번만 사용할 수 있습니다.",
     confirmLabel: "연기",
     cancelLabel: "취소",
     notFoundError: "이 권한 + 상속인 쌍에 대한 에스테이트를 찾지 못했습니다.",
@@ -546,8 +553,7 @@ const app: AppMessages = {
     hotSignerPortal: "핫 서명자 포털",
     headline1: "하트비트를",
     headline2: "갱신하세요.",
-    description:
-      "등록된 하트비트 서명자로서 완전한 권한 없이 에스테이트에 핑을 보낼 수 있습니다.",
+    description: "등록된 하트비트 서명자로서 완전한 권한 없이 에스테이트에 핑을 보낼 수 있습니다.",
     authorityLabel: "권한 (소유자) 주소",
     authorityPlaceholder: "볼트 소유자 솔라나 주소...",
     heirLabel: "상속인 주소",
@@ -635,6 +641,10 @@ const app: AppMessages = {
     edit: "편집",
     signIn: "로그인",
     retry: "다시 시도",
+    saveFailed: "알림을 저장할 수 없습니다",
+    saveFailedDesc: "문제가 발생했습니다. 다시 시도해 주세요.",
+    signInFailed: "지갑을 확인할 수 없습니다",
+    signInFailedDesc: "서명 확인에 실패했습니다. 다시 시도해 주세요.",
     summaryYou: "나: {{channel}}",
     summaryYouPlus: "나: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -719,23 +729,22 @@ const app: AppMessages = {
     yieldFeeNote:
       "수수료는 번 수익의 10%이며 원금에는 붙지 않습니다. 상속인이 청구하려면 먼저 배치된 자금을 회수해야 합니다.",
     stakeVaultSol: "볼트의 SOL을 스테이킹",
-    stakeVaultDesc: "{{amount}} SOL을 밸리데이터에 위임합니다. 에스테이트가 기다리는 동안에도 수익이 납니다.",
+    stakeVaultDesc:
+      "{{amount}} SOL을 밸리데이터에 위임합니다. 에스테이트가 기다리는 동안에도 수익이 납니다.",
     commissionPct: "수수료 {{pct}}%",
     selectedDot: "{{name}} · {{apy}}% APY",
     epochRecallNote:
       "위임은 다음 에포크 경계에 활성화되고, 언스테이킹은 에포크 하나가 걸려 정산됩니다. 청구 창이 열리기 전에 회수하세요.",
     jitoEditorial: "MEV 강화 스테이킹. 둘 중 현재 수익이 더 높습니다.",
     marinadeEditorial: "밸리데이터 집합에 분산. 더 안정적이고 조금 낮습니다.",
-    pullBackEarned:
-      "{{amount}} {{unit}}과 번 수익을 볼트로 되돌립니다.",
+    pullBackEarned: "{{amount}} {{unit}}과 번 수익을 볼트로 되돌립니다.",
     oneSigLuloEditorial:
       "서명 한 번으로 Lulo에서 출금해 볼트로 되돌립니다. 수수료는 번 수익의 10%이며 원금에는 없습니다.",
     oneSigStakeEditorial:
       "서명 한 번으로 위임을 해제하고 SOL을 볼트로 되돌립니다. 스테이크는 다음 에포크 경계에 정산됩니다.",
     deployed: "배치됨",
     fundsOutEarning: "자금이 밖에서 수익 중",
-    beforeAction:
-      "{{action}} 전에 모든 것이 볼트로 돌아와야 합니다. 같은 트랜잭션에서 이뤄집니다.",
+    beforeAction: "{{action}} 전에 모든 것이 볼트로 돌아와야 합니다. 같은 트랜잭션에서 이뤄집니다.",
     preparing: "준비 중…",
     recallAndAction: "회수하고 {{action}}",
     tokensInLulo: "Lulo의 토큰",
@@ -760,8 +769,7 @@ const app: AppMessages = {
     withdrawFromVault: "볼트에서 출금",
     returnToVault: "볼트로 되돌리기",
     depositToLulo: "Lulo에 입금",
-    epochActiveNote:
-      "위임은 다음 에포크 경계에 활성화됩니다. 그때부터 보상이 쌓입니다.",
+    epochActiveNote: "위임은 다음 에포크 경계에 활성화됩니다. 그때부터 보상이 쌓입니다.",
     topUpSymbol: "{{symbol}} 충전",
     moveIntoVault: "지갑에서 볼트로 {{symbol}}을 옮깁니다.",
     inVault: "볼트에",

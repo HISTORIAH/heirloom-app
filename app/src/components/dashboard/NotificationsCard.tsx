@@ -1,6 +1,6 @@
 import { Bell, Lock, Clock, AlertTriangle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { NotificationsCardStatus } from "@/types/notifications";
+import type { NotificationsCardStatus } from "@/types/reminders";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -104,7 +104,7 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
           onClick={onAction}
           className={cn(
             "shrink-0 rounded-lg border border-tile-line px-5 py-2.5 text-sm font-semibold transition-colors hover:brightness-95",
-            meta.buttonClass
+            meta.buttonClass,
           )}
         >
           {t(meta.buttonKey)}
