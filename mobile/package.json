@@ -1,6 +1,6 @@
 {
-  "name": "heirloom-mobile",
-  "main": "expo-router/entry",
+  "name": "mobile",
+  "main": "index.ts",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",
+    "@historiah/heirloom": "workspace:*",
+    "@solana/kit": "^7.1.1",
     "@tamagui/config": "2.0.0-rc.19",
+    "@wallet-ui/react-native-kit": "^4.3.0",
     "expo": "~57.0.22",
     "expo-constants": "~57.0.18",
+    "expo-dev-client": "~57.0.19",
     "expo-font": "~57.0.4",
     "expo-linking": "~57.0.10",
     "expo-router": "~57.0.21",
@@ -24,6 +28,9 @@
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-quick-base64": "^3.0.1",
+    "react-native-quick-crypto": "^1.1.7",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",

@@ -9,7 +9,10 @@ const config = getDefaultConfig(projectRoot);
 
 // Bun keeps nested deps (Tamagui, Expo) inside node_modules/.bun. Hierarchical
 // lookup is required to see those. Pin React so Metro does not walk into app/.
-config.watchFolders = [projectRoot];
+config.watchFolders = [
+  projectRoot,
+  path.resolve(monorepoRoot, "clients/heirloom/js"),
+];
 config.resolver.nodeModulesPaths = [
   projectModules,
   path.resolve(monorepoRoot, "node_modules"),
@@ -18,6 +21,10 @@ config.resolver.extraNodeModules = {
   react: path.resolve(projectModules, "react"),
   "react-dom": path.resolve(projectModules, "react-dom"),
   "react-native": path.resolve(projectModules, "react-native"),
+  "@solana/kit": path.resolve(projectModules, "@solana/kit"),
+  "@historiah/heirloom": path.resolve(projectModules, "@historiah/heirloom"),
+  // Kit imports Node `crypto`. Route it to react-native-quick-crypto.
+  crypto: require.resolve("react-native-quick-crypto"),
 };
 config.resolver.unstable_enablePackageExports = true;
 config.resolver.unstable_conditionNames = ["react-native", "require", "default"];
