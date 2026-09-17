@@ -51,6 +51,8 @@ export type FetchReminderResponse = {
 export type ChannelSelection = {
   channel: ReminderChannel;
   value: string;
+  /** Only known for a channel loaded from a saved recipient — absent for one the user is still editing. */
+  verified?: boolean;
 };
 
 export type RoleNotificationConfig = {
@@ -124,6 +126,28 @@ export function summarizeNotifications(
     );
   }
   return parts.join(" · ");
+}
+
+/** Inverse of toAddRecipientRequests — rebuild UI config from the server's saved recipients. */
+export function notificationsConfigFromRecipients(
+  recipients: RecipientResponse[],
+): NotificationsConfig {
+  const config = defaultNotificationsConfig();
+  for (const recipient of recipients) {
+    const target = recipient.role === "heir" ? config.heir : config.creator;
+    const slot = {
+      channel: recipient.channel,
+      value: recipient.destination,
+      verified: recipient.verified,
+    };
+    if (!target.enabled) {
+      target.enabled = true;
+      target.primary = slot;
+    } else {
+      target.backup = slot;
+    }
+  }
+  return config;
 }
 
 /** Flatten a NotificationsConfig into the backend's AddRecipientRequest list (max 2). */

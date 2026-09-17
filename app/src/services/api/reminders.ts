@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { request } from "@/lib/api";
+import { request, requestRaw } from "@/lib/api";
 import type {
   AddContactRequest,
   AddContactResponse,
@@ -14,8 +14,9 @@ const REMINDERS_API_BASE = `${BACKEND_URL}/v1/estates`;
 
 // ─── Per-estate reminders ─────────────────────────────────────────
 
+// Unlike the other reminder endpoints, GET returns the resource directly — not wrapped in { data }.
 export async function fetchReminders(estateAddress: string): Promise<FetchReminderResponse> {
-  return request<FetchReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`);
+  return requestRaw<FetchReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`);
 }
 
 export async function saveReminder(

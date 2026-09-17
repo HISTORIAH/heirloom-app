@@ -663,6 +663,7 @@ const app = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "Not verified yet — check {{channel}} for the confirmation message.",
   },
   yield: {
     enableLulo: "Enable Lulo Yield",

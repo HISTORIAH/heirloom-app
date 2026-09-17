@@ -1,20 +1,22 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import bs58 from "bs58";
 import type { EstateData } from "@/contexts/VaultContext";
-import { requestChallenge, verifyChallenge } from "@/services/api/auth";
 import NotificationsCard from "@/components/dashboard/NotificationsCard";
 import NotificationsSignInPanel from "@/components/dashboard/NotificationsSignInPanel";
 import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
 import {
   defaultNotificationsConfig,
+  notificationsConfigFromRecipients,
   summarizeNotifications,
   toAddRecipientRequests,
   type NotificationsCardStatus,
   type NotificationsConfig,
 } from "@/types/reminders";
-import { addContact, fetchReminders, saveReminder } from "@/services/api/reminders";
+import { useReminders, useSaveReminder, useAddContact } from "@/hooks/useReminders";
+import { useAuthenticate } from "@/hooks/useAuth";
+import { ApiError } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
@@ -24,8 +26,6 @@ interface Props {
   /** Only ever rendered once the wallet is connected, so this is never null in practice. */
   account: UiWalletAccount;
 }
-
-const textEncoder = new TextEncoder();
 
 /**
  * Owns the notifications card + its sign-in / edit dialogs for one estate.
@@ -37,14 +37,97 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const { toast } = useToast();
   const signMessage = useSignMessage(account);
 
-  const [notifStatus, setNotifStatus] = useState<NotificationsCardStatus>("locked");
-  const [notifSummary, setNotifSummary] = useState<string | undefined>(undefined);
-  const [notifConfig, setNotifConfig] = useState<NotificationsConfig>(defaultNotificationsConfig());
   const [notifSignInOpen, setNotifSignInOpen] = useState(false);
   const [notifEditOpen, setNotifEditOpen] = useState(false);
-  const [notifSigning, setNotifSigning] = useState(false);
-  const [notifSaving, setNotifSaving] = useState(false);
-  const [hasSubscription, setHasSubscription] = useState(false);
+  // ─── Data ───────────────────────────────────────────────────────
+
+  // Always try fetching — if the session cookie is still valid this succeeds silently.
+  // If 401, the card shows "locked" and the user signs in.
+  const remindersQuery = useReminders(estate.estatePda);
+  const hasSubscription = (remindersQuery.data?.recipients.length ?? 0) > 0;
+
+  // Rebuilt from the server's saved recipients whenever they change — the dialog and
+  // card summary always reflect what's actually saved, never stale local edits.
+  const notifConfig = useMemo(
+    () =>
+      remindersQuery.data
+        ? notificationsConfigFromRecipients(remindersQuery.data.recipients)
+        : defaultNotificationsConfig(),
+    [remindersQuery.data],
+  );
+
+  const notifStatus: NotificationsCardStatus = (() => {
+    if (remindersQuery.isPending) return "loading";
+    if (remindersQuery.isError) {
+      if (remindersQuery.error instanceof ApiError && remindersQuery.error.code === "FORBIDDEN") {
+        return "error";
+      }
+      // 401 (no session) or network error — prompt sign-in
+      return "locked";
+    }
+    return "authorized";
+  })();
+
+  const notifSummary =
+    remindersQuery.data && hasSubscription
+      ? summarizeNotifications(notifConfig, estate.label, t)
+      : undefined;
+
+  // ─── Auth ───────────────────────────────────────────────────────
+
+  const authMutation = useAuthenticate(signMessage);
+
+  const handleNotifSign = async () => {
+    try {
+      await authMutation.mutateAsync({ address: account.address, encode: bs58.encode });
+      // Refetch reminders with the new session cookie.
+      // If none exist, open the edit dialog so the user can create them.
+      const result = await remindersQuery.refetch();
+      setNotifSignInOpen(false);
+      if (!result.data || result.data.recipients.length === 0) {
+        setNotifEditOpen(true);
+      }
+    } catch (err) {
+      setNotifSignInOpen(false);
+      toast({
+        title: t("notifications.signInFailed"),
+        description: errMsg(err, t("notifications.signInFailedDesc")),
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ─── Save ───────────────────────────────────────────────────────
+
+  const saveMutation = useSaveReminder(estate.estatePda);
+  const addContactMutation = useAddContact(estate.estatePda);
+  const notifSaving = saveMutation.isPending || addContactMutation.isPending;
+
+  const handleNotifSave = async (next: NotificationsConfig) => {
+    const recipients = toAddRecipientRequests(next);
+    try {
+      if (hasSubscription) {
+        await addContactMutation.mutateAsync({ recipients });
+      } else {
+        await saveMutation.mutateAsync({ estateKind: "heirloom", recipients });
+      }
+      setNotifEditOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "unauthorized") {
+        // Session expired — prompt re-sign instead of showing error
+        setNotifEditOpen(false);
+        setNotifSignInOpen(true);
+      } else {
+        toast({
+          title: t("notifications.saveFailed"),
+          description: errMsg(err, t("notifications.saveFailedDesc")),
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // ─── Render ─────────────────────────────────────────────────────
 
   const handleNotifAction = () => {
     if (notifStatus === "authorized") {
@@ -52,64 +135,6 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
       return;
     }
     setNotifSignInOpen(true);
-  };
-
-  const handleNotifSign = async () => {
-    setNotifSigning(true);
-    try {
-      const challengeMessage = await requestChallenge(account.address);
-      const { signature } = await signMessage({ message: textEncoder.encode(challengeMessage) });
-      await verifyChallenge(account.address, bs58.encode(signature));
-      setNotifSignInOpen(false);
-      setNotifStatus("authorized");
-
-      // Load existing reminders to determine save vs add-contact
-      try {
-        const existing = await fetchReminders(estate.estatePda);
-        if (existing.recipients.length > 0) {
-          setHasSubscription(true);
-        }
-      } catch {
-        // No existing reminders or fetch failed — treat as new subscription
-      }
-
-      setNotifEditOpen(true);
-    } catch (err) {
-      setNotifSignInOpen(false);
-      setNotifStatus("error");
-      toast({
-        title: t("notifications.signInFailed"),
-        description: errMsg(err, t("notifications.signInFailedDesc")),
-        variant: "destructive",
-      });
-    } finally {
-      setNotifSigning(false);
-    }
-  };
-
-  const handleNotifSave = async (next: NotificationsConfig) => {
-    setNotifSaving(true);
-    try {
-      const recipients = toAddRecipientRequests(next);
-      if (hasSubscription) {
-        await addContact(estate.estatePda, recipients);
-      } else {
-        await saveReminder(estate.estatePda, "heirloom", recipients);
-        setHasSubscription(true);
-      }
-      setNotifConfig(next);
-      setNotifEditOpen(false);
-      setNotifSummary(summarizeNotifications(next, estate.label, t));
-    } catch (err) {
-      setNotifStatus("error");
-      toast({
-        title: t("notifications.saveFailed"),
-        description: errMsg(err, t("notifications.saveFailedDesc")),
-        variant: "destructive",
-      });
-    } finally {
-      setNotifSaving(false);
-    }
   };
 
   const notifSignMessage = t("notifications.signMessageBody", {
@@ -130,7 +155,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
       <NotificationsSignInPanel
         open={notifSignInOpen}
         message={notifSignMessage}
-        signing={notifSigning}
+        signing={authMutation.isPending}
         onClose={() => setNotifSignInOpen(false)}
         onSign={handleNotifSign}
       />
