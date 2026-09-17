@@ -1,9 +1,12 @@
 import type { Estate } from "@historiah/heirloom";
 import { useEffect, useState } from "react";
 
-import { estateStatusLine } from "@/lib/estateState";
+import { presentEstate, type EstatePresentation } from "@/lib/presentEstate";
 
-export function useEstateStatusLine(data: Estate, vaultEmpty: boolean) {
+export function useEstatePresentation(
+  data: Estate,
+  claimableLamports: bigint,
+): EstatePresentation {
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -11,5 +14,5 @@ export function useEstateStatusLine(data: Estate, vaultEmpty: boolean) {
     return () => clearInterval(id);
   }, []);
 
-  return estateStatusLine(data, vaultEmpty);
+  return presentEstate(data, claimableLamports);
 }
