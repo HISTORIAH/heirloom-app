@@ -51,16 +51,34 @@ function formatDuration(seconds: number): string {
   return `${minutes}m ${rest}s`;
 }
 
-export function estateStatusLine(data: Estate): { state: EstateUiState; line: string } {
+export function isVaultEmpty(claimableAssets: number, claimableLamports: bigint): boolean {
+  return claimableAssets === 0 && claimableLamports === 0n;
+}
+
+export function holdingsLine(claimableLamports: bigint, tokenCount: number): string {
+  const sol = Number(claimableLamports) / 1e9;
+  const solText = `${sol.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL`;
+  if (tokenCount === 0) return solText;
+  if (tokenCount === 1) return `${solText} · 1 token`;
+  return `${solText} · ${tokenCount} tokens`;
+}
+
+export function estateStatusLine(
+  data: Estate,
+  vaultEmpty: boolean,
+): { state: EstateUiState; line: string } {
   const result = computeEstateState({
     lastHeartbeat: Number(data.lastHeartbeat),
     heartbeatInterval: Number(data.heartbeatInterval),
     gracePeriod: Number(data.gracePeriod),
     pausedUntil: Number(data.pausedUntil),
     createdAt: Number(data.createdAt),
-    vaultEmpty: false,
+    vaultEmpty,
   });
 
+  if (result.state === "distributed") {
+    return { state: result.state, line: "Distributed" };
+  }
   if (result.state === "claimable") {
     return { state: result.state, line: "Claimable" };
   }

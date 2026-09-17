@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { estateStatusLine } from "@/lib/estateState";
 
-export function useEstateStatusLine(data: Estate) {
+export function useEstateStatusLine(data: Estate, vaultEmpty: boolean) {
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -11,5 +11,5 @@ export function useEstateStatusLine(data: Estate) {
     return () => clearInterval(id);
   }, []);
 
-  return estateStatusLine(data);
+  return estateStatusLine(data, vaultEmpty);
 }

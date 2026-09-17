@@ -5,7 +5,7 @@ import { ScreenFrame } from "@/components/ScreenFrame";
 import { type EstateRole, useEstates } from "@/hooks/useEstates";
 import { useEstateStatusLine } from "@/hooks/useEstateStatusLine";
 import { shortAddress } from "@/lib/address";
-import { STATUS_COLOR } from "@/lib/estateState";
+import { holdingsLine, isVaultEmpty, STATUS_COLOR } from "@/lib/estateState";
 import type { EstateRow } from "@/lib/estates";
 
 interface EstateListProps {
@@ -15,7 +15,8 @@ interface EstateListProps {
 }
 
 function EstateRowItem({ row }: { row: EstateRow }) {
-  const { state, line } = useEstateStatusLine(row.data);
+  const vaultEmpty = isVaultEmpty(row.data.claimableAssets, row.claimableLamports);
+  const { state, line } = useEstateStatusLine(row.data, vaultEmpty);
 
   return (
     <YStack gap={4}>
@@ -28,6 +29,11 @@ function EstateRowItem({ row }: { row: EstateRow }) {
       <Text fontSize={14} style={{ color: STATUS_COLOR[state] }}>
         {line}
       </Text>
+      {state !== "distributed" ? (
+        <Text color="#888888" fontSize={14}>
+          {holdingsLine(row.claimableLamports, row.data.claimableAssets)}
+        </Text>
+      ) : null}
     </YStack>
   );
 }

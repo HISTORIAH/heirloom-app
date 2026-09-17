@@ -1,6 +1,7 @@
 import {
   decodeEstate,
   ESTATE_DISCRIMINATOR,
+  findVaultPda,
   HEIRLOOM_PROGRAM_ADDRESS,
   type Estate,
 } from "@historiah/heirloom";
@@ -13,6 +14,12 @@ import type {
 } from "@solana/kit";
 
 export type EstateRow = {
+  address: Address;
+  data: Estate;
+  claimableLamports: bigint;
+};
+
+type DecodedEstate = {
   address: Address;
   data: Estate;
 };
@@ -36,7 +43,7 @@ function decodeAccountData(data: string | readonly string[]): Uint8Array {
 async function fetchEstatesByMemcmp(
   rpc: EstateRpc,
   extra: ReadonlyArray<{ offset: bigint; bytes: string; encoding: "base58" | "base64" }>,
-): Promise<EstateRow[]> {
+): Promise<DecodedEstate[]> {
   const accounts = await rpc
     .getProgramAccounts(HEIRLOOM_PROGRAM_ADDRESS, {
       encoding: "base64",
@@ -59,7 +66,7 @@ async function fetchEstatesByMemcmp(
     })
     .send();
 
-  const out: EstateRow[] = [];
+  const out: DecodedEstate[] = [];
   for (const item of accounts) {
     if (Number(item.account.lamports) <= 0) continue;
     const raw = decodeAccountData(item.account.data);
@@ -80,30 +87,71 @@ async function fetchEstatesByMemcmp(
   return out;
 }
 
-export function fetchEstatesByAuthority(
+const rentBySpace = new Map<string, bigint>();
+
+async function claimableLamportsForVault(
+  rpc: EstateRpc,
+  vaultPda: Address,
+): Promise<bigint> {
+  const { value } = await rpc
+    .getAccountInfo(vaultPda, { encoding: "base64", commitment: "confirmed" })
+    .send();
+  if (!value) return 0n;
+  const spaceKey = String(value.space);
+  let rentMin = rentBySpace.get(spaceKey);
+  if (rentMin === undefined) {
+    rentMin = BigInt(await rpc.getMinimumBalanceForRentExemption(value.space).send());
+    rentBySpace.set(spaceKey, rentMin);
+  }
+  const balance = BigInt(value.lamports);
+  return balance > rentMin ? balance - rentMin : 0n;
+}
+
+async function withClaimableLamports(
+  rpc: EstateRpc,
+  rows: DecodedEstate[],
+): Promise<EstateRow[]> {
+  return Promise.all(
+    rows.map(async (row) => {
+      const [vaultPda] = await findVaultPda({
+        authority: row.data.authority,
+        heir: row.data.heir,
+      });
+      return {
+        ...row,
+        claimableLamports: await claimableLamportsForVault(rpc, vaultPda),
+      };
+    }),
+  );
+}
+
+export async function fetchEstatesByAuthority(
   rpc: EstateRpc,
   authority: Address,
 ): Promise<EstateRow[]> {
-  return fetchEstatesByMemcmp(rpc, [
+  const rows = await fetchEstatesByMemcmp(rpc, [
     { offset: 8n, bytes: authority, encoding: "base58" },
   ]);
+  return withClaimableLamports(rpc, rows);
 }
 
-export function fetchEstatesByHeir(
+export async function fetchEstatesByHeir(
   rpc: EstateRpc,
   heir: Address,
 ): Promise<EstateRow[]> {
-  return fetchEstatesByMemcmp(rpc, [
+  const rows = await fetchEstatesByMemcmp(rpc, [
     { offset: 40n, bytes: heir, encoding: "base58" },
   ]);
+  return withClaimableLamports(rpc, rows);
 }
 
-export function fetchEstatesByHbSigner(
+export async function fetchEstatesByHbSigner(
   rpc: EstateRpc,
   hbSigner: Address,
 ): Promise<EstateRow[]> {
-  return fetchEstatesByMemcmp(rpc, [
+  const rows = await fetchEstatesByMemcmp(rpc, [
     { offset: 155n, bytes: bytesToBase64(new Uint8Array([1])), encoding: "base64" },
     { offset: 156n, bytes: hbSigner, encoding: "base58" },
   ]);
+  return withClaimableLamports(rpc, rows);
 }
