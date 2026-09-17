@@ -200,6 +200,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@expo/metro-runtime": "~57.0.15",
+        "@historiah/heirloom": "workspace:*",
         "@solana/kit": "^7.1.1",
         "@tamagui/config": "2.0.0-rc.19",
         "@wallet-ui/react-native-kit": "^4.3.0",

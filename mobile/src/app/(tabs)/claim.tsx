@@ -1,9 +1,11 @@
-import { ScreenFrame } from "@/components/ScreenFrame";
+import { EstateList } from "@/components/EstateList";
 
 export default function ClaimScreen() {
   return (
-    <ScreenFrame title="Claim">
-      Estates where this wallet or card is heir. TODO
-    </ScreenFrame>
+    <EstateList
+      role="heir"
+      emptyTitle="Claim"
+      emptyBody="No estates where this wallet is heir."
+    />
   );
 }

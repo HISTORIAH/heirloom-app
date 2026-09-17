@@ -1,9 +1,11 @@
-import { ScreenFrame } from "@/components/ScreenFrame";
+import { EstateList } from "@/components/EstateList";
 
 export default function HeartbeatScreen() {
   return (
-    <ScreenFrame title="Heartbeat">
-      Estates where this wallet or card is hb-signer. TODO.
-    </ScreenFrame>
+    <EstateList
+      role="hbSigner"
+      emptyTitle="Heartbeat"
+      emptyBody="No estates where this wallet is hb-signer."
+    />
   );
 }

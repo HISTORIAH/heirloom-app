@@ -2,10 +2,7 @@ import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useState } from "react";
 import { Button, Text, YStack } from "tamagui";
 
-function shortAddress(address: string): string {
-  if (address.length < 10) return address;
-  return `${address.slice(0, 4)}…${address.slice(-4)}`;
-}
+import { shortAddress } from "@/lib/address";
 
 export function ConnectWallet() {
   const { account, connect, disconnect } = useMobileWallet();
