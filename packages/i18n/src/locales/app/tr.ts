@@ -666,6 +666,7 @@ const app: AppMessages = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "Henüz doğrulanmadı — onay mesajı için {{channel}} kısmını kontrol edin.",
   },
   yield: {
     enableLulo: "Lulo Getirisini Etkinleştir",

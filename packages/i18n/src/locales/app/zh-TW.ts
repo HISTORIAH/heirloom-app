@@ -638,6 +638,7 @@ const app: AppMessages = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "尚未驗證 — 請查看{{channel}}以獲取確認訊息。",
   },
   yield: {
     enableLulo: "啟用 Lulo 收益",

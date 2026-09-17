@@ -660,6 +660,7 @@ const app: AppMessages = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "Chưa được xác minh — hãy kiểm tra {{channel}} để xem tin nhắn xác nhận.",
   },
   yield: {
     enableLulo: "Bật Lợi suất Lulo",

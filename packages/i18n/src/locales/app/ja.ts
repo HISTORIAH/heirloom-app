@@ -664,6 +664,7 @@ const app: AppMessages = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "まだ確認されていません — 確認メッセージについては{{channel}}をご確認ください。",
   },
   yield: {
     enableLulo: "Lulo 利回りを有効化",

@@ -674,6 +674,7 @@ const app: AppMessages = {
     placeholderEmail: "tu@email.com",
     placeholderTelegram: "@usuario",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "Aún no verificado — revisa {{channel}} para ver el mensaje de confirmación.",
   },
   yield: {
     enableLulo: "Activar rendimiento Lulo",
