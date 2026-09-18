@@ -3,16 +3,18 @@ import { useEffect, useState } from "react";
 
 import {
   fetchEstatesByAuthority,
+  fetchEstatesByDelegate,
   fetchEstatesByHbSigner,
   fetchEstatesByHeir,
   type EstateRow,
 } from "@/lib/estates";
 
-export type EstateRole = "authority" | "heir" | "hbSigner";
+export type EstateRole = "authority" | "heir" | "hbSigner" | "delegate";
 
 function fetchForRole(role: EstateRole) {
   if (role === "authority") return fetchEstatesByAuthority;
   if (role === "heir") return fetchEstatesByHeir;
+  if (role === "delegate") return fetchEstatesByDelegate;
   return fetchEstatesByHbSigner;
 }
 

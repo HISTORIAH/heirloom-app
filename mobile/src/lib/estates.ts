@@ -145,6 +145,17 @@ export async function fetchEstatesByHeir(
   return withClaimableLamports(rpc, rows);
 }
 
+export async function fetchEstatesByDelegate(
+  rpc: EstateRpc,
+  delegate: Address,
+): Promise<EstateRow[]> {
+  const rows = await fetchEstatesByMemcmp(rpc, [
+    { offset: 122n, bytes: bytesToBase64(new Uint8Array([1])), encoding: "base64" },
+    { offset: 123n, bytes: delegate, encoding: "base58" },
+  ]);
+  return withClaimableLamports(rpc, rows);
+}
+
 export async function fetchEstatesByHbSigner(
   rpc: EstateRpc,
   hbSigner: Address,

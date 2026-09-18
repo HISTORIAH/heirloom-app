@@ -9,60 +9,59 @@ import {
 } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
-import { PulseTicket, SignerHoldWell } from "@/components/PulseTicket";
+import { gateKind, LatchRail, PauseGate } from "@/components/PauseGate";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
-import type { EstateUiState } from "@/lib/estateState";
 import type { EstateRow } from "@/lib/estates";
 import { presentEstate } from "@/lib/presentEstate";
 import { colors } from "@/theme";
 
-function rank(state: EstateUiState): number {
-  if (state === "grace") return 0;
-  if (state === "claimable") return 1;
-  if (state === "active") return 2;
-  return 3;
+function rank(row: EstateRow): number {
+  const kind = gateKind(row);
+  if (kind === "holdable") {
+    const state = presentEstate(row.data, row.claimableLamports).state;
+    return state === "grace" ? 0 : 1;
+  }
+  if (kind === "holding") return 2;
+  if (kind === "unset") return 3;
+  if (kind === "spent") return 4;
+  if (kind === "late") return 5;
+  return 6;
 }
 
-function sortAsSigner(rows: EstateRow[]): EstateRow[] {
-  return [...rows].sort((a, b) => {
-    const sa = presentEstate(a.data, a.claimableLamports).state;
-    const sb = presentEstate(b.data, b.claimableLamports).state;
-    return rank(sa) - rank(sb);
-  });
+function sortAsGuardian(rows: EstateRow[]): EstateRow[] {
+  return [...rows].sort((a, b) => rank(a) - rank(b));
 }
 
-function onBeatPress(label: string, reclaim: boolean) {
+function onDeferPress(label: string, duration: string) {
   Alert.alert(
-    reclaim ? `Reclaim ${label}?` : `Send a heartbeat for ${label}?`,
-    "This only resets the timer. It cannot move assets.",
+    `Hold ${label}?`,
+    `Pushes the claim window by ${duration}. Once until a heartbeat clears it.`,
     [
       { text: "Not now", style: "cancel" },
       {
-        text: reclaim ? "I'm alive — reclaim" : "Send heartbeat",
+        text: "Hold the window",
         onPress: () =>
           Alert.alert(
             "Coming next",
-            "Signer check-in lands in the heir / signer write slice.",
+            "Mobile defer waits on a web linking pass, then the guardian slice.",
           ),
       },
     ],
   );
 }
 
-function HeartbeatConnected({
+function GuardianConnected({
   loading,
   error,
   ordered,
-  dueCount,
-  onHold,
+  holdableCount,
   onLookup,
 }: {
   loading: boolean;
   error: string | null;
   ordered: EstateRow[];
-  dueCount: number;
-  onHold: () => void;
+  holdableCount: number;
   onLookup: () => void;
 }) {
   if (loading) {
@@ -76,7 +75,7 @@ function HeartbeatConnected({
             color: colors.mute,
           }}
         >
-          Looking for estates you sign for…
+          Looking for estates you guard…
         </Text>
       </View>
     );
@@ -106,9 +105,10 @@ function HeartbeatConnected({
             borderRadius: 12,
             backgroundColor: colors.soft,
             padding: 16,
-            gap: 8,
+            gap: 12,
           }}
         >
+          <LatchRail kind="ended" />
           <Text
             style={{
               fontFamily: "SpaceGrotesk_600SemiBold",
@@ -116,7 +116,7 @@ function HeartbeatConnected({
               color: colors.ink,
             }}
           >
-            No signer role
+            No guardian role
           </Text>
           <Text
             style={{
@@ -126,8 +126,8 @@ function HeartbeatConnected({
               color: colors.mute,
             }}
           >
-            This wallet is not the heartbeat signer on any estate. Hold the
-            signer card, or look up by owner and heir.
+            This wallet is not named as guardian on any estate. Look up by owner
+            and heir if you were assigned off this device.
           </Text>
         </View>
         <TextLink
@@ -135,7 +135,16 @@ function HeartbeatConnected({
           align="left"
           onPress={onLookup}
         />
-        <SignerHoldWell onHold={onHold} />
+        <Text
+          style={{
+            fontFamily: "SpaceGrotesk_500Medium",
+            fontSize: 13,
+            lineHeight: 18,
+            color: colors.mute,
+          }}
+        >
+          There is no guardian card. This wallet is the only key.
+        </Text>
       </View>
     );
   }
@@ -149,7 +158,7 @@ function HeartbeatConnected({
           alignItems: "baseline",
         }}
       >
-        <Cap>You keep time</Cap>
+        <Cap>You hold the gate</Cap>
         <Text
           style={{
             fontFamily: "SpaceGrotesk_700Bold",
@@ -158,33 +167,39 @@ function HeartbeatConnected({
             color: colors.mute,
           }}
         >
-          {dueCount === 0
-            ? "All on time"
-            : `${String(dueCount).padStart(2, "0")} due`}
+          {holdableCount === 0
+            ? "None open"
+            : `${String(holdableCount).padStart(2, "0")} can hold`}
         </Text>
       </View>
       {ordered.map((row) => (
-        <PulseTicket key={row.address} row={row} onBeat={onBeatPress} />
+        <PauseGate key={row.address} row={row} onDefer={onDeferPress} />
       ))}
       <TextLink
         label="Look up by owner and heir"
         align="left"
         onPress={onLookup}
       />
-      <SignerHoldWell onHold={onHold} />
+      <Text
+        style={{
+          fontFamily: "SpaceGrotesk_500Medium",
+          fontSize: 13,
+          lineHeight: 18,
+          color: colors.mute,
+        }}
+      >
+        There is no guardian card. This wallet is the only key.
+      </Text>
     </View>
   );
 }
 
-export default function HeartbeatScreen() {
+export default function GuardianScreen() {
   const { account, connect } = useMobileWallet();
-  const { rows, loading, error } = useEstates("hbSigner");
+  const { rows, loading, error } = useEstates("delegate");
   const [busy, setBusy] = useState(false);
-  const ordered = useMemo(() => sortAsSigner(rows), [rows]);
-  const dueCount = ordered.filter((row) => {
-    const state = presentEstate(row.data, row.claimableLamports).state;
-    return state === "grace" || state === "claimable";
-  }).length;
+  const ordered = useMemo(() => sortAsGuardian(rows), [rows]);
+  const holdableCount = ordered.filter((row) => gateKind(row) === "holdable").length;
 
   async function onConnect() {
     if (busy) return;
@@ -201,17 +216,10 @@ export default function HeartbeatScreen() {
     }
   }
 
-  function onHold() {
-    Alert.alert(
-      "Coming next",
-      "Card heartbeat lands with the Java Card slice.",
-    );
-  }
-
   function onLookup() {
     Alert.alert(
       "Coming next",
-      "Owner + heir lookup lands with the signer write slice.",
+      "Owner + heir lookup lands with the guardian slice.",
     );
   }
 
@@ -219,11 +227,11 @@ export default function HeartbeatScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader />
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-        <Cap>Send heartbeat</Cap>
-        <H2>Keep the timer alive</H2>
+        <Cap>Guardian</Cap>
+        <H2>Hold the claim window</H2>
         <Lede>
-          You can bump the clock. You cannot move the vault. Grace estates come
-          first.
+          One pause, for the length the owner set. You cannot claim and you
+          cannot check in.
         </Lede>
 
         {!account ? (
@@ -233,11 +241,12 @@ export default function HeartbeatScreen() {
                 borderWidth: 1,
                 borderColor: colors.ink,
                 borderRadius: 12,
-                backgroundColor: colors.sage,
+                backgroundColor: colors.soft,
                 padding: 18,
-                gap: 10,
+                gap: 14,
               }}
             >
+              <LatchRail kind="holdable" />
               <Text
                 style={{
                   fontFamily: "SpaceGrotesk_600SemiBold",
@@ -246,7 +255,7 @@ export default function HeartbeatScreen() {
                   color: colors.ink,
                 }}
               >
-                Connect to keep time
+                Connect to hold a window
               </Text>
               <Text
                 style={{
@@ -256,8 +265,8 @@ export default function HeartbeatScreen() {
                   color: colors.ink,
                 }}
               >
-                We find estates where this wallet is the heartbeat signer. The
-                key on a signer card is the same job.
+                We find estates where this wallet is the guardian. There is no
+                card for this role.
               </Text>
               <PrimaryButton
                 label={busy ? "Working…" : "Connect wallet"}
@@ -265,15 +274,13 @@ export default function HeartbeatScreen() {
                 onPress={onConnect}
               />
             </View>
-            <SignerHoldWell onHold={onHold} />
           </View>
         ) : (
-          <HeartbeatConnected
+          <GuardianConnected
             loading={loading}
             error={error}
             ordered={ordered}
-            dueCount={dueCount}
-            onHold={onHold}
+            holdableCount={holdableCount}
             onLookup={onLookup}
           />
         )}
