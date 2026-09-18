@@ -12,12 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Every backend service shares one envelope — `{ data }` on success,
- * `{ code, message, details? }` on failure — so no endpoint can quietly
- * skip it or swap in a different casing convention.
- */
-export async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+async function fetchJson(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
     ...options,
     credentials: "include", // session cookie is HttpOnly + Secure + SameSite=Strict
@@ -27,15 +22,29 @@ export async function request<T>(url: string, options: RequestInit = {}): Promis
     },
   });
 
-  const body = (await res.json().catch(() => null)) as ApiSuccess<T> | ApiErrorBody | null;
+  const body = await res.json().catch(() => null);
 
   if (!res.ok) {
     throw new ApiError(
-      body && "code" in body
-        ? body
+      body && typeof body === "object" && "code" in body
+        ? (body as ApiErrorBody)
         : { code: res.status === 401 ? "unauthorized" : "unknown", message: res.statusText },
     );
   }
 
-  return (body as ApiSuccess<T>).data;
+  return body;
+}
+
+/**
+ * Most backend services share one envelope — `{ data }` on success,
+ * `{ code, message, details? }` on failure — so no endpoint can quietly
+ * skip it or swap in a different casing convention.
+ */
+export async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  return ((await fetchJson(url, options)) as ApiSuccess<T>).data;
+}
+
+/** For the few endpoints that return the resource directly instead of wrapping it in `{ data }`. */
+export async function requestRaw<T>(url: string, options?: RequestInit): Promise<T> {
+  return (await fetchJson(url, options)) as T;
 }

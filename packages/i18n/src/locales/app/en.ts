@@ -76,7 +76,7 @@ const app = {
       whatProtecting: "What are you protecting?",
       howOften: "How often do you check in?",
       reviewConfirm: "Review & confirm",
-      labelLabel: "LABEL (E.G. \"SON\", \"SPOUSE\")",
+      labelLabel: 'LABEL (E.G. "SON", "SPOUSE")',
       labelPlaceholder: "e.g. spouse",
       heirAddressLabel: "HEIR SOLANA ADDRESS",
       heirAddressPlaceholder: "Enter Solana wallet address…",
@@ -120,7 +120,8 @@ const app = {
       ifNoCheckin: "If you don't check in for this long, your heir can claim.",
       neverCheckin: "→ If you never check in, earliest claim date is",
       graceUndo: "The grace period is your undo button.",
-      graceUndoDesc: "Miss your interval? You can still check in during grace and reset the whole clock. Only after the full {{days}} days can your heir claim.",
+      graceUndoDesc:
+        "Miss your interval? You can still check in during grace and reset the whole clock. Only after the full {{days}} days can your heir claim.",
       timing: "TIMING",
       deposits: "DEPOSITS",
       heir: "HEIR",
@@ -166,8 +167,7 @@ const app = {
       youCheckInEvery: "You check in every",
       heirThenWaits: "Your heir then waits",
       checkInFeeNote: "One signature in your wallet. No network fee.",
-      graceWaitNote:
-        "They're notified at the start. You can stop it any time before it ends.",
+      graceWaitNote: "They're notified at the start. You can stop it any time before it ends.",
       timelineToday: "Today",
       timelineHorizon: "Up to 15 months",
       timelinePending: "Set on the next step",
@@ -186,15 +186,12 @@ const app = {
       labelOnlyYou: "Only you see this. It keeps estates apart on your dashboard.",
       labelPlaceholderMum: "Mum's estate",
       heirWalletLabel: "Their Solana wallet address",
-      heirWalletHint:
-        "Paste it from your heir's wallet. Assets go here and nowhere else.",
+      heirWalletHint: "Paste it from your heir's wallet. Assets go here and nowhere else.",
       pasteAddress: "Paste an address",
-      guardianHint:
-        "Someone you trust who can start the transfer early if they know you've died.",
+      guardianHint: "Someone you trust who can start the transfer early if they know you've died.",
       leaveBlank: "Leave blank to skip",
       signerLabelPlain: "Check-in signer",
-      signerHint:
-        "A second wallet allowed to check in for you, if you'd rather not use this one.",
+      signerHint: "A second wallet allowed to check in for you, if you'd rather not use this one.",
       goingIntoEstate: "Going into the estate",
       nothingYetShort: "Nothing yet",
       skipDepositHint: "You can skip this and deposit from your dashboard whenever you like.",
@@ -340,36 +337,49 @@ const app = {
       last: "Finish",
       back: "Back",
       step1Title: "Welcome to Heirloom",
-      step1Content: "Take a quick tour of the app — no wallet needed yet. You only connect when you're ready to move assets.",
+      step1Content:
+        "Take a quick tour of the app — no wallet needed yet. You only connect when you're ready to move assets.",
       step2Title: "Name your heir",
-      step2Content: "Set who inherits: enter their Solana address, give the relationship a label, and optionally assign a delegate or a heartbeat signer.",
+      step2Content:
+        "Set who inherits: enter their Solana address, give the relationship a label, and optionally assign a delegate or a heartbeat signer.",
       step3Title: "Choose your assets",
-      step3Content: "Deposit SOL and/or SPL tokens into the vault. You can skip this now and add assets later.",
+      step3Content:
+        "Deposit SOL and/or SPL tokens into the vault. You can skip this now and add assets later.",
       step4Title: "Set your check-in timer",
-      step4Content: "Pick how often you'll confirm you're active, and the grace period heirs wait after you miss a check-in before they can claim.",
+      step4Content:
+        "Pick how often you'll confirm you're active, and the grace period heirs wait after you miss a check-in before they can claim.",
       step5Title: "Review & create",
-      step5Content: "Check the full plan — heir, assets, timers — then acknowledge and hit Create Estate. This is where you connect your wallet to deposit and sign.",
+      step5Content:
+        "Check the full plan — heir, assets, timers — then acknowledge and hit Create Estate. This is where you connect your wallet to deposit and sign.",
       step6Title: "Your vault dashboard",
-      step6Content: "Each vault shows its live status, countdown, locked balances and heir. Send a heartbeat here to reset the timer and keep assets with you.",
+      step6Content:
+        "Each vault shows its live status, countdown, locked balances and heir. Send a heartbeat here to reset the timer and keep assets with you.",
       step7Title: "Your dashboard",
-      step7Content: "Before any vault exists, the dashboard lets you create a new estate or — if you were named an heir — claim an inheritance.",
+      step7Content:
+        "Before any vault exists, the dashboard lets you create a new estate or — if you were named an heir — claim an inheritance.",
       step8Title: "Claim an inheritance",
-      step8Content: "Heirs come here to look up and claim assets left to them. You'll connect a wallet to claim what's yours.",
+      step8Content:
+        "Heirs come here to look up and claim assets left to them. You'll connect a wallet to claim what's yours.",
       step9Title: "Look up by owner",
-      step9Content: "If the automatic scan can't find your inheritance, expand this to look up an estate by the vault owner's address.",
+      step9Content:
+        "If the automatic scan can't find your inheritance, expand this to look up an estate by the vault owner's address.",
       step10Title: "Heartbeat signer portal",
-      step10Content: "A trusted signer can refresh a vault's heartbeat here — keeping it active without holding full authority over your assets.",
+      step10Content:
+        "A trusted signer can refresh a vault's heartbeat here — keeping it active without holding full authority over your assets.",
       step11Title: "That's Heirloom",
-      step11Content: "That's the whole app. Click Finish and connect your wallet to create your first vault.",
+      step11Content:
+        "That's the whole app. Click Finish and connect your wallet to create your first vault.",
       allSetTitle: "You're all set",
-      allSetDesc: "Connect your wallet to create your first vault — we'll take you straight to the builder.",
+      allSetDesc:
+        "Connect your wallet to create your first vault — we'll take you straight to the builder.",
       connectWallet: "Connect Wallet",
     },
     manage: {
       changeHeir: "Change Heir",
       changeHeirDesc: "Transfer estate to a different heir address.",
       newHeirPlaceholder: "New heir Solana address...",
-      changeHeirWarning: "Warning: this moves the estate PDA + vault assets to the new heir. Old heir can no longer claim.",
+      changeHeirWarning:
+        "Warning: this moves the estate PDA + vault assets to the new heir. Old heir can no longer claim.",
       cancel: "Cancel",
       sameHeirTitle: "Same heir",
       sameHeirDesc: "New heir address matches current heir.",
@@ -377,7 +387,8 @@ const app = {
       heirUpdatedDesc: "Estate reassigned to new heir.",
       updateFailedTitle: "Update Failed",
       changeHeirConfirmTitle: "Change Heir?",
-      changeHeirConfirmDesc: "The estate PDA and vault assets move to the new heir. The current heir can no longer claim.",
+      changeHeirConfirmDesc:
+        "The estate PDA and vault assets move to the new heir. The current heir can no longer claim.",
       from: "From",
       to: "To",
       addAsset: "Add Asset",
@@ -388,7 +399,8 @@ const app = {
       amount: "Amount",
       walletBalance: "Wallet balance:",
       noTokensAvailable: "No tokens available in wallet",
-      addAssetNote: "Adds a new SPL token type to the vault. The token must already exist in your wallet.",
+      addAssetNote:
+        "Adds a new SPL token type to the vault. The token must already exist in your wallet.",
       depositing: "Depositing...",
       deposit: "Deposit",
       assetAddedTitle: "Asset added",
@@ -400,7 +412,8 @@ const app = {
       vaultClosedDesc: "Assets returned to your wallet.",
       withdrawFailedTitle: "Withdraw Failed",
       closeEstateConfirmTitle: "Close Estate & Withdraw?",
-      closeEstateConfirmDesc: "This returns all SOL and tokens to your wallet and permanently cancels the vault. Heir will no longer be able to claim.",
+      closeEstateConfirmDesc:
+        "This returns all SOL and tokens to your wallet and permanently cancels the vault. Heir will no longer be able to claim.",
       withdrawCancelLabel: "Withdraw & Cancel",
       keepEstate: "Keep Estate",
       updateEstate: "Update Estate",
@@ -415,7 +428,8 @@ const app = {
       settingsUpdatedTitle: "Settings updated",
       settingsUpdatedDesc: "Estate config saved on-chain.",
       updateEstateConfirmTitle: "Update Estate?",
-      updateEstateConfirmDesc: "Changing interval, grace, or pause shifts the heartbeat deadline. Make sure heirs are aware before saving.",
+      updateEstateConfirmDesc:
+        "Changing interval, grace, or pause shifts the heartbeat deadline. Make sure heirs are aware before saving.",
       save: "Save",
       label: "Label",
       interval: "Interval",
@@ -438,8 +452,7 @@ const app = {
         "Register a new SPL token with the estate and deposit an opening balance.",
       nowUsesTimings: "The estate now uses the new timings.",
       changeHeirShort: "Change heir",
-      changeHeirMigrateDesc:
-        "Assets migrate to a new estate and vault derived from the new heir.",
+      changeHeirMigrateDesc: "Assets migrate to a new estate and vault derived from the new heir.",
       changeHeirQuestion: "Change heir?",
       changeHeirMovesDesc:
         "Every asset moves to a new estate and vault. The current heir can no longer claim.",
@@ -526,7 +539,8 @@ const app = {
     notDelegate: "Not the Delegate",
     deferClaimWindow: "Defer Claim Window",
     confirmTitle: "Extend Claim Window?",
-    confirmDesc: "Extend the claim window by {{duration}}. This guardian pause can only be used once per estate.",
+    confirmDesc:
+      "Extend the claim window by {{duration}}. This guardian pause can only be used once per estate.",
     confirmLabel: "Defer",
     cancelLabel: "Cancel",
     notFoundError: "Estate not found for this authority + heir pair.",
@@ -604,8 +618,7 @@ const app = {
     youWillSign: "You will be asked to sign",
     addBackupPlain: "Add a backup channel",
     notifyName: "Notify {{name}}",
-    signCostsNothing:
-      "Signing costs nothing and moves no funds. It only proves you hold the key.",
+    signCostsNothing: "Signing costs nothing and moves no funds. It only proves you hold the key.",
     remindTitle: "Remind me before expiry",
     remindDesc: "A heads-up before your heartbeat is due",
     notifyTitle: "Notify {{name}} at unlock",
@@ -617,9 +630,11 @@ const app = {
     saving: "Saving…",
     cancel: "Cancel",
     signInTitle: "Sign in to manage notifications",
-    signInDesc: "Contact details are private to this estate. Prove you own this wallet — nothing more.",
+    signInDesc:
+      "Contact details are private to this estate. Prove you own this wallet — nothing more.",
     signPrompt: "You'll be asked to sign this exact message",
-    signNote: "No transaction, no gas, no wallet connection request — just a signature, valid for this session only.",
+    signNote:
+      "No transaction, no gas, no wallet connection request — just a signature, valid for this session only.",
     signMessage: "Sign message",
     signMessageBody:
       "heirlm.xyz wants you to manage notification settings.\n\nEstate:  {{estate}}\nWallet:  {{wallet}}\n\nThis does not cost gas and does not authorize any on-chain transaction.",
@@ -633,6 +648,10 @@ const app = {
     edit: "Edit",
     signIn: "Sign in",
     retry: "Retry",
+    saveFailed: "Couldn't save reminders",
+    saveFailedDesc: "Something went wrong. Please try again.",
+    signInFailed: "Couldn't verify wallet",
+    signInFailedDesc: "Signature verification failed. Please try again.",
     summaryYou: "You: {{channel}}",
     summaryYouPlus: "You: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -644,6 +663,7 @@ const app = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "Not verified yet — check {{channel}} for the confirmation message.",
   },
   yield: {
     enableLulo: "Enable Lulo Yield",
@@ -675,8 +695,10 @@ const app = {
     unstakeSol: "Unstake SOL",
     pullBack: "Pull {{amount}} {{unit}} back to your vault.",
     oneSigTitle: "One-signature recall",
-    oneSigLulo: "The backend handles the Lulo withdrawal and returns funds to your vault automatically.",
-    oneSigStake: "The backend handles the staking withdrawal and returns funds to your vault automatically.",
+    oneSigLulo:
+      "The backend handles the Lulo withdrawal and returns funds to your vault automatically.",
+    oneSigStake:
+      "The backend handles the staking withdrawal and returns funds to your vault automatically.",
     recalling: "Recalling…",
     tokens: "tokens",
     done: "Done!",
@@ -717,7 +739,8 @@ const app = {
     yieldFeeNote:
       "A 10% fee applies to yield earned, never to the principal. Deployed funds must be recalled before an heir can claim.",
     stakeVaultSol: "Stake the vault's SOL",
-    stakeVaultDesc: "Delegate {{amount}} SOL to a validator. It keeps earning while the estate waits.",
+    stakeVaultDesc:
+      "Delegate {{amount}} SOL to a validator. It keeps earning while the estate waits.",
     commissionPct: "{{pct}}% commission",
     selectedDot: "{{name}} · {{apy}}% APY",
     epochRecallNote:
