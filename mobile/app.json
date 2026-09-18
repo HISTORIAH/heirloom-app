@@ -25,6 +25,12 @@
       "expo-router",
       "react-native-quick-crypto",
       [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Allow Heirloom to read NFC cards for inheritance actions."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#FFD400",

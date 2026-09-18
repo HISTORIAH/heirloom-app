@@ -9,6 +9,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TamaguiProvider } from "tamagui";
 
 import { solanaCluster, walletIdentity } from "@/config";
@@ -30,11 +31,13 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-      <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
-      </MobileWalletProvider>
-    </TamaguiProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
+        </MobileWalletProvider>
+      </TamaguiProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -5,10 +5,10 @@ import { colors } from "@/theme";
 
 interface EstateRailProps {
   count: number;
-  onNewEstate?: () => void;
+  onScan?: () => void;
 }
 
-export function EstateRail({ count, onNewEstate }: EstateRailProps) {
+export function EstateRail({ count, onScan }: EstateRailProps) {
   const n = String(count).padStart(2, "0");
   return (
     <View
@@ -18,8 +18,6 @@ export function EstateRail({ count, onNewEstate }: EstateRailProps) {
         gap: 10,
         height: 48,
         paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.line,
       }}
     >
       <Text
@@ -43,8 +41,8 @@ export function EstateRail({ count, onNewEstate }: EstateRailProps) {
       >
         {n}
       </Text>
-      <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
-      <PrimaryButton label="New Estate" compact onPress={onNewEstate} />
+      <View style={{ flex: 1 }} />
+      <PrimaryButton label="Scan" compact tone="sage" onPress={onScan} />
     </View>
   );
 }

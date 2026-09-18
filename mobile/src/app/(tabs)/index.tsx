@@ -1,13 +1,18 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { EstateDetail } from "@/components/EstateDetail";
+import { EstatePicker } from "@/components/EstatePicker";
 import { EstateRail } from "@/components/EstateRail";
-import { EstateStrip } from "@/components/EstateStrip";
 import { useEstates } from "@/hooks/useEstates";
 import { colors } from "@/theme";
 
@@ -17,10 +22,25 @@ export default function DashboardScreen() {
   const { rows, loading, error } = useEstates("authority");
   const [picked, setPicked] = useState(0);
   const [busy, setBusy] = useState(false);
+  const detailOpacity = useSharedValue(1);
+  const skipDetailFade = useRef(true);
 
   useEffect(() => {
     if (picked >= rows.length) setPicked(0);
   }, [picked, rows.length]);
+
+  useEffect(() => {
+    if (skipDetailFade.current) {
+      skipDetailFade.current = false;
+      return;
+    }
+    detailOpacity.value = 0.4;
+    detailOpacity.value = withTiming(1, { duration: 220 });
+  }, [picked, detailOpacity]);
+
+  const detailFade = useAnimatedStyle(() => ({
+    opacity: detailOpacity.value,
+  }));
 
   async function onConnect() {
     if (busy) return;
@@ -56,6 +76,10 @@ export default function DashboardScreen() {
     router.push("/create");
   }
 
+  function onScan() {
+    router.push("/scan");
+  }
+
   function onCheckIn() {
     Alert.alert("Coming next", "Check-in lands in the owner-write slice.");
   }
@@ -65,7 +89,7 @@ export default function DashboardScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader />
-      <EstateRail count={account ? rows.length : 0} onNewEstate={onNewEstate} />
+      <EstateRail count={account ? rows.length : 0} onScan={onScan} />
 
       {!account ? (
         <EmptyState
@@ -112,10 +136,12 @@ export default function DashboardScreen() {
           contentContainerStyle={{ paddingBottom: 110 }}
         >
           {rows.length > 1 ? (
-            <EstateStrip rows={rows} selected={picked} onSelect={setPicked} />
+            <EstatePicker rows={rows} selected={picked} onSelect={setPicked} />
           ) : null}
           {selected ? (
-            <EstateDetail row={selected} onCheckIn={onCheckIn} />
+            <Animated.View style={detailFade}>
+              <EstateDetail row={selected} onCheckIn={onCheckIn} />
+            </Animated.View>
           ) : null}
         </ScrollView>
       )}

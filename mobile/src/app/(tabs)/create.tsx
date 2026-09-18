@@ -31,8 +31,6 @@ function Stepper({ step, onJump }: { step: number; onJump: (n: number) => void }
         gap: 10,
         height: 48,
         paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.line,
       }}
     >
       <Text
@@ -56,7 +54,7 @@ function Stepper({ step, onJump }: { step: number; onJump: (n: number) => void }
       >
         {String(step).padStart(2, "0")} / 04
       </Text>
-      <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+      <View style={{ flex: 1 }} />
       <View style={{ flexDirection: "row", gap: 4 }}>
         {[1, 2, 3, 4].map((i) => (
           <Pressable
