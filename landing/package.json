@@ -14,21 +14,21 @@
   },
   "dependencies": {
     "@heirloom/i18n": "workspace:*",
-    "astro": "^5.16.2",
+    "astro": "^7.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "posthog-js": "^1.386.3",
-    "tailwind-merge": "^2.6.0"
+    "posthog-js": "^1.434.2",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.5",
-    "@astrojs/sitemap": "^3.7.0",
-    "@types/node": "^24.12.2",
-    "autoprefixer": "^10.4.20",
-    "lucide-static": "^0.468.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17",
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "@types/node": "^26.6.2",
+    "autoprefixer": "^10.6.1",
+    "lucide-static": "^1.47.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "~5.6.3"
+    "typescript": "~7.0.2"
   }
 }

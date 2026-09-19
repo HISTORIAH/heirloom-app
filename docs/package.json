@@ -11,7 +11,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.3.2",
+    "astro": "^7.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.7.0"
@@ -20,10 +20,10 @@
     "@astrojs/check": "^0.9.10",
     "@astrojs/mdx": "^8.0.1",
     "@astrojs/sitemap": "^3.7.4",
-    "@types/node": "^26.5.1",
-    "autoprefixer": "^10.6.0",
+    "@types/node": "^26.6.2",
+    "autoprefixer": "^10.6.1",
     "github-slugger": "^2.0.0",
-    "lucide-static": "^1.46.0",
+    "lucide-static": "^1.47.0",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "~7.0.2"
