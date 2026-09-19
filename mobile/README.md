@@ -1,0 +1,13 @@
+# mobile
+
+Android client. Expo 57, Tamagui, Expo Router.
+
+```bash
+bun install          # from repo root
+bun run dev:mobile
+bun run android      # expo run:android. Needs ANDROID_HOME. JDK 17 or 21, not 25.
+```
+
+`android/` is generated and gitignored. `bun android` installs the Heirloom APK. Expo Go is a different app and will not show our splash. JDK 17 or 21. On JDK 25, CMake dies until you `export JAVA_TOOL_OPTIONS=--enable-native-access=ALL-UNNAMED`.
+
+RPC is `EXPO_PUBLIC_SOLANA_RPC_ENDPOINT` (see `.env.example`). Defaults to public Solana devnet. Never `VITE_*`. A laptop validator from the emulator is `http://10.0.2.2:8899`, not `127.0.0.1`.

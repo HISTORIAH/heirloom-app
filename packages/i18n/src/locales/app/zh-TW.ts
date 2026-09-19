@@ -122,7 +122,8 @@ const app: AppMessages = {
       ifNoCheckin: "如果你這麼久不簽到，你的繼承人就可以領取。",
       neverCheckin: "→ 如果你從不簽到，最早的領取日期是",
       graceUndo: "寬限期是你的復原按鈕。",
-      graceUndoDesc: "錯過了間隔？你仍可在寬限期內簽到並重置整個時鐘。只有過了完整的 {{days}} 天後，你的繼承人才能領取。",
+      graceUndoDesc:
+        "錯過了間隔？你仍可在寬限期內簽到並重置整個時鐘。只有過了完整的 {{days}} 天後，你的繼承人才能領取。",
       timing: "時間",
       deposits: "存款",
       heir: "繼承人",
@@ -163,13 +164,11 @@ const app: AppMessages = {
       whatGoesIn: "放進去什麼",
       checkAndConfirm: "核對並確認",
       ifNeverCheckIn: "如果你不再簽到",
-      dragToMove:
-        "距今 {{days}} 天。拖動任一標記來調整。簽到一次就會重置計時。",
+      dragToMove: "距今 {{days}} 天。拖動任一標記來調整。簽到一次就會重置計時。",
       youCheckInEvery: "你每隔",
       heirThenWaits: "然後繼承人等待",
       checkInFeeNote: "錢包裡簽一次名。沒有網路費。",
-      graceWaitNote:
-        "一開始就會通知他們。結束前你隨時可以叫停。",
+      graceWaitNote: "一開始就會通知他們。結束前你隨時可以叫停。",
       timelineToday: "今天",
       timelineHorizon: "最長 15 個月",
       timelinePending: "下一步再設",
@@ -188,15 +187,12 @@ const app: AppMessages = {
       labelOnlyYou: "只有你看得到。用來在面板上區分不同遺產。",
       labelPlaceholderMum: "媽媽的遺產",
       heirWalletLabel: "對方的 Solana 錢包地址",
-      heirWalletHint:
-        "從繼承人的錢包貼上。資產只會到這個地址。",
+      heirWalletHint: "從繼承人的錢包貼上。資產只會到這個地址。",
       pasteAddress: "貼上地址",
-      guardianHint:
-        "你信任的人。如果他們知道你已經去世，可以提前啟動移交。",
+      guardianHint: "你信任的人。如果他們知道你已經去世，可以提前啟動移交。",
       leaveBlank: "留空即跳過",
       signerLabelPlain: "簽到簽署人",
-      signerHint:
-        "如果懶得用這個錢包簽到，可以授權第二個錢包代簽。",
+      signerHint: "如果懶得用這個錢包簽到，可以授權第二個錢包代簽。",
       goingIntoEstate: "將進入遺產",
       nothingYetShort: "還沒有",
       skipDepositHint: "可以先跳過，之後再從面板存入。",
@@ -213,17 +209,13 @@ const app: AppMessages = {
       estFeeTilde: "預估網路費約 0.002 SOL",
       nothingAddedYet: "還沒新增",
       tipCheckAddressTitle: "再核對一遍地址",
-      tipCheckAddress:
-        "資產只會到這個地址。從繼承人錢包貼上，別手打。",
+      tipCheckAddress: "資產只會到這個地址。從繼承人錢包貼上，別手打。",
       tipAddLaterTitle: "之後還能再加",
-      tipAddLater:
-        "這裡都能再改。之後隨時可以從面板存入。",
+      tipAddLater: "這裡都能再改。之後隨時可以從面板存入。",
       tipKeepIntervalTitle: "選一個你能堅持的間隔",
-      tipKeepInterval:
-        "間隔越短，出事時移交越快，但你要更勤快地簽到。",
+      tipKeepInterval: "間隔越短，出事時移交越快，但你要更勤快地簽到。",
       tipStaysYoursTitle: "在打開之前都還是你的",
-      tipStaysYours:
-        "遺產打開之前你仍完全掌控。隨時可以取出、更換繼承人或關閉。",
+      tipStaysYours: "遺產打開之前你仍完全掌控。隨時可以取出、更換繼承人或關閉。",
       confirmed: "已確認",
       step01: "第 01 步",
       step02: "第 02 步",
@@ -344,23 +336,29 @@ const app: AppMessages = {
       step1Title: "歡迎來到 Heirloom",
       step1Content: "快速瀏覽一下應用——暫時不需要錢包。只有當你準備轉移資產時才需要連接。",
       step2Title: "指定你的繼承人",
-      step2Content: "設定繼承對象：輸入他們的 Solana 地址，為關係新增標籤，並可選擇指定委託人或心跳簽名者。",
+      step2Content:
+        "設定繼承對象：輸入他們的 Solana 地址，為關係新增標籤，並可選擇指定委託人或心跳簽名者。",
       step3Title: "選擇你的資產",
       step3Content: "將 SOL 和/或 SPL 代幣存入金庫。你現在可以跳過，稍後再新增資產。",
       step4Title: "設定你的簽到計時器",
-      step4Content: "選擇你多久確認一次活躍狀態，以及繼承人錯過簽到後需要等待的寬限期，之後才能領取。",
+      step4Content:
+        "選擇你多久確認一次活躍狀態，以及繼承人錯過簽到後需要等待的寬限期，之後才能領取。",
       step5Title: "複核並建立",
-      step5Content: "檢查完整方案——繼承人、資產、計時器——然後確認並點擊建立遺產。在這裡你需要連接錢包來存款和簽名。",
+      step5Content:
+        "檢查完整方案——繼承人、資產、計時器——然後確認並點擊建立遺產。在這裡你需要連接錢包來存款和簽名。",
       step6Title: "你的金庫儀表板",
-      step6Content: "每個金庫都會顯示其即時狀態、倒數計時、鎖定餘額和繼承人。在這裡發送心跳以重置計時器，讓資產留在你身邊。",
+      step6Content:
+        "每個金庫都會顯示其即時狀態、倒數計時、鎖定餘額和繼承人。在這裡發送心跳以重置計時器，讓資產留在你身邊。",
       step7Title: "你的儀表板",
-      step7Content: "在還沒有任何金庫之前，儀表板允許你建立新遺產，或者——如果你被指定為繼承人——領取繼承。",
+      step7Content:
+        "在還沒有任何金庫之前，儀表板允許你建立新遺產，或者——如果你被指定為繼承人——領取繼承。",
       step8Title: "領取繼承",
       step8Content: "繼承人在這裡查找並領取留給他們的資產。你需要連接錢包來領取屬於你的東西。",
       step9Title: "按所有者查找",
       step9Content: "如果自動掃描找不到你的繼承，展開此項以按金庫所有者地址查找遺產。",
       step10Title: "心跳簽名者入口",
-      step10Content: "受信任的簽名者可以在這裡刷新金庫的心跳——保持其活躍，而無需對你的資產擁有完全權限。",
+      step10Content:
+        "受信任的簽名者可以在這裡刷新金庫的心跳——保持其活躍，而無需對你的資產擁有完全權限。",
       step11Title: "這就是 Heirloom",
       step11Content: "這就是整個應用。點擊完成並連接錢包來建立你的第一個金庫。",
       allSetTitle: "一切就緒",
@@ -402,7 +400,8 @@ const app: AppMessages = {
       vaultClosedDesc: "資產已返還到你的錢包。",
       withdrawFailedTitle: "提款失敗",
       closeEstateConfirmTitle: "關閉遺產並提款？",
-      closeEstateConfirmDesc: "這會將所有 SOL 和代幣返還到你的錢包，並永久取消金庫。繼承人將無法再領取。",
+      closeEstateConfirmDesc:
+        "這會將所有 SOL 和代幣返還到你的錢包，並永久取消金庫。繼承人將無法再領取。",
       withdrawCancelLabel: "提款並取消",
       keepEstate: "保留遺產",
       updateEstate: "更新遺產",
@@ -430,21 +429,17 @@ const app: AppMessages = {
       closeEstateDescEditorial:
         "所有資產退回你的錢包（扣除 0.5% 費用），遺產關閉。繼承人不再能領取。",
       closeEstateShort: "關閉遺產",
-      updateEstateEditorialDesc:
-        "改名稱、簽到節奏，以及監護人暫停能持續多久。",
+      updateEstateEditorialDesc: "改名稱、簽到節奏，以及監護人暫停能持續多久。",
       saveChangesQuestion: "儲存這些變更？",
       saveCountsCheckIn: "儲存同時算一次簽到，領取窗口會往後推。",
       noNewTokensWallet: "這個錢包裡沒有新代幣",
       noTokensToAdd: "沒有可新增的代幣。",
-      addAssetEditorialDesc:
-        "幫遺產登記一種新的 SPL 代幣並存入開戶餘額。",
+      addAssetEditorialDesc: "幫遺產登記一種新的 SPL 代幣並存入開戶餘額。",
       nowUsesTimings: "遺產現在按新的時間設定運行。",
       changeHeirShort: "更換繼承人",
-      changeHeirMigrateDesc:
-        "資產會遷到由新繼承人派生的新遺產和金庫。",
+      changeHeirMigrateDesc: "資產會遷到由新繼承人派生的新遺產和金庫。",
       changeHeirQuestion: "更換繼承人？",
-      changeHeirMovesDesc:
-        "每項資產都會遷到新的遺產和金庫。目前繼承人不能再領取。",
+      changeHeirMovesDesc: "每項資產都會遷到新的遺產和金庫。目前繼承人不能再領取。",
       spousePlaceholder: "配偶",
       timingCap: "時間",
       updateEstateShort: "更新遺產",
@@ -453,12 +448,10 @@ const app: AppMessages = {
       heirCap: "繼承人",
       dangerZoneCap: "危險操作",
       newHeirAddress: "新繼承人地址",
-      reassignPauseNote:
-        "目前繼承人失去這份遺產的全部領取權。監護人暫停期間不能做這件事。",
+      reassignPauseNote: "目前繼承人失去這份遺產的全部領取權。監護人暫停期間不能做這件事。",
       tokenLabel: "代幣",
       scanningWallet: "正在掃描你的錢包…",
-      registerTokenNote:
-        "登記代幣會建立金庫帳戶，並把它加入可領取集合。",
+      registerTokenNote: "登記代幣會建立金庫帳戶，並把它加入可領取集合。",
       assetAddedEstateDesc: "該代幣現在屬於這份遺產。",
       couldNotAddAsset: "無法新增資產",
       labelMaxN: "名稱（最多 {{max}} 字）",
@@ -471,11 +464,9 @@ const app: AppMessages = {
     heirPortal: "繼承人入口",
     headline1: "你的繼承",
     headline2: "正在等待。",
-    description:
-      "連接以掃描指定你為繼承人的遺產，或按所有者地址查找。",
+    description: "連接以掃描指定你為繼承人的遺產，或按所有者地址查找。",
     connectTitle: "連接以查找你的繼承",
-    connectDesc:
-      "連接你的錢包以掃描鏈上指定你為繼承人的遺產。可先自由瀏覽頁面。",
+    connectDesc: "連接你的錢包以掃描鏈上指定你為繼承人的遺產。可先自由瀏覽頁面。",
     scanning: "正在掃描鏈上的繼承…",
     autoFetchUnavailable: "自動取得不可用",
     autoFetchDesc: "RPC 拒絕了鏈上掃描。請使用下方的手動查找。",
@@ -507,8 +498,7 @@ const app: AppMessages = {
     guardianPortal: "守護人入口",
     headline1: "延長",
     headline2: "領取視窗。",
-    description:
-      "作為指定的委託人，你可以按遺產的暫停時長將領取截止時間推遲一次。",
+    description: "作為指定的委託人，你可以按遺產的暫停時長將領取截止時間推遲一次。",
     authorityLabel: "權限（所有者）地址",
     authorityPlaceholder: "金庫所有者 Solana 地址…",
     heirLabel: "繼承人地址",
@@ -546,8 +536,7 @@ const app: AppMessages = {
     hotSignerPortal: "熱簽名者入口",
     headline1: "刷新",
     headline2: "心跳。",
-    description:
-      "作為註冊的心跳簽名者，你可以在不持有完全權限的情況下為遺產發送心跳。",
+    description: "作為註冊的心跳簽名者，你可以在不持有完全權限的情況下為遺產發送心跳。",
     authorityLabel: "權限（所有者）地址",
     authorityPlaceholder: "金庫所有者 Solana 地址…",
     heirLabel: "繼承人地址",
@@ -606,8 +595,7 @@ const app: AppMessages = {
     youWillSign: "接下來會請你簽名",
     addBackupPlain: "新增備用管道",
     notifyName: "通知 {{name}}",
-    signCostsNothing:
-      "簽名不花錢，也不動資金。只證明你拿著這把鑰匙。",
+    signCostsNothing: "簽名不花錢，也不動資金。只證明你拿著這把鑰匙。",
     remindTitle: "到期前提醒我",
     remindDesc: "心跳到期前先提醒一聲",
     notifyTitle: "解鎖時通知 {{name}}",
@@ -635,6 +623,10 @@ const app: AppMessages = {
     edit: "編輯",
     signIn: "登入",
     retry: "重試",
+    saveFailed: "無法儲存提醒",
+    saveFailedDesc: "發生問題，請重試。",
+    signInFailed: "無法驗證錢包",
+    signInFailedDesc: "簽名驗證失敗，請重試。",
     summaryYou: "你：{{channel}}",
     summaryYouPlus: "你：{{channel}} +1",
     summaryHeir: "{{name}}：{{channel}}",
@@ -646,6 +638,7 @@ const app: AppMessages = {
     placeholderEmail: "you@email.com",
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "尚未驗證 — 請查看{{channel}}以獲取確認訊息。",
   },
   yield: {
     enableLulo: "啟用 Lulo 收益",
@@ -716,8 +709,7 @@ const app: AppMessages = {
     protectedInstant: "隨時可取。收益低一些，沒有鎖定期。",
     boosted: "加速",
     boostedDesc: "收益更高，但取出要等冷卻。",
-    yieldFeeNote:
-      "手續費只抽已賺收益的 10%，不動本金。繼承人領取前必須先把已投放的資金收回。",
+    yieldFeeNote: "手續費只抽已賺收益的 10%，不動本金。繼承人領取前必須先把已投放的資金收回。",
     stakeVaultSol: "質押金庫裡的 SOL",
     stakeVaultDesc: "把 {{amount}} SOL 委託給驗證者。遺產等待期間仍會生息。",
     commissionPct: "{{pct}}% 佣金",
@@ -726,16 +718,12 @@ const app: AppMessages = {
       "委託在下一個 epoch 邊界生效，取消質押也要一個 epoch 才能結算。領取窗口打開前請先收回。",
     jitoEditorial: "帶 MEV 加成的質押。兩者裡眼下收益更高。",
     marinadeEditorial: "分散到一組驗證者。更穩，略低一點。",
-    pullBackEarned:
-      "把 {{amount}} {{unit}} 連同已賺的收益一起收回金庫。",
-    oneSigLuloEditorial:
-      "簽一次名就從 Lulo 取出並退回金庫。10% 只抽已賺收益，不動本金。",
-    oneSigStakeEditorial:
-      "簽一次名就取消委託並把 SOL 退回金庫。質押在下一個 epoch 邊界結算。",
+    pullBackEarned: "把 {{amount}} {{unit}} 連同已賺的收益一起收回金庫。",
+    oneSigLuloEditorial: "簽一次名就從 Lulo 取出並退回金庫。10% 只抽已賺收益，不動本金。",
+    oneSigStakeEditorial: "簽一次名就取消委託並把 SOL 退回金庫。質押在下一個 epoch 邊界結算。",
     deployed: "已投放",
     fundsOutEarning: "資金正在外面生息",
-    beforeAction:
-      "在{{action}}之前，全部得先回到金庫。會在同一筆交易裡完成。",
+    beforeAction: "在{{action}}之前，全部得先回到金庫。會在同一筆交易裡完成。",
     preparing: "準備中…",
     recallAndAction: "收回並{{action}}",
     tokensInLulo: "Lulo 中的代幣",
@@ -760,8 +748,7 @@ const app: AppMessages = {
     withdrawFromVault: "從金庫取出",
     returnToVault: "退回金庫",
     depositToLulo: "存入 Lulo",
-    epochActiveNote:
-      "你的委託在下一個 epoch 邊界生效。獎勵從那時開始累積。",
+    epochActiveNote: "你的委託在下一個 epoch 邊界生效。獎勵從那時開始累積。",
     topUpSymbol: "加存 {{symbol}}",
     moveIntoVault: "把錢包裡的 {{symbol}} 轉入金庫。",
     inVault: "金庫中",

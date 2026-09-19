@@ -78,7 +78,7 @@ const app: AppMessages = {
       whatProtecting: "O que você está protegendo?",
       howOften: "Com que frequência você faz check-in?",
       reviewConfirm: "Revisar e confirmar",
-      labelLabel: "RÓTULO (EX. \"FILHO\", \"CÔNJUGE\")",
+      labelLabel: 'RÓTULO (EX. "FILHO", "CÔNJUGE")',
       labelPlaceholder: "ex. cônjuge",
       heirAddressLabel: "ENDEREÇO SOLANA DO HERDEIRO",
       heirAddressPlaceholder: "Digite o endereço da carteira Solana…",
@@ -113,7 +113,8 @@ const app: AppMessages = {
       assets: "ativos",
       and: "e",
       oneHeir: "1 herdeiro",
-      chooseHowOften: "neste espólio. Escolha com que frequência você precisa provar que está vivo.",
+      chooseHowOften:
+        "neste espólio. Escolha com que frequência você precisa provar que está vivo.",
       heartbeatInterval: "INTERVALO DE BATIMENTO",
       gracePeriod: "PERÍODO DE CARÊNCIA",
       days: "DIAS",
@@ -122,7 +123,8 @@ const app: AppMessages = {
       ifNoCheckin: "Se você não fizer check-in por esse tempo, seu herdeiro pode reivindicar.",
       neverCheckin: "→ Se você nunca fizer check-in, a data de reivindicação mais cedo é",
       graceUndo: "O período de carência é seu botão de desfazer.",
-      graceUndoDesc: "Perdeu seu intervalo? Você ainda pode fazer check-in durante a carência e reiniciar todo o relógio. Somente após os {{days}} dias completos seu herdeiro pode reivindicar.",
+      graceUndoDesc:
+        "Perdeu seu intervalo? Você ainda pode fazer check-in durante a carência e reiniciar todo o relógio. Somente após os {{days}} dias completos seu herdeiro pode reivindicar.",
       timing: "TEMPO",
       deposits: "DEPÓSITOS",
       heir: "HERDEIRO",
@@ -342,36 +344,49 @@ const app: AppMessages = {
       last: "Concluir",
       back: "Voltar",
       step1Title: "Bem-vindo ao Heirloom",
-      step1Content: "Faça um tour rápido pelo app — ainda sem carteira necessária. Você só conecta quando estiver pronto para mover ativos.",
+      step1Content:
+        "Faça um tour rápido pelo app — ainda sem carteira necessária. Você só conecta quando estiver pronto para mover ativos.",
       step2Title: "Nomeie seu herdeiro",
-      step2Content: "Defina quem herda: insira o endereço Solana deles, dê um rótulo ao relacionamento e, opcionalmente, atribua um delegado ou um assinante de batimento.",
+      step2Content:
+        "Defina quem herda: insira o endereço Solana deles, dê um rótulo ao relacionamento e, opcionalmente, atribua um delegado ou um assinante de batimento.",
       step3Title: "Escolha seus ativos",
-      step3Content: "Deposite SOL e/ou tokens SPL no cofre. Você pode pular agora e adicionar ativos depois.",
+      step3Content:
+        "Deposite SOL e/ou tokens SPL no cofre. Você pode pular agora e adicionar ativos depois.",
       step4Title: "Defina seu cronômetro de check-in",
-      step4Content: "Escolha com que frequência você confirmará que está ativo e o período de carência que os herdeiros esperam após você perder um check-in antes de poderem reivindicar.",
+      step4Content:
+        "Escolha com que frequência você confirmará que está ativo e o período de carência que os herdeiros esperam após você perder um check-in antes de poderem reivindicar.",
       step5Title: "Revise e crie",
-      step5Content: "Confira o plano completo — herdeiro, ativos, cronômetros — depois reconheça e clique em Criar Espólio. É aqui que você conecta sua carteira para depositar e assinar.",
+      step5Content:
+        "Confira o plano completo — herdeiro, ativos, cronômetros — depois reconheça e clique em Criar Espólio. É aqui que você conecta sua carteira para depositar e assinar.",
       step6Title: "Seu painel do cofre",
-      step6Content: "Cada cofre mostra seu status ao vivo, contagem regressiva, saldos bloqueados e herdeiro. Envie um batimento aqui para reiniciar o cronômetro e manter os ativos com você.",
+      step6Content:
+        "Cada cofre mostra seu status ao vivo, contagem regressiva, saldos bloqueados e herdeiro. Envie um batimento aqui para reiniciar o cronômetro e manter os ativos com você.",
       step7Title: "Seu painel",
-      step7Content: "Antes de existir qualquer cofre, o painel permite criar um novo espólio ou — se você foi nomeado herdeiro — reivindicar uma herança.",
+      step7Content:
+        "Antes de existir qualquer cofre, o painel permite criar um novo espólio ou — se você foi nomeado herdeiro — reivindicar uma herança.",
       step8Title: "Reivindique uma herança",
-      step8Content: "Herdeiros vêm aqui para procurar e reivindicar ativos deixados para eles. Você conectará uma carteira para reivindicar o que é seu.",
+      step8Content:
+        "Herdeiros vêm aqui para procurar e reivindicar ativos deixados para eles. Você conectará uma carteira para reivindicar o que é seu.",
       step9Title: "Procure por proprietário",
-      step9Content: "Se a varredura automática não encontrar sua herança, expanda isto para procurar um espólio pelo endereço do proprietário do cofre.",
+      step9Content:
+        "Se a varredura automática não encontrar sua herança, expanda isto para procurar um espólio pelo endereço do proprietário do cofre.",
       step10Title: "Portal do assinante de batimento",
-      step10Content: "Um assinante confiável pode atualizar o batimento de um cofre aqui — mantendo-o ativo sem deter autoridade total sobre seus ativos.",
+      step10Content:
+        "Um assinante confiável pode atualizar o batimento de um cofre aqui — mantendo-o ativo sem deter autoridade total sobre seus ativos.",
       step11Title: "Isso é o Heirloom",
-      step11Content: "Esse é o app inteiro. Clique em Concluir e conecte sua carteira para criar seu primeiro cofre.",
+      step11Content:
+        "Esse é o app inteiro. Clique em Concluir e conecte sua carteira para criar seu primeiro cofre.",
       allSetTitle: "Você está pronto",
-      allSetDesc: "Conecte sua carteira para criar seu primeiro cofre — levaremos você direto ao construtor.",
+      allSetDesc:
+        "Conecte sua carteira para criar seu primeiro cofre — levaremos você direto ao construtor.",
       connectWallet: "Conectar Carteira",
     },
     manage: {
       changeHeir: "Mudar Herdeiro",
       changeHeirDesc: "Transfira o espólio para um endereço de herdeiro diferente.",
       newHeirPlaceholder: "Novo endereço Solana do herdeiro...",
-      changeHeirWarning: "Aviso: isso move o PDA do espólio + ativos do cofre para o novo herdeiro. O herdeiro antigo não pode mais reivindicar.",
+      changeHeirWarning:
+        "Aviso: isso move o PDA do espólio + ativos do cofre para o novo herdeiro. O herdeiro antigo não pode mais reivindicar.",
       cancel: "Cancelar",
       sameHeirTitle: "Mesmo herdeiro",
       sameHeirDesc: "O novo endereço do herdeiro corresponde ao herdeiro atual.",
@@ -379,7 +394,8 @@ const app: AppMessages = {
       heirUpdatedDesc: "Espólio reatribuído ao novo herdeiro.",
       updateFailedTitle: "Falha na Atualização",
       changeHeirConfirmTitle: "Mudar Herdeiro?",
-      changeHeirConfirmDesc: "O PDA do espólio e os ativos do cofre se movem para o novo herdeiro. O herdeiro atual não pode mais reivindicar.",
+      changeHeirConfirmDesc:
+        "O PDA do espólio e os ativos do cofre se movem para o novo herdeiro. O herdeiro atual não pode mais reivindicar.",
       from: "De",
       to: "Para",
       addAsset: "Adicionar Ativo",
@@ -390,7 +406,8 @@ const app: AppMessages = {
       amount: "Quantidade",
       walletBalance: "Saldo da carteira:",
       noTokensAvailable: "Nenhum token disponível na carteira",
-      addAssetNote: "Adiciona um novo tipo de token SPL ao cofre. O token já deve existir na sua carteira.",
+      addAssetNote:
+        "Adiciona um novo tipo de token SPL ao cofre. O token já deve existir na sua carteira.",
       depositing: "Depositando...",
       deposit: "Depositar",
       assetAddedTitle: "Ativo adicionado",
@@ -402,11 +419,13 @@ const app: AppMessages = {
       vaultClosedDesc: "Ativos devolvidos à sua carteira.",
       withdrawFailedTitle: "Falha no Saque",
       closeEstateConfirmTitle: "Fechar Espólio e Sacar?",
-      closeEstateConfirmDesc: "Isso devolve todo o SOL e tokens à sua carteira e cancela permanentemente o cofre. O herdeiro não poderá mais reivindicar.",
+      closeEstateConfirmDesc:
+        "Isso devolve todo o SOL e tokens à sua carteira e cancela permanentemente o cofre. O herdeiro não poderá mais reivindicar.",
       withdrawCancelLabel: "Sacar e Cancelar",
       keepEstate: "Manter Espólio",
       updateEstate: "Atualizar Espólio",
-      updateEstateDesc: "Ajuste sua programação de check-in, período de carência ou rótulo do espólio.",
+      updateEstateDesc:
+        "Ajuste sua programação de check-in, período de carência ou rótulo do espólio.",
       labelMax: "Rótulo (máx. {{max}} caracteres)",
       estateLabelPlaceholder: "Rótulo do espólio",
       intervalSec: "Intervalo (seg)",
@@ -417,7 +436,8 @@ const app: AppMessages = {
       settingsUpdatedTitle: "Configurações atualizadas",
       settingsUpdatedDesc: "Configuração do espólio salva on-chain.",
       updateEstateConfirmTitle: "Atualizar Espólio?",
-      updateEstateConfirmDesc: "Mudar intervalo, carência ou pausa altera o prazo do batimento. Certifique-se de que os herdeiros estejam cientes antes de salvar.",
+      updateEstateConfirmDesc:
+        "Mudar intervalo, carência ou pausa altera o prazo do batimento. Certifique-se de que os herdeiros estejam cientes antes de salvar.",
       save: "Salvar",
       label: "Rótulo",
       interval: "Intervalo",
@@ -433,11 +453,11 @@ const app: AppMessages = {
       updateEstateEditorialDesc:
         "Altere o rótulo, o calendário de check-in e quanto dura uma pausa do guardião.",
       saveChangesQuestion: "Salvar estas alterações?",
-      saveCountsCheckIn: "Salvar também conta como um check-in e empurra a janela de reivindicação para frente.",
+      saveCountsCheckIn:
+        "Salvar também conta como um check-in e empurra a janela de reivindicação para frente.",
       noNewTokensWallet: "Não há tokens novos nesta wallet",
       noTokensToAdd: "Não há tokens para adicionar.",
-      addAssetEditorialDesc:
-        "Registre um novo token SPL no espólio e deposite um saldo inicial.",
+      addAssetEditorialDesc: "Registre um novo token SPL no espólio e deposite um saldo inicial.",
       nowUsesTimings: "O espólio agora usa os novos prazos.",
       changeHeirShort: "Trocar herdeiro",
       changeHeirMigrateDesc:
@@ -481,7 +501,8 @@ const app: AppMessages = {
     autoFetchDesc: "O RPC rejeitou a varredura on-chain. Use a busca manual abaixo.",
     noEstates: "Nenhum Espólio Encontrado",
     noEstatesDesc1: "Procure um espólio pelo endereço Solana do proprietário do cofre.",
-    noEstatesDesc2: "Nenhum espólio nomeia sua carteira como herdeiro. Tente a busca manual se você espera um.",
+    noEstatesDesc2:
+      "Nenhum espólio nomeia sua carteira como herdeiro. Tente a busca manual se você espera um.",
     manualLookup: "Busca manual",
     owner: "Proprietário",
     status: "Status",
@@ -528,7 +549,8 @@ const app: AppMessages = {
     notDelegate: "Não é o Delegado",
     deferClaimWindow: "Adiar Janela de Reivindicação",
     confirmTitle: "Estender Janela de Reivindicação?",
-    confirmDesc: "Estenda a janela de reivindicação em {{duration}}. Esta pausa de guardião só pode ser usada uma vez por espólio.",
+    confirmDesc:
+      "Estenda a janela de reivindicação em {{duration}}. Esta pausa de guardião só pode ser usada uma vez por espólio.",
     confirmLabel: "Adiar",
     cancelLabel: "Cancelar",
     notFoundError: "Espólio não encontrado para este par autoridade + herdeiro.",
@@ -567,7 +589,8 @@ const app: AppMessages = {
     sendHeartbeat: "Enviar Batimento",
     notFoundError: "Espólio não encontrado para este par autoridade + herdeiro.",
     noSignerError: "O espólio não tem assinante de batimento designado.",
-    wrongSignerError: "Você não é o assinante de batimento deste espólio. O assinante é {{signer}}...",
+    wrongSignerError:
+      "Você não é o assinante de batimento deste espólio. O assinante é {{signer}}...",
     toastSentTitle: "Batimento enviado",
     toastSentDesc: "Cronômetro do cofre reiniciado.",
     toastFailTitle: "Falha no batimento",
@@ -606,8 +629,7 @@ const app: AppMessages = {
     youWillSign: "Você vai assinar",
     addBackupPlain: "Adicionar um canal de backup",
     notifyName: "Avisar {{name}}",
-    signCostsNothing:
-      "Assinar não custa nada e não move fundos. Só prova que você tem a chave.",
+    signCostsNothing: "Assinar não custa nada e não move fundos. Só prova que você tem a chave.",
     remindTitle: "Lembre-me antes do vencimento",
     remindDesc: "Um aviso antes do seu batimento vencer",
     notifyTitle: "Avisar {{name}} no desbloqueio",
@@ -619,9 +641,11 @@ const app: AppMessages = {
     saving: "Salvando…",
     cancel: "Cancelar",
     signInTitle: "Entre para gerenciar notificações",
-    signInDesc: "Os dados de contato são privados deste espólio. Prove que você é dono desta carteira — nada mais.",
+    signInDesc:
+      "Os dados de contato são privados deste espólio. Prove que você é dono desta carteira — nada mais.",
     signPrompt: "Você vai assinar exatamente esta mensagem",
-    signNote: "Sem transação, sem gas, sem pedido de conexão de carteira — só uma assinatura, válida só para esta sessão.",
+    signNote:
+      "Sem transação, sem gas, sem pedido de conexão de carteira — só uma assinatura, válida só para esta sessão.",
     signMessage: "Assinar mensagem",
     signMessageBody:
       "heirlm.xyz wants you to manage notification settings.\n\nEstate:  {{estate}}\nWallet:  {{wallet}}\n\nThis does not cost gas and does not authorize any on-chain transaction.",
@@ -635,6 +659,10 @@ const app: AppMessages = {
     edit: "Editar",
     signIn: "Entrar",
     retry: "Tentar de novo",
+    saveFailed: "Não foi possível salvar os lembretes",
+    saveFailedDesc: "Algo deu errado. Tente de novo.",
+    signInFailed: "Não foi possível verificar a carteira",
+    signInFailedDesc: "Falha ao verificar a assinatura. Tente de novo.",
     summaryYou: "Você: {{channel}}",
     summaryYouPlus: "Você: {{channel}} +1",
     summaryHeir: "{{name}}: {{channel}}",
@@ -646,6 +674,7 @@ const app: AppMessages = {
     placeholderEmail: "voce@email.com",
     placeholderTelegram: "@usuario",
     placeholderPhone: "+1 234 567 8900",
+    unverified: "Ainda não verificado — confira o {{channel}} para ver a mensagem de confirmação.",
   },
   yield: {
     enableLulo: "Ativar Rendimento Lulo",
@@ -655,7 +684,8 @@ const app: AppMessages = {
     doneShort: "Pronto",
     protected: "Protegido",
     recommended: "Recomendado",
-    protectedDesc: "Os fundos são segurados contra risco da plataforma. Rendimento menor, segurança maior.",
+    protectedDesc:
+      "Os fundos são segurados contra risco da plataforma. Rendimento menor, segurança maior.",
     unprotected: "Desprotegido",
     unprotectedDesc: "Rendimento maior sem seguro. Melhor para depósitos que toleram mais risco.",
     apy: "{{apy}}% APY",
@@ -671,14 +701,17 @@ const app: AppMessages = {
     epochDesc:
       "A delegação entra em vigor no próximo limite de época (~2–3 dias). As recompensas acumulam por época e são creditadas no fim. Você pode desfazer a delegação a qualquer momento, mas o unstake tem um período de resfriamento.",
     delegateTo: "Delegar para {{name}}",
-    validatorJitoDesc: "Staking potencializado por MEV com reinvestimento automático de recompensas.",
+    validatorJitoDesc:
+      "Staking potencializado por MEV com reinvestimento automático de recompensas.",
     validatorMarinadeDesc: "Staking líquido com mSOL — continue líquido enquanto rende.",
     recallLulo: "Recuperar do Lulo",
     unstakeSol: "Unstake de SOL",
     pullBack: "Puxe {{amount}} {{unit}} de volta ao seu cofre.",
     oneSigTitle: "Recuperação com uma assinatura",
-    oneSigLulo: "O backend cuida do saque do Lulo e devolve os fundos ao seu cofre automaticamente.",
-    oneSigStake: "O backend cuida do saque do staking e devolve os fundos ao seu cofre automaticamente.",
+    oneSigLulo:
+      "O backend cuida do saque do Lulo e devolve os fundos ao seu cofre automaticamente.",
+    oneSigStake:
+      "O backend cuida do saque do staking e devolve os fundos ao seu cofre automaticamente.",
     recalling: "Recuperando…",
     tokens: "tokens",
     done: "Pronto!",
@@ -719,15 +752,16 @@ const app: AppMessages = {
     yieldFeeNote:
       "Uma taxa de 10% incide sobre o rendimento, nunca sobre o principal. Fundos em estratégia precisam voltar antes de um herdeiro reivindicar.",
     stakeVaultSol: "Faça stake do SOL da vault",
-    stakeVaultDesc: "Delegue {{amount}} SOL a um validador. Continua rendendo enquanto o espólio espera.",
+    stakeVaultDesc:
+      "Delegue {{amount}} SOL a um validador. Continua rendendo enquanto o espólio espera.",
     commissionPct: "{{pct}}% de comissão",
     selectedDot: "{{name}} · {{apy}}% APY",
     epochRecallNote:
       "A delegação ativa no próximo limite de época, e o unstake leva uma época para liquidar. Puxe de volta antes de a janela de reivindicação abrir.",
     jitoEditorial: "Stake com MEV. O maior rendimento atual dos dois.",
-    marinadeEditorial: "Stake espalhado por um conjunto de validadores. Mais estável, um pouco menor.",
-    pullBackEarned:
-      "Traga {{amount}} {{unit}} de volta para a vault, junto com o que rendeu.",
+    marinadeEditorial:
+      "Stake espalhado por um conjunto de validadores. Mais estável, um pouco menor.",
+    pullBackEarned: "Traga {{amount}} {{unit}} de volta para a vault, junto com o que rendeu.",
     oneSigLuloEditorial:
       "Uma assinatura saca da Lulo e devolve os fundos à vault. 10% incide sobre o rendimento, nunca sobre o principal.",
     oneSigStakeEditorial:
