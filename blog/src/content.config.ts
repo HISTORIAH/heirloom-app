@@ -13,6 +13,8 @@ const blog = defineCollection({
     author: z.string().default("Heirloom Team"),
     authorBio: z.string().optional(),
     featured: z.boolean().default(false),
+    cover: z.string().optional(),
+    canonical: z.string().url().optional(),
   }),
 });
 

@@ -150,7 +150,7 @@ const launchHref = appUrl(locale);
       }
     };
 
-    toggle.addEventListener("click", () => set(drawer.hidden));
+    toggle.addEventListener("click", () => set(drawer.hidden !== false));
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !drawer.hidden) set(false);
     });

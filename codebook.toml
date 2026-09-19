@@ -1,4 +1,5 @@
 words = [
+    "Apalis",
     "Ethereum",
     "Lamport",
     "Lulo",
@@ -9,6 +10,7 @@ words = [
     "historiah",
     "ika",
     "kamino",
+    "onchain",
     "pda",
     "sysvar",
 ]

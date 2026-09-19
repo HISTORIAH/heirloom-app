@@ -91,7 +91,7 @@ const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0]!;
       trigger.setAttribute("aria-expanded", String(open));
     };
 
-    trigger.addEventListener("click", () => set(menu.hidden));
+    trigger.addEventListener("click", () => set(menu.hidden !== false));
     document.addEventListener("mousedown", (e) => {
       if (!root.contains(e.target as Node)) set(false);
     });

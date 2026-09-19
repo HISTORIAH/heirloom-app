@@ -1,0 +1,249 @@
+---
+title: "Rust Background Jobs with Apalis and Postgres: Reminders on Solana"
+description: "How we built a Solana reminder scheduler with Apalis and Postgres: retries, idempotent job keys, and reconciling jobs against onchain state."
+pubDate: 2026-09-19
+tags: ["technical"]
+draft: false
+author: "Jimii"
+authorBio: "Co-founder at Heirloom. Previously built for Smithii, SF, Calyptus."
+canonical: "https://heirlm.xyz/blog/apalis-reminder-workers-solana/"
+cover: "/blog/images/apalis-postgres-reminder-workers-cover.png"
+---
+
+We are building Heirloom, an onchain inheritance platform on Solana. One of the most requested features was reminders/notifications as the timer wound down. However, we initially hesitated because that would mean tracking and managing user contact details, which is a valid concern given the number of customer [data breaches](https://techcrunch.com/2026/09/11/scammers-target-hundreds-of-thousands-of-crypto-owners-after-trezor-confirms-data-breach-of-email-provider/) hitting web3 and blockchain-adjacent products.
+
+In this post we share how we tackled this using [Apalis](https://github.com/apalis-dev) and Postgres on our axum backend. We also cover the issues we faced and some gotchas to watch out for if you're building background workers with Apalis.
+
+We set out to build a notification system that sends reminders to the testator/testatrix (the estate creator) and to the heir, with information about how to claim. The reminder schedule is managed on our end.
+
+For the **testator** we have two distinct schedules:
+- During the normal countdown period, the first reminder fires when 7 days are left and the other when the countdown elapses.
+- During the grace period we send three reminders: when the grace period starts, halfway through it, and finally 24 hours before it elapses.
+
+For the **heir** we only send a single reminder after the timer elapses, with multiple retries if the estate still remains unclaimed.
+
+
+## Why we chose Apalis for Rust background jobs
+We worked through a couple of suggestions for building this, listing their strengths and weaknesses. We needed something simple and reliable, and we didn't want to reinvent the wheel on problems that have already been solved.
+
+We decided against cron jobs and separate workers (e.g. Cloudflare Workers) because that would mean managing two different platforms. We needed the reminders to run inside our background service as a separate tokio task. We evaluated a lot of libraries, but they were either unmaintained, archived, or too lightweight for what we needed, which is what led us to Apalis. Its storage-agnostic design is what drew us in: if you need more throughput because Postgres is bottlenecked by writes, you can switch to Redis and your core job processing logic remains the same. It is actively maintained and **well documented**, so we could ramp up on it quickly.
+
+## Why Postgres as the job queue backend
+One of the main reasons we went with Postgres instead of an in-memory DB was, well, because we already had it 😂. Jokes aside, the reminder system isn't a latency-sensitive service where milliseconds dictate success or failure. When a reminder lands two seconds, four seconds or five minutes later, it isn't a failure. It did what it was supposed to do.
+
+The tradeoff we accepted was that with a large number of jobs, this would bottleneck Postgres compared to, say, Redis. However, given that the check-in interval is in months and the feature is opt-in, this isn't a problem we are likely to run into any time soon.
+
+## Architecture: a dispatch worker and a chain reconciler
+With our stack locked in, it was time to put it all together and ship. The flow chart below illustrates what was needed.
+
+![Flow chart of the reminder pipeline: opt-in and contact verification, the Apalis dispatch worker with its guards (already checked in, estate closed or paused, fire time out of range), and the sweep worker that reconciles the database with onchain state](/blog/images/shapes-at-26-09-15-20.09.30.png)
+
+We had two tasks running separately from main:
+- The Apalis worker responsible for dispatching enqueued jobs/reminders.
+- A separate tokio task responsible for reconciling jobs with actual onchain data. It helped us clean up stale jobs and enqueue jobs that might not have been added when a user opted in to our reminders.
+
+For both of them we had four guards that void any pending job in case:
+- a user had checked in earlier than their reminder was due to fire
+- a user had closed or paused their estate
+- the reminder was firing outside its specified window
+- a job with a duplicate key was scheduled (duplication)
+
+For job failures we added a retry layer for the jobs. After max attempts the notifier would record them as permanent failures and we'd abandon them. The unique key mentioned above made retries safe.
+
+We used a `ReminderDispatchJob` struct to store the job data, and any additional data (recipient list, deadlines, estate state) was read at fire time.
+
+```rust
+/// Identity of one reminder event
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReminderDispatchJob {
+    pub reminder_subscription_id: Uuid,
+
+    /// Which half of the lifecycle this event belongs to.
+    pub phase: ReminderPhase, // Countdown or Grace
+
+    /// Ordinal within the phase — countdown has stages 0–1, grace 0–3.
+    pub stage: u32,
+
+    /// What kind of event this is; determines recipients and message.
+    pub kind: ReminderEventKind, // Reminder, CountdownExpired, HeirAlert
+
+    /// `last_check_in_at` at enqueue time. Compared against the onchain value at
+    /// fire time: if they differ, the user checked in since, and this job is
+    /// voided. Also baked into `event_key` for apalis dedup.
+    pub check_in_anchor: DateTime<Utc>,
+}
+```
+
+## Dispatching reminders idempotently
+The handler is where the guards live. Every job that fires runs through it, and it walks the same path each time: load state, check the guards, claim the event, deliver. Here's each step.
+
+### 1. Load the subscription and the onchain clock
+The database tells us who to notify, but the source of truth for the countdown is the estate account onchain. We read `last_heartbeat` from chain at fire time rather than trusting anything we stored when the job was queued.
+
+```rust
+pub async fn dispatch_reminder(
+    job: ReminderDispatchJob,
+    ctx: Data<ReminderWorkerContext>,
+) -> anyhow::Result<()> {
+    let repo = ReminderRepository::new(ctx.pool.clone());
+
+    // Subscription deleted: nothing to void, just acknowledge the job.
+    let Some(sub) = repo
+        .fetch_subscription_id(job.reminder_subscription_id)
+        .await?
+    else {
+        return Ok(());
+    };
+
+    // The estate account is gone (e.g. closed): move on.
+    let Ok(onchain_estate) = resolve_estate(
+        &ctx.solana_rpc,
+        &Address::from_str_const(&sub.estate_address),
+    ) else {
+        return Ok(());
+    };
+    let estate = match onchain_estate {
+        FetchedEstate::Heirloom(acc) => acc.data,
+    };
+    let Some(last_check_in) = DateTime::<Utc>::from_timestamp(estate.last_heartbeat, 0) else {
+        return Ok(());
+    };
+```
+
+### 2. Guards
+Each guard returns `Ok(())` rather than an error. A voided job isn't a failure, so we acknowledge it and Apalis doesn't retry it.
+
+```rust
+    // Guard 1: generation. If the clock moved after this job was queued (a
+    // check-in, or a chain resync that found a newer one), void it. This is what
+    // makes a mid-countdown check-in safe, with no job deletion needed anywhere.
+    if job.check_in_anchor != last_check_in {
+        return Ok(());
+    }
+
+    // Guard 2: lifecycle. The estate was paused, closed or triggered.
+    if estate.paused_until > 0 || sub.closed_at.is_some() {
+        return Ok(());
+    }
+
+    // Guard 3: window. The event's window must still be open. A job that fires
+    // late after an outage is sent if still valid, and voided if its window passed.
+    let now = Utc::now();
+    let countdown_deadline = sub.last_check_in_at + Duration::seconds(sub.countdown_secs);
+    let grace_deadline = countdown_deadline + Duration::seconds(sub.grace_secs);
+    let within_window = match (job.phase, job.kind) {
+        (ReminderPhase::Countdown, ReminderEventKind::Reminder) => now < countdown_deadline,
+        (ReminderPhase::Countdown, ReminderEventKind::CountdownExpired) => {
+            now >= countdown_deadline && now < grace_deadline
+        }
+        (ReminderPhase::Grace, ReminderEventKind::Reminder) => {
+            now >= countdown_deadline && now < grace_deadline
+        }
+        (ReminderPhase::Grace, ReminderEventKind::HeirAlert) => now >= grace_deadline,
+        _ => true,
+    };
+    if !within_window {
+        return Ok(());
+    }
+```
+
+### 3. Claim the event
+The fourth guard, deduplication, is enforced by the database. `reminder_event.event_key` has a `UNIQUE` constraint, built from the subscription, the check-in anchor, the phase, the stage and the kind. If two duplicate queue rows somehow both fire, one insert wins and the other becomes a no-op.
+
+```rust
+    let event_key = reminder_event_key(
+        job.reminder_subscription_id,
+        job.check_in_anchor,
+        job.phase,
+        job.stage,
+        job.kind,
+    );
+    let Some(event_id) = repo
+        .add_reminder_event(
+            job.reminder_subscription_id,
+            job.phase.as_str(),
+            job.stage as i32,
+            job.kind.as_str(),
+            event_key,
+        )
+        .await?
+    else {
+        return Ok(()); // already claimed by another run
+    };
+
+    // CountdownExpired is a phase marker: the audit row above is its whole job.
+    if job.kind == ReminderEventKind::CountdownExpired {
+        return Ok(());
+    }
+```
+
+### 4. Deliver
+Contact details are encrypted at rest, so we load and decrypt the recipients for this event just before sending. Then, for each recipient, we claim a `(event, recipient)` row **before** sending. That second `UNIQUE` constraint is a per-channel guard: a recipient who was already handled is skipped, so nobody gets the same reminder twice.
+
+```rust
+    let recipients = load_recipients(&repo, &ctx, &sub, job.kind).await?;
+
+    for recipient in recipients {
+        let Some(delivery_id) = repo
+            .claim_delivery(event_id, recipient.reminder_recipient_id)
+            .await?
+        else {
+            continue; // this channel was already handled
+        };
+
+        match ctx.notifier.deliver(&recipient, &job).await {
+            Ok(()) => {
+                repo.mark_delivery_sent(delivery_id).await?;
+            }
+            Err(e) => {
+                let msg = e.to_string();
+                if let Err(db_err) = repo.mark_delivery_failed(delivery_id, &msg).await {
+                    tracing::error!(
+                        ?db_err,
+                        %msg,
+                        %delivery_id,
+                        "failed to record delivery failure; row may still say 'pending'"
+                    );
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+```
+
+## Fixing the Apalis Postgres VersionMissing migration error
+All was fine and dandy until it was time to test, so we fired up the server with `cargo run` and came across the error below.
+
+```text
+2026-09-13T17:06:08.170485Z  INFO heirloom_backend::app: Redis client configured
+2026-09-13T17:06:08.171076Z  INFO sqlx::postgres::notice: relation "_sqlx_migrations" already exists, skipping
+
+thread 'main' (677167) panicked at src/app.rs:105:10:
+failed to run apalis migrations: Migrate(VersionMissing(20260513185704))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+The error pointed at sqlx, so I wondered whether I'd forgotten to run my migrations. I reran them and restarted the server, but the error persisted. I couldn't figure out the cause because the [apalis-postgres](https://github.com/apalis-dev/apalis-postgres#upgrading-to-10) README had mentioned that it uses a separate migrations table, `apalis._sqlx_migrations`, distinct from the user's own:
+
+> The sqlx migrations table is now tracked in apalis._sqlx_migrations (configured in sqlx.toml) instead of public._sqlx_migrations. This also keeps apalis's migration history from colliding with your own sqlx migrations on the same database.
+
+Maybe Apalis was meant to handle the migrations itself, so I dropped the local database and ran `cargo run` first. The server started, but when I then ran my own migrations they failed, so something was clearly still wrong.
+
+The GitHub repo had everything the README described, including the `sqlx.toml` and a newer version of sqlx. The published [docs.rs](https://docs.rs/crate/apalis-postgres/1.0.0-rc.8/source/) version (`1.0.0-rc.8`) didn't: the `sqlx.toml` was missing, and its publish date was older than the latest commits. In other words, the README on `main` was documenting behaviour that hadn't been released yet.
+
+Pointing Cargo at the git repository directly fixed the issue for us, and we opened an issue describing the mismatch: https://github.com/apalis-dev/apalis-postgres/issues/113
+
+**Update:** the issue was resolved quickly and the fix landed in `1.0.0-rc.9`. If you hit `VersionMissing` on `rc.8`, upgrade `apalis-postgres` to the latest release, and `apalis` t    o `1.0.0-rc.10`:
+
+```toml
+[dependencies]
+apalis = "1.0.0-rc.10"
+apalis-postgres = "1.0.0-rc.9"
+```
+
+## Closing
+Apalis gave us what we were after: a reminder pipeline that lives inside our existing backend, runs on the Postgres we already had, and stays correct when users check in mid-countdown or duplicate jobs slip into the queue. The one hiccup was a mismatch between the docs on `main` and the published release candidate, and the maintainers fixed it quickly. If you're building on a pre-release crate, check that the docs you're reading match the version you've installed.
+
+Notifications will soon be live on Heirloom, starting with Telegram. Create an estate, opt in, and never miss a check-in [heirlm.xyz](heirlm.xyz).
