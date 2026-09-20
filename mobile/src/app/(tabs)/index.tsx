@@ -15,13 +15,16 @@ import { EstatePicker } from "@/components/EstatePicker";
 import { EstateRail } from "@/components/EstateRail";
 import { useEstates } from "@/hooks/useEstates";
 import { useOwnerTx } from "@/hooks/useOwnerTx";
+import { openExplorerTx } from "@/lib/explorer";
 import { colors } from "@/theme";
+import type { Address } from "@solana/kit";
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { account, connect, disconnect } = useMobileWallet();
+  const { account, connect, disconnect, client } = useMobileWallet();
   const { rows, loading, error, reload } = useEstates("authority");
-  const { checkIn, topUpSol } = useOwnerTx();
+  const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } =
+    useOwnerTx();
   const [picked, setPicked] = useState(0);
   const [busy, setBusy] = useState(false);
   const detailOpacity = useSharedValue(1);
@@ -84,32 +87,27 @@ export default function DashboardScreen() {
 
   const selected = rows[picked];
 
-  async function runCheckIn() {
-    if (!selected || busy) return;
+  async function runOwner(
+    title: string,
+    work: () => Promise<string>,
+    okTitle: string,
+    okBody: string,
+    resetPick?: boolean,
+  ) {
+    if (busy) return;
     setBusy(true);
     try {
-      await checkIn(selected.data.heir);
+      const sig = await work();
+      if (resetPick) setPicked(0);
       reload();
+      Alert.alert(okTitle, okBody, [
+        { text: "OK" },
+        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
+      ]);
     } catch (cause) {
       Alert.alert(
-        "Check-in",
-        cause instanceof Error ? cause.message : "Could not check in",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function runTopUp(lamports: bigint) {
-    if (!selected || busy) return;
-    setBusy(true);
-    try {
-      await topUpSol(selected.data.heir, lamports);
-      reload();
-    } catch (cause) {
-      Alert.alert(
-        "Top up",
-        cause instanceof Error ? cause.message : "Could not add SOL",
+        title,
+        cause instanceof Error ? cause.message : "Something went wrong",
       );
     } finally {
       setBusy(false);
@@ -117,21 +115,137 @@ export default function DashboardScreen() {
   }
 
   function onCheckIn() {
-    if (!selected || busy) return;
+    const row = selected;
+    if (!row || busy) return;
     Alert.alert("Check in?", "Restarts your check-in timer. Nothing else moves.", [
       { text: "Not now", style: "cancel" },
-      { text: "Check in", onPress: () => void runCheckIn() },
+      {
+        text: "Check in",
+        onPress: () =>
+          void runOwner(
+            "Check-in",
+            () => checkIn(row.data.heir),
+            "Checked in",
+            "The timer starts again.",
+          ),
+      },
     ]);
   }
 
   function onAddSol(lamports: bigint) {
-    if (!selected || busy) return;
+    const row = selected;
+    if (!row || busy) return;
     Alert.alert(
       "Add SOL?",
       "This SOL locks in the vault until claim or withdraw.",
       [
         { text: "Not now", style: "cancel" },
-        { text: "Add SOL", onPress: () => void runTopUp(lamports) },
+        {
+          text: "Add SOL",
+          onPress: () =>
+            void runOwner(
+              "Top up",
+              () => topUpSol(row.data.heir, lamports),
+              "SOL added",
+              "It is locked in the vault.",
+            ),
+        },
+      ],
+    );
+  }
+
+  function onReassign(newHeir: Address) {
+    const row = selected;
+    if (!row || busy) return;
+    Alert.alert(
+      "Change heir?",
+      "The vault moves to a new estate. The check-in signer stays the same.",
+      [
+        { text: "Not now", style: "cancel" },
+        {
+          text: "Change heir",
+          onPress: () =>
+            void runOwner(
+              "Change heir",
+              () => reassignHeir(row, newHeir),
+              "Heir changed",
+              "Assets now sit on the new estate.",
+              true,
+            ),
+        },
+      ],
+    );
+  }
+
+  function onTiming(fields: {
+    heartbeatInterval?: bigint;
+    gracePeriod?: bigint;
+    pauseDuration?: bigint;
+    label?: string;
+  }) {
+    const row = selected;
+    if (!row || busy) return;
+    Alert.alert(
+      "Save timing?",
+      "This also counts as a check-in and pushes the claim window forward. Check-in, grace, pause length, and label change on-chain.",
+      [
+        { text: "Not now", style: "cancel" },
+        {
+          text: "Save",
+          onPress: () =>
+            void runOwner(
+              "Update timing",
+              () => updateSettings(row, fields),
+              "Timing saved",
+              "This estate uses the new settings.",
+            ),
+        },
+      ],
+    );
+  }
+
+  function onAddAsset(mint: Address, amount: bigint) {
+    const row = selected;
+    if (!row || busy) return;
+    Alert.alert(
+      "Add token?",
+      "This registers a new mint. The amount leaves your wallet and locks in the vault. It is not a top-up of an existing token.",
+      [
+        { text: "Not now", style: "cancel" },
+        {
+          text: "Add token",
+          onPress: () =>
+            void runOwner(
+              "Add asset",
+              () => addToken(row, mint, amount),
+              "Token added",
+              "It is registered as a claimable asset.",
+            ),
+        },
+      ],
+    );
+  }
+
+  function onCloseEstate() {
+    const row = selected;
+    if (!row || busy) return;
+    Alert.alert(
+      "Close this estate?",
+      "Assets return to you. 0.5% is taken from the vault. The heir can no longer claim. This cannot be undone.",
+      [
+        { text: "Keep estate", style: "cancel" },
+        {
+          text: "Close estate",
+          style: "destructive",
+          onPress: () =>
+            void runOwner(
+              "Close estate",
+              () => closeEstate(row),
+              "Estate closed",
+              "Assets are back in this wallet.",
+              true,
+            ),
+        },
       ],
     );
   }
@@ -192,8 +306,13 @@ export default function DashboardScreen() {
             <Animated.View style={detailFade}>
               <EstateDetail
                 row={selected}
+                rpc={client.rpc}
                 onCheckIn={onCheckIn}
                 onAddSol={onAddSol}
+                onReassign={onReassign}
+                onTiming={onTiming}
+                onAddAsset={onAddAsset}
+                onCloseEstate={onCloseEstate}
                 adding={busy}
               />
             </Animated.View>

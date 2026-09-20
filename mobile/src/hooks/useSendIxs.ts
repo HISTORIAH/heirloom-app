@@ -20,8 +20,11 @@ export function useSendIxs() {
     build: (signer: TransactionSigner) => Promise<Instruction[]>,
   ): Promise<string> {
     const acc = account ?? (await connect());
-    const slot = await client.rpc.getSlot().send();
-    const signer = getTransactionSigner(acc.address, slot);
+    // MWA send uses this as minContextSlot. getSlot() is the processed tip
+    // and is often ahead of the wallet's RPC, so the send dies after approve.
+    // Same slot as the blockhash, same as wallet-ui's own sendTransactions.
+    const first = await client.rpc.getLatestBlockhash().send();
+    const signer = getTransactionSigner(acc.address, first.context.slot);
     const ixs = await build(signer);
     if (ixs.length === 0) throw new Error("Nothing to send");
     const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();

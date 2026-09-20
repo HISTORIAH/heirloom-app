@@ -7,6 +7,14 @@ import {
   findVaultPda,
   type CreateEstateInput,
 } from "@/lib/ownerWrites";
+import {
+  buildReassignIxs,
+  buildRegisterTokenIx,
+  buildRevokeAllIxs,
+  buildSettingsIx,
+} from "@/lib/manageWrites";
+import type { EstateRow } from "@/lib/estates";
+import type { Address } from "@solana/kit";
 
 export function useOwnerTx() {
   const { account, client, sendIxs } = useSendIxs();
@@ -33,5 +41,46 @@ export function useOwnerTx() {
     });
   }
 
-  return { account, checkIn, topUpSol, createEstate };
+  async function reassignHeir(row: EstateRow, newHeir: Address): Promise<string> {
+    return sendIxs((signer) => buildReassignIxs(client.rpc, signer, row, newHeir));
+  }
+
+  async function closeEstate(row: EstateRow): Promise<string> {
+    return sendIxs((signer) => buildRevokeAllIxs(client.rpc, signer, row));
+  }
+
+  async function updateSettings(
+    row: EstateRow,
+    fields: {
+      heartbeatInterval?: bigint;
+      gracePeriod?: bigint;
+      pauseDuration?: bigint;
+      label?: string;
+    },
+  ): Promise<string> {
+    return sendIxs(async (signer) => [
+      buildSettingsIx(signer, row.data.heir, row.address, fields),
+    ]);
+  }
+
+  async function addToken(
+    row: EstateRow,
+    mint: Address,
+    amount: bigint,
+  ): Promise<string> {
+    return sendIxs(async (signer) => [
+      await buildRegisterTokenIx(client.rpc, signer, row.data.heir, mint, amount),
+    ]);
+  }
+
+  return {
+    account,
+    checkIn,
+    topUpSol,
+    createEstate,
+    reassignHeir,
+    closeEstate,
+    updateSettings,
+    addToken,
+  };
 }
