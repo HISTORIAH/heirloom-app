@@ -1,7 +1,9 @@
-import { Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Text, TextInput, View } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 
-import { Cap } from "@/components/ui";
+import { Cap, PrimaryButton } from "@/components/ui";
+import { solToLamports } from "@/lib/lamports";
 import { formatSol } from "@/lib/presentEstate";
 import { colors, space } from "@/theme";
 
@@ -9,6 +11,8 @@ interface EstateAssetsProps {
   claimableLamports: bigint;
   tokenAccounts: number;
   distributed?: boolean;
+  onAddSol?: (lamports: bigint) => void;
+  adding?: boolean;
 }
 
 function VaultWatermark({ lively }: { lively?: boolean }) {
@@ -100,14 +104,59 @@ function LedgerRow({
   );
 }
 
-/**
- * Vault ledger chamber — inventory lines with accent rails + watermark.
- * Soft fill is for empty only; funded vaults stay paper-white and lively.
- */
+function AddSolRow({
+  onAddSol,
+  adding,
+}: {
+  onAddSol: (lamports: bigint) => void;
+  adding?: boolean;
+}) {
+  const [amount, setAmount] = useState("");
+
+  function submit() {
+    try {
+      const lamports = solToLamports(amount);
+      if (lamports <= 0n) throw new Error("Enter a SOL amount");
+      onAddSol(lamports);
+    } catch (cause) {
+      Alert.alert("Top up", cause instanceof Error ? cause.message : "Enter a SOL amount");
+    }
+  }
+
+  return (
+    <View style={{ marginTop: 16, gap: 10 }}>
+      <TextInput
+        value={amount}
+        onChangeText={setAmount}
+        placeholder="SOL to add"
+        placeholderTextColor={colors.mute}
+        keyboardType="decimal-pad"
+        style={{
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderWidth: 1,
+          borderColor: colors.ink,
+          borderRadius: space.radiusBtn,
+          fontFamily: "SpaceGrotesk_500Medium",
+          fontSize: 14,
+          color: colors.ink,
+          backgroundColor: colors.bg,
+        }}
+      />
+      <PrimaryButton
+        label={adding ? "Working…" : "Add SOL"}
+        disabled={adding}
+        onPress={submit}
+      />
+    </View>
+  );
+}
 export function EstateAssets({
   claimableLamports,
   tokenAccounts,
   distributed = false,
+  onAddSol,
+  adding,
 }: EstateAssetsProps) {
   const hasSol = claimableLamports > 0n;
   const hasTokens = tokenAccounts > 0;
@@ -237,6 +286,10 @@ export function EstateAssets({
           </View>
         )}
       </View>
+
+      {onAddSol && !distributed ? (
+        <AddSolRow onAddSol={onAddSol} adding={adding} />
+      ) : null}
     </View>
   );
 }

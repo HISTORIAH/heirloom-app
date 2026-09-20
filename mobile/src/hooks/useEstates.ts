@@ -1,5 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 
 import {
   fetchEstatesByAuthority,
@@ -24,36 +25,43 @@ export function useEstates(role: EstateRole) {
   const [rows, setRows] = useState<EstateRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nonce, setNonce] = useState(0);
 
-  useEffect(() => {
-    if (!address) {
-      setRows([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+  const reload = useCallback(() => {
+    setNonce((n) => n + 1);
+  }, []);
 
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    fetchForRole(role)(client.rpc, address)
-      .then((next) => {
-        if (!cancelled) setRows(next);
-      })
-      .catch((cause: unknown) => {
-        if (cancelled) return;
+  useFocusEffect(
+    useCallback(() => {
+      if (!address) {
         setRows([]);
-        setError(cause instanceof Error ? cause.message : "Could not load estates");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+        setLoading(false);
+        setError(null);
+        return;
+      }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [address, client, role]);
+      let cancelled = false;
+      setLoading(true);
+      setError(null);
 
-  return { account, rows, loading, error };
+      fetchForRole(role)(client.rpc, address)
+        .then((next) => {
+          if (!cancelled) setRows(next);
+        })
+        .catch((cause: unknown) => {
+          if (cancelled) return;
+          setRows([]);
+          setError(cause instanceof Error ? cause.message : "Could not load estates");
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [address, client, role, nonce]),
+  );
+
+  return { account, rows, loading, error, reload };
 }
