@@ -16,12 +16,11 @@ const landing = {
     returnHome: "Return Home",
   },
   seo: {
-    homeTitle: "Heirloom — Solana Inheritance Protocol",
+    homeTitle: "Heirloom - Solana Inheritance Protocol",
     homeDescription:
       "A Solana inheritance protocol for self-custody continuity. Lock digital assets in a heartbeat estate, check in to prove life, or your heir inherits on-chain.",
-    ogImageAlt:
-      "Heirloom — your wallet should outlive you, even if your seed phrase doesn't.",
-    twitterImageAlt: "Heirloom — self-custody estates on Solana.",
+    ogImageAlt: "Heirloom - your wallet should outlive you, even if your seed phrase doesn't.",
+    twitterImageAlt: "Heirloom - self-custody estates on Solana.",
     orgDescription:
       "Heirloom is a Solana-native inheritance protocol. Lock digital assets into an estate you control, earn yield on idle balances, recover a lost wallet through a backup you name, and hand off on-chain if you stop checking in — no custodians, no seed-phrase sharing.",
     websiteDescription:
@@ -162,30 +161,34 @@ const landing = {
     // theirs and a description that opens a sentence rather than following
     // a dash. emergencyTitle / emergencyLede are still the app's wording.
     emergencyShort: "Emergency exit",
-    emergencyDesc:
-      "Pull everything back to your wallet, any time before distribution.",
+    emergencyDesc: "Pull everything back to your wallet, any time before distribution.",
   },
   whySolana: {
     eyebrow: "Why Solana",
     title: "Built where speed meets safety.",
     lede: "The estate is an Anchor program on Solana. Every rule it follows is in the code, and every deadline it keeps is read from the chain.",
     n1Title: "Sub-second finality",
-    n1Desc: "Solana confirms in around 400ms. Check-ins resolve instantly and claims settle in seconds.",
+    n1Desc:
+      "Solana confirms in around 400ms. Check-ins resolve instantly and claims settle in seconds.",
     n1Tag: "FAST",
     n2Title: "Program-level security",
-    n2Desc: "Anchor enforces type safety, account validation, and constraint checks at compile time.",
+    n2Desc:
+      "Anchor enforces type safety, account validation, and constraint checks at compile time.",
     n2Tag: "SAFE",
     n3Title: "On-chain clock",
-    n3Desc: "Solana's Clock sysvar gives the estate accurate timestamps for every interval and deadline.",
+    n3Desc:
+      "Solana's Clock sysvar gives the estate accurate timestamps for every interval and deadline.",
     n3Tag: "PRECISE",
     n4Title: "PDA custody",
-    n4Desc: "Program Derived Addresses mean only the program moves estate funds. Nobody custodies a key.",
+    n4Desc:
+      "Program Derived Addresses mean only the program moves estate funds. Nobody custodies a key.",
     n4Tag: "TRUSTLESS",
     n5Title: "Composable yield",
     n5Desc: "Estate balances plug straight into Lulo and Kamino without ever leaving self-custody.",
     n5Tag: "OPEN",
     n6Title: "SPL token standard",
-    n6Desc: "One standard token interface, so any registered SPL token can be deposited and handed on.",
+    n6Desc:
+      "One standard token interface, so any registered SPL token can be deposited and handed on.",
     n6Tag: "SPL",
   },
   comparison: {

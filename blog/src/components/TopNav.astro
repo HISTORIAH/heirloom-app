@@ -7,18 +7,27 @@ const base = import.meta.env.BASE_URL;
 // In dev, link to local ports. In prod, link to live domains.
 const links = isDev
   ? [
-      { label: "Home", href: "http://localhost:4321" },
-      { label: "Docs", href: "http://localhost:4322/docs/" },
-      { label: "Blog", href: base, current: true },
+      { label: "Home", href: "http://localhost:4321", icon: "home" },
+      { label: "Docs", href: "http://localhost:4322/docs/", icon: "book-open" },
+      { label: "Blog", href: base, icon: "file-text", current: true },
     ]
   : [
-      { label: "Home", href: "https://heirlm.xyz" },
-      { label: "Docs", href: "https://heirlm.xyz/docs/" },
-      { label: "Blog", href: base, current: true },
+      { label: "Home", href: "https://heirlm.xyz", icon: "home" },
+      { label: "Docs", href: "https://heirlm.xyz/docs/", icon: "book-open" },
+      { label: "Blog", href: base, icon: "file-text", current: true },
     ];
+
+// lucide-static v1.47.0 paths (same icons as the landing nav).
+const icons: Record<string, string> = {
+  home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  "book-open":
+    '<path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/>',
+  "file-text":
+    '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+};
 ---
 
-<nav class="topnav">
+<nav class="topnav" data-nav>
   <div class="shell topnav-inner">
     <a href={isDev ? "http://localhost:4321" : "https://heirlm.xyz"} class="topnav-logo">
       <Logo />
@@ -39,27 +48,129 @@ const links = isDev
     </div>
 
     <div class="topnav-right">
-      <a href={isDev ? "http://localhost:5173" : "https://app.heirlm.xyz"} class="btn-flat-yellow">Launch App</a>
+      <a href={isDev ? "http://localhost:5173" : "https://app.heirlm.xyz"} class="btn-flat-yellow" data-nav-launch>
+        Launch App
+      </a>
+      <button
+        type="button"
+        class="topnav-toggle"
+        data-nav-toggle
+        aria-expanded="false"
+        aria-controls="nav-drawer"
+        aria-label="Open menu"
+        data-label-open="Open menu"
+        data-label-close="Close menu"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          data-nav-icon-open
+        >
+          <path d="M4 5h16"></path>
+          <path d="M4 12h16"></path>
+          <path d="M4 19h16"></path>
+        </svg>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          data-nav-icon-close
+          style="display: none"
+        >
+          <path d="M18 6 6 18"></path>
+          <path d="m6 6 12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="nav-drawer" class="topnav-drawer" data-nav-drawer hidden>
+    <div class="topnav-drawer-inner">
+      {
+        links.map((link) => (
+          <a
+            href={link.href}
+            class:list={["topnav-drawer-link", { active: link.current }]}
+            {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              set:html={icons[link.icon]}
+            />
+            {link.label}
+          </a>
+        ))
+      }
+      <a
+        href={isDev ? "http://localhost:5173" : "https://app.heirlm.xyz"}
+        class="btn-flat-yellow topnav-drawer-launch"
+      >
+        Launch App
+      </a>
     </div>
   </div>
 </nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>("[data-nav]");
+  const toggle = nav?.querySelector<HTMLElement>("[data-nav-toggle]");
+  const drawer = nav?.querySelector<HTMLElement>("[data-nav-drawer]");
+
+  if (nav && toggle && drawer) {
+    const iconOpen = toggle.querySelector<HTMLElement>("[data-nav-icon-open]");
+    const iconClose = toggle.querySelector<HTMLElement>("[data-nav-icon-close]");
+    let restoreOverflow = "";
+
+    const set = (open: boolean) => {
+      drawer.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute(
+        "aria-label",
+        (open ? toggle.dataset.labelClose : toggle.dataset.labelOpen) ?? "",
+      );
+      if (iconOpen) iconOpen.style.display = open ? "none" : "";
+      if (iconClose) iconClose.style.display = open ? "" : "none";
+      if (open) {
+        restoreOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = restoreOverflow;
+      }
+    };
+
+    toggle.addEventListener("click", () => set(drawer.hasAttribute("hidden")));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !drawer.hasAttribute("hidden")) set(false);
+    });
+  }
+</script>
 
 <style>
   .topnav {
     position: sticky;
     top: 0;
     z-index: 50;
-    height: var(--nav-h);
     border-bottom: 1px solid hsl(var(--tile-line));
     background: hsl(var(--background) / 0.95);
     backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
   }
 
   .topnav-inner {
     display: flex;
     align-items: center;
+    height: var(--nav-h);
     width: 100%;
     gap: 1rem;
   }
@@ -116,6 +227,9 @@ const links = isDev
 
   .topnav-right {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   @media (min-width: 1024px) {
@@ -137,7 +251,7 @@ const links = isDev
     background: hsl(var(--accent-yellow));
     color: hsl(var(--foreground));
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     text-decoration: none;
     cursor: pointer;
     transition: filter 0.15s;
@@ -145,5 +259,101 @@ const links = isDev
 
   .btn-flat-yellow:hover {
     filter: brightness(0.95);
+  }
+
+  /* Hide the bar button on mobile — the drawer carries the full-width one */
+  @media (max-width: 1023.98px) {
+    [data-nav-launch] {
+      display: none;
+    }
+  }
+
+  /* Mobile drawer toggle (below 1024px), mirroring the landing nav */
+  .topnav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid hsl(var(--tile-line));
+    background: transparent;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .topnav-toggle:hover {
+    background: hsl(var(--tile-soft));
+  }
+
+  .topnav-toggle:focus-visible {
+    outline: 4px solid hsl(var(--foreground));
+    outline-offset: 2px;
+  }
+
+  .topnav-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  @media (min-width: 1024px) {
+    .topnav-toggle {
+      display: none;
+    }
+  }
+
+  /* Full-width in-flow drawer under the bar, mirroring the landing nav */
+  .topnav-drawer {
+    border-top: 1px solid hsl(var(--tile-line));
+    background: hsl(var(--background));
+  }
+
+  @media (min-width: 1024px) {
+    .topnav-drawer {
+      display: none;
+    }
+  }
+
+  .topnav-drawer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px var(--page-pad);
+  }
+
+  .topnav-drawer-link {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .topnav-drawer-link:hover {
+    background: hsl(var(--tile-soft));
+  }
+
+  .topnav-drawer-link.active {
+    background: hsl(var(--accent-sage));
+  }
+
+  .topnav-drawer-link svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .topnav-drawer-launch {
+    margin-top: 12px;
+    width: 100%;
+    height: 56px;
+    font-size: 16px;
   }
 </style>
