@@ -22,13 +22,16 @@ import { unwrapOption } from "@/lib/option";
 
 export type EstateRpc = Rpc<SolanaRpcApi>;
 
-export type ClaimToken = {
+export type VaultToken = {
   mint: Address;
   vaultTokenAccount: Address;
-  heirTokenAccount: Address;
-  treasuryTokenAccount: Address;
   tokenProgram: Address;
   assetRecord: Address;
+};
+
+export type ClaimToken = VaultToken & {
+  heirTokenAccount: Address;
+  treasuryTokenAccount: Address;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -60,12 +63,11 @@ function ownerProgram(owner: unknown): Address | undefined {
   }
 }
 
-async function maybeClaimToken(
+async function maybeVaultToken(
   rpc: EstateRpc,
   vaultAccount: { pubkey: Address; account: { data: unknown; owner: Address } },
   estate: Address,
-  heir: Address,
-): Promise<ClaimToken | undefined> {
+): Promise<VaultToken | undefined> {
   const parsed = parsedMintAndAmount(vaultAccount.account.data);
   const tokenProgram = ownerProgram(vaultAccount.account.owner);
   if (parsed === undefined || tokenProgram === undefined) return undefined;
@@ -80,7 +82,7 @@ async function maybeClaimToken(
   if (!maybe.exists) return undefined;
   if (maybe.data.hasProtectedExposure || maybe.data.hasBoostedExposure) {
     throw new Error(
-      "This vault still has yield deployed. Recall it on the web app before claiming.",
+      "This vault still has yield deployed. Recall it on the web app first.",
     );
   }
   let amount: bigint;
@@ -90,18 +92,42 @@ async function maybeClaimToken(
     return undefined;
   }
   if (amount <= 0n) return undefined;
-  const [heirTokenAccount, treasuryTokenAccount] = await Promise.all([
-    findAtaPda(heir, mint, tokenProgram),
-    findAtaPda(TREASURY_ADDRESS, mint, tokenProgram),
-  ]);
   return {
     mint,
     vaultTokenAccount: vaultAccount.pubkey,
-    heirTokenAccount,
-    treasuryTokenAccount,
     tokenProgram,
     assetRecord,
   };
+}
+
+async function listVaultAccounts(rpc: EstateRpc, vault: Address) {
+  return Promise.all(
+    tokenProgramList().map((programId) =>
+      rpc
+        .getTokenAccountsByOwner(
+          vault,
+          { programId },
+          { encoding: "jsonParsed" },
+        )
+        .send(),
+    ),
+  );
+}
+
+export async function discoverVaultRegisteredTokens(
+  rpc: EstateRpc,
+  vault: Address,
+  estate: Address,
+): Promise<VaultToken[]> {
+  const groups = await listVaultAccounts(rpc, vault);
+  const found: VaultToken[] = [];
+  for (const group of groups) {
+    for (const item of group.value) {
+      const tok = await maybeVaultToken(rpc, item, estate);
+      if (tok !== undefined) found.push(tok);
+    }
+  }
+  return found;
 }
 
 export function registeredTokenCount(claimableAssets: number): number {
@@ -121,26 +147,16 @@ export async function discoverVaultClaimTokens(
   estate: Address,
   heir: Address,
 ): Promise<ClaimToken[]> {
-  const groups = await Promise.all(
-    tokenProgramList().map((programId) =>
-      rpc
-        .getTokenAccountsByOwner(
-          vault,
-          { programId },
-          { encoding: "jsonParsed" },
-        )
-        .send(),
-    ),
+  const registered = await discoverVaultRegisteredTokens(rpc, vault, estate);
+  return Promise.all(
+    registered.map(async (tok) => {
+      const [heirTokenAccount, treasuryTokenAccount] = await Promise.all([
+        findAtaPda(heir, tok.mint, tok.tokenProgram),
+        findAtaPda(TREASURY_ADDRESS, tok.mint, tok.tokenProgram),
+      ]);
+      return { ...tok, heirTokenAccount, treasuryTokenAccount };
+    }),
   );
-
-  const found: ClaimToken[] = [];
-  for (const group of groups) {
-    for (const item of group.value) {
-      const tok = await maybeClaimToken(rpc, item, estate, heir);
-      if (tok !== undefined) found.push(tok);
-    }
-  }
-  return found;
 }
 
 export async function buildClaimIxs(

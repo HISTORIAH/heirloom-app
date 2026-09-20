@@ -10,11 +10,22 @@ import type { EstateRow } from "@/lib/estates";
 import { unwrapOption } from "@/lib/option";
 import { padUnit } from "@/lib/presentEstate";
 import { colors } from "@/theme";
+import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
 
 interface EstateDetailProps {
   row: EstateRow;
+  rpc: Rpc<SolanaRpcApi>;
   onCheckIn?: () => void;
   onAddSol?: (lamports: bigint) => void;
+  onReassign?: (newHeir: Address) => void;
+  onTiming?: (fields: {
+    heartbeatInterval?: bigint;
+    gracePeriod?: bigint;
+    pauseDuration?: bigint;
+    label?: string;
+  }) => void;
+  onAddAsset?: (mint: Address, amount: bigint) => void;
+  onCloseEstate?: () => void;
   adding?: boolean;
   padded?: boolean;
 }
@@ -64,8 +75,13 @@ function ProgressTrack({
 
 export function EstateDetail({
   row,
+  rpc,
   onCheckIn,
   onAddSol,
+  onReassign,
+  onTiming,
+  onAddAsset,
+  onCloseEstate,
   adding,
   padded = true,
 }: EstateDetailProps) {
@@ -164,7 +180,18 @@ export function EstateDetail({
         adding={adding}
       />
 
-      {state !== "distributed" ? <EstateManage /> : null}
+      {state !== "distributed" && onReassign && onTiming && onAddAsset && onCloseEstate ? (
+        <EstateManage
+          key={row.address}
+          row={row}
+          rpc={rpc}
+          busy={adding}
+          onReassign={onReassign}
+          onTiming={onTiming}
+          onAddAsset={onAddAsset}
+          onClose={onCloseEstate}
+        />
+      ) : null}
     </View>
   );
 }
