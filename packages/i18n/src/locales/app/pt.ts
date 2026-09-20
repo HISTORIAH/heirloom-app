@@ -213,6 +213,10 @@ const app: AppMessages = {
       ackNotify:
         "Entendo que se eu não fizer check-in por {{hb}} dias, o herdeiro é avisado e pode reivindicar o espólio {{grace}} dias depois.",
       estFeeTilde: "Taxa de rede estimada ~0.002 SOL",
+      cardFloat: "Para o cartão",
+      cardFloatAmount: "{{amount}} SOL",
+      cardFloatHint:
+        "{{amount}} SOL nesta mesma transação para um cartão ou hot signer pagar depois.",
       nothingAddedYet: "Nada adicionado ainda",
       tipCheckAddressTitle: "Confira o endereço",
       tipCheckAddress:

@@ -207,6 +207,9 @@ const app: AppMessages = {
       ackNotify:
         "我理解：如果 {{hb}} 天不簽到，會通知繼承人，再過 {{grace}} 天他們可以領取這份遺產。",
       estFeeTilde: "預估網路費約 0.002 SOL",
+      cardFloat: "到卡上",
+      cardFloatAmount: "{{amount}} SOL",
+      cardFloatHint: "同一筆交易再轉 {{amount}} SOL，供卡片或熱簽錢包之後付手續費。",
       nothingAddedYet: "還沒新增",
       tipCheckAddressTitle: "再核對一遍地址",
       tipCheckAddress: "資產只會到這個地址。從繼承人錢包貼上，別手打。",

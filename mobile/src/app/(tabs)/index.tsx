@@ -14,12 +14,14 @@ import { EstateDetail } from "@/components/EstateDetail";
 import { EstatePicker } from "@/components/EstatePicker";
 import { EstateRail } from "@/components/EstateRail";
 import { useEstates } from "@/hooks/useEstates";
+import { useOwnerTx } from "@/hooks/useOwnerTx";
 import { colors } from "@/theme";
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { account, connect, disconnect } = useMobileWallet();
-  const { rows, loading, error } = useEstates("authority");
+  const { rows, loading, error, reload } = useEstates("authority");
+  const { checkIn, topUpSol } = useOwnerTx();
   const [picked, setPicked] = useState(0);
   const [busy, setBusy] = useState(false);
   const detailOpacity = useSharedValue(1);
@@ -80,11 +82,59 @@ export default function DashboardScreen() {
     router.push("/scan");
   }
 
-  function onCheckIn() {
-    Alert.alert("Coming next", "Check-in lands in the owner-write slice.");
+  const selected = rows[picked];
+
+  async function runCheckIn() {
+    if (!selected || busy) return;
+    setBusy(true);
+    try {
+      await checkIn(selected.data.heir);
+      reload();
+    } catch (cause) {
+      Alert.alert(
+        "Check-in",
+        cause instanceof Error ? cause.message : "Could not check in",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
-  const selected = rows[picked];
+  async function runTopUp(lamports: bigint) {
+    if (!selected || busy) return;
+    setBusy(true);
+    try {
+      await topUpSol(selected.data.heir, lamports);
+      reload();
+    } catch (cause) {
+      Alert.alert(
+        "Top up",
+        cause instanceof Error ? cause.message : "Could not add SOL",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function onCheckIn() {
+    if (!selected || busy) return;
+    Alert.alert("Check in?", "Restarts your check-in timer. Nothing else moves.", [
+      { text: "Not now", style: "cancel" },
+      { text: "Check in", onPress: () => void runCheckIn() },
+    ]);
+  }
+
+  function onAddSol(lamports: bigint) {
+    if (!selected || busy) return;
+    Alert.alert(
+      "Add SOL?",
+      "This SOL locks in the vault until claim or withdraw.",
+      [
+        { text: "Not now", style: "cancel" },
+        { text: "Add SOL", onPress: () => void runTopUp(lamports) },
+      ],
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -140,7 +190,12 @@ export default function DashboardScreen() {
           ) : null}
           {selected ? (
             <Animated.View style={detailFade}>
-              <EstateDetail row={selected} onCheckIn={onCheckIn} />
+              <EstateDetail
+                row={selected}
+                onCheckIn={onCheckIn}
+                onAddSol={onAddSol}
+                adding={busy}
+              />
             </Animated.View>
           ) : null}
         </ScrollView>

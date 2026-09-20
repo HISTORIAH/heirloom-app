@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
-import { SOL_DECIMALS, SECONDS_PER_DAY } from "@/lib/constants";
+import { SOL_DECIMALS, SECONDS_PER_DAY, CARD_FEE_FLOAT_SOL } from "@/lib/constants";
 import { cn, formatUiAmount, truncateAddress } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import type { TokenSelection } from "@/pages/CreateVault";
@@ -93,6 +93,14 @@ const ReviewStep: React.FC<Props> = ({
             {solAmount > 0 && (
               <AssetRow name="SOL" amount={solAmount.toFixed(Math.min(6, SOL_DECIMALS))} />
             )}
+            {hbSigner.trim().length > 0 && (
+              <AssetRow
+                name={t("createVault.wizard.cardFloat")}
+                amount={t("createVault.wizard.cardFloatAmount", {
+                  amount: CARD_FEE_FLOAT_SOL,
+                })}
+              />
+            )}
             {selectedTokenEntries.map(([mint, sel]) => {
               const tok = (tokens ?? []).find((item) => item.mint === mint);
               return (
@@ -106,6 +114,11 @@ const ReviewStep: React.FC<Props> = ({
             })}
           </div>
         )}
+        {hbSigner.trim().length > 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("createVault.wizard.cardFloatHint", { amount: CARD_FEE_FLOAT_SOL })}
+          </p>
+        ) : null}
       </Section>
 
       <button

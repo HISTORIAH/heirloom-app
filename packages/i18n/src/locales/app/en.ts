@@ -206,6 +206,10 @@ const app = {
       ackNotify:
         "I understand that if I don't check in for {{hb}} days, my heir is notified and can claim the estate {{grace}} days after that.",
       estFeeTilde: "Estimated network fee ~0.002 SOL",
+      cardFloat: "Onto the card",
+      cardFloatAmount: "{{amount}} SOL",
+      cardFloatHint:
+        "{{amount}} SOL in this same transaction so a card or hot signer can pay later.",
       nothingAddedYet: "Nothing added yet",
       tipCheckAddressTitle: "Double-check the address",
       tipCheckAddress:

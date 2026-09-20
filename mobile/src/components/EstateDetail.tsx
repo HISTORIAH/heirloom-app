@@ -14,6 +14,8 @@ import { colors } from "@/theme";
 interface EstateDetailProps {
   row: EstateRow;
   onCheckIn?: () => void;
+  onAddSol?: (lamports: bigint) => void;
+  adding?: boolean;
   padded?: boolean;
 }
 
@@ -60,7 +62,13 @@ function ProgressTrack({
   );
 }
 
-export function EstateDetail({ row, onCheckIn, padded = true }: EstateDetailProps) {
+export function EstateDetail({
+  row,
+  onCheckIn,
+  onAddSol,
+  adding,
+  padded = true,
+}: EstateDetailProps) {
   const presentation = useEstatePresentation(row.data, row.claimableLamports);
   const {
     state,
@@ -139,6 +147,7 @@ export function EstateDetail({ row, onCheckIn, padded = true }: EstateDetailProp
             <PrimaryButton
               label={checkInLabel}
               tone={checkInTone}
+              disabled={adding}
               onPress={onCheckIn}
             />
           </View>
@@ -151,6 +160,8 @@ export function EstateDetail({ row, onCheckIn, padded = true }: EstateDetailProp
         claimableLamports={row.claimableLamports}
         tokenAccounts={row.data.claimableAssets}
         distributed={state === "distributed"}
+        onAddSol={onAddSol}
+        adding={adding}
       />
 
       {state !== "distributed" ? <EstateManage /> : null}

@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   Text,
@@ -18,9 +19,25 @@ import {
   TextLink,
   Tile,
 } from "@/components/ui";
+import { useOwnerTx } from "@/hooks/useOwnerTx";
+import { shortAddress } from "@/lib/address";
+import { floatDestinations } from "@/lib/cardFloat";
+import {
+  CARD_FEE_FLOAT_SOL,
+  DEFAULT_GRACE_DAYS,
+  DEFAULT_HEARTBEAT_DAYS,
+  SECONDS_PER_DAY,
+} from "@/lib/constants";
+import { solToLamports } from "@/lib/lamports";
+import {
+  parseAddress,
+  parseOptionalAddress,
+} from "@/lib/ownerWrites";
 import { colors, space } from "@/theme";
 
 const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
+const HEARTBEAT_DAYS = DEFAULT_HEARTBEAT_DAYS;
+const GRACE_DAYS = DEFAULT_GRACE_DAYS;
 
 function Stepper({ step, onJump }: { step: number; onJump: (n: number) => void }) {
   return (
@@ -92,12 +109,14 @@ function Field({
   hint,
   value,
   placeholder,
+  keyboardType,
   onChangeText,
 }: {
   label: string;
   hint?: string;
   value: string;
   placeholder?: string;
+  keyboardType?: "default" | "decimal-pad";
   onChangeText: (v: string) => void;
 }) {
   return (
@@ -123,6 +142,7 @@ function Field({
         placeholderTextColor={colors.mute}
         autoCapitalize="none"
         autoCorrect={false}
+        keyboardType={keyboardType}
         style={{
           marginTop: 8,
           paddingVertical: 12,
@@ -140,65 +160,94 @@ function Field({
   );
 }
 
-function PctRow({
-  selected,
-  onSelect,
-}: {
-  selected: string;
-  onSelect: (v: string) => void;
-}) {
-  return (
-    <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-      {["25%", "50%", "75%", "Max"].map((p) => {
-        const on = p === selected;
-        return (
-          <Pressable
-            key={p}
-            onPress={() => onSelect(p)}
-            style={{
-              flex: 1,
-              borderWidth: 1,
-              borderColor: on ? colors.ink : colors.line,
-              backgroundColor: on ? colors.ink : colors.bg,
-              borderRadius: space.radiusBtn,
-              paddingVertical: 8,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: "SpaceGrotesk_700Bold",
-                fontSize: 11,
-                letterSpacing: 1,
-                color: on ? colors.white : colors.ink,
-              }}
-            >
-              {p}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+function fail(message: string) {
+  Alert.alert("Create estate", message);
+}
+
+function hasSolAmount(text: string): boolean {
+  try {
+    return solToLamports(text) > 0n;
+  } catch {
+    return false;
+  }
 }
 
 export default function CreateScreen() {
   const router = useRouter();
+  const { createEstate } = useOwnerTx();
   const [step, setStep] = useState(1);
   const [label, setLabel] = useState("spouse");
   const [heir, setHeir] = useState("");
   const [guardian, setGuardian] = useState("");
   const [signer, setSigner] = useState("");
-  const [sol, setSol] = useState("2.50");
-  const [usdc, setUsdc] = useState("400.00");
-  const [solPct, setSolPct] = useState("Max");
-  const [usdcPct, setUsdcPct] = useState("50%");
-  const [acked, setAcked] = useState(true);
+  const [sol, setSol] = useState("");
+  const [fundHeir, setFundHeir] = useState(false);
+  const [acked, setAcked] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  function onCreate() {
-    if (!acked) return;
-    router.replace("/");
+  const floatCount = useMemo(() => {
+    try {
+      const heirAddr = parseAddress(heir, "heir");
+      const hbSigner = parseOptionalAddress(signer, "check-in signer");
+      return floatDestinations({
+        heir: heirAddr,
+        hbSigner,
+        fundHeir,
+      }).length;
+    } catch {
+      return 0;
+    }
+  }, [heir, signer, fundHeir]);
+
+  function goAssets() {
+    try {
+      parseAddress(heir, "heir");
+      parseOptionalAddress(guardian, "guardian");
+      parseOptionalAddress(signer, "check-in signer");
+    } catch (cause) {
+      fail(cause instanceof Error ? cause.message : "Check the addresses");
+      return;
+    }
+    setStep(2);
   }
+
+  async function onCreate() {
+    if (!acked || busy) return;
+    let amountLamports: bigint;
+    try {
+      amountLamports = solToLamports(sol);
+      if (amountLamports <= 0n) throw new Error("Select at least some SOL to create a vault.");
+      parseAddress(heir, "heir");
+    } catch (cause) {
+      fail(cause instanceof Error ? cause.message : "Check the form");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const heirAddr = parseAddress(heir, "heir");
+      await createEstate({
+        heir: heirAddr,
+        label,
+        heartbeatInterval: BigInt(HEARTBEAT_DAYS * SECONDS_PER_DAY),
+        gracePeriod: BigInt(GRACE_DAYS * SECONDS_PER_DAY),
+        amountLamports,
+        delegate: parseOptionalAddress(guardian, "guardian"),
+        hbSigner: parseOptionalAddress(signer, "check-in signer"),
+        fundHeir,
+      });
+      Alert.alert("Estate created", "Check-in starts now. The vault is on chain.", [
+        { text: "Dashboard", onPress: () => router.replace("/") },
+      ]);
+    } catch (cause) {
+      fail(cause instanceof Error ? cause.message : "Could not create the estate");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const canSubmit = acked && !busy && hasSolAmount(sol);
+  const heirShort = heir.trim().length > 8 ? shortAddress(heir.trim()) : heir.trim() || "—";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -222,7 +271,16 @@ export default function CreateScreen() {
               placeholder="Heir address"
               onChangeText={setHeir}
             />
-            <TextLink label="Fill from a card" align="left" onPress={() => undefined} />
+            <TextLink
+              label="Fill from a card"
+              align="left"
+              onPress={() =>
+                Alert.alert(
+                  "Coming next",
+                  "Card fill lands with the Java Card slice.",
+                )
+              }
+            />
             <View
               style={{
                 flexDirection: "row",
@@ -247,7 +305,7 @@ export default function CreateScreen() {
               placeholder="Leave blank to skip"
               onChangeText={setSigner}
             />
-            <PrimaryButton label="Continue" onPress={() => setStep(2)} />
+            <PrimaryButton label="Continue" onPress={goAssets} />
           </>
         ) : null}
 
@@ -255,11 +313,17 @@ export default function CreateScreen() {
           <>
             <Cap>02 / 04</Cap>
             <H2>What goes in</H2>
-            <Lede>You can skip this and deposit from your dashboard whenever you like.</Lede>
-            <Field label="SOL" value={sol} onChangeText={setSol} />
-            <PctRow selected={solPct} onSelect={setSolPct} />
-            <Field label="USDC" value={usdc} onChangeText={setUsdc} />
-            <PctRow selected={usdcPct} onSelect={setUsdcPct} />
+            <Lede>
+              Skip if you want. Review still needs some SOL — the program rejects an empty
+              vault.
+            </Lede>
+            <Field
+              label="SOL"
+              value={sol}
+              placeholder="0"
+              keyboardType="decimal-pad"
+              onChangeText={setSol}
+            />
             <View style={{ marginTop: 20 }}>
               <PrimaryButton label="Continue" onPress={() => setStep(3)} />
               <TextLink label="Skip for now" onPress={() => setStep(3)} />
@@ -272,44 +336,14 @@ export default function CreateScreen() {
             <Cap>03 / 04</Cap>
             <H2>When your heir inherits</H2>
             <Lede>
-              That's 120 days from today. Drag either marker to move it — checking in once
-              resets the clock.
+              {`That's ${HEARTBEAT_DAYS + GRACE_DAYS} days from today. Checking in once resets the clock.`}
             </Lede>
-            <View
-              style={{
-                height: 2,
-                backgroundColor: colors.line,
-                marginTop: 28,
-                marginBottom: 8,
-                marginHorizontal: 4,
-                position: "relative",
-              }}
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: -5,
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: colors.ink,
-                }}
-              />
-              <View
-                style={{
-                  position: "absolute",
-                  right: "22%",
-                  top: -5,
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: colors.yellow,
-                }}
-              />
-            </View>
-            <Row left="Check-in" right="90 days" muteLeft />
-            <Row left="Opens" right="90 + 30 days" muteLeft />
+            <Row left="Check-in" right={`${HEARTBEAT_DAYS} days`} muteLeft />
+            <Row
+              left="Opens"
+              right={`${HEARTBEAT_DAYS} + ${GRACE_DAYS} days`}
+              muteLeft
+            />
             <View style={{ marginTop: 20 }}>
               <PrimaryButton label="Continue" onPress={() => setStep(4)} />
             </View>
@@ -321,65 +355,66 @@ export default function CreateScreen() {
             <Cap>04 / 04</Cap>
             <H2>Check and confirm</H2>
             <Cap>If you never check in again</Cap>
-            <H2 size={28}>120 days from today</H2>
-            <View
-              style={{
-                height: 2,
-                backgroundColor: colors.line,
-                marginTop: 8,
-                marginBottom: 8,
-                marginHorizontal: 4,
-              }}
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: -5,
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: colors.ink,
-                }}
-              />
-              <View
-                style={{
-                  position: "absolute",
-                  right: "22%",
-                  top: -5,
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: colors.yellow,
-                }}
-              />
-            </View>
+            <H2 size={28}>{`${HEARTBEAT_DAYS + GRACE_DAYS} days from today`}</H2>
             <Tile paper style={{ marginTop: 16 }}>
               <Cap>Heir</Cap>
-              <Row left={label || "heir"} right={heir ? heir.slice(0, 4) + "…" + heir.slice(-4) : "—"} />
+              <Row left={label.trim() || "heir"} right={heirShort} />
               <Lede>Inherits the whole estate</Lede>
             </Tile>
             <Tile style={{ marginTop: 12 }}>
               <Cap>Going into the estate</Cap>
-              <Row left="SOL" right={sol || "0"} />
-              <Row left="USDC" right={usdc || "0"} />
-              <Row left="Onto the card" right="0.02 SOL" />
+              <Row left="SOL" right={sol.trim() || "0"} />
+              {floatCount > 0 ? (
+                <Row
+                  left="Onto the card"
+                  right={`${CARD_FEE_FLOAT_SOL} SOL${floatCount > 1 ? ` × ${floatCount}` : ""}`}
+                />
+              ) : null}
             </Tile>
-            <Text
-              style={{
-                marginTop: 16,
-                fontFamily: "SpaceGrotesk_500Medium",
-                fontSize: 16,
-                lineHeight: 24,
-                color: colors.mute,
-              }}
+            <Pressable
+              onPress={() => setFundHeir((v) => !v)}
+              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 16 }}
             >
-              That 0.02 SOL is in this same transaction so the card can pay claim later.
-              Skip it if the heir is a software wallet.
-            </Text>
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  marginTop: 4,
+                  borderWidth: 1,
+                  borderColor: colors.ink,
+                  backgroundColor: fundHeir ? colors.ink : colors.bg,
+                }}
+              />
+              <Text
+                style={{
+                  flex: 1,
+                  fontFamily: "SpaceGrotesk_500Medium",
+                  fontSize: 16,
+                  lineHeight: 24,
+                  color: colors.mute,
+                }}
+              >
+                Send {CARD_FEE_FLOAT_SOL} SOL to the heir so a card can pay claim later.
+                Skip this if the heir is a software wallet.
+              </Text>
+            </Pressable>
+            {signer.trim().length > 0 ? (
+              <Text
+                style={{
+                  marginTop: 12,
+                  fontFamily: "SpaceGrotesk_500Medium",
+                  fontSize: 14,
+                  lineHeight: 20,
+                  color: colors.mute,
+                }}
+              >
+                The check-in signer always gets {CARD_FEE_FLOAT_SOL} SOL in this same
+                transaction.
+              </Text>
+            ) : null}
             <Pressable
               onPress={() => setAcked((v) => !v)}
-              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 8 }}
+              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 16 }}
             >
               <View
                 style={{
@@ -400,15 +435,15 @@ export default function CreateScreen() {
                   color: colors.mute,
                 }}
               >
-                I understand that if I don't check in for 90 days, my heir is notified and
-                can claim the estate 30 days after that.
+                I understand that if I don't check in for {HEARTBEAT_DAYS} days, my heir is
+                notified and can claim the estate {GRACE_DAYS} days after that.
               </Text>
             </Pressable>
             <View style={{ marginTop: 20 }}>
               <PrimaryButton
-                label="Create estate"
-                disabled={!acked}
-                onPress={onCreate}
+                label={busy ? "Working…" : "Create estate"}
+                disabled={!canSubmit}
+                onPress={() => void onCreate()}
               />
             </View>
           </>

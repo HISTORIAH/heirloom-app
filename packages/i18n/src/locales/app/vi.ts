@@ -208,6 +208,10 @@ const app: AppMessages = {
       ackNotify:
         "Tôi hiểu rằng nếu không check-in trong {{hb}} ngày, người thừa kế sẽ được báo và có thể nhận di sản {{grace}} ngày sau đó.",
       estFeeTilde: "Phí mạng ước tính ~0.002 SOL",
+      cardFloat: "Vào thẻ",
+      cardFloatAmount: "{{amount}} SOL",
+      cardFloatHint:
+        "{{amount}} SOL trong cùng giao dịch để thẻ hoặc hot signer trả phí sau này.",
       nothingAddedYet: "Chưa thêm gì",
       tipCheckAddressTitle: "Kiểm tra lại địa chỉ",
       tipCheckAddress: "Tài sản chỉ đến địa chỉ này. Dán từ ví người thừa kế, đừng gõ tay.",
