@@ -5,12 +5,14 @@ import { Cap, PrimaryButton } from "@/components/ui";
 import { shortAddress } from "@/lib/address";
 import type { EstateUiState } from "@/lib/estateState";
 import type { EstateRow } from "@/lib/estates";
+import { registeredTokenCount } from "@/lib/heirWrites";
 import { formatSol, presentEstate } from "@/lib/presentEstate";
 import { colors, space } from "@/theme";
 
 interface ClaimTicketProps {
   row: EstateRow;
-  onClaim: (label: string, owner: string) => void;
+  onClaim: (row: EstateRow) => void;
+  busy?: boolean;
 }
 
 function GiftMark() {
@@ -85,11 +87,12 @@ function statusChip(state: EstateUiState): { label: string; fg: string; bg: stri
 }
 
 /** Inheritance ticket — not a dashboard status tile. */
-export function ClaimTicket({ row, onClaim }: ClaimTicketProps) {
+export function ClaimTicket({ row, onClaim, busy }: ClaimTicketProps) {
   const presentation = presentEstate(row.data, row.claimableLamports);
   const { state, countdown } = presentation;
   const label = row.data.label.trim() || "Estate";
   const owner = shortAddress(String(row.data.authority));
+  const tokenSlots = registeredTokenCount(row.data.claimableAssets);
   const ready = state === "claimable";
   const waiting = state === "active" || state === "grace";
   const claimed = state === "distributed";
@@ -215,9 +218,7 @@ export function ClaimTicket({ row, onClaim }: ClaimTicketProps) {
                 color: colors.ink,
               }}
             >
-              {row.data.claimableAssets === 0
-                ? "—"
-                : String(row.data.claimableAssets)}
+              {tokenSlots === 0 ? "—" : String(tokenSlots)}
             </Text>
           </View>
         </View>
@@ -234,8 +235,9 @@ export function ClaimTicket({ row, onClaim }: ClaimTicketProps) {
 
         {ready ? (
           <PrimaryButton
-            label="Claim inheritance"
-            onPress={() => onClaim(label, owner)}
+            label={busy ? "Working…" : "Claim inheritance"}
+            disabled={busy}
+            onPress={() => onClaim(row)}
           />
         ) : waiting ? (
           <Text
@@ -273,7 +275,7 @@ export function CardHoldWell({ onHold }: CardHoldWellProps) {
     <Pressable
       onPress={onHold}
       accessibilityRole="button"
-      accessibilityLabel="Hold the heir card to claim"
+      accessibilityLabel="Card tap is not live yet"
       style={({ pressed }) => ({
         borderWidth: 1,
         borderStyle: "dashed",
@@ -308,7 +310,7 @@ export function CardHoldWell({ onHold }: CardHoldWellProps) {
               color: colors.ink,
             }}
           >
-            Hold to the phone
+            Hold later
           </Text>
         </View>
       </View>
@@ -321,7 +323,7 @@ export function CardHoldWell({ onHold }: CardHoldWellProps) {
           color: colors.mute,
         }}
       >
-        If you were handed a card, skip the wallet list and tap here.
+        Card tap is not live yet. Connect a software wallet to claim.
       </Text>
     </Pressable>
   );

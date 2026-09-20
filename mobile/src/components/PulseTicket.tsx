@@ -10,7 +10,8 @@ import { colors, space } from "@/theme";
 
 interface PulseTicketProps {
   row: EstateRow;
-  onBeat: (label: string, reclaim: boolean) => void;
+  onBeat: (row: EstateRow) => void;
+  busy?: boolean;
 }
 
 function BeatMark({ size = 22 }: { size?: number }) {
@@ -87,7 +88,7 @@ function barFill(state: EstateUiState): string {
 }
 
 /** Signer monitor — pulse track, not a gift ticket or owner status tile. */
-export function PulseTicket({ row, onBeat }: PulseTicketProps) {
+export function PulseTicket({ row, onBeat, busy }: PulseTicketProps) {
   const presentation = presentEstate(row.data, row.claimableLamports);
   const { state, progress, countdown, checkInTone } = presentation;
   const label = row.data.label.trim() || "Estate";
@@ -100,7 +101,7 @@ export function PulseTicket({ row, onBeat }: PulseTicketProps) {
       : Math.round(Math.max(0, Math.min(1, progress.ratio)) * 100);
   const fill = barFill(state);
   const beatLabel =
-    state === "claimable" ? "I'm alive — reclaim" : "Send heartbeat";
+    state === "claimable" ? "I'm alive" : "Send heartbeat";
 
   return (
     <View
@@ -223,9 +224,10 @@ export function PulseTicket({ row, onBeat }: PulseTicketProps) {
 
         {live ? (
           <PrimaryButton
-            label={beatLabel}
+            label={busy ? "Working…" : beatLabel}
             tone={state === "claimable" ? "ink" : checkInTone}
-            onPress={() => onBeat(label, state === "claimable")}
+            disabled={busy}
+            onPress={() => onBeat(row)}
           />
         ) : (
           <Text
@@ -252,7 +254,7 @@ export function SignerHoldWell({ onHold }: SignerHoldWellProps) {
     <Pressable
       onPress={onHold}
       accessibilityRole="button"
-      accessibilityLabel="Hold the signer card"
+      accessibilityLabel="Card tap is not live yet"
       style={({ pressed }) => ({
         borderWidth: 1,
         borderStyle: "dashed",
@@ -288,7 +290,7 @@ export function SignerHoldWell({ onHold }: SignerHoldWellProps) {
               color: colors.ink,
             }}
           >
-            Hold to the phone
+            Hold later
           </Text>
         </View>
       </View>
@@ -302,7 +304,7 @@ export function SignerHoldWell({ onHold }: SignerHoldWellProps) {
           color: colors.mute,
         }}
       >
-        The hot signer card only bumps the timer. It cannot empty the vault.
+        Card tap is not live yet. The signer card will only bump the timer.
       </Text>
     </Pressable>
   );
