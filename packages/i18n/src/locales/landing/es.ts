@@ -252,6 +252,7 @@ const landing: LandingMessages = {
     lede: "Bóvedas de autocustodia en Solana. Tus activos siguen rindiendo mientras esperan, y siempre saben a dónde ir después.",
     protocol: "Protocolo",
     documentation: "Documentación",
+    blog: "Blog",
     github: "GitHub",
     community: "Comunidad",
     twitter: "Twitter / X",

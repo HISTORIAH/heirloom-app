@@ -34,7 +34,7 @@ bun install
 anchor build
 bun generate
 
-# Run the app against localnet
+# Run the app locally
 bun dev:ui
 
 # Run any site locally
@@ -45,7 +45,7 @@ bun dev:blog
 # Build all web assets, assembled as they deploy
 bun build:web
 
-# Run tests (requires local validator)
+# Run tests
 bun test
 ```
 

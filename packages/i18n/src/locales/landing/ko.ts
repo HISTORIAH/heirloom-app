@@ -251,6 +251,7 @@ const landing: LandingMessages = {
     lede: "솔라나 자기 수탁 볼트. 자산은 앉아 있는 동안에도 계속 벌고, 다음에 어디로 갈지 항상 알고 있습니다.",
     protocol: "프로토콜",
     documentation: "문서",
+    blog: "블로그",
     github: "GitHub",
     community: "커뮤니티",
     twitter: "Twitter / X",

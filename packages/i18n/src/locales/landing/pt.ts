@@ -252,6 +252,7 @@ const landing: LandingMessages = {
     lede: "Cofres de autocustódia na Solana. Seus ativos continuam rendendo enquanto esperam, e sempre sabem para onde ir em seguida.",
     protocol: "Protocolo",
     documentation: "Documentação",
+    blog: "Blog",
     github: "GitHub",
     community: "Comunidade",
     twitter: "Twitter / X",

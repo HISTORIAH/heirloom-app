@@ -251,6 +251,7 @@ const landing: LandingMessages = {
     lede: "Solana 上の自己管理ボルト。資産は置いてある間も稼ぎ続け、次の行き先を常に知っています。",
     protocol: "プロトコル",
     documentation: "ドキュメント",
+    blog: "ブログ",
     github: "GitHub",
     community: "コミュニティ",
     twitter: "Twitter / X",

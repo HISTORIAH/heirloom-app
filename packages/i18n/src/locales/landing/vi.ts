@@ -252,6 +252,7 @@ const landing: LandingMessages = {
     lede: "Kho bạc tự lưu ký trên Solana. Tài sản của bạn tiếp tục sinh lời khi nằm yên, và luôn biết đi đâu tiếp theo.",
     protocol: "Giao thức",
     documentation: "Tài liệu",
+    blog: "Blog",
     github: "GitHub",
     community: "Cộng đồng",
     twitter: "Twitter / X",

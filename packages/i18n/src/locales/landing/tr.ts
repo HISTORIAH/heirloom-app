@@ -252,6 +252,7 @@ const landing: LandingMessages = {
     lede: "Solana'da kendi saklamalı kasalar. Varlıklarınız dururken kazanç sağlamaya devam eder ve her zaman sıradaki yeri bilir.",
     protocol: "Protokol",
     documentation: "Dokümantasyon",
+    blog: "Blog",
     github: "GitHub",
     community: "Topluluk",
     twitter: "Twitter / X",
