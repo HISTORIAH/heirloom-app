@@ -3,7 +3,7 @@ import type { LandingT } from "@heirloom/i18n/landing";
 import { cn } from "@/lib/cn";
 import Logo from "@/components/Logo.astro";
 import LanguageSwitcher from "@/components/LanguageSwitcher.astro";
-import { DOCS_URL, GITHUB_URL, TWITTER_URL } from "@/lib/site";
+import { BLOG_URL, DOCS_URL, GITHUB_URL, TWITTER_URL } from "@/lib/site";
 
 interface Props {
   t: LandingT;
@@ -16,6 +16,7 @@ const linkGroups = [
     heading: t("footer.protocol"),
     links: [
       { name: t("footer.documentation"), href: DOCS_URL },
+      { name: t("footer.blog"), href: BLOG_URL },
       { name: t("footer.github"), href: GITHUB_URL },
     ],
   },

@@ -250,6 +250,7 @@ const landing: LandingMessages = {
     lede: "Solana 上的自託管金庫。資產閒著也會繼續生息，並且始終知道下一步去哪兒。",
     protocol: "協議",
     documentation: "文件",
+    blog: "部落格",
     github: "GitHub",
     community: "社群",
     twitter: "Twitter / X",

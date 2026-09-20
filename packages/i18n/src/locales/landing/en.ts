@@ -254,6 +254,7 @@ const landing = {
     lede: "Self-custody estates on Solana. Your assets keep earning while they sit, and they always know where to go next.",
     protocol: "Protocol",
     documentation: "Documentation",
+    blog: "Blog",
     github: "GitHub",
     community: "Community",
     twitter: "Twitter / X",
