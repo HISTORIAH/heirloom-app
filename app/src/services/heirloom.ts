@@ -37,7 +37,6 @@ import {
   getEstateVaultPair,
   getAssetRecordAddress,
 } from "@/lib/heirloom/pdas";
-import { CARD_FEE_FLOAT_LAMPORTS } from "@/lib/constants";
 
 // Re-export types used by consumers
 export type { HeirloomClient, VaultTokenHolding };
@@ -628,7 +627,6 @@ export async function initializeWithTokens(
   authority: TransactionSigner,
   initInput: Omit<InitializeAsyncInput, "authority" | "estate" | "vault">,
   extraTokens: TokenRegistration[],
-  fundFloatTo: Address[] = [],
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, initInput.heir);
 
@@ -663,11 +661,7 @@ export async function initializeWithTokens(
     }),
   );
 
-  const floatIxs = fundFloatTo.map((destination) =>
-    buildTransferSolIx(authority, destination, CARD_FEE_FLOAT_LAMPORTS),
-  );
-
-  return sendTx(client, authority, [initIx, ...registerIxs, ...floatIxs]);
+  return sendTx(client, authority, [initIx, ...registerIxs]);
 }
 
 export async function depositSol(

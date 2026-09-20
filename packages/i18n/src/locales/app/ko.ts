@@ -208,10 +208,6 @@ const app: AppMessages = {
       ackNotify:
         "{{hb}}일 동안 체크인하지 않으면 상속인에게 알리고, 그로부터 {{grace}}일 뒤에 에스테이트를 청구할 수 있음을 이해합니다.",
       estFeeTilde: "예상 네트워크 수수료 ~0.002 SOL",
-      cardFloat: "카드로",
-      cardFloatAmount: "{{amount}} SOL",
-      cardFloatHint:
-        "카드나 핫 사이너가 나중에 수수료를 낼 수 있도록 같은 트랜잭션에서 {{amount}} SOL을 보냅니다.",
       nothingAddedYet: "아직 추가된 것 없음",
       tipCheckAddressTitle: "주소를 다시 확인하세요",
       tipCheckAddress: "자산은 이 주소로만 갑니다. 타이핑하지 말고 상속인 지갑에서 붙여넣으세요.",

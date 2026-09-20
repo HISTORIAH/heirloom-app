@@ -108,6 +108,7 @@ export async function buildCreateEstateIxs(
     delegate: input.delegate,
     hbSigner: input.hbSigner,
   });
+  // Testing: typed signer / fund-heir checkbox. Product: only after "add card".
   const dests = floatDestinations({
     heir: input.heir,
     hbSigner: input.hbSigner,

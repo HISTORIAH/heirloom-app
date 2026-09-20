@@ -10,10 +10,6 @@ export const SECONDS_PER_MINUTE = 60;
 export const SECONDS_PER_HOUR = 3600;
 export const SECONDS_PER_DAY = 86400;
 
-/** 0.02 SOL. Placeholder floor until CARD_FEE_FLOAT_LAMPORTS is finalized. */
-export const CARD_FEE_FLOAT_LAMPORTS = 20_000_000n;
-export const CARD_FEE_FLOAT_SOL = 0.02;
-
 export const POSTHOG_HOST =
   import.meta.env.VITE_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
 

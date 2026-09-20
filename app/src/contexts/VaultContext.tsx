@@ -27,7 +27,6 @@ import {
   type VaultTokenHolding,
 } from "@/services/heirloom";
 import { errMsg } from "@/lib/utils";
-import { floatDestinations } from "@/lib/cardFloat";
 import { TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
 
 
@@ -366,16 +365,7 @@ const VaultProviderInner: React.FC<{
         }));
       }
 
-      const txId = await initializeWithTokens(
-        client,
-        signer,
-        initArgs,
-        extraTokens,
-        floatDestinations({
-          heir: heirAddress,
-          hbSigner: input.hbSigner ? toAddress(input.hbSigner) : undefined,
-        }),
-      );
+      const txId = await initializeWithTokens(client, signer, initArgs, extraTokens);
       setPendingTxId(txId);
       setPendingCreate(true);
       return txId;

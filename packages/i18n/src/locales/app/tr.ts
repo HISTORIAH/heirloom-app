@@ -209,10 +209,6 @@ const app: AppMessages = {
       ackNotify:
         "{{hb}} gün check-in yapmazsam varisimin haberdar edileceğini ve {{grace}} gün sonra terekeyi talep edebileceğini anlıyorum.",
       estFeeTilde: "Tahmini ağ ücreti ~0.002 SOL",
-      cardFloat: "Karta",
-      cardFloatAmount: "{{amount}} SOL",
-      cardFloatHint:
-        "Kart veya sıcak imzalayanın sonra ücret ödeyebilmesi için aynı işlemde {{amount}} SOL gönderilir.",
       nothingAddedYet: "Henüz bir şey eklenmedi",
       tipCheckAddressTitle: "Adresi bir daha kontrol et",
       tipCheckAddress:

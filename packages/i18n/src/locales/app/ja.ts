@@ -208,10 +208,6 @@ const app: AppMessages = {
       ackNotify:
         "{{hb}}日間チェックインしないと相続人に通知され、その{{grace}}日後にエステートを請求できることを理解しています。",
       estFeeTilde: "推定ネットワーク手数料 ~0.002 SOL",
-      cardFloat: "カードへ",
-      cardFloatAmount: "{{amount}} SOL",
-      cardFloatHint:
-        "カードやホットサイナーが後で手数料を払えるよう、同じトランザクションで {{amount}} SOL を送ります。",
       nothingAddedYet: "まだ何も追加されていません",
       tipCheckAddressTitle: "アドレスを再確認",
       tipCheckAddress:

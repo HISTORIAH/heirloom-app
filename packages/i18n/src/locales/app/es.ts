@@ -212,10 +212,6 @@ const app: AppMessages = {
       ackNotify:
         "Entiendo que si no me registro durante {{hb}} días, se avisa a mi heredero y puede reclamar el estado {{grace}} días después.",
       estFeeTilde: "Tarifa de red estimada ~0.002 SOL",
-      cardFloat: "A la tarjeta",
-      cardFloatAmount: "{{amount}} SOL",
-      cardFloatHint:
-        "{{amount}} SOL en esta misma transacción para que una tarjeta o firmante en caliente pague después.",
       nothingAddedYet: "Nada añadido aún",
       tipCheckAddressTitle: "Revisa bien la dirección",
       tipCheckAddress:
