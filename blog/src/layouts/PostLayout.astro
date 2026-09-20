@@ -12,6 +12,8 @@ interface Props {
     author: string;
     authorBio?: string;
     draft?: boolean;
+    cover?: string;
+    canonical?: string;
   };
   headings: { depth: number; slug: string; text: string }[];
 }
@@ -36,7 +38,14 @@ function formatDate(date: Date): string {
 }
 ---
 
-<BlogLayout title={frontmatter.title} description={frontmatter.description}>
+<BlogLayout
+  title={frontmatter.title}
+  description={frontmatter.description}
+  image={frontmatter.cover}
+  canonical={frontmatter.canonical}
+  type="article"
+  publishedTime={frontmatter.pubDate}
+>
   <div class="shell article-layout">
     <!-- Left sidebar -->
     <aside class="post-sidebar">
