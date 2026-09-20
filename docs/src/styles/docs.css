@@ -1,8 +1,7 @@
 /* Space Grotesk is loaded via <link> in DocsLayout.astro — an @import here
    would delay discovery until this file downloads and parses. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/index.css";
+@config "../../tailwind.config.ts";
 
 @layer base {
   :root {
