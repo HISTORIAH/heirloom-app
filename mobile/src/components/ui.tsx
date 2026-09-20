@@ -61,20 +61,21 @@ interface TextLinkProps {
   label: string;
   onPress?: () => void;
   align?: "center" | "left";
+  quiet?: boolean;
 }
 
-export function TextLink({ label, onPress, align = "center" }: TextLinkProps) {
+export function TextLink({ label, onPress, align = "center", quiet }: TextLinkProps) {
+  const color = quiet ? colors.mute : colors.ink;
   return (
     <Pressable onPress={onPress} style={{ marginTop: 16 }}>
       <Text
         style={{
           textAlign: align,
-          fontFamily: "SpaceGrotesk_600SemiBold",
-          fontSize: 14,
-          color: colors.ink,
+          fontFamily: quiet ? "SpaceGrotesk_500Medium" : "SpaceGrotesk_600SemiBold",
+          fontSize: quiet ? 13 : 14,
+          color,
           textDecorationLine: "underline",
-          textDecorationColor: colors.ink,
-          textUnderlineOffset: 4,
+          textDecorationColor: color,
         }}
       >
         {label}

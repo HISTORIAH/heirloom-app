@@ -1,7 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   Text,
@@ -9,6 +8,7 @@ import {
 } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
+import { ChainLoading } from "@/components/ChainLoading";
 import { gateKind, LatchRail, PauseGate } from "@/components/PauseGate";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
@@ -65,20 +65,7 @@ function GuardianConnected({
   onLookup: () => void;
 }) {
   if (loading) {
-    return (
-      <View style={{ marginTop: 32, alignItems: "center" }}>
-        <ActivityIndicator color={colors.ink} />
-        <Text
-          style={{
-            marginTop: 12,
-            fontFamily: "SpaceGrotesk_500Medium",
-            color: colors.mute,
-          }}
-        >
-          Looking for estates you guard…
-        </Text>
-      </View>
-    );
+    return <ChainLoading compact body="Looking for estates you guard…" />;
   }
 
   if (error !== null) {

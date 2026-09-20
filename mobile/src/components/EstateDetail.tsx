@@ -6,6 +6,7 @@ import { EstatePeople } from "@/components/EstatePeople";
 import { Cap, H2, Lede, PrimaryButton, Tile } from "@/components/ui";
 import { useEstatePresentation } from "@/hooks/useEstatePresentation";
 import { shortAddress } from "@/lib/address";
+import type { EstateUiState } from "@/lib/estateState";
 import type { EstateRow } from "@/lib/estates";
 import { unwrapOption } from "@/lib/option";
 import { padUnit } from "@/lib/presentEstate";
@@ -28,6 +29,23 @@ interface EstateDetailProps {
   onCloseEstate?: () => void;
   adding?: boolean;
   padded?: boolean;
+}
+
+function detailStatusChip(state: EstateUiState): {
+  bg: string;
+  border: string;
+  fg: string;
+} {
+  if (state === "claimable") {
+    return { bg: colors.yellow, border: colors.ink, fg: colors.ink };
+  }
+  if (state === "grace") {
+    return { bg: colors.sage, border: colors.ink, fg: colors.ink };
+  }
+  if (state === "distributed") {
+    return { bg: colors.soft, border: colors.line, fg: colors.mute };
+  }
+  return { bg: colors.yellow, border: colors.ink, fg: colors.ink };
 }
 
 function ProgressTrack({
@@ -101,6 +119,7 @@ export function EstateDetail({
   const heartbeat = hbRaw === null ? undefined : hbRaw;
   const guardian = guardianRaw === null ? undefined : guardianRaw;
   const label = row.data.label.trim() || shortAddress(heir);
+  const statusChip = detailStatusChip(state);
 
   return (
     <View
@@ -111,8 +130,31 @@ export function EstateDetail({
       }}
     >
       <Tile claim={state === "claimable"}>
-        <Cap>{label}</Cap>
-        <H2>{statusLabel}</H2>
+        <H2>{label}</H2>
+        <View style={{ marginTop: 4, marginBottom: 8, alignSelf: "flex-start" }}>
+          <View
+            style={{
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: statusChip.border,
+              backgroundColor: statusChip.bg,
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "SpaceGrotesk_700Bold",
+                fontSize: 10,
+                letterSpacing: 1.2,
+                textTransform: "uppercase",
+                color: statusChip.fg,
+              }}
+            >
+              {statusLabel}
+            </Text>
+          </View>
+        </View>
         <Lede>{description}</Lede>
 
         <ProgressTrack

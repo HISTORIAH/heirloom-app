@@ -1,7 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   Text,
@@ -10,6 +9,8 @@ import {
 
 import { AddressLookup } from "@/components/AddressLookup";
 import { AppHeader } from "@/components/AppHeader";
+import { ChainLoading } from "@/components/ChainLoading";
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
 import { PulseTicket, SignerHoldWell } from "@/components/PulseTicket";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
@@ -115,20 +116,7 @@ function HeartbeatConnected({
   );
 
   if (loading) {
-    return (
-      <View style={{ marginTop: 32, alignItems: "center" }}>
-        <ActivityIndicator color={colors.ink} />
-        <Text
-          style={{
-            marginTop: 12,
-            fontFamily: "SpaceGrotesk_500Medium",
-            color: colors.mute,
-          }}
-        >
-          Looking for estates you sign for…
-        </Text>
-      </View>
-    );
+    return <ChainLoading compact body="Looking for estates you sign for…" />;
   }
 
   if (error !== null) {
@@ -226,6 +214,7 @@ export default function HeartbeatScreen() {
   const [ownerQuery, setOwnerQuery] = useState("");
   const [heirQuery, setHeirQuery] = useState("");
   const [extra, setExtra] = useState<EstateRow[]>([]);
+  const { ask, prompt, cancel, confirm } = useConfirmSheet();
   const ordered = useMemo(
     () => sortAsSigner(mergeRows(rows, extra)),
     [rows, extra],
@@ -294,16 +283,14 @@ export default function HeartbeatScreen() {
     }
     const label = row.data.label.trim() || "estate";
     const reclaim = state === "claimable";
-    Alert.alert(
-      reclaim ? `Reclaim ${label}?` : `Send a heartbeat for ${label}?`,
-      "This only resets the timer. It cannot move assets.",
-      [
-        { text: "Not now", style: "cancel" },
-        {
-          text: reclaim ? "I'm alive" : "Send heartbeat",
-          onPress: () => void runBeat(row),
-        },
-      ],
+    prompt(
+      {
+        cap: "Heartbeat",
+        title: reclaim ? `Reclaim ${label}?` : `Send a heartbeat for ${label}?`,
+        body: "This only resets the timer. It cannot move assets.",
+        confirmLabel: reclaim ? "I'm alive" : "Send heartbeat",
+      },
+      () => void runBeat(row),
     );
   }
 
@@ -402,6 +389,7 @@ export default function HeartbeatScreen() {
           />
         )}
       </ScrollView>
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} />
     </View>
   );
 }

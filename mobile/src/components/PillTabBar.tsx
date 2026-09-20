@@ -15,7 +15,7 @@ const LABELS: Record<(typeof SIDE_TABS)[number], string> = {
 };
 
 const FAB_SIZE = 64;
-const BAR_HEIGHT = 58;
+const BAR_HEIGHT = 62;
 /** How much of the yellow circle sits above the pill top. */
 const FAB_OVERHANG = 32;
 
@@ -126,6 +126,51 @@ function SideIcon({ name }: { name: (typeof SIDE_TABS)[number] }) {
   return <GuardianIcon />;
 }
 
+function SideTab({
+  name,
+  active,
+  onPress,
+}: {
+  name: (typeof SIDE_TABS)[number];
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 3,
+        opacity: active ? 1 : 0.4,
+        paddingVertical: 8,
+      }}
+    >
+      <SideIcon name={name} />
+      <Text
+        style={{
+          color: colors.white,
+          fontFamily: "SpaceGrotesk_500Medium",
+          fontSize: 10,
+          letterSpacing: 0.2,
+        }}
+        numberOfLines={1}
+      >
+        {LABELS[name]}
+      </Text>
+      <View
+        style={{
+          width: 18,
+          height: 3,
+          borderRadius: 2,
+          backgroundColor: active ? colors.yellow : "transparent",
+        }}
+      />
+    </Pressable>
+  );
+}
+
 function navigateTo(
   navigation: BottomTabBarProps["navigation"],
   name: string,
@@ -148,7 +193,9 @@ export function PillTabBar({ state, navigation }: BottomTabBarProps) {
 
   const left = SIDE_TABS.slice(0, 2);
   const right = SIDE_TABS.slice(2);
-  const routeByName = Object.fromEntries(state.routes.map((r) => [r.name, r]));
+  const routeByName = Object.fromEntries(
+    state.routes.map((r: { name: string; key: string }) => [r.name, r]),
+  );
   const wrapperHeight = BAR_HEIGHT + FAB_OVERHANG;
 
   function sideActive(name: string) {
@@ -180,33 +227,13 @@ export function PillTabBar({ state, navigation }: BottomTabBarProps) {
         {left.map((name) => {
           const route = routeByName[name];
           if (!route) return <View key={name} style={{ flex: 1 }} />;
-          const active = sideActive(name);
           return (
-            <Pressable
+            <SideTab
               key={route.key}
+              name={name}
+              active={sideActive(name)}
               onPress={() => navigateTo(navigation, name, route.key)}
-              style={{
-                flex: 1,
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 3,
-                opacity: active ? 1 : 0.85,
-                paddingVertical: 8,
-              }}
-            >
-              <SideIcon name={name} />
-              <Text
-                style={{
-                  color: colors.white,
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 10,
-                  letterSpacing: 0.2,
-                }}
-                numberOfLines={1}
-              >
-                {LABELS[name]}
-              </Text>
-            </Pressable>
+            />
           );
         })}
 
@@ -215,33 +242,13 @@ export function PillTabBar({ state, navigation }: BottomTabBarProps) {
         {right.map((name) => {
           const route = routeByName[name];
           if (!route) return <View key={name} style={{ flex: 1 }} />;
-          const active = sideActive(name);
           return (
-            <Pressable
+            <SideTab
               key={route.key}
+              name={name}
+              active={sideActive(name)}
               onPress={() => navigateTo(navigation, name, route.key)}
-              style={{
-                flex: 1,
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 3,
-                opacity: active ? 1 : 0.85,
-                paddingVertical: 8,
-              }}
-            >
-              <SideIcon name={name} />
-              <Text
-                style={{
-                  color: colors.white,
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 10,
-                  letterSpacing: 0.2,
-                }}
-                numberOfLines={1}
-              >
-                {LABELS[name]}
-              </Text>
-            </Pressable>
+            />
           );
         })}
       </View>

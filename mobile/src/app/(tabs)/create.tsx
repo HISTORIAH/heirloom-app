@@ -110,6 +110,7 @@ function Field({
   value,
   placeholder,
   keyboardType,
+  error,
   onChangeText,
 }: {
   label: string;
@@ -117,8 +118,11 @@ function Field({
   value: string;
   placeholder?: string;
   keyboardType?: "default" | "decimal-pad";
+  error?: string;
   onChangeText: (v: string) => void;
 }) {
+  const [focused, setFocused] = useState(false);
+  const border = error ? colors.claim : focused ? colors.ink : colors.line;
   return (
     <View style={{ marginVertical: 16 }}>
       <Cap>{label}</Cap>
@@ -127,8 +131,8 @@ function Field({
           style={{
             marginTop: 4,
             fontFamily: "SpaceGrotesk_500Medium",
-            fontSize: 16,
-            lineHeight: 24,
+            fontSize: 13,
+            lineHeight: 18,
             color: colors.mute,
           }}
         >
@@ -143,12 +147,14 @@ function Field({
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType={keyboardType}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         style={{
           marginTop: 8,
           paddingVertical: 12,
           paddingHorizontal: 14,
           borderWidth: 1,
-          borderColor: colors.line,
+          borderColor: border,
           borderRadius: space.radiusBtn,
           fontFamily: "SpaceGrotesk_500Medium",
           fontSize: 14,
@@ -156,6 +162,18 @@ function Field({
           backgroundColor: colors.bg,
         }}
       />
+      {error ? (
+        <Text
+          style={{
+            marginTop: 8,
+            fontFamily: "SpaceGrotesk_600SemiBold",
+            fontSize: 12,
+            color: colors.claim,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -184,6 +202,9 @@ export default function CreateScreen() {
   const [fundHeir, setFundHeir] = useState(false);
   const [acked, setAcked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [heirError, setHeirError] = useState<string | undefined>(undefined);
+  const [guardianError, setGuardianError] = useState<string | undefined>(undefined);
+  const [signerError, setSignerError] = useState<string | undefined>(undefined);
 
   const floatCount = useMemo(() => {
     try {
@@ -200,15 +221,31 @@ export default function CreateScreen() {
   }, [heir, signer, fundHeir]);
 
   function goAssets() {
+    let ok = true;
     try {
       parseAddress(heir, "heir");
-      parseOptionalAddress(guardian, "guardian");
-      parseOptionalAddress(signer, "check-in signer");
+      setHeirError(undefined);
     } catch (cause) {
-      fail(cause instanceof Error ? cause.message : "Check the addresses");
-      return;
+      setHeirError(
+        cause instanceof Error ? cause.message : "Enter a valid heir address.",
+      );
+      ok = false;
     }
-    setStep(2);
+    try {
+      parseOptionalAddress(guardian, "guardian");
+      setGuardianError(undefined);
+    } catch (cause) {
+      setGuardianError(cause instanceof Error ? cause.message : "Check the address");
+      ok = false;
+    }
+    try {
+      parseOptionalAddress(signer, "check-in signer");
+      setSignerError(undefined);
+    } catch (cause) {
+      setSignerError(cause instanceof Error ? cause.message : "Check the address");
+      ok = false;
+    }
+    if (ok) setStep(2);
   }
 
   async function onCreate() {
@@ -260,16 +297,20 @@ export default function CreateScreen() {
             <H2>Who inherits</H2>
             <Field
               label="What to call this estate"
-              hint="Only you see this. It keeps estates apart on your dashboard."
+              hint="Only you see this. Keeps estates apart."
               value={label}
               onChangeText={setLabel}
             />
             <Field
               label="Their Solana wallet address"
-              hint="Paste it from your heir's wallet. Assets go here and nowhere else."
+              hint="Paste from your heir's wallet. Assets go here only."
               value={heir}
               placeholder="Heir address"
-              onChangeText={setHeir}
+              error={heirError}
+              onChangeText={(v) => {
+                setHeirError(undefined);
+                setHeir(v);
+              }}
             />
             <TextLink
               label="Fill from a card"
@@ -295,15 +336,25 @@ export default function CreateScreen() {
             </View>
             <Field
               label="Guardian"
+              hint="Optional. Leave blank to skip."
               value={guardian}
               placeholder="Leave blank to skip"
-              onChangeText={setGuardian}
+              error={guardianError}
+              onChangeText={(v) => {
+                setGuardianError(undefined);
+                setGuardian(v);
+              }}
             />
             <Field
               label="Check-in signer"
+              hint="Optional. Leave blank to skip."
               value={signer}
               placeholder="Leave blank to skip"
-              onChangeText={setSigner}
+              error={signerError}
+              onChangeText={(v) => {
+                setSignerError(undefined);
+                setSigner(v);
+              }}
             />
             <PrimaryButton label="Continue" onPress={goAssets} />
           </>

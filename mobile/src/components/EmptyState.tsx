@@ -70,7 +70,7 @@ export function EmptyState({
           <TextLink label={secondaryLabel} onPress={onSecondary} />
         ) : null}
         {tertiaryLabel && onTertiary ? (
-          <TextLink label={tertiaryLabel} onPress={onTertiary} />
+          <TextLink label={tertiaryLabel} quiet onPress={onTertiary} />
         ) : null}
       </View>
     </View>

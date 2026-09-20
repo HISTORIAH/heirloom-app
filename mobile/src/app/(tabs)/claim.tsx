@@ -1,16 +1,12 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 
 import { AddressLookup } from "@/components/AddressLookup";
 import { AppHeader } from "@/components/AppHeader";
+import { ChainLoading } from "@/components/ChainLoading";
 import { CardHoldWell, ClaimTicket } from "@/components/ClaimTicket";
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
 import { useHeirTx } from "@/hooks/useHeirTx";
@@ -104,20 +100,7 @@ function ClaimConnected({
   );
 
   if (loading) {
-    return (
-      <View style={{ marginTop: 32, alignItems: "center" }}>
-        <ActivityIndicator color={colors.ink} />
-        <Text
-          style={{
-            marginTop: 12,
-            fontFamily: "SpaceGrotesk_500Medium",
-            color: colors.mute,
-          }}
-        >
-          Looking for estates that name you…
-        </Text>
-      </View>
-    );
+    return <ChainLoading compact body="Looking for estates that name you…" />;
   }
 
   if (error !== null) {
@@ -219,6 +202,7 @@ export default function ClaimScreen() {
   const [showLookup, setShowLookup] = useState(false);
   const [ownerQuery, setOwnerQuery] = useState("");
   const [extra, setExtra] = useState<EstateRow[]>([]);
+  const { ask, prompt, cancel, confirm } = useConfirmSheet();
   const ordered = useMemo(
     () => sortAsHeir(mergeRows(rows, extra)),
     [rows, extra],
@@ -269,13 +253,14 @@ export default function ClaimScreen() {
       return;
     }
     const label = row.data.label.trim() || "estate";
-    Alert.alert(
-      `Claim ${label}?`,
-      "Assets move to this wallet. 0.75% is taken from the vault. The vault then closes.",
-      [
-        { text: "Not now", style: "cancel" },
-        { text: "Claim inheritance", onPress: () => void runClaim(row) },
-      ],
+    prompt(
+      {
+        cap: "Claim",
+        title: `Claim ${label}?`,
+        body: "Assets move to this wallet. 0.75% is taken from the vault. The vault then closes.",
+        confirmLabel: "Claim inheritance",
+      },
+      () => void runClaim(row),
     );
   }
 
@@ -367,6 +352,7 @@ export default function ClaimScreen() {
           />
         )}
       </ScrollView>
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} />
     </View>
   );
 }
