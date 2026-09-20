@@ -8,12 +8,16 @@ import {
   View,
 } from "react-native";
 
+import { AddressLookup } from "@/components/AddressLookup";
 import { AppHeader } from "@/components/AppHeader";
 import { CardHoldWell, ClaimTicket } from "@/components/ClaimTicket";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
+import { useHeirTx } from "@/hooks/useHeirTx";
 import type { EstateUiState } from "@/lib/estateState";
-import type { EstateRow } from "@/lib/estates";
+import { fetchEstateByPair, type EstateRow } from "@/lib/estates";
+import { openExplorerTx } from "@/lib/explorer";
+import { parseAddress } from "@/lib/ownerWrites";
 import { presentEstate } from "@/lib/presentEstate";
 import { colors } from "@/theme";
 
@@ -32,18 +36,17 @@ function sortAsHeir(rows: EstateRow[]): EstateRow[] {
   });
 }
 
-function onClaimPress(label: string, owner: string) {
+function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
+  const byAddr = new Map<string, EstateRow>();
+  for (const row of extra) byAddr.set(row.address, row);
+  for (const row of discovered) byAddr.set(row.address, row);
+  return [...byAddr.values()];
+}
+
+function fail(title: string, cause: unknown) {
   Alert.alert(
-    `Claim ${label}?`,
-    `From ${owner}. Assets move to this wallet. The vault then closes.`,
-    [
-      { text: "Not now", style: "cancel" },
-      {
-        text: "Claim inheritance",
-        onPress: () =>
-          Alert.alert("Coming next", "Claim writes land in the heir slice."),
-      },
-    ],
+    title,
+    cause instanceof Error ? cause.message : "Something went wrong",
   );
 }
 
@@ -52,16 +55,54 @@ function ClaimConnected({
   error,
   ordered,
   readyCount,
+  busy,
+  showLookup,
+  ownerQuery,
+  setOwnerQuery,
+  onClaim,
   onHoldCard,
+  onToggleLookup,
   onLookup,
 }: {
   loading: boolean;
   error: string | null;
   ordered: EstateRow[];
   readyCount: number;
+  busy: boolean;
+  showLookup: boolean;
+  ownerQuery: string;
+  setOwnerQuery: (value: string) => void;
+  onClaim: (row: EstateRow) => void;
   onHoldCard: () => void;
+  onToggleLookup: () => void;
   onLookup: () => void;
 }) {
+  const lookup = (
+    <View style={{ gap: 12 }}>
+      <TextLink
+        label={showLookup ? "Hide owner lookup" : "Look up by owner"}
+        align="left"
+        onPress={onToggleLookup}
+      />
+      {showLookup ? (
+        <AddressLookup
+          fields={[
+            {
+              key: "owner",
+              label: "Owner",
+              value: ownerQuery,
+              onChange: setOwnerQuery,
+            },
+          ]}
+          submitLabel="Find estate"
+          busy={busy}
+          onSubmit={onLookup}
+        />
+      ) : null}
+      <CardHoldWell onHold={onHoldCard} />
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={{ marginTop: 32, alignItems: "center" }}>
@@ -81,15 +122,17 @@ function ClaimConnected({
 
   if (error !== null) {
     return (
-      <Text
-        style={{
-          marginTop: 20,
-          fontFamily: "SpaceGrotesk_500Medium",
-          color: colors.claim,
-        }}
-      >
-        {error}
-      </Text>
+      <View style={{ marginTop: 20, gap: 16 }}>
+        <Text
+          style={{
+            fontFamily: "SpaceGrotesk_500Medium",
+            color: colors.claim,
+          }}
+        >
+          {error}
+        </Text>
+        {lookup}
+      </View>
     );
   }
 
@@ -123,12 +166,11 @@ function ClaimConnected({
               color: colors.mute,
             }}
           >
-            This wallet is not named as heir on-chain. Try a card, or look up by
-            the owner’s address.
+            This wallet is not named as heir on-chain. Look up by the owner’s
+            address, or wait for card tap.
           </Text>
         </View>
-        <TextLink label="Look up by owner" align="left" onPress={onLookup} />
-        <CardHoldWell onHold={onHoldCard} />
+        {lookup}
       </View>
     );
   }
@@ -157,20 +199,30 @@ function ClaimConnected({
         </Text>
       </View>
       {ordered.map((row) => (
-        <ClaimTicket key={row.address} row={row} onClaim={onClaimPress} />
+        <ClaimTicket
+          key={row.address}
+          row={row}
+          busy={busy}
+          onClaim={onClaim}
+        />
       ))}
-      <TextLink label="Look up by owner" align="left" onPress={onLookup} />
-      <CardHoldWell onHold={onHoldCard} />
+      {lookup}
     </View>
   );
 }
 
-
 export default function ClaimScreen() {
-  const { account, connect } = useMobileWallet();
-  const { rows, loading, error } = useEstates("heir");
+  const { account, client, connect } = useMobileWallet();
+  const { rows, loading, error, reload } = useEstates("heir");
+  const { claimAll } = useHeirTx();
   const [busy, setBusy] = useState(false);
-  const ordered = useMemo(() => sortAsHeir(rows), [rows]);
+  const [showLookup, setShowLookup] = useState(false);
+  const [ownerQuery, setOwnerQuery] = useState("");
+  const [extra, setExtra] = useState<EstateRow[]>([]);
+  const ordered = useMemo(
+    () => sortAsHeir(mergeRows(rows, extra)),
+    [rows, extra],
+  );
   const readyCount = ordered.filter(
     (row) => presentEstate(row.data, row.claimableLamports).state === "claimable",
   ).length;
@@ -181,10 +233,7 @@ export default function ClaimScreen() {
     try {
       await connect();
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not connect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
@@ -194,8 +243,58 @@ export default function ClaimScreen() {
     Alert.alert("Coming next", "Card claim lands with the Java Card slice.");
   }
 
-  function onLookup() {
-    Alert.alert("Coming next", "Owner lookup lands with the heir slice.");
+  async function runClaim(row: EstateRow) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const sig = await claimAll(row);
+      setExtra((prev) => prev.filter((item) => item.address !== row.address));
+      reload();
+      Alert.alert("Estate claimed", "Assets are in this wallet. The vault closed.", [
+        { text: "OK" },
+        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
+      ]);
+    } catch (cause) {
+      fail("Claim", cause);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function onClaim(row: EstateRow) {
+    if (busy) return;
+    const state = presentEstate(row.data, row.claimableLamports).state;
+    if (state !== "claimable") {
+      Alert.alert("Not yet", "This vault is not open to claim.");
+      return;
+    }
+    const label = row.data.label.trim() || "estate";
+    Alert.alert(
+      `Claim ${label}?`,
+      "Assets move to this wallet. 0.75% is taken from the vault. The vault then closes.",
+      [
+        { text: "Not now", style: "cancel" },
+        { text: "Claim inheritance", onPress: () => void runClaim(row) },
+      ],
+    );
+  }
+
+  async function onLookup() {
+    if (busy || !account) return;
+    setBusy(true);
+    try {
+      const owner = parseAddress(ownerQuery, "owner");
+      const row = await fetchEstateByPair(client.rpc, owner, account.address);
+      if (row === undefined) {
+        throw new Error("No estate for that owner with this wallet as heir.");
+      }
+      setExtra((prev) => mergeRows(prev, [row]));
+      setShowLookup(false);
+    } catch (cause) {
+      fail("Lookup", cause);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -245,6 +344,7 @@ export default function ClaimScreen() {
               <PrimaryButton
                 label={busy ? "Working…" : "Connect wallet"}
                 tone="ink"
+                disabled={busy}
                 onPress={onConnect}
               />
             </View>
@@ -256,8 +356,14 @@ export default function ClaimScreen() {
             error={error}
             ordered={ordered}
             readyCount={readyCount}
+            busy={busy}
+            showLookup={showLookup}
+            ownerQuery={ownerQuery}
+            setOwnerQuery={setOwnerQuery}
+            onClaim={onClaim}
             onHoldCard={onHoldCard}
-            onLookup={onLookup}
+            onToggleLookup={() => setShowLookup((open) => !open)}
+            onLookup={() => void onLookup()}
           />
         )}
       </ScrollView>

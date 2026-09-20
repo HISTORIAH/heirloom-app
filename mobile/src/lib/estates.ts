@@ -1,6 +1,8 @@
 import {
   decodeEstate,
   ESTATE_DISCRIMINATOR,
+  fetchMaybeEstate,
+  findEstatePda,
   findVaultPda,
   HEIRLOOM_PROGRAM_ADDRESS,
   type Estate,
@@ -123,6 +125,21 @@ async function withClaimableLamports(
       };
     }),
   );
+}
+
+export async function fetchEstateByPair(
+  rpc: EstateRpc,
+  authority: Address,
+  heir: Address,
+): Promise<EstateRow | undefined> {
+  const [pda] = await findEstatePda({ authority, heir });
+  const maybe = await fetchMaybeEstate(rpc, pda);
+  if (!maybe.exists) return undefined;
+  if (maybe.lamports <= 0n) return undefined;
+  const [row] = await withClaimableLamports(rpc, [
+    { address: maybe.address, data: maybe.data },
+  ]);
+  return row;
 }
 
 export async function fetchEstatesByAuthority(

@@ -8,12 +8,17 @@ import {
   View,
 } from "react-native";
 
+import { AddressLookup } from "@/components/AddressLookup";
 import { AppHeader } from "@/components/AppHeader";
 import { PulseTicket, SignerHoldWell } from "@/components/PulseTicket";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
+import { useHeirTx } from "@/hooks/useHeirTx";
 import type { EstateUiState } from "@/lib/estateState";
-import type { EstateRow } from "@/lib/estates";
+import { fetchEstateByPair, type EstateRow } from "@/lib/estates";
+import { openExplorerTx } from "@/lib/explorer";
+import { unwrapOption } from "@/lib/option";
+import { parseAddress } from "@/lib/ownerWrites";
 import { presentEstate } from "@/lib/presentEstate";
 import { colors } from "@/theme";
 
@@ -32,21 +37,17 @@ function sortAsSigner(rows: EstateRow[]): EstateRow[] {
   });
 }
 
-function onBeatPress(label: string, reclaim: boolean) {
+function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
+  const byAddr = new Map<string, EstateRow>();
+  for (const row of extra) byAddr.set(row.address, row);
+  for (const row of discovered) byAddr.set(row.address, row);
+  return [...byAddr.values()];
+}
+
+function fail(title: string, cause: unknown) {
   Alert.alert(
-    reclaim ? `Reclaim ${label}?` : `Send a heartbeat for ${label}?`,
-    "This only resets the timer. It cannot move assets.",
-    [
-      { text: "Not now", style: "cancel" },
-      {
-        text: reclaim ? "I'm alive — reclaim" : "Send heartbeat",
-        onPress: () =>
-          Alert.alert(
-            "Coming next",
-            "Signer check-in lands in the heir / signer write slice.",
-          ),
-      },
-    ],
+    title,
+    cause instanceof Error ? cause.message : "Something went wrong",
   );
 }
 
@@ -55,16 +56,64 @@ function HeartbeatConnected({
   error,
   ordered,
   dueCount,
+  busy,
+  showLookup,
+  ownerQuery,
+  heirQuery,
+  setOwnerQuery,
+  setHeirQuery,
+  onBeat,
   onHold,
+  onToggleLookup,
   onLookup,
 }: {
   loading: boolean;
   error: string | null;
   ordered: EstateRow[];
   dueCount: number;
+  busy: boolean;
+  showLookup: boolean;
+  ownerQuery: string;
+  heirQuery: string;
+  setOwnerQuery: (value: string) => void;
+  setHeirQuery: (value: string) => void;
+  onBeat: (row: EstateRow) => void;
   onHold: () => void;
+  onToggleLookup: () => void;
   onLookup: () => void;
 }) {
+  const lookup = (
+    <View style={{ gap: 12 }}>
+      <TextLink
+        label={showLookup ? "Hide lookup" : "Look up by owner and heir"}
+        align="left"
+        onPress={onToggleLookup}
+      />
+      {showLookup ? (
+        <AddressLookup
+          fields={[
+            {
+              key: "owner",
+              label: "Owner",
+              value: ownerQuery,
+              onChange: setOwnerQuery,
+            },
+            {
+              key: "heir",
+              label: "Heir",
+              value: heirQuery,
+              onChange: setHeirQuery,
+            },
+          ]}
+          submitLabel="Find estate"
+          busy={busy}
+          onSubmit={onLookup}
+        />
+      ) : null}
+      <SignerHoldWell onHold={onHold} />
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={{ marginTop: 32, alignItems: "center" }}>
@@ -84,15 +133,17 @@ function HeartbeatConnected({
 
   if (error !== null) {
     return (
-      <Text
-        style={{
-          marginTop: 20,
-          fontFamily: "SpaceGrotesk_500Medium",
-          color: colors.mute,
-        }}
-      >
-        {error}
-      </Text>
+      <View style={{ marginTop: 20, gap: 16 }}>
+        <Text
+          style={{
+            fontFamily: "SpaceGrotesk_500Medium",
+            color: colors.mute,
+          }}
+        >
+          {error}
+        </Text>
+        {lookup}
+      </View>
     );
   }
 
@@ -126,16 +177,11 @@ function HeartbeatConnected({
               color: colors.mute,
             }}
           >
-            This wallet is not the heartbeat signer on any estate. Hold the
-            signer card, or look up by owner and heir.
+            This wallet is not the heartbeat signer on any estate. Look up by
+            owner and heir, or wait for card tap.
           </Text>
         </View>
-        <TextLink
-          label="Look up by owner and heir"
-          align="left"
-          onPress={onLookup}
-        />
-        <SignerHoldWell onHold={onHold} />
+        {lookup}
       </View>
     );
   }
@@ -164,23 +210,26 @@ function HeartbeatConnected({
         </Text>
       </View>
       {ordered.map((row) => (
-        <PulseTicket key={row.address} row={row} onBeat={onBeatPress} />
+        <PulseTicket key={row.address} row={row} busy={busy} onBeat={onBeat} />
       ))}
-      <TextLink
-        label="Look up by owner and heir"
-        align="left"
-        onPress={onLookup}
-      />
-      <SignerHoldWell onHold={onHold} />
+      {lookup}
     </View>
   );
 }
 
 export default function HeartbeatScreen() {
-  const { account, connect } = useMobileWallet();
-  const { rows, loading, error } = useEstates("hbSigner");
+  const { account, client, connect } = useMobileWallet();
+  const { rows, loading, error, reload } = useEstates("hbSigner");
+  const { sendHeartbeat } = useHeirTx();
   const [busy, setBusy] = useState(false);
-  const ordered = useMemo(() => sortAsSigner(rows), [rows]);
+  const [showLookup, setShowLookup] = useState(false);
+  const [ownerQuery, setOwnerQuery] = useState("");
+  const [heirQuery, setHeirQuery] = useState("");
+  const [extra, setExtra] = useState<EstateRow[]>([]);
+  const ordered = useMemo(
+    () => sortAsSigner(mergeRows(rows, extra)),
+    [rows, extra],
+  );
   const dueCount = ordered.filter((row) => {
     const state = presentEstate(row.data, row.claimableLamports).state;
     return state === "grace" || state === "claimable";
@@ -192,10 +241,7 @@ export default function HeartbeatScreen() {
     try {
       await connect();
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not connect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
@@ -208,11 +254,80 @@ export default function HeartbeatScreen() {
     );
   }
 
-  function onLookup() {
+  async function runBeat(row: EstateRow) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const sig = await sendHeartbeat(row.data.authority, row.data.heir);
+      let next: EstateRow | undefined;
+      try {
+        next = await fetchEstateByPair(
+          client.rpc,
+          row.data.authority,
+          row.data.heir,
+        );
+      } catch {
+        next = undefined;
+      }
+      setExtra((prev) => {
+        const rest = prev.filter((item) => item.address !== row.address);
+        return next === undefined ? rest : [...rest, next];
+      });
+      reload();
+      Alert.alert("Heartbeat sent", "The check-in timer starts again.", [
+        { text: "OK" },
+        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
+      ]);
+    } catch (cause) {
+      fail("Heartbeat", cause);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function onBeat(row: EstateRow) {
+    if (busy) return;
+    const state = presentEstate(row.data, row.claimableLamports).state;
+    if (state === "distributed") {
+      Alert.alert("Ended", "This vault is empty. No pulse left to send.");
+      return;
+    }
+    const label = row.data.label.trim() || "estate";
+    const reclaim = state === "claimable";
     Alert.alert(
-      "Coming next",
-      "Owner + heir lookup lands with the signer write slice.",
+      reclaim ? `Reclaim ${label}?` : `Send a heartbeat for ${label}?`,
+      "This only resets the timer. It cannot move assets.",
+      [
+        { text: "Not now", style: "cancel" },
+        {
+          text: reclaim ? "I'm alive" : "Send heartbeat",
+          onPress: () => void runBeat(row),
+        },
+      ],
     );
+  }
+
+  async function onLookup() {
+    if (busy || !account) return;
+    setBusy(true);
+    try {
+      const owner = parseAddress(ownerQuery, "owner");
+      const heir = parseAddress(heirQuery, "heir");
+      const row = await fetchEstateByPair(client.rpc, owner, heir);
+      if (row === undefined) {
+        throw new Error("No estate for that owner and heir.");
+      }
+      const signer = unwrapOption(row.data.hbSigner);
+      if (signer === null || signer !== account.address) {
+        throw new Error("This wallet is not the heartbeat signer on that estate.");
+      }
+      setExtra((prev) => mergeRows(prev, [row]));
+      setShowLookup(false);
+    } catch (cause) {
+      fail("Lookup", cause);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -262,6 +377,7 @@ export default function HeartbeatScreen() {
               <PrimaryButton
                 label={busy ? "Working…" : "Connect wallet"}
                 tone="ink"
+                disabled={busy}
                 onPress={onConnect}
               />
             </View>
@@ -273,8 +389,16 @@ export default function HeartbeatScreen() {
             error={error}
             ordered={ordered}
             dueCount={dueCount}
+            busy={busy}
+            showLookup={showLookup}
+            ownerQuery={ownerQuery}
+            heirQuery={heirQuery}
+            setOwnerQuery={setOwnerQuery}
+            setHeirQuery={setHeirQuery}
+            onBeat={onBeat}
             onHold={onHold}
-            onLookup={onLookup}
+            onToggleLookup={() => setShowLookup((open) => !open)}
+            onLookup={() => void onLookup()}
           />
         )}
       </ScrollView>

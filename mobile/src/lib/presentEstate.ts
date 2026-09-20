@@ -48,8 +48,8 @@ function clampRatio(n: number): number {
   return n;
 }
 
-export function assetCount(claimableAssets: number, claimableLamports: bigint): number {
-  return (claimableLamports > 0n ? 1 : 0) + claimableAssets;
+export function assetCount(claimableAssets: number): number {
+  return claimableAssets;
 }
 
 export function presentEstate(
@@ -68,7 +68,7 @@ export function presentEstate(
     vaultEmpty,
   });
 
-  const assets = assetCount(data.claimableAssets, claimableLamports);
+  const assets = assetCount(data.claimableAssets);
   const assetWord = assets === 1 ? "1 asset" : `${assets} assets`;
 
   if (state === "distributed") {
