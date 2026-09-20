@@ -39,6 +39,7 @@ body {
   color: hsl(var(--foreground));
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -197,13 +198,13 @@ body {
 
 @media (min-width: 640px) {
   .post-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
   .post-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -216,6 +217,12 @@ body {
   transition: background 0.2s;
   text-decoration: none;
   color: inherit;
+}
+
+@media (max-width: 639.98px) {
+  .post-card {
+    padding: 1.25rem;
+  }
 }
 
 .post-card:hover {
@@ -328,10 +335,16 @@ body {
 /* ── Article layout ────────────────────────────────────────── */
 .article-layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(2rem, 4vw, 4rem);
   padding-top: 2rem;
   padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+/* Keep grid children from blowing out the track with wide content
+   (long code lines, tables, unbreakable strings) */
+.article-layout > * {
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {
@@ -354,6 +367,29 @@ body {
     position: sticky;
     top: calc(var(--nav-h) + 2rem);
     align-self: start;
+  }
+}
+
+/* Compact meta strip on smaller screens */
+@media (max-width: 1023.98px) {
+  .post-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem 2.5rem;
+    padding: 1rem 1.25rem;
+    background: hsl(var(--tile-soft));
+    border: 1px solid hsl(var(--tile-line));
+    border-radius: 12px;
+  }
+
+  .post-sidebar .back-link {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .post-sidebar .author-bio {
+    display: none;
   }
 }
 
@@ -443,6 +479,13 @@ body {
   font-size: 15.5px;
   line-height: 1.75;
   color: hsl(var(--foreground));
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 639.98px) {
+  .prose {
+    font-size: 16px;
+  }
 }
 
 .prose > * + * {
@@ -542,6 +585,17 @@ body {
   overflow-x: auto;
   font-size: 13px;
   line-height: 1.65;
+}
+
+@media (max-width: 639.98px) {
+  .prose pre {
+    padding: 1rem;
+    font-size: 12px;
+  }
+
+  .prose blockquote {
+    padding: 1rem 1.25rem;
+  }
 }
 
 .prose pre code {
@@ -699,6 +753,30 @@ body {
 .post-nav .nav-next {
   text-align: right;
   align-items: flex-end;
+}
+
+/* ── Small screens (below 640px) ───────────────────────────── */
+@media (max-width: 639.98px) {
+  .article-layout {
+    padding-top: 1.25rem;
+  }
+
+  .article-header {
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .post-nav {
+    margin-top: 2rem;
+  }
+
+  .post-nav a {
+    padding: 1.25rem;
+  }
+
+  .filter-bar {
+    padding-top: 1.25rem;
+  }
 }
 
 /* ── Footer ────────────────────────────────────────────────── */
