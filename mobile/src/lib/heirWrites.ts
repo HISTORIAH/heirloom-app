@@ -32,7 +32,7 @@ export type ClaimToken = {
 };
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (typeof value !== "object" || value === undefined || value === null) {
+  if (typeof value !== "object" || value === null) {
     return undefined;
   }
   return value as Record<string, unknown>;
