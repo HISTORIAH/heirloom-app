@@ -1,11 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useMemo, useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { AddressLookup } from "@/components/AddressLookup";
 import { AppHeader } from "@/components/AppHeader";
@@ -43,13 +38,6 @@ function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
   for (const row of extra) byAddr.set(row.address, row);
   for (const row of discovered) byAddr.set(row.address, row);
   return [...byAddr.values()];
-}
-
-function fail(title: string, cause: unknown) {
-  Alert.alert(
-    title,
-    cause instanceof Error ? cause.message : "Something went wrong",
-  );
 }
 
 function HeartbeatConnected({
@@ -214,7 +202,8 @@ export default function HeartbeatScreen() {
   const [ownerQuery, setOwnerQuery] = useState("");
   const [heirQuery, setHeirQuery] = useState("");
   const [extra, setExtra] = useState<EstateRow[]>([]);
-  const { ask, prompt, cancel, confirm } = useConfirmSheet();
+  const { ask, prompt, notice, fail, cancel, confirm, extra: runExtra } =
+    useConfirmSheet();
   const ordered = useMemo(
     () => sortAsSigner(mergeRows(rows, extra)),
     [rows, extra],
@@ -237,10 +226,11 @@ export default function HeartbeatScreen() {
   }
 
   function onHold() {
-    Alert.alert(
-      "Coming next",
-      "Card heartbeat lands with the Java Card slice.",
-    );
+    notice({
+      cap: "Coming next",
+      title: "Card heartbeat lands later",
+      body: "Card heartbeat lands with the Java Card slice.",
+    });
   }
 
   async function runBeat(row: EstateRow) {
@@ -262,11 +252,16 @@ export default function HeartbeatScreen() {
         const rest = prev.filter((item) => item.address !== row.address);
         return next === undefined ? rest : [...rest, next];
       });
-      reload();
-      Alert.alert("Heartbeat sent", "The check-in timer starts again.", [
-        { text: "OK" },
-        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
-      ]);
+      await reload();
+      notice(
+        {
+          cap: "Done",
+          title: "Heartbeat sent",
+          body: "The check-in timer starts again.",
+          extraLabel: "View on explorer",
+        },
+        () => openExplorerTx(sig),
+      );
     } catch (cause) {
       fail("Heartbeat", cause);
     } finally {
@@ -278,7 +273,11 @@ export default function HeartbeatScreen() {
     if (busy) return;
     const state = presentEstate(row.data, row.claimableLamports).state;
     if (state === "distributed") {
-      Alert.alert("Ended", "This vault is empty. No pulse left to send.");
+      notice({
+        cap: "Ended",
+        title: "This vault is empty",
+        body: "No pulse left to send.",
+      });
       return;
     }
     const label = row.data.label.trim() || "estate";
@@ -389,7 +388,12 @@ export default function HeartbeatScreen() {
           />
         )}
       </ScrollView>
-      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} />
+      <ConfirmSheet
+        ask={ask}
+        onCancel={cancel}
+        onConfirm={confirm}
+        onExtra={runExtra}
+      />
     </View>
   );
 }

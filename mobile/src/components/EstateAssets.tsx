@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 
 import { Cap, PrimaryButton } from "@/components/ui";
@@ -112,14 +112,16 @@ function AddSolRow({
   adding?: boolean;
 }) {
   const [amount, setAmount] = useState("");
+  const [error, setError] = useState<string | undefined>(undefined);
 
   function submit() {
     try {
       const lamports = solToLamports(amount);
       if (lamports <= 0n) throw new Error("Enter a SOL amount");
+      setError(undefined);
       onAddSol(lamports);
     } catch (cause) {
-      Alert.alert("Top up", cause instanceof Error ? cause.message : "Enter a SOL amount");
+      setError(cause instanceof Error ? cause.message : "Enter a SOL amount");
     }
   }
 
@@ -127,7 +129,10 @@ function AddSolRow({
     <View style={{ marginTop: 16, gap: 10 }}>
       <TextInput
         value={amount}
-        onChangeText={setAmount}
+        onChangeText={(value) => {
+          setError(undefined);
+          setAmount(value);
+        }}
         placeholder="SOL to add"
         placeholderTextColor={colors.mute}
         keyboardType="decimal-pad"
@@ -135,7 +140,7 @@ function AddSolRow({
           paddingVertical: 12,
           paddingHorizontal: 14,
           borderWidth: 1,
-          borderColor: colors.ink,
+          borderColor: error !== undefined ? colors.claim : colors.ink,
           borderRadius: space.radiusBtn,
           fontFamily: "SpaceGrotesk_500Medium",
           fontSize: 14,
@@ -143,6 +148,17 @@ function AddSolRow({
           backgroundColor: colors.bg,
         }}
       />
+      {error !== undefined ? (
+        <Text
+          style={{
+            fontFamily: "SpaceGrotesk_600SemiBold",
+            fontSize: 12,
+            color: colors.claim,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
       <PrimaryButton
         label={adding ? "Working…" : "Add SOL"}
         disabled={adding}

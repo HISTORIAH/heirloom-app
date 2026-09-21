@@ -28,20 +28,6 @@ function BeatMark({ size = 22 }: { size?: number }) {
   );
 }
 
-function PulseTrace() {
-  return (
-    <Svg width={120} height={36} viewBox="0 0 120 36" fill="none">
-      <Path
-        d="M2 20h18l6-12 10 24 8-16h76"
-        stroke={colors.sage}
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 function urgency(state: EstateUiState): {
   label: string;
   bg: string;
@@ -186,10 +172,6 @@ export function PulseTicket({ row, onBeat, busy }: PulseTicketProps) {
         </View>
       </View>
 
-      <View style={{ paddingHorizontal: 10, paddingBottom: 4, opacity: 0.9 }}>
-        <PulseTrace />
-      </View>
-
       <View style={{ paddingHorizontal: 14, paddingBottom: 14, gap: 10 }}>
         <View
           style={{
@@ -294,7 +276,6 @@ export function SignerHoldWell({ onHold }: SignerHoldWellProps) {
           </Text>
         </View>
       </View>
-      <PulseTrace />
       <Text
         style={{
           textAlign: "center",

@@ -1,6 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useMemo, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { AddressLookup } from "@/components/AddressLookup";
 import { AppHeader } from "@/components/AppHeader";
@@ -37,13 +37,6 @@ function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
   for (const row of extra) byAddr.set(row.address, row);
   for (const row of discovered) byAddr.set(row.address, row);
   return [...byAddr.values()];
-}
-
-function fail(title: string, cause: unknown) {
-  Alert.alert(
-    title,
-    cause instanceof Error ? cause.message : "Something went wrong",
-  );
 }
 
 function ClaimConnected({
@@ -202,7 +195,8 @@ export default function ClaimScreen() {
   const [showLookup, setShowLookup] = useState(false);
   const [ownerQuery, setOwnerQuery] = useState("");
   const [extra, setExtra] = useState<EstateRow[]>([]);
-  const { ask, prompt, cancel, confirm } = useConfirmSheet();
+  const { ask, prompt, notice, fail, cancel, confirm, extra: runExtra } =
+    useConfirmSheet();
   const ordered = useMemo(
     () => sortAsHeir(mergeRows(rows, extra)),
     [rows, extra],
@@ -224,7 +218,11 @@ export default function ClaimScreen() {
   }
 
   function onHoldCard() {
-    Alert.alert("Coming next", "Card claim lands with the Java Card slice.");
+    notice({
+      cap: "Coming next",
+      title: "Card claim lands later",
+      body: "Card claim lands with the Java Card slice.",
+    });
   }
 
   async function runClaim(row: EstateRow) {
@@ -233,11 +231,16 @@ export default function ClaimScreen() {
     try {
       const sig = await claimAll(row);
       setExtra((prev) => prev.filter((item) => item.address !== row.address));
-      reload();
-      Alert.alert("Estate claimed", "Assets are in this wallet. The vault closed.", [
-        { text: "OK" },
-        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
-      ]);
+      await reload();
+      notice(
+        {
+          cap: "Done",
+          title: "Estate claimed",
+          body: "Assets are in this wallet. The vault closed.",
+          extraLabel: "View on explorer",
+        },
+        () => openExplorerTx(sig),
+      );
     } catch (cause) {
       fail("Claim", cause);
     } finally {
@@ -249,7 +252,10 @@ export default function ClaimScreen() {
     if (busy) return;
     const state = presentEstate(row.data, row.claimableLamports).state;
     if (state !== "claimable") {
-      Alert.alert("Not yet", "This vault is not open to claim.");
+      notice({
+        cap: "Not yet",
+        title: "This vault is not open to claim.",
+      });
       return;
     }
     const label = row.data.label.trim() || "estate";
@@ -352,7 +358,12 @@ export default function ClaimScreen() {
           />
         )}
       </ScrollView>
-      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} />
+      <ConfirmSheet
+        ask={ask}
+        onCancel={cancel}
+        onConfirm={confirm}
+        onExtra={runExtra}
+      />
     </View>
   );
 }

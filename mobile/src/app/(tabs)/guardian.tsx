@@ -1,14 +1,10 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useMemo, useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
 import { ChainLoading } from "@/components/ChainLoading";
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
 import { gateKind, LatchRail, PauseGate } from "@/components/PauseGate";
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { useEstates } from "@/hooks/useEstates";
@@ -33,36 +29,20 @@ function sortAsGuardian(rows: EstateRow[]): EstateRow[] {
   return [...rows].sort((a, b) => rank(a) - rank(b));
 }
 
-function onDeferPress(label: string, duration: string) {
-  Alert.alert(
-    `Hold ${label}?`,
-    `Pushes the claim window by ${duration}. Once until a heartbeat clears it.`,
-    [
-      { text: "Not now", style: "cancel" },
-      {
-        text: "Hold the window",
-        onPress: () =>
-          Alert.alert(
-            "Coming next",
-            "Mobile defer waits on a web linking pass, then the guardian slice.",
-          ),
-      },
-    ],
-  );
-}
-
 function GuardianConnected({
   loading,
   error,
   ordered,
   holdableCount,
   onLookup,
+  onDefer,
 }: {
   loading: boolean;
   error: string | null;
   ordered: EstateRow[];
   holdableCount: number;
   onLookup: () => void;
+  onDefer: (label: string, duration: string) => void;
 }) {
   if (loading) {
     return <ChainLoading compact body="Looking for estates you guard…" />;
@@ -160,7 +140,7 @@ function GuardianConnected({
         </Text>
       </View>
       {ordered.map((row) => (
-        <PauseGate key={row.address} row={row} onDefer={onDeferPress} />
+        <PauseGate key={row.address} row={row} onDefer={onDefer} />
       ))}
       <TextLink
         label="Look up by owner and heir"
@@ -185,6 +165,7 @@ export default function GuardianScreen() {
   const { account, connect } = useMobileWallet();
   const { rows, loading, error } = useEstates("delegate");
   const [busy, setBusy] = useState(false);
+  const { ask, prompt, notice, fail, cancel, confirm, extra } = useConfirmSheet();
   const ordered = useMemo(() => sortAsGuardian(rows), [rows]);
   const holdableCount = ordered.filter((row) => gateKind(row) === "holdable").length;
 
@@ -194,19 +175,34 @@ export default function GuardianScreen() {
     try {
       await connect();
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not connect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
   }
 
   function onLookup() {
-    Alert.alert(
-      "Coming next",
-      "Owner + heir lookup lands with the guardian slice.",
+    notice({
+      cap: "Coming next",
+      title: "Lookup comes later",
+      body: "Owner + heir lookup lands with the guardian slice.",
+    });
+  }
+
+  function onDefer(label: string, duration: string) {
+    prompt(
+      {
+        cap: "Hold",
+        title: `Hold ${label}?`,
+        body: `Pushes the claim window by ${duration}. Once until a heartbeat clears it.`,
+        confirmLabel: "Hold the window",
+      },
+      () =>
+        notice({
+          cap: "Coming next",
+          title: "Not in this slice",
+          body: "Mobile defer waits on a web linking pass, then the guardian slice.",
+        }),
     );
   }
 
@@ -269,9 +265,16 @@ export default function GuardianScreen() {
             ordered={ordered}
             holdableCount={holdableCount}
             onLookup={onLookup}
+            onDefer={onDefer}
           />
         )}
       </ScrollView>
+      <ConfirmSheet
+        ask={ask}
+        onCancel={cancel}
+        onConfirm={confirm}
+        onExtra={extra}
+      />
     </View>
   );
 }

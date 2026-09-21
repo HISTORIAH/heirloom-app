@@ -1,7 +1,7 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -17,6 +17,7 @@ import { EstatePicker } from "@/components/EstatePicker";
 import { EstateRail } from "@/components/EstateRail";
 import { useEstates } from "@/hooks/useEstates";
 import { useOwnerTx } from "@/hooks/useOwnerTx";
+import { waitUntilAccountGone } from "@/lib/confirm";
 import { openExplorerTx } from "@/lib/explorer";
 import { colors } from "@/theme";
 import type { Address } from "@solana/kit";
@@ -24,12 +25,12 @@ import type { Address } from "@solana/kit";
 export default function DashboardScreen() {
   const router = useRouter();
   const { account, connect, disconnect, client } = useMobileWallet();
-  const { rows, loading, error, reload } = useEstates("authority");
+  const { rows, loading, error, reload, drop } = useEstates("authority");
   const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } =
     useOwnerTx();
   const [picked, setPicked] = useState(0);
   const [busy, setBusy] = useState(false);
-  const { ask, prompt, cancel, confirm } = useConfirmSheet();
+  const { ask, prompt, notice, fail, cancel, confirm, extra } = useConfirmSheet();
   const detailOpacity = useSharedValue(1);
   const skipDetailFade = useRef(true);
 
@@ -56,10 +57,7 @@ export default function DashboardScreen() {
     try {
       await connect();
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not connect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
@@ -71,10 +69,7 @@ export default function DashboardScreen() {
     try {
       await disconnect();
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not disconnect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
@@ -95,23 +90,34 @@ export default function DashboardScreen() {
     work: () => Promise<string>,
     okTitle: string,
     okBody: string,
-    resetPick?: boolean,
+    gone?: Address,
   ) {
     if (busy) return;
     setBusy(true);
     try {
       const sig = await work();
-      if (resetPick) setPicked(0);
-      reload();
-      Alert.alert(okTitle, okBody, [
-        { text: "OK" },
-        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
-      ]);
-    } catch (cause) {
-      Alert.alert(
-        title,
-        cause instanceof Error ? cause.message : "Something went wrong",
+      if (gone !== undefined) {
+        await waitUntilAccountGone(client.rpc, gone);
+        drop(gone);
+        setPicked(0);
+      }
+      const next = await reload();
+      if (gone !== undefined && next.some((row) => row.address === gone)) {
+        throw new Error(
+          "This estate is still on chain. Open the dashboard again in a moment.",
+        );
+      }
+      notice(
+        {
+          cap: "Done",
+          title: okTitle,
+          body: okBody,
+          extraLabel: "View on explorer",
+        },
+        () => openExplorerTx(sig),
       );
+    } catch (cause) {
+      fail(title, cause);
     } finally {
       setBusy(false);
     }
@@ -173,7 +179,7 @@ export default function DashboardScreen() {
           () => reassignHeir(row, newHeir),
           "Heir changed",
           "Assets now sit on the new estate.",
-          true,
+          row.address,
         ),
     );
   }
@@ -240,7 +246,7 @@ export default function DashboardScreen() {
           () => closeEstate(row),
           "Estate closed",
           "Assets are back in this wallet.",
-          true,
+          row.address,
         ),
     );
   }
@@ -303,7 +309,12 @@ export default function DashboardScreen() {
           ) : null}
         </ScrollView>
       )}
-      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} />
+      <ConfirmSheet
+        ask={ask}
+        onCancel={cancel}
+        onConfirm={confirm}
+        onExtra={extra}
+      />
     </View>
   );
 }

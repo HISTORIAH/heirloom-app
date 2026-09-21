@@ -49,6 +49,7 @@ async function fetchEstatesByMemcmp(
   const accounts = await rpc
     .getProgramAccounts(HEIRLOOM_PROGRAM_ADDRESS, {
       encoding: "base64",
+      commitment: "confirmed",
       filters: [
         {
           memcmp: {

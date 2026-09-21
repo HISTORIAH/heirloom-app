@@ -12,11 +12,13 @@ const tones: Record<BtnTone, { bg: string; fg: string }> = {
 };
 
 interface PrimaryButtonProps {
+  /** Sentence case. This control uppercases and tracks. */
   label: string;
   onPress?: () => void;
   tone?: BtnTone;
   disabled?: boolean;
   compact?: boolean;
+  inkBorder?: boolean;
 }
 
 export function PrimaryButton({
@@ -25,6 +27,7 @@ export function PrimaryButton({
   tone = "yellow",
   disabled,
   compact,
+  inkBorder,
 }: PrimaryButtonProps) {
   const t = tones[tone];
   return (
@@ -39,6 +42,8 @@ export function PrimaryButton({
         borderRadius: space.radiusBtn,
         paddingVertical: compact ? 10 : 16,
         paddingHorizontal: compact ? 14 : 16,
+        borderWidth: inkBorder ? 1.5 : 0,
+        borderColor: inkBorder ? colors.ink : "transparent",
         opacity: disabled ? 0.45 : pressed ? 0.88 : 1,
       })}
     >
@@ -62,12 +67,13 @@ interface TextLinkProps {
   onPress?: () => void;
   align?: "center" | "left";
   quiet?: boolean;
+  flush?: boolean;
 }
 
-export function TextLink({ label, onPress, align = "center", quiet }: TextLinkProps) {
+export function TextLink({ label, onPress, align = "center", quiet, flush }: TextLinkProps) {
   const color = quiet ? colors.mute : colors.ink;
   return (
-    <Pressable onPress={onPress} style={{ marginTop: 16 }}>
+    <Pressable onPress={onPress} style={{ marginTop: flush ? 8 : 16 }}>
       <Text
         style={{
           textAlign: align,
@@ -85,6 +91,7 @@ export function TextLink({ label, onPress, align = "center", quiet }: TextLinkPr
 }
 
 interface CapProps {
+  /** Sentence case. This control uppercases and tracks. */
   children: string;
   color?: string;
 }
@@ -117,7 +124,7 @@ export function H2({ children, size = 34 }: H2Props) {
         fontFamily: "SpaceGrotesk_600SemiBold",
         fontSize: size,
         letterSpacing: size * -0.035,
-        lineHeight: size * 0.96,
+        lineHeight: size * 1.12,
         color: colors.ink,
         marginVertical: 8,
       }}

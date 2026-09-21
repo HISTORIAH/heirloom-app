@@ -5,6 +5,7 @@ import Svg, { Circle, Path, Rect } from "react-native-svg";
 
 import { colors } from "@/theme";
 
+/** Pill slots. Scan is EstateRail only; create is the FAB. */
 const SIDE_TABS = ["index", "claim", "heartbeat", "guardian"] as const;
 
 const LABELS: Record<(typeof SIDE_TABS)[number], string> = {

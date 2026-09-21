@@ -1,3 +1,4 @@
+import { waitForConfirmed } from "@/lib/confirm";
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import {
   appendTransactionMessageInstructions,
@@ -35,7 +36,9 @@ export function useSendIxs() {
       (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
     );
     const signatureBytes = await signAndSendTransactionMessageWithSigners(message);
-    return base58.decode(signatureBytes);
+    const signature = base58.decode(signatureBytes);
+    await waitForConfirmed(client.rpc, signature);
+    return signature;
   }
 
   return { account, client, sendIxs };

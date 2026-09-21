@@ -1,9 +1,10 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
 import { Cap, H2, Lede, PrimaryButton, TextLink, Tile } from "@/components/ui";
 import { clusterLabel } from "@/config";
 import { colors } from "@/theme";
@@ -12,6 +13,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { account, disconnect } = useMobileWallet();
   const [busy, setBusy] = useState(false);
+  const { ask, fail, cancel, confirm, extra } = useConfirmSheet();
 
   async function onDisconnect() {
     if (busy) return;
@@ -20,10 +22,7 @@ export default function SettingsScreen() {
       await disconnect();
       router.replace("/");
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not disconnect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
@@ -53,6 +52,12 @@ export default function SettingsScreen() {
           <TextLink label="Back to dashboard" onPress={() => router.replace("/")} />
         )}
       </ScrollView>
+      <ConfirmSheet
+        ask={ask}
+        onCancel={cancel}
+        onConfirm={confirm}
+        onExtra={extra}
+      />
     </View>
   );
 }

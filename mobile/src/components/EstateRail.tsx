@@ -42,7 +42,13 @@ export function EstateRail({ count, onScan }: EstateRailProps) {
         {n}
       </Text>
       <View style={{ flex: 1 }} />
-      <PrimaryButton label="Scan" compact tone="sage" onPress={onScan} />
+      <PrimaryButton
+        label="Scan"
+        compact
+        tone="sage"
+        inkBorder
+        onPress={onScan}
+      />
     </View>
   );
 }
