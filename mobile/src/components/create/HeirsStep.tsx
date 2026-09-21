@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
 import { CreateField } from "@/components/create/CreateField";
-import { Cap, H2, Lede, TextLink, Tile } from "@/components/ui";
+import { Cap, H2, Lede, Tile } from "@/components/ui";
 import { LABEL_MAX_LEN } from "@/lib/constants";
 import { colors } from "@/theme";
 
@@ -43,14 +42,12 @@ export function HeirsStep({
   clearSignerError: () => void;
   onLift?: (node: View) => void;
 }) {
-  const [cardNote, setCardNote] = useState(false);
-
   return (
     <View>
       <H2>Who inherits</H2>
       <CreateField
         label="What to call this estate"
-        hint="Only you see this. It keeps estates apart on your dashboard."
+        hint="Visible to anyone named on this estate."
         value={label}
         placeholder="Mum's estate"
         maxLength={LABEL_MAX_LEN}
@@ -64,7 +61,7 @@ export function HeirsStep({
       />
       <CreateField
         label="Their Solana wallet address"
-        hint="Paste it from your heir's wallet. Assets go here and nowhere else."
+        hint="Assets go here and nowhere else."
         value={heir}
         placeholder="Paste an address"
         error={heirError}
@@ -74,24 +71,6 @@ export function HeirsStep({
         }}
         onLift={onLift}
       />
-      <TextLink
-        label="Fill from a card"
-        quiet
-        align="left"
-        onPress={() => setCardNote(true)}
-      />
-      {cardNote ? (
-        <Text
-          style={{
-            marginTop: 8,
-            fontFamily: "SpaceGrotesk_500Medium",
-            fontSize: 13,
-            color: colors.mute,
-          }}
-        >
-          Coming next.
-        </Text>
-      ) : null}
 
       <View
         style={{
@@ -111,12 +90,12 @@ export function HeirsStep({
         <Cap>Set once</Cap>
         <View style={{ marginTop: 8 }}>
           <Lede>
-            Guardian and check-in signer cannot be changed later. Leave either blank to skip. How long a guardian can hold is set with the clocks.
+            Addresses below cannot be changed later.
           </Lede>
         </View>
         <CreateField
           label="Guardian"
-          hint="Someone you trust who can hold the claim window if they know you've died."
+          hint="Someone you trust who can hold the claim window in your absence."
           value={guardian}
           placeholder="Leave blank to skip"
           error={guardianError}
