@@ -1,0 +1,33 @@
+{
+  "name": "@historiah/heirloom-stocks",
+  "version": "0.0.1",
+  "description": "Client for the heirloom tokenized-equity program",
+  "main": "src/main.ts",
+  "types": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "keywords": [],
+  "author": "",
+  "peerDependencies": {
+    "@solana/kit": "^7.1.1"
+  },
+  "dependencies": {
+    "@solana-program/token-2022": "^0.15.0",
+    "@solana/kit-plugin-rpc": "^0.16.0",
+    "@solana/program-client-core": "^7.1.1"
+  },
+  "devDependencies": {
+    "@solana-program/system": "^0.13.0",
+    "@solana-program/token": "^0.15.0",
+    "@solana/kit-client-rpc": "^0.15.1",
+    "@solana/kit-plugin-litesvm": "^0.15.0",
+    "@solana/kit-plugin-signer": "^0.13.0",
+    "@solana/transactions": "^7.1.1",
+    "@types/bun": "^1.3.14",
+    "typescript": "^7.0.2"
+  }
+}
