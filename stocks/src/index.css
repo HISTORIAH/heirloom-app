@@ -1,0 +1,292 @@
+/* Space Grotesk is loaded via <link> in index.html — an @import here would
+   delay discovery until this file downloads and parses. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent-pink: 313 100% 65%;
+    --accent-lime: 83 78% 55%;
+    --accent-cyan: 189 100% 50%;
+    --accent-orange: 29 100% 50%;
+    --accent-purple: 249 100% 69%;
+    --accent-yellow: 50 100% 50%;
+    --accent-red: 0 100% 61%;
+
+    /* Mosaic landing palette — muted companions to yellow, plus the hairline
+       and warm-neutral fill the tiles are built from. Deliberately low
+       chroma so yellow stays the only loud colour on the page. */
+    --accent-sage: 101 21% 80%;
+    --accent-sky: 203 41% 82%;
+    --tile-line: 60 9% 87%;
+    --tile-soft: 60 10% 94%;
+
+    /* Yellow is the primary accent. Lime is reserved for live/alive state,
+       success, and editorial highlights. */
+    --accent: 50 100% 50%;
+
+    /* Overridden per wizard step so controls match the card's shadow color;
+       falls back to the primary accent outside those flows. */
+    --step-accent: var(--accent-yellow);
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 100% 61%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+
+    --radius: 0.75rem;
+
+    /* --------------------------------------------------------- page insets
+       Two insets describe the page. --rule-pad is where a vertical rule would
+       be drawn; --page-pad is where content starts, always --rule-gap clear of
+       it. The chrome runs full bleed on those; route bodies sit in --app-max.
+       The ruled landing these were cut for is its own package now, and shares
+       the values so the two surfaces still line up. */
+    --rule-pad: 1.25rem;
+    --rule-gap: 1.25rem;
+    --page-pad: calc(var(--rule-pad) + var(--rule-gap));
+    --app-max: 1300px;
+    --nav-h: 5rem;
+
+    /* The one offset shadow the app still draws: the range thumb, which needs
+       to read as a physical control. Panels and dialogs use hairlines. */
+    --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
+  }
+}
+
+@layer base {
+  /* Both insets open up with the viewport; the ruling follows automatically. */
+  @media (min-width: 640px) { :root { --rule-pad: 1.75rem; --rule-gap: 1.5rem; } }
+  @media (min-width: 1024px) { :root { --rule-pad: 2rem; --rule-gap: 1.75rem; } }
+  @media (min-width: 1440px) { :root { --rule-pad: 2.5rem; --rule-gap: 2.25rem; } }
+  @media (min-width: 1800px) { :root { --rule-pad: 3.5rem; --rule-gap: 2.75rem; } }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent-lime));
+    color: hsl(var(--foreground));
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--secondary));
+    border-left: 4px solid hsl(var(--foreground));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground));
+    border: 2px solid hsl(var(--secondary));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: hsl(var(--foreground));
+    border: 4px solid hsl(var(--background));
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+    transition: transform 0.15s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+  input[type="range"]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: hsl(var(--foreground));
+    border: 4px solid hsl(var(--background));
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+  }
+
+  button:focus-visible {
+    outline: 4px solid hsl(var(--foreground));
+    outline-offset: 2px;
+  }
+
+  /* Placeholder text - make it clearly visible */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* Webkit placeholder (older browsers) */
+  input::-webkit-input-placeholder,
+  textarea::-webkit-input-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* Firefox placeholder */
+  input::-moz-placeholder,
+  textarea::-moz-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
+  /* MS placeholder */
+  input:-ms-input-placeholder,
+  textarea:-ms-input-placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+}
+
+@layer components {
+  /* Body of app routes (dashboard, wizard). Chrome stays full-bleed. */
+  .app-shell {
+    width: 100%;
+    max-width: var(--app-max);
+    margin-inline: auto;
+  }
+  /* ------------------------------------------------------ editorial fields
+     A hairline box, not an ink one. Hover and focus stay on tile-line so the
+     field does not jump to a solid black outline. Keyboard focus uses a
+     quieter ring than buttons. */
+  .ed-input {
+    @apply w-full appearance-none rounded-lg border border-tile-line bg-background px-4 py-3 text-sm font-medium transition-colors;
+    outline: none;
+  }
+  .ed-input:hover,
+  .ed-input:focus {
+    @apply border-tile-line;
+    outline: none;
+  }
+  .ed-input:focus-visible {
+    @apply border-tile-line;
+    outline: 2px solid hsl(var(--foreground) / 0.28);
+    outline-offset: 2px;
+  }
+  .ed-input::placeholder {
+    @apply font-medium text-muted-foreground/70;
+  }
+  .ed-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+  .ed-field-label {
+    @apply text-xs font-bold uppercase tracking-[0.16em] text-foreground;
+  }
+  /* ------------------------------------------------------- editorial scale
+     Type is sized against the viewport, not a fixed column: at full bleed a
+     2.6rem headline that looked large in a 1300px measure reads as a caption.
+     Every section shares these three steps so the scale holds across the
+     scroll. */
+  /* The opening headline: sized against the window so it fills the left
+     seven columns at any width. Nothing else on the page is set this large. */
+  .hero-display {
+    @apply font-display font-semibold tracking-[-0.045em];
+    font-size: clamp(2.6rem, 5.2vw, 6.4rem);
+    line-height: 0.93;
+  }
+  .ed-h2 {
+    @apply font-display font-semibold tracking-[-0.035em];
+    font-size: clamp(2.15rem, 3.9vw, 4.75rem);
+    line-height: 0.96;
+  }
+  .ed-h3 {
+    @apply font-display font-semibold tracking-[-0.022em];
+    font-size: clamp(1.35rem, 1.75vw, 2.15rem);
+    line-height: 1.06;
+  }
+  .ed-lede {
+    @apply font-medium leading-relaxed;
+    font-size: clamp(1.0625rem, 1.15vw, 1.4rem);
+  }
+  .ed-body {
+    @apply font-medium leading-relaxed;
+    font-size: clamp(1rem, 0.95vw, 1.2rem);
+  }
+
+  /* ------------------------------------------------------------ tile scale
+     What the app still borrows from the landing's tile type: a title at
+     headline weight, and the oversized mark a panel is signed with. The rest
+     of the scale moved to the landing package with the mosaic itself. */
+  .tile-h {
+    @apply font-display font-semibold tracking-[-0.032em];
+    font-size: clamp(1.7rem, 2.6vw, 3.4rem);
+    line-height: 0.99;
+  }
+  /* The oversized mark a tile is signed with, sitting in its bottom corner.
+     Sized against the viewport like the type it shares the field with. */
+  .mark-lg {
+    width: clamp(4rem, 7.5vw, 10rem);
+    height: clamp(4rem, 7.5vw, 10rem);
+    flex-shrink: 0;
+  }
+  /* A dialog is already the only thing on screen once the overlay lands, so
+     it only needs to arrive rather than travel. */
+  .modal-rise {
+    animation: modalRise 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes modalRise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-rise {
+    animation: none !important;
+  }
+}

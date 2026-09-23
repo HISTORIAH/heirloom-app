@@ -11,6 +11,7 @@ A Solana-native inheritance protocol. Lock assets into a programmatic estate tha
 | [`blog/`](./blog/) | Astro + MDX blog | `heirlm.xyz/blog` |
 | [`app/`](./app/README.md) | Vite + React SPA, wallet-gated | `app.heirlm.xyz` |
 | [`app-ika/`](./app-ika/README.md) | The cross-chain IKA variant | — |
+| [`stocks/`](./stocks/README.md) | Vite + React SPA: backup and inheritance for tokenized stocks | `stocks.heirlm.xyz` |
 | `programs/`, `clients/` | Anchor programs and their generated clients | — |
 
 The content-heavy sites (landing, docs, blog) are prerendered static HTML and
@@ -23,6 +24,7 @@ SPA at `app.heirlm.xyz`.
 |---------|----|--------|
 | `heirloom` | `heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg` | devnet |
 | `heirloom-ika` | `9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf` | devnet |
+| `heirloom-stocks` | `8ZwqSnyXupsKsFqseEP62P9pw6hmvaBRu52PeYGo21mm` | devnet |
 
 ## Quick start
 
@@ -35,7 +37,10 @@ anchor build
 bun generate
 
 # Run the app locally
-bun dev:ui
+bun dev:app
+
+# Run Heirloom Stocks locally, against a local validator with test equities
+cd stocks && bun run localnet
 
 # Run any site locally
 bun dev:landing
@@ -47,6 +52,9 @@ bun build:web
 
 # Run tests
 bun test
+
+# Heirloom Stocks against a local validator, and end to end in Chrome
+cd stocks && bun run test:localnet && bun run test:e2e
 ```
 
 See [`app-ika/README.md`](./app-ika/README.md) for the cross-chain IKA variant.

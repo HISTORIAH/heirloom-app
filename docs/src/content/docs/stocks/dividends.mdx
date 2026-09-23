@@ -1,0 +1,44 @@
+---
+title: Dividends and splits
+description: How tokenized stocks pay dividends and apply splits through a multiplier on the mint, why balances never change, and how Heirloom reads the schedule.
+section: stocks
+order: 4
+keywords: ["dividends", "splits", "multiplier", "scaled ui amount", "corporate actions", "allocation", "calendar"]
+---
+
+Tokenized stocks don't pay dividends in cash, and they don't mint new tokens for a split.
+Both work through a **display multiplier** on the mint — the Token-2022 `ScaledUiAmount`
+extension.
+
+## How it works
+
+Every stock has a raw balance, in whole token units, and a multiplier. What your wallet
+shows is the raw balance times the multiplier:
+
+```txt
+raw balance        10.00000000
+multiplier         1.0032690125
+shown in a wallet  10.032690125
+```
+
+- A **dividend** nudges the multiplier up by the dividend's value, reinvested. Apple xStock
+  sat at about 1.0033 after five dividends.
+- A **split** multiplies it — 2 for a 2-for-1 split. A reverse split divides it.
+
+Your raw balance never changes. The multiplier does, for every holder at once.
+
+## Scheduled ahead of time
+
+An issuer sets the next multiplier together with the moment it takes effect, before the
+ex-date. That schedule is on-chain, so the dashboard's **upcoming corporate actions** list
+reads it straight from the mint: which of your stocks will change, by how much, and when.
+
+## Why Heirloom only works in raw units
+
+Every amount Heirloom moves is a raw amount — recoveries, claims, deposits, withdrawals, and
+fees. That keeps each transfer exact, whatever the multiplier is doing.
+
+It is also why a backup covers a **share** of a holding rather than a fixed number of shares.
+"10 AAPLx" would quietly mean something different after every dividend; "50% of the holding"
+means the same thing forever. Amounts you type in the app are in the units your wallet shows,
+and are converted back to raw units using the multiplier in force at that moment.

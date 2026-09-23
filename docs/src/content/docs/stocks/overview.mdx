@@ -1,0 +1,82 @@
+---
+title: Backup and vault modes
+description: How Heirloom protects tokenized stocks — a backup that leaves them in your wallet, or a vault that holds them for an heir — and how the two differ.
+section: stocks
+order: 1
+keywords: ["stocks", "tokenized equities", "xstocks", "ondo", "backup mode", "vault mode", "recovery", "heirloom-stocks"]
+---
+
+Tokenized stocks — xStocks, Ondo Global Markets — are SPL tokens, so they can be lost with
+a key like any other. **Heirloom Stocks**, at `stocks.heirlm.xyz`, protects them in one of
+two ways. Both run on their own program, `heirloom-stocks`, separate from the audited
+estate program.
+
+<Callout type="warning" title="Devnet only, today">
+`heirloom-stocks` is deployed to **devnet**; its address is in
+[Addresses & clusters](/docs/reference/addresses/). xStocks and Ondo mint their stocks only
+on mainnet, so on devnet the supported stocks are test equities, configured like an xStock and an Ondo stock. Balances on devnet are test
+balances.
+</Callout>
+
+## Backup mode
+
+Your stocks **stay in your wallet**. Covering a holding approves your backup plan as the
+token account's delegate, with an unlimited allowance. Nothing moves, so you can keep
+trading the position or use it as collateral.
+
+You name a **recovery wallet** — one you control and keep somewhere else. If you stop
+checking in, and the grace period after that runs out too, the recovery wallet can move the
+covered holdings to itself. It signs; your lost key is never needed.
+
+- **Allocation.** Each holding is covered for a share of its balance, from 1% to 100%. The
+  share is applied to whatever the balance is at recovery, so it never goes stale as you
+  trade.
+- **Fee.** 0.75% of what a recovery moves, paid to the treasury.
+- **The catch.** A token account has only one delegate. Approving another app on the same
+  account quietly replaces Heirloom — see [Delegate eviction](/docs/stocks/delegate-eviction/).
+
+## Vault mode
+
+Your stocks **move into a vault** the plan owns. If you stop checking in, your **heir**
+claims everything in it. Until then you can withdraw at any time.
+
+- **Everything goes.** A vault always passes on its whole balance. To leave part of a
+  position, deposit only that part.
+- **No eviction.** Nothing you approve elsewhere can displace a vault.
+- **Fees.** 0.75% of a claim; 0.5% of an early withdrawal.
+- **The catch.** Vaulted stocks can't be traded or used as collateral until you withdraw
+  them.
+
+## Side by side
+
+| | Backup | Vault |
+|---|---|---|
+| Where the stocks sit | Your wallet | A plan-owned account |
+| Tradeable while covered | Yes | No — withdraw first |
+| Who receives them | Your recovery wallet | Your heir |
+| How much moves | Your chosen share of each holding | Everything in the vault |
+| Can another approval break it | Yes, and it has to be repaired | No |
+| Fee | 0.75% on recovery | 0.75% on claim, 0.5% on early withdrawal |
+
+You can run one of each at the same time: a backup for the stocks you trade, a vault for the
+ones you are putting away.
+
+## What both share
+
+Both use the same check-in cycle as an estate — an interval, then a grace period — and both
+support the same optional helpers:
+
+- a **guardian**, who can push the deadline out once if you are alive but can't check in;
+- a **check-in wallet**, a hot wallet allowed to check in for you and nothing else.
+
+Changing a plan's settings never counts as a check-in, so a scheduled edit can't keep a plan
+alive by accident.
+
+## Which stocks are supported
+
+Coverage is limited to issuers Heirloom has registered. The registry is keyed by an issuer's
+**mint authority** rather than by individual mint — one xStocks key signs for every xStock,
+and one Ondo key for every Ondo stock — so a single entry admits an issuer's whole catalogue,
+including listings added later. Mints that start frozen by default, can't be transferred, or
+have a live transfer hook are refused. [Issuer controls](/docs/stocks/issuer-risk/) explains
+what the supported issuers can still do to a position.

@@ -1,0 +1,57 @@
+---
+title: Issuer controls and risk
+description: What xStocks and Ondo can still do to a tokenized stock after you own it, and what a recovery does when they use those powers.
+section: stocks
+order: 3
+keywords: ["permanent delegate", "clawback", "pause", "freeze", "transfer hook", "risk", "issuer", "xstocks", "ondo", "superstate"]
+---
+
+A tokenized stock is not a bearer asset in the way SOL is. Its issuer keeps powers over every
+holder's position, written into the mint as Token-2022 extensions. Heirloom can't remove
+those powers; it shows them, and it re-checks them at the moment a recovery or claim would
+move anything.
+
+## What the issuers can do
+
+As read from their mints on mainnet:
+
+| Power | Extension | xStocks | Ondo |
+|---|---|---|---|
+| **Clawback** — move tokens out of any account, without the holder | Permanent delegate | Yes | No |
+| **Pause** — halt every transfer of the stock | Pausable | Yes | Yes |
+| **Freeze** — lock an individual account | Freeze authority | Yes | Yes |
+| **Hook slot** — switch on a transfer hook later, without a new mint | Transfer hook, unset | Yes | Yes |
+
+Each of these appears as a tag next to the stock on the dashboard. The registry also gives
+every issuer a **risk tier**, higher meaning more control over holders' funds.
+
+Ondo's lack of a permanent delegate is a real difference: nobody but the holder, or a
+delegate the holder approved, can move an Ondo stock out of an account.
+
+## What happens at recovery
+
+Nothing checked when a stock was covered is trusted later, because the issuer can change the
+mint while a plan is live. A recovery or a claim re-checks, and stops with a specific reason:
+
+| Situation | Result | What to do |
+|---|---|---|
+| The issuer has **paused** the stock | `AssetPaused` | Wait. It can be retried once the issuer unpauses it |
+| The issuer has **frozen** the account | `AccountFrozen` | Only the issuer can thaw it |
+| A **permanent delegate appeared** after coverage began | `PermanentDelegateAdded` | The payout won't proceed on changed custody terms |
+| The issuer **switched on a transfer hook** | `TransferHookUnsupported` | Not supported yet |
+
+Withdrawing from your own vault is deliberately less strict. A pause or a frozen account
+still blocks it — the token program would refuse the transfer anyway — but a newly added
+permanent delegate does not. You should never be trapped by a change the issuer made.
+
+## What Heirloom can't see
+
+Mergers, delistings, and ticker changes are decided off-chain by the issuer, and issuers'
+terms say such adjustments may not be visible to holders. No program can react to them. If
+an issuer retires a stock, what happens to holders is between them and the issuer.
+
+## Issuers that aren't supported
+
+Some tokenized securities start every new account **frozen** and only thaw accounts for
+holders the issuer has approved. A vault account or a recovery wallet could never be relied
+on to receive them, so Heirloom refuses to cover them.

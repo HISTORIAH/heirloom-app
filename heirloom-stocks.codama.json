@@ -1,0 +1,9 @@
+{
+  "idl": "target/idl/heirloom_stocks.json",
+  "scripts": {
+    "js": {
+      "from": "@codama/renderers-js",
+      "args": ["clients/heirloom-stocks/js"]
+    }
+  }
+}
