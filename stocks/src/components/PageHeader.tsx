@@ -10,9 +10,10 @@ interface PageHeaderProps {
 }
 
 /**
- * The app's header with the stocks destinations in it. Six links need about
- * 1100px beside the wallet control — at 1024px the bar pushes it off-screen —
- * so the bar collapses into the drawer below `xl` rather than the app's `md`.
+ * The app's header with the stocks destinations in it. Seven links need about
+ * 1000px beside the wallet control — at 1024px the bar pushes it off-screen,
+ * and at 1280px it still fits with a wallet connected — so the bar collapses
+ * into the drawer below `xl` rather than the app's `md`.
  */
 const PageHeader: React.FC<PageHeaderProps> = ({ onConnectWallet }) => {
   const { t, i18n } = useTranslation("app");

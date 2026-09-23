@@ -1,3 +1,4 @@
+import type { CatalogIssuer } from "@/services/catalog";
 import type { MintDetails } from "@/services/mints";
 
 /**
@@ -21,3 +22,14 @@ export function riskFlags(mint: MintDetails): RiskFlag[] {
   if (mint.transferHook?.authority && !mint.transferHook.programId) flags.push("hook-slot");
   return flags;
 }
+
+/**
+ * What each catalogued issuer's mints carry, as read on mainnet (see the docs'
+ * issuer-risk page). Used where a stock is listed but not held, so showing it
+ * costs no chain read; a held stock shows `riskFlags` of its live mint instead.
+ * The one real difference: Ondo has no permanent delegate.
+ */
+export const ISSUER_POWERS: Record<CatalogIssuer, RiskFlag[]> = {
+  xstocks: ["clawback", "pausable", "freezable", "hook-slot"],
+  ondo: ["pausable", "freezable", "hook-slot"],
+};

@@ -164,7 +164,10 @@ export async function fetchStockHoldings(
 }
 
 /** Display symbol and name, preferring the catalog, then on-chain metadata. */
-export function holdingLabel(holding: Pick<StockHolding, "mint" | "catalog">): {
+export function holdingLabel(holding: {
+  mint: Pick<MintDetails, "mint" | "name" | "symbol">;
+  catalog: CatalogEntry | null;
+}): {
   symbol: string;
   name: string;
 } {

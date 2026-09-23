@@ -8,10 +8,13 @@ import { EmptyState, Figure, QueryState, Section } from "@/components/stocks/Sec
 import { HealthText, RiskTags } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
 import { useCatalog, useNow, useOwnerOverview } from "@/hooks/useStocks";
-import { formatDate, formatUiAmount } from "@/lib/format";
+import { formatDate, formatNumber, formatUiAmount } from "@/lib/format";
 import { coverBlockers } from "@/services/holdings";
 import type { OwnerOverview } from "@/services/overview";
 import { planTimeline } from "@/services/plans";
+
+/** Shortcuts into the browse page from an empty wallet. Each is listed by both issuers. */
+const POPULAR_TICKERS = ["AAPL", "TSLA", "NVDA", "SPY", "MSFT"];
 
 const Portfolio = () => (
   <StocksPage page="portfolio">{(wallet) => <PortfolioBody wallet={wallet} />}</StocksPage>
@@ -42,8 +45,21 @@ function PortfolioView({ data }: { data: OwnerOverview }) {
     return (
       <EmptyState
         title={t("portfolio.emptyTitle")}
-        description={t("portfolio.emptyDescription", { count: catalog.count })}
-      />
+        description={t("portfolio.emptyDescription", {
+          formatted: formatNumber(catalog.count, locale),
+        })}
+      >
+        <Button variant="flat-yellow" size="sm" asChild>
+          <Link to="/browse">
+            {t("portfolio.browseAll", { formatted: formatNumber(catalog.count, locale) })}
+          </Link>
+        </Button>
+        {POPULAR_TICKERS.map((ticker) => (
+          <Button key={ticker} variant="flat-outline" size="sm" asChild>
+            <Link to={`/browse?q=${ticker}`}>{ticker}</Link>
+          </Button>
+        ))}
+      </EmptyState>
     );
   }
 

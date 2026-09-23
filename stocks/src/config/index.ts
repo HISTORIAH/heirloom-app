@@ -16,5 +16,11 @@ export const DOCS_URL = `${LANDING_URL}/docs/`;
 export const SOLANA_RPC_ENDPOINT =
   import.meta.env.VITE_SOLANA_RPC_ENDPOINT || "http://127.0.0.1:8899";
 
+/**
+ * Whether this build reads mainnet. The catalog lists mainnet stocks only, so on
+ * any other cluster they can be browsed but not held, bought, or covered.
+ */
+export const IS_MAINNET = SOLANA_RPC_ENDPOINT.includes("mainnet");
+
 export const SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT =
   import.meta.env.VITE_SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT || "ws://127.0.0.1:8900";

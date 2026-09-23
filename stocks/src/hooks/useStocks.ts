@@ -25,11 +25,18 @@ export function useCatalog() {
     queryFn: () => fetchCatalog(),
     staleTime: Infinity,
   });
+  const entries = useMemo(() => query.data?.entries ?? [], [query.data]);
   const byMint = useMemo(
-    () => new Map<Address, CatalogEntry>((query.data?.entries ?? []).map((e) => [e.mint, e])),
-    [query.data],
+    () => new Map<Address, CatalogEntry>(entries.map((e) => [e.mint, e])),
+    [entries],
   );
-  return { byMint, count: query.data?.entries.length ?? 0, isLoading: query.isLoading };
+  return {
+    entries,
+    byMint,
+    count: entries.length,
+    generatedAt: query.data?.generatedAt ?? "",
+    isLoading: query.isLoading,
+  };
 }
 
 /**

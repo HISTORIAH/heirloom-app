@@ -6,24 +6,34 @@ import { WithWallet, type WalletCtx } from "@/components/WithWallet";
 import { Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 
-export type StocksPageKey = "portfolio" | "protect" | "dashboard" | "recover" | "inherit";
+export type StocksPageKey =
+  "portfolio" | "browse" | "protect" | "dashboard" | "recover" | "inherit";
+
+type StocksPageProps =
+  | { page: StocksPageKey; walletOptional?: false; children: (wallet: WalletCtx) => ReactNode }
+  | {
+      page: StocksPageKey;
+      /** Render the body without a wallet too, handing it a way to open the connect dialog. */
+      walletOptional: true;
+      children: (wallet: WalletCtx | null, connect: () => void) => ReactNode;
+    };
 
 /**
  * Chrome shared by every route: the header, the page's title block, and a
- * connect prompt in place of the body while no wallet is connected. Everything
- * on this origin is read from and signed by the visitor's own wallet, so no
- * page has anything to show without one.
+ * connect prompt in place of the body while no wallet is connected. Nearly
+ * everything on this origin is read from and signed by the visitor's own
+ * wallet; a page with something to show without one opts out with
+ * `walletOptional`.
  */
-export const StocksPage: React.FC<{
-  page: StocksPageKey;
-  children: (wallet: WalletCtx) => ReactNode;
-}> = ({ page, children }) => {
+export const StocksPage: React.FC<StocksPageProps> = (props) => {
+  const { page } = props;
   const { t } = useTranslation("stocks");
   const [connectOpen, setConnectOpen] = useState(false);
+  const connect = () => setConnectOpen(true);
 
   return (
     <div className="min-h-screen overflow-x-clip bg-background">
-      <PageHeader onConnectWallet={() => setConnectOpen(true)} />
+      <PageHeader onConnectWallet={connect} />
       <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,5rem)]">
         <header className="mb-8 max-w-3xl">
           <span className="ed-label">{t(`pages.${page}.cap`)}</span>
@@ -34,7 +44,13 @@ export const StocksPage: React.FC<{
         </header>
         <WithWallet>
           {(wallet) =>
-            wallet ? children(wallet) : <ConnectPrompt onConnect={() => setConnectOpen(true)} />
+            props.walletOptional ? (
+              props.children(wallet, connect)
+            ) : wallet ? (
+              props.children(wallet)
+            ) : (
+              <ConnectPrompt onConnect={connect} />
+            )
           }
         </WithWallet>
       </main>

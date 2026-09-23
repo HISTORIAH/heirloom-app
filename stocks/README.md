@@ -17,12 +17,13 @@ docs are in [`docs/`](../docs/src/content/docs/stocks/).
 | Path         | Page                                                                   |
 | ------------ | ---------------------------------------------------------------------- |
 | `/`          | Portfolio: stock holdings, their coverage, what's vaulted              |
+| `/browse`    | Every catalogued stock, grouped by company, with issuer powers and a Jupiter link; marks what the wallet holds |
 | `/protect`   | Create a backup plan, choose what it covers                            |
 | `/dashboard` | Check in, coverage health and re-approval, dividend calendar, issuer risk, plan settings |
 | `/recover`   | Plans naming this wallet: recover, claim, defer, or check in for them  |
 | `/inherit`   | Create a vault, add and withdraw stocks, vault settings                |
 
-Every route is wallet-gated, and the origin is `noindex`.
+Every route but `/browse` is wallet-gated, and the origin is `noindex`.
 
 ## Running it
 
@@ -88,9 +89,12 @@ Issuers for real mainnet mints are registered with
   what each page shows.
 - `public/catalog.json` is the issuer catalog — names, logos, underlying
   tickers. The xStocks API can't be read from a browser (no CORS headers), so
-  it is fetched by `bun run catalog:refresh` and shipped with the app. It only
-  labels mainnet stocks and lists those whose issuer isn't registered yet;
-  balances, coverage, and plans always come from the chain.
+  it is fetched by `bun run catalog:refresh` and shipped with the app. Ondo's
+  list has no names or logos, so the refresh reads them from each Ondo mint's
+  own metadata on mainnet (`--rpc <url>` or `CATALOG_RPC_URL` to use another
+  endpoint than the public one). The catalog labels mainnet stocks, lists those
+  whose issuer isn't registered yet, and is what `/browse` shows; balances,
+  coverage, and plans always come from the chain.
 - `src/dev/burnerWallet.ts` is a wallet that signs with a local key. It loads
   only on the dev server with `VITE_DEV_BURNER_WALLET=true`, and is never part of
   a production build.

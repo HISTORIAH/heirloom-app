@@ -9,6 +9,7 @@
 const stocks = {
   nav: {
     portfolio: "Portfolio",
+    browse: "Browse",
     protect: "Protect",
     dashboard: "Dashboard",
     recover: "Recover",
@@ -19,6 +20,12 @@ const stocks = {
       cap: "Portfolio",
       headline: "Your tokenized stocks.",
       description: "The equities held in this wallet, and whether each one is backed up.",
+    },
+    browse: {
+      cap: "Browse",
+      headline: "Stocks Heirloom can protect.",
+      description:
+        "Every tokenized equity from xStocks and Ondo, grouped by company, with what each issuer can still do to a position.",
     },
     protect: {
       cap: "Protect",
@@ -186,7 +193,44 @@ const stocks = {
     protect: "Protect",
     emptyTitle: "No tokenized stocks here",
     emptyDescription:
-      "This wallet doesn't hold any equities from a supported issuer. Heirloom recognises {{count}} tokenized stocks from xStocks and Ondo.",
+      "This wallet doesn't hold any equities from a supported issuer. Heirloom recognises {{formatted}} tokenized stocks from xStocks and Ondo.",
+    browseAll: "Browse all {{formatted}}",
+  },
+  browse: {
+    networkCap: "Mainnet listings",
+    networkNote:
+      "These are the stocks xStocks and Ondo issue on Solana mainnet. Heirloom Stocks runs on devnet for now, where only test stocks exist, so none of these can be held or covered here yet.",
+    searchLabel: "Search",
+    searchPlaceholder: "Ticker, company, or mint address",
+    issuerLabel: "Issuer",
+    issuers: {
+      all: "All",
+      xstocks: "xStocks",
+      ondo: "Ondo",
+    },
+    heldOnly: "Only stocks I hold",
+    companies_one: "{{formatted}} company",
+    companies_other: "{{formatted}} companies",
+    tokens_one: "{{formatted}} token",
+    tokens_other: "{{formatted}} tokens",
+    connectHint: "Connect a wallet to see which of these you hold.",
+    connect: "Connect",
+    walletFailed: "Couldn't read this wallet's holdings, so they aren't marked below.",
+    noMatchTitle: "No matches",
+    noMatchDescription:
+      "Nothing listed matches “{{query}}”. Try a ticker like AAPL, a company name, or a mint address.",
+    noneHeldTitle: "None held",
+    noneHeldDescription: "This wallet doesn't hold any of the listed stocks.",
+    showMore_one: "Show {{count}} more",
+    showMore_other: "Show {{count}} more",
+    youHold: "You hold {{amount}}",
+    inVault: "In your vault",
+    buy: "Get on Jupiter",
+    source:
+      "Listings from xStocks and Ondo as of {{date}}. Issuer powers are what each issuer's mints carried when checked on mainnet; a stock you hold shows its own.",
+    unavailableTitle: "The listings couldn't load",
+    unavailableDescription:
+      "Reload the page to try again. Your holdings and plans don't depend on them.",
   },
   protect: {
     planTitle: "Your backup plan",
@@ -317,6 +361,7 @@ const stocks = {
     defaultDescription:
       "Back up your tokenized stocks and leave them to an heir — Heirloom on Solana.",
     portfolioTitle: "Portfolio · Heirloom Stocks",
+    browseTitle: "Browse · Heirloom Stocks",
     protectTitle: "Protect · Heirloom Stocks",
     dashboardTitle: "Dashboard · Heirloom Stocks",
     recoverTitle: "Recover · Heirloom Stocks",

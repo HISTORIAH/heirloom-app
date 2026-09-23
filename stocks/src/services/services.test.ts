@@ -15,12 +15,15 @@ import {
   HEIRLOOM_STOCKS_ERROR__DELEGATE_EVICTED,
 } from "@historiah/heirloom-stocks";
 
+import { companyName, filterGroups, groupByCompany, jupiterSwapUrl } from "./browse";
 import {
+  isHttpsUrl,
   isValidMint,
   mergeCatalog,
   parseCatalog,
   parseOndoConstants,
   parseXStocksPage,
+  withTokenLabels,
   type CatalogEntry,
 } from "./catalog";
 import { assessCoverage, assessVaultAsset, canReapprove } from "./coverage";
@@ -35,7 +38,7 @@ import {
   type CoveredRecord,
   type PlanView,
 } from "./plans";
-import { riskFlags } from "./risk";
+import { ISSUER_POWERS, riskFlags } from "./risk";
 import { programErrorCode, programErrorKey } from "./tx";
 
 const MINT = address("XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp");
@@ -167,6 +170,97 @@ describe("catalog", () => {
       }).entries,
     ).toEqual([entry]);
     expect(parseCatalog("garbage").entries).toEqual([]);
+  });
+
+  test("fills names and logos from mint metadata, keeping the snapshot's where a read failed", () => {
+    const ondo = (mint: Address, symbol: string): CatalogEntry => ({
+      mint,
+      symbol,
+      name: symbol,
+      issuer: "ondo",
+      underlying: symbol.slice(0, -2),
+      logo: null,
+    });
+    const read = ondo(MINT, "AAPLon");
+    const unread = ondo(PLAN, "TSLAon");
+    const labelled = withTokenLabels(
+      [read, unread],
+      new Map([[MINT, { name: "Apple (Ondo Tokenized)", logo: "https://cdn.example/aapl.png" }]]),
+      new Map([
+        [PLAN, { ...unread, name: "Tesla (Ondo Tokenized)", logo: "https://cdn.example/tsla.png" }],
+      ]),
+    );
+    expect(labelled.map((e) => [e.name, e.logo])).toEqual([
+      ["Apple (Ondo Tokenized)", "https://cdn.example/aapl.png"],
+      ["Tesla (Ondo Tokenized)", "https://cdn.example/tsla.png"],
+    ]);
+    expect(isHttpsUrl("https://cdn.example/a.png")).toBe(true);
+    expect(isHttpsUrl("http://cdn.example/a.png")).toBe(false);
+    expect(isHttpsUrl("javascript:alert(1)")).toBe(false);
+    expect(isHttpsUrl(42)).toBe(false);
+  });
+});
+
+// -------------------------------------------------------------------- browse
+
+describe("browse", () => {
+  const entry = (
+    mint: Address,
+    symbol: string,
+    name: string,
+    issuer: CatalogEntry["issuer"],
+    underlying: string,
+  ): CatalogEntry => ({ mint, symbol, name, issuer, underlying, logo: null });
+
+  const AAPLX = entry(MINT, "AAPLx", "Apple xStock", "xstocks", "AAPL");
+  const AAPLON = entry(PLAN, "AAPLon", "Apple (Ondo Tokenized)", "ondo", "AAPL");
+  const IWMX = entry(OWNER, "IWMx", "Russell 2000 xStock", "xstocks", "IWM");
+  const IWMON = entry(DEST, "IWMon", "iShares Russell 2000 ETF (Ondo Tokenized)", "ondo", "IWM");
+  const AAPGX = entry(HOT, "AAPGx", "Ascentage Pharma xStock", "xstocks", "AAPG");
+  const HK1024 = entry(GUARD, "1024x", "Kuaishou Technology xStock", "xstocks", "1024");
+  const HK12 = entry(DEX, "12x", "Henderson Land xStock", "xstocks", "12");
+  const groups = groupByCompany([IWMON, HK1024, AAPLON, AAPGX, HK12, IWMX, AAPLX]);
+
+  test("strips each issuer's brand from the security's name", () => {
+    expect(companyName(AAPLX)).toBe("Apple");
+    expect(companyName(AAPLON)).toBe("Apple");
+    expect(companyName({ ...AAPLX, name: "xStock" })).toBe("AAPLx");
+  });
+
+  test("groups both issuers' tokens under one ticker, xStocks first, named from Ondo", () => {
+    // Numeric exchange codes go last, in numeric order.
+    expect(groups.map((g) => g.ticker)).toEqual(["AAPG", "AAPL", "IWM", "12", "1024"]);
+    const iwm = groups.find((g) => g.ticker === "IWM")!;
+    expect(iwm.company).toBe("iShares Russell 2000 ETF");
+    expect(iwm.listings.map((l) => l.symbol)).toEqual(["IWMx", "IWMon"]);
+    expect(groups.find((g) => g.ticker === "AAPG")!.company).toBe("Ascentage Pharma");
+  });
+
+  test("ranks an exact ticker ahead of a prefix, and a prefix ahead of a name match", () => {
+    const tickers = (query: string) =>
+      filterGroups(groups, { query, issuer: "all" }).map((g) => g.ticker);
+    expect(tickers("aapl")).toEqual(["AAPL"]);
+    expect(tickers("AAP")).toEqual(["AAPG", "AAPL"]);
+    expect(tickers("russell")).toEqual(["IWM"]);
+    expect(tickers("aaplon")).toEqual(["AAPL"]);
+    expect(tickers(PLAN)).toEqual(["AAPL"]);
+    expect(tickers("no such stock")).toEqual([]);
+    expect(tickers("")).toEqual(["AAPG", "AAPL", "IWM", "12", "1024"]);
+  });
+
+  test("filters listings by issuer and by what a wallet holds, dropping emptied groups", () => {
+    const ondo = filterGroups(groups, { query: "", issuer: "ondo" });
+    expect(ondo.map((g) => g.listings.map((l) => l.symbol))).toEqual([["AAPLon"], ["IWMon"]]);
+    const held = filterGroups(groups, { query: "", issuer: "all", only: new Set([MINT]) });
+    expect(held.map((g) => g.listings.map((l) => l.symbol))).toEqual([["AAPLx"]]);
+  });
+
+  test("links to Jupiter with the token preselected, and records each issuer's powers", () => {
+    expect(jupiterSwapUrl(MINT)).toBe(
+      `https://jup.ag/swap?sell=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&buy=${MINT}`,
+    );
+    expect(ISSUER_POWERS.xstocks).toContain("clawback");
+    expect(ISSUER_POWERS.ondo).not.toContain("clawback");
   });
 });
 
