@@ -33,8 +33,8 @@ export function useCatalog() {
 }
 
 /**
- * The connected owner's holdings and plans. Waits for the catalog so records
- * whose accounts were closed can be found through it.
+ * The connected owner's holdings and plans. Waits for the catalog, which only
+ * adds logos and underlying tickers, so rows don't render twice.
  */
 export function useOwnerOverview(owner: Address) {
   const { rpc } = useWallet();

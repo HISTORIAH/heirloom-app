@@ -1,5 +1,7 @@
 import {
+  getAddressDecoder,
   getBase58Decoder,
+  getBase64Encoder,
   parseBase64RpcAccount,
   unwrapOption,
   type Address,
@@ -10,8 +12,10 @@ import {
   type Rpc,
 } from "@solana/kit";
 import {
+  COVERED_ASSET_DISCRIMINATOR,
   decodeStockPlan,
   fetchAllMaybeCoveredAsset,
+  getCoveredAssetSize,
   fetchAllMaybeStockPlan,
   HEIRLOOM_STOCKS_PROGRAM_ADDRESS,
   PLAN_MODE_BACKUP,
@@ -152,6 +156,37 @@ export async function fetchCoveredRecords(
   }
 
   return records;
+}
+
+/** Where a `CoveredAsset` keeps its mint: after the discriminator and version byte. */
+const COVERED_ASSET_MINT_OFFSET = 9;
+const base64 = getBase64Encoder();
+const addressDecoder = getAddressDecoder();
+
+/**
+ * Every mint any plan holds a `CoveredAsset` record for, read from the program's
+ * accounts. A plan's records are among these even when the owner no longer
+ * holds the mint anywhere, which is what `fetchCoveredRecords` needs them for.
+ * Only the mint bytes are fetched.
+ */
+export async function fetchCoveredMints(rpc: Rpc<GetProgramAccountsApi>): Promise<Address[]> {
+  const accounts = await rpc
+    .getProgramAccounts(HEIRLOOM_STOCKS_PROGRAM_ADDRESS, {
+      encoding: "base64",
+      commitment: "confirmed",
+      dataSlice: { offset: COVERED_ASSET_MINT_OFFSET, length: 32 },
+      filters: [
+        { dataSize: BigInt(getCoveredAssetSize()) },
+        memcmp(0, base58.decode(COVERED_ASSET_DISCRIMINATOR)),
+      ],
+    })
+    .send();
+
+  const mints = new Set<Address>();
+  for (const { account } of accounts) {
+    mints.add(addressDecoder.decode(base64.encode(account.data[0])));
+  }
+  return [...mints];
 }
 
 // ---------------------------------------------------- plans that name a wallet

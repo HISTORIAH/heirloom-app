@@ -8,6 +8,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["bun"]
   },
-  "include": ["src/**/*.test.ts", "localnet", "e2e", "scripts"],
+  "include": ["src/**/*.test.ts", "localnet", "devnet", "e2e", "scripts"],
   "exclude": []
 }

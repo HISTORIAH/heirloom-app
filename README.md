@@ -24,7 +24,7 @@ SPA at `app.heirlm.xyz`.
 |---------|----|--------|
 | `heirloom` | `heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg` | devnet |
 | `heirloom-ika` | `9ede3aHXJiv14BNT67MWpgFGugtP1PSdBuLDuRX2D4sf` | devnet |
-| `heirloom-stocks` | `8ZwqSnyXupsKsFqseEP62P9pw6hmvaBRu52PeYGo21mm` | not deployed yet |
+| `heirloom-stocks` | `8ZwqSnyXupsKsFqseEP62P9pw6hmvaBRu52PeYGo21mm` | devnet |
 
 ## Quick start
 

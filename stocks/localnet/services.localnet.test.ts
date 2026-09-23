@@ -165,7 +165,7 @@ describe("coverage monitor", () => {
     expect(repaired.backup?.rows.map((r) => r.health)).toEqual(["covered"]);
   });
 
-  test("a record whose account was closed is still found, through the catalog", async () => {
+  test("a record whose account was closed is still found on-chain", async () => {
     const owner = await holder();
     const destination = await fundedSigner(client);
 
@@ -204,24 +204,7 @@ describe("coverage monitor", () => {
       ),
     ]);
 
-    const blind = await loadOwnerOverview(client.rpc, owner.address, NO_CATALOG);
-    expect(blind.backup?.rows).toEqual([]);
-    expect(blind.backup?.missing).toBe(1);
-
-    const catalog = new Map<Address, CatalogEntry>([
-      [
-        ondo.mint,
-        {
-          mint: ondo.mint,
-          symbol: "TSTon",
-          name: "Test",
-          issuer: "ondo",
-          underlying: "TST",
-          logo: null,
-        },
-      ],
-    ]);
-    const found = await loadOwnerOverview(client.rpc, owner.address, catalog);
+    const found = await loadOwnerOverview(client.rpc, owner.address, NO_CATALOG);
     expect(found.backup?.rows.map((r) => [r.health, r.position])).toEqual([["closed", null]]);
     expect(found.backup?.missing).toBe(0);
   });

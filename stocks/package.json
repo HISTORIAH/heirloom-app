@@ -12,7 +12,12 @@
     "test:localnet": "bun test localnet",
     "test:e2e": "bun test e2e",
     "localnet": "bun scripts/localnet.ts",
-    "catalog:refresh": "bun scripts/refresh-catalog.ts"
+    "catalog:refresh": "bun scripts/refresh-catalog.ts",
+    "devnet:list": "bun scripts/devnet.ts list",
+    "devnet:create": "bun scripts/devnet.ts create",
+    "devnet:seed": "bun scripts/devnet.ts seed",
+    "devnet:mint": "bun scripts/devnet.ts mint",
+    "devnet:dividend": "bun scripts/devnet.ts dividend"
   },
   "dependencies": {
     "@heirloom/i18n": "workspace:*",

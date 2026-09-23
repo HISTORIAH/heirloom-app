@@ -59,7 +59,7 @@ export function getUpdateIssuerDiscriminatorBytes(): ReadonlyUint8Array {
 export type UpdateIssuerInstruction<
   TProgram extends string = typeof HEIRLOOM_STOCKS_PROGRAM_ADDRESS,
   TAccountAdmin extends string | AccountMeta<string> =
-    "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q",
+    "Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA",
   TAccountMintAuthority extends string | AccountMeta<string> = string,
   TAccountIssuer extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> = "11111111111111111111111111111111",
@@ -181,7 +181,7 @@ export async function getUpdateIssuerInstructionAsync<
   // Resolve default values.
   if (!accounts.admin.value) {
     accounts.admin.value =
-      "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q" as Address<"tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q">;
+      "Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA" as Address<"Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA">;
   }
   if (!accounts.issuer.value) {
     accounts.issuer.value = await findIssuerPda({
@@ -272,7 +272,7 @@ export function getUpdateIssuerInstruction<
   // Resolve default values.
   if (!accounts.admin.value) {
     accounts.admin.value =
-      "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q" as Address<"tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q">;
+      "Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA" as Address<"Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA">;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =

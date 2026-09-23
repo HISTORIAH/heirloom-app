@@ -1,16 +1,18 @@
 /**
- * The app, end to end, in a real browser against a local validator.
+ * The app, end to end, in a real browser.
  *
- * Starts a validator with the stocks program and two issuers' equities, serves
- * the app from the Vite dev server with the development burner wallet enabled,
- * and drives Chrome through the flows the pages exist for: backing up a stock,
- * repairing an eviction, recovering from the destination wallet, and vaulting
- * and claiming an inheritance. Each wallet gets its own browser context.
+ * Serves the app from the Vite dev server with the development burner wallet
+ * enabled, and drives Chrome through the flows the pages exist for: backing up
+ * a stock, repairing an eviction, recovering from the destination wallet, and
+ * vaulting and claiming an inheritance. Each wallet gets its own browser
+ * context.
  *
- *   bun run test:e2e
+ *   bun run test:e2e                      # a fresh local validator
+ *   E2E_CLUSTER=devnet bun run test:e2e   # the devnet deployment
  *
- * Needs the Solana CLI, a built program (`programs/heirloom-stocks/build.sh`),
- * and Google Chrome (or `CHROME_PATH`).
+ * Needs Google Chrome (or `CHROME_PATH`). Locally it also needs the Solana CLI
+ * and a built program; on devnet, the seeded equities and a funded CLI keypair
+ * (see e2e/cluster.ts).
  */
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -20,7 +22,6 @@ import path from "node:path";
 import {
   createKeyPairSignerFromPrivateKeyBytes,
   getBase58Decoder,
-  lamports,
   type KeyPairSigner,
 } from "@solana/kit";
 import {
@@ -31,28 +32,14 @@ import {
 import { chromium, type Browser, type Page } from "playwright-core";
 
 import { buildUpdatePlanIx, getAtaAddress } from "../src/lib/stocks";
-import {
-  createEquities,
-  createLocalClient,
-  generateIssuers,
-  issuerGenesis,
-  mintTo,
-  startValidator,
-  type LocalClient,
-  type LocalEquity,
-  type LocalIssuers,
-  type Validator,
-} from "../localnet/localnet";
+import { startCluster, type E2ECluster } from "./cluster";
 
 const STOCKS_DIR = path.resolve(import.meta.dir, "..");
 const SCREENSHOTS = path.join(STOCKS_DIR, "e2e", "screenshots");
 const CHROME = process.env.CHROME_PATH ?? "/usr/bin/google-chrome";
 
-let validator: Validator;
-let client: LocalClient;
-let issuers: LocalIssuers;
-let xstock: LocalEquity;
-let ondo: LocalEquity;
+let cluster: E2ECluster;
+const wallets: KeyPairSigner[] = [];
 let vite: ChildProcess;
 let appUrl: string;
 let browser: Browser;
@@ -62,10 +49,11 @@ interface BurnerWallet {
   signer: KeyPairSigner;
 }
 
-async function burner(sol = 20n): Promise<BurnerWallet> {
+async function burner(sol = cluster.walletSol): Promise<BurnerWallet> {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   const signer = await createKeyPairSignerFromPrivateKeyBytes(bytes);
-  await client.airdrop(signer.address, lamports(sol * 1_000_000_000n));
+  if (sol > 0) await cluster.fund(signer.address, sol);
+  wallets.push(signer);
   return { seed: getBase58Decoder().decode(bytes), signer };
 }
 
@@ -99,20 +87,18 @@ async function startVite(rpcUrl: string, wsUrl: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  issuers = await generateIssuers();
-  validator = await startValidator({ accounts: await issuerGenesis(issuers) });
-  client = await createLocalClient(validator);
-  ({ xstock, ondo } = await createEquities(client, issuers));
-  appUrl = await startVite(validator.rpcUrl, validator.wsUrl);
+  cluster = await startCluster();
+  appUrl = await startVite(cluster.rpcUrl, cluster.wsUrl);
   browser = await chromium.launch({ executablePath: CHROME, headless: true });
-  await mkdir(SCREENSHOTS, { recursive: true });
+  await mkdir(path.join(SCREENSHOTS, cluster.name), { recursive: true });
 }, 180_000);
 
+// Returning test wallets' SOL on devnet takes a confirmation per wallet.
 afterAll(async () => {
   await browser?.close();
   vite?.kill("SIGTERM");
-  await validator?.stop();
-});
+  await cluster?.stop(wallets);
+}, 120_000);
 
 /** A page signed in with `wallet`, in a browser context of its own. */
 async function openAs(wallet: BurnerWallet, route: string): Promise<Page> {
@@ -135,12 +121,15 @@ async function toast(page: Page, title: string) {
 }
 
 async function shoot(page: Page, name: string) {
-  await page.screenshot({ path: path.join(SCREENSHOTS, `${name}.png`), fullPage: true });
+  await page.screenshot({
+    path: path.join(SCREENSHOTS, cluster.name, `${name}.png`),
+    fullPage: true,
+  });
 }
 
 /** Shortens a plan's timing through the owner's own key, so it lapses within seconds. */
 async function lapse(owner: KeyPairSigner, mode: "backup" | "vault") {
-  await client.sendTransaction(
+  await cluster.send(
     await buildUpdatePlanIx(owner, mode, { checkinIntervalSecs: 1n, gracePeriodSecs: 1n }),
   );
   await new Promise((r) => setTimeout(r, 3_000));
@@ -152,8 +141,8 @@ let recovery: BurnerWallet;
 test("an owner creates a backup plan, covers a stock, and sees it on the dashboard", async () => {
   owner = await burner();
   recovery = await burner();
-  await mintTo(client, issuers.xstocks, xstock, owner.signer.address, 25n * 10n ** 8n);
-  await mintTo(client, issuers.ondo, ondo, owner.signer.address, 40n * 10n ** 9n);
+  await cluster.mint(owner.signer.address, "xstock", 25n * 10n ** 8n);
+  await cluster.mint(owner.signer.address, "ondo", 40n * 10n ** 9n);
 
   const page = await openAs(owner, "/");
   await page.getByText("TSTx", { exact: true }).first().waitFor();
@@ -183,19 +172,19 @@ test("an owner creates a backup plan, covers a stock, and sees it on the dashboa
 test("a silent eviction shows up on the dashboard and is repaired with one approval", async () => {
   const ownerAta = await getAtaAddress(
     owner.signer.address,
-    xstock.mint,
+    cluster.xstock.mint,
     TOKEN_2022_PROGRAM_ADDRESS,
   );
-  const dex = await burner(1n);
-  await client.sendTransaction(
+  const dex = await burner(0);
+  await cluster.send(
     getApproveCheckedInstruction(
       {
         source: ownerAta,
-        mint: xstock.mint,
+        mint: cluster.xstock.mint,
         delegate: dex.signer.address,
         owner: owner.signer,
         amount: 1n,
-        decimals: xstock.decimals,
+        decimals: cluster.xstock.decimals,
       },
       { programAddress: TOKEN_2022_PROGRAM_ADDRESS },
     ),
@@ -213,7 +202,7 @@ test("a silent eviction shows up on the dashboard and is repaired with one appro
     .getByRole("heading", { name: "Coverage lost on 1 holding" })
     .waitFor({ state: "detached" });
 
-  const account = await fetchToken(client.rpc, ownerAta);
+  const account = await fetchToken(cluster.rpc, ownerAta);
   expect(account.data.delegate).toMatchObject({ __option: "Some" });
   await page.context().close();
 }, 180_000);
@@ -231,12 +220,12 @@ test("the recovery wallet recovers the covered stock once the plan lapses", asyn
 
   const destinationAta = await getAtaAddress(
     recovery.signer.address,
-    xstock.mint,
+    cluster.xstock.mint,
     TOKEN_2022_PROGRAM_ADDRESS,
   );
   const moved = 25n * 10n ** 8n;
   const fee = (moved * 75n + 9_999n) / 10_000n;
-  expect((await fetchToken(client.rpc, destinationAta)).data.amount).toBe(moved - fee);
+  expect((await fetchToken(cluster.rpc, destinationAta)).data.amount).toBe(moved - fee);
   await page.context().close();
 }, 180_000);
 
@@ -267,9 +256,13 @@ test("an owner vaults a stock and the heir claims it once the plan lapses", asyn
   await toast(heirPage, "Claimed");
   await shoot(heirPage, "07-claimed");
 
-  const heirAta = await getAtaAddress(heir.signer.address, ondo.mint, TOKEN_2022_PROGRAM_ADDRESS);
+  const heirAta = await getAtaAddress(
+    heir.signer.address,
+    cluster.ondo.mint,
+    TOKEN_2022_PROGRAM_ADDRESS,
+  );
   const vaulted = 40n * 10n ** 9n;
   const fee = (vaulted * 75n + 9_999n) / 10_000n;
-  expect((await fetchToken(client.rpc, heirAta)).data.amount).toBe(vaulted - fee);
+  expect((await fetchToken(cluster.rpc, heirAta)).data.amount).toBe(vaulted - fee);
   await heirPage.context().close();
 }, 180_000);

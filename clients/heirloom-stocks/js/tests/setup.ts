@@ -272,9 +272,9 @@ export async function seedIssuer(
  * on-chain, and that is the part under test.
  */
 export async function sendAsAdmin(client: LiteSvmClient, instruction: Instruction) {
-  // The admin pays rent for new registry entries. Only fund an empty account:
-  // the admin shares its address with the treasury, and a second identical
-  // airdrop in the same blockhash is rejected as already processed.
+  // The admin pays rent for new registry entries. Only an empty account is
+  // funded: two admin sends in one blockhash would otherwise repeat an identical
+  // airdrop, which is rejected as already processed.
   const { value: adminBalance } = await client.rpc.getBalance(ADMIN_ADDRESS).send();
   if (adminBalance === 0n) {
     await client.airdrop(ADMIN_ADDRESS, lamports(1_000_000_000n));

@@ -4,9 +4,9 @@ export const TREASURY_ADDRESS = address("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssigheP
 
 /**
  * The only key allowed to curate the issuer registry, mirroring the program's
- * `ADMIN`. Currently the same key as the treasury.
+ * `ADMIN`: the devnet deployer, which is also the upgrade authority.
  */
-export const ADMIN_ADDRESS = address("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q");
+export const ADMIN_ADDRESS = address("Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA");
 
 /** Plan mode discriminator, also the trailing byte of the plan PDA seeds. */
 export const PLAN_MODE_BACKUP = 0;

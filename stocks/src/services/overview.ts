@@ -16,6 +16,7 @@ import {
 } from "@/services/holdings";
 import { fetchMintDetails, type MintDetails } from "@/services/mints";
 import {
+  fetchCoveredMints,
   fetchCoveredRecords,
   fetchOwnerPlans,
   findPlansNaming,
@@ -24,7 +25,7 @@ import {
   type PlanView,
 } from "@/services/plans";
 
-type OverviewRpc = Rpc<GetTokenAccountsByOwnerApi & GetMultipleAccountsApi>;
+type OverviewRpc = Rpc<GetTokenAccountsByOwnerApi & GetMultipleAccountsApi & GetProgramAccountsApi>;
 
 /** One asset a plan covers, joined with the state that decides its health. */
 export interface CoveredRow {
@@ -40,8 +41,9 @@ export interface PlanOverview {
   plan: PlanView;
   rows: CoveredRow[];
   /**
-   * Records the plan counts but that could not be matched to a mint — see
-   * `fetchCoveredRecords` for why records are found by derivation.
+   * Records the plan counts but that were not found, which happens only while
+   * the RPC's account index lags behind the plan — see `fetchCoveredRecords`
+   * for why records are found by derivation.
    */
   missing: number;
 }
@@ -76,22 +78,21 @@ function rowsFor(
 
 /**
  * Finds a plan's records among `candidates`, and, if the plan still counts
- * more, among every catalogued mint as well. The second pass is what surfaces
- * a record whose account the owner closed after selling out: that mint is no
- * longer in the wallet, and without it the record cannot be retired and the
- * plan cannot close.
+ * more, among every mint the program holds a record for. The second pass is
+ * what surfaces a record whose account the owner closed after selling out:
+ * that mint is no longer in the wallet, and without it the record cannot be
+ * retired and the plan cannot close.
  */
 async function findRecords(
   rpc: OverviewRpc,
   plan: PlanView,
   candidates: Address[],
-  catalog: Map<Address, CatalogEntry>,
 ): Promise<Map<Address, CoveredRecord>> {
   const records = await fetchCoveredRecords(rpc, plan.address, candidates);
-  if (records.size >= plan.coveredAssets || catalog.size === 0) return records;
+  if (records.size >= plan.coveredAssets) return records;
 
   const checked = new Set(candidates);
-  const rest = [...catalog.keys()].filter((mint) => !checked.has(mint));
+  const rest = (await fetchCoveredMints(rpc)).filter((mint) => !checked.has(mint));
   for (const [mint, record] of await fetchCoveredRecords(rpc, plan.address, rest)) {
     records.set(mint, record);
   }
@@ -116,7 +117,6 @@ export async function loadOwnerOverview(
           rpc,
           plans.backup,
           positions.map((p) => p.mint),
-          catalog,
         )
       : Promise.resolve(new Map<Address, CoveredRecord>()),
     plans.vault
@@ -124,7 +124,6 @@ export async function loadOwnerOverview(
           rpc,
           plans.vault,
           vaultPositions.map((p) => p.mint),
-          catalog,
         )
       : Promise.resolve(new Map<Address, CoveredRecord>()),
   ]);
@@ -169,7 +168,7 @@ export interface NamedPlanOverview extends NamedPlan {
  * the owner's wallet; a vault plan's in the plan's own accounts.
  */
 export async function loadNamedPlans(
-  rpc: OverviewRpc & Rpc<GetProgramAccountsApi>,
+  rpc: OverviewRpc,
   wallet: Address,
   catalog: Map<Address, CatalogEntry>,
 ): Promise<NamedPlanOverview[]> {
@@ -185,7 +184,6 @@ export async function loadNamedPlans(
         rpc,
         plan,
         positions.map((p) => p.mint),
-        catalog,
       );
       const mints = await fetchMintDetails(rpc, [...records.keys()]);
       return { plan, roles, rows: rowsFor(plan.mode, plan, records, positions, mints, catalog) };

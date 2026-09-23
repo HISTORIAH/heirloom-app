@@ -37,7 +37,7 @@ It prints a link per wallet (owner, recovery wallet, heir). Each carries its key
 in `?burner=`, for the development burner wallet — open each in its own browser
 profile and pick **Heirloom Burner** in Connect Wallet.
 
-Against a real cluster:
+Against devnet, where the program is deployed:
 
 ```bash
 cp stocks/.env.example stocks/.env    # then fill in the RPC endpoints
@@ -45,6 +45,34 @@ bun dev:stocks                        # http://localhost:5174
 bun build:stocks
 bun deploy:stocks                     # builds, then uploads with wrangler
 ```
+
+## Devnet
+
+`heirloom-stocks` is deployed to devnet at `8ZwqSnyXupsKsFqseEP62P9pw6hmvaBRu52PeYGo21mm`.
+Its upgrade authority, and the program's `ADMIN` (the key allowed to register
+issuers), is `Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA`.
+
+xStocks and Ondo mint only on mainnet, so devnet has test equities
+configured like theirs (xStocks-like: permanent delegate, a scheduled
+dividend) and (Ondo-like: none) — with their issuers registered.
+
+Nothing about them is kept in the repo. The scripts find them on-chain,
+through the token account each issuer holds for every equity it issues, and
+print an explorer link for everything they send. They use the Solana CLI's RPC
+URL and keypair unless `--rpc` / `--keypair` say otherwise:
+
+```bash
+bun run devnet:list --owner <address>                # every test equity, and what a wallet holds
+bun run devnet:create --symbol TSTNV --name "Test NVIDIA xStock" --to <address>
+                                                     # a new one; --issuer ondo for Ondo-like
+bun run devnet:mint --to <address>                   # 25 of every test equity
+bun run devnet:mint --to <address> --symbol TSTx --amount 100 --sol 0.5
+bun run devnet:dividend --symbol TSTx --change 0.35 --days 7
+bun run devnet:seed                                  # once; already done
+```
+
+Issuers for real mainnet mints are registered with
+`clients/heirloom-stocks/js/scripts/register-issuers.ts`.
 
 ## Layout
 
@@ -60,7 +88,9 @@ bun deploy:stocks                     # builds, then uploads with wrangler
   what each page shows.
 - `public/catalog.json` is the issuer catalog — names, logos, underlying
   tickers. The xStocks API can't be read from a browser (no CORS headers), so
-  it is fetched by `bun run catalog:refresh` and shipped with the app.
+  it is fetched by `bun run catalog:refresh` and shipped with the app. It only
+  labels mainnet stocks and lists those whose issuer isn't registered yet;
+  balances, coverage, and plans always come from the chain.
 - `src/dev/burnerWallet.ts` is a wallet that signs with a local key. It loads
   only on the dev server with `VITE_DEV_BURNER_WALLET=true`, and is never part of
   a production build.
@@ -75,11 +105,15 @@ bun deploy:stocks                     # builds, then uploads with wrangler
 The program has to be built first (`./programs/heirloom-stocks/build.sh`).
 
 ```bash
-bun run test            # services, and every builder against the program in litesvm
-bun run test:localnet   # the services against a local validator
-bun run test:e2e        # the app in Chrome against a local validator
+bun run test                        # services, and every builder against the program in litesvm
+bun run test:localnet               # the services against a local validator
+bun run test:e2e                    # the app in Chrome against a local validator
+E2E_CLUSTER=devnet bun run test:e2e # the same flows against the devnet deployment
 ```
+
+The devnet run funds its test wallets from the CLI keypair (0.1 SOL each) and
+sweeps what is left back afterwards; a run costs about 0.01 SOL.
 
 The localnet and end-to-end suites need the Solana CLI; the end-to-end suite
 also needs Google Chrome (or `CHROME_PATH`). Its screenshots land in
-`e2e/screenshots/`.
+`e2e/screenshots/<cluster>/`.

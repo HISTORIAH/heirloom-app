@@ -21,13 +21,16 @@ import {
   generateKeyPairSigner,
   getBase64Decoder,
   lamports,
+  unwrapOption,
   type Address,
   type KeyPairSigner,
+  type Signature,
 } from "@solana/kit";
 import { solanaLocalRpc } from "@solana/kit-plugin-rpc";
 import { generatedSigner } from "@solana/kit-plugin-signer";
 import { systemProgram } from "@solana-program/system";
 import {
+  fetchMint,
   getUpdateMultiplierScaledUiMintInstruction,
   token2022Program,
   TOKEN_2022_PROGRAM_ADDRESS,
@@ -215,6 +218,12 @@ export async function createLocalClient(validator: Pick<Validator, "rpcUrl" | "w
 
 export type LocalClient = Awaited<ReturnType<typeof createLocalClient>>;
 
+/**
+ * What creating and minting equities needs from a client. The devnet scripts
+ * build theirs from the Solana CLI config instead of a local validator.
+ */
+export type EquityClient = Pick<LocalClient, "token2022" | "sendTransaction">;
+
 export async function fundedSigner(client: LocalClient, sol = 20n): Promise<KeyPairSigner> {
   const signer = await generateKeyPairSigner();
   await client.airdrop(signer.address, lamports(sol * 1_000_000_000n));
@@ -250,74 +259,106 @@ export interface LocalEquity {
   decimals: number;
 }
 
+/** Which issuer's mints an equity is configured like, and which key issues it. */
+export type IssuerStyle = keyof LocalIssuers;
+
+export interface EquitySpec {
+  symbol: string;
+  name: string;
+  decimals: number;
+  /** The display multiplier in force from the start. Defaults to 1. */
+  multiplier?: number;
+}
+
+/** The two equities every test cluster starts with, one per issuer. */
+export const SEEDED_EQUITIES = {
+  xstock: { style: "xstocks", symbol: "TSTx", name: "Test Apple xStock", decimals: 8 },
+  ondo: {
+    style: "ondo",
+    symbol: "TSTon",
+    name: "Test Invesco QQQ (Ondo)",
+    decimals: 9,
+    multiplier: 1.004,
+  },
+} as const satisfies Record<string, EquitySpec & { style: IssuerStyle }>;
+
+export type EquityKey = keyof typeof SEEDED_EQUITIES;
+
 const DAY = 86_400;
 
 /**
- * Mints configured like the real ones on mainnet: xStocks with a permanent
- * delegate and a dividend scheduled a few days out, Ondo without the delegate
- * and with a multiplier already applied. Both reserve the transfer-hook slot
- * without a program and carry their names in Token-2022 metadata.
+ * An equity from `style`'s issuer, configured like that issuer's mints on
+ * mainnet: xStocks with a permanent delegate, Ondo without. Both can pause,
+ * reserve the transfer-hook slot without a program, apply dividends through a
+ * ScaledUiAmount multiplier, and carry their name in Token-2022 metadata.
+ */
+export async function createEquity(
+  client: EquityClient,
+  issuers: LocalIssuers,
+  style: IssuerStyle,
+  spec: EquitySpec,
+): Promise<LocalEquity> {
+  const authority = issuers[style];
+  const multiplier = spec.multiplier ?? 1;
+  const mint = await generateKeyPairSigner();
+
+  await client.token2022.instructions
+    .createMint({
+      newMint: mint,
+      decimals: spec.decimals,
+      mintAuthority: authority,
+      freezeAuthority: authority.address,
+      extensions: [
+        {
+          __kind: "MetadataPointer",
+          authority: authority.address,
+          metadataAddress: mint.address,
+        },
+        {
+          __kind: "TokenMetadata",
+          updateAuthority: authority.address,
+          mint: mint.address,
+          name: spec.name,
+          symbol: spec.symbol,
+          uri: "",
+          additionalMetadata: new Map(),
+        },
+        ...(style === "xstocks"
+          ? [{ __kind: "PermanentDelegate", delegate: authority.address } as const]
+          : []),
+        { __kind: "PausableConfig", authority: authority.address, paused: false },
+        {
+          __kind: "TransferHook",
+          authority: authority.address,
+          programId: "11111111111111111111111111111111" as Address,
+        },
+        {
+          __kind: "ScaledUiAmountConfig",
+          authority: authority.address,
+          multiplier,
+          newMultiplierEffectiveTimestamp: 0n,
+          newMultiplier: multiplier,
+        },
+      ] satisfies ExtensionArgs[],
+    })
+    .sendTransaction();
+
+  return { mint: mint.address, symbol: spec.symbol, decimals: spec.decimals };
+}
+
+/**
+ * The seeded equities, with a dividend scheduled on TSTx a few days out and
+ * TSTon's multiplier already applied.
  */
 export async function createEquities(
-  client: LocalClient,
+  client: EquityClient,
   issuers: LocalIssuers,
-): Promise<{ xstock: LocalEquity; ondo: LocalEquity }> {
+): Promise<Record<EquityKey, LocalEquity>> {
   const now = Math.floor(Date.now() / 1000);
+  const { style: xstockStyle, ...xstockSpec } = SEEDED_EQUITIES.xstock;
+  const { style: ondoStyle, ...ondoSpec } = SEEDED_EQUITIES.ondo;
 
-  const equity = async (
-    authority: KeyPairSigner,
-    symbol: string,
-    name: string,
-    decimals: number,
-    extensions: (mint: Address) => ExtensionArgs[],
-  ): Promise<LocalEquity> => {
-    const mint = await generateKeyPairSigner();
-    await client.token2022.instructions
-      .createMint({
-        newMint: mint,
-        decimals,
-        mintAuthority: authority,
-        freezeAuthority: authority.address,
-        extensions: [
-          {
-            __kind: "MetadataPointer",
-            authority: authority.address,
-            metadataAddress: mint.address,
-          },
-          {
-            __kind: "TokenMetadata",
-            updateAuthority: authority.address,
-            mint: mint.address,
-            name,
-            symbol,
-            uri: "",
-            additionalMetadata: new Map(),
-          },
-          ...extensions(mint.address),
-        ],
-      })
-      .sendTransaction();
-    return { mint: mint.address, symbol, decimals };
-  };
-
-  const hookSlot = (authority: Address): ExtensionArgs => ({
-    __kind: "TransferHook",
-    authority,
-    programId: "11111111111111111111111111111111" as Address,
-  });
-
-  const xstock = await equity(issuers.xstocks, "TSTx", "Test Apple xStock", 8, () => [
-    { __kind: "PermanentDelegate", delegate: issuers.xstocks.address },
-    { __kind: "PausableConfig", authority: issuers.xstocks.address, paused: false },
-    hookSlot(issuers.xstocks.address),
-    {
-      __kind: "ScaledUiAmountConfig",
-      authority: issuers.xstocks.address,
-      multiplier: 1,
-      newMultiplierEffectiveTimestamp: 0n,
-      newMultiplier: 1,
-    },
-  ]);
+  const xstock = await createEquity(client, issuers, xstockStyle, xstockSpec);
 
   // Initialising the extension only sets the starting multiplier. A dividend is
   // scheduled afterwards, the way issuers do it: an update that names the new
@@ -334,30 +375,20 @@ export async function createEquities(
     ),
   );
 
-  const ondo = await equity(issuers.ondo, "TSTon", "Test Invesco QQQ (Ondo)", 9, () => [
-    { __kind: "PausableConfig", authority: issuers.ondo.address, paused: false },
-    hookSlot(issuers.ondo.address),
-    {
-      __kind: "ScaledUiAmountConfig",
-      authority: issuers.ondo.address,
-      multiplier: 1.004,
-      newMultiplierEffectiveTimestamp: 0n,
-      newMultiplier: 1.004,
-    },
-  ]);
+  const ondo = await createEquity(client, issuers, ondoStyle, ondoSpec);
 
   return { xstock, ondo };
 }
 
 /** Mints `amount` raw units of `equity` into `owner`'s associated account. */
 export async function mintTo(
-  client: LocalClient,
+  client: EquityClient,
   issuer: KeyPairSigner,
   equity: LocalEquity,
   owner: Address,
   amount: bigint,
-) {
-  await client.token2022.instructions
+): Promise<Signature> {
+  const result = await client.token2022.instructions
     .mintToATA({
       mint: equity.mint,
       mintAuthority: issuer,
@@ -366,4 +397,42 @@ export async function mintTo(
       decimals: equity.decimals,
     })
     .sendTransaction();
+  return result.context.signature;
+}
+
+/**
+ * Schedules the next dividend on `equity`: the multiplier in force now, raised
+ * by `change` (0.0035 for 0.35%), taking effect at `effectiveAt`. Issuers
+ * publish a dividend exactly this way, ahead of the ex-date.
+ */
+export async function scheduleDividend(
+  client: EquityClient & { rpc: LocalClient["rpc"] },
+  issuer: KeyPairSigner,
+  equity: LocalEquity,
+  change: number,
+  effectiveAt: number,
+): Promise<Signature> {
+  const mint = await fetchMint(client.rpc, equity.mint);
+  const config = unwrapOption(mint.data.extensions)?.find(
+    (e) => e.__kind === "ScaledUiAmountConfig",
+  );
+  if (!config || config.__kind !== "ScaledUiAmountConfig") {
+    throw new Error(`${equity.symbol} has no ScaledUiAmount extension`);
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const current =
+    now < Number(config.newMultiplierEffectiveTimestamp) ? config.multiplier : config.newMultiplier;
+
+  const result = await client.sendTransaction(
+    getUpdateMultiplierScaledUiMintInstruction(
+      {
+        mint: equity.mint,
+        authority: issuer,
+        multiplier: current * (1 + change),
+        effectiveTimestamp: BigInt(effectiveAt),
+      },
+      { programAddress: TOKEN_2022_PROGRAM_ADDRESS },
+    ),
+  );
+  return result.context.signature;
 }

@@ -14,7 +14,10 @@ pub const BPS_DENOMINATOR: u16 = 10_000;
 pub const TREASURY: Address = address!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q");
 
 /// Permitted to curate the issuer registry. Cannot touch user plans or assets.
-pub const ADMIN: Address = address!("tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q");
+///
+/// The devnet deployer, which is also the upgrade authority. Rotate it with a
+/// program upgrade before a mainnet deployment.
+pub const ADMIN: Address = address!("Qa6QND9zTzYFfJfLVwsw8YGcYzySMi5Vg4wNASmLRJA");
 
 /// Token-2022 `AccountState::Frozen`, as stored in `DefaultAccountState.state`.
 ///

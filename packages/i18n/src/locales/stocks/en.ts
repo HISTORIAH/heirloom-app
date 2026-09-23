@@ -202,9 +202,9 @@ const stocks = {
     coveredTitle: "Covered",
     stopCovering: "Stop covering",
     missing_one:
-      "{{count}} covered record belongs to a stock that's no longer in this wallet and isn't in the catalog.",
+      "{{count}} covered record couldn't be read from the network yet. It will appear on the next refresh.",
     missing_other:
-      "{{count}} covered records belong to stocks that are no longer in this wallet and aren't in the catalog.",
+      "{{count}} covered records couldn't be read from the network yet. They will appear on the next refresh.",
   },
   dashboard: {
     noPlanTitle: "Nothing to watch yet",
