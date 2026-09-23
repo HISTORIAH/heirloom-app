@@ -16,14 +16,23 @@ docs are in [`docs/`](../docs/src/content/docs/stocks/).
 
 | Path         | Page                                                                   |
 | ------------ | ---------------------------------------------------------------------- |
-| `/`          | Portfolio: stock holdings, their coverage, what's vaulted              |
+| `/`          | Landing: the marketing page for Heirloom Stocks, with no wallet        |
+| `/portfolio` | Portfolio: stock holdings, their coverage, what's vaulted              |
 | `/browse`    | Every catalogued stock, grouped by company: live mainnet price, issuer powers, what the wallet holds on mainnet, and buying or selling through Jupiter |
 | `/protect`   | Create a backup plan, choose what it covers                            |
 | `/dashboard` | Check in, coverage health and re-approval, dividend calendar, issuer risk, plan settings |
 | `/recover`   | Plans naming this wallet: recover, claim, defer, or check in for them  |
 | `/inherit`   | Create a vault, add and withdraw stocks, vault settings                |
 
-Every route but `/browse` is wallet-gated, and the origin is `noindex`.
+Every app route but `/browse` is wallet-gated. Only the landing is indexable:
+the app routes carry `noindex`, and `public/robots.txt` keeps crawlers to `/`.
+
+The landing is its own register, not the app's panels or heirlm.xyz's mosaic:
+one column ruled into quarters, soft cards, a monospace voice (Geist Mono) for
+small print, and two canvas pieces drawn in ASCII. Its styles are scoped under
+`.lp` in `src/styles/landing.css`, and its sections are in
+`src/components/landing/`. Every figure on it is live (catalog counts, Jupiter
+prices) or a program constant from `@historiah/heirloom-stocks`.
 
 ## Running it
 

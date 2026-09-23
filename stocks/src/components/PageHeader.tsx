@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check, Menu, X } from "lucide-react";
 import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
 import { useWallet } from "@/contexts/WalletContext";
 import { StocksNavLinks } from "@/components/app/StocksNavLinks";
-import { landingUrl } from "@/config";
 
 interface PageHeaderProps {
   onConnectWallet?: () => void;
@@ -16,10 +16,8 @@ interface PageHeaderProps {
  * into the drawer below `xl` rather than the app's `md`.
  */
 const PageHeader: React.FC<PageHeaderProps> = ({ onConnectWallet }) => {
-  const { t, i18n } = useTranslation("app");
+  const { t } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
-  // Home is the marketing site, on the other origin, in this language.
-  const home = landingUrl(i18n.resolvedLanguage ?? i18n.language);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -133,8 +131,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({ onConnectWallet }) => {
   return (
     <div className="sticky top-0 z-50 border-b border-tile-line bg-background">
       <div className="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
-        <a
-          href={home}
+        {/* Home is this origin's own landing; heirlm.xyz is linked from its footer. */}
+        <Link
+          to="/"
           aria-label={t("common.home")}
           className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`}
         >
@@ -145,7 +144,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ onConnectWallet }) => {
           <span className="hidden text-sm font-semibold md:inline md:hover:underline">
             {t("common.home")}
           </span>
-        </a>
+        </Link>
 
         <div className="flex items-center">
           <nav className="hidden items-center gap-1 xl:flex">

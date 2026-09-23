@@ -14,6 +14,7 @@ import Seo from "@/components/Seo";
 import { Toaster } from "@/components/ui/toaster";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 
+import Landing from "@/pages/Landing";
 import Portfolio from "@/pages/Portfolio";
 import Browse from "@/pages/Browse";
 import Protect from "@/pages/Protect";
@@ -43,12 +44,22 @@ const clusters = isMainnet
 
 const walletUiConfig = createWalletUiConfig({ clusters });
 
-// Per-route head tags. The whole origin is noindex; see components/Seo.tsx.
+// Per-route head tags. Only the landing is indexable; see components/Seo.tsx.
 const RouteSeo = () => {
   const { pathname } = useLocation();
   const { t } = useTranslation("stocks");
+  if (pathname === "/") {
+    return (
+      <Seo
+        title={t("seo.landingTitle")}
+        description={t("seo.landingDescription")}
+        path="/"
+        indexable
+      />
+    );
+  }
   const titles: Record<string, string> = {
-    "/": t("seo.portfolioTitle"),
+    "/portfolio": t("seo.portfolioTitle"),
     "/browse": t("seo.browseTitle"),
     "/protect": t("seo.protectTitle"),
     "/dashboard": t("seo.dashboardTitle"),
@@ -72,9 +83,10 @@ const App = () => (
         <BrowserRouter>
           <RouteSeo />
           <Routes>
-            {/* Unlike app.heirlm.xyz, this origin has no landing page to
-                defer to, so the root is the portfolio itself. */}
-            <Route path="/" element={<Portfolio />} />
+            {/* The root is this origin's own marketing page; the app starts
+                at the portfolio. */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/protect" element={<Protect />} />
             <Route path="/dashboard" element={<Dashboard />} />

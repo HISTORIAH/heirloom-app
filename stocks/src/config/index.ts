@@ -1,14 +1,9 @@
-import { localeHref } from "@heirloom/i18n";
-
 // The marketing site is a separate Astro build on the apex domain; this app
 // serves stocks.heirlm.xyz. Anything in here that means "go back to the site"
 // leaves the origin, so it is a URL rather than a router path.
 export const LANDING_URL = (
   import.meta.env.VITE_LANDING_URL?.trim() || "https://heirlm.xyz"
 ).replace(/\/+$/, "");
-
-/** The landing, in the language this app is currently showing. See app/src/config. */
-export const landingUrl = (locale: string) => `${LANDING_URL}${localeHref(locale)}`;
 
 /** The documentation, which lives at /docs on the landing's origin, in English only. */
 export const DOCS_URL = `${LANDING_URL}/docs/`;

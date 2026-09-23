@@ -2,7 +2,7 @@
   "name": "Heirloom Stocks",
   "short_name": "Heirloom Stocks",
   "description": "Back up your tokenized stocks and leave them to an heir — Heirloom on Solana.",
-  "start_url": "/",
+  "start_url": "/portfolio",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",

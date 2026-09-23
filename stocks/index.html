@@ -11,23 +11,24 @@
     <link rel="manifest" href="/site.webmanifest" />
 
     <!--
-      The stocks app shell, like app.heirlm.xyz's: every route is wallet-gated
-      and per-user, so the origin is noindex and carries no marketing copy.
-      Per-route titles are set from src/components/Seo.tsx.
+      The stocks shell. The root is the marketing page and the one route meant
+      to be indexed; the app routes behind it are wallet-gated and per-user.
+      Robots, titles and descriptions are set per route from
+      src/components/Seo.tsx, and public/robots.txt keeps crawlers to the root.
+      These defaults describe the landing, for anything that doesn't run JS.
     -->
-    <title>Heirloom Stocks</title>
+    <title>Heirloom Stocks — back up your tokenized stocks</title>
     <meta
       name="description"
-      content="Back up your tokenized stocks and leave them to an heir — Heirloom on Solana."
+      content="Back up your xStocks and Ondo stocks to a recovery wallet you control, or leave them to an heir. They stay in your wallet and stay tradeable. Heirloom on Solana."
     />
-    <meta name="robots" content="noindex, nofollow" />
     <link rel="canonical" href="https://stocks.heirlm.xyz/" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     />
   </head>
   <body>

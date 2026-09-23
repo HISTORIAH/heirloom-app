@@ -7,6 +7,235 @@
  * from the `app` namespace instead, which is already translated.
  */
 const stocks = {
+  /*
+   * The marketing page at the origin's root. It is the one page here with a
+   * pitch in it, so it has a voice of its own, and every figure it quotes is
+   * either read live (catalog counts, prices) or a program constant.
+   */
+  landing: {
+    nav: {
+      home: "Heirloom Stocks home",
+      stocks: "Stocks",
+      howItWorks: "How it works",
+      issuers: "Issuer risk",
+      docs: "Docs",
+      launch: "Launch app",
+    },
+    hero: {
+      titleA: "Tokenized stocks,",
+      titleB: "backed up.",
+      lede: "Heirloom gives your xStocks and Ondo equities a way back. They stay in your wallet and stay tradeable, and a recovery wallet you name can reclaim them if you ever stop checking in.",
+      primary: "Launch app",
+      secondary: "Browse stocks",
+      note: "Plans run on Solana devnet · prices are live from mainnet",
+    },
+    intro: {
+      title: "Keep trading.\nStay covered.",
+      body: "Tokenized stocks are SPL tokens, so a lost key loses the position. Heirloom puts a plan on-chain over the stocks you hold: name where they go, check in now and then, and carry on as normal. If the check-ins stop, the plan moves them. No seed phrase, no support ticket.",
+      docs: "Read the docs",
+      protect: "Back up stocks",
+    },
+    pillars: {
+      custody: {
+        title: "Non-custodial,\nby design.",
+        body: "In backup mode your stocks never leave your wallet. The plan is only the token account's delegate, and it can only pay the wallet you named.",
+      },
+      liquid: {
+        title: "Still yours\nto trade.",
+        body: "Covered holdings stay liquid. Sell them, lend them, post them as collateral. Coverage is a share of whatever the balance is on the day it's used.",
+      },
+      dividends: {
+        title: "Dividends and splits,\ncarried through.",
+        body: "Issuers pay dividends by moving a multiplier on the mint, not by minting more tokens. Heirloom moves raw units, so the multiplier travels with them.",
+        example: "Example",
+        raw: "Raw units moved",
+        multiplier: "Mint multiplier",
+        shown: "Wallet shows",
+      },
+    },
+    how: {
+      tag: "heirloom-stocks",
+      title: "How it works",
+      body: "One program, two kinds of plan. A backup plan is the delegate on token accounts you already hold; a vault plan owns the accounts you deposit into. Either way the plan is the only thing that can move the stocks, and only to the wallet written into it.",
+      topLabel: "Create · Check in · Cover · Deposit · Withdraw",
+      owner: { title: "Your wallet", sub: "Owns the plan" },
+      checkin: { title: "Check-in wallet", sub: "Checks in, nothing else" },
+      guardian: { title: "Guardian", sub: "Defers once" },
+      signs: "Signs",
+      checksIn: "Checks in",
+      defers: "Defers",
+      program: "heirloom-stocks",
+      backup: {
+        title: "Backup plan",
+        sub: "Delegate on your accounts",
+        a: "Cover",
+        aSub: "1–100% of a holding",
+        b: "Stays in your wallet",
+        bSub: "Tradeable · lendable",
+        c: "Recover",
+        cSub: "{{recoveryFee}} of what moves",
+      },
+      vault: {
+        title: "Vault plan",
+        sub: "Owner of the vault accounts",
+        a: "Deposit",
+        aSub: "Withdraw any time · {{exitFee}}",
+        b: "Held in the vault",
+        bSub: "The whole balance passes",
+        c: "Claim",
+        cSub: "{{recoveryFee}} of what moves",
+      },
+      registry: {
+        title: "Issuer registry",
+        sub: "xStocks · Ondo · checked on every cover and recovery",
+      },
+      lapse: "Interval and grace period pass",
+      destination: {
+        title: "Recovery wallet · Heir",
+        sub: "Named by you, and the only wallet the plan can pay",
+      },
+    },
+    catalog: {
+      title: "Every stock\nthey issue.",
+      body: "Heirloom registers issuers, not tickers. One entry admits an issuer's whole catalogue, including listings added later.",
+      count: "{{formatted}} stocks from xStocks and Ondo",
+    },
+    cycle: {
+      title: "The check-in cycle",
+      body: "Every plan runs on the same clock. You choose the interval and the grace period, anywhere up to a year.",
+      setup: {
+        name: "Set up",
+        when: "Day 0",
+        body: "Name a recovery wallet or an heir, then pick an interval and a grace period.",
+      },
+      active: {
+        name: "Active",
+        when: "Every interval",
+        body: "Check in from your wallet, or a hot wallet you allow, and the clock starts over.",
+      },
+      grace: {
+        name: "Grace period",
+        when: "A check-in is missed",
+        body: "Extra time before anything can move. A guardian can push the deadline out once.",
+      },
+      recoverable: {
+        name: "Recoverable",
+        when: "Grace runs out",
+        body: "Your recovery wallet or heir signs, and the covered stocks move to it.",
+      },
+    },
+    price: {
+      title: "Priced live on mainnet",
+      body: "Every listed stock carries its live price from Jupiter, and the ones with a market can be bought or sold without leaving Heirloom.",
+      pick: "Show the price of",
+      trade: "Trade",
+      change: "24h",
+      unavailable: "Price unavailable",
+      retry: "Try again",
+      link: "Browse all {{formatted}} stocks",
+      linkFallback: "Browse every stock",
+    },
+    open: {
+      title: "Inside the app",
+      browse: {
+        title: "Browse",
+        body: "Every stock, its live price, and what its issuer can still do.",
+        cta: "Browse stocks",
+      },
+      protect: {
+        title: "Protect",
+        body: "Back up what's in your wallet to a recovery wallet you control.",
+        cta: "Create a backup",
+      },
+      inherit: {
+        title: "Inherit",
+        body: "Put stocks in a vault that passes to your heir.",
+        cta: "Open a vault",
+      },
+      recover: {
+        title: "Recover",
+        body: "Named in someone's plan? Recover, claim, or check in from here.",
+        cta: "Open recovery",
+      },
+    },
+    cta: {
+      cap: "Heirloom Stocks",
+      title:
+        "Your stocks moved on-chain. Give them the way back a brokerage account always had, from the wallet you already use.",
+      button: "Launch app",
+    },
+    facts: {
+      stocks: "Stocks supported",
+      tradable: "With a Jupiter market",
+      fee: "Fee on a recovery",
+      interval: "Longest check-in interval",
+    },
+    issuers: {
+      title: "Know what the issuer can do",
+      note: "Tokenized stocks come with issuer powers. Heirloom shows every one, and refuses the mints a recovery couldn't survive.",
+      more: "Issuer controls",
+      filterLabel: "Filter",
+      filters: {
+        all: "All",
+        powers: "Issuer powers",
+        refused: "Refused at cover",
+        account: "Your account",
+      },
+      previous: "Previous",
+      next: "Next",
+      clawback: {
+        title: "Clawback",
+        body: "A permanent delegate can move tokens out of any account. Heirloom records whether one existed when you covered, and stops a recovery if one appears later.",
+      },
+      pausable: {
+        title: "Pausable",
+        body: "The issuer can halt every transfer, recoveries included. A paused recovery waits, and resumes when they unpause.",
+      },
+      freezable: {
+        title: "Freezable",
+        body: "Individual accounts can be frozen. Nothing moves a frozen account until the issuer thaws it.",
+      },
+      hookSlot: {
+        title: "Hook slot",
+        body: "A transfer hook is reserved on the mint and could be switched on later. You see it before you cover.",
+      },
+      frozenDefault: {
+        title: "Frozen by default",
+        body: "New accounts for the stock start frozen, so a recovery could never be received. These mints are refused.",
+      },
+      liveHook: {
+        title: "Live transfer hook",
+        body: "A hook that is already switched on could block the transfer a recovery needs. Refused until it's supported.",
+      },
+      unregistered: {
+        title: "Unregistered issuer",
+        body: "Coverage is limited to issuers in the on-chain registry, matched by mint authority on every cover.",
+      },
+      eviction: {
+        title: "Delegate eviction",
+        body: "Approving another app on a covered account quietly replaces Heirloom. The dashboard catches it, and one approval repairs it.",
+      },
+      cpiGuard: {
+        title: "CPI Guard",
+        body: "With CPI Guard on, the plan can't be approved on that account. Turn it off in your wallet, then cover it.",
+      },
+    },
+    closing: {
+      title: "Talk to us",
+      body: "Questions about a plan, an issuer, or a stock that isn't listed yet? Find us here.",
+      x: "Heirloom on X",
+      github: "Heirloom on GitHub",
+      docs: "Heirloom docs",
+    },
+    footer: {
+      tagline: "Backup and inheritance for tokenized stocks, on Solana.",
+      rights: "© {{year}} Heirloom",
+      site: "heirlm.xyz",
+      docs: "Docs",
+      disclaimer:
+        "heirloom-stocks runs on Solana devnet with test equities. Prices and trades are on mainnet, through Jupiter. Nothing here is investment advice.",
+    },
+  },
   nav: {
     portfolio: "Portfolio",
     browse: "Browse",
@@ -399,6 +628,9 @@ const stocks = {
   seo: {
     defaultDescription:
       "Back up your tokenized stocks and leave them to an heir — Heirloom on Solana.",
+    landingTitle: "Heirloom Stocks — back up your tokenized stocks",
+    landingDescription:
+      "Back up your xStocks and Ondo stocks to a recovery wallet you control, or leave them to an heir. They stay in your wallet and stay tradeable. Heirloom on Solana.",
     portfolioTitle: "Portfolio · Heirloom Stocks",
     browseTitle: "Browse · Heirloom Stocks",
     protectTitle: "Protect · Heirloom Stocks",

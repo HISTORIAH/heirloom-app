@@ -16,7 +16,7 @@ const NotFound = () => {
         </h1>
         <p className="ed-lede mt-4 text-muted-foreground">{t("notFound.description")}</p>
         <Button variant="flat-yellow" size="lg" className="mt-8" asChild>
-          <Link to="/">
+          <Link to="/portfolio">
             <ArrowLeft className="h-4 w-4" /> {t("notFound.returnHome")}
           </Link>
         </Button>

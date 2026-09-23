@@ -1,5 +1,6 @@
-# https://stocks.heirlm.xyz — every route is wallet-gated and per-user, so
-# there is nothing here to index. The public, indexable site is
-# https://heirlm.xyz, which serves its own robots.txt and sitemap.
+# https://stocks.heirlm.xyz — the landing at the root is public. Every other
+# route is the wallet-gated app, per-user and noindex, so crawlers stay on the
+# root. The main site, https://heirlm.xyz, serves its own robots.txt and sitemap.
 User-agent: *
+Allow: /$
 Disallow: /

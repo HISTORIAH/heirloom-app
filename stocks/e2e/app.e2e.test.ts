@@ -144,7 +144,7 @@ test("an owner creates a backup plan, covers a stock, and sees it on the dashboa
   await cluster.mint(owner.signer.address, "xstock", 25n * 10n ** 8n);
   await cluster.mint(owner.signer.address, "ondo", 40n * 10n ** 9n);
 
-  const page = await openAs(owner, "/");
+  const page = await openAs(owner, "/portfolio");
   await page.getByText("TSTx", { exact: true }).first().waitFor();
   await page.getByText("Test Apple xStock · xstocks").waitFor();
   await shoot(page, "01-portfolio");

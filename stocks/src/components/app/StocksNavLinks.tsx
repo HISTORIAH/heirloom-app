@@ -14,7 +14,7 @@ import { DOCS_URL } from "@/config";
 import { cn } from "@/lib/utils";
 
 export const STOCKS_DESTINATIONS = [
-  { path: "/", labelKey: "nav.portfolio", Icon: Briefcase },
+  { path: "/portfolio", labelKey: "nav.portfolio", Icon: Briefcase },
   { path: "/browse", labelKey: "nav.browse", Icon: Compass },
   { path: "/protect", labelKey: "nav.protect", Icon: ShieldCheck },
   { path: "/dashboard", labelKey: "nav.dashboard", Icon: LayoutDashboard },
@@ -42,9 +42,6 @@ export const StocksNavLinks: React.FC<{
         <NavLink
           key={path}
           to={path}
-          // The portfolio is the root, so it must match exactly or it would
-          // stay highlighted on every other route.
-          end={path === "/"}
           onClick={onNavigate}
           className={({ isActive }) => cn(linkClass[variant], isActive && "bg-tile-soft")}
         >

@@ -10,13 +10,16 @@ export interface SeoProps {
   description: string;
   /** Path of the current route, e.g. "/dashboard". Used for canonical + og:url. */
   path?: string;
+  /** Whether search engines may index the route. Only the landing is. */
+  indexable?: boolean;
 }
 
 /**
- * Per-route head tags. Like app.heirlm.xyz, every route here is wallet-gated
- * and per-user, so the whole origin carries a noindex directive.
+ * Per-route head tags. The app routes are wallet-gated and per-user, like
+ * app.heirlm.xyz's, so they carry noindex; the landing at the root is the one
+ * page here meant to be found. robots.txt keeps crawlers to that one path.
  */
-const Seo = ({ title, description, path = "/" }: SeoProps) => {
+const Seo = ({ title, description, path = "/", indexable = false }: SeoProps) => {
   const canonical = `${STOCKS_URL}${path}`;
 
   return (
@@ -24,7 +27,7 @@ const Seo = ({ title, description, path = "/" }: SeoProps) => {
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
-      <meta name="robots" content="noindex, nofollow" />
+      <meta name="robots" content={indexable ? "index, follow" : "noindex, nofollow"} />
 
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
