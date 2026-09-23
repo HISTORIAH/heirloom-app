@@ -2,7 +2,7 @@ import { useTranslation } from "@heirloom/i18n";
 import type { CoverageHealth } from "@/services/coverage";
 import type { MintDetails } from "@/services/mints";
 import { planTimeline, type PlanView } from "@/services/plans";
-import { riskFlags } from "@/services/risk";
+import { riskFlags, type RiskFlag } from "@/services/risk";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -34,13 +34,18 @@ export const HealthText: React.FC<{ health: CoverageHealth; withHint?: boolean }
   );
 };
 
-/** What the issuer can still do, as rectangular hairline tags. */
+/** What the issuer can still do to this mint, as rectangular hairline tags. */
 export const RiskTags: React.FC<{ mint: MintDetails; className?: string }> = ({
   mint,
   className,
+}) => <FlagTags flags={riskFlags(mint)} className={className} />;
+
+/** The same tags for a known set of flags, where there is no live mint to read. */
+export const FlagTags: React.FC<{ flags: RiskFlag[]; className?: string }> = ({
+  flags,
+  className,
 }) => {
   const { t } = useTranslation("stocks");
-  const flags = riskFlags(mint);
   if (flags.length === 0) return null;
   return (
     <ul className={cn("flex flex-wrap gap-1.5", className)}>

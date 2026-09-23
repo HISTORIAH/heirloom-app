@@ -1,12 +1,21 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { BookOpen, Briefcase, Gift, LayoutDashboard, LifeBuoy, ShieldCheck } from "lucide-react";
+import {
+  BookOpen,
+  Briefcase,
+  Compass,
+  Gift,
+  LayoutDashboard,
+  LifeBuoy,
+  ShieldCheck,
+} from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
 import { DOCS_URL } from "@/config";
 import { cn } from "@/lib/utils";
 
 export const STOCKS_DESTINATIONS = [
   { path: "/", labelKey: "nav.portfolio", Icon: Briefcase },
+  { path: "/browse", labelKey: "nav.browse", Icon: Compass },
   { path: "/protect", labelKey: "nav.protect", Icon: ShieldCheck },
   { path: "/dashboard", labelKey: "nav.dashboard", Icon: LayoutDashboard },
   { path: "/recover", labelKey: "nav.recover", Icon: LifeBuoy },

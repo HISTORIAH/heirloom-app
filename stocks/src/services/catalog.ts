@@ -27,6 +27,12 @@ export interface CatalogEntry {
   /** The listed security the token tracks, e.g. `AAPL`. */
   underlying: string | null;
   logo: string | null;
+  /**
+   * Whether Jupiter had an on-chain market for it when the catalog was built.
+   * Most xStocks listings don't. Only a hint for ordering and filtering: the
+   * page reads live prices, and a live price is what shows a Trade button.
+   */
+  tradable?: boolean;
 }
 
 export interface Catalog {
@@ -112,6 +118,64 @@ export function parseOndoConstants(source: string): CatalogEntry[] {
     });
   }
   return entries;
+}
+
+// ------------------------------------------------------------ token labels
+
+/** What a mint says about itself: its metadata name, and the image its metadata URI links. */
+export interface TokenLabel {
+  name: string | null;
+  logo: string | null;
+}
+
+/** Logos are rendered straight into `<img>`, so only plain https URLs are kept. */
+export function isHttpsUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fills in names and logos from each mint's own metadata. Ondo's constants
+ * file carries neither, so without this every Ondo stock shows its symbol
+ * twice and no logo.
+ *
+ * Where a mint's metadata couldn't be read this time, what the previous
+ * snapshot had is kept, so a flaky RPC or metadata host never strips labels
+ * an earlier refresh found.
+ */
+export function withTokenLabels(
+  entries: CatalogEntry[],
+  labels: Map<Address, TokenLabel>,
+  previous: Map<Address, CatalogEntry>,
+): CatalogEntry[] {
+  return entries.map((entry) => {
+    const label = labels.get(entry.mint);
+    const before = previous.get(entry.mint);
+    return {
+      ...entry,
+      name: label?.name || before?.name || entry.name,
+      logo: label?.logo ?? before?.logo ?? entry.logo,
+    };
+  });
+}
+
+/**
+ * Marks each entry with whether it has a market, keeping the previous
+ * snapshot's mark for any mint the price lookup didn't cover.
+ */
+export function withTradable(
+  entries: CatalogEntry[],
+  priced: Map<Address, boolean>,
+  previous: Map<Address, CatalogEntry>,
+): CatalogEntry[] {
+  return entries.map((entry) => {
+    const tradable = priced.get(entry.mint) ?? previous.get(entry.mint)?.tradable;
+    return tradable === undefined ? entry : { ...entry, tradable };
+  });
 }
 
 // ------------------------------------------------------------------- catalog

@@ -25,24 +25,32 @@ export function useCatalog() {
     queryFn: () => fetchCatalog(),
     staleTime: Infinity,
   });
+  const entries = useMemo(() => query.data?.entries ?? [], [query.data]);
   const byMint = useMemo(
-    () => new Map<Address, CatalogEntry>((query.data?.entries ?? []).map((e) => [e.mint, e])),
-    [query.data],
+    () => new Map<Address, CatalogEntry>(entries.map((e) => [e.mint, e])),
+    [entries],
   );
-  return { byMint, count: query.data?.entries.length ?? 0, isLoading: query.isLoading };
+  return {
+    entries,
+    byMint,
+    count: entries.length,
+    generatedAt: query.data?.generatedAt ?? "",
+    isLoading: query.isLoading,
+  };
 }
 
 /**
  * The connected owner's holdings and plans. Waits for the catalog, which only
- * adds logos and underlying tickers, so rows don't render twice.
+ * adds logos and underlying tickers, so rows don't render twice. A null owner
+ * reads nothing, for pages that only want this some of the time.
  */
-export function useOwnerOverview(owner: Address) {
+export function useOwnerOverview(owner: Address | null) {
   const { rpc } = useWallet();
   const catalog = useCatalog();
   return useQuery({
     queryKey: [STOCKS_QUERY_KEY, "owner", owner, catalog.count],
-    queryFn: () => loadOwnerOverview(rpc, owner, catalog.byMint),
-    enabled: !catalog.isLoading,
+    queryFn: () => loadOwnerOverview(rpc, owner!, catalog.byMint),
+    enabled: !!owner && !catalog.isLoading,
     refetchInterval: 30_000,
   });
 }

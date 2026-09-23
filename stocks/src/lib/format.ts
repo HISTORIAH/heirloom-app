@@ -29,6 +29,17 @@ export function parseUiAmount(text: string, mint: MintDetails, now: number): big
   return raw > 0n ? raw : null;
 }
 
+/** US dollars: cents for anything from a dollar up, four significant digits below. */
+export function formatUsd(value: number, locale: string): string {
+  return value.toLocaleString(locale, {
+    style: "currency",
+    currency: "USD",
+    ...(Math.abs(value) >= 1 || value === 0
+      ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      : { maximumSignificantDigits: 4 }),
+  });
+}
+
 export function formatDate(seconds: number, locale: string): string {
   return new Date(seconds * 1000).toLocaleString(locale, {
     dateStyle: "medium",

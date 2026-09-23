@@ -5,9 +5,13 @@ import { holdingLabel, type IssuerInfo } from "@/services/holdings";
 import type { MintDetails } from "@/services/mints";
 import { cn, getTokenAccent } from "@/lib/utils";
 
-/** A stock's logo, symbol, and name, with its issuer when known. */
+/**
+ * A stock's logo, symbol, and name, with its issuer when known. Only the mint's
+ * address and metadata labels are read, so a catalog listing with no chain
+ * data behind it renders the same way.
+ */
 export const AssetBadge: React.FC<{
-  mint: MintDetails;
+  mint: Pick<MintDetails, "mint" | "name" | "symbol">;
   catalog: CatalogEntry | null;
   issuer?: IssuerInfo | null;
   className?: string;

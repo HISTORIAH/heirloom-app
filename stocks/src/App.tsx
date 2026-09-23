@@ -15,6 +15,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 
 import Portfolio from "@/pages/Portfolio";
+import Browse from "@/pages/Browse";
 import Protect from "@/pages/Protect";
 import Dashboard from "@/pages/Dashboard";
 import Recover from "@/pages/Recover";
@@ -48,6 +49,7 @@ const RouteSeo = () => {
   const { t } = useTranslation("stocks");
   const titles: Record<string, string> = {
     "/": t("seo.portfolioTitle"),
+    "/browse": t("seo.browseTitle"),
     "/protect": t("seo.protectTitle"),
     "/dashboard": t("seo.dashboardTitle"),
     "/recover": t("seo.recoverTitle"),
@@ -73,6 +75,7 @@ const App = () => (
             {/* Unlike app.heirlm.xyz, this origin has no landing page to
                 defer to, so the root is the portfolio itself. */}
             <Route path="/" element={<Portfolio />} />
+            <Route path="/browse" element={<Browse />} />
             <Route path="/protect" element={<Protect />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/recover" element={<Recover />} />
