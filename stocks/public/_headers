@@ -1,0 +1,10 @@
+# Same rules as app/public/_headers, which explains them. In short: `/*` must
+# not set Cache-Control, because Cloudflare appends every matching rule, and a
+# cached shell that outlived its asset hashes is a blank page.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Vite fingerprints these.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

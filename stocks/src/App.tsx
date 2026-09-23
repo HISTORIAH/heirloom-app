@@ -1,0 +1,88 @@
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  WalletUi,
+  createWalletUiConfig,
+  createSolanaDevnet,
+  createSolanaLocalnet,
+  createSolanaMainnet,
+} from "@wallet-ui/react";
+import walletUiCss from "@wallet-ui/react/index.css?raw";
+import { useTranslation } from "@heirloom/i18n";
+import { WalletProvider } from "@/contexts/WalletContext";
+import Seo from "@/components/Seo";
+import { Toaster } from "@/components/ui/toaster";
+import { SOLANA_RPC_ENDPOINT } from "@/config";
+
+import Portfolio from "@/pages/Portfolio";
+import Protect from "@/pages/Protect";
+import Dashboard from "@/pages/Dashboard";
+import Recover from "@/pages/Recover";
+import Inherit from "@/pages/Inherit";
+import NotFound from "@/pages/NotFound";
+
+const queryClient = new QueryClient();
+
+if (typeof document !== "undefined" && !document.getElementById("wallet-ui-css")) {
+  const style = document.createElement("style");
+  style.id = "wallet-ui-css";
+  style.textContent = walletUiCss;
+  document.head.appendChild(style);
+}
+
+const isMainnet = SOLANA_RPC_ENDPOINT.includes("mainnet");
+const isLocalnet =
+  SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1");
+
+const clusters = isMainnet
+  ? [createSolanaMainnet(), createSolanaDevnet(), createSolanaLocalnet()]
+  : isLocalnet
+    ? [createSolanaLocalnet(), createSolanaDevnet(), createSolanaMainnet()]
+    : [createSolanaDevnet(), createSolanaLocalnet(), createSolanaMainnet()];
+
+const walletUiConfig = createWalletUiConfig({ clusters });
+
+// Per-route head tags. The whole origin is noindex; see components/Seo.tsx.
+const RouteSeo = () => {
+  const { pathname } = useLocation();
+  const { t } = useTranslation("stocks");
+  const titles: Record<string, string> = {
+    "/": t("seo.portfolioTitle"),
+    "/protect": t("seo.protectTitle"),
+    "/dashboard": t("seo.dashboardTitle"),
+    "/recover": t("seo.recoverTitle"),
+    "/inherit": t("seo.inheritTitle"),
+  };
+  return (
+    <Seo
+      title={titles[pathname] ?? t("seo.notFoundTitle")}
+      description={t("seo.defaultDescription")}
+      path={pathname}
+    />
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <WalletUi config={walletUiConfig}>
+      <WalletProvider>
+        <Toaster />
+        <BrowserRouter>
+          <RouteSeo />
+          <Routes>
+            {/* Unlike app.heirlm.xyz, this origin has no landing page to
+                defer to, so the root is the portfolio itself. */}
+            <Route path="/" element={<Portfolio />} />
+            <Route path="/protect" element={<Protect />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/recover" element={<Recover />} />
+            <Route path="/inherit" element={<Inherit />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </WalletProvider>
+    </WalletUi>
+  </QueryClientProvider>
+);
+
+export default App;
