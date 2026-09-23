@@ -68,8 +68,10 @@
        be drawn; --page-pad is where content starts, always --rule-gap clear of
        it. The stocks column (--hs-w in styles/stocks.css) is measured from
        --page-pad, so it shares heirlm.xyz's gutters. */
-    --rule-pad: 1.25rem;
-    --rule-gap: 1.25rem;
+    /* 20px a side on a phone: at 40px, a 320px screen kept only 240px for
+       content, and the bars ran into their own padding. */
+    --rule-pad: 0.75rem;
+    --rule-gap: 0.5rem;
     --page-pad: calc(var(--rule-pad) + var(--rule-gap));
   }
 }

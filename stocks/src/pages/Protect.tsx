@@ -99,7 +99,7 @@ function PlanTerms({ backup }: { backup: PlanOverview }) {
     <section className="hs-sheet overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-6">
         <Cap>{t("protect.planTitle")}</Cap>
-        <Link to="/dashboard" className="hs-link text-sm">
+        <Link to="/dashboard" className="hs-link hs-tap text-sm">
           {t("protect.settingsLink")}
         </Link>
       </header>

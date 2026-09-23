@@ -212,7 +212,7 @@ function PortfolioView({ data }: { data: OwnerOverview }) {
             nextDeadline ? (
               formatShortDate(nextDeadline, locale)
             ) : (
-              <span className="text-[1.5rem] tracking-[-0.02em]">{t("portfolio.noPlan")}</span>
+              <span className="text-[1.25rem] tracking-[-0.02em] md:text-[1.5rem]">{t("portfolio.noPlan")}</span>
             )
           }
           note={

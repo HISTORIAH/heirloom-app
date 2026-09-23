@@ -9,9 +9,9 @@ import { MarkTile } from "@/components/landing/Primitives";
  */
 export const Brand: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <Link to="/" className={cn("flex shrink-0 items-center gap-2.5 rounded-lg", className)}>
+    <Link to="/" className={cn("flex h-10 shrink-0 items-center gap-2 rounded-lg sm:gap-2.5", className)}>
       <MarkTile className="h-7 w-7" />
-      <span className="whitespace-nowrap text-[1.0625rem] font-semibold tracking-[-0.02em]">
+      <span className="whitespace-nowrap text-base font-semibold tracking-[-0.02em] sm:text-[1.0625rem]">
         Heirloom <span className="font-normal text-muted-foreground">Stocks</span>
       </span>
     </Link>

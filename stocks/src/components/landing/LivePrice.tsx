@@ -95,7 +95,7 @@ export const LivePrice: React.FC = () => {
               <button
                 type="button"
                 onClick={() => void prices.refetch()}
-                className="hs-link hs-mono-xs mt-1 text-muted-foreground"
+                className="hs-link hs-tap hs-mono-xs mt-1 text-muted-foreground"
               >
                 {t("landing.price.retry")}
               </button>
@@ -136,7 +136,7 @@ export const LivePrice: React.FC = () => {
         </Link>
       </div>
 
-      <Link to="/browse" className="hs-link mt-5 inline-block text-sm">
+      <Link to="/browse" className="hs-link hs-tap mt-5 text-sm">
         {catalog.count > 0
           ? t("landing.price.link", { formatted: formatNumber(catalog.count, locale) })
           : t("landing.price.linkFallback")}

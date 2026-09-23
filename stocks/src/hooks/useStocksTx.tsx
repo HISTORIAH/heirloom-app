@@ -55,7 +55,12 @@ export function useStocksTx(signer: TransactionSigner) {
         toast({
           title: t(`tx.done.${request.done}`),
           description: last ? (
-            <a href={explorerTxUrl(last)} target="_blank" rel="noreferrer" className="underline">
+            <a
+              href={explorerTxUrl(last)}
+              target="_blank"
+              rel="noreferrer"
+              className="hs-link hs-tap"
+            >
               {t("tx.view")}
             </a>
           ) : undefined,

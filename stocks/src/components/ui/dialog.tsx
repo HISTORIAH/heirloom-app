@@ -40,7 +40,14 @@ const DialogContent = React.forwardRef<
         // The column is minmax(0, 1fr), not the implicit auto: an auto track
         // grows to its longest unbreakable line (a stock's full name, before
         // it truncates) and pushes the content past the dialog's edge.
-        "fixed left-[50%] top-[50%] z-50 grid max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] max-w-lg grid-cols-[minmax(0,1fr)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-[1.375rem] border border-tile-line bg-background p-6 shadow-[var(--hs-shadow-float)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.98] data-[state=open]:zoom-in-[0.98] motion-reduce:animate-none sm:p-7",
+        "fixed z-50 grid grid-cols-[minmax(0,1fr)] gap-4 overflow-y-auto border border-tile-line bg-background p-6 shadow-[var(--hs-shadow-float)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:animate-none",
+        // From sm up, a centred card. The enter and exit keyframes replace the
+        // element's own transform, so they have to carry its -50% centring too
+        // or the card would slide in from the lower right.
+        "sm:left-[50%] sm:top-[50%] sm:max-h-[calc(100svh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[1.375rem] sm:p-7 sm:data-[state=closed]:zoom-out-[0.98] sm:data-[state=open]:zoom-in-[0.98] sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-top-[48%]",
+        // On a phone, a sheet from the bottom edge: full width, its main action
+        // within the thumb's reach.
+        "max-sm:inset-x-0 max-sm:bottom-0 max-sm:max-h-[calc(100svh-1.5rem)] max-sm:rounded-t-[1.375rem] max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))] max-sm:data-[state=closed]:slide-out-to-bottom-6 max-sm:data-[state=open]:slide-in-from-bottom-6",
         className,
       )}
       {...props}

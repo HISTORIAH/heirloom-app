@@ -61,7 +61,7 @@ export const TradeDialog: React.FC<{
   onOpenChange: (open: boolean) => void;
 }> = ({ entry, onOpenChange, ...rest }) => (
   <Dialog open={entry !== null} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md">
+    <DialogContent className="sm:max-w-md">
       {/* Keyed so each stock opens on a clean form. */}
       {entry && (
         <TradeForm key={entry.mint} entry={entry} onDone={() => onOpenChange(false)} {...rest} />
@@ -206,6 +206,8 @@ function TradeForm({
             aria-invalid={tooMuch}
             className="hs-input h-12 pr-20 text-lg tabular-nums"
           />
+          {/* The pill is what shows; the button is the whole right end of the
+              field, so the target is as tall as the input. */}
           <button
             type="button"
             disabled={!spendable}
@@ -214,9 +216,11 @@ function TradeForm({
               setExact(spendable);
               setText(String(toDisplayAmount(spendable, inputDecimals, inputMultiplier)));
             }}
-            className="hs-mono-xs absolute right-2 top-1/2 h-8 -translate-y-1/2 rounded-full bg-tile-soft px-3 transition-colors duration-100 ease-out hover:bg-tile-line disabled:cursor-not-allowed disabled:text-muted-foreground"
+            className="group absolute inset-y-0 right-0 flex items-center rounded-r-[0.875rem] pl-2 pr-2 disabled:cursor-not-allowed"
           >
-            {t("common.max")}
+            <span className="hs-mono-xs flex h-8 items-center rounded-full bg-tile-soft px-3 transition-colors duration-100 ease-out group-hover:bg-tile-line group-disabled:bg-tile-soft group-disabled:text-muted-foreground">
+              {t("common.max")}
+            </span>
           </button>
         </div>
         {spendable !== null && inputDecimals !== null && (
@@ -306,7 +310,7 @@ function TradeForm({
         href={jupiterSwapUrl(entry.mint)}
         target="_blank"
         rel="noreferrer"
-        className="hs-link inline-flex items-center gap-1 self-start text-sm"
+        className="hs-link hs-tap inline-flex items-center gap-1 self-start text-sm"
       >
         {t("trade.openOnJupiter")}
         <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -350,7 +354,7 @@ function SwapButton({
             href={mainnetTxUrl(result.signature)}
             target="_blank"
             rel="noreferrer"
-            className="hs-link"
+            className="hs-link hs-tap"
           >
             {t("tx.view")}
           </a>

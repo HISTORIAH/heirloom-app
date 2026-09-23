@@ -282,7 +282,7 @@ function VaultRow({
       <div className="flex gap-2 md:justify-self-end">
         <button
           type="button"
-          className="hs-pill h-9"
+          className="hs-pill md:h-9"
           aria-pressed={mode === "deposit"}
           disabled={!wallet_}
           onClick={() => setMode(mode === "deposit" ? null : "deposit")}
@@ -291,7 +291,7 @@ function VaultRow({
         </button>
         <button
           type="button"
-          className="hs-pill h-9"
+          className="hs-pill md:h-9"
           aria-pressed={mode === "withdraw"}
           disabled={vaulted === 0n}
           onClick={() => setMode(mode === "withdraw" ? null : "withdraw")}

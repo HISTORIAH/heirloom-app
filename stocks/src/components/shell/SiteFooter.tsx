@@ -25,7 +25,7 @@ export const SiteFooter: React.FC = () => {
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {links.map(({ href, label }) => (
               <li key={href}>
-                <a href={href} className="hs-link">
+                <a href={href} className="hs-link hs-tap">
                   {label}
                 </a>
               </li>

@@ -692,6 +692,25 @@ select.hs-input {
   .hs-rail > * { flex-basis: calc((100% - 1rem) / 2.35); }
 }
 
+/* ---------------------------------------------------------------- touch
+   The compact controls are sized for a mouse. On a phone, or anywhere the
+   pointer is a finger, every one of them grows to a 40px target; the
+   desktop layout keeps its tighter rhythm. */
+@media (max-width: 767px), (pointer: coarse) {
+  .hs-btn-sm,
+  .hs-seg > button { height: 2.5rem; }
+  .hs-btn-icon { width: 2.75rem; height: 2.75rem; }
+  /* A standalone text link (not one inside a sentence) gets a full-height
+     row to land on without changing how it reads. */
+  .hs-tap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    min-height: 2.5rem;
+  }
+}
+
 /* An entrance for content that has just loaded: a short rise, once. */
 .hs-rise {
   animation: hs-rise 250ms cubic-bezier(0, 0, 0.2, 1) both;

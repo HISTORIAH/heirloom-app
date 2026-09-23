@@ -27,7 +27,9 @@ export const LandingNav: React.FC = () => {
             </a>
           </nav>
         </div>
-        <Link to="/portfolio" className="hs-btn hs-btn-primary hs-btn-sm">
+        {/* Narrower padding on the smallest phones, where the name and the
+            button otherwise need 335px of a 320px screen. */}
+        <Link to="/portfolio" className="hs-btn hs-btn-primary hs-btn-sm shrink-0 max-[359px]:px-3.5">
           {t("landing.nav.launch")}
         </Link>
       </div>

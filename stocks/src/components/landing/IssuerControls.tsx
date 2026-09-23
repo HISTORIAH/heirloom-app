@@ -118,7 +118,10 @@ export const IssuerControls: React.FC = () => {
             </button>
           ))}
         </div>
-        <a href={ISSUER_DOCS_URL} className="hs-mono inline-flex items-center gap-1.5 hover:underline">
+        <a
+          href={ISSUER_DOCS_URL}
+          className="hs-mono hs-tap inline-flex items-center gap-1.5 hover:underline"
+        >
           {t("landing.issuers.more")}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </a>

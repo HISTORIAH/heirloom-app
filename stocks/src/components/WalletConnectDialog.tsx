@@ -75,7 +75,7 @@ const WalletConnectDialog = ({ open, onOpenChange, onDismiss }: WalletConnectDia
         onOpenChange(next);
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("walletDialog.title")}</DialogTitle>
           <DialogDescription className="text-[0.9375rem] leading-relaxed text-muted-foreground">

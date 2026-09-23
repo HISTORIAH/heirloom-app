@@ -35,7 +35,11 @@ export const Section: React.FC<{
 export const Stats: React.FC<{ className?: string; children: ReactNode }> = ({
   className,
   children,
-}) => <dl className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-4", className)}>{children}</dl>;
+}) => (
+  // Two by two on a phone: four cards stacked one above another took half a
+  // screen of scrolling to say four numbers.
+  <dl className={cn("grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4", className)}>{children}</dl>
+);
 
 /** One labelled figure. */
 export const Stat: React.FC<{ cap: string; value: ReactNode; note?: ReactNode }> = ({
@@ -43,10 +47,10 @@ export const Stat: React.FC<{ cap: string; value: ReactNode; note?: ReactNode }>
   value,
   note,
 }) => (
-  <div className="hs-card flex min-h-[8.5rem] flex-col justify-between gap-6 p-5 md:p-6">
-    <dt className="hs-mono text-foreground/70">{cap}</dt>
+  <div className="hs-card flex min-h-[7rem] flex-col justify-between gap-4 p-4 md:min-h-[8.5rem] md:gap-6 md:p-6">
+    <dt className="hs-mono text-foreground/70 max-md:text-xs">{cap}</dt>
     <dd>
-      <p className="hs-figure">{value}</p>
+      <p className="hs-figure max-md:text-[1.75rem]">{value}</p>
       {note && <p className="mt-2 text-sm">{note}</p>}
     </dd>
   </div>
@@ -193,9 +197,9 @@ export function QueryState<T>({
       <div role="status" aria-label={t("common.loading")}>
         {loading ?? (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
               {Array.from({ length: 4 }, (_, i) => (
-                <span key={i} className="hs-skel h-[8.5rem] !rounded-[var(--hs-radius)]" />
+                <span key={i} className="hs-skel h-[7rem] !rounded-[var(--hs-radius)] md:h-[8.5rem]" />
               ))}
             </div>
             <ListSkeleton />
@@ -241,12 +245,15 @@ export const AmountInput: React.FC<{
         onChange={(e) => onChange(e.target.value)}
         className="hs-input pr-20 tabular-nums"
       />
+      {/* The pill is what shows; the button is the field's whole right end. */}
       <button
         type="button"
         onClick={onMax}
-        className="hs-mono-xs absolute right-1.5 top-1/2 h-8 -translate-y-1/2 rounded-full bg-tile-soft px-3 transition-colors duration-100 ease-out hover:bg-tile-line"
+        className="group absolute inset-y-0 right-0 flex items-center rounded-r-[0.875rem] pl-2 pr-1.5"
       >
-        {t("common.max")}
+        <span className="hs-mono-xs flex h-8 items-center rounded-full bg-tile-soft px-3 transition-colors duration-100 ease-out group-hover:bg-tile-line">
+          {t("common.max")}
+        </span>
       </button>
     </div>
   );

@@ -60,7 +60,7 @@ const WalletControl: React.FC<{ onConnect?: () => void; onOpen: () => void }> = 
         size="sm"
         onClick={onConnect}
         aria-label={t("common.connectWallet")}
-        className="max-sm:w-9 max-sm:px-0"
+        className="max-sm:w-10 max-sm:px-0"
       >
         <Wallet aria-hidden="true" className="sm:hidden" />
         <span className="hidden sm:inline">{t("common.connectWallet")}</span>
@@ -79,7 +79,7 @@ const WalletControl: React.FC<{ onConnect?: () => void; onOpen: () => void }> = 
           onOpen();
           setOpen((v) => !v);
         }}
-        className="hs-btn hs-btn-ghost hs-btn-sm gap-2 max-sm:w-9 max-sm:px-0"
+        className="hs-btn hs-btn-ghost hs-btn-sm gap-2 max-sm:w-10 max-sm:px-0"
       >
         <WalletDisc address={publicKey} />
         <span className="hs-mono hidden sm:inline">{truncateAddress(publicKey, 4)}</span>
@@ -187,6 +187,18 @@ export const AppNav: React.FC<{ onConnectWallet?: () => void }> = ({ onConnectWa
         </div>
       </div>
 
+      {drawer && (
+        // Dims the page under the drawer, so it reads as a layer, and closes it
+        // on a tap. It sits inside the bar, so useDismiss would count that tap
+        // as inside; hence its own handler. Absolute from the bar's bottom
+        // edge, not fixed: the bar's backdrop-filter makes it the containing
+        // block for fixed children, so `fixed` would be clipped to its 64px.
+        <div
+          aria-hidden="true"
+          onClick={() => setDrawer(false)}
+          className="absolute inset-x-0 top-full h-[100svh] bg-foreground/20 xl:hidden"
+        />
+      )}
       {drawer && (
         <div className="absolute inset-x-0 top-full border-b border-tile-line bg-background xl:hidden">
           <nav className="hs-rise flex flex-col gap-1 px-[var(--page-pad)] py-3">
