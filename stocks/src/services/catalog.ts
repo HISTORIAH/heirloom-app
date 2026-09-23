@@ -27,6 +27,12 @@ export interface CatalogEntry {
   /** The listed security the token tracks, e.g. `AAPL`. */
   underlying: string | null;
   logo: string | null;
+  /**
+   * Whether Jupiter had an on-chain market for it when the catalog was built.
+   * Most xStocks listings don't. Only a hint for ordering and filtering: the
+   * page reads live prices, and a live price is what shows a Trade button.
+   */
+  tradable?: boolean;
 }
 
 export interface Catalog {
@@ -154,6 +160,21 @@ export function withTokenLabels(
       name: label?.name || before?.name || entry.name,
       logo: label?.logo ?? before?.logo ?? entry.logo,
     };
+  });
+}
+
+/**
+ * Marks each entry with whether it has a market, keeping the previous
+ * snapshot's mark for any mint the price lookup didn't cover.
+ */
+export function withTradable(
+  entries: CatalogEntry[],
+  priced: Map<Address, boolean>,
+  previous: Map<Address, CatalogEntry>,
+): CatalogEntry[] {
+  return entries.map((entry) => {
+    const tradable = priced.get(entry.mint) ?? previous.get(entry.mint)?.tradable;
+    return tradable === undefined ? entry : { ...entry, tradable };
   });
 }
 

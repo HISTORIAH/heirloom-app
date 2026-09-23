@@ -41,15 +41,16 @@ export function useCatalog() {
 
 /**
  * The connected owner's holdings and plans. Waits for the catalog, which only
- * adds logos and underlying tickers, so rows don't render twice.
+ * adds logos and underlying tickers, so rows don't render twice. A null owner
+ * reads nothing, for pages that only want this some of the time.
  */
-export function useOwnerOverview(owner: Address) {
+export function useOwnerOverview(owner: Address | null) {
   const { rpc } = useWallet();
   const catalog = useCatalog();
   return useQuery({
     queryKey: [STOCKS_QUERY_KEY, "owner", owner, catalog.count],
-    queryFn: () => loadOwnerOverview(rpc, owner, catalog.byMint),
-    enabled: !catalog.isLoading,
+    queryFn: () => loadOwnerOverview(rpc, owner!, catalog.byMint),
+    enabled: !!owner && !catalog.isLoading,
     refetchInterval: 30_000,
   });
 }

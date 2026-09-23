@@ -13,6 +13,9 @@
  * own Token-2022 metadata on mainnet — about five `getMultipleAccounts` calls,
  * which the public endpoint handles. `--rpc` (or `CATALOG_RPC_URL`) points it
  * elsewhere; the URL is never printed, since it may carry an API key.
+ *
+ * Every entry is also marked with whether Jupiter has a market for it, which
+ * the browse page orders by. Most xStocks listings have none.
  */
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -29,6 +32,7 @@ import {
   parseCatalog,
   parseOndoConstants,
   withTokenLabels,
+  withTradable,
   type Catalog,
   type CatalogEntry,
   type CatalogIssuer,
@@ -42,6 +46,9 @@ const RPC_URL = values.rpc ?? process.env.CATALOG_RPC_URL ?? "https://api.mainne
 
 /** `getMultipleAccounts` takes at most 100 keys per call. */
 const BATCH = 100;
+/** Jupiter's price API takes at most 50 ids per call. */
+const PRICE_BATCH = 50;
+const JUPITER_PRICES = "https://lite-api.jup.ag/price/v3";
 /** Metadata JSON fetches in flight at once. */
 const CONCURRENCY = 8;
 
@@ -120,6 +127,19 @@ async function readTokenLabels(mints: Address[]): Promise<Map<Address, TokenLabe
   return labels;
 }
 
+/** Whether Jupiter quotes each mint: it only gives a `usdPrice` where there's a market. */
+async function readTradable(mints: Address[]): Promise<Map<Address, boolean>> {
+  const tradable = new Map<Address, boolean>();
+  for (let i = 0; i < mints.length; i += PRICE_BATCH) {
+    const batch = mints.slice(i, i + PRICE_BATCH);
+    const response = await fetch(`${JUPITER_PRICES}?ids=${batch.join(",")}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const prices = (await response.json()) as Record<string, { usdPrice?: unknown } | null>;
+    for (const mint of batch) tradable.set(mint, typeof prices[mint]?.usdPrice === "number");
+  }
+  return tradable;
+}
+
 const current = await previous();
 const xstocks = await source("xstocks", () => fetchAllXStocks(), current);
 const ondo = await source("ondo", fetchOndo, current);
@@ -131,10 +151,15 @@ const labels = await readTokenLabels(ondo.map((e) => e.mint)).catch((error: Erro
 const withLogo = [...labels.values()].filter((l) => l.logo).length;
 console.log(`ondo labels: ${labels.size} names, ${withLogo} logos`);
 
-const entries = mergeCatalog(
-  xstocks,
-  withTokenLabels(ondo, labels, new Map(current.entries.map((e) => [e.mint, e]))),
-);
+const before = new Map(current.entries.map((e) => [e.mint, e]));
+const merged = mergeCatalog(xstocks, withTokenLabels(ondo, labels, before));
+
+const tradable = await readTradable(merged.map((e) => e.mint)).catch((error: Error) => {
+  console.warn(`markets: ${error.message}; keeping the snapshot's marks`);
+  return new Map<Address, boolean>();
+});
+const entries = withTradable(merged, tradable, before);
+console.log(`markets: ${entries.filter((e) => e.tradable).length} of ${entries.length} tradable`);
 
 const catalog: Catalog = { generatedAt: new Date().toISOString(), entries };
 await writeFile(OUTPUT, `${JSON.stringify(catalog)}\n`);

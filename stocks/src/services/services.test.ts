@@ -15,7 +15,7 @@ import {
   HEIRLOOM_STOCKS_ERROR__DELEGATE_EVICTED,
 } from "@historiah/heirloom-stocks";
 
-import { companyName, filterGroups, groupByCompany, jupiterSwapUrl } from "./browse";
+import { companyName, filterGroups, groupByCompany } from "./browse";
 import {
   isHttpsUrl,
   isValidMint,
@@ -24,6 +24,7 @@ import {
   parseOndoConstants,
   parseXStocksPage,
   withTokenLabels,
+  withTradable,
   type CatalogEntry,
 } from "./catalog";
 import { assessCoverage, assessVaultAsset, canReapprove } from "./coverage";
@@ -38,6 +39,18 @@ import {
   type CoveredRecord,
   type PlanView,
 } from "./plans";
+import {
+  JupiterError,
+  jupiterSwapUrl,
+  multiplierAt,
+  parseExecute,
+  parseHoldings,
+  parseOrder,
+  parsePrices,
+  toDisplayAmount,
+  toRawAmount,
+  USDC_MINT,
+} from "./jupiter";
 import { ISSUER_POWERS, riskFlags } from "./risk";
 import { programErrorCode, programErrorKey } from "./tx";
 
@@ -199,6 +212,23 @@ describe("catalog", () => {
     expect(isHttpsUrl("javascript:alert(1)")).toBe(false);
     expect(isHttpsUrl(42)).toBe(false);
   });
+
+  test("marks what has a market, keeping the snapshot's mark where the lookup missed", () => {
+    const base: CatalogEntry = {
+      mint: MINT,
+      symbol: "AAPLx",
+      name: "Apple xStock",
+      issuer: "xstocks",
+      underlying: "AAPL",
+      logo: null,
+    };
+    const marked = withTradable(
+      [base, { ...base, mint: PLAN }, { ...base, mint: OWNER }],
+      new Map([[MINT, false]]),
+      new Map([[PLAN, { ...base, mint: PLAN, tradable: true }]]),
+    );
+    expect(marked.map((e) => e.tradable)).toEqual([false, true, undefined]);
+  });
 });
 
 // -------------------------------------------------------------------- browse
@@ -220,6 +250,13 @@ describe("browse", () => {
   const HK1024 = entry(GUARD, "1024x", "Kuaishou Technology xStock", "xstocks", "1024");
   const HK12 = entry(DEX, "12x", "Henderson Land xStock", "xstocks", "12");
   const groups = groupByCompany([IWMON, HK1024, AAPLON, AAPGX, HK12, IWMX, AAPLX]);
+  const TRADABLE = [AAPLON, IWMX].map((e) => e.mint);
+  const marked = groupByCompany(
+    [IWMON, HK1024, AAPLON, AAPGX, HK12, IWMX, AAPLX].map((e) => ({
+      ...e,
+      tradable: TRADABLE.includes(e.mint),
+    })),
+  );
 
   test("strips each issuer's brand from the security's name", () => {
     expect(companyName(AAPLX)).toBe("Apple");
@@ -234,6 +271,17 @@ describe("browse", () => {
     expect(iwm.company).toBe("iShares Russell 2000 ETF");
     expect(iwm.listings.map((l) => l.symbol)).toEqual(["IWMx", "IWMon"]);
     expect(groups.find((g) => g.ticker === "AAPG")!.company).toBe("Ascentage Pharma");
+  });
+
+  test("lists companies with a tradable token first, and can keep only those tokens", () => {
+    expect(marked.map((g) => g.ticker)).toEqual(["AAPL", "IWM", "AAPG", "12", "1024"]);
+    const tradable = filterGroups(marked, { query: "", issuer: "all", tradableOnly: true });
+    expect(tradable.map((g) => g.listings.map((l) => l.symbol))).toEqual([["AAPLon"], ["IWMx"]]);
+    // A ticker match still outranks the ordering.
+    expect(filterGroups(marked, { query: "aap", issuer: "all" }).map((g) => g.ticker)).toEqual([
+      "AAPL",
+      "AAPG",
+    ]);
   });
 
   test("ranks an exact ticker ahead of a prefix, and a prefix ahead of a name match", () => {
@@ -255,12 +303,135 @@ describe("browse", () => {
     expect(held.map((g) => g.listings.map((l) => l.symbol))).toEqual([["AAPLx"]]);
   });
 
-  test("links to Jupiter with the token preselected, and records each issuer's powers", () => {
-    expect(jupiterSwapUrl(MINT)).toBe(
-      `https://jup.ag/swap?sell=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&buy=${MINT}`,
-    );
+  test("records each issuer's powers, the difference being Ondo's lack of clawback", () => {
     expect(ISSUER_POWERS.xstocks).toContain("clawback");
     expect(ISSUER_POWERS.ondo).not.toContain("clawback");
+  });
+});
+
+// ------------------------------------------------------------------- jupiter
+
+describe("jupiter", () => {
+  test("reads a stock's price, its underlying share, and its multiplier schedule", () => {
+    const prices = parsePrices({
+      [MINT]: {
+        usdPrice: 339.65,
+        priceChange24h: -0.43,
+        decimals: 8,
+        stockData: { id: "xstocks", price: 339.84 },
+        scaledUiConfig: {
+          multiplier: 1.0026,
+          newMultiplier: 1.0032,
+          newMultiplierEffectiveAt: "2026-08-08T00:30:00Z",
+        },
+      },
+      [PLAN]: null,
+      [OWNER]: { usdPrice: "not a number" },
+      // No on-chain market: Jupiter sends only the listed share's price.
+      [DEST]: { decimals: 8, stockData: { id: "xstocks", price: 167 } },
+    });
+    expect([...prices.keys()]).toEqual([MINT, DEST]);
+    expect(prices.get(DEST)).toMatchObject({ usd: null, underlyingUsd: 167 });
+    const price = prices.get(MINT)!;
+    expect(price).toMatchObject({
+      usd: 339.65,
+      change24h: -0.43,
+      underlyingUsd: 339.84,
+      decimals: 8,
+    });
+    const effective = Date.parse("2026-08-08T00:30:00Z") / 1000;
+    expect(multiplierAt(price.scaled, effective - 1)).toBe(1.0026);
+    expect(multiplierAt(price.scaled, effective)).toBe(1.0032);
+    expect(multiplierAt(null, effective)).toBe(1);
+  });
+
+  test("sums a mint's accounts, but only its unfrozen associated account is sellable", () => {
+    const holdings = parseHoldings({
+      amount: "2500000000",
+      uiAmount: 2.5,
+      tokens: {
+        [MINT]: [
+          { amount: "100000000", uiAmount: 1.0032, decimals: 8, isAssociatedTokenAccount: true },
+          { amount: "50000000", uiAmount: 0.5016, decimals: 8, isAssociatedTokenAccount: false },
+        ],
+        [PLAN]: [
+          {
+            amount: "7",
+            uiAmount: 0.000007,
+            decimals: 6,
+            isAssociatedTokenAccount: true,
+            isFrozen: true,
+          },
+        ],
+        [OWNER]: [{ amount: "0", uiAmount: 0, decimals: 6, isAssociatedTokenAccount: true }],
+      },
+    });
+    expect(holdings.sol).toMatchObject({ raw: 2_500_000_000n, ui: 2.5 });
+    expect(holdings.tokens.get(MINT)).toMatchObject({ raw: 150_000_000n, sellable: 100_000_000n });
+    expect(holdings.tokens.get(MINT)!.ui).toBeCloseTo(1.5048);
+    expect(holdings.tokens.get(PLAN)!.sellable).toBe(0n);
+    expect(holdings.tokens.has(OWNER)).toBe(false);
+    expect(parseHoldings(null).tokens.size).toBe(0);
+  });
+
+  test("reads an order, and turns Jupiter's error forms into errors", () => {
+    const order = parseOrder({
+      requestId: "r1",
+      inAmount: "10000000",
+      outAmount: "2926215",
+      priceImpactPct: "-0.0219",
+      feeBps: 10,
+      gasless: true,
+      transaction: "AQID",
+      inUsdValue: 10,
+      outUsdValue: 9.78,
+    });
+    expect(order).toMatchObject({
+      requestId: "r1",
+      inAmount: 10_000_000n,
+      outAmount: 2_926_215n,
+      feeBps: 10,
+      gasless: true,
+      transaction: "AQID",
+    });
+    expect(order.priceImpact).toBeCloseTo(-2.19);
+    expect(parseOrder({ requestId: "r2", priceImpact: -0.5 }).priceImpact).toBe(-0.5);
+    expect(parseOrder({ requestId: "r3", transaction: "" }).transaction).toBeNull();
+    expect(() => parseOrder({ error: "Invalid amount" })).toThrow("Invalid amount");
+    expect(() => parseOrder({ requestId: "r4", errorMessage: "Insufficient funds" })).toThrow(
+      "Insufficient funds",
+    );
+  });
+
+  test("a swap only counts as done when Jupiter says it landed", () => {
+    expect(parseExecute({ status: "Success", signature: "sig", outputAmountResult: "42" })).toEqual(
+      {
+        signature: "sig",
+        inAmount: null,
+        outAmount: 42n,
+      },
+    );
+    try {
+      parseExecute({ status: "Failed", signature: "sig2", error: "Slippage exceeded" });
+      throw new Error("expected a failure");
+    } catch (error) {
+      expect(error).toBeInstanceOf(JupiterError);
+      expect((error as JupiterError).message).toBe("Slippage exceeded");
+      expect((error as JupiterError).signature).toBe("sig2");
+    }
+  });
+
+  test("converts display amounts through a stock's multiplier and back", () => {
+    expect(toRawAmount("1.5", 6)).toBe(1_500_000n);
+    expect(toRawAmount("1.0032", 8, 1.0032)).toBe(100_000_000n);
+    expect(toRawAmount("0", 6)).toBeNull();
+    expect(toRawAmount("abc", 6)).toBeNull();
+    expect(toRawAmount("0.0000001", 6)).toBeNull();
+    expect(toDisplayAmount(100_000_000n, 8, 1.0032)).toBeCloseTo(1.0032);
+  });
+
+  test("links to Jupiter with the token preselected against USDC", () => {
+    expect(jupiterSwapUrl(MINT)).toBe(`https://jup.ag/swap?sell=${USDC_MINT}&buy=${MINT}`);
   });
 });
 

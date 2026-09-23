@@ -13,6 +13,8 @@ export interface CompanyGroup {
   company: string;
   /** One token per issuer, xStocks first. */
   listings: CatalogEntry[];
+  /** Whether any of its tokens had a Jupiter market when the catalog was built. */
+  tradable: boolean;
 }
 
 export type IssuerFilter = CatalogIssuer | "all";
@@ -39,7 +41,9 @@ function compareTickers(a: string, b: string): number {
 }
 
 /**
- * Groups entries by underlying ticker, sorted by ticker. The heading prefers
+ * Groups entries by underlying ticker. Companies with a tradable token come
+ * first, since most listings have no market and a page of them reads as if
+ * nothing can be bought; each half is sorted by ticker. The heading prefers
  * Ondo's name, which is the formal one ("iShares Russell 2000 ETF" where
  * xStocks says "Russell 2000"), and falls back to xStocks'.
  */
@@ -54,9 +58,10 @@ export function groupByCompany(entries: CatalogEntry[]): CompanyGroup[] {
     .map(([ticker, listings]) => {
       listings.sort((a, b) => ISSUER_ORDER.indexOf(a.issuer) - ISSUER_ORDER.indexOf(b.issuer));
       const named = listings.find((l) => l.issuer === "ondo") ?? listings[0]!;
-      return { ticker, company: companyName(named), listings };
+      const tradable = listings.some((l) => l.tradable === true);
+      return { ticker, company: companyName(named), listings, tradable };
     })
-    .sort((a, b) => compareTickers(a.ticker, b.ticker));
+    .sort((a, b) => Number(b.tradable) - Number(a.tradable) || compareTickers(a.ticker, b.ticker));
 }
 
 export interface BrowseFilter {
@@ -64,6 +69,8 @@ export interface BrowseFilter {
   issuer: IssuerFilter;
   /** When set, only these mints are kept: what the connected wallet holds or has vaulted. */
   only?: Set<Address> | null;
+  /** Keep only tokens that had a market when the catalog was built. */
+  tradableOnly?: boolean;
 }
 
 /**
@@ -79,7 +86,8 @@ export function filterGroups(groups: CompanyGroup[], filter: BrowseFilter): Comp
     const listings = group.listings.filter(
       (l) =>
         (filter.issuer === "all" || l.issuer === filter.issuer) &&
-        (!filter.only || filter.only.has(l.mint)),
+        (!filter.only || filter.only.has(l.mint)) &&
+        (!filter.tradableOnly || l.tradable === true),
     );
     if (listings.length === 0) continue;
 
@@ -103,15 +111,4 @@ function matchScore(group: CompanyGroup, listings: CatalogEntry[], q: string): n
     .join(" ")
     .toLowerCase();
   return text.includes(q) ? 2 : null;
-}
-
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-
-/**
- * Jupiter's swap page with USDC → this token preselected. It must be the
- * `sell`/`buy` query form: the older `/swap/USDC-<mint>` path silently falls
- * back to SOL for tokens it doesn't recognise by symbol.
- */
-export function jupiterSwapUrl(mint: Address): string {
-  return `https://jup.ag/swap?sell=${USDC_MINT}&buy=${mint}`;
 }
