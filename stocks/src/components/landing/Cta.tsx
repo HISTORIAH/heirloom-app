@@ -10,17 +10,17 @@ export const Cta: React.FC = () => {
   const { t } = useTranslation("stocks");
 
   return (
-    <section className="lp-col">
-      <div className="lp-card p-5 md:p-6">
-        <p className="lp-mono-xs text-muted-foreground">{t("landing.cta.cap")}</p>
+    <section className="hs-col">
+      <div className="hs-card p-5 md:p-6">
+        <p className="hs-mono-xs text-muted-foreground">{t("landing.cta.cap")}</p>
         <p className="mt-4 max-w-[46rem] text-[clamp(1.5rem,2.5vw,2.25rem)] font-medium leading-[1.15] tracking-[-0.025em]">
           {t("landing.cta.title")}
         </p>
         <div className="relative mt-10 h-[15rem] overflow-hidden rounded-xl border border-tile-line bg-background md:h-[17rem]">
-          <DitherField shape="rise" className="text-[hsl(var(--lp-sage-line))]" />
+          <DitherField shape="rise" className="text-[hsl(var(--hs-sage-line))]" />
           <div className="absolute inset-0 grid place-items-center">
             <div className="rounded-full border border-tile-line bg-background/70 p-2.5 backdrop-blur-sm">
-              <Link to="/portfolio" className="lp-btn lp-btn-primary">
+              <Link to="/portfolio" className="hs-btn hs-btn-primary">
                 {t("landing.cta.button")}
               </Link>
             </div>
@@ -55,11 +55,11 @@ export const Facts: React.FC = () => {
   ];
 
   return (
-    <section className="lp-col">
+    <section className="hs-col">
       <dl className="grid gap-4 sm:grid-cols-2">
         {facts.map(({ label, value }) => (
-          <div key={label} className="lp-card flex min-h-[10rem] flex-col justify-between gap-8 p-6">
-            <dt className="lp-mono text-foreground/75">{label}</dt>
+          <div key={label} className="hs-card flex min-h-[10rem] flex-col justify-between gap-8 p-6">
+            <dt className="hs-mono text-foreground/75">{label}</dt>
             <dd className="text-[clamp(2.25rem,4vw,3.25rem)] font-medium leading-none tracking-[-0.035em] tabular-nums">
               {value ?? (
                 <span className="block h-[0.9em] w-40 animate-pulse rounded-md bg-background motion-reduce:animate-none" />

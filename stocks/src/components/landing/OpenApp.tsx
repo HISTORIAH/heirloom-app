@@ -18,8 +18,8 @@ export const OpenApp: React.FC = () => {
   const { t } = useTranslation("stocks");
 
   return (
-    <section className="lp-col">
-      <h2 className="lp-h2">{t("landing.open.title")}</h2>
+    <section className="hs-col">
+      <h2 className="hs-h2">{t("landing.open.title")}</h2>
       <ul className="mt-8 grid grid-cols-2 border-y border-tile-line md:grid-cols-4">
         {ROUTES.map(({ key, to }, i) => (
           <li
@@ -34,8 +34,8 @@ export const OpenApp: React.FC = () => {
               className="group flex h-full flex-col transition-colors duration-100 ease-out hover:bg-tile-soft/60"
             >
               <span className="flex min-h-[10rem] flex-1 flex-col justify-between gap-6 p-4 sm:p-5 md:min-h-[13.5rem] md:gap-8">
-                <span className="lp-h3">{t(`landing.open.${key}.title`)}</span>
-                <span className="lp-mono text-foreground/75">{t(`landing.open.${key}.body`)}</span>
+                <span className="hs-h3">{t(`landing.open.${key}.title`)}</span>
+                <span className="hs-mono text-foreground/75">{t(`landing.open.${key}.body`)}</span>
               </span>
               {/* Filled, so it hides the page rules; it draws its own dividers. */}
               <span

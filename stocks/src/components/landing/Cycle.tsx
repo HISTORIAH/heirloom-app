@@ -12,8 +12,8 @@ export const Cycle: React.FC = () => {
   const { t } = useTranslation("stocks");
 
   return (
-    <section className="lp-col">
-      <h2 className="lp-h2">{t("landing.cycle.title")}</h2>
+    <section className="hs-col">
+      <h2 className="hs-h2">{t("landing.cycle.title")}</h2>
       <p className="mt-5 max-w-[31rem] text-[0.975rem] leading-relaxed text-foreground/80">
         {t("landing.cycle.body")}
       </p>
@@ -21,7 +21,7 @@ export const Cycle: React.FC = () => {
         {PHASES.map((phase, i) => (
           <li key={phase} className="grid grid-rows-[auto_1fr]">
             <div className="flex items-baseline gap-3 border-t border-tile-line px-4 py-4 md:border-b">
-              <span className="lp-mono-xs text-muted-foreground">0{i + 1}</span>
+              <span className="hs-mono-xs text-muted-foreground">0{i + 1}</span>
               <span className="text-[0.9375rem] font-medium">
                 {t(`landing.cycle.${phase}.name`)}
               </span>

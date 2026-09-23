@@ -1,61 +1,41 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  BookOpen,
-  Briefcase,
-  Compass,
-  Gift,
-  LayoutDashboard,
-  LifeBuoy,
-  ShieldCheck,
-} from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
-import { DOCS_URL } from "@/config";
-import { cn } from "@/lib/utils";
 
 export const STOCKS_DESTINATIONS = [
-  { path: "/portfolio", labelKey: "nav.portfolio", Icon: Briefcase },
-  { path: "/browse", labelKey: "nav.browse", Icon: Compass },
-  { path: "/protect", labelKey: "nav.protect", Icon: ShieldCheck },
-  { path: "/dashboard", labelKey: "nav.dashboard", Icon: LayoutDashboard },
-  { path: "/recover", labelKey: "nav.recover", Icon: LifeBuoy },
-  { path: "/inherit", labelKey: "nav.inherit", Icon: Gift },
+  { path: "/portfolio", labelKey: "nav.portfolio" },
+  { path: "/browse", labelKey: "nav.browse" },
+  { path: "/protect", labelKey: "nav.protect" },
+  { path: "/dashboard", labelKey: "nav.dashboard" },
+  { path: "/recover", labelKey: "nav.recover" },
+  { path: "/inherit", labelKey: "nav.inherit" },
 ] as const;
 
 const linkClass = {
-  bar: "flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft",
-  drawer:
-    "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft",
+  bar: "hs-nav-link",
+  // In the drawer each destination is a full-width row, big enough to thumb.
+  drawer: "hs-nav-link h-12 w-full justify-between px-4 text-base",
 };
 
-/** The app's `AppNavLinks`, pointed at the stocks routes. */
+/**
+ * The app's destinations as quiet text links, the way the landing's nav
+ * reads. NavLink sets aria-current on the active one, which is what the
+ * stylesheet lights.
+ */
 export const StocksNavLinks: React.FC<{
   onNavigate?: () => void;
   variant?: "bar" | "drawer";
 }> = ({ onNavigate, variant = "bar" }) => {
   const { t } = useTranslation("stocks");
-  const { t: tApp } = useTranslation("app");
 
+  // The docs are linked from the footer rather than the bar.
   return (
     <>
-      {STOCKS_DESTINATIONS.map(({ path, labelKey, Icon }) => (
-        <NavLink
-          key={path}
-          to={path}
-          onClick={onNavigate}
-          className={({ isActive }) => cn(linkClass[variant], isActive && "bg-tile-soft")}
-        >
-          <Icon className="h-4 w-4" strokeWidth={2} />
+      {STOCKS_DESTINATIONS.map(({ path, labelKey }) => (
+        <NavLink key={path} to={path} onClick={onNavigate} className={linkClass[variant]}>
           {t(labelKey)}
         </NavLink>
       ))}
-
-      {/* The docs are on the landing's origin, so this is an anchor rather
-          than a router link. */}
-      <a href={DOCS_URL} onClick={onNavigate} className={linkClass[variant]}>
-        <BookOpen className="h-4 w-4" strokeWidth={2} />
-        {tApp("nav.docs")}
-      </a>
     </>
   );
 };

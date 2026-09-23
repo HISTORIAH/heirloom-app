@@ -30,16 +30,16 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         this.props.fallback ?? (
           <div className="flex min-h-screen items-center justify-center bg-background px-[var(--page-pad)]">
-            <div className="w-full max-w-lg rounded-xl border border-tile-line bg-background p-6 md:p-7">
-              <p className="ed-label">{getI18n().t("error.cap", { ns: "app" })}</p>
-              <h1 className="ed-h3 mt-2">{getI18n().t("error.title", { ns: "app" })}</h1>
-              <p className="mt-3 break-all font-mono text-sm text-muted-foreground">
+            <div className="hs-card w-full max-w-lg p-6 md:p-8">
+              <span className="hs-tag hs-mono-xs">{getI18n().t("error.cap", { ns: "app" })}</span>
+              <h1 className="hs-h3 mt-5">{getI18n().t("error.title", { ns: "app" })}</h1>
+              <p className="hs-mono mt-4 break-all rounded-xl border border-tile-line bg-background px-4 py-3 text-muted-foreground">
                 {this.state.error?.message ?? getI18n().t("error.unknown", { ns: "app" })}
               </p>
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="mt-6 rounded-lg bg-accent-yellow px-4 py-2.5 text-sm font-bold uppercase tracking-wide hover:brightness-95"
+                className="hs-btn hs-btn-primary mt-6"
               >
                 {getI18n().t("error.reload", { ns: "app" })}
               </button>

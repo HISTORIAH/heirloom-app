@@ -69,3 +69,8 @@ export function explorerTxUrl(signature: string): string {
   if (SOLANA_RPC_ENDPOINT.includes("devnet")) return `${base}?cluster=devnet`;
   return `${base}?cluster=custom&customUrl=${encodeURIComponent(SOLANA_RPC_ENDPOINT)}`;
 }
+
+/** A date without the time or year, for the ends of a timeline: "Sep 23". */
+export function formatShortDate(seconds: number, locale: string): string {
+  return new Date(seconds * 1000).toLocaleDateString(locale, { month: "short", day: "numeric" });
+}

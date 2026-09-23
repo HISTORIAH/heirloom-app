@@ -3,22 +3,25 @@ import { Link } from "react-router-dom";
 import type { Address } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
 import { StocksPage } from "@/components/layout/StocksPage";
-import { Panel, PanelCap } from "@/components/surface/Panel";
+import { Cap } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
 import { PlanForm } from "@/components/stocks/PlanForms";
-import { QueryState, Section } from "@/components/stocks/Section";
+import { Cell, List, QueryState, Row, Section } from "@/components/stocks/Section";
 import { HealthText, RiskTags } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
 import { useNow, useOwnerOverview } from "@/hooks/useStocks";
 import { useStocksTx } from "@/hooks/useStocksTx";
 import { buildCoverAssetIx, buildInitializePlanIx, buildUncoverAssetIx } from "@/lib/stocks";
 import { formatPercent, formatUiAmount, SECONDS_PER_DAY, truncateAddress } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { coverBlockers, type StockHolding } from "@/services/holdings";
 import type { OwnerOverview, PlanOverview } from "@/services/overview";
 
 /** Cover instructions per transaction; each is an approval plus a new record. */
 const COVERS_PER_TX = 3;
+
+const CHOOSE_COLS = "minmax(0,2.1fr) minmax(0,0.9fr) minmax(0,1.5fr) minmax(6.5rem,auto)";
 
 const Protect = () => (
   <StocksPage page="protect">{(wallet) => <ProtectBody wallet={wallet} />}</StocksPage>
@@ -56,32 +59,43 @@ function PlanTerms({ backup }: { backup: PlanOverview }) {
   const { plan } = backup;
   const days = (seconds: number) =>
     t("common.days", { count: Math.round(seconds / SECONDS_PER_DAY) });
-  const rows: [string, string][] = [
-    [t("common.recoveryWallet"), truncateAddress(plan.destination, 6)],
-    [t("planForm.interval"), days(plan.checkinIntervalSecs)],
-    [t("planForm.grace"), days(plan.gracePeriodSecs)],
-    [t("common.guardian"), plan.guardian ? truncateAddress(plan.guardian, 6) : t("common.none")],
+  // Label, value, and whether the value is an address (set in mono).
+  const rows: [string, string, boolean][] = [
+    [t("common.recoveryWallet"), truncateAddress(plan.destination, 6), true],
+    [t("planForm.interval"), days(plan.checkinIntervalSecs), false],
+    [t("planForm.grace"), days(plan.gracePeriodSecs), false],
+    [
+      t("common.guardian"),
+      plan.guardian ? truncateAddress(plan.guardian, 6) : t("common.none"),
+      !!plan.guardian,
+    ],
     [
       t("common.checkinWallet"),
       plan.checkinSigner ? truncateAddress(plan.checkinSigner, 6) : t("common.none"),
+      !!plan.checkinSigner,
     ],
   ];
 
   return (
-    <Panel tone="soft" className="gap-4">
-      <PanelCap className="text-muted-foreground">{t("protect.planTitle")}</PanelCap>
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {rows.map(([label, value]) => (
-          <div key={label}>
-            <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="font-mono text-sm font-semibold">{value}</dd>
+    <section className="hs-sheet overflow-hidden">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-6">
+        <Cap>{t("protect.planTitle")}</Cap>
+        <Link to="/dashboard" className="hs-link text-sm">
+          {t("protect.settingsLink")}
+        </Link>
+      </header>
+      {/* Stacked below lg with rules between; one row of five above it. */}
+      <dl className="grid divide-y divide-tile-line border-t border-tile-line lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+        {rows.map(([label, value, mono]) => (
+          <div key={label} className="px-5 py-4 md:px-6">
+            <dt className="hs-mono-xs text-muted-foreground">{label}</dt>
+            <dd className={cn("mt-1.5 truncate font-medium", mono ? "hs-mono" : "text-[0.9375rem]")}>
+              {value}
+            </dd>
           </div>
         ))}
       </dl>
-      <Link to="/dashboard" className="self-start text-sm font-semibold underline">
-        {t("protect.settingsLink")}
-      </Link>
-    </Panel>
+    </section>
   );
 }
 
@@ -138,7 +152,7 @@ function CoverView({
       .then((ok) => ok && setSelected({}));
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-14">
       <PlanTerms backup={backup} />
 
       <Section
@@ -147,7 +161,7 @@ function CoverView({
         action={
           uncovered.length > 0 && (
             <Button
-              variant="flat-yellow"
+              variant="primary"
               disabled={chosen.length === 0 || tx.pending !== null}
               onClick={cover}
             >
@@ -161,9 +175,14 @@ function CoverView({
         }
       >
         {uncovered.length === 0 ? (
-          <p className="text-muted-foreground">{t("protect.nothingToCover")}</p>
+          <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">
+            {t("protect.nothingToCover")}
+          </p>
         ) : (
-          <ul className="space-y-3">
+          <List
+            cols={CHOOSE_COLS}
+            head={[t("columns.stock"), t("columns.balance"), t("columns.issuerCan"), t("columns.allocation")]}
+          >
             {uncovered.map((holding) => (
               <UncoveredRow
                 key={holding.position.tokenAccount}
@@ -183,29 +202,30 @@ function CoverView({
                 }
               />
             ))}
-          </ul>
+          </List>
         )}
       </Section>
 
       {backup.rows.length > 0 && (
         <Section title={t("protect.coveredTitle")}>
-          <ul className="space-y-3">
+          <List
+            cols="minmax(0,2fr) minmax(0,0.9fr) minmax(0,1.2fr) minmax(8rem,auto)"
+            head={[t("columns.stock"), t("columns.allocation"), t("columns.status"), ""]}
+          >
             {backup.rows.map((row) => (
-              <li key={row.record.address}>
-                <Panel
-                  tone="paper"
-                  className="gap-4 md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center"
-                >
-                  <AssetBadge mint={row.mint} catalog={row.catalog} />
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t("common.allocation")}</p>
-                    <p className="font-semibold">
-                      {formatPercent(row.record.allocationBps / 10_000, locale)}
-                    </p>
-                  </div>
+              <Row key={row.record.address}>
+                <AssetBadge mint={row.mint} catalog={row.catalog} />
+                <Cell label={t("columns.allocation")}>
+                  <p className="font-medium tabular-nums">
+                    {formatPercent(row.record.allocationBps / 10_000, locale)}
+                  </p>
+                </Cell>
+                <Cell label={t("columns.status")}>
                   <HealthText health={row.health} />
+                </Cell>
+                <div className="md:justify-self-end">
                   <Button
-                    variant="flat-outline"
+                    variant="ghost"
                     size="sm"
                     disabled={tx.pending !== null}
                     onClick={() =>
@@ -227,15 +247,15 @@ function CoverView({
                       ? t("tx.signing")
                       : t("protect.stopCovering")}
                   </Button>
-                </Panel>
-              </li>
+                </div>
+              </Row>
             ))}
-          </ul>
+          </List>
         </Section>
       )}
 
       {backup.missing > 0 && (
-        <p className="text-sm text-muted-foreground">
+        <p className="hs-mono-xs text-muted-foreground">
           {t("protect.missing", { count: backup.missing })}
         </p>
       )}
@@ -262,29 +282,35 @@ function UncoveredRow({
   const checked = allocation !== undefined;
 
   return (
-    <li>
-      <Panel
-        tone={checked ? "yellow-line" : "paper"}
-        className="gap-4 md:grid md:grid-cols-[auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)] md:items-center"
-      >
+    <Row className={cn(checked && "bg-tile-soft/70")}>
+      <div className="flex min-w-0 items-center gap-4">
         <input
           id={id}
           type="checkbox"
           checked={checked}
           disabled={blockers.length > 0}
           onChange={(e) => onToggle(e.target.checked)}
-          className="h-5 w-5 accent-foreground"
+          className="hs-check"
           aria-label={holding.mint.symbol ?? holding.mint.mint}
         />
-        <label htmlFor={id} className="cursor-pointer">
+        <label htmlFor={id} className="min-w-0 cursor-pointer">
           <AssetBadge mint={holding.mint} catalog={holding.catalog} issuer={holding.issuer} />
         </label>
-        <p className="font-semibold tabular-nums">{amount}</p>
+      </div>
+      <Cell label={t("columns.balance")}>
+        <p className="font-medium tabular-nums">{amount}</p>
+      </Cell>
+      <Cell label={t("columns.issuerCan")}>
         {blockers.length > 0 ? (
           <p className="text-sm text-muted-foreground">{t(`blockers.${blockers[0]}`)}</p>
-        ) : checked ? (
-          <div className="flex items-center gap-2">
-            <label htmlFor={`${id}-allocation`} className="text-sm text-muted-foreground">
+        ) : (
+          <RiskTags mint={holding.mint} />
+        )}
+      </Cell>
+      <Cell label={t("columns.allocation")}>
+        {checked ? (
+          <div className="relative w-24">
+            <label htmlFor={`${id}-allocation`} className="sr-only">
               {t("common.allocation")}
             </label>
             <input
@@ -293,15 +319,20 @@ function UncoveredRow({
               value={allocation}
               onChange={(e) => onAllocation(e.target.value)}
               title={t("protect.allocationHint")}
-              className="ed-input w-20"
+              className="hs-input h-10 pr-8 tabular-nums"
             />
-            <span className="text-sm font-semibold">%</span>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+            >
+              %
+            </span>
           </div>
         ) : (
-          <RiskTags mint={holding.mint} />
+          <span className="text-sm text-muted-foreground">—</span>
         )}
-      </Panel>
-    </li>
+      </Cell>
+    </Row>
   );
 }
 

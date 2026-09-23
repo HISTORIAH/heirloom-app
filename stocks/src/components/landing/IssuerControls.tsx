@@ -92,8 +92,8 @@ export const IssuerControls: React.FC = () => {
     "grid h-11 w-11 place-items-center rounded-full border border-foreground/20 bg-background transition-colors duration-100 ease-out hover:border-foreground/55 disabled:pointer-events-none disabled:opacity-35";
 
   return (
-    <section id="issuers" className="lp-col scroll-mt-24">
-      <h2 className="lp-h2">{t("landing.issuers.title")}</h2>
+    <section id="issuers" className="hs-col scroll-mt-24">
+      <h2 className="hs-h2">{t("landing.issuers.title")}</h2>
       <p className="mt-4 max-w-[36rem] text-[0.975rem] leading-relaxed text-foreground/80">
         <span aria-hidden="true">* </span>
         {t("landing.issuers.note")}
@@ -108,7 +108,7 @@ export const IssuerControls: React.FC = () => {
               aria-pressed={filter === f}
               onClick={() => setFilter(f)}
               className={cn(
-                "lp-mono-xs h-10 rounded-full border px-4 transition-colors duration-100 ease-out",
+                "hs-mono-xs h-10 rounded-full border px-4 transition-colors duration-100 ease-out",
                 filter === f
                   ? "border-foreground bg-foreground text-background"
                   : "border-foreground/20 bg-background hover:border-foreground/55",
@@ -118,7 +118,7 @@ export const IssuerControls: React.FC = () => {
             </button>
           ))}
         </div>
-        <a href={ISSUER_DOCS_URL} className="lp-mono inline-flex items-center gap-1.5 hover:underline">
+        <a href={ISSUER_DOCS_URL} className="hs-mono inline-flex items-center gap-1.5 hover:underline">
           {t("landing.issuers.more")}
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </a>
@@ -128,18 +128,18 @@ export const IssuerControls: React.FC = () => {
         ref={rail}
         tabIndex={0}
         aria-label={t("landing.issuers.title")}
-        className="lp-rail mt-6 rounded-[var(--lp-radius)]"
+        className="hs-rail mt-6 rounded-[var(--hs-radius)]"
       >
         {shown.map(({ key, group, Icon }) => (
-          <li key={key} className="lp-card flex min-h-[16rem] flex-col justify-between gap-10 p-6">
+          <li key={key} className="hs-card flex min-h-[16rem] flex-col justify-between gap-10 p-6">
             <div className="flex items-center gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-tile-line bg-background">
                 <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
               </span>
-              <h3 className="lp-h3">{t(`landing.issuers.${key}.title`)}</h3>
+              <h3 className="hs-h3">{t(`landing.issuers.${key}.title`)}</h3>
             </div>
             <div>
-              <span className="lp-mono-xs inline-flex rounded-md border border-tile-line bg-background px-2 py-0.5 text-muted-foreground">
+              <span className="hs-mono-xs inline-flex rounded-md border border-tile-line bg-background px-2 py-0.5 text-muted-foreground">
                 {t(`landing.issuers.filters.${group}`)}
               </span>
               <p className="mt-3 text-sm leading-relaxed text-foreground/80">

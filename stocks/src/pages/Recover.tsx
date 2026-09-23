@@ -1,10 +1,10 @@
+import type { CSSProperties } from "react";
 import { useTranslation } from "@heirloom/i18n";
 import { RECOVERY_FEE_BPS } from "@historiah/heirloom-stocks";
 import { StocksPage } from "@/components/layout/StocksPage";
-import { Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
-import { EmptyState, QueryState } from "@/components/stocks/Section";
+import { Cell, EmptyState, QueryState, Row } from "@/components/stocks/Section";
 import { HealthText, PlanClock } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
 import { useNamedPlans, useNow } from "@/hooks/useStocks";
@@ -25,6 +25,8 @@ import {
 import type { CoveredRow, NamedPlanOverview } from "@/services/overview";
 import { canDefer, planTimeline } from "@/services/plans";
 
+const PAYOUT_COLS = "minmax(0,1.4fr) minmax(0,0.9fr) minmax(0,1.6fr) minmax(7rem,auto)";
+
 /** Recoveries or claims per transaction; each may create two token accounts. */
 const PAYOUTS_PER_TX = 2;
 
@@ -43,7 +45,7 @@ function RecoverBody({ wallet }: { wallet: WalletCtx }) {
         plans.length === 0 ? (
           <EmptyState title={t("recover.emptyTitle")} description={t("recover.emptyDescription")} />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {plans.map((named) => (
               <NamedPlanPanel key={named.plan.address} named={named} wallet={wallet} tx={tx} />
             ))}
@@ -101,31 +103,36 @@ function NamedPlanPanel({
       },
     });
 
+  const payoutLabel = plan.mode === "backup" ? t("recover.recover") : t("recover.claim");
+
   return (
-    <Panel tone="paper" className="gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-6">
-        <div className="space-y-2">
-          <h2 className="ed-h3">
+    <section className="hs-sheet overflow-hidden">
+      {/* Whose plan, what this wallet is to it, and where its clock stands. */}
+      <header className="grid gap-8 px-6 py-7 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:px-8">
+        <div className="space-y-4">
+          <h2 className="hs-h3">
             {plan.mode === "backup"
               ? t("recover.backupOf", { owner: truncateAddress(plan.owner, 6) })
               : t("recover.vaultOf", { owner: truncateAddress(plan.owner, 6) })}
           </h2>
-          <ul className="space-y-1">
+          <ul className="flex flex-wrap gap-1.5">
             {roles.map((role) => (
-              <li key={role} className="text-sm font-semibold">
+              <li key={role} className="hs-chip">
                 {t(`recover.roles.${role}`)}
               </li>
             ))}
           </ul>
         </div>
-        <PlanClock plan={plan} now={now} />
-      </div>
+        <div className="rounded-2xl border border-tile-line bg-tile-soft p-5">
+          <PlanClock plan={plan} now={now} />
+        </div>
+      </header>
 
       {(roles.includes("checkin") || roles.includes("guardian")) && (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 border-t border-tile-line px-6 py-5 md:px-8">
           {roles.includes("checkin") && (
             <Button
-              variant="flat"
+              variant="ink"
               disabled={tx.pending !== null}
               onClick={() =>
                 tx.run(`checkin-${plan.address}`, {
@@ -140,7 +147,7 @@ function NamedPlanPanel({
           {roles.includes("guardian") &&
             (canDefer(plan, now) ? (
               <Button
-                variant="flat-outline"
+                variant="ghost"
                 disabled={tx.pending !== null}
                 onClick={() =>
                   tx.run(`defer-${plan.address}`, {
@@ -164,28 +171,32 @@ function NamedPlanPanel({
       )}
 
       {roles.includes("destination") && (
-        <div className="space-y-4">
+        <>
           {rows.length > 0 && (
-            <ul className="space-y-3">
+            <div className="border-t border-tile-line" style={{ "--cols": PAYOUT_COLS } as CSSProperties}>
+              <div className="hs-list-head md:px-8" aria-hidden="true">
+                <span>{t("columns.stock")}</span>
+                <span>{t("columns.moves")}</span>
+                <span>{t("columns.status")}</span>
+                <span />
+              </div>
               {rows.map((row) => {
                 const id = `payout-${row.record.address}`;
                 const amount = payoutAmount(row, plan.mode);
                 return (
-                  <li key={row.record.address}>
-                    <Panel
-                      tone="soft"
-                      className="gap-4 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.5fr)_auto] md:items-center"
-                    >
-                      <AssetBadge mint={row.mint} catalog={row.catalog} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t("recover.willMove")}</p>
-                        <p className="font-semibold tabular-nums">
-                          {formatUiAmount(amount, row.mint, now, locale)}
-                        </p>
-                      </div>
+                  <Row key={row.record.address} className="md:px-8">
+                    <AssetBadge mint={row.mint} catalog={row.catalog} />
+                    <Cell label={t("recover.willMove")}>
+                      <p className="font-medium tabular-nums">
+                        {formatUiAmount(amount, row.mint, now, locale)}
+                      </p>
+                    </Cell>
+                    <Cell label={t("columns.status")}>
                       <HealthText health={row.health} withHint />
+                    </Cell>
+                    <div className="md:justify-self-end">
                       <Button
-                        variant="flat-yellow"
+                        variant="primary"
                         size="sm"
                         disabled={
                           tx.pending !== null ||
@@ -200,45 +211,44 @@ function NamedPlanPanel({
                           })
                         }
                       >
-                        {tx.pending === id
-                          ? t("tx.signing")
-                          : plan.mode === "backup"
-                            ? t("recover.recover")
-                            : t("recover.claim")}
+                        {tx.pending === id ? t("tx.signing") : payoutLabel}
                       </Button>
-                    </Panel>
-                  </li>
+                    </div>
+                  </Row>
                 );
               })}
-            </ul>
+            </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-4">
-            {recoverable ? (
-              ready.length > 1 && (
-                <Button variant="flat-yellow" disabled={tx.pending !== null} onClick={payAll}>
-                  {tx.pending === `all-${plan.address}`
-                    ? t("tx.signing")
-                    : plan.mode === "backup"
-                      ? t("recover.recoverAll")
-                      : t("recover.claimAll")}
-                </Button>
-              )
-            ) : (
-              <p className="text-sm font-semibold">
-                {t("recover.notYet", { date: formatDate(timeline.recoverableAt, locale) })}
-              </p>
-            )}
-            {recoverable && ready.length === 0 && (
-              <p className="text-sm text-muted-foreground">{t("recover.nothingToRecover")}</p>
-            )}
-            <p className="text-sm text-muted-foreground">
+          <footer className="flex flex-col gap-4 border-t border-tile-line bg-tile-soft px-6 py-5 md:flex-row md:items-center md:justify-between md:px-8">
+            <div className="flex flex-wrap items-center gap-3">
+              {recoverable ? (
+                ready.length > 1 ? (
+                  <Button variant="primary" disabled={tx.pending !== null} onClick={payAll}>
+                    {tx.pending === `all-${plan.address}`
+                      ? t("tx.signing")
+                      : plan.mode === "backup"
+                        ? t("recover.recoverAll")
+                        : t("recover.claimAll")}
+                  </Button>
+                ) : (
+                  ready.length === 0 && (
+                    <p className="text-sm text-muted-foreground">{t("recover.nothingToRecover")}</p>
+                  )
+                )
+              ) : (
+                <p className="text-sm font-medium">
+                  {t("recover.notYet", { date: formatDate(timeline.recoverableAt, locale) })}
+                </p>
+              )}
+            </div>
+            <p className="hs-mono-xs text-muted-foreground">
               {t("recover.feeNote", { fee: formatPercent(RECOVERY_FEE_BPS / 10_000, locale) })}
             </p>
-          </div>
-        </div>
+          </footer>
+        </>
       )}
-    </Panel>
+    </section>
   );
 }
 

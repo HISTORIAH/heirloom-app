@@ -14,11 +14,9 @@ const stocks = {
    */
   landing: {
     nav: {
-      home: "Heirloom Stocks home",
       stocks: "Stocks",
       howItWorks: "How it works",
       issuers: "Issuer risk",
-      docs: "Docs",
       launch: "Launch app",
     },
     hero: {
@@ -281,6 +279,22 @@ const stocks = {
         "Deposit stocks into a vault that passes to your heir if you stop checking in. Vaulted stocks can't be traded until you withdraw them.",
     },
   },
+  /* Column headers for the app's lists. */
+  columns: {
+    stock: "Stock",
+    balance: "Balance",
+    backup: "Backup",
+    issuerCan: "Issuer can",
+    status: "Status",
+    allocation: "Allocation",
+    inVault: "In vault",
+    moves: "Moves",
+    price: "Price",
+    issuer: "Issuer",
+    position: "Your position",
+    change: "Next change",
+    tier: "Registry",
+  },
   connect: {
     title: "Connect a wallet to continue",
     description: "Everything on this page is read from, and signed by, your own wallet.",
@@ -395,6 +409,15 @@ const stocks = {
     unit: "days",
     submitBackup: "Create backup plan",
     submitVault: "Create vault",
+    backupNote: "Creating the plan moves nothing. You choose what it covers next.",
+    vaultNote: "Creating the vault moves nothing. You add stocks to it next.",
+    groups: {
+      recipient: "Recipient",
+      timing: "Timing",
+      timingHint: "Each can be up to 365 days.",
+      helpers: "Helpers",
+      helpersHint: "Optional. You can add or remove them later.",
+    },
     errors: {
       address: "Enter a valid Solana address.",
       self: "This has to be a different wallet from the one connected.",
@@ -536,6 +559,7 @@ const stocks = {
   inherit: {
     planTitle: "Your vault",
     contentsTitle: "In the vault",
+    tradeoffTitle: "How a vault differs",
     tradeoff:
       "A vault holds your stocks in accounts only the plan controls. Unlike a backup, no later approval can displace it — but vaulted stocks can't be traded or used as collateral until you withdraw them.",
     empty: "The vault is empty. Add a stock below.",

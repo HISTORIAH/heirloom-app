@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /** Registration ticks on the outer rules and the centre line, between sections. */
 export const Ticks: React.FC<{ className?: string }> = ({ className }) => (
-  <div aria-hidden="true" className={cn("lp-ticks", className)}>
+  <div aria-hidden="true" className={cn("hs-ticks", className)}>
     <i />
   </div>
 );

@@ -27,12 +27,16 @@ docs are in [`docs/`](../docs/src/content/docs/stocks/).
 Every app route but `/browse` is wallet-gated. Only the landing is indexable:
 the app routes carry `noindex`, and `public/robots.txt` keeps crawlers to `/`.
 
-The landing is its own register, not the app's panels or heirlm.xyz's mosaic:
-one column ruled into quarters, soft cards, a monospace voice (Geist Mono) for
-small print, and two canvas pieces drawn in ASCII. Its styles are scoped under
-`.lp` in `src/styles/landing.css`, and its sections are in
-`src/components/landing/`. Every figure on it is live (catalog counts, Jupiter
-prices) or a program constant from `@historiah/heirloom-stocks`.
+The whole origin, landing and app, speaks one visual language of its own, not
+app.heirlm.xyz's panels or heirlm.xyz's mosaic: one column ruled into quarters,
+soft rounded cards and list sheets, pill controls, a monospace voice (Geist
+Mono) for labels and small print, and canvas pieces drawn in ASCII. Its classes
+are the `hs-*` set in `src/styles/stocks.css`, which `index.css` imports ahead
+of Tailwind's utilities so a utility on an element can still override one.
+Paper ground, yellow for the main action and sage for "alive" are shared with
+the rest of Heirloom. The landing's sections are in `src/components/landing/`;
+every figure on it is live (catalog counts, Jupiter prices) or a program
+constant from `@historiah/heirloom-stocks`.
 
 ## Running it
 
@@ -112,8 +116,12 @@ Issuers for real mainnet mints are registered with
 - `src/dev/burnerWallet.ts` is a wallet that signs with a local key. It loads
   only on the dev server with `VITE_DEV_BURNER_WALLET=true`, and is never part of
   a production build.
-- `src/components/` is partly copied from `app/` (header, wallet dialog,
-  surfaces, primitives) until the planned `packages/ui` extraction.
+- `src/components/shell/` is the chrome every route shares (the app bar, the
+  brand, the footer); `layout/StocksPage.tsx` is the ruled page frame and page
+  head; `stocks/Section.tsx` holds the page primitives (sections, stat cards,
+  list sheets, empty, loading and error states). `ui/button.tsx`, `ui/dialog.tsx`
+  and `ui/toast.tsx` started as copies of `app/`'s but are restyled for this
+  origin, so don't sync them back.
 - Copy lives in the `stocks` namespace of `@heirloom/i18n`, registered through
   `@heirloom/i18n/stocks`. Generic chrome reuses the translated `app` namespace.
   Stocks copy is English-only so far; other languages fall back to it.

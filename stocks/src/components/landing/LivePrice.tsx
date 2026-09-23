@@ -50,8 +50,8 @@ export const LivePrice: React.FC = () => {
   const unavailable = !loading && (usd === null || !listing);
 
   return (
-    <section className="lp-col">
-      <h2 className="lp-h2">{t("landing.price.title")}</h2>
+    <section className="hs-col">
+      <h2 className="hs-h2">{t("landing.price.title")}</h2>
       <p className="mt-5 max-w-[34rem] text-[0.975rem] leading-relaxed text-foreground/80">
         {t("landing.price.body")}
       </p>
@@ -95,7 +95,7 @@ export const LivePrice: React.FC = () => {
               <button
                 type="button"
                 onClick={() => void prices.refetch()}
-                className="lp-link lp-mono-xs mt-1 text-muted-foreground"
+                className="hs-link hs-mono-xs mt-1 text-muted-foreground"
               >
                 {t("landing.price.retry")}
               </button>
@@ -105,7 +105,7 @@ export const LivePrice: React.FC = () => {
               <p className="text-[2rem] font-medium leading-none tracking-[-0.03em] tabular-nums sm:text-[2.75rem]">
                 {formatUsd(usd!, locale)}
               </p>
-              <p className="lp-mono-xs mt-2 flex flex-wrap items-center gap-x-2 text-muted-foreground">
+              <p className="hs-mono-xs mt-2 flex flex-wrap items-center gap-x-2 text-muted-foreground">
                 <span className="truncate">
                   {listing!.symbol} · {listing!.name}
                 </span>
@@ -113,7 +113,7 @@ export const LivePrice: React.FC = () => {
                   <span
                     className={cn(
                       "inline-flex items-center gap-0.5 tabular-nums",
-                      change >= 0 ? "text-[hsl(var(--lp-up))]" : "text-[hsl(var(--lp-down))]",
+                      change >= 0 ? "text-[hsl(var(--hs-up))]" : "text-[hsl(var(--hs-down))]",
                     )}
                   >
                     {change >= 0 ? (
@@ -130,13 +130,13 @@ export const LivePrice: React.FC = () => {
         </div>
         <Link
           to={listing?.underlying ? `/browse?q=${encodeURIComponent(listing.underlying)}` : "/browse"}
-          className="lp-btn lp-btn-ghost shrink-0 max-sm:px-4"
+          className="hs-btn hs-btn-ghost shrink-0 max-sm:px-4"
         >
           {t("landing.price.trade")}
         </Link>
       </div>
 
-      <Link to="/browse" className="lp-link mt-5 inline-block text-sm">
+      <Link to="/browse" className="hs-link mt-5 inline-block text-sm">
         {catalog.count > 0
           ? t("landing.price.link", { formatted: formatNumber(catalog.count, locale) })
           : t("landing.price.linkFallback")}

@@ -10,21 +10,21 @@ export const Intro: React.FC = () => {
   const { t } = useTranslation("stocks");
 
   return (
-    <section className="lp-col">
-      <div className="lp-card grid gap-6 p-4 md:grid-cols-2 md:p-6">
+    <section className="hs-col">
+      <div className="hs-card grid gap-6 p-4 md:grid-cols-2 md:p-6">
         <div className="aspect-square overflow-hidden rounded-xl border border-tile-line bg-background">
           <AsciiCanvas scene={barsScene} fontPx={10} className="text-foreground" />
         </div>
         <div className="flex flex-col justify-end gap-5 px-2 pb-2 md:px-0 md:pb-0">
-          <h2 className="lp-h2 whitespace-pre-line">{t("landing.intro.title")}</h2>
+          <h2 className="hs-h2 whitespace-pre-line">{t("landing.intro.title")}</h2>
           <p className="text-[0.975rem] leading-relaxed text-foreground/80">
             {t("landing.intro.body")}
           </p>
           <div className="flex flex-wrap gap-3 pt-1">
-            <Link to="/protect" className="lp-btn lp-btn-primary">
+            <Link to="/protect" className="hs-btn hs-btn-primary">
               {t("landing.intro.protect")}
             </Link>
-            <a href={STOCKS_DOCS_URL} className="lp-btn lp-btn-ghost">
+            <a href={STOCKS_DOCS_URL} className="hs-btn hs-btn-ghost">
               {t("landing.intro.docs")}
             </a>
           </div>
@@ -46,22 +46,22 @@ export const Pillars: React.FC = () => {
   ];
 
   return (
-    <section className="lp-col grid gap-4 md:grid-cols-2">
+    <section className="hs-col grid gap-4 md:grid-cols-2">
       <div className="grid gap-4">
         {(["custody", "liquid"] as const).map((key) => (
-          <article key={key} className="lp-card flex flex-col gap-10 p-6">
-            <h3 className="lp-h3 whitespace-pre-line">{t(`landing.pillars.${key}.title`)}</h3>
-            <p className="lp-mono text-foreground/75">{t(`landing.pillars.${key}.body`)}</p>
+          <article key={key} className="hs-card flex flex-col gap-10 p-6">
+            <h3 className="hs-h3 whitespace-pre-line">{t(`landing.pillars.${key}.title`)}</h3>
+            <p className="hs-mono text-foreground/75">{t(`landing.pillars.${key}.body`)}</p>
           </article>
         ))}
       </div>
-      <article className="lp-card flex flex-col justify-between gap-10 p-6">
-        <h3 className="lp-h3 whitespace-pre-line">{t("landing.pillars.dividends.title")}</h3>
+      <article className="hs-card flex flex-col justify-between gap-10 p-6">
+        <h3 className="hs-h3 whitespace-pre-line">{t("landing.pillars.dividends.title")}</h3>
         <figure className="rounded-xl border border-tile-line bg-background p-4">
-          <figcaption className="lp-mono-xs mb-2 text-muted-foreground">
+          <figcaption className="hs-mono-xs mb-2 text-muted-foreground">
             {t("landing.pillars.dividends.example")}
           </figcaption>
-          <dl className="lp-mono">
+          <dl className="hs-mono">
             {example.map(([label, value], i) => (
               <div
                 key={label}
@@ -75,7 +75,7 @@ export const Pillars: React.FC = () => {
             ))}
           </dl>
         </figure>
-        <p className="lp-mono text-foreground/75">{t("landing.pillars.dividends.body")}</p>
+        <p className="hs-mono text-foreground/75">{t("landing.pillars.dividends.body")}</p>
       </article>
     </section>
   );

@@ -1,31 +1,43 @@
-/* ------------------------------------------------------------ landing (/)
-   The marketing page at the root of stocks.heirlm.xyz. It is deliberately its
-   own register rather than the app's editorial tiles or heirlm.xyz's mosaic:
-   one narrow column ruled into quarters, registration ticks between
-   sections, soft rounded cards, and a monospace voice for the small print.
-   Paper ground, yellow as the one loud colour and sage for "alive" are the
-   only things it shares with the rest of the product.
+/* --------------------------------------------------- Heirloom Stocks UI
+   The one visual language of stocks.heirlm.xyz, the landing at / and every
+   app route behind it. It is deliberately its own register rather than the
+   heirlm.xyz mosaic: one column ruled into quarters, registration ticks
+   between sections, soft rounded cards, pill controls, and a monospace
+   voice (Geist Mono) for labels and small print. Paper ground, yellow as
+   the one loud colour and sage for "alive" are what it shares with the
+   rest of Heirloom.
 
-   Everything is scoped under .lp and written as plain CSS (this file is not
-   run through @tailwind, so @layer is not available here). */
+   Written as plain CSS: this file is not run through @tailwind, so @layer
+   is not available here. index.css imports it ahead of Tailwind's layers,
+   which puts it after preflight's resets in effect (every rule here is a
+   class) and before the utilities, so a utility on an element still wins. */
 
-.lp {
+/* Tokens live on :root rather than on .hs, because dialogs and toasts are
+   portalled outside the page root and still need them. */
+:root {
   /* The column everything sits in, and the four quarters it is ruled into.
      The rules and every section measure the same expression, so the lines
      land on card edges instead of near them. */
-  --lp-w: min(100% - 2 * var(--page-pad), 64rem);
-  --lp-line: hsl(var(--tile-line));
-  --lp-tick: hsl(var(--foreground) / 0.4);
-  --lp-card: hsl(var(--tile-soft));
-  --lp-radius: 1.125rem;
+  --hs-w: min(100% - 2 * var(--page-pad), 64rem);
+  --hs-line: hsl(var(--tile-line));
+  --hs-tick: hsl(var(--foreground) / 0.4);
+  --hs-card: hsl(var(--tile-soft));
+  --hs-radius: 1.125rem;
   /* Sage as a stroke: the fill value is too light to draw a 1px line or a
      dot with. Same step the docs use. */
-  --lp-sage-line: 101 25% 54%;
-  /* Price moves, dark enough to pass AA as small text on paper. */
-  --lp-up: 101 38% 28%;
-  --lp-down: 0 70% 42%;
-  --lp-nav-h: 4rem;
+  --hs-sage-line: 101 25% 54%;
+  /* Text-strength state colours, dark enough to pass AA as small type on
+     paper. The accent tokens themselves are fills, not text colours. */
+  --hs-up: 101 38% 28%;
+  --hs-down: 0 70% 42%;
+  --hs-ok: 101 38% 28%;
+  --hs-warn: 29 90% 34%;
+  --hs-danger: 0 70% 42%;
+  --hs-nav-h: 4rem;
+  --hs-shadow-float: 0 24px 48px -24px hsl(var(--foreground) / 0.28);
+}
 
+.hs {
   position: relative;
   /* clip, not hidden: hidden would make this a scroll container and break
      the sticky nav. The hero's art bleeds past the viewport on purpose. */
@@ -34,32 +46,32 @@
   color: hsl(var(--foreground));
 }
 
-.lp-col {
+.hs-col {
   position: relative;
-  width: var(--lp-w);
+  width: var(--hs-w);
   margin-inline: auto;
 }
 
 /* The ruling: both edges of the column and its quarter marks, drawn once
    behind the whole scroll. Opaque cards mask whatever they cover. */
-.lp-rules {
+.hs-rules {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
 }
-.lp-rules > div {
+.hs-rules > div {
   height: 100%;
-  width: var(--lp-w);
+  width: var(--hs-w);
   margin-inline: auto;
-  --rule: linear-gradient(var(--lp-line), var(--lp-line));
+  --rule: linear-gradient(var(--hs-line), var(--hs-line));
   background:
     var(--rule) 0 0 / 1px 100% no-repeat,
     var(--rule) 50% 0 / 1px 100% no-repeat,
     var(--rule) 100% 0 / 1px 100% no-repeat;
 }
 @media (min-width: 768px) {
-  .lp-rules > div {
+  .hs-rules > div {
     background:
       var(--rule) 0 0 / 1px 100% no-repeat,
       var(--rule) 25% 0 / 1px 100% no-repeat,
@@ -68,90 +80,124 @@
       var(--rule) 100% 0 / 1px 100% no-repeat;
   }
 }
-.lp-body {
+.hs-body {
   position: relative;
   z-index: 1;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
 }
 
 /* Registration ticks on the outer rules and the centre line, marking where
    one section hands over to the next. */
-.lp-ticks {
+.hs-ticks {
   position: relative;
-  width: var(--lp-w);
+  width: var(--hs-w);
   height: 1px;
   margin-inline: auto;
 }
-.lp-ticks::before,
-.lp-ticks::after,
-.lp-ticks > i {
+.hs-ticks::before,
+.hs-ticks::after,
+.hs-ticks > i {
   content: "";
   position: absolute;
   top: 0;
   width: 0.75rem;
   height: 1px;
-  background: var(--lp-tick);
+  background: var(--hs-tick);
 }
-.lp-ticks::before { left: 0; }
-.lp-ticks::after { right: 0; }
-.lp-ticks > i { left: calc(50% - 0.375rem); }
+.hs-ticks::before { left: 0; }
+.hs-ticks::after { right: 0; }
+.hs-ticks > i { left: calc(50% - 0.375rem); }
 
 /* ------------------------------------------------------------------ type */
-.lp-display {
+.hs-display {
   font-family: "Space Grotesk", system-ui, sans-serif;
   font-weight: 500;
   letter-spacing: -0.04em;
   line-height: 1;
   font-size: clamp(2.2rem, 4.3vw, 4.1rem);
 }
-.lp-h2 {
+.hs-h2 {
   font-family: "Space Grotesk", system-ui, sans-serif;
   font-weight: 500;
   letter-spacing: -0.035em;
   line-height: 1.04;
   font-size: clamp(2rem, 3.6vw, 3.25rem);
 }
-.lp-h3 {
+.hs-h3 {
   font-family: "Space Grotesk", system-ui, sans-serif;
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.15;
   font-size: clamp(1.3rem, 1.7vw, 1.6rem);
 }
-.lp-lede {
+/* A heading inside a card or a list: a step under .hs-h3. */
+.hs-h4 {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  font-size: 1.125rem;
+}
+.hs-lede {
   font-size: clamp(1rem, 1.1vw, 1.125rem);
   line-height: 1.55;
 }
-.lp-mono {
+.hs-mono {
   font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.8125rem;
   line-height: 1.6;
   letter-spacing: -0.01em;
 }
-.lp-mono-xs {
+.hs-mono-xs {
   font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.6875rem;
   line-height: 1.5;
   letter-spacing: 0;
 }
+/* Big figures: balances, prices, counts. */
+.hs-figure {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+}
 
 /* ----------------------------------------------------------------- cards */
-.lp-card {
+.hs-card {
   position: relative;
-  background: var(--lp-card);
-  border: 1px solid var(--lp-line);
-  border-radius: var(--lp-radius);
+  background: var(--hs-card);
+  border: 1px solid var(--hs-line);
+  border-radius: var(--hs-radius);
 }
-/* A card on paper: for the diagram and the table, where the fill belongs to
+/* A card on paper: for diagrams, lists and forms, where the fill belongs to
    what is inside. */
-.lp-sheet {
+.hs-sheet {
   position: relative;
   background: hsl(var(--background));
-  border: 1px solid var(--lp-line);
-  border-radius: var(--lp-radius);
+  border: 1px solid var(--hs-line);
+  border-radius: var(--hs-radius);
 }
 
-/* --------------------------------------------------------------- buttons */
-.lp-btn {
+/* Tinted fills, laid over paper so they stay opaque: a translucent fill on
+   a card would let the page rules show through it. */
+.hs-fill-sage {
+  background:
+    linear-gradient(hsl(var(--accent-sage) / 0.3), hsl(var(--accent-sage) / 0.3)),
+    hsl(var(--background));
+}
+.hs-fill-alert {
+  background:
+    linear-gradient(hsl(var(--accent-yellow) / 0.15), hsl(var(--accent-yellow) / 0.15)),
+    hsl(var(--background));
+}
+
+/* --------------------------------------------------------------- buttons
+   The React <Button> renders these classes too, so there is one button. */
+.hs-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -159,37 +205,123 @@
   height: 2.75rem;
   padding-inline: 1.35rem;
   border-radius: 999px;
+  border: 1px solid transparent;
   font-size: 0.9375rem;
   font-weight: 500;
   white-space: nowrap;
   transition:
     background-color 100ms ease-out,
     border-color 100ms ease-out,
+    color 100ms ease-out,
     filter 100ms ease-out;
 }
-.lp-btn-sm {
+.hs-btn svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.hs-btn-sm {
   height: 2.25rem;
   padding-inline: 1rem;
   font-size: 0.875rem;
 }
-.lp-btn-primary {
+.hs-btn-lg {
+  height: 3.25rem;
+  padding-inline: 1.75rem;
+  font-size: 1rem;
+}
+.hs-btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+}
+.hs-btn-primary {
   background: hsl(var(--accent-yellow));
   color: hsl(var(--foreground));
 }
-.lp-btn-primary:hover { filter: brightness(0.95); }
-.lp-btn-ghost {
+.hs-btn-primary:hover { filter: brightness(0.95); }
+.hs-btn-ghost {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  border: 1px solid hsl(var(--foreground) / 0.2);
+  border-color: hsl(var(--foreground) / 0.2);
 }
-.lp-btn-ghost:hover { border-color: hsl(var(--foreground) / 0.55); }
-.lp-btn-ink {
+.hs-btn-ghost:hover { border-color: hsl(var(--foreground) / 0.55); }
+.hs-btn-ink {
   background: hsl(var(--foreground));
   color: hsl(var(--background));
 }
-.lp-btn-ink:hover { background: hsl(var(--foreground) / 0.85); }
+.hs-btn-ink:hover { background: hsl(var(--foreground) / 0.85); }
+.hs-btn-quiet {
+  background: transparent;
+  color: hsl(var(--foreground));
+}
+.hs-btn-quiet:hover { background: hsl(var(--tile-soft)); }
+/* Disabled drops to the neutral fill rather than fading its own colour, so
+   a disabled yellow button never reads as a pale call to action. */
+.hs-btn:disabled,
+.hs-btn[aria-disabled="true"] {
+  background: hsl(var(--tile-soft));
+  color: hsl(var(--muted-foreground));
+  border-color: transparent;
+  filter: none;
+  cursor: not-allowed;
+}
 
-.lp-tag {
+/* Toggles: filters and choices that stay pressed. */
+.hs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding-inline: 1rem;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--foreground) / 0.2);
+  background: hsl(var(--background));
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 100ms ease-out,
+    border-color 100ms ease-out,
+    color 100ms ease-out;
+}
+.hs-pill:hover { border-color: hsl(var(--foreground) / 0.55); }
+.hs-pill[aria-pressed="true"] {
+  background: hsl(var(--foreground));
+  border-color: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+/* Two to four mutually exclusive choices in one capsule. */
+.hs-seg {
+  display: inline-flex;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--hs-line);
+  background: hsl(var(--tile-soft));
+}
+.hs-seg > button {
+  height: 2.25rem;
+  padding-inline: 1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  transition:
+    background-color 100ms ease-out,
+    color 100ms ease-out;
+}
+.hs-seg > button:hover { color: hsl(var(--foreground)); }
+.hs-seg > button[aria-pressed="true"] {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  box-shadow:
+    0 0 0 1px var(--hs-line),
+    0 1px 2px hsl(var(--foreground) / 0.08);
+}
+
+.hs-tag {
   display: inline-flex;
   align-items: center;
   height: 1.75rem;
@@ -200,36 +332,248 @@
   font-size: 0.8125rem;
   font-weight: 500;
 }
+/* A small squared label for metadata: issuer powers, a plan's mode. */
+.hs-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1.375rem;
+  padding-inline: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--hs-line);
+  background: hsl(var(--background));
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  color: hsl(var(--foreground) / 0.75);
+  white-space: nowrap;
+}
+.hs-chip[data-tone="warn"] {
+  border-color: hsl(var(--accent-orange) / 0.45);
+  color: hsl(var(--hs-warn));
+}
 
-/* One focus treatment for the page: a quiet ring, not the app's 4px bar. */
-.lp a:focus-visible,
-.lp button:focus-visible,
-.lp [tabindex]:focus-visible {
+/* State of a plan or a covered holding. Sage means alive and well, the way
+   the landing's cycle lights Active; warn and danger ask for attention. */
+.hs-status {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding-inline: 0.625rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+.hs-status[data-tone="ok"] {
+  background: hsl(var(--accent-sage) / 0.5);
+  border-color: hsl(var(--accent-sage));
+  color: hsl(var(--hs-ok));
+}
+.hs-status[data-tone="warn"] {
+  background: hsl(var(--accent-orange) / 0.07);
+  border-color: hsl(var(--accent-orange) / 0.4);
+  color: hsl(var(--hs-warn));
+}
+.hs-status[data-tone="danger"] {
+  background: hsl(var(--accent-red) / 0.06);
+  border-color: hsl(var(--accent-red) / 0.4);
+  color: hsl(var(--hs-danger));
+}
+.hs-status[data-tone="quiet"] {
+  background: hsl(var(--tile-soft));
+  border-color: var(--hs-line);
+  color: hsl(var(--muted-foreground));
+}
+
+/* One focus treatment everywhere: a quiet ring, not a 4px bar. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+summary:focus-visible {
   outline: 2px solid hsl(var(--foreground));
   outline-offset: 3px;
 }
 
-.lp-link {
+.hs-link {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   text-decoration-color: hsl(var(--foreground) / 0.35);
   transition: text-decoration-color 100ms ease-out;
 }
-.lp-link:hover { text-decoration-color: hsl(var(--foreground)); }
+.hs-link:hover { text-decoration-color: hsl(var(--foreground)); }
+
+/* ---------------------------------------------------------------- fields */
+.hs-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.hs-hint {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+.hs-error {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  font-weight: 500;
+  color: hsl(var(--hs-danger));
+}
+.hs-input {
+  width: 100%;
+  height: 2.75rem;
+  padding-inline: 1rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--hs-line);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+  appearance: none;
+  transition:
+    border-color 100ms ease-out,
+    box-shadow 100ms ease-out;
+}
+.hs-input:hover { border-color: hsl(var(--foreground) / 0.3); }
+.hs-input:focus {
+  outline: none;
+  border-color: hsl(var(--foreground) / 0.55);
+  box-shadow: 0 0 0 3px hsl(var(--foreground) / 0.08);
+}
+.hs-input[aria-invalid="true"] { border-color: hsl(var(--hs-danger) / 0.6); }
+.hs-input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.75);
+  opacity: 1;
+}
+.hs-input-mono {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+}
+/* Room on the left for a leading icon, which the markup positions. */
+.hs-input-lead { padding-left: 2.75rem; }
+select.hs-input {
+  padding-right: 2.75rem;
+  cursor: pointer;
+  /* A chevron in the muted ink; data URIs can't read CSS variables. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 0.75rem;
+}
+.hs-input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
+
+.hs-check {
+  appearance: none;
+  display: inline-grid;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 0.375rem;
+  border: 1.5px solid hsl(var(--foreground) / 0.35);
+  background-color: hsl(var(--background));
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 72%;
+  cursor: pointer;
+  transition:
+    background-color 100ms ease-out,
+    border-color 100ms ease-out;
+}
+.hs-check:hover { border-color: hsl(var(--foreground) / 0.65); }
+.hs-check:checked {
+  border-color: hsl(var(--foreground));
+  background-color: hsl(var(--foreground));
+  /* White tick on ink; data URIs can't read CSS variables. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2 5 8.5 9.5 3.5'/%3E%3C/svg%3E");
+}
+.hs-check:disabled {
+  border-color: var(--hs-line);
+  background-color: hsl(var(--tile-soft));
+  cursor: not-allowed;
+}
+.hs-check:focus-visible {
+  outline: 2px solid hsl(var(--foreground));
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------- lists
+   A sheet of rows with a column header above them. Each list passes its own
+   column template as --cols; below md the rows stack instead. */
+.hs-list {
+  overflow: hidden;
+  border: 1px solid var(--hs-line);
+  border-radius: var(--hs-radius);
+  background: hsl(var(--background));
+}
+.hs-list-head {
+  display: none;
+}
+.hs-list-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+}
+.hs-list-row + .hs-list-row,
+.hs-list-head + .hs-list-row { border-top: 1px solid var(--hs-line); }
+@media (min-width: 768px) {
+  .hs-list-head,
+  .hs-list-row {
+    display: grid;
+    grid-template-columns: var(--cols);
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .hs-list-head {
+    padding: 0.625rem 1.25rem;
+    background: hsl(var(--tile-soft));
+    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.6875rem;
+    color: hsl(var(--muted-foreground));
+  }
+  .hs-list-row { padding: 1.125rem 1.25rem; }
+}
+/* A field label for a cell, shown only while rows are stacked and the
+   column header is hidden. */
+.hs-cell-label {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+}
+@media (min-width: 768px) {
+  .hs-cell-label { display: none; }
+}
+
+/* ------------------------------------------------------------- skeletons */
+.hs-skel {
+  display: block;
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--tile-soft)) 0%,
+    hsl(var(--tile-line) / 0.7) 50%,
+    hsl(var(--tile-soft)) 100%
+  );
+  background-size: 200% 100%;
+  animation: hs-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes hs-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
 
 /* ------------------------------------------------------------------- nav */
-.lp-nav {
+.hs-nav {
   position: sticky;
   top: 0;
   z-index: 50;
-  height: var(--lp-nav-h);
-  border-bottom: 1px solid var(--lp-line);
+  height: var(--hs-nav-h);
+  border-bottom: 1px solid var(--hs-line);
   background: hsl(var(--background) / 0.86);
   backdrop-filter: saturate(1.4) blur(12px);
   -webkit-backdrop-filter: saturate(1.4) blur(12px);
 }
-.lp-nav-link {
+.hs-nav-link {
   display: inline-flex;
   align-items: center;
   height: 2.5rem;
@@ -237,17 +581,45 @@
   border-radius: 999px;
   font-size: 0.875rem;
   color: hsl(var(--muted-foreground));
-  transition: color 100ms ease-out;
+  transition:
+    color 100ms ease-out,
+    background-color 100ms ease-out;
 }
-.lp-nav-link:hover { color: hsl(var(--foreground)); }
+.hs-nav-link:hover { color: hsl(var(--foreground)); }
+.hs-nav-link[aria-current="page"] {
+  color: hsl(var(--foreground));
+  background: hsl(var(--tile-soft));
+}
+
+/* A dropdown or a drawer: paper, hairline, one soft shadow. */
+.hs-menu {
+  padding: 0.375rem;
+  border-radius: 1rem;
+  border: 1px solid var(--hs-line);
+  background: hsl(var(--background));
+  box-shadow: var(--hs-shadow-float);
+}
+.hs-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  text-align: left;
+  transition: background-color 100ms ease-out;
+}
+.hs-menu-item:hover { background: hsl(var(--tile-soft)); }
 
 /* ------------------------------------------------------------------ hero */
-.lp-hero {
-  min-height: clamp(34rem, calc(92svh - var(--lp-nav-h)), 48rem);
+.hs-hero {
+  min-height: clamp(34rem, calc(92svh - var(--hs-nav-h)), 48rem);
 }
 /* The art runs from the column's centre line out past the right edge of the
    viewport, the way the page's reference lets its object leave the grid. */
-.lp-hero-art {
+.hs-hero-art {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -255,7 +627,7 @@
   right: calc((100% - 100vw) / 2);
 }
 @media (max-width: 767px) {
-  .lp-hero-art {
+  .hs-hero-art {
     position: relative;
     left: auto;
     right: auto;
@@ -263,47 +635,47 @@
     margin-inline: calc(-1 * var(--page-pad));
   }
 }
-.lp-app-tile {
+.hs-app-tile {
   width: clamp(8.5rem, 14vw, 12rem);
   aspect-ratio: 1;
   padding: 11%;
   border-radius: 26%;
   background: hsl(var(--background));
-  border: 1px solid var(--lp-line);
+  border: 1px solid var(--hs-line);
   box-shadow:
     0 1px 0 hsl(var(--background)) inset,
     0 30px 60px -32px hsl(var(--foreground) / 0.4);
 }
 
 /* --------------------------------------------------------------- marquee */
-.lp-marquee {
+.hs-marquee {
   overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
-.lp-marquee-track {
+.hs-marquee-track {
   display: flex;
   width: max-content;
   /* Linear on purpose: a ticker moves at one speed. */
-  animation: lp-marquee 80s linear infinite;
+  animation: hs-marquee 80s linear infinite;
 }
-.lp-marquee-track[data-reverse] { animation-direction: reverse; }
-.lp-marquee:hover .lp-marquee-track { animation-play-state: paused; }
-@keyframes lp-marquee {
+.hs-marquee-track[data-reverse] { animation-direction: reverse; }
+.hs-marquee:hover .hs-marquee-track { animation-play-state: paused; }
+@keyframes hs-marquee {
   to { transform: translateX(-50%); }
 }
-.lp-logo-mono {
+.hs-logo-mono {
   filter: grayscale(1);
   opacity: 0.8;
   transition: filter 100ms ease-out, opacity 100ms ease-out;
 }
-.lp-marquee-item:hover .lp-logo-mono {
+.hs-marquee-item:hover .hs-logo-mono {
   filter: none;
   opacity: 1;
 }
 
 /* ------------------------------------------------------------- carousel */
-.lp-rail {
+.hs-rail {
   display: flex;
   gap: 1rem;
   overflow-x: auto;
@@ -311,18 +683,35 @@
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }
-.lp-rail::-webkit-scrollbar { display: none; }
-.lp-rail > * {
+.hs-rail::-webkit-scrollbar { display: none; }
+.hs-rail > * {
   scroll-snap-align: start;
   flex: 0 0 min(85%, 22rem);
 }
 @media (min-width: 768px) {
-  .lp-rail > * { flex-basis: calc((100% - 1rem) / 2.35); }
+  .hs-rail > * { flex-basis: calc((100% - 1rem) / 2.35); }
+}
+
+/* An entrance for content that has just loaded: a short rise, once. */
+.hs-rise {
+  animation: hs-rise 250ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+@keyframes hs-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lp-marquee-track { animation: none; }
-  .lp-btn,
-  .lp-link,
-  .lp-logo-mono { transition: none; }
+  .hs-marquee-track,
+  .hs-skel,
+  .hs-rise { animation: none; }
+  .hs-btn,
+  .hs-pill,
+  .hs-seg > button,
+  .hs-link,
+  .hs-input,
+  .hs-check,
+  .hs-nav-link,
+  .hs-menu-item,
+  .hs-logo-mono { transition: none; }
 }

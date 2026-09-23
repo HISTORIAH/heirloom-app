@@ -1,13 +1,13 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { ArrowDownRight, ArrowUpRight, Check, Search } from "lucide-react";
 import type { Address } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
 import { StocksPage } from "@/components/layout/StocksPage";
-import { Panel, PanelCap } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
-import { EmptyState } from "@/components/stocks/Section";
-import { FlagTags, HealthText } from "@/components/stocks/StatusBits";
+import { Cell, EmptyState, List, ListSkeleton, Notice } from "@/components/stocks/Section";
+import { FlagTags, HealthText, Status } from "@/components/stocks/StatusBits";
 import { TradeDialog } from "@/components/stocks/TradeDialog";
 import type { WalletCtx } from "@/components/WithWallet";
 import { IS_MAINNET } from "@/config";
@@ -33,7 +33,7 @@ const PAGE_SIZE = 30;
 
 const ISSUER_FILTERS: IssuerFilter[] = ["all", "xstocks", "ondo"];
 
-const statusLabel = "text-[11px] font-bold uppercase tracking-[0.14em]";
+const CATALOG_COLS = "minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr)";
 
 /**
  * Every stock in the catalog, grouped by company, readable without a wallet.
@@ -44,11 +44,22 @@ const statusLabel = "text-[11px] font-bold uppercase tracking-[0.14em]";
  * protecting a holding — only appears when the app itself reads mainnet, since
  * a catalogued stock can only be covered on the cluster it lives on.
  */
-const Browse = () => (
-  <StocksPage page="browse" walletOptional>
-    {(wallet, connect) => <BrowseView wallet={wallet} connect={connect} />}
-  </StocksPage>
-);
+const Browse = () => {
+  const { t } = useTranslation("stocks");
+  return (
+    <StocksPage
+      page="browse"
+      walletOptional
+      // Where these prices come from, beside the headline, on any build that
+      // isn't reading mainnet.
+      aside={
+        !IS_MAINNET && <Notice title={t("browse.networkCap")}>{t("browse.networkNote")}</Notice>
+      }
+    >
+      {(wallet, connect) => <BrowseView wallet={wallet} connect={connect} />}
+    </StocksPage>
+  );
+};
 
 /** What the stocks program knows about one of the wallet's stocks. Mainnet builds only. */
 interface Coverage {
@@ -135,7 +146,13 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
     setLimit(PAGE_SIZE);
   };
 
-  if (catalog.isLoading) return <p className="text-muted-foreground">{t("common.loading")}</p>;
+  if (catalog.isLoading) {
+    return (
+      <div role="status" aria-label={t("common.loading")}>
+        <ListSkeleton rows={6} />
+      </div>
+    );
+  }
   if (catalog.count === 0) {
     return (
       <EmptyState
@@ -152,25 +169,24 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
   const held = holdings && heldMints ? portfolioValue(heldMints, holdings, prices) : null;
 
   return (
-    <div className="space-y-8">
-      {!IS_MAINNET && (
-        <Panel tone="sky" className="max-w-3xl gap-2">
-          <PanelCap className="text-foreground/55">{t("browse.networkCap")}</PanelCap>
-          <p className="text-foreground/75">{t("browse.networkNote")}</p>
-        </Panel>
-      )}
-
+    <div className="space-y-6">
       {held && held.count > 0 && (
-        <p className="font-semibold">
+        <p className="hs-card px-5 py-4 text-[0.9375rem]">
           {t("browse.heldSummary", { count: held.count, value: formatUsd(held.usd, locale) })}
         </p>
       )}
 
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
-        <div className="w-full max-w-md space-y-2">
-          <label htmlFor="browse-search" className="ed-field-label block">
+      {/* The toolbar: search, issuer, and two narrowing toggles. All of it
+          lives in the URL. */}
+      <div className="hs-sheet flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <div className="relative min-w-0 flex-1">
+          <label htmlFor="browse-search" className="sr-only">
             {t("browse.searchLabel")}
           </label>
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             id="browse-search"
             type="search"
@@ -179,46 +195,39 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
             placeholder={t("browse.searchPlaceholder")}
             autoComplete="off"
             spellCheck={false}
-            className="ed-input w-full"
+            className="hs-input hs-input-lead"
           />
         </div>
-        <div role="group" aria-label={t("browse.issuerLabel")} className="flex flex-wrap gap-2">
-          {ISSUER_FILTERS.map((filter) => (
-            <Button
-              key={filter}
-              size="sm"
-              variant={issuer === filter ? "flat" : "flat-outline"}
-              aria-pressed={issuer === filter}
-              onClick={() => update("issuer", filter === "all" ? "" : filter)}
-            >
-              {t(`browse.issuers.${filter}`)}
-            </Button>
-          ))}
-        </div>
-        <label className="flex h-10 items-center gap-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={tradableOnly}
-            onChange={(e) => update("tradable", e.target.checked ? "1" : "")}
-            className="h-5 w-5 accent-foreground"
+        <div className="flex flex-wrap items-center gap-2">
+          <div role="group" aria-label={t("browse.issuerLabel")} className="hs-seg">
+            {ISSUER_FILTERS.map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                aria-pressed={issuer === filter}
+                onClick={() => update("issuer", filter === "all" ? "" : filter)}
+              >
+                {t(`browse.issuers.${filter}`)}
+              </button>
+            ))}
+          </div>
+          <Toggle
+            pressed={tradableOnly}
+            onChange={(on) => update("tradable", on ? "1" : "")}
+            label={t("browse.tradableOnly")}
           />
-          {t("browse.tradableOnly")}
-        </label>
-        {holdings && (
-          <label className="flex h-10 items-center gap-2 text-sm font-semibold">
-            <input
-              type="checkbox"
-              checked={heldOnly}
-              onChange={(e) => update("held", e.target.checked ? "1" : "")}
-              className="h-5 w-5 accent-foreground"
+          {holdings && (
+            <Toggle
+              pressed={heldOnly}
+              onChange={(on) => update("held", on ? "1" : "")}
+              label={t("browse.heldOnly")}
             />
-            {t("browse.heldOnly")}
-          </label>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-muted-foreground" aria-live="polite">
+        <p className="hs-mono-xs text-muted-foreground" aria-live="polite">
           {t("browse.companies", {
             count: results.length,
             formatted: formatNumber(results.length, locale),
@@ -229,7 +238,7 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
         {!wallet && (
           <p className="text-sm text-muted-foreground">
             {t("browse.connectHint")}{" "}
-            <button type="button" onClick={connect} className="font-semibold underline">
+            <button type="button" onClick={connect} className="hs-link font-medium text-foreground">
               {t("browse.connect")}
             </button>
           </p>
@@ -240,7 +249,7 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
             <button
               type="button"
               onClick={() => void holdingsQuery.refetch()}
-              className="font-semibold underline"
+              className="hs-link font-medium text-foreground"
             >
               {t("common.retry")}
             </button>
@@ -261,9 +270,19 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
           />
         )
       ) : (
-        <ul className="space-y-3">
+        <List
+          cols={CATALOG_COLS}
+          head={[
+            t("columns.stock"),
+            t("columns.price"),
+            t("columns.issuer"),
+            <span key="position" className="block md:text-right">
+              {t("columns.position")}
+            </span>,
+          ]}
+        >
           {shown.map((group) => (
-            <CompanyRow
+            <CompanyRows
               key={group.ticker}
               group={group}
               prices={prices}
@@ -273,17 +292,19 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
               onTrade={setTrading}
             />
           ))}
-        </ul>
+        </List>
       )}
 
       {results.length > limit && (
-        <Button variant="flat-outline" onClick={() => setLimit((l) => l + PAGE_SIZE)}>
-          {t("browse.showMore", { count: Math.min(PAGE_SIZE, results.length - limit) })}
-        </Button>
+        <div className="flex justify-center pt-2">
+          <Button variant="ghost" onClick={() => setLimit((l) => l + PAGE_SIZE)}>
+            {t("browse.showMore", { count: Math.min(PAGE_SIZE, results.length - limit) })}
+          </Button>
+        </div>
       )}
 
       {asOf && (
-        <p className="max-w-3xl text-sm text-muted-foreground">
+        <p className="hs-mono-xs max-w-3xl pt-4 text-muted-foreground">
           {t("browse.source", { date: asOf })}
         </p>
       )}
@@ -300,6 +321,29 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
         onOpenChange={(open) => !open && setTrading(null)}
       />
     </div>
+  );
+}
+
+/** A filter that stays on: a pill that fills with ink and shows a tick. */
+function Toggle({
+  pressed,
+  onChange,
+  label,
+}: {
+  pressed: boolean;
+  onChange: (pressed: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={() => onChange(!pressed)}
+      className="hs-pill"
+    >
+      {pressed && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+      {label}
+    </button>
   );
 }
 
@@ -328,21 +372,18 @@ interface RowProps {
   onTrade: (entry: CatalogEntry) => void;
 }
 
-function CompanyRow({ group, ...row }: RowProps & { group: CompanyGroup }) {
+/** A company's name as a band across the table, then one row per listing of it. */
+function CompanyRows({ group, ...row }: RowProps & { group: CompanyGroup }) {
   return (
-    <li>
-      <Panel tone="paper" className="gap-4">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 className="text-lg font-bold">{group.ticker}</h2>
-          <p className="min-w-0 truncate text-muted-foreground">{group.company}</p>
-        </div>
-        <ul className="divide-y divide-tile-line">
-          {group.listings.map((entry) => (
-            <ListingRow key={entry.mint} entry={entry} {...row} />
-          ))}
-        </ul>
-      </Panel>
-    </li>
+    <Fragment>
+      <div className="hs-list-row !flex !flex-row items-baseline gap-3 bg-tile-soft/60 !py-3">
+        <h2 className="hs-h4">{group.ticker}</h2>
+        <p className="min-w-0 truncate text-sm text-muted-foreground">{group.company}</p>
+      </div>
+      {group.listings.map((entry) => (
+        <ListingRow key={entry.mint} entry={entry} {...row} />
+      ))}
+    </Fragment>
   );
 }
 
@@ -370,31 +411,35 @@ function ListingRow({
     coverBlockers(covered.holding).length === 0;
 
   return (
-    <li className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.6fr)_minmax(0,1.5fr)] md:items-center md:gap-4">
+    // On a phone the row is two lines of two: the stock and its price, then
+    // the issuer and the actions. From md it takes the table's columns.
+    <div className="hs-list-row max-md:grid max-md:grid-cols-[minmax(0,1fr)_auto] max-md:items-start max-md:gap-x-4">
       <AssetBadge mint={{ mint: entry.mint, name: null, symbol: null }} catalog={entry} />
-      <PriceCell price={price} ticker={entry.underlying} locale={locale} />
-      <div className="space-y-2">
-        <p className="text-sm font-semibold">{t(`browse.issuers.${entry.issuer}`)}</p>
+      <Cell className="max-md:text-right">
+        <PriceCell price={price} ticker={entry.underlying} locale={locale} />
+      </Cell>
+      <Cell className="space-y-2">
+        <p className="text-sm font-medium">{t(`browse.issuers.${entry.issuer}`)}</p>
         <FlagTags flags={flags} />
-      </div>
-      <div className="flex flex-wrap items-center gap-3 md:justify-end">
+      </Cell>
+      <div className="flex flex-wrap items-center justify-end gap-3 max-md:self-end">
         {(balance || covered?.vault) && (
           <Position balance={balance} price={price} covered={covered} locale={locale} />
         )}
         <div className="flex gap-2">
           {protectable && (
-            <Button variant="flat-yellow" size="sm" asChild>
+            <Button variant="primary" size="sm" asChild>
               <Link to="/protect">{t("portfolio.protect")}</Link>
             </Button>
           )}
           {tradable && (
-            <Button variant="flat-outline" size="sm" onClick={() => onTrade(entry)}>
+            <Button variant="ghost" size="sm" onClick={() => onTrade(entry)}>
               {t("browse.trade")}
             </Button>
           )}
         </div>
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -411,26 +456,31 @@ function PriceCell({
   if (!price) return <p className="text-sm text-muted-foreground">—</p>;
   const change = price.change24h;
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-1">
       {price.usd !== null ? (
-        <p className="font-semibold tabular-nums">{formatUsd(price.usd, locale)}</p>
+        <p className="font-medium tabular-nums">{formatUsd(price.usd, locale)}</p>
       ) : (
-        <p className={`${statusLabel} text-muted-foreground`} title={t("browse.noMarketHint")}>
-          {t("browse.noMarket")}
-        </p>
+        <span title={t("browse.noMarketHint")}>
+          <Status tone="quiet">{t("browse.noMarket")}</Status>
+        </span>
       )}
       {price.usd !== null && change !== null && (
         <p
           className={cn(
-            "text-sm font-semibold tabular-nums",
-            change < 0 ? "text-accent-red" : "text-foreground/70",
+            "hs-mono-xs inline-flex items-center gap-0.5 tabular-nums",
+            change < 0 ? "text-[hsl(var(--hs-down))]" : "text-[hsl(var(--hs-up))]",
           )}
         >
+          {change < 0 ? (
+            <ArrowDownRight className="h-3 w-3" aria-hidden="true" />
+          ) : (
+            <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+          )}
           {formatPercent(change / 100, locale, true)}
         </p>
       )}
       {ticker && price.underlyingUsd !== null && (
-        <p className="text-xs text-muted-foreground">
+        <p className="hs-mono-xs text-muted-foreground">
           {t("browse.underlying", { ticker, price: formatUsd(price.underlyingUsd, locale) })}
         </p>
       )}
@@ -451,9 +501,9 @@ function Position({
 }) {
   const { t } = useTranslation("stocks");
   return (
-    <div className="space-y-1 md:text-right">
+    <div className="space-y-1.5 md:text-right">
       {balance && (
-        <p className="text-sm font-semibold tabular-nums">
+        <p className="text-sm font-medium tabular-nums">
           {t("browse.youHold", { amount: formatNumber(balance.ui, locale) })}
           {price?.usd != null && (
             <span className="font-normal text-muted-foreground">
@@ -467,11 +517,9 @@ function Position({
         <HealthText health={covered.backup.health} />
       ) : (
         IS_MAINNET &&
-        covered?.holding && (
-          <p className={`${statusLabel} text-muted-foreground`}>{t("common.notProtected")}</p>
-        )
+        covered?.holding && <Status tone="quiet">{t("common.notProtected")}</Status>
       )}
-      {covered?.vault && <p className={statusLabel}>{t("browse.inVault")}</p>}
+      {covered?.vault && <Status tone="ok">{t("browse.inVault")}</Status>}
     </div>
   );
 }

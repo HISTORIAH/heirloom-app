@@ -3,11 +3,19 @@ import type { Address } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
 import { EXIT_FEE_BPS } from "@historiah/heirloom-stocks";
 import { StocksPage } from "@/components/layout/StocksPage";
-import { Panel, PanelCap } from "@/components/surface/Panel";
+import { Cap, Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
 import { PlanForm, PlanSettings } from "@/components/stocks/PlanForms";
-import { AmountInput, QueryState, Section } from "@/components/stocks/Section";
+import {
+  AmountInput,
+  Cell,
+  List,
+  Notice,
+  QueryState,
+  Row,
+  Section,
+} from "@/components/stocks/Section";
 import { HealthText, PlanClock } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
 import { useNow, useOwnerOverview } from "@/hooks/useStocks";
@@ -25,6 +33,9 @@ import { formatPercent, formatUiAmount, parseUiAmount } from "@/lib/format";
 import { coverBlockers, holdingLabel } from "@/services/holdings";
 import type { MintDetails } from "@/services/mints";
 import type { CoveredRow, OwnerOverview, PlanOverview } from "@/services/overview";
+import { cn } from "@/lib/utils";
+
+const VAULT_COLS = "minmax(0,1.6fr) minmax(0,0.9fr) minmax(0,1.5fr) minmax(13rem,auto)";
 
 const Inherit = () => (
   <StocksPage page="inherit">{(wallet) => <InheritBody wallet={wallet} />}</StocksPage>
@@ -42,7 +53,7 @@ function InheritBody({ wallet }: { wallet: WalletCtx }) {
           <VaultView wallet={wallet} data={data} vault={data.vault} tx={tx} />
         ) : (
           <div className="space-y-6">
-            <p className="ed-body max-w-3xl text-muted-foreground">{t("inherit.tradeoff")}</p>
+            <Notice className="max-w-3xl">{t("inherit.tradeoff")}</Notice>
             <PlanForm
               mode="vault"
               owner={wallet.address}
@@ -102,36 +113,48 @@ function VaultView({
   const now = useNow();
 
   return (
-    <div className="space-y-10">
-      <Panel tone="sage" className="gap-4">
-        <PanelCap className="text-foreground/55">{t("inherit.planTitle")}</PanelCap>
-        <PlanClock plan={vault.plan} now={now} />
-        <Button
-          variant="flat"
-          className="self-start"
-          disabled={tx.pending !== null}
-          onClick={() =>
-            tx.run("checkin", {
-              done: "checkIn",
-              build: async () => [
-                [await buildCheckInIx(wallet.signer, { owner: wallet.address, mode: "vault" })],
-              ],
-            })
-          }
-        >
-          {tx.pending === "checkin" ? t("tx.signing") : t("common.checkIn")}
-        </Button>
-      </Panel>
+    <div className="space-y-14">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel tone="sage" className="gap-7">
+          <Cap>{t("inherit.planTitle")}</Cap>
+          <PlanClock plan={vault.plan} now={now} />
+          <div className="mt-auto">
+            <Button
+              variant="ink"
+              disabled={tx.pending !== null}
+              onClick={() =>
+                tx.run("checkin", {
+                  done: "checkIn",
+                  build: async () => [
+                    [await buildCheckInIx(wallet.signer, { owner: wallet.address, mode: "vault" })],
+                  ],
+                })
+              }
+            >
+              {tx.pending === "checkin" ? t("tx.signing") : t("common.checkIn")}
+            </Button>
+          </div>
+        </Panel>
+        <Panel tone="soft" className="justify-between gap-6">
+          <h2 className="hs-h4">{t("inherit.tradeoffTitle")}</h2>
+          <p className="text-[0.9375rem] leading-relaxed text-foreground/75">
+            {t("inherit.tradeoff")}
+          </p>
+        </Panel>
+      </div>
 
       <Section title={t("inherit.contentsTitle")}>
         {vault.rows.length === 0 ? (
-          <p className="text-muted-foreground">{t("inherit.empty")}</p>
+          <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">{t("inherit.empty")}</p>
         ) : (
-          <ul className="space-y-3">
+          <List
+            cols={VAULT_COLS}
+            head={[t("columns.stock"), t("columns.inVault"), t("columns.status"), ""]}
+          >
             {vault.rows.map((row) => (
               <VaultRow key={row.record.address} row={row} data={data} wallet={wallet} tx={tx} />
             ))}
-          </ul>
+          </List>
         )}
       </Section>
 
@@ -207,58 +230,61 @@ function VaultRow({
   };
 
   return (
-    <li>
-      <Panel tone="paper" className="gap-4">
-        <div className="gap-4 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center">
-          <AssetBadge mint={row.mint} catalog={row.catalog} />
-          <p className="font-semibold tabular-nums">
-            {formatUiAmount(vaulted, row.mint, now, locale)}
-          </p>
-          <HealthText health={row.health} withHint />
-          <div className="flex gap-2 md:justify-self-end">
-            <Button
-              variant={mode === "deposit" ? "flat" : "flat-outline"}
-              size="sm"
-              disabled={!wallet_}
-              onClick={() => setMode(mode === "deposit" ? null : "deposit")}
-            >
-              {t("inherit.deposit")}
-            </Button>
-            <Button
-              variant={mode === "withdraw" ? "flat" : "flat-outline"}
-              size="sm"
-              disabled={vaulted === 0n}
-              onClick={() => setMode(mode === "withdraw" ? null : "withdraw")}
-            >
-              {t("inherit.withdraw")}
-            </Button>
-          </div>
+    <Row className={cn(mode && "bg-tile-soft/70")}>
+      <AssetBadge mint={row.mint} catalog={row.catalog} />
+      <Cell label={t("columns.inVault")}>
+        <p className="font-medium tabular-nums">
+          {formatUiAmount(vaulted, row.mint, now, locale)}
+        </p>
+      </Cell>
+      <Cell label={t("columns.status")}>
+        <HealthText health={row.health} withHint />
+      </Cell>
+      <div className="flex gap-2 md:justify-self-end">
+        <button
+          type="button"
+          className="hs-pill h-9"
+          aria-pressed={mode === "deposit"}
+          disabled={!wallet_}
+          onClick={() => setMode(mode === "deposit" ? null : "deposit")}
+        >
+          {t("inherit.deposit")}
+        </button>
+        <button
+          type="button"
+          className="hs-pill h-9"
+          aria-pressed={mode === "withdraw"}
+          disabled={vaulted === 0n}
+          onClick={() => setMode(mode === "withdraw" ? null : "withdraw")}
+        >
+          {t("inherit.withdraw")}
+        </button>
+      </div>
+      {mode && (
+        // Spans the row, under its cells, so the amount sits with its stock.
+        <div className="hs-rise flex flex-wrap items-center gap-3 border-t border-tile-line pt-4 md:col-span-full">
+          <AmountInput
+            id={`${id}-amount`}
+            label={t("common.amount")}
+            value={amount.text}
+            onChange={amount.set}
+            onMax={() => amount.max(limit, formatUiAmount(limit, row.mint, now, locale))}
+          />
+          <Button variant="primary" disabled={tx.pending !== null} onClick={submit}>
+            {tx.pending === id
+              ? t("tx.signing")
+              : mode === "withdraw"
+                ? t("inherit.withdraw")
+                : t("inherit.deposit")}
+          </Button>
+          {mode === "withdraw" && (
+            <p className="hs-mono-xs text-muted-foreground">
+              {t("inherit.withdrawNote", { fee: formatPercent(EXIT_FEE_BPS / 10_000, locale) })}
+            </p>
+          )}
         </div>
-        {mode && (
-          <div className="flex flex-wrap items-center gap-3 border-t border-tile-line pt-4">
-            <AmountInput
-              id={`${id}-amount`}
-              label={t("common.amount")}
-              value={amount.text}
-              onChange={amount.set}
-              onMax={() => amount.max(limit, formatUiAmount(limit, row.mint, now, locale))}
-            />
-            <Button variant="flat-yellow" size="sm" disabled={tx.pending !== null} onClick={submit}>
-              {tx.pending === id
-                ? t("tx.signing")
-                : mode === "withdraw"
-                  ? t("inherit.withdraw")
-                  : t("inherit.deposit")}
-            </Button>
-            {mode === "withdraw" && (
-              <p className="text-sm text-muted-foreground">
-                {t("inherit.withdrawNote", { fee: formatPercent(EXIT_FEE_BPS / 10_000, locale) })}
-              </p>
-            )}
-          </div>
-        )}
-      </Panel>
-    </li>
+      )}
+    </Row>
   );
 }
 
@@ -313,46 +339,55 @@ function AddToVault({
   return (
     <Section title={t("inherit.addTitle")} description={t("inherit.addDescription")}>
       {options.length === 0 ? (
-        <p className="text-muted-foreground">{t("inherit.nothingToAdd")}</p>
+        <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">
+          {t("inherit.nothingToAdd")}
+        </p>
       ) : (
-        <Panel tone="paper" className="gap-4 md:flex-row md:flex-wrap md:items-center">
-          <label htmlFor="vault-add-stock" className="sr-only">
-            {t("inherit.chooseStock")}
-          </label>
-          <select
-            id="vault-add-stock"
-            value={chosen}
-            onChange={(e) => {
-              setChosen(e.target.value);
-              amount.reset();
-            }}
-            className="ed-input md:w-72"
-          >
-            <option value="">{t("inherit.choose")}</option>
-            {options.map((h) => (
-              <option key={h.position.tokenAccount} value={h.position.tokenAccount}>
-                {holdingLabel(h).symbol} — {formatUiAmount(h.position.amount, h.mint, now, locale)}
-              </option>
-            ))}
-          </select>
+        <div className="hs-sheet flex flex-col gap-4 p-5 md:flex-row md:flex-wrap md:items-end md:p-6">
+          <div className="space-y-2 md:w-72">
+            <label htmlFor="vault-add-stock" className="hs-label">
+              {t("inherit.chooseStock")}
+            </label>
+            <select
+              id="vault-add-stock"
+              value={chosen}
+              onChange={(e) => {
+                setChosen(e.target.value);
+                amount.reset();
+              }}
+              className="hs-input"
+            >
+              <option value="">{t("inherit.choose")}</option>
+              {options.map((h) => (
+                <option key={h.position.tokenAccount} value={h.position.tokenAccount}>
+                  {holdingLabel(h).symbol} — {formatUiAmount(h.position.amount, h.mint, now, locale)}
+                </option>
+              ))}
+            </select>
+          </div>
           {holding && (
-            <AmountInput
-              id="vault-add-amount"
-              label={t("common.amount")}
-              value={amount.text}
-              onChange={amount.set}
-              onMax={() =>
-                amount.max(
-                  holding.position.amount,
-                  formatUiAmount(holding.position.amount, holding.mint, now, locale),
-                )
-              }
-            />
+            <div className="space-y-2">
+              <p className="hs-label" aria-hidden="true">
+                {t("common.amount")}
+              </p>
+              <AmountInput
+                id="vault-add-amount"
+                label={t("common.amount")}
+                value={amount.text}
+                onChange={amount.set}
+                onMax={() =>
+                  amount.max(
+                    holding.position.amount,
+                    formatUiAmount(holding.position.amount, holding.mint, now, locale),
+                  )
+                }
+              />
+            </div>
           )}
-          <Button variant="flat-yellow" disabled={!holding || tx.pending !== null} onClick={submit}>
+          <Button variant="primary" disabled={!holding || tx.pending !== null} onClick={submit}>
             {tx.pending === "add" ? t("tx.signing") : t("inherit.add")}
           </Button>
-        </Panel>
+        </div>
       )}
     </Section>
   );

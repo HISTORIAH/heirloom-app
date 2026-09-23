@@ -61,7 +61,7 @@ export const TradeDialog: React.FC<{
   onOpenChange: (open: boolean) => void;
 }> = ({ entry, onOpenChange, ...rest }) => (
   <Dialog open={entry !== null} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md rounded-xl border-tile-line p-6 sm:rounded-xl">
+    <DialogContent className="max-w-md">
       {/* Keyed so each stock opens on a clean form. */}
       {entry && (
         <TradeForm key={entry.mint} entry={entry} onDone={() => onOpenChange(false)} {...rest} />
@@ -141,52 +141,54 @@ function TradeForm({
   return (
     <div className="flex flex-col gap-5">
       <DialogHeader className="gap-1">
-        <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-          {t("trade.cap")}
-        </span>
-        <DialogTitle className="ed-h3">{t("trade.title", { symbol: entry.symbol })}</DialogTitle>
+        <span className="hs-mono-xs text-muted-foreground">{t("trade.cap")}</span>
+        <DialogTitle>{t("trade.title", { symbol: entry.symbol })}</DialogTitle>
       </DialogHeader>
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-tile-line px-4 py-3">
         <AssetBadge mint={{ mint: entry.mint, name: null, symbol: null }} catalog={entry} />
         {price?.usd != null && (
-          <p className="text-right font-semibold tabular-nums">{formatUsd(price.usd, locale)}</p>
+          <p className="text-right text-lg font-medium tabular-nums">
+            {formatUsd(price.usd, locale)}
+          </p>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label={t("trade.sideLabel")}>
-        {(["buy", "sell"] as const).map((s) => (
-          <Button
-            key={s}
-            size="sm"
-            variant={side === s ? "flat" : "flat-outline"}
-            aria-pressed={side === s}
-            onClick={() => reset(() => setSide(s))}
-          >
-            {t(`trade.${s}`)}
-          </Button>
-        ))}
-        <span className="mx-1 self-center text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label={t("trade.sideLabel")} className="hs-seg">
+          {(["buy", "sell"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={side === s}
+              onClick={() => reset(() => setSide(s))}
+            >
+              {t(`trade.${s}`)}
+            </button>
+          ))}
+        </div>
+        <span className="px-1 text-sm text-muted-foreground">
           {side === "buy" ? t("trade.payWith") : t("trade.receiveIn")}
         </span>
-        {(Object.keys(QUOTE_TOKENS) as QuoteSymbol[]).map((q) => (
-          <Button
-            key={q}
-            size="sm"
-            variant={quoteSymbol === q ? "flat" : "flat-outline"}
-            aria-pressed={quoteSymbol === q}
-            onClick={() => reset(() => setQuoteSymbol(q))}
-          >
-            {q}
-          </Button>
-        ))}
+        <div role="group" aria-label={side === "buy" ? t("trade.payWith") : t("trade.receiveIn")} className="hs-seg">
+          {(Object.keys(QUOTE_TOKENS) as QuoteSymbol[]).map((q) => (
+            <button
+              key={q}
+              type="button"
+              aria-pressed={quoteSymbol === q}
+              onClick={() => reset(() => setQuoteSymbol(q))}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="trade-amount" className="ed-field-label block">
+        <label htmlFor="trade-amount" className="hs-label">
           {t(side === "buy" ? "trade.spend" : "trade.sellAmount", { symbol: inputSymbol })}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="relative">
           <input
             id="trade-amount"
             inputMode="decimal"
@@ -197,29 +199,24 @@ function TradeForm({
               setExact(null);
             }}
             autoComplete="off"
-            className="ed-input w-full"
+            aria-invalid={tooMuch}
+            className="hs-input h-12 pr-20 text-lg tabular-nums"
           />
-          <Button
+          <button
             type="button"
-            variant="flat-outline"
-            size="sm"
             disabled={!spendable}
             onClick={() => {
               if (!spendable || inputDecimals === null) return;
               setExact(spendable);
               setText(String(toDisplayAmount(spendable, inputDecimals, inputMultiplier)));
             }}
+            className="hs-mono-xs absolute right-2 top-1/2 h-8 -translate-y-1/2 rounded-full bg-tile-soft px-3 transition-colors duration-100 ease-out hover:bg-tile-line disabled:cursor-not-allowed disabled:text-muted-foreground"
           >
             {t("common.max")}
-          </Button>
+          </button>
         </div>
         {spendable !== null && inputDecimals !== null && (
-          <p
-            className={cn(
-              "text-sm",
-              tooMuch ? "font-semibold text-accent-red" : "text-muted-foreground",
-            )}
-          >
+          <p className={cn("hs-mono-xs", tooMuch ? "hs-error" : "text-muted-foreground")}>
             {tooMuch
               ? t("trade.insufficient", { symbol: inputSymbol })
               : t("trade.balance", {
@@ -234,10 +231,10 @@ function TradeForm({
         )}
       </div>
 
-      <div className="space-y-2 rounded-lg bg-tile-soft p-4" aria-live="polite">
+      <div className="space-y-3 rounded-2xl bg-tile-soft p-4" aria-live="polite">
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-sm text-muted-foreground">{t("trade.youReceive")}</span>
-          <span className="font-semibold tabular-nums">
+          <span className="text-lg font-medium tabular-nums">
             {amount === null
               ? "—"
               : quote.isFetching && !quoteIsCurrent
@@ -248,12 +245,12 @@ function TradeForm({
           </span>
         </div>
         {quote.isError && amount !== null && (
-          <p className="text-sm font-semibold text-accent-red">
+          <p className="hs-error">
             {quote.error.message || t("trade.quoteFailed")}
           </p>
         )}
         {quote.data && amount !== null && (
-          <dl className="space-y-1 text-sm text-muted-foreground">
+          <dl className="hs-mono-xs space-y-1.5 border-t border-tile-line pt-3 text-muted-foreground">
             {quote.data.outUsd !== null && (
               <Row label={t("trade.value")} value={`≈ ${formatUsd(quote.data.outUsd, locale)}`} />
             )}
@@ -281,11 +278,11 @@ function TradeForm({
       </DialogDescription>
 
       {!account ? (
-        <Button variant="flat-yellow" onClick={onConnect} disabled={!onConnect}>
+        <Button variant="primary" size="lg" onClick={onConnect} disabled={!onConnect}>
           {t("trade.connect")}
         </Button>
       ) : !canSignMainnet(account) ? (
-        <p className="text-sm font-semibold text-accent-red">{t("trade.cantSign")}</p>
+        <p className="hs-error">{t("trade.cantSign")}</p>
       ) : (
         <SwapButton
           account={account}
@@ -305,10 +302,10 @@ function TradeForm({
         href={jupiterSwapUrl(entry.mint)}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-1 self-start text-sm font-semibold underline"
+        className="hs-link inline-flex items-center gap-1 self-start text-sm"
       >
         {t("trade.openOnJupiter")}
-        <ArrowUpRight className="h-4 w-4" />
+        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
       </a>
     </div>
   );
@@ -349,7 +346,7 @@ function SwapButton({
             href={mainnetTxUrl(result.signature)}
             target="_blank"
             rel="noreferrer"
-            className="underline"
+            className="hs-link"
           >
             {t("tx.view")}
           </a>
@@ -373,7 +370,7 @@ function SwapButton({
   };
 
   return (
-    <Button variant="flat-yellow" disabled={!order || stage !== "idle"} onClick={run}>
+    <Button variant="primary" size="lg" disabled={!order || stage !== "idle"} onClick={run}>
       {stage === "signing"
         ? t("tx.signing")
         : stage === "submitting"

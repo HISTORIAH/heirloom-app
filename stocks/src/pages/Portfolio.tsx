@@ -1,20 +1,33 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "@heirloom/i18n";
 import { StocksPage } from "@/components/layout/StocksPage";
-import { Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
-import { EmptyState, Figure, QueryState, Section } from "@/components/stocks/Section";
-import { HealthText, RiskTags } from "@/components/stocks/StatusBits";
+import {
+  Cell,
+  EmptyState,
+  List,
+  QueryState,
+  Row,
+  Section,
+  Stat,
+  Stats,
+} from "@/components/stocks/Section";
+import { HealthText, RiskTags, Status } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
 import { useCatalog, useNow, useOwnerOverview } from "@/hooks/useStocks";
-import { formatDate, formatNumber, formatUiAmount } from "@/lib/format";
+import { formatDate, formatNumber, formatShortDate, formatUiAmount } from "@/lib/format";
 import { coverBlockers } from "@/services/holdings";
 import type { OwnerOverview } from "@/services/overview";
 import { planTimeline } from "@/services/plans";
+import { riskFlags } from "@/services/risk";
 
 /** Shortcuts into the browse page from an empty wallet. Each is listed by both issuers. */
 const POPULAR_TICKERS = ["AAPL", "TSLA", "NVDA", "SPY", "MSFT"];
+
+const HOLDING_COLS =
+  "minmax(0,2fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.5fr) minmax(5.5rem,auto)";
+const VAULT_COLS = "minmax(0,2fr) minmax(0,1fr) minmax(0,1.6fr)";
 
 const Portfolio = () => (
   <StocksPage page="portfolio">{(wallet) => <PortfolioBody wallet={wallet} />}</StocksPage>
@@ -49,114 +62,128 @@ function PortfolioView({ data }: { data: OwnerOverview }) {
           formatted: formatNumber(catalog.count, locale),
         })}
       >
-        <Button variant="flat-yellow" size="sm" asChild>
+        <Button variant="primary" asChild>
           <Link to="/browse">
             {t("portfolio.browseAll", { formatted: formatNumber(catalog.count, locale) })}
           </Link>
         </Button>
         {POPULAR_TICKERS.map((ticker) => (
-          <Button key={ticker} variant="flat-outline" size="sm" asChild>
-            <Link to={`/browse?q=${ticker}`}>{ticker}</Link>
-          </Button>
+          <Link key={ticker} to={`/browse?q=${ticker}`} className="hs-pill">
+            {ticker}
+          </Link>
         ))}
       </EmptyState>
     );
   }
 
   return (
-    <div className="space-y-10">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Figure cap={t("portfolio.held")} value={held.length} />
-        <Figure
+    <div className="space-y-14">
+      <Stats>
+        <Stat cap={t("portfolio.held")} value={held.length} />
+        <Stat
           cap={t("portfolio.backedUp")}
           value={t("portfolio.backedUpOf", { covered: backupRows.length, total: held.length })}
           note={
             attention > 0 ? (
-              <span className="text-accent-red">
-                {t("portfolio.needsAttention", { count: attention })}
+              <Status tone="danger">{t("portfolio.needsAttention", { count: attention })}</Status>
+            ) : undefined
+          }
+        />
+        <Stat cap={t("portfolio.inVault")} value={vaultRows.length} />
+        <Stat
+          cap={t("portfolio.nextCheckIn")}
+          value={
+            nextDeadline ? (
+              formatShortDate(nextDeadline, locale)
+            ) : (
+              <span className="text-[1.5rem] tracking-[-0.02em]">{t("portfolio.noPlan")}</span>
+            )
+          }
+          note={
+            nextDeadline ? (
+              <span className="hs-mono-xs text-muted-foreground">
+                {formatDate(nextDeadline, locale)}
               </span>
             ) : undefined
           }
         />
-        <Figure cap={t("portfolio.inVault")} value={vaultRows.length} />
-        <Figure
-          cap={t("portfolio.nextCheckIn")}
-          value={
-            <span className="text-xl">
-              {nextDeadline ? formatDate(nextDeadline, locale) : t("portfolio.noPlan")}
-            </span>
-          }
-        />
-      </div>
+      </Stats>
 
       {held.length > 0 && (
         <Section title={t("portfolio.holdings")}>
-          <ul className="space-y-3">
+          <List
+            cols={HOLDING_COLS}
+            head={[
+              t("columns.stock"),
+              t("columns.balance"),
+              t("columns.backup"),
+              t("columns.issuerCan"),
+              "",
+            ]}
+          >
             {held.map((holding) => {
               const covered = backupRows.find((r) => r.record.mint === holding.mint.mint);
               const coverable = !covered && coverBlockers(holding).length === 0;
               return (
-                <li key={holding.position.tokenAccount}>
-                  <Panel
-                    tone="paper"
-                    className="gap-4 md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center"
-                  >
-                    <AssetBadge
-                      mint={holding.mint}
-                      catalog={holding.catalog}
-                      issuer={holding.issuer}
-                    />
-                    <p className="font-semibold tabular-nums">
+                <Row key={holding.position.tokenAccount}>
+                  <AssetBadge
+                    mint={holding.mint}
+                    catalog={holding.catalog}
+                    issuer={holding.issuer}
+                  />
+                  <Cell label={t("columns.balance")}>
+                    <p className="font-medium tabular-nums">
                       {formatUiAmount(holding.position.amount, holding.mint, now, locale)}
                     </p>
-                    <div className="space-y-2">
-                      {covered ? (
-                        <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                            {t("common.backup")}
-                          </p>
-                          <HealthText health={covered.health} />
-                        </div>
-                      ) : (
-                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                          {t("common.notProtected")}
-                        </p>
-                      )}
+                  </Cell>
+                  <Cell label={t("columns.backup")}>
+                    {covered ? (
+                      <HealthText health={covered.health} />
+                    ) : (
+                      <Status tone="quiet">{t("common.notProtected")}</Status>
+                    )}
+                  </Cell>
+                  <Cell label={t("columns.issuerCan")}>
+                    {riskFlags(holding.mint).length > 0 ? (
                       <RiskTags mint={holding.mint} />
-                    </div>
-                    <div className="md:justify-self-end">
-                      {coverable && (
-                        <Button variant="flat-yellow" size="sm" asChild>
-                          <Link to="/protect">{t("portfolio.protect")}</Link>
-                        </Button>
-                      )}
-                    </div>
-                  </Panel>
-                </li>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </Cell>
+                  <div className="md:justify-self-end">
+                    {coverable && (
+                      <Button variant="primary" size="sm" asChild>
+                        <Link to="/protect">{t("portfolio.protect")}</Link>
+                      </Button>
+                    )}
+                  </div>
+                </Row>
               );
             })}
-          </ul>
+          </List>
         </Section>
       )}
 
       {vaultRows.length > 0 && (
         <Section title={t("portfolio.vaulted")}>
-          <ul className="space-y-3">
+          <List
+            cols={VAULT_COLS}
+            head={[t("columns.stock"), t("columns.inVault"), t("columns.status")]}
+          >
             {vaultRows.map((row) => (
-              <li key={row.record.address}>
-                <Panel
-                  tone="sage"
-                  className="gap-4 md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] md:items-center"
-                >
-                  <AssetBadge mint={row.mint} catalog={row.catalog} />
-                  <p className="font-semibold tabular-nums">
+              <Row key={row.record.address}>
+                <AssetBadge mint={row.mint} catalog={row.catalog} />
+                <Cell label={t("columns.inVault")}>
+                  <p className="font-medium tabular-nums">
                     {formatUiAmount(row.position?.amount ?? 0n, row.mint, now, locale)}
                   </p>
+                </Cell>
+                <Cell label={t("columns.status")}>
                   <HealthText health={row.health} />
-                </Panel>
-              </li>
+                </Cell>
+              </Row>
             ))}
-          </ul>
+          </List>
         </Section>
       )}
     </div>

@@ -3,7 +3,7 @@ import { useTranslation } from "@heirloom/i18n";
 import type { CatalogEntry } from "@/services/catalog";
 import { holdingLabel, type IssuerInfo } from "@/services/holdings";
 import type { MintDetails } from "@/services/mints";
-import { cn, getTokenAccent } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 /**
  * A stock's logo, symbol, and name, with its issuer when known. Only the mint's
@@ -29,21 +29,20 @@ export const AssetBadge: React.FC<{
           alt=""
           loading="lazy"
           onError={() => setLogoFailed(true)}
-          className="h-10 w-10 shrink-0 rounded-lg border border-tile-line object-cover"
+          className="h-10 w-10 shrink-0 rounded-full border border-tile-line bg-tile-soft object-cover"
         />
       ) : (
+        // No logo (every devnet test stock): a neutral monogram rather than a
+        // colour picked for it, so a list of them doesn't turn into confetti.
         <span
           aria-hidden="true"
-          className={cn(
-            "grid h-10 w-10 shrink-0 place-items-center rounded-lg text-xs font-bold",
-            getTokenAccent(mint.mint).bg,
-          )}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-tile-line bg-tile-soft text-[0.8125rem] font-medium tracking-[-0.01em]"
         >
           {symbol.slice(0, 2).toUpperCase()}
         </span>
       )}
       <div className="min-w-0">
-        <p className="truncate font-bold">{symbol}</p>
+        <p className="truncate font-medium">{symbol}</p>
         <p className="truncate text-sm text-muted-foreground">
           {name}
           {issuer !== undefined && (

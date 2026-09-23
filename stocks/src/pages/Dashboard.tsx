@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
+import { ArrowRight, TriangleAlert } from "lucide-react";
 import type { Address } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
 import { StocksPage } from "@/components/layout/StocksPage";
-import { Panel, PanelCap } from "@/components/surface/Panel";
+import { Cap, Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
 import { PlanSettings } from "@/components/stocks/PlanForms";
-import { EmptyState, QueryState, Section } from "@/components/stocks/Section";
+import { Cell, EmptyState, List, QueryState, Row, Section } from "@/components/stocks/Section";
 import { HealthText, PlanClock, RiskTags } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
 import { useNow, useOwnerOverview } from "@/hooks/useStocks";
@@ -48,10 +49,10 @@ function DashboardView({ wallet, data }: { wallet: WalletCtx; data: OwnerOvervie
   if (!data.backup && !data.vault) {
     return (
       <EmptyState title={t("dashboard.noPlanTitle")} description={t("dashboard.noPlanDescription")}>
-        <Button variant="flat-yellow" asChild>
+        <Button variant="primary" asChild>
           <Link to="/protect">{t("dashboard.startBackup")}</Link>
         </Button>
-        <Button variant="flat-outline" asChild>
+        <Button variant="ghost" asChild>
           <Link to="/inherit">{t("dashboard.startVault")}</Link>
         </Button>
       </EmptyState>
@@ -64,18 +65,18 @@ function DashboardView({ wallet, data }: { wallet: WalletCtx; data: OwnerOvervie
       build: async () => [[await buildCheckInIx(wallet.signer, { owner: wallet.address, mode })]],
     });
 
+  // The backup reads as the everyday card; the vault carries the sage that
+  // marks what is being kept for someone.
   const planPanel = (mode: PlanMode, overview: PlanOverview) => (
-    <Panel tone={mode === "backup" ? "paper" : "sage"} className="gap-4">
-      <PanelCap className="text-muted-foreground">
-        {mode === "backup" ? t("dashboard.backupTitle") : t("dashboard.vaultTitle")}
-      </PanelCap>
+    <Panel tone={mode === "backup" ? "soft" : "sage"} className="gap-7">
+      <Cap>{mode === "backup" ? t("dashboard.backupTitle") : t("dashboard.vaultTitle")}</Cap>
       <PlanClock plan={overview.plan} now={now} />
-      <div className="mt-auto flex flex-wrap gap-3">
-        <Button variant="flat" disabled={tx.pending !== null} onClick={() => checkIn(mode)}>
+      <div className="mt-auto flex flex-wrap gap-2.5">
+        <Button variant="ink" disabled={tx.pending !== null} onClick={() => checkIn(mode)}>
           {tx.pending === `checkin-${mode}` ? t("tx.signing") : t("common.checkIn")}
         </Button>
         {mode === "vault" && (
-          <Button variant="flat-outline" asChild>
+          <Button variant="ghost" asChild>
             <Link to="/inherit">{t("dashboard.manageVault")}</Link>
           </Button>
         )}
@@ -86,29 +87,39 @@ function DashboardView({ wallet, data }: { wallet: WalletCtx; data: OwnerOvervie
   const evicted = data.backup?.rows.filter((r) => r.health === "evicted") ?? [];
 
   return (
-    <div className="space-y-10">
-      <div className="grid gap-4 lg:grid-cols-2">
-        {data.backup && planPanel("backup", data.backup)}
-        {data.vault && planPanel("vault", data.vault)}
-      </div>
-
+    <div className="space-y-14">
       {evicted.length > 0 && (
-        <Panel tone="yellow" className="gap-4">
-          <h2 className="ed-h3">{t("dashboard.alertTitle", { count: evicted.length })}</h2>
-          <p className="max-w-2xl text-foreground/75">{t("dashboard.alertDescription")}</p>
+        <Panel tone="alert" className="flex-row gap-4">
+          <TriangleAlert className="mt-1 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div>
+            <h2 className="hs-h4">{t("dashboard.alertTitle", { count: evicted.length })}</h2>
+            <p className="mt-1.5 max-w-2xl text-[0.9375rem] leading-relaxed text-foreground/75">
+              {t("dashboard.alertDescription")}
+            </p>
+          </div>
         </Panel>
       )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {data.backup ? planPanel("backup", data.backup) : <Offer mode="backup" />}
+        {data.vault ? planPanel("vault", data.vault) : <Offer mode="vault" />}
+      </div>
 
       {data.backup && (
         <Section title={t("dashboard.healthTitle")}>
           {data.backup.rows.length === 0 ? (
-            <p className="text-muted-foreground">{t("dashboard.healthEmpty")}</p>
+            <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">
+              {t("dashboard.healthEmpty")}
+            </p>
           ) : (
-            <ul className="space-y-3">
+            <List
+              cols="minmax(0,1.3fr) minmax(0,2fr) minmax(7rem,auto)"
+              head={[t("columns.stock"), t("columns.status"), ""]}
+            >
               {data.backup.rows.map((row) => (
                 <HealthRow key={row.record.address} row={row} wallet={wallet} tx={tx} />
               ))}
-            </ul>
+            </List>
           )}
         </Section>
       )}
@@ -138,6 +149,30 @@ function DashboardView({ wallet, data }: { wallet: WalletCtx; data: OwnerOvervie
   );
 }
 
+/** The plan this wallet doesn't have yet, offered in the other half of the row. */
+function Offer({ mode }: { mode: PlanMode }) {
+  const { t } = useTranslation("stocks");
+  const page = mode === "backup" ? "protect" : "inherit";
+  return (
+    <Panel tone="paper" className="justify-between gap-8">
+      <div>
+        <h2 className="hs-h4">{t(`pages.${page}.headline`)}</h2>
+        <p className="mt-2 max-w-[28rem] text-[0.9375rem] leading-relaxed text-muted-foreground">
+          {t(`pages.${page}.description`)}
+        </p>
+      </div>
+      <div>
+        <Button variant="ghost" asChild>
+          <Link to={`/${page}`}>
+            {mode === "backup" ? t("dashboard.startBackup") : t("dashboard.startVault")}
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        </Button>
+      </div>
+    </Panel>
+  );
+}
+
 function HealthRow({
   row,
   wallet,
@@ -155,7 +190,7 @@ function HealthRow({
     const mintAuthority = row.mint.mintAuthority;
     action = (
       <Button
-        variant="flat-yellow"
+        variant="primary"
         size="sm"
         disabled={tx.pending !== null}
         onClick={() =>
@@ -180,7 +215,7 @@ function HealthRow({
   } else if (row.health === "closed") {
     action = (
       <Button
-        variant="flat-outline"
+        variant="ghost"
         size="sm"
         disabled={tx.pending !== null}
         onClick={() =>
@@ -196,16 +231,13 @@ function HealthRow({
   }
 
   return (
-    <li>
-      <Panel
-        tone={row.health === "covered" ? "paper" : "yellow-line"}
-        className="gap-4 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,2fr)_auto] md:items-center"
-      >
-        <AssetBadge mint={row.mint} catalog={row.catalog} />
+    <Row className={row.health === "covered" ? undefined : "bg-accent-yellow/[0.07]"}>
+      <AssetBadge mint={row.mint} catalog={row.catalog} />
+      <Cell label={t("columns.status")}>
         <HealthText health={row.health} withHint />
-        <div className="md:justify-self-end">{action}</div>
-      </Panel>
-    </li>
+      </Cell>
+      <div className="md:justify-self-end">{action}</div>
+    </Row>
   );
 }
 
@@ -241,33 +273,33 @@ function Dividends({ data, now }: { data: OwnerOverview; now: number }) {
       description={t("dashboard.dividendsDescription")}
     >
       {upcoming.length === 0 ? (
-        <p className="text-muted-foreground">{t("dashboard.dividendsEmpty")}</p>
+        <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">
+          {t("dashboard.dividendsEmpty")}
+        </p>
       ) : (
-        <ul className="space-y-3">
+        <List
+          cols="minmax(0,1.3fr) minmax(0,2fr)"
+          head={[t("columns.stock"), t("columns.change")]}
+        >
           {upcoming.map(({ mint, catalog, state }) => (
-            <li key={mint.mint}>
-              <Panel
-                tone="sky"
-                className="gap-3 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,2fr)] md:items-center"
-              >
-                <AssetBadge mint={mint} catalog={catalog} />
-                <div>
-                  <p className="font-semibold">
-                    {t("dashboard.dividendRow", {
-                      change: formatPercent(state!.upcoming!.change, locale, true),
-                      date: formatDate(state!.upcoming!.effectiveAt, locale),
-                    })}
-                  </p>
-                  <p className="text-sm text-foreground/65">
-                    {t("dashboard.currentMultiplier", {
-                      value: formatNumber(state!.current, locale, 6),
-                    })}
-                  </p>
-                </div>
-              </Panel>
-            </li>
+            <Row key={mint.mint}>
+              <AssetBadge mint={mint} catalog={catalog} />
+              <Cell label={t("columns.change")}>
+                <p className="font-medium">
+                  {t("dashboard.dividendRow", {
+                    change: formatPercent(state!.upcoming!.change, locale, true),
+                    date: formatDate(state!.upcoming!.effectiveAt, locale),
+                  })}
+                </p>
+                <p className="hs-mono-xs mt-1 text-muted-foreground">
+                  {t("dashboard.currentMultiplier", {
+                    value: formatNumber(state!.current, locale, 6),
+                  })}
+                </p>
+              </Cell>
+            </Row>
           ))}
-        </ul>
+        </List>
       )}
     </Section>
   );
@@ -281,31 +313,33 @@ function IssuerRisk({ data }: { data: OwnerOverview }) {
 
   return (
     <Section title={t("dashboard.riskTitle")} description={t("risk.legend")}>
-      <ul className="space-y-3">
+      <List
+        cols="minmax(0,1.5fr) minmax(0,0.8fr) minmax(0,2fr)"
+        head={[t("columns.stock"), t("columns.tier"), t("columns.issuerCan")]}
+      >
         {mints.map(({ mint, catalog }) => {
           const issuer = issuers.get(mint.mint);
           return (
-            <li key={mint.mint}>
-              <Panel
-                tone="paper"
-                className="gap-3 md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.7fr)_minmax(0,2fr)] md:items-center"
-              >
-                <AssetBadge mint={mint} catalog={catalog} issuer={issuer ?? null} />
-                <p className="text-sm font-semibold">
+            <Row key={mint.mint}>
+              <AssetBadge mint={mint} catalog={catalog} issuer={issuer ?? null} />
+              <Cell label={t("columns.tier")}>
+                <span className="hs-chip">
                   {issuer
                     ? t("common.issuerTier", { tier: issuer.riskTier })
                     : t("common.unknownIssuer")}
-                </p>
+                </span>
+              </Cell>
+              <Cell label={t("columns.issuerCan")}>
                 {riskFlags(mint).length > 0 ? (
                   <RiskTags mint={mint} />
                 ) : (
                   <p className="text-sm text-muted-foreground">{t("dashboard.riskNone")}</p>
                 )}
-              </Panel>
-            </li>
+              </Cell>
+            </Row>
           );
         })}
-      </ul>
+      </List>
     </Section>
   );
 }

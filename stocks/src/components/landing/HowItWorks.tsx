@@ -17,7 +17,7 @@ const Box: React.FC<{ title: string; sub: string; className?: string }> = ({
 }) => (
   <div className={cn("rounded-lg border border-tile-line px-3 py-2.5", className)}>
     <p className="text-[0.8125rem] font-medium leading-snug">{title}</p>
-    <p className="lp-mono-xs mt-0.5 text-muted-foreground">{sub}</p>
+    <p className="hs-mono-xs mt-0.5 text-muted-foreground">{sub}</p>
   </div>
 );
 
@@ -32,7 +32,7 @@ const Plan: React.FC<{ mode: "backup" | "vault" }> = ({ mode }) => {
   return (
     <div className="rounded-xl border border-tile-line bg-background p-3">
       <p className="text-[0.9375rem] font-medium">{k("title")}</p>
-      <p className="lp-mono-xs text-muted-foreground">{k("sub")}</p>
+      <p className="hs-mono-xs text-muted-foreground">{k("sub")}</p>
       <div className="mt-3 grid gap-2">
         {(["a", "b", "c"] as const).map((row) => (
           <Box key={row} title={k(row)} sub={k(`${row}Sub`)} className="bg-tile-soft" />
@@ -52,18 +52,18 @@ export const HowItWorks: React.FC = () => {
   const { t } = useTranslation("stocks");
 
   return (
-    <section id="how-it-works" className="lp-col scroll-mt-24">
-      <span className="lp-tag lp-mono-xs">{t("landing.how.tag")}</span>
-      <h2 className="lp-h2 mt-5">{t("landing.how.title")}</h2>
+    <section id="how-it-works" className="hs-col scroll-mt-24">
+      <span className="hs-tag hs-mono-xs">{t("landing.how.tag")}</span>
+      <h2 className="hs-h2 mt-5">{t("landing.how.title")}</h2>
       <p className="mt-5 max-w-[31rem] text-[0.975rem] leading-relaxed text-foreground/80">
         {t("landing.how.body")}
       </p>
 
-      <div className="lp-sheet mt-10 p-4 sm:p-6 lg:px-12 lg:py-10">
+      <div className="hs-sheet mt-10 p-4 sm:p-6 lg:px-12 lg:py-10">
         <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[10rem_5.5rem_minmax(0,1fr)] lg:gap-x-0">
           {/* The owner's instructions, bracketed from their wallet to the program. */}
           <div className="relative hidden h-12 lg:col-span-3 lg:block" aria-hidden="true">
-            <p className="lp-mono-xs absolute left-[5rem] top-0 w-[calc(75%-1.125rem)] text-center text-muted-foreground">
+            <p className="hs-mono-xs absolute left-[5rem] top-0 w-[calc(75%-1.125rem)] text-center text-muted-foreground">
               {t("landing.how.topLabel")}
             </p>
             <div className="absolute bottom-0 left-[5rem] h-4 w-[calc(75%-1.125rem)] rounded-t-md border-x border-t border-foreground/35" />
@@ -87,10 +87,10 @@ export const HowItWorks: React.FC = () => {
                 )}
               >
                 <p className="text-[0.875rem] font-medium">{t(`landing.how.${key}.title`)}</p>
-                <p className="lp-mono-xs text-muted-foreground">{t(`landing.how.${key}.sub`)}</p>
+                <p className="hs-mono-xs text-muted-foreground">{t(`landing.how.${key}.sub`)}</p>
               </div>
               <div className={cn("hidden flex-col justify-center px-2 lg:col-start-2 lg:flex", row)}>
-                <span className="lp-mono-xs mb-1 text-center text-muted-foreground">
+                <span className="hs-mono-xs mb-1 text-center text-muted-foreground">
                   {t(`landing.how.${verb}`)}
                 </span>
                 <Connector />
@@ -101,7 +101,7 @@ export const HowItWorks: React.FC = () => {
           <Connector down className="h-8 lg:hidden" />
 
           <div className="relative rounded-xl border border-tile-line bg-tile-soft p-3 pt-6 sm:p-4 sm:pt-7 lg:col-start-3 lg:row-span-3 lg:row-start-2">
-            <span className="lp-mono-xs absolute -top-3 left-1/2 -translate-x-1/2 rounded-md border border-tile-line bg-background px-2 py-0.5">
+            <span className="hs-mono-xs absolute -top-3 left-1/2 -translate-x-1/2 rounded-md border border-tile-line bg-background px-2 py-0.5">
               {t("landing.how.program")}
             </span>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -117,13 +117,13 @@ export const HowItWorks: React.FC = () => {
 
           <div className="flex flex-col items-center lg:col-start-3 lg:row-start-5">
             <Connector down className="h-10" />
-            <span className="lp-mono-xs my-1 text-muted-foreground">{t("landing.how.lapse")}</span>
+            <span className="hs-mono-xs my-1 text-muted-foreground">{t("landing.how.lapse")}</span>
             <Connector down className="h-6" />
           </div>
 
           <div className="rounded-xl border border-tile-line bg-tile-soft px-4 py-5 text-center lg:col-start-3 lg:row-start-6">
             <p className="text-[0.9375rem] font-medium">{t("landing.how.destination.title")}</p>
-            <p className="lp-mono-xs mt-1 text-muted-foreground">
+            <p className="hs-mono-xs mt-1 text-muted-foreground">
               {t("landing.how.destination.sub")}
             </p>
           </div>

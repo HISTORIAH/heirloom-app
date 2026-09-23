@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ChevronRight } from "lucide-react";
 import { useWalletUi, useWalletUiWallet, type UiWallet } from "@wallet-ui/react";
 import { useTranslation } from "@heirloom/i18n";
 import { useWallet } from "@/contexts/WalletContext";
@@ -30,14 +31,19 @@ const WalletRow = ({ wallet, onConnected }: { wallet: UiWallet; onConnected: () 
           console.error("wallet connect failed", err);
         }
       }}
-      className="flex w-full items-center gap-3 rounded-lg border border-tile-line px-4 py-3 font-semibold transition-colors hover:bg-tile-soft disabled:opacity-60"
+      className="group flex w-full items-center gap-3.5 rounded-2xl border border-tile-line px-4 py-3.5 text-[0.9375rem] font-medium transition-colors duration-100 ease-out hover:border-foreground/30 hover:bg-tile-soft/60 disabled:cursor-wait disabled:bg-tile-soft"
     >
-      {wallet.icon && <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />}
+      {wallet.icon && (
+        <img src={wallet.icon} alt="" className="h-9 w-9 rounded-xl border border-tile-line" />
+      )}
       <span className="flex-1 text-left">{wallet.name}</span>
-      {isConnecting && (
-        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {t("common.connecting")}
-        </span>
+      {isConnecting ? (
+        <span className="hs-mono-xs text-muted-foreground">{t("common.connecting")}</span>
+      ) : (
+        <ChevronRight
+          aria-hidden="true"
+          className="h-4 w-4 text-muted-foreground transition-transform duration-100 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+        />
       )}
     </button>
   );
@@ -56,10 +62,10 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-xl border-tile-line p-6 sm:rounded-xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="ed-h3">{t("walletDialog.title")}</DialogTitle>
-          <DialogDescription className="text-sm font-medium text-muted-foreground">
+          <DialogTitle>{t("walletDialog.title")}</DialogTitle>
+          <DialogDescription className="text-[0.9375rem] leading-relaxed text-muted-foreground">
             {t("walletDialog.description")}
           </DialogDescription>
         </DialogHeader>
@@ -69,7 +75,7 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
               href="https://solana.com/solana-wallets"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-accent-yellow bg-accent-yellow px-4 py-3 text-center text-sm font-semibold"
+              className="hs-btn hs-btn-primary w-full"
             >
               {t("walletDialog.noWallets")}
             </a>

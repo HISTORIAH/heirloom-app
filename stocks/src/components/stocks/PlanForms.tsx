@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { isAddress, type Address } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
-import { Panel } from "@/components/surface/Panel";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { PlanMode, PlanChanges, PlanTiming } from "@/lib/stocks";
 import { SECONDS_PER_DAY } from "@/lib/format";
 import type { PlanView } from "@/services/plans";
@@ -89,10 +90,10 @@ const TextField: React.FC<{
   mono?: boolean;
 }> = ({ id, label, hint, error, value, onChange, unit, mono }) => (
   <div className="space-y-2">
-    <label htmlFor={id} className="ed-field-label block">
+    <label htmlFor={id} className="hs-label">
       {label}
     </label>
-    <div className="flex items-center gap-2">
+    <div className={cn("relative", unit && "max-w-[12rem]")}>
       <input
         id={id}
         value={value}
@@ -101,22 +102,55 @@ const TextField: React.FC<{
         spellCheck={false}
         autoComplete="off"
         aria-invalid={!!error}
-        aria-describedby={hint ? `${id}-hint` : undefined}
-        className={`ed-input ${unit ? "w-28" : ""} ${mono ? "font-mono text-xs" : ""}`}
+        aria-describedby={hint || error ? `${id}-note` : undefined}
+        className={cn("hs-input", unit && "pr-16 tabular-nums", mono && "hs-input-mono")}
       />
-      {unit && <span className="text-sm font-semibold text-muted-foreground">{unit}</span>}
+      {unit && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+        >
+          {unit}
+        </span>
+      )}
     </div>
     {error ? (
-      <p className="text-sm font-semibold text-accent-red">{error}</p>
+      <p id={`${id}-note`} className="hs-error">
+        {error}
+      </p>
     ) : (
       hint && (
-        <p id={`${id}-hint`} className="text-sm text-muted-foreground">
+        <p id={`${id}-note`} className="hs-hint">
           {hint}
         </p>
       )
     )}
   </div>
 );
+
+/** One band of a form: its name and a note on the left, its fields on the right. */
+const Group: React.FC<{ title: string; hint?: string; children: React.ReactNode }> = ({
+  title,
+  hint,
+  children,
+}) => {
+  const id = useId();
+  return (
+    <div
+      role="group"
+      aria-labelledby={id}
+      className="grid gap-5 border-t border-tile-line px-6 py-7 md:grid-cols-[12rem_minmax(0,1fr)] md:gap-8 md:px-8"
+    >
+      <div>
+        <h3 id={id} className="hs-h4">
+          {title}
+        </h3>
+        {hint && <p className="hs-hint mt-1">{hint}</p>}
+      </div>
+      <div className="grid gap-5">{children}</div>
+    </div>
+  );
+};
 
 function PlanFieldsView({
   mode,
@@ -132,8 +166,8 @@ function PlanFieldsView({
   const { t } = useTranslation("stocks");
   const unit = t("planForm.unit");
   return (
-    <div className="grid gap-5 md:grid-cols-2">
-      <div className="md:col-span-2">
+    <>
+      <Group title={t("planForm.groups.recipient")}>
         <TextField
           id={`${mode}-destination`}
           label={mode === "backup" ? t("planForm.recoveryWallet") : t("planForm.heir")}
@@ -142,43 +176,49 @@ function PlanFieldsView({
           error={errors.destination}
           mono
         />
-      </div>
-      <TextField
-        id={`${mode}-interval`}
-        label={t("planForm.interval")}
-        hint={t("planForm.intervalHint")}
-        value={fields.intervalDays}
-        onChange={(v) => setField("intervalDays", v)}
-        error={errors.intervalDays}
-        unit={unit}
-      />
-      <TextField
-        id={`${mode}-grace`}
-        label={t("planForm.grace")}
-        hint={t("planForm.graceHint")}
-        value={fields.graceDays}
-        onChange={(v) => setField("graceDays", v)}
-        error={errors.graceDays}
-        unit={unit}
-      />
-      <TextField
-        id={`${mode}-guardian`}
-        label={t("planForm.guardian")}
-        hint={t("planForm.guardianHint")}
-        value={fields.guardian}
-        onChange={(v) => setField("guardian", v)}
-        error={errors.guardian}
-        mono
-      />
-      <TextField
-        id={`${mode}-defer`}
-        label={t("planForm.defer")}
-        value={fields.deferDays}
-        onChange={(v) => setField("deferDays", v)}
-        error={errors.deferDays}
-        unit={unit}
-      />
-      <div className="md:col-span-2">
+      </Group>
+      <Group title={t("planForm.groups.timing")} hint={t("planForm.groups.timingHint")}>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField
+            id={`${mode}-interval`}
+            label={t("planForm.interval")}
+            hint={t("planForm.intervalHint")}
+            value={fields.intervalDays}
+            onChange={(v) => setField("intervalDays", v)}
+            error={errors.intervalDays}
+            unit={unit}
+          />
+          <TextField
+            id={`${mode}-grace`}
+            label={t("planForm.grace")}
+            hint={t("planForm.graceHint")}
+            value={fields.graceDays}
+            onChange={(v) => setField("graceDays", v)}
+            error={errors.graceDays}
+            unit={unit}
+          />
+        </div>
+      </Group>
+      <Group title={t("planForm.groups.helpers")} hint={t("planForm.groups.helpersHint")}>
+        <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_12rem]">
+          <TextField
+            id={`${mode}-guardian`}
+            label={t("planForm.guardian")}
+            hint={t("planForm.guardianHint")}
+            value={fields.guardian}
+            onChange={(v) => setField("guardian", v)}
+            error={errors.guardian}
+            mono
+          />
+          <TextField
+            id={`${mode}-defer`}
+            label={t("planForm.defer")}
+            value={fields.deferDays}
+            onChange={(v) => setField("deferDays", v)}
+            error={errors.deferDays}
+            unit={unit}
+          />
+        </div>
         <TextField
           id={`${mode}-checkin-signer`}
           label={t("planForm.checkinWallet")}
@@ -188,10 +228,21 @@ function PlanFieldsView({
           error={errors.checkinSigner}
           mono
         />
-      </div>
-    </div>
+      </Group>
+    </>
   );
 }
+
+/** The band a form ends on: its actions on the soft fill, with a note beside them. */
+const FormFooter: React.FC<{ note?: string; children: React.ReactNode }> = ({
+  note,
+  children,
+}) => (
+  <div className="flex flex-col gap-4 rounded-b-[var(--hs-radius)] border-t border-tile-line bg-tile-soft px-6 py-5 md:flex-row md:items-center md:justify-between md:px-8">
+    <div className="flex flex-wrap gap-2.5">{children}</div>
+    {note && <p className="hs-mono-xs text-muted-foreground md:text-right">{note}</p>}
+  </div>
+);
 
 function useFields(initial: Fields) {
   const [fields, setFields] = useState(initial);
@@ -221,34 +272,35 @@ export const PlanForm: React.FC<{
   });
 
   return (
-    <Panel tone="paper" className="max-w-3xl gap-6">
-      <div>
-        <h2 className="ed-h3">
+    <form
+      className="hs-sheet"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        const { input, errors: found } = validate(fields, owner, t);
+        setErrors(found);
+        if (input) onSubmit(input);
+      }}
+    >
+      <div className="max-w-[40rem] px-6 py-7 md:px-8 md:py-8">
+        <h2 className="hs-h3">
           {mode === "backup" ? t("planForm.backupTitle") : t("planForm.vaultTitle")}
         </h2>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
           {mode === "backup" ? t("planForm.backupDescription") : t("planForm.vaultDescription")}
         </p>
       </div>
-      <form
-        className="space-y-6"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const { input, errors: found } = validate(fields, owner, t);
-          setErrors(found);
-          if (input) onSubmit(input);
-        }}
-      >
-        <PlanFieldsView mode={mode} fields={fields} setField={setField} errors={errors} />
-        <Button type="submit" variant="flat-yellow" disabled={pending}>
+      <PlanFieldsView mode={mode} fields={fields} setField={setField} errors={errors} />
+      <FormFooter note={mode === "backup" ? t("planForm.backupNote") : t("planForm.vaultNote")}>
+        <Button type="submit" variant="primary" disabled={pending}>
           {pending
             ? t("tx.signing")
             : mode === "backup"
               ? t("planForm.submitBackup")
               : t("planForm.submitVault")}
         </Button>
-      </form>
-    </Panel>
+      </FormFooter>
+    </form>
   );
 };
 
@@ -274,57 +326,80 @@ export const PlanSettings: React.FC<{
     checkinSigner: plan.checkinSigner ?? "",
   });
 
+  const [open, setOpen] = useState(false);
+
   return (
-    <Panel tone="paper" className="gap-6">
-      <div>
-        <h3 className="ed-h3">{t("settings.title")}</h3>
-        <p className="mt-2 text-muted-foreground">{t("settings.description")}</p>
-      </div>
-      <form
-        className="space-y-6"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const { input, errors: found } = validate(fields, plan.owner, t);
-          setErrors(found);
-          if (!input) return;
-          const changes: PlanChanges = {};
-          if (input.destination !== plan.destination) changes.destination = input.destination;
-          if (Number(input.checkinIntervalSecs) !== plan.checkinIntervalSecs) {
-            changes.checkinIntervalSecs = input.checkinIntervalSecs;
-          }
-          if (Number(input.gracePeriodSecs) !== plan.gracePeriodSecs) {
-            changes.gracePeriodSecs = input.gracePeriodSecs;
-          }
-          if (Number(input.pauseDurationSecs) !== plan.pauseDurationSecs) {
-            changes.pauseDurationSecs = input.pauseDurationSecs;
-          }
-          if ((input.guardian ?? null) !== plan.guardian) {
-            if (input.guardian) changes.guardian = input.guardian;
-            else changes.clearGuardian = true;
-          }
-          if ((input.checkinSigner ?? null) !== plan.checkinSigner) {
-            if (input.checkinSigner) changes.checkinSigner = input.checkinSigner;
-            else changes.clearCheckinSigner = true;
-          }
-          if (Object.keys(changes).length > 0) onSave(changes);
-        }}
+    <section className="hs-sheet">
+      {/* Settings are rarely changed, so they wait behind their heading. */}
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`${plan.mode}-settings`}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-6 rounded-[var(--hs-radius)] px-6 py-6 text-left transition-colors duration-100 ease-out hover:bg-tile-soft/60 md:px-8"
       >
-        <PlanFieldsView mode={plan.mode} fields={fields} setField={setField} errors={errors} />
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" variant="flat" disabled={pending !== null}>
-            {pending === "settings" ? t("tx.signing") : t("settings.save")}
-          </Button>
-          <Button
-            type="button"
-            variant="flat-outline"
-            disabled={pending !== null || plan.coveredAssets > 0}
-            onClick={onClose}
-            title={t("settings.closeHint")}
-          >
-            {pending === "close" ? t("tx.signing") : t("settings.close")}
-          </Button>
-        </div>
-      </form>
-    </Panel>
+        <span>
+          <span className="hs-h3 block">{t("settings.title")}</span>
+          <span className="mt-1.5 block text-[0.9375rem] text-muted-foreground">
+            {t("settings.description")}
+          </span>
+        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "h-5 w-5 shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+      {open && (
+        <form
+          id={`${plan.mode}-settings`}
+          className="hs-rise"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            const { input, errors: found } = validate(fields, plan.owner, t);
+            setErrors(found);
+            if (!input) return;
+            const changes: PlanChanges = {};
+            if (input.destination !== plan.destination) changes.destination = input.destination;
+            if (Number(input.checkinIntervalSecs) !== plan.checkinIntervalSecs) {
+              changes.checkinIntervalSecs = input.checkinIntervalSecs;
+            }
+            if (Number(input.gracePeriodSecs) !== plan.gracePeriodSecs) {
+              changes.gracePeriodSecs = input.gracePeriodSecs;
+            }
+            if (Number(input.pauseDurationSecs) !== plan.pauseDurationSecs) {
+              changes.pauseDurationSecs = input.pauseDurationSecs;
+            }
+            if ((input.guardian ?? null) !== plan.guardian) {
+              if (input.guardian) changes.guardian = input.guardian;
+              else changes.clearGuardian = true;
+            }
+            if ((input.checkinSigner ?? null) !== plan.checkinSigner) {
+              if (input.checkinSigner) changes.checkinSigner = input.checkinSigner;
+              else changes.clearCheckinSigner = true;
+            }
+            if (Object.keys(changes).length > 0) onSave(changes);
+          }}
+        >
+          <PlanFieldsView mode={plan.mode} fields={fields} setField={setField} errors={errors} />
+          <FormFooter note={t("settings.closeHint")}>
+            <Button type="submit" variant="ink" disabled={pending !== null}>
+              {pending === "settings" ? t("tx.signing") : t("settings.save")}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={pending !== null || plan.coveredAssets > 0}
+              onClick={onClose}
+            >
+              {pending === "close" ? t("tx.signing") : t("settings.close")}
+            </Button>
+          </FormFooter>
+        </form>
+      )}
+    </section>
   );
 };
