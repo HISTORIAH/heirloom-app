@@ -139,16 +139,20 @@ function TradeForm({
   const quoteIsCurrent = quote.data !== undefined && settledAmount === amount;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex min-w-0 flex-col gap-5">
       <DialogHeader className="gap-1">
         <span className="hs-mono-xs text-muted-foreground">{t("trade.cap")}</span>
         <DialogTitle>{t("trade.title", { symbol: entry.symbol })}</DialogTitle>
       </DialogHeader>
 
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-tile-line px-4 py-3">
-        <AssetBadge mint={{ mint: entry.mint, name: null, symbol: null }} catalog={entry} />
+        <AssetBadge
+          mint={{ mint: entry.mint, name: null, symbol: null }}
+          catalog={entry}
+          className="flex-1"
+        />
         {price?.usd != null && (
-          <p className="text-right text-lg font-medium tabular-nums">
+          <p className="shrink-0 text-right text-lg font-medium tabular-nums">
             {formatUsd(price.usd, locale)}
           </p>
         )}

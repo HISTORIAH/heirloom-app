@@ -1,8 +1,9 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { isAddress, type Address } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDraft, useResume } from "@/contexts/PageSession";
 import { cn } from "@/lib/utils";
 import type { PlanMode, PlanChanges, PlanTiming } from "@/lib/stocks";
 import { SECONDS_PER_DAY } from "@/lib/format";
@@ -37,7 +38,8 @@ function days(text: string, min: number): bigint | null {
 /** Checks the fields the way the program would, so a bad value never reaches a signature. */
 function validate(
   fields: Fields,
-  owner: Address,
+  // Null before a wallet is connected: the one check that needs it waits.
+  owner: Address | null,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): { input: PlanInput | null; errors: FieldErrors } {
   const errors: FieldErrors = {};
@@ -244,8 +246,11 @@ const FormFooter: React.FC<{ note?: string; children: React.ReactNode }> = ({
   </div>
 );
 
-function useFields(initial: Fields) {
-  const [fields, setFields] = useState(initial);
+/** Edits a set of fields held wherever the caller keeps them. */
+function useFieldEditor([fields, setFields]: [
+  Fields,
+  React.Dispatch<React.SetStateAction<Fields>>,
+]) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const setField = (key: keyof Fields, value: string) => {
     setFields((f) => ({ ...f, [key]: value }));
@@ -255,21 +260,46 @@ function useFields(initial: Fields) {
 }
 
 /** Creates a backup plan or a vault. */
+const EMPTY_FIELDS: Fields = {
+  destination: "",
+  intervalDays: "30",
+  graceDays: "7",
+  deferDays: "7",
+  guardian: "",
+  checkinSigner: "",
+};
+
+/**
+ * Creates a backup plan or a vault. It renders without a wallet (`owner`
+ * null), so a visitor can read and fill it first; the page asks for a wallet
+ * when it's submitted. The fields are a page draft, so they survive the page
+ * body remounting on connect, and `resumeKey` lets the connected form submit
+ * itself once, carrying on the action that asked for the wallet.
+ */
 export const PlanForm: React.FC<{
   mode: PlanMode;
-  owner: Address;
+  owner: Address | null;
   pending: boolean;
   onSubmit: (input: PlanInput) => void;
-}> = ({ mode, owner, pending, onSubmit }) => {
+  resumeKey?: string;
+}> = ({ mode, owner, pending, onSubmit, resumeKey }) => {
   const { t } = useTranslation("stocks");
-  const { fields, setField, errors, setErrors } = useFields({
-    destination: "",
-    intervalDays: "30",
-    graceDays: "7",
-    deferDays: "7",
-    guardian: "",
-    checkinSigner: "",
-  });
+  const { fields, setField, errors, setErrors } = useFieldEditor(
+    useDraft(`plan-form-${mode}`, EMPTY_FIELDS),
+  );
+  const submit = () => {
+    const { input, errors: found } = validate(fields, owner, t);
+    setErrors(found);
+    if (input) onSubmit(input);
+  };
+
+  const resumed = useResume(resumeKey ?? "", !!resumeKey && owner !== null);
+  useEffect(() => {
+    if (resumed) submit();
+    // Only the resume itself should trigger this; `submit` reads the fields
+    // as they are when it runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumed]);
 
   return (
     <form
@@ -277,9 +307,7 @@ export const PlanForm: React.FC<{
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        const { input, errors: found } = validate(fields, owner, t);
-        setErrors(found);
-        if (input) onSubmit(input);
+        submit();
       }}
     >
       <div className="max-w-[40rem] px-6 py-7 md:px-8 md:py-8">
@@ -291,7 +319,13 @@ export const PlanForm: React.FC<{
         </p>
       </div>
       <PlanFieldsView mode={mode} fields={fields} setField={setField} errors={errors} />
-      <FormFooter note={mode === "backup" ? t("planForm.backupNote") : t("planForm.vaultNote")}>
+      <FormFooter
+        note={
+          owner === null
+            ? t(mode === "backup" ? "planForm.connectNote" : "planForm.connectVaultNote")
+            : t(mode === "backup" ? "planForm.backupNote" : "planForm.vaultNote")
+        }
+      >
         <Button type="submit" variant="primary" disabled={pending}>
           {pending
             ? t("tx.signing")
@@ -317,14 +351,16 @@ export const PlanSettings: React.FC<{
   onClose: () => void;
 }> = ({ plan, pending, onSave, onClose }) => {
   const { t } = useTranslation("stocks");
-  const { fields, setField, errors, setErrors } = useFields({
-    destination: plan.destination,
-    intervalDays: toDays(plan.checkinIntervalSecs),
-    graceDays: toDays(plan.gracePeriodSecs),
-    deferDays: toDays(plan.pauseDurationSecs),
-    guardian: plan.guardian ?? "",
-    checkinSigner: plan.checkinSigner ?? "",
-  });
+  const { fields, setField, errors, setErrors } = useFieldEditor(
+    useState<Fields>({
+      destination: plan.destination,
+      intervalDays: toDays(plan.checkinIntervalSecs),
+      graceDays: toDays(plan.gracePeriodSecs),
+      deferDays: toDays(plan.pauseDurationSecs),
+      guardian: plan.guardian ?? "",
+      checkinSigner: plan.checkinSigner ?? "",
+    }),
+  );
 
   const [open, setOpen] = useState(false);
 

@@ -28,9 +28,34 @@ import type { MintDetails } from "@/services/mints";
 import type { CoveredRow, OwnerOverview, PlanOverview } from "@/services/overview";
 import { riskFlags } from "@/services/risk";
 
+const HEALTH_COLS = "minmax(0,1.3fr) minmax(0,2fr) minmax(7rem,auto)";
+const DIVIDEND_COLS = "minmax(0,1.3fr) minmax(0,2fr)";
+const RISK_COLS = "minmax(0,1.5fr) minmax(0,0.8fr) minmax(0,2fr)";
+
 const Dashboard = () => (
-  <StocksPage page="dashboard">{(wallet) => <DashboardBody wallet={wallet} />}</StocksPage>
+  <StocksPage page="dashboard">
+    {(wallet) => (wallet ? <DashboardBody wallet={wallet} /> : <PreviewDashboard />)}
+  </StocksPage>
 );
+
+/**
+ * The dashboard before a wallet is connected: one card with the two ways in,
+ * the same one a connected wallet with no plans sees. Its sections only mean
+ * something once there is a plan to watch, so they wait.
+ */
+function PreviewDashboard() {
+  const { t } = useTranslation("stocks");
+  return (
+    <EmptyState title={t("dashboard.noPlanTitle")} description={t("dashboard.previewDescription")}>
+      <Button variant="primary" asChild>
+        <Link to="/protect">{t("dashboard.startBackup")}</Link>
+      </Button>
+      <Button variant="ghost" asChild>
+        <Link to="/inherit">{t("dashboard.startVault")}</Link>
+      </Button>
+    </EmptyState>
+  );
+}
 
 function DashboardBody({ wallet }: { wallet: WalletCtx }) {
   const overview = useOwnerOverview(wallet.address);
@@ -113,7 +138,7 @@ function DashboardView({ wallet, data }: { wallet: WalletCtx; data: OwnerOvervie
             </p>
           ) : (
             <List
-              cols="minmax(0,1.3fr) minmax(0,2fr) minmax(7rem,auto)"
+              cols={HEALTH_COLS}
               head={[t("columns.stock"), t("columns.status"), ""]}
             >
               {data.backup.rows.map((row) => (
@@ -278,7 +303,7 @@ function Dividends({ data, now }: { data: OwnerOverview; now: number }) {
         </p>
       ) : (
         <List
-          cols="minmax(0,1.3fr) minmax(0,2fr)"
+          cols={DIVIDEND_COLS}
           head={[t("columns.stock"), t("columns.change")]}
         >
           {upcoming.map(({ mint, catalog, state }) => (
@@ -314,7 +339,7 @@ function IssuerRisk({ data }: { data: OwnerOverview }) {
   return (
     <Section title={t("dashboard.riskTitle")} description={t("risk.legend")}>
       <List
-        cols="minmax(0,1.5fr) minmax(0,0.8fr) minmax(0,2fr)"
+        cols={RISK_COLS}
         head={[t("columns.stock"), t("columns.tier"), t("columns.issuerCan")]}
       >
         {mints.map(({ mint, catalog }) => {

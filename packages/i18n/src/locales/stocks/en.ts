@@ -295,9 +295,16 @@ const stocks = {
     change: "Next change",
     tier: "Registry",
   },
-  connect: {
-    title: "Connect a wallet to continue",
-    description: "Everything on this page is read from, and signed by, your own wallet.",
+  /*
+   * What a page shows in place of wallet data before one is connected: the
+   * interface stays, and each list says what would fill it.
+   */
+  preview: {
+    holdings: "The stocks in your wallet show here, with which ones are backed up.",
+    featuredTitle: "Stocks you can back up",
+    featuredDescription:
+      "A few of the {{formatted}} tokenized stocks Heirloom recognises. Connect a wallet to see which you hold.",
+    view: "View",
   },
   common: {
     loading: "Loading…",
@@ -410,6 +417,8 @@ const stocks = {
     submitBackup: "Create backup plan",
     submitVault: "Create vault",
     backupNote: "Creating the plan moves nothing. You choose what it covers next.",
+    connectNote: "You'll connect a wallet to create it. Nothing moves until you choose what it covers.",
+    connectVaultNote: "You'll connect a wallet to create it. Nothing moves until you add stocks.",
     vaultNote: "Creating the vault moves nothing. You add stocks to it next.",
     groups: {
       recipient: "Recipient",
@@ -502,16 +511,21 @@ const stocks = {
     cover_one: "Cover {{count}} holding",
     cover_other: "Cover {{count}} holdings",
     nothingToCover: "Every stock in this wallet is already covered.",
+    nothingHeld: "This wallet doesn't hold any stocks Heirloom supports yet.",
+    browse: "Browse stocks",
     coveredTitle: "Covered",
     stopCovering: "Stop covering",
     missing_one:
       "{{count}} covered record couldn't be read from the network yet. It will appear on the next refresh.",
     missing_other:
       "{{count}} covered records couldn't be read from the network yet. They will appear on the next refresh.",
+    existingPlan: "This wallet already has a backup plan, so nothing new was created. Here it is.",
   },
   dashboard: {
     noPlanTitle: "Nothing to watch yet",
     noPlanDescription: "Back up the stocks in this wallet, or put some in a vault for an heir.",
+    previewDescription:
+      "Back up your stocks, or put some in a vault for an heir. Connect a wallet to see the plans it already has.",
     startBackup: "Back up stocks",
     startVault: "Open a vault",
     backupTitle: "Backup plan",
@@ -555,6 +569,23 @@ const stocks = {
     notYet: "Available {{date}}.",
     nothingToRecover: "None of this owner's covered stocks are recoverable right now.",
     feeNote: "A {{fee}} protocol fee comes out of each transfer.",
+    connectTitle: "Were you named in a plan?",
+    connectDescription:
+      "Connect the wallet an owner named, as their recovery wallet, heir, guardian, or check-in wallet, and their plan shows up here with what you can do for it.",
+    explain: {
+      destination: {
+        title: "Recovery wallet or heir",
+        body: "Once the owner stops checking in and the grace period runs out, move the covered stocks to this wallet.",
+      },
+      guardian: {
+        title: "Guardian",
+        body: "If the owner is fine but can't check in, push the deadline out once.",
+      },
+      checkin: {
+        title: "Check-in wallet",
+        body: "Check in for the owner from a hot wallet that can do nothing else.",
+      },
+    },
   },
   inherit: {
     planTitle: "Your vault",
@@ -573,6 +604,7 @@ const stocks = {
     withdraw: "Withdraw",
     withdrawNote: "A {{fee}} fee comes out of withdrawals.",
     nothingToAdd: "No stocks in this wallet can be vaulted.",
+    existingVault: "This wallet already has a vault, so nothing new was created. Here it is.",
   },
   trade: {
     cap: "Mainnet · via Jupiter",

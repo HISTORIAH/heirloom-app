@@ -3,6 +3,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { Info, TriangleAlert } from "lucide-react";
 import { useTranslation } from "@heirloom/i18n";
 import { DitherField } from "@/components/landing/DitherField";
+import { useConnect } from "@/contexts/PageSession";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -137,6 +138,25 @@ export const Cell: React.FC<{ label?: string; className?: string; children: Reac
     {children}
   </div>
 );
+
+/**
+ * A list's only row while no wallet is connected: what would be here, and the
+ * way to fill it. The list keeps its header, so the page still shows its shape.
+ */
+export const ConnectRow: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { t } = useTranslation("app");
+  const connect = useConnect();
+  return (
+    <div className="hs-list-row md:!flex md:!flex-row md:items-center md:justify-between">
+      <p className="text-[0.9375rem] text-muted-foreground">{children}</p>
+      <div>
+        <Button variant="ghost" size="sm" onClick={connect}>
+          {t("common.connectWallet")}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 /** Where a list will be: grey rows in the list's own sheet. */
 export const ListSkeleton: React.FC<{ rows?: number }> = ({ rows = 3 }) => (

@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import { useTranslation } from "@heirloom/i18n";
 import { RECOVERY_FEE_BPS } from "@historiah/heirloom-stocks";
-import { StocksPage } from "@/components/layout/StocksPage";
+import { CalendarCheck, Hourglass, Wallet } from "lucide-react";
+import { ConnectCard, StocksPage } from "@/components/layout/StocksPage";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
 import { Cell, EmptyState, QueryState, Row } from "@/components/stocks/Section";
@@ -31,8 +32,44 @@ const PAYOUT_COLS = "minmax(0,1.4fr) minmax(0,0.9fr) minmax(0,1.6fr) minmax(7rem
 const PAYOUTS_PER_TX = 2;
 
 const Recover = () => (
-  <StocksPage page="recover">{(wallet) => <RecoverBody wallet={wallet} />}</StocksPage>
+  <StocksPage page="recover">
+    {(wallet) => (wallet ? <RecoverBody wallet={wallet} /> : <PreviewRecover />)}
+  </StocksPage>
 );
+
+const ROLES = [
+  { key: "destination", Icon: Wallet },
+  { key: "guardian", Icon: Hourglass },
+  { key: "checkin", Icon: CalendarCheck },
+] as const;
+
+/**
+ * Before a wallet is connected there are no plans to find, so the page says
+ * who it is for and what each named wallet can do.
+ */
+function PreviewRecover() {
+  const { t } = useTranslation("stocks");
+  return (
+    <div className="space-y-4">
+      <ConnectCard title={t("recover.connectTitle")} description={t("recover.connectDescription")} />
+      <ul className="grid gap-4 md:grid-cols-3">
+        {ROLES.map(({ key, Icon }) => (
+          <li key={key} className="hs-card flex min-h-[12rem] flex-col justify-between gap-8 p-6">
+            <span className="grid h-9 w-9 place-items-center rounded-full border border-tile-line bg-background">
+              <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="hs-h4">{t(`recover.explain.${key}.title`)}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/75">
+                {t(`recover.explain.${key}.body`)}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function RecoverBody({ wallet }: { wallet: WalletCtx }) {
   const { t } = useTranslation("stocks");

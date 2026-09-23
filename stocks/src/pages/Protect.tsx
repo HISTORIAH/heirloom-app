@@ -7,9 +7,10 @@ import { Cap } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { AssetBadge } from "@/components/stocks/AssetBadge";
 import { PlanForm } from "@/components/stocks/PlanForms";
-import { Cell, List, QueryState, Row, Section } from "@/components/stocks/Section";
+import { Cell, List, Notice, QueryState, Row, Section } from "@/components/stocks/Section";
 import { HealthText, RiskTags } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
+import { usePageSession, useResume } from "@/contexts/PageSession";
 import { useNow, useOwnerOverview } from "@/hooks/useStocks";
 import { useStocksTx } from "@/hooks/useStocksTx";
 import { buildCoverAssetIx, buildInitializePlanIx, buildUncoverAssetIx } from "@/lib/stocks";
@@ -23,11 +24,28 @@ const COVERS_PER_TX = 3;
 
 const CHOOSE_COLS = "minmax(0,2.1fr) minmax(0,0.9fr) minmax(0,1.5fr) minmax(6.5rem,auto)";
 
+/** The pending action a disconnected "Create backup plan" leaves for the connected page. */
+const CREATE = "create-backup";
+
 const Protect = () => (
-  <StocksPage page="protect">{(wallet) => <ProtectBody wallet={wallet} />}</StocksPage>
+  <StocksPage page="protect">
+    {(wallet) => (wallet ? <ConnectedProtect wallet={wallet} /> : <PreviewProtect />)}
+  </StocksPage>
 );
 
-function ProtectBody({ wallet }: { wallet: WalletCtx }) {
+/**
+ * Without a wallet the page is the form a new owner starts from. Submitting
+ * it asks for a wallet; the connected page then creates the plan from the
+ * same fields, or shows the plan the wallet already has.
+ */
+function PreviewProtect() {
+  const { requireWallet } = usePageSession();
+  return (
+    <PlanForm mode="backup" owner={null} pending={false} onSubmit={() => requireWallet(CREATE)} />
+  );
+}
+
+function ConnectedProtect({ wallet }: { wallet: WalletCtx }) {
   const overview = useOwnerOverview(wallet.address);
   const tx = useStocksTx(wallet.signer);
 
@@ -41,6 +59,7 @@ function ProtectBody({ wallet }: { wallet: WalletCtx }) {
             mode="backup"
             owner={wallet.address}
             pending={tx.pending === "create"}
+            resumeKey={CREATE}
             onSubmit={(input) =>
               tx.run("create", {
                 done: "createBackup",
@@ -85,7 +104,7 @@ function PlanTerms({ backup }: { backup: PlanOverview }) {
         </Link>
       </header>
       {/* Stacked below lg with rules between; one row of five above it. */}
-      <dl className="grid divide-y divide-tile-line border-t border-tile-line lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+      <dl className="grid grid-cols-1 divide-y divide-tile-line border-t border-tile-line lg:grid-cols-5 lg:divide-x lg:divide-y-0">
         {rows.map(([label, value, mono]) => (
           <div key={label} className="px-5 py-4 md:px-6">
             <dt className="hs-mono-xs text-muted-foreground">{label}</dt>
@@ -113,8 +132,11 @@ function CoverView({
   const { t, i18n } = useTranslation("stocks");
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const now = useNow();
+  // Asked to create a plan, but the wallet that connected already has one.
+  const alreadyHad = useResume(CREATE, true);
 
   const coveredMints = new Set<Address>(backup.rows.map((r) => r.record.mint));
+  const heldAny = data.holdings.some((h) => h.position.amount > 0n);
   const candidates = data.holdings.filter(
     (h) => h.position.amount > 0n && !coveredMints.has(h.mint.mint),
   );
@@ -153,6 +175,7 @@ function CoverView({
 
   return (
     <div className="space-y-14">
+      {alreadyHad && <Notice>{t("protect.existingPlan")}</Notice>}
       <PlanTerms backup={backup} />
 
       <Section
@@ -175,9 +198,20 @@ function CoverView({
         }
       >
         {uncovered.length === 0 ? (
-          <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">
-            {t("protect.nothingToCover")}
-          </p>
+          // Nothing left to cover is two different situations: everything is
+          // already covered, or the wallet holds no supported stock at all.
+          heldAny ? (
+            <p className="hs-sheet px-5 py-4 text-sm text-muted-foreground">
+              {t("protect.nothingToCover")}
+            </p>
+          ) : (
+            <div className="hs-sheet flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm text-muted-foreground">{t("protect.nothingHeld")}</p>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/browse">{t("protect.browse")}</Link>
+              </Button>
+            </div>
+          )
         ) : (
           <List
             cols={CHOOSE_COLS}

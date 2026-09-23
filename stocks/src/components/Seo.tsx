@@ -15,9 +15,9 @@ export interface SeoProps {
 }
 
 /**
- * Per-route head tags. The app routes are wallet-gated and per-user, like
- * app.heirlm.xyz's, so they carry noindex; the landing at the root is the one
- * page here meant to be found. robots.txt keeps crawlers to that one path.
+ * Per-route head tags. The app routes show what a wallet holds, per visitor,
+ * so they carry noindex; the landing at the root is the one page here meant
+ * to be found. robots.txt keeps crawlers to that one path.
  */
 const Seo = ({ title, description, path = "/", indexable = false }: SeoProps) => {
   const canonical = `${STOCKS_URL}${path}`;

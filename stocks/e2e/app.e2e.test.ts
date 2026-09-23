@@ -116,6 +116,19 @@ async function openAs(wallet: BurnerWallet, route: string): Promise<Page> {
   return page;
 }
 
+/**
+ * A page with no wallet connected, the way a first-time visitor sees it.
+ * `wallet`, when given, is loaded into the burner, so the page can connect it
+ * when an action asks for one.
+ */
+async function openWithout(route: string, wallet?: BurnerWallet): Promise<Page> {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => console.error("[page error]", error.message));
+  await page.goto(`${appUrl}${route}${wallet ? `?burner=${wallet.seed}` : ""}`);
+  return page;
+}
+
 async function toast(page: Page, title: string) {
   await page.getByText(title, { exact: true }).first().waitFor({ timeout: 60_000 });
 }
@@ -265,4 +278,40 @@ test("an owner vaults a stock and the heir claims it once the plan lapses", asyn
   const fee = (vaulted * 75n + 9_999n) / 10_000n;
   expect((await fetchToken(cluster.rpc, heirAta)).data.amount).toBe(vaulted - fee);
   await heirPage.context().close();
+}, 180_000);
+
+test("every page can be explored without a wallet", async () => {
+  const page = await openWithout("/portfolio");
+  await page.getByRole("heading", { name: "Holdings" }).waitFor();
+  await page.getByRole("heading", { name: "Stocks you can back up" }).waitFor();
+  await shoot(page, "08-portfolio-preview");
+
+  for (const [route, field] of [
+    ["/protect", "Recovery wallet address"],
+    ["/inherit", "Heir wallet address"],
+  ] as const) {
+    await page.goto(`${appUrl}${route}`);
+    await page.getByLabel(field).waitFor();
+  }
+  await page.goto(`${appUrl}/dashboard`);
+  await page.getByRole("heading", { name: "Nothing to watch yet" }).waitFor();
+  await page.goto(`${appUrl}/recover`);
+  await page.getByRole("heading", { name: "Were you named in a plan?" }).waitFor();
+  await page.context().close();
+}, 120_000);
+
+test("a visitor fills in a backup plan first, and connects only to create it", async () => {
+  const visitor = await burner();
+  const recoveryWallet = await burner(0);
+
+  const page = await openWithout("/protect", visitor);
+  await page.getByLabel("Recovery wallet address").fill(recoveryWallet.signer.address);
+  await page.getByRole("button", { name: "Create backup plan" }).click();
+  // The submit asks for a wallet; once it's connected the plan is created
+  // from what was typed, without filling the form in again.
+  await page.getByRole("button", { name: /Heirloom Burner/ }).click();
+  await toast(page, "Backup plan created");
+  await page.getByRole("heading", { name: "Choose what it covers" }).waitFor();
+  await shoot(page, "09-connect-to-create");
+  await page.context().close();
 }, 180_000);

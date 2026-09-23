@@ -24,8 +24,14 @@ docs are in [`docs/`](../docs/src/content/docs/stocks/).
 | `/recover`   | Plans naming this wallet: recover, claim, defer, or check in for them  |
 | `/inherit`   | Create a vault, add and withdraw stocks, vault settings                |
 
-Every app route but `/browse` is wallet-gated. Only the landing is indexable:
-the app routes carry `noindex`, and `public/robots.txt` keeps crawlers to `/`.
+No route is gated on a wallet. Each renders its interface without one — the
+forms, the lists and their headers, with a row saying what each would show —
+and asks for a wallet only when an action needs a signature. A plan form
+submitted without a wallet opens the wallet dialog; once connected, the page
+creates the plan from what was typed (or shows the plan that wallet already
+has). `src/contexts/PageSession.ts` holds the drafts and pending actions that
+make that work across the connect. Only the landing is indexable: the app
+routes carry `noindex`, and `public/robots.txt` keeps crawlers to `/`.
 
 The whole origin, landing and app, speaks one visual language of its own, not
 app.heirlm.xyz's panels or heirlm.xyz's mosaic: one column ruled into quarters,

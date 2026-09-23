@@ -18,6 +18,7 @@ import {
 } from "@/components/stocks/Section";
 import { HealthText, PlanClock } from "@/components/stocks/StatusBits";
 import type { WalletCtx } from "@/components/WithWallet";
+import { usePageSession, useResume } from "@/contexts/PageSession";
 import { useNow, useOwnerOverview } from "@/hooks/useStocks";
 import { useStocksTx } from "@/hooks/useStocksTx";
 import {
@@ -37,12 +38,43 @@ import { cn } from "@/lib/utils";
 
 const VAULT_COLS = "minmax(0,1.6fr) minmax(0,0.9fr) minmax(0,1.5fr) minmax(13rem,auto)";
 
+/** The pending action a disconnected "Create vault" leaves for the connected page. */
+const CREATE = "create-vault";
+
 const Inherit = () => (
-  <StocksPage page="inherit">{(wallet) => <InheritBody wallet={wallet} />}</StocksPage>
+  <StocksPage page="inherit">
+    {(wallet) => (wallet ? <ConnectedInherit wallet={wallet} /> : <PreviewInherit />)}
+  </StocksPage>
 );
 
-function InheritBody({ wallet }: { wallet: WalletCtx }) {
+/** What a vault trades away, above the form a new owner starts from. */
+function NewVault({ form }: { form: React.ReactNode }) {
   const { t } = useTranslation("stocks");
+  return (
+    <div className="space-y-6">
+      <Notice className="max-w-3xl">{t("inherit.tradeoff")}</Notice>
+      {form}
+    </div>
+  );
+}
+
+/**
+ * Without a wallet the page is the vault form. Submitting it asks for a
+ * wallet; the connected page then creates the vault from the same fields, or
+ * shows the one the wallet already has.
+ */
+function PreviewInherit() {
+  const { requireWallet } = usePageSession();
+  return (
+    <NewVault
+      form={
+        <PlanForm mode="vault" owner={null} pending={false} onSubmit={() => requireWallet(CREATE)} />
+      }
+    />
+  );
+}
+
+function ConnectedInherit({ wallet }: { wallet: WalletCtx }) {
   const overview = useOwnerOverview(wallet.address);
   const tx = useStocksTx(wallet.signer);
 
@@ -52,20 +84,24 @@ function InheritBody({ wallet }: { wallet: WalletCtx }) {
         data.vault ? (
           <VaultView wallet={wallet} data={data} vault={data.vault} tx={tx} />
         ) : (
-          <div className="space-y-6">
-            <Notice className="max-w-3xl">{t("inherit.tradeoff")}</Notice>
-            <PlanForm
-              mode="vault"
-              owner={wallet.address}
-              pending={tx.pending === "create"}
-              onSubmit={(input) =>
-                tx.run("create", {
-                  done: "createVault",
-                  build: async () => [[await buildInitializePlanIx(wallet.signer, "vault", input)]],
-                })
-              }
-            />
-          </div>
+          <NewVault
+            form={
+              <PlanForm
+                mode="vault"
+                owner={wallet.address}
+                pending={tx.pending === "create"}
+                resumeKey={CREATE}
+                onSubmit={(input) =>
+                  tx.run("create", {
+                    done: "createVault",
+                    build: async () => [
+                      [await buildInitializePlanIx(wallet.signer, "vault", input)],
+                    ],
+                  })
+                }
+              />
+            }
+          />
         )
       }
     </QueryState>
@@ -111,9 +147,12 @@ function VaultView({
 }) {
   const { t } = useTranslation("stocks");
   const now = useNow();
+  // Asked to create a vault, but the wallet that connected already has one.
+  const alreadyHad = useResume(CREATE, true);
 
   return (
     <div className="space-y-14">
+      {alreadyHad && <Notice>{t("inherit.existingVault")}</Notice>}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel tone="sage" className="gap-7">
           <Cap>{t("inherit.planTitle")}</Cap>

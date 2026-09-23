@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowDownRight, ArrowUpRight, Check, Search } from "lucide-react";
 import type { Address } from "@solana/kit";
@@ -12,6 +12,7 @@ import { TradeDialog } from "@/components/stocks/TradeDialog";
 import type { WalletCtx } from "@/components/WithWallet";
 import { IS_MAINNET } from "@/config";
 import { useWallet } from "@/contexts/WalletContext";
+import { usePageSession, useResume } from "@/contexts/PageSession";
 import { useMainnetHoldings, useTokenPrices } from "@/hooks/useJupiter";
 import { useCatalog, useOwnerOverview } from "@/hooks/useStocks";
 import { formatNumber, formatPercent, formatUsd } from "@/lib/format";
@@ -35,6 +36,9 @@ const ISSUER_FILTERS: IssuerFilter[] = ["all", "xstocks", "ondo"];
 
 const CATALOG_COLS = "minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr)";
 
+/** The pending action a trade leaves when it stops to connect a wallet. */
+const TRADE = "trade";
+
 /**
  * Every stock in the catalog, grouped by company, readable without a wallet.
  *
@@ -49,14 +53,13 @@ const Browse = () => {
   return (
     <StocksPage
       page="browse"
-      walletOptional
       // Where these prices come from, beside the headline, on any build that
       // isn't reading mainnet.
       aside={
         !IS_MAINNET && <Notice title={t("browse.networkCap")}>{t("browse.networkNote")}</Notice>
       }
     >
-      {(wallet, connect) => <BrowseView wallet={wallet} connect={connect} />}
+      {(wallet) => <BrowseView wallet={wallet} />}
     </StocksPage>
   );
 };
@@ -89,10 +92,11 @@ const parseIssuer = (value: string | null): IssuerFilter =>
  * `/browse?q=AAPL` lands on a result. If the wallet's holdings can't be read,
  * the listings still show, as they would with no wallet.
  */
-function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: () => void }) {
+function BrowseView({ wallet }: { wallet: WalletCtx | null }) {
   const { t, i18n } = useTranslation("stocks");
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const { account } = useWallet();
+  const { connect, requireWallet } = usePageSession();
   const catalog = useCatalog();
   const groups = useMemo(() => groupByCompany(catalog.entries), [catalog.entries]);
   const allMints = useMemo(() => catalog.entries.map((e) => e.mint), [catalog.entries]);
@@ -112,6 +116,13 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
   const tradableOnly = params.get("tradable") === "1";
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [trading, setTrading] = useState<CatalogEntry | null>(null);
+
+  // A trade that stopped to connect a wallet opens again once it's connected.
+  const resumedTrade = useResume<Address>(TRADE, !!wallet && catalog.count > 0);
+  useEffect(() => {
+    if (!resumedTrade) return;
+    setTrading(catalog.entries.find((e) => e.mint === resumedTrade) ?? null);
+  }, [resumedTrade, catalog.entries]);
 
   // Catalogued stocks the wallet holds on mainnet, or has in a vault.
   const heldMints = useMemo(() => {
@@ -315,8 +326,8 @@ function BrowseView({ wallet, connect }: { wallet: WalletCtx | null; connect: ()
         holdings={holdings}
         account={account}
         onConnect={() => {
+          if (trading) requireWallet(TRADE, trading.mint);
           setTrading(null);
-          connect();
         }}
         onOpenChange={(open) => !open && setTrading(null)}
       />

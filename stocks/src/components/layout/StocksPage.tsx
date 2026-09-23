@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "@heirloom/i18n";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { WithWallet, type WalletCtx } from "@/components/WithWallet";
+import { PageSessionContext, usePageSession, type PageSession } from "@/contexts/PageSession";
 import { AppNav } from "@/components/shell/AppNav";
 import { SiteFooter } from "@/components/shell/SiteFooter";
 import { AsciiCanvas } from "@/components/landing/AsciiCanvas";
@@ -53,78 +54,78 @@ export const PageHead: React.FC<{
   </>
 );
 
-type StocksPageProps =
-  | {
-      page: StocksPageKey;
-      walletOptional?: false;
-      aside?: ReactNode;
-      children: (wallet: WalletCtx) => ReactNode;
-    }
-  | {
-      page: StocksPageKey;
-      /** Render the body without a wallet too, handing it a way to open the connect dialog. */
-      walletOptional: true;
-      aside?: ReactNode;
-      children: (wallet: WalletCtx | null, connect: () => void) => ReactNode;
-    };
-
 /**
- * Chrome shared by every app route: the frame, the page's head, and a
- * connect card in place of the body while no wallet is connected. Nearly
- * everything on this origin is read from and signed by the visitor's own
- * wallet; a page with something to show without one opts out with
- * `walletOptional`.
+ * Chrome shared by every app route: the frame, the page's head, and the page
+ * session. No route is gated on a wallet — every page renders without one, so
+ * a visitor can see what each part of the app does before trusting it with a
+ * key. The body gets the wallet when there is one, and asks for it through
+ * `requireWallet` (see contexts/PageSession) only when an action needs a
+ * signature.
  */
-export const StocksPage: React.FC<StocksPageProps> = (props) => {
-  const { page } = props;
+export const StocksPage: React.FC<{
+  page: StocksPageKey;
+  aside?: ReactNode;
+  children: (wallet: WalletCtx | null) => ReactNode;
+}> = ({ page, aside, children }) => {
   const { t } = useTranslation("stocks");
   const [connectOpen, setConnectOpen] = useState(false);
-  const connect = () => setConnectOpen(true);
+  // Held for the page's lifetime, above the body that remounts on connect.
+  const [session] = useState<PageSession>(() => {
+    const intents = new Map<string, unknown>();
+    return {
+      connect: () => setConnectOpen(true),
+      requireWallet: (key, payload) => {
+        intents.set(key, payload ?? true);
+        setConnectOpen(true);
+      },
+      drafts: new Map(),
+      intents,
+    };
+  });
 
   return (
-    <PageFrame onConnectWallet={connect}>
-      <PageHead
-        cap={t(`pages.${page}.cap`)}
-        headline={t(`pages.${page}.headline`)}
-        description={t(`pages.${page}.description`)}
-        aside={props.aside}
-      />
-      <div className="hs-col pt-10 md:pt-14">
-        <WithWallet>
-          {(wallet) =>
-            props.walletOptional ? (
-              props.children(wallet, connect)
-            ) : wallet ? (
-              props.children(wallet)
-            ) : (
-              <ConnectPrompt onConnect={connect} />
-            )
-          }
-        </WithWallet>
-      </div>
-      <WalletConnectDialog open={connectOpen} onOpenChange={setConnectOpen} />
-    </PageFrame>
+    <PageSessionContext.Provider value={session}>
+      <PageFrame onConnectWallet={session.connect}>
+        <PageHead
+          cap={t(`pages.${page}.cap`)}
+          headline={t(`pages.${page}.headline`)}
+          description={t(`pages.${page}.description`)}
+          aside={aside}
+        />
+        <div className="hs-col pt-10 md:pt-14">
+          <WithWallet>{(wallet) => children(wallet)}</WithWallet>
+        </div>
+        <WalletConnectDialog
+          open={connectOpen}
+          onOpenChange={setConnectOpen}
+          // An action that asked for a wallet and didn't get one is dropped, so
+          // connecting later from the bar can't start it unasked.
+          onDismiss={() => session.intents.clear()}
+        />
+      </PageFrame>
+    </PageSessionContext.Provider>
   );
 };
 
 /**
- * The first thing "Launch app" shows a visitor without a wallet, so it is
- * cut like the landing's intro card: the ask on one side, the mark as a deep
- * ASCII solid behind the app icon on the other.
+ * A page's invitation to connect, cut like the landing's intro card: the ask
+ * on one side, the mark as a deep ASCII solid behind the app icon on the
+ * other. Used where a page has nothing to show until it knows the wallet.
  */
-const ConnectPrompt: React.FC<{ onConnect: () => void }> = ({ onConnect }) => {
-  const { t } = useTranslation("stocks");
+export const ConnectCard: React.FC<{ title: string; description: string }> = ({
+  title,
+  description,
+}) => {
   const { t: tApp } = useTranslation("app");
+  const { connect } = usePageSession();
 
   return (
     <div className="hs-card grid gap-6 p-4 md:grid-cols-2 md:p-6">
       <div className="flex flex-col justify-end gap-5 px-2 pb-2 pt-6 md:order-2 md:px-0 md:pb-0">
-        <h2 className="hs-h2">{t("connect.title")}</h2>
-        <p className="text-[0.975rem] leading-relaxed text-foreground/75">
-          {t("connect.description")}
-        </p>
+        <h2 className="hs-h2">{title}</h2>
+        <p className="text-[0.975rem] leading-relaxed text-foreground/75">{description}</p>
         <div className="pt-1">
-          <Button variant="primary" onClick={onConnect}>
+          <Button variant="primary" onClick={connect}>
             {tApp("common.connectWallet")}
           </Button>
         </div>

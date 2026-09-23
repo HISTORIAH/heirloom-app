@@ -14,6 +14,11 @@ import {
 interface WalletConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * The visitor closed the dialog without connecting (Escape, the overlay,
+   * the close button) — as opposed to it closing because a wallet connected.
+   */
+  onDismiss?: () => void;
 }
 
 const WalletRow = ({ wallet, onConnected }: { wallet: UiWallet; onConnected: () => void }) => {
@@ -50,7 +55,7 @@ const WalletRow = ({ wallet, onConnected }: { wallet: UiWallet; onConnected: () 
 };
 
 /** The app's wallet picker, without its analytics. */
-const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) => {
+const WalletConnectDialog = ({ open, onOpenChange, onDismiss }: WalletConnectDialogProps) => {
   const { isConnected } = useWallet();
   const { t } = useTranslation("app");
   const walletUi = useWalletUi() as unknown as { wallets?: UiWallet[] };
@@ -61,7 +66,15 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
   }, [isConnected, open, onOpenChange]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Radix only reports closes the visitor made; a successful connect
+        // closes the dialog through onOpenChange directly, below.
+        if (!next) onDismiss?.();
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("walletDialog.title")}</DialogTitle>
