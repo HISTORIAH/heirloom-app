@@ -10,6 +10,7 @@ export const SECTIONS = [
   { id: "getting-started", label: "Getting started" },
   { id: "concepts", label: "Core concepts" },
   { id: "using", label: "Using Heirloom" },
+  { id: "stocks", label: "Tokenized stocks" },
   { id: "program", label: "On-chain program" },
   { id: "reference", label: "Reference" },
 ] as const;
