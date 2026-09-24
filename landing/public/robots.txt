@@ -1,7 +1,8 @@
-# https://heirlm.xyz — the marketing site. The app is a separate origin
-# (https://app.heirlm.xyz) and carries its own, stricter robots.txt.
+# https://heirlm.xyz — the marketing site, the docs at /docs, and the blog at
+# /blog. The app is a separate origin (https://app.heirlm.xyz) and carries its
+# own, stricter robots.txt.
 User-agent: *
 Allow: /
 
-Sitemap: https://heirlm.xyz/sitemap-index.xml
-Sitemap: https://heirlm.xyz/docs/sitemap-index.xml
+# Indexes the sitemaps of all three builds: landing, docs, and blog.
+Sitemap: https://heirlm.xyz/sitemap.xml

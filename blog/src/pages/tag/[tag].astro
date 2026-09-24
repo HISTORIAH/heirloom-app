@@ -33,7 +33,9 @@ const allTags = [
 ].sort();
 ---
 
-<BlogLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`}>
+{/* A tag page only repeats cards that live on the index, so it stays out of
+    the index itself; crawlers still follow it through to the posts. */}
+<BlogLayout title={`Tag: ${tag}`} description={`Posts tagged ${tag}`} noindex>
   <section class="hero">
     <div class="shell">
       <div class="hero-label">

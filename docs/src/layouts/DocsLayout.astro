@@ -68,12 +68,11 @@ const jsonLd = JSON.stringify([
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Heirloom", item: `${SITE_URL}/` },
       { "@type": "ListItem", position: 2, name: "Docs", item: docsHome },
+      // No crumb for the sidebar section: sections have no page of their own,
+      // and Google rejects a breadcrumb whose non-final items lack a URL.
       ...(entryId === "index"
         ? []
-        : [
-            { "@type": "ListItem", position: 3, name: sectionLabel(section) },
-            { "@type": "ListItem", position: 4, name: title, item: canonical },
-          ]),
+        : [{ "@type": "ListItem", position: 3, name: title, item: canonical }]),
     ],
   },
 ]);

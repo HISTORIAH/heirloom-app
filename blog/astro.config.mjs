@@ -7,7 +7,12 @@ export default defineConfig({
   base: "/blog",
   trailingSlash: "always",
   build: { format: "directory" },
-  integrations: [mdx(), sitemap()],
+  integrations: [
+    mdx(),
+    // Tag pages are noindex (see pages/tag/[tag].astro), so they stay out of
+    // the sitemap too: a sitemap should only list what is meant to be indexed.
+    sitemap({ filter: (page) => !page.includes("/blog/tag/") }),
+  ],
   markdown: {
     shikiConfig: { theme: "github-dark-default", wrap: false },
   },

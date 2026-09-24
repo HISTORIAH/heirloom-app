@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The one sitemap for heirlm.xyz, and the URL submitted to Search Console.
+
+  heirlm.xyz is three Astro builds in one deploy (landing, /docs, /blog), and
+  each writes its own sitemap through @astrojs/sitemap. This index points at
+  their URL lists so a crawler finds all three from one place. It lists the
+  sitemap-0.xml files rather than each build's sitemap-index.xml because
+  sitemap indexes cannot nest. A build only splits past 45,000 URLs, so there is
+  one file per build.
+
+  It is served as a file, not as a redirect to /sitemap-index.xml, because this
+  is the path Search Console already has on record, so it should answer with the
+  sitemap itself rather than a hop to somewhere else.
+-->
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap><loc>https://heirlm.xyz/sitemap-0.xml</loc></sitemap>
+  <sitemap><loc>https://heirlm.xyz/docs/sitemap-0.xml</loc></sitemap>
+  <sitemap><loc>https://heirlm.xyz/blog/sitemap-0.xml</loc></sitemap>
+</sitemapindex>

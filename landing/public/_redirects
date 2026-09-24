@@ -8,8 +8,8 @@
 /defer          https://app.heirlm.xyz/defer          301
 /heartbeat      https://app.heirlm.xyz/heartbeat      301
 
-# The old sitemap path. @astrojs/sitemap emits an index instead.
-/sitemap.xml    /sitemap-index.xml                    301
+# /sitemap.xml is a real file (public/sitemap.xml), not a redirect: it is the
+# path Search Console has on record, and it indexes all three builds.
 
 # There is deliberately no rule for the old docs.heirlm.xyz here. Workers static
 # assets only accept relative sources — an absolute one is rejected outright
@@ -17,6 +17,6 @@
 # would match this hostname too and swallow the whole site. A cross-hostname
 # redirect has to be a Cloudflare Redirect Rule, configured on the zone.
 #
-# It is not worth one. The Mintlify site was never crawled (no Wayback
-# snapshot), its DNS record is already deleted, and the hostname now resolves
-# to nothing at all.
+# Google did crawl the Mintlify site (Search Console still lists
+# docs.heirlm.xyz/quickstart and others as "Crawled - currently not indexed"),
+# so a zone Redirect Rule sending it to heirlm.xyz/docs/ is worth adding.

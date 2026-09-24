@@ -9,7 +9,7 @@ export async function GET(context) {
   return rss({
     title: "Heirloom Blog",
     description:
-      "Essays, updates, and deep-dives on digital legacy and on-chain memory.",
+      "Engineering deep-dives, product updates, and essays on self-custody inheritance and wallet recovery on Solana, from the team building Heirloom.",
     site: context.site,
     items: posts.map((post) => ({
       title: post.data.title,

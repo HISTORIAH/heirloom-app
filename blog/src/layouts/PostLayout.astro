@@ -36,6 +36,44 @@ function formatDate(date: Date): string {
     year: "numeric",
   });
 }
+
+/* Structured data. The @ids are the ones the landing and docs declare, so a
+   crawler reads the blog as a section of heirlm.xyz, published by the same
+   organization, rather than as a site of its own. */
+const site = "https://heirlm.xyz";
+const url = frontmatter.canonical ?? new URL(Astro.url.pathname, Astro.site).href;
+const organization = { "@type": "Organization", "@id": `${site}/#organization`, name: "Heirloom" };
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    headline: frontmatter.title,
+    description: frontmatter.description,
+    url,
+    mainEntityOfPage: url,
+    inLanguage: "en",
+    datePublished: frontmatter.pubDate.toISOString(),
+    dateModified: (frontmatter.updatedDate ?? frontmatter.pubDate).toISOString(),
+    ...(frontmatter.cover && { image: new URL(frontmatter.cover, Astro.site).href }),
+    keywords: frontmatter.tags,
+    author:
+      frontmatter.author === "Heirloom Team"
+        ? organization
+        : { "@type": "Person", name: frontmatter.author },
+    publisher: organization,
+    isPartOf: { "@type": "WebSite", "@id": `${site}/#website` },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Heirloom", item: `${site}/` },
+      { "@type": "ListItem", position: 2, name: "Blog", item: `${site}${base}` },
+      { "@type": "ListItem", position: 3, name: frontmatter.title, item: url },
+    ],
+  },
+];
 ---
 
 <BlogLayout
@@ -45,6 +83,8 @@ function formatDate(date: Date): string {
   canonical={frontmatter.canonical}
   type="article"
   publishedTime={frontmatter.pubDate}
+  modifiedTime={frontmatter.updatedDate}
+  jsonLd={jsonLd}
 >
   <div class="shell article-layout">
     <!-- Left sidebar -->

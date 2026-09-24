@@ -41,6 +41,7 @@ export function structuredData(t: LandingT, canonical: string) {
         "@type": "Organization",
         "@id": `${SITE_URL}/#organization`,
         name: "Heirloom",
+        alternateName: "heirlm",
         url: `${SITE_URL}/`,
         logo: `${SITE_URL}/favicon.png`,
         description: t("seo.orgDescription"),
@@ -50,7 +51,11 @@ export function structuredData(t: LandingT, canonical: string) {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         url: `${SITE_URL}/`,
+        // "Heirloom" alone is shared with plenty of other things, and the
+        // domain's spelling is what people type: it is the top query in
+        // Search Console. alternateName ties both to this site.
         name: "Heirloom",
+        alternateName: "heirlm",
         description: t("seo.websiteDescription"),
         publisher: { "@id": `${SITE_URL}/#organization` },
       },

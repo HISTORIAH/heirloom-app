@@ -1,6 +1,16 @@
 # https://stocks.heirlm.xyz — the landing at the root is public. Every other
 # route is the wallet-gated app, per-user and noindex, so crawlers stay on the
 # root. The main site, https://heirlm.xyz, serves its own robots.txt and sitemap.
+#
+# The landing is client-rendered: the root document is an empty shell until
+# its script runs. Google renders it, but only with the files it is allowed to
+# fetch, so the bundle, the catalog the landing counts from, and the icons have
+# to be open too — with `Disallow: /` alone the crawler sees a blank page.
 User-agent: *
 Allow: /$
+Allow: /assets/
+Allow: /catalog.json$
+Allow: /favicon
+Allow: /apple-touch-icon.png$
+Allow: /site.webmanifest$
 Disallow: /
