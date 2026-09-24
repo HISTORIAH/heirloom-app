@@ -5,7 +5,7 @@ import { ScrollView, View } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
 import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
-import { Cap, H2, Lede, PrimaryButton, TextLink, Tile } from "@/components/ui";
+import { QuietRow, SectionLabel } from "@/components/Quiet";
 import { clusterLabel } from "@/config";
 import { colors } from "@/theme";
 
@@ -31,33 +31,22 @@ export default function SettingsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader back />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 110, gap: 16 }}>
-        <Cap>Settings</Cap>
-        <H2>This device</H2>
-        <Tile paper>
-          <Cap>Cluster</Cap>
-          <View style={{ marginTop: 8 }}>
-            <H2 size={28}>{clusterLabel()}</H2>
-          </View>
-          <Lede>Locale and a second tour wait on a later slice.</Lede>
-        </Tile>
-        {account ? (
-          <PrimaryButton
-            label={busy ? "Working…" : "Disconnect wallet"}
-            tone="ink"
-            disabled={busy}
-            onPress={() => void onDisconnect()}
-          />
-        ) : (
-          <TextLink label="Back to dashboard" onPress={() => router.replace("/")} />
-        )}
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 30, paddingBottom: 110 }}>
+        <SectionLabel title="This device" />
+        <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+          <QuietRow title="Cluster" desc={clusterLabel()} />
+          <QuietRow title="Locale" desc="English for now" />
+          {account ? (
+            <QuietRow
+              title={busy ? "Working…" : "Disconnect wallet"}
+              onPress={() => void onDisconnect()}
+            />
+          ) : (
+            <QuietRow title="Back to dashboard" onPress={() => router.replace("/")} />
+          )}
+        </View>
       </ScrollView>
-      <ConfirmSheet
-        ask={ask}
-        onCancel={cancel}
-        onConfirm={confirm}
-        onExtra={extra}
-      />
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
     </View>
   );
 }

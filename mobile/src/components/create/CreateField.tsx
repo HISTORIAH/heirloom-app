@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
@@ -13,6 +14,7 @@ export function CreateField({
   maxLength,
   showCounter,
   keyboardType,
+  trailing,
   onChangeText,
   onLift,
 }: {
@@ -24,6 +26,7 @@ export function CreateField({
   maxLength?: number;
   showCounter?: boolean;
   keyboardType?: "default" | "decimal-pad";
+  trailing?: ReactNode;
   onChangeText: (v: string) => void;
   onLift?: (node: View) => void;
 }) {
@@ -54,36 +57,51 @@ export function CreateField({
           </Text>
         ) : null}
       </View>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.mute}
-        autoCapitalize="none"
-        autoCorrect={false}
-        spellCheck={false}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        onFocus={() => {
-          setFocused(true);
-          const node = box.current;
-          if (node === null || node === undefined) return;
-          onLift?.(node);
-        }}
-        onBlur={() => setFocused(false)}
-        style={{
-          marginTop: 8,
-          paddingVertical: 12,
-          paddingHorizontal: 14,
-          borderWidth: 1,
-          borderColor: border,
-          borderRadius: space.radiusBtn,
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 14,
-          color: colors.ink,
-          backgroundColor: colors.bg,
-        }}
-      />
+      <View style={{ marginTop: 8 }}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={colors.mute}
+          autoCapitalize="none"
+          autoCorrect={false}
+          spellCheck={false}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+          onFocus={() => {
+            setFocused(true);
+            const node = box.current;
+            if (node === null || node === undefined) return;
+            onLift?.(node);
+          }}
+          onBlur={() => setFocused(false)}
+          style={{
+            paddingVertical: 12,
+            paddingLeft: 14,
+            paddingRight: trailing !== undefined ? 48 : 14,
+            borderWidth: 1,
+            borderColor: border,
+            borderRadius: space.radiusBtn,
+            fontFamily: "SpaceGrotesk_500Medium",
+            fontSize: 14,
+            color: colors.ink,
+            backgroundColor: colors.bg,
+          }}
+        />
+        {trailing !== undefined ? (
+          <View
+            style={{
+              position: "absolute",
+              right: 4,
+              top: 0,
+              bottom: 0,
+              justifyContent: "center",
+            }}
+          >
+            {trailing}
+          </View>
+        ) : null}
+      </View>
       {hint ? (
         <Text
           style={{

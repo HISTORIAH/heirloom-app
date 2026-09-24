@@ -11,10 +11,10 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { ChainLoading } from "@/components/ChainLoading";
 import { AssetsStep } from "@/components/create/AssetsStep";
+import { CardScanOverlay } from "@/components/create/CardScanOverlay";
 import { HeartbeatStep } from "@/components/create/HeartbeatStep";
 import { HeirsStep } from "@/components/create/HeirsStep";
 import { ReviewStep } from "@/components/create/ReviewStep";
-import { SuccessStep } from "@/components/create/SuccessStep";
 import { FabClearance, WizardFooter } from "@/components/create/WizardFooter";
 import { WizardRail } from "@/components/create/WizardRail";
 import { useLiftIntoScroll } from "@/components/create/useLiftIntoScroll";
@@ -35,11 +35,12 @@ import {
   HB_MIN_DAYS,
   PAUSE_MAX_DAYS,
   PAUSE_MIN_DAYS,
-  dateShort,
   daysRangeError,
 } from "@/lib/estateTiming";
 import { lamportsToSolText, solToLamports } from "@/lib/lamports";
 import { parseAddress, parseOptionalAddress } from "@/lib/ownerWrites";
+import { setFlash } from "@/lib/flash";
+import { cancelScan, scanCardAddress, type CardScan } from "@/lib/nfc";
 import { colors } from "@/theme";
 
 type SubmitState = "idle" | "creating" | "complete";
@@ -73,6 +74,29 @@ function heirsGateReady(
   } catch {
     return false;
   }
+}
+
+function cardScanMessage(
+  result: Exclude<CardScan, { kind: "address" | "cancelled" }>,
+): string {
+  if (result.kind === "off") return "NFC is off. Turn it on, then tap the card again.";
+  if (result.kind === "unsupported") return "This phone cannot read NFC cards.";
+  if (result.kind === "empty") return "This card has no Solana address.";
+  return result.message;
+}
+
+function writeCardScan(
+  result: CardScan,
+  setValue: (value: string) => void,
+  setError: (message: string | undefined) => void,
+) {
+  if (result.kind === "cancelled") return;
+  if (result.kind === "address") {
+    setError(undefined);
+    setValue(result.value);
+    return;
+  }
+  setError(cardScanMessage(result));
 }
 
 function createFailCopy(cause: unknown, walletOn: boolean): string {
@@ -111,6 +135,7 @@ export default function CreateScreen() {
   const [heirError, setHeirError] = useState<string | undefined>(undefined);
   const [guardianError, setGuardianError] = useState<string | undefined>(undefined);
   const [signerError, setSignerError] = useState<string | undefined>(undefined);
+  const [scanning, setScanning] = useState<"heir" | "signer" | undefined>(undefined);
 
   const { frameRef, scrollRef, keyboardOpen, kbPad, onLift, onScroll } =
     useLiftIntoScroll();
@@ -118,6 +143,7 @@ export default function CreateScreen() {
   const submitRef = useRef(submit);
   const connectedRef = useRef(connected);
   const focusedRef = useRef(true);
+  const scanLock = useRef(false);
   submitRef.current = submit;
   connectedRef.current = connected;
 
@@ -164,7 +190,7 @@ export default function CreateScreen() {
   const balanceLine = connected
     ? balanceLoading || balance === undefined
       ? "Balance: …"
-      : `Balance: ${lamportsToSolText(balance)} SOL · keep a little for later check-ins`
+      : `Balance: ${lamportsToSolText(balance)} SOL`
     : undefined;
 
   const reviewReason = reviewGate(hasSol, acked);
@@ -196,6 +222,7 @@ export default function CreateScreen() {
     setHeirError(undefined);
     setGuardianError(undefined);
     setSignerError(undefined);
+    setScanning(undefined);
   }, []);
 
   useFocusEffect(
@@ -203,11 +230,28 @@ export default function CreateScreen() {
       focusedRef.current = true;
       return () => {
         focusedRef.current = false;
+        void cancelScan();
         if (submitRef.current === "creating") return;
         resetForm();
       };
     }, [resetForm]),
   );
+
+  function onScanCard(role: "heir" | "signer") {
+    if (scanLock.current || scanning !== undefined) return;
+    scanLock.current = true;
+    const setValue = role === "heir" ? setHeir : setSigner;
+    const setError = role === "heir" ? setHeirError : setSignerError;
+    void (async () => {
+      try {
+        const result = await scanCardAddress(() => setScanning(role));
+        if (focusedRef.current) writeCardScan(result, setValue, setError);
+      } finally {
+        scanLock.current = false;
+        setScanning(undefined);
+      }
+    })();
+  }
 
   function validateHeirs(): boolean {
     let ok = true;
@@ -302,7 +346,9 @@ export default function CreateScreen() {
         fundHeir,
       });
       if (dropIfLeft()) return;
-      setSubmit("complete");
+      setFlash("Estate open.");
+      router.replace("/");
+      return;
     } catch (cause) {
       setSubmit("idle");
       if (dropIfLeft()) return;
@@ -337,6 +383,7 @@ export default function CreateScreen() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <CardScanOverlay role={scanning} onCancel={() => void cancelScan()} />
       <AppHeader />
       <WizardRail
         step={step}
@@ -358,15 +405,6 @@ export default function CreateScreen() {
       >
         {creating ? (
           <ChainLoading body="Confirm in your wallet" />
-        ) : complete ? (
-          <SuccessStep
-            label={label.trim()}
-            heirShort={heirShort}
-            totalDays={heartbeatDays + graceDays}
-            firstCheckIn={dateShort(heartbeatDays)}
-            onDashboard={() => router.replace("/")}
-            onAnother={resetForm}
-          />
         ) : (
           <>
             {step === 1 ? (
@@ -387,6 +425,8 @@ export default function CreateScreen() {
                 clearHeirError={() => setHeirError(undefined)}
                 clearGuardianError={() => setGuardianError(undefined)}
                 clearSignerError={() => setSignerError(undefined)}
+                scanning={scanning}
+                onScanCard={onScanCard}
                 onLift={onLift}
               />
             ) : null}
@@ -400,7 +440,6 @@ export default function CreateScreen() {
                 showClear={hasSol}
                 balanceLine={balanceLine}
                 disconnected={!connected}
-                empty={!hasSol}
                 onChangeSol={(v) => {
                   setSolPct(undefined);
                   setSol(v);

@@ -1,31 +1,15 @@
 import { Text, View } from "react-native";
 
 import { CheckRow, EditLink } from "@/components/create/CheckRow";
-import { EstateTimeline } from "@/components/create/EstateTimeline";
-import { Cap, H2, Row, Tile } from "@/components/ui";
+import { DayRuler } from "@/components/DayRuler";
+import { QuietRow, SectionLabel } from "@/components/Quiet";
+import { StateSlab } from "@/components/StateSlab";
 import { CARD_FEE_FLOAT_SOL } from "@/lib/constants";
-import { dateLong } from "@/lib/estateTiming";
+import { dateShort } from "@/lib/estateTiming";
 import { colors } from "@/theme";
 
-function Head({
-  cap,
-  onEdit,
-}: {
-  cap: string;
-  onEdit: () => void;
-}) {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      <Cap>{cap}</Cap>
-      <EditLink onPress={onEdit} />
-    </View>
-  );
+function dayWord(n: number): string {
+  return n === 1 ? "day" : "days";
 }
 
 export function ReviewStep({
@@ -63,89 +47,86 @@ export function ReviewStep({
   onToggleFundHeir: () => void;
   onToggleAck: () => void;
 }) {
-  const total = heartbeatDays + graceDays;
-  const hasSigner = signerShort !== undefined;
+  const claimOn = dateShort(heartbeatDays + graceDays);
 
   return (
-    <View>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
+    <View style={{ marginHorizontal: -20 }}>
+      <StateSlab
+        color={colors.yellow}
+        eyebrow="Next check-in due in"
+        value={String(heartbeatDays)}
+        unit={dayWord(heartbeatDays)}
+        leading={
+          <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+            <EditLink onPress={onEditTiming} />
+          </View>
+        }
       >
-        <View style={{ flex: 1 }}>
-          <Cap>Opens</Cap>
-          <H2 size={28}>{dateLong(total)}</H2>
+        <DayRuler
+          intervalDays={heartbeatDays}
+          graceDays={graceDays}
+          elapsedDays={0}
+          legendFrom="Today"
+          legendTo={`Heir can claim ${claimOn}`}
+        />
+      </StateSlab>
+
+      <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+          <SectionLabel title="Named on this estate" />
+          <EditLink onPress={onEditHeirs} />
         </View>
-        <View style={{ marginTop: 18 }}>
-          <EditLink onPress={onEditTiming} />
+        <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+          <QuietRow title="Label" desc={label} />
+          <QuietRow title="Heir" desc={heirShort} />
+          <QuietRow title="Guardian" desc={guardianShort ?? "Not set"} />
+          <QuietRow title="Check-in signer" desc={signerShort ?? "Not set"} />
+          {guardianShort !== undefined && pauseDays > 0 ? (
+            <QuietRow title="Pause" desc={`${pauseDays} days`} />
+          ) : null}
         </View>
       </View>
-      <View style={{ marginTop: 8 }}>
-        <EstateTimeline heartbeatDays={heartbeatDays} graceDays={graceDays} mini />
-      </View>
 
-      <Tile paper style={{ marginTop: 20 }}>
-        <Head cap="People" onEdit={onEditHeirs} />
-        <Row left={label} right={heirShort} />
-        {guardianShort ? (
-          <Row left="Guardian" right={guardianShort} muteLeft />
-        ) : null}
-        {guardianShort && pauseDays > 0 ? (
-          <Row left="Hold" right={`${pauseDays}d`} muteLeft />
-        ) : null}
-        {hasSigner ? (
-          <Row left="Signer" right={signerShort} muteLeft />
-        ) : null}
-      </Tile>
-
-      <Tile style={{ marginTop: 12 }}>
-        <Head cap="Estate" onEdit={onEditAssets} />
-        {hasSol ? (
-          <Row left="SOL" right={solDisplay} />
-        ) : (
-          <Row left="SOL" right="Nothing yet" />
-        )}
-        {hasSigner ? (
-          <Row left="Signer gas" right={`${CARD_FEE_FLOAT_SOL} SOL`} />
-        ) : null}
-        <View
-          style={{
-            marginTop: 8,
-            paddingTop: 12,
-            borderTopWidth: 1,
-            borderColor: colors.line,
-          }}
-        >
+      <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+          <SectionLabel title="In the vault" />
+          <EditLink onPress={onEditAssets} />
+        </View>
+        <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+          <QuietRow title="SOL" desc={hasSol ? solDisplay : "Nothing yet"} />
+          {signerShort !== undefined ? (
+            <QuietRow title="Signer gas" desc={`${CARD_FEE_FLOAT_SOL} SOL`} />
+          ) : null}
+        </View>
+        <View style={{ marginTop: 16 }}>
           <CheckRow
             checked={fundHeir}
             onToggle={onToggleFundHeir}
             body="Fund a card heir"
-            hint="0.02 SOL so a physical card can pay to claim. Leave off for a normal wallet."
+            hint="0.02 SOL for a card to pay claim fees."
           />
         </View>
-      </Tile>
+      </View>
 
-      <CheckRow
-        boxed
-        checked={acked}
-        onToggle={onToggleAck}
-        body="If I miss check-in, the heir can claim."
-      />
-      <Text
-        style={{
-          marginTop: 12,
-          textAlign: "right",
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 12,
-          color: colors.mute,
-        }}
-      >
-        Network ~0.002 SOL
-      </Text>
+      <View style={{ paddingHorizontal: 20, paddingTop: 24 }}>
+        <CheckRow
+          boxed
+          checked={acked}
+          onToggle={onToggleAck}
+          body="If I miss check-in, the heir can claim."
+        />
+        <Text
+          style={{
+            marginTop: 12,
+            textAlign: "right",
+            fontFamily: "SpaceGrotesk_500Medium",
+            fontSize: 12,
+            color: colors.mute,
+          }}
+        >
+          Network ~0.002 SOL
+        </Text>
+      </View>
     </View>
   );
 }

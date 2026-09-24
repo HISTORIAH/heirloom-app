@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Text, TextInput, View } from "react-native";
 
 import { PercentRow } from "@/components/create/Chips";
-import { Cap, H2, Lede, TextLink } from "@/components/ui";
+import { Cap, H2, TextLink } from "@/components/ui";
 import { colors, space } from "@/theme";
 
 export function AssetsStep({
@@ -14,7 +14,6 @@ export function AssetsStep({
   showClear,
   balanceLine,
   disconnected,
-  empty,
   onChangeSol,
   onPickPct,
   onClear,
@@ -29,7 +28,6 @@ export function AssetsStep({
   showClear: boolean;
   balanceLine?: string;
   disconnected: boolean;
-  empty: boolean;
   onChangeSol: (v: string) => void;
   onPickPct: (pct: number) => void;
   onClear: () => void;
@@ -43,11 +41,6 @@ export function AssetsStep({
       <View style={{ marginTop: 20 }}>
         <Cap>Going into the estate</Cap>
         <H2 size={28}>{hero}</H2>
-        {empty ? (
-          <Lede>
-            You can skip this and deposit from your dashboard whenever you like.
-          </Lede>
-        ) : null}
       </View>
 
       <View style={{ marginTop: 24 }}>

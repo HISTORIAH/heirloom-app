@@ -19,8 +19,9 @@
       "softwareKeyboardLayoutMode": "resize"
     },
     "androidStatusBar": {
-      "backgroundColor": "#FFD400",
-      "barStyle": "dark-content"
+      "backgroundColor": "#00000000",
+      "barStyle": "dark-content",
+      "translucent": true
     },
     "plugins": [
       "expo-router",
