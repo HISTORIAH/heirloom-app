@@ -664,6 +664,13 @@ const app = {
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
     unverified: "Not verified yet — check {{channel}} for the confirmation message.",
+    unverifiedTelegram: "Not verified — open the Telegram link we showed you to activate.",
+    telegramVerifyTitle: "Verify Telegram",
+    telegramVerifyDesc: "Tap below to open our bot and press Start.",
+    telegramVerifyLink: "Open Telegram",
+    telegramVerifyLater: "I'll do it later",
+    heirTelegramWarning:
+      "Telegram can't message {{name}} until they start our bot. Ask {{name}} to click your verification link after you save.",
   },
   yield: {
     enableLulo: "Enable Lulo Yield",

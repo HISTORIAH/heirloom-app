@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/surface/Modal";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,11 @@ interface RoleSectionProps {
   addBackupLabel: string;
   channelLabel: (c: ReminderChannel) => string;
   channelPlaceholder: (c: ReminderChannel) => string;
-  unverifiedLabel: (channel: string) => string;
+  unverifiedText: (c: ReminderChannel) => string;
+  /** Extra hint rendered under the primary input (e.g. heir Telegram bot warning). */
+  primaryHint?: React.ReactNode;
+  /** Extra hint rendered under the backup input. */
+  backupHint?: React.ReactNode;
 }
 
 const UnverifiedNotice: React.FC<{ children: string }> = ({ children }) => (
@@ -64,7 +68,9 @@ const RoleSection: React.FC<RoleSectionProps> = ({
   addBackupLabel,
   channelLabel,
   channelPlaceholder,
-  unverifiedLabel,
+  unverifiedText,
+  primaryHint,
+  backupHint,
 }) => {
   const primaryOptions = channels.filter((c) => c !== config.backup?.channel);
   const backupOptions = channels.filter((c) => c !== config.primary.channel);
@@ -110,8 +116,9 @@ const RoleSection: React.FC<RoleSectionProps> = ({
             className="ed-input"
           />
           {config.primary.verified === false && (
-            <UnverifiedNotice>{unverifiedLabel(channelLabel(config.primary.channel))}</UnverifiedNotice>
+            <UnverifiedNotice>{unverifiedText(config.primary.channel)}</UnverifiedNotice>
           )}
+          {primaryHint}
 
           {config.backup ? (
             <div className="mt-3 rounded-lg border border-dashed border-tile-line p-3">
@@ -146,8 +153,9 @@ const RoleSection: React.FC<RoleSectionProps> = ({
                 className="ed-input"
               />
               {config.backup.verified === false && (
-                <UnverifiedNotice>{unverifiedLabel(channelLabel(config.backup.channel))}</UnverifiedNotice>
+                <UnverifiedNotice>{unverifiedText(config.backup.channel)}</UnverifiedNotice>
               )}
+              {backupHint}
             </div>
           ) : (
             backupOptions.length > 0 && (
@@ -203,7 +211,20 @@ const NotificationsDialog: React.FC<Props> = ({
     if (c === "telegram") return t("notifications.placeholderTelegram");
     return t("notifications.placeholderPhone");
   };
-  const unverifiedLabel = (channel: string) => t("notifications.unverified", { channel });
+  const unverifiedText = (c: ReminderChannel) =>
+    c === "telegram"
+      ? t("notifications.unverifiedTelegram")
+      : t("notifications.unverified", { channel: channelLabel(c) });
+
+  // Heir Telegram warning — shown when the heir has Telegram selected (primary or backup).
+  // Amber styling matches the UnverifiedNotice so it doesn't blend into the background.
+  const heirTgWarning = (sel: { channel: ReminderChannel; value: string }) =>
+    sel.channel === "telegram" && sel.value ? (
+      <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
+        <Send className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+        {t("notifications.heirTelegramWarning", { name: heirLabel })}
+      </p>
+    ) : null;
 
   return (
     <Modal
@@ -247,7 +268,7 @@ const NotificationsDialog: React.FC<Props> = ({
           addBackupLabel={t("notifications.addBackupPlain")}
           channelLabel={channelLabel}
           channelPlaceholder={channelPlaceholder}
-          unverifiedLabel={unverifiedLabel}
+          unverifiedText={unverifiedText}
         />
         <RoleSection
           title={t("notifications.notifyName", { name: heirLabel })}
@@ -260,7 +281,9 @@ const NotificationsDialog: React.FC<Props> = ({
           addBackupLabel={t("notifications.addBackupPlain")}
           channelLabel={channelLabel}
           channelPlaceholder={channelPlaceholder}
-          unverifiedLabel={unverifiedLabel}
+          unverifiedText={unverifiedText}
+          primaryHint={heirTgWarning(config.heir.primary)}
+          backupHint={config.heir.backup ? heirTgWarning(config.heir.backup) : undefined}
         />
       </div>
     </Modal>
