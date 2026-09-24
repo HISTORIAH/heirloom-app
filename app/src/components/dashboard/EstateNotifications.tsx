@@ -11,7 +11,6 @@ import {
   defaultNotificationsConfig,
   normalizeChannel,
   notificationsConfigFromRecipients,
-  normalizeChannel,
   summarizeNotifications,
   toAddRecipientRequests,
   type NotificationsCardStatus,
