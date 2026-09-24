@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { Cap, PrimaryButton } from "@/components/ui";
@@ -21,19 +21,17 @@ type EverydayAction = "heir" | "timing" | "asset";
 
 const EVERYDAY: Record<
   EverydayAction,
-  { title: string; consequence: string }
+  { title: string; fallback?: string }
 > = {
   heir: {
     title: "Change heir",
-    consequence: "Moves the vault to a new estate. The check-in signer stays.",
   },
   timing: {
     title: "Update timing",
-    consequence: "Changes check-in, grace, the guardian pause length, and the label",
+    fallback: "Check-in, grace, and pause length",
   },
   asset: {
-    title: "Add asset",
-    consequence: "Register a new SPL mint in the vault. Not a top-up.",
+    title: "Add token",
   },
 };
 
@@ -59,6 +57,7 @@ function Field({
   editable,
   maxLength,
   hint,
+  error,
 }: {
   label: string;
   value: string;
@@ -67,6 +66,7 @@ function Field({
   editable?: boolean;
   maxLength?: number;
   hint?: string;
+  error?: string;
 }) {
   return (
     <View>
@@ -98,7 +98,7 @@ function Field({
           paddingVertical: 12,
           paddingHorizontal: 14,
           borderWidth: 1,
-          borderColor: colors.line,
+          borderColor: error !== undefined ? colors.claim : colors.line,
           borderRadius: space.radiusBtn,
           fontFamily: "SpaceGrotesk_500Medium",
           fontSize: 14,
@@ -106,7 +106,34 @@ function Field({
           backgroundColor: colors.bg,
         }}
       />
+      {error !== undefined ? (
+        <Text
+          style={{
+            marginTop: 6,
+            fontFamily: "SpaceGrotesk_600SemiBold",
+            fontSize: 12,
+            color: colors.claim,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
+  );
+}
+
+function FormIssue({ text }: { text?: string }) {
+  if (text === undefined) return null;
+  return (
+    <Text
+      style={{
+        fontFamily: "SpaceGrotesk_600SemiBold",
+        fontSize: 12,
+        color: colors.claim,
+      }}
+    >
+      {text}
+    </Text>
   );
 }
 
@@ -177,57 +204,57 @@ function collectTimingFields(
 
 function EverydayRow({
   action,
-  last,
-  selected,
+  desc,
+  danger,
   disabled,
   onPress,
 }: {
-  action: EverydayAction;
-  last?: boolean;
-  selected: boolean;
+  action: EverydayAction | "close";
+  desc?: string;
+  danger?: boolean;
   disabled?: boolean;
   onPress: () => void;
 }) {
-  const copy = EVERYDAY[action];
+  const title = action === "close" ? "Close estate" : EVERYDAY[action].title;
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={copy.title}
+      accessibilityLabel={title}
       style={({ pressed }) => ({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        paddingVertical: 14,
-        paddingHorizontal: 14,
+        paddingVertical: 15,
         opacity: disabled ? 0.45 : pressed ? 0.72 : 1,
-        backgroundColor: selected ? colors.soft : colors.bg,
-        borderBottomWidth: last ? 0 : 1,
+        borderBottomWidth: 1,
         borderBottomColor: colors.line,
       })}
     >
-      <View style={{ flex: 1, gap: 4 }}>
+      <View style={{ flex: 1 }}>
         <Text
           style={{
             fontFamily: "SpaceGrotesk_600SemiBold",
             fontSize: 16,
-            letterSpacing: -0.2,
-            color: colors.ink,
+            color: danger ? colors.claim : colors.ink,
           }}
         >
-          {copy.title}
+          {title}
         </Text>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_500Medium",
-            fontSize: 13,
-            lineHeight: 18,
-            color: colors.mute,
-          }}
-        >
-          {copy.consequence}
-        </Text>
+        {desc !== undefined ? (
+          <Text
+            style={{
+              marginTop: 3,
+              fontFamily: "SpaceGrotesk_500Medium",
+              fontSize: 13,
+              lineHeight: 18,
+              color: colors.mute,
+            }}
+          >
+            {desc}
+          </Text>
+        ) : null}
       </View>
       <Chevron />
     </Pressable>
@@ -259,21 +286,31 @@ function HeirForm({
   onSubmit: (heir: Address) => void;
 }) {
   const [raw, setRaw] = useState("");
+  const [error, setError] = useState<string | undefined>(undefined);
   return (
-    <View style={{ padding: 14, gap: 12, borderTopWidth: 1, borderTopColor: colors.line }}>
-      <Field label="New heir" value={raw} onChangeText={setRaw} editable={!busy && !paused} />
-      <Text
-        style={{
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 13,
-          lineHeight: 18,
-          color: colors.mute,
+    <View style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+      <Field
+        label="New heir"
+        value={raw}
+        onChangeText={(value) => {
+          setError(undefined);
+          setRaw(value);
         }}
-      >
-        {paused
-          ? "This estate is paused. Wait until the pause ends."
-          : "The check-in signer stays the same."}
-      </Text>
+        editable={!busy && !paused}
+        error={error}
+      />
+      {paused ? (
+        <Text
+          style={{
+            fontFamily: "SpaceGrotesk_500Medium",
+            fontSize: 13,
+            lineHeight: 18,
+            color: colors.mute,
+          }}
+        >
+          This estate is paused. Wait until the pause ends.
+        </Text>
+      ) : null}
       <PrimaryButton
         label={busy ? "Working…" : "Change heir"}
         tone="ink"
@@ -285,10 +322,7 @@ function HeirForm({
             }
             onSubmit(parseAddress(raw, "heir"));
           } catch (cause) {
-            Alert.alert(
-              "Change heir",
-              cause instanceof Error ? cause.message : "Check the address",
-            );
+            setError(cause instanceof Error ? cause.message : "Check the address");
           }
         }}
       />
@@ -309,19 +343,26 @@ function TimingForm({
   const [heartbeat, setHeartbeat] = useState(daysFromSeconds(row.data.heartbeatInterval));
   const [grace, setGrace] = useState(daysFromSeconds(row.data.gracePeriod));
   const [pause, setPause] = useState(daysFromSeconds(row.data.pauseDuration));
+  const [error, setError] = useState<string | undefined>(undefined);
   return (
-    <View style={{ padding: 14, gap: 12, borderTopWidth: 1, borderTopColor: colors.line }}>
+    <View style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
       <Field
         label="Label"
         value={label}
-        onChangeText={setLabel}
+        onChangeText={(value) => {
+          setError(undefined);
+          setLabel(value);
+        }}
         editable={!busy}
         maxLength={LABEL_MAX_LEN}
       />
       <Field
         label="Check-in days"
         value={heartbeat}
-        onChangeText={setHeartbeat}
+        onChangeText={(value) => {
+          setError(undefined);
+          setHeartbeat(value);
+        }}
         keyboardType="decimal-pad"
         editable={!busy}
         hint={`1–${MAX_INTERVAL_DAYS} days`}
@@ -329,7 +370,10 @@ function TimingForm({
       <Field
         label="Grace days"
         value={grace}
-        onChangeText={setGrace}
+        onChangeText={(value) => {
+          setError(undefined);
+          setGrace(value);
+        }}
         keyboardType="decimal-pad"
         editable={!busy}
         hint={`1–${MAX_INTERVAL_DAYS} days`}
@@ -337,11 +381,15 @@ function TimingForm({
       <Field
         label="Pause days"
         value={pause}
-        onChangeText={setPause}
+        onChangeText={(value) => {
+          setError(undefined);
+          setPause(value);
+        }}
         keyboardType="decimal-pad"
         editable={!busy}
-        hint={`How long a guardian can hold a claim. 0–${MAX_INTERVAL_DAYS}. Zero means they cannot hold.`}
+        hint={`0–${MAX_INTERVAL_DAYS} days`}
       />
+      <FormIssue text={error} />
       <PrimaryButton
         label={busy ? "Working…" : "Save timing"}
         tone="ink"
@@ -350,10 +398,7 @@ function TimingForm({
           try {
             onSubmit(collectTimingFields(row, label, heartbeat, grace, pause));
           } catch (cause) {
-            Alert.alert(
-              "Update timing",
-              cause instanceof Error ? cause.message : "Check the form",
-            );
+            setError(cause instanceof Error ? cause.message : "Check the form");
           }
         }}
       />
@@ -377,23 +422,31 @@ function AssetForm({
   const [mint, setMint] = useState("");
   const [amount, setAmount] = useState("");
   const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
   const locked = Boolean(busy) || checking;
   return (
-    <View style={{ padding: 14, gap: 12, borderTopWidth: 1, borderTopColor: colors.line }}>
+    <View style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
       <Field
         label="Mint"
         value={mint}
-        onChangeText={setMint}
+        onChangeText={(value) => {
+          setError(undefined);
+          setMint(value);
+        }}
         editable={!locked}
         hint="A mint that is not already in this vault."
       />
       <Field
         label="Amount"
         value={amount}
-        onChangeText={setAmount}
+        onChangeText={(value) => {
+          setError(undefined);
+          setAmount(value);
+        }}
         keyboardType="decimal-pad"
         editable={!locked}
       />
+      <FormIssue text={error} />
       <PrimaryButton
         label={busy || checking ? "Working…" : "Add token"}
         tone="ink"
@@ -417,10 +470,7 @@ function AssetForm({
               );
               onSubmit(mintAddr, raw);
             } catch (cause) {
-              Alert.alert(
-                "Add asset",
-                cause instanceof Error ? cause.message : "Check mint and amount",
-              );
+              setError(cause instanceof Error ? cause.message : "Check mint and amount");
             } finally {
               setChecking(false);
             }
@@ -441,6 +491,8 @@ export function EstateManage({
   onClose,
 }: EstateManageProps) {
   const [open, setOpen] = useState<EverydayAction | undefined>(undefined);
+  const intervalDays = Math.round(Number(row.data.heartbeatInterval) / SECONDS_PER_DAY);
+  const graceDays = Math.round(Number(row.data.gracePeriod) / SECONDS_PER_DAY);
   const paused = isPausedNow(row.data.pausedUntil);
 
   function toggle(action: EverydayAction) {
@@ -449,135 +501,45 @@ export function EstateManage({
   }
 
   return (
-    <View style={{ gap: 12 }}>
-      <Cap>Manage</Cap>
-
-      <View
-        style={{
-          borderWidth: 1,
-          borderColor: colors.ink,
-          borderRadius: space.radiusTile,
-          backgroundColor: colors.bg,
-          overflow: "hidden",
-        }}
-      >
-        <EverydayRow
-          action="heir"
-          selected={open === "heir"}
-          disabled={busy}
-          onPress={() => toggle("heir")}
+    <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+      <EverydayRow
+        action="heir"
+        disabled={busy}
+        onPress={() => toggle("heir")}
+      />
+      {open === "heir" ? (
+        <HeirForm busy={busy} paused={paused} onSubmit={onReassign} />
+      ) : null}
+      <EverydayRow
+        action="timing"
+        desc={`Every ${intervalDays} days, ${graceDays}-day grace`}
+        disabled={busy}
+        onPress={() => toggle("timing")}
+      />
+      {open === "timing" ? (
+        <TimingForm row={row} busy={busy} onSubmit={onTiming} />
+      ) : null}
+      <EverydayRow
+        action="asset"
+        disabled={busy}
+        onPress={() => toggle("asset")}
+      />
+      {open === "asset" ? (
+        <AssetForm
+          rpc={rpc}
+          estate={row.address}
+          owner={row.data.authority}
+          busy={busy}
+          onSubmit={onAddAsset}
         />
-        {open === "heir" ? (
-          <HeirForm busy={busy} paused={paused} onSubmit={onReassign} />
-        ) : null}
-        <EverydayRow
-          action="timing"
-          selected={open === "timing"}
-          disabled={busy}
-          onPress={() => toggle("timing")}
-        />
-        {open === "timing" ? (
-          <TimingForm row={row} busy={busy} onSubmit={onTiming} />
-        ) : null}
-        <EverydayRow
-          action="asset"
-          last={open !== "asset"}
-          selected={open === "asset"}
-          disabled={busy}
-          onPress={() => toggle("asset")}
-        />
-        {open === "asset" ? (
-          <AssetForm
-            rpc={rpc}
-            estate={row.address}
-            owner={row.data.authority}
-            busy={busy}
-            onSubmit={onAddAsset}
-          />
-        ) : null}
-      </View>
-
-      <View
-        style={{
-          borderWidth: 1.5,
-          borderColor: colors.claim,
-          borderRadius: space.radiusTile,
-          backgroundColor: colors.bg,
-          padding: 16,
-          gap: 12,
-        }}
-      >
-        <View
-          style={{
-            alignSelf: "flex-start",
-            borderWidth: 1,
-            borderColor: colors.claim,
-            borderRadius: 6,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            backgroundColor: colors.bg,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_700Bold",
-              fontSize: 10,
-              letterSpacing: 1.4,
-              textTransform: "uppercase",
-              color: colors.claim,
-            }}
-          >
-            Danger
-          </Text>
-        </View>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_600SemiBold",
-            fontSize: 18,
-            letterSpacing: -0.3,
-            color: colors.ink,
-          }}
-        >
-          Close estate
-        </Text>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_500Medium",
-            fontSize: 14,
-            lineHeight: 20,
-            color: colors.mute,
-          }}
-        >
-          Returns every locked asset to you and ends this vault. 0.5% is taken from the vault. The heir loses the claim.
-        </Text>
-        <Pressable
-          onPress={onClose}
-          disabled={busy}
-          accessibilityRole="button"
-          accessibilityLabel="Close estate"
-          style={({ pressed }) => ({
-            borderWidth: 1.5,
-            borderColor: colors.claim,
-            borderRadius: space.radiusBtn,
-            paddingVertical: 14,
-            alignItems: "center",
-            opacity: busy ? 0.45 : 1,
-            backgroundColor: pressed ? "rgba(255,59,59,0.08)" : colors.bg,
-          })}
-        >
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_700Bold",
-              fontSize: 13,
-              letterSpacing: 1.04,
-              textTransform: "uppercase",
-              color: colors.claim,
-            }}
-          >
-            {busy ? "Working…" : "Close estate"}
-          </Text>
-        </Pressable>
-      </View>
+      ) : null}
+      <EverydayRow
+        action="close"
+        desc="0.5% fee"
+        danger
+        disabled={busy}
+        onPress={onClose}
+      />
     </View>
   );
 }

@@ -2,11 +2,57 @@ import { Text, View } from "react-native";
 
 import { VaultMark } from "@/components/VaultMark";
 import { PrimaryButton, TextLink } from "@/components/ui";
-import { colors, space } from "@/theme";
+import { colors } from "@/theme";
+
+export function ConnectWallet({
+  body = "Connect your wallet.",
+  busy,
+  onConnect,
+}: {
+  body?: string;
+  busy?: boolean;
+  onConnect: () => void;
+}) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        flexGrow: 1,
+        justifyContent: "center",
+        paddingHorizontal: 28,
+        paddingBottom: 72,
+        backgroundColor: colors.bg,
+      }}
+    >
+      <View style={{ alignItems: "center" }}>
+        <VaultMark size={88} color={colors.line} />
+      </View>
+      <Text
+        style={{
+          marginTop: 28,
+          textAlign: "center",
+          fontFamily: "SpaceGrotesk_500Medium",
+          fontSize: 16,
+          lineHeight: 24,
+          color: colors.mute,
+        }}
+      >
+        {body}
+      </Text>
+      <View style={{ marginTop: 28 }}>
+        <PrimaryButton
+          label={busy ? "Working…" : "Connect wallet"}
+          disabled={busy}
+          onPress={onConnect}
+        />
+      </View>
+    </View>
+  );
+}
 
 interface EmptyStateProps {
   title?: string;
-  body: string;
+  body?: string;
   primaryLabel: string;
   onPrimary: () => void;
   secondaryLabel?: string;
@@ -29,48 +75,46 @@ export function EmptyState({
     <View
       style={{
         flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingHorizontal: 28,
-        paddingBottom: 24,
+        backgroundColor: colors.soft,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+        paddingHorizontal: 20,
+        paddingTop: 28,
+        paddingBottom: 22,
       }}
     >
-      <View style={{ marginBottom: 28 }}>
-        <VaultMark size={88} color={colors.line} />
-      </View>
-      {title ? (
+      {title !== undefined ? (
         <Text
           style={{
             fontFamily: "SpaceGrotesk_600SemiBold",
-            fontSize: 34,
-            letterSpacing: 34 * -0.035,
-            lineHeight: 34 * 0.96,
+            fontSize: 15,
             color: colors.ink,
-            marginVertical: 8,
-            textAlign: "center",
           }}
         >
           {title}
         </Text>
       ) : null}
-      <Text
-        style={{
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 16,
-          lineHeight: 24,
-          color: colors.mute,
-          textAlign: "center",
-        }}
-      >
-        {body}
-      </Text>
-      <View style={{ paddingTop: 28, width: "100%", paddingHorizontal: space.pad - 8 }}>
+      {body !== undefined ? (
+        <Text
+          style={{
+            marginTop: title !== undefined ? 14 : 0,
+            fontFamily: "SpaceGrotesk_500Medium",
+            fontSize: 16,
+            lineHeight: 24,
+            color: colors.ink,
+            maxWidth: 300,
+          }}
+        >
+          {body}
+        </Text>
+      ) : null}
+      <View style={{ marginTop: 22 }}>
         <PrimaryButton label={primaryLabel} onPress={onPrimary} />
-        {secondaryLabel && onSecondary ? (
-          <TextLink label={secondaryLabel} onPress={onSecondary} />
+        {secondaryLabel !== undefined && onSecondary !== undefined ? (
+          <TextLink label={secondaryLabel} align="left" onPress={onSecondary} />
         ) : null}
-        {tertiaryLabel && onTertiary ? (
-          <TextLink label={tertiaryLabel} onPress={onTertiary} />
+        {tertiaryLabel !== undefined && onTertiary !== undefined ? (
+          <TextLink label={tertiaryLabel} quiet align="left" onPress={onTertiary} />
         ) : null}
       </View>
     </View>

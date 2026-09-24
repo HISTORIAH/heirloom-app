@@ -29,6 +29,7 @@ export type CreateEstateInput = {
   delegate?: Address;
   hbSigner?: Address;
   fundHeir?: boolean;
+  pauseDuration?: bigint;
 };
 
 function trimmedLabel(label: string): string {
@@ -104,7 +105,7 @@ export async function buildCreateEstateIxs(
     label: trimmedLabel(input.label),
     heartbeatInterval: input.heartbeatInterval,
     gracePeriod: input.gracePeriod,
-    pauseDuration: 0n,
+    pauseDuration: input.pauseDuration ?? 0n,
     delegate: input.delegate,
     hbSigner: input.hbSigner,
   });

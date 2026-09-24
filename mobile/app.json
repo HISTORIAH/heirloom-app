@@ -15,11 +15,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize"
     },
     "androidStatusBar": {
-      "backgroundColor": "#FFD400",
-      "barStyle": "dark-content"
+      "backgroundColor": "#00000000",
+      "barStyle": "dark-content",
+      "translucent": true
     },
     "plugins": [
       "expo-router",

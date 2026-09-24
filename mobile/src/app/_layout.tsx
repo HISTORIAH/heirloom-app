@@ -9,6 +9,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { StatusBar as NativeStatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TamaguiProvider } from "tamagui";
 
@@ -27,6 +28,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync().catch(() => undefined);
   }, [loaded]);
+
+  useEffect(() => {
+    NativeStatusBar.setBarStyle("dark-content");
+    NativeStatusBar.setTranslucent(true);
+    NativeStatusBar.setBackgroundColor("#00000000");
+  }, []);
 
   if (!loaded) return null;
 

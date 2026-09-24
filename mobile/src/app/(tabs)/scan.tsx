@@ -1,5 +1,6 @@
-import { useEffect } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -11,7 +12,9 @@ import Animated, {
 
 import { AppHeader } from "@/components/AppHeader";
 import { NfcDummyCard } from "@/components/NfcDummyCard";
-import { Cap, H2, Lede, PrimaryButton, Row, TextLink, Tile } from "@/components/ui";
+import { QuietRow, SectionLabel } from "@/components/Quiet";
+import { StateSlab } from "@/components/StateSlab";
+import { PrimaryButton } from "@/components/ui";
 import { useNfcScan } from "@/hooks/useNfcScan";
 import { colors } from "@/theme";
 
@@ -46,11 +49,19 @@ export default function ScanScreen() {
     phase,
     tag,
     error,
-    refreshCapability,
     startScan,
     stopScan,
+    reset,
     openSettings,
   } = useNfcScan();
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        reset();
+      };
+    }, [reset]),
+  );
 
   const pulse = useSharedValue(1);
   useEffect(() => {
@@ -75,103 +86,94 @@ export default function ScanScreen() {
   const copy = statusCopy(capability);
   const ready = capability.status === "ready";
   const listening = phase === "listening";
+  const slab = slabColor(listening, ready);
+
+  const canListen = ready || listening;
+  const headline = canListen
+    ? "Hold the card to the back of the phone"
+    : copy.title;
+
+  function onCard() {
+    if (listening) {
+      void stopScan();
+      return;
+    }
+    if (ready) void startScan();
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader />
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: 20,
-          paddingBottom: 130,
-          alignItems: "center",
-        }}
-      >
-        <Cap>Scan</Cap>
-        <H2>{listening ? "Keep it still" : copy.title}</H2>
-        <Lede>{listening ? "Reading the card…" : copy.body}</Lede>
-
-        <Animated.View style={[{ marginTop: 28 }, cardStyle]}>
-          <NfcDummyCard width={300} />
-        </Animated.View>
-
-        <View style={{ marginTop: 28, width: "100%", gap: 10 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 130, flexGrow: 1 }}>
+        <StateSlab
+          color={slab}
+          underStatusBar
+          headline={headline}
+          advice={listening ? "Keep it still." : ready ? undefined : copy.body}
+          leading={<AppHeader plain />}
+        >
+          <Pressable
+            onPress={onCard}
+            disabled={!canListen}
+            accessibilityRole="button"
+            accessibilityLabel={headline}
+            style={{ marginTop: 22, alignItems: "center" }}
+          >
+            <Animated.View style={cardStyle}>
+              <NfcDummyCard width={300} />
+            </Animated.View>
+          </Pressable>
           {capability.status === "disabled" ? (
-            <>
+            <View style={{ marginTop: 22 }}>
               <PrimaryButton
                 label="Open NFC settings"
-                tone="sage"
-                onPress={() => {
-                  void openSettings();
-                }}
+                tone="ink"
+                onPress={() => void openSettings()}
               />
-              <TextLink label="Check again" onPress={() => void refreshCapability()} />
-            </>
+            </View>
           ) : null}
+        </StateSlab>
 
-          {ready && !listening ? (
-            <PrimaryButton
-              label={phase === "done" ? "Scan again" : "Ready to scan"}
-              tone="sage"
-              onPress={() => void startScan()}
-            />
-          ) : null}
-
-          {listening ? (
-            <PrimaryButton label="Cancel" tone="ink" onPress={() => void stopScan()} />
-          ) : null}
-        </View>
-
-        {error ? (
-          <View style={{ marginTop: 20, width: "100%" }}>
-            <Tile claim>
-              <Cap>Could not read</Cap>
-              <Text
-                style={{
-                  marginTop: 8,
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 14,
-                  color: colors.ink,
-                }}
-              >
-                {error}
-              </Text>
-            </Tile>
+        {error !== undefined && error.length > 0 ? (
+          <View style={{ paddingHorizontal: 20, paddingTop: 24 }}>
+            <Text
+              style={{
+                fontFamily: "SpaceGrotesk_600SemiBold",
+                fontSize: 15,
+                color: colors.claim,
+              }}
+            >
+              {error}
+            </Text>
           </View>
         ) : null}
 
         {tag ? (
-          <View style={{ marginTop: 20, width: "100%" }}>
-            <Tile paper>
-              <Cap>Tag</Cap>
-              {tag.idHex ? <Row left="ID" right={tag.idHex} /> : null}
+          <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+            <SectionLabel title="Last tag" />
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+              {tag.idHex ? <QuietRow title="ID" desc={tag.idHex} /> : null}
               {tag.techs.length > 0 ? (
-                <Row left="Tech" right={tag.techs.map(shortTech).join(", ")} />
+                <QuietRow title="Tech" desc={tag.techs.map(shortTech).join(", ")} />
               ) : null}
-              {tag.ndefType ? <Row left="Type" right={tag.ndefType} /> : null}
+              {tag.ndefType ? <QuietRow title="Type" desc={tag.ndefType} /> : null}
               {tag.ndefRecordCount !== undefined ? (
-                <Row left="NDEF records" right={String(tag.ndefRecordCount)} />
+                <QuietRow title="NDEF records" desc={String(tag.ndefRecordCount)} />
               ) : null}
               {tag.maxSize !== undefined ? (
-                <Row left="Max size" right={`${tag.maxSize} B`} />
+                <QuietRow title="Max size" desc={`${tag.maxSize} B`} />
               ) : null}
-            </Tile>
-            <Text
-              style={{
-                marginTop: 10,
-                fontFamily: "SpaceGrotesk_500Medium",
-                fontSize: 12,
-                color: colors.mute,
-                textAlign: "center",
-              }}
-            >
-              Temporary reader — Java Card signing comes later.
-            </Text>
+            </View>
           </View>
         ) : null}
       </ScrollView>
     </View>
   );
+}
+
+function slabColor(listening: boolean, ready: boolean): string {
+  if (listening) return colors.yellow;
+  if (ready) return colors.sage;
+  return colors.soft;
 }
 
 function shortTech(tech: string): string {

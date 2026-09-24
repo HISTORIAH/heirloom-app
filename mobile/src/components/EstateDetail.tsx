@@ -3,17 +3,20 @@ import { Text, View } from "react-native";
 import { EstateAssets } from "@/components/EstateAssets";
 import { EstateManage } from "@/components/EstateManage";
 import { EstatePeople } from "@/components/EstatePeople";
-import { Cap, H2, Lede, PrimaryButton, Tile } from "@/components/ui";
-import { useEstatePresentation } from "@/hooks/useEstatePresentation";
+import { EstatePicker } from "@/components/EstatePicker";
+import { EstateSlab } from "@/components/EstateSlab";
+import { useDashboardView } from "@/hooks/useEstatePresentation";
 import { shortAddress } from "@/lib/address";
 import type { EstateRow } from "@/lib/estates";
 import { unwrapOption } from "@/lib/option";
-import { padUnit } from "@/lib/presentEstate";
 import { colors } from "@/theme";
 import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
 
 interface EstateDetailProps {
   row: EstateRow;
+  rows: EstateRow[];
+  picked: number;
+  onSelect: (index: number) => void;
   rpc: Rpc<SolanaRpcApi>;
   onCheckIn?: () => void;
   onAddSol?: (lamports: bigint) => void;
@@ -27,54 +30,49 @@ interface EstateDetailProps {
   onAddAsset?: (mint: Address, amount: bigint) => void;
   onCloseEstate?: () => void;
   adding?: boolean;
-  padded?: boolean;
+  checkingIn?: boolean;
+  onHoldingChange?: (holding: boolean) => void;
 }
 
-function ProgressTrack({
-  ratio,
-  fill,
-  caption,
-}: {
-  ratio: number;
-  fill: string;
-  caption: string;
-}) {
-  const pct = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
+function SecHead({ title, aside }: { title: string; aside?: string }) {
   return (
-    <View style={{ marginTop: 16 }}>
-      <View
-        style={{
-          height: 10,
-          borderRadius: 999,
-          backgroundColor: colors.line,
-          overflow: "hidden",
-        }}
-      >
-        <View
-          style={{
-            width: `${pct}%`,
-            height: "100%",
-            backgroundColor: fill,
-            borderRadius: 999,
-          }}
-        />
-      </View>
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        marginBottom: 14,
+      }}
+    >
       <Text
         style={{
-          marginTop: 8,
-          fontFamily: "SpaceGrotesk_500Medium",
+          fontFamily: "SpaceGrotesk_600SemiBold",
           fontSize: 13,
           color: colors.mute,
         }}
       >
-        {caption}
+        {title}
       </Text>
+      {aside !== undefined ? (
+        <Text
+          style={{
+            fontFamily: "SpaceGrotesk_500Medium",
+            fontSize: 13,
+            color: colors.mute,
+          }}
+        >
+          {aside}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 export function EstateDetail({
   row,
+  rows,
+  picked,
+  onSelect,
   rpc,
   onCheckIn,
   onAddSol,
@@ -83,115 +81,74 @@ export function EstateDetail({
   onAddAsset,
   onCloseEstate,
   adding,
-  padded = true,
+  checkingIn,
+  onHoldingChange,
 }: EstateDetailProps) {
-  const presentation = useEstatePresentation(row.data, row.claimableLamports);
-  const {
-    state,
-    statusLabel,
-    description,
-    countdown,
-    checkInTone,
-    checkInLabel,
-    progress,
-  } = presentation;
+  const view = useDashboardView(row.data, row.claimableLamports);
   const heir = String(row.data.heir);
   const hbRaw = unwrapOption(row.data.hbSigner);
   const guardianRaw = unwrapOption(row.data.delegate);
   const heartbeat = hbRaw === null ? undefined : hbRaw;
   const guardian = guardianRaw === null ? undefined : guardianRaw;
   const label = row.data.label.trim() || shortAddress(heir);
+  const live = view.state !== "distributed";
+  const canManage =
+    live &&
+    onReassign !== undefined &&
+    onTiming !== undefined &&
+    onAddAsset !== undefined &&
+    onCloseEstate !== undefined;
 
   return (
-    <View
-      style={{
-        padding: padded ? 20 : 0,
-        paddingBottom: padded ? 8 : 0,
-        gap: 14,
-      }}
-    >
-      <Tile claim={state === "claimable"}>
-        <Cap>{label}</Cap>
-        <H2>{statusLabel}</H2>
-        <Lede>{description}</Lede>
-
-        <ProgressTrack
-          ratio={progress.ratio}
-          fill={progress.fill}
-          caption={progress.caption}
-        />
-
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 16 }}>
-          {(
-            [
-              ["Days", countdown.days],
-              ["Hours", countdown.hours],
-              ["Min", countdown.minutes],
-              ["Sec", countdown.seconds],
-            ] as const
-          ).map(([unit, value]) => (
-            <View
-              key={unit}
-              style={{
-                flex: 1,
-                borderWidth: 1,
-                borderColor: colors.line,
-                borderRadius: 12,
-                paddingVertical: 10,
-                paddingHorizontal: 6,
-                alignItems: "center",
-                backgroundColor: colors.soft,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: "SpaceGrotesk_600SemiBold",
-                  fontSize: 22,
-                  fontVariant: ["tabular-nums"],
-                  color: colors.ink,
-                }}
-              >
-                {padUnit(value)}
-              </Text>
-              <Cap>{unit}</Cap>
-            </View>
-          ))}
-        </View>
-
-        {state !== "distributed" ? (
-          <View style={{ marginTop: 16 }}>
-            <PrimaryButton
-              label={checkInLabel}
-              tone={checkInTone}
-              disabled={adding}
-              onPress={onCheckIn}
-            />
-          </View>
-        ) : null}
-      </Tile>
-
-      <EstatePeople heir={heir} heartbeat={heartbeat} guardian={guardian} />
-
-      <EstateAssets
-        claimableLamports={row.claimableLamports}
-        tokenAccounts={row.data.claimableAssets}
-        distributed={state === "distributed"}
-        onAddSol={onAddSol}
-        adding={adding}
+    <View>
+      <EstateSlab
+        key={row.address}
+        view={view}
+        label={label}
+        switcher={
+          rows.length > 1 ? (
+            <EstatePicker rows={rows} selected={picked} onSelect={onSelect} />
+          ) : undefined
+        }
+        busy={checkingIn}
+        disabled={adding}
+        onCheckIn={onCheckIn}
+        onHoldingChange={onHoldingChange}
       />
 
-      {state !== "distributed" && onReassign && onTiming && onAddAsset && onCloseEstate ? (
-        <EstateManage
-          key={row.address}
-          row={row}
-          rpc={rpc}
-          busy={adding}
-          onReassign={onReassign}
-          onTiming={onTiming}
-          onAddAsset={onAddAsset}
-          onClose={onCloseEstate}
+      <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+        <SecHead title="In the vault" />
+        <EstateAssets
+          claimableLamports={row.claimableLamports}
+          tokenAccounts={row.data.claimableAssets}
+          distributed={!live}
+          onAddSol={onAddSol}
+          adding={adding}
         />
+      </View>
+
+      <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+        <SecHead title="Named on this estate" />
+        <EstatePeople heir={heir} heartbeat={heartbeat} guardian={guardian} />
+      </View>
+
+      {canManage ? (
+        <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+          <SecHead title="Manage" />
+          <EstateManage
+            key={row.address}
+            row={row}
+            rpc={rpc}
+            busy={adding}
+            onReassign={onReassign}
+            onTiming={onTiming}
+            onAddAsset={onAddAsset}
+            onClose={onCloseEstate}
+          />
+        </View>
       ) : null}
+
+      <View style={{ height: 130 }} />
     </View>
   );
 }

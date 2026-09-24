@@ -1,4 +1,4 @@
-import { Text, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
 
 import { Cap, PrimaryButton } from "@/components/ui";
 import { colors, space } from "@/theme";
@@ -66,16 +66,6 @@ export function AddressLookup({
         disabled={busy}
         onPress={onSubmit}
       />
-      <Text
-        style={{
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 13,
-          lineHeight: 18,
-          color: colors.mute,
-        }}
-      >
-        Use this if auto-discovery missed an estate.
-      </Text>
     </View>
   );
 }

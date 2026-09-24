@@ -1,196 +1,48 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
-import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ScrollView, Text, View } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
-import { gateKind, LatchRail, PauseGate } from "@/components/PauseGate";
-import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
+import { ConnectWallet } from "@/components/EmptyState";
+import { ChainLoading } from "@/components/ChainLoading";
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { DayRuler } from "@/components/DayRuler";
+import { HoldCheckIn } from "@/components/HoldCheckIn";
+import { QuietRow, RowAddress, SectionLabel } from "@/components/Quiet";
+import { StateSlab } from "@/components/StateSlab";
 import { useEstates } from "@/hooks/useEstates";
 import type { EstateRow } from "@/lib/estates";
-import { presentEstate } from "@/lib/presentEstate";
+import { gateKind, presentGuardian } from "@/lib/presentGuardian";
 import { colors } from "@/theme";
+
+function useTick() {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+}
 
 function rank(row: EstateRow): number {
   const kind = gateKind(row);
-  if (kind === "holdable") {
-    const state = presentEstate(row.data, row.claimableLamports).state;
-    return state === "grace" ? 0 : 1;
-  }
-  if (kind === "holding") return 2;
-  if (kind === "unset") return 3;
-  if (kind === "spent") return 4;
-  if (kind === "late") return 5;
-  return 6;
+  if (kind === "holdable") return 0;
+  if (kind === "holding") return 1;
+  if (kind === "unset") return 2;
+  if (kind === "spent") return 3;
+  if (kind === "late") return 4;
+  return 5;
 }
 
-function sortAsGuardian(rows: EstateRow[]): EstateRow[] {
-  return [...rows].sort((a, b) => rank(a) - rank(b));
-}
-
-function onDeferPress(label: string, duration: string) {
-  Alert.alert(
-    `Hold ${label}?`,
-    `Pushes the claim window by ${duration}. Once until a heartbeat clears it.`,
-    [
-      { text: "Not now", style: "cancel" },
-      {
-        text: "Hold the window",
-        onPress: () =>
-          Alert.alert(
-            "Coming next",
-            "Mobile defer waits on a web linking pass, then the guardian slice.",
-          ),
-      },
-    ],
-  );
-}
-
-function GuardianConnected({
-  loading,
-  error,
-  ordered,
-  holdableCount,
-  onLookup,
-}: {
-  loading: boolean;
-  error: string | null;
-  ordered: EstateRow[];
-  holdableCount: number;
-  onLookup: () => void;
-}) {
-  if (loading) {
-    return (
-      <View style={{ marginTop: 32, alignItems: "center" }}>
-        <ActivityIndicator color={colors.ink} />
-        <Text
-          style={{
-            marginTop: 12,
-            fontFamily: "SpaceGrotesk_500Medium",
-            color: colors.mute,
-          }}
-        >
-          Looking for estates you guard…
-        </Text>
-      </View>
-    );
-  }
-
-  if (error !== null) {
-    return (
-      <Text
-        style={{
-          marginTop: 20,
-          fontFamily: "SpaceGrotesk_500Medium",
-          color: colors.mute,
-        }}
-      >
-        {error}
-      </Text>
-    );
-  }
-
-  if (ordered.length === 0) {
-    return (
-      <View style={{ marginTop: 20, gap: 16 }}>
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: colors.line,
-            borderRadius: 12,
-            backgroundColor: colors.soft,
-            padding: 16,
-            gap: 12,
-          }}
-        >
-          <LatchRail kind="ended" />
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_600SemiBold",
-              fontSize: 18,
-              color: colors.ink,
-            }}
-          >
-            No guardian role
-          </Text>
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_500Medium",
-              fontSize: 14,
-              lineHeight: 20,
-              color: colors.mute,
-            }}
-          >
-            This wallet is not named as guardian on any estate. Look up by owner
-            and heir if you were assigned off this device.
-          </Text>
-        </View>
-        <TextLink
-          label="Look up by owner and heir"
-          align="left"
-          onPress={onLookup}
-        />
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_500Medium",
-            fontSize: 13,
-            lineHeight: 18,
-            color: colors.mute,
-          }}
-        >
-          There is no guardian card. This wallet is the only key.
-        </Text>
-      </View>
-    );
-  }
-
+function GuardianListRow({ row, onPress }: { row: EstateRow; onPress: () => void }) {
+  const view = presentGuardian(row);
+  const name = row.data.label.trim() || "Estate";
   return (
-    <View style={{ marginTop: 20, gap: 14 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        <Cap>You hold the gate</Cap>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_700Bold",
-            fontSize: 11,
-            letterSpacing: 1.4,
-            color: colors.mute,
-          }}
-        >
-          {holdableCount === 0
-            ? "None open"
-            : `${String(holdableCount).padStart(2, "0")} can hold`}
-        </Text>
-      </View>
-      {ordered.map((row) => (
-        <PauseGate key={row.address} row={row} onDefer={onDeferPress} />
-      ))}
-      <TextLink
-        label="Look up by owner and heir"
-        align="left"
-        onPress={onLookup}
-      />
-      <Text
-        style={{
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 13,
-          lineHeight: 18,
-          color: colors.mute,
-        }}
-      >
-        There is no guardian card. This wallet is the only key.
-      </Text>
-    </View>
+    <QuietRow
+      title={name}
+      desc={view.eyebrow}
+      onPress={onPress}
+      right={<RowAddress address={String(row.data.authority)} />}
+    />
   );
 }
 
@@ -198,8 +50,16 @@ export default function GuardianScreen() {
   const { account, connect } = useMobileWallet();
   const { rows, loading, error } = useEstates("delegate");
   const [busy, setBusy] = useState(false);
-  const ordered = useMemo(() => sortAsGuardian(rows), [rows]);
-  const holdableCount = ordered.filter((row) => gateKind(row) === "holdable").length;
+  const [picked, setPicked] = useState(0);
+  const { ask, notice, fail, cancel, confirm, extra } = useConfirmSheet();
+  useTick();
+
+  const ordered = useMemo(() => [...rows].sort((a, b) => rank(a) - rank(b)), [rows]);
+  const selected = ordered[picked];
+
+  useEffect(() => {
+    if (picked >= ordered.length) setPicked(0);
+  }, [picked, ordered.length]);
 
   async function onConnect() {
     if (busy) return;
@@ -207,84 +67,118 @@ export default function GuardianScreen() {
     try {
       await connect();
     } catch (cause) {
-      Alert.alert(
-        "Wallet",
-        cause instanceof Error ? cause.message : "Could not connect",
-      );
+      fail("Wallet", cause);
     } finally {
       setBusy(false);
     }
   }
 
   function onLookup() {
-    Alert.alert(
-      "Coming next",
-      "Owner + heir lookup lands with the guardian slice.",
+    notice({
+      cap: "Coming next",
+      title: "Lookup comes later",
+    });
+  }
+
+  function onPause() {
+    const row = selected;
+    if (row === undefined) return;
+    const view = presentGuardian(row);
+    if (!view.canHold) return;
+    notice({
+      cap: "Coming next",
+      title: "Not in this slice",
+    });
+  }
+
+  let body;
+  if (!account) {
+    body = (
+      <ConnectWallet
+        busy={busy}
+        onConnect={() => void onConnect()}
+      />
+    );
+  } else if (loading && ordered.length === 0) {
+    body = (
+      <>
+        <AppHeader />
+        <ChainLoading body="Looking for estates you guard…" />
+      </>
+    );
+  } else if (error !== null && ordered.length === 0) {
+    body = (
+      <>
+        <AppHeader />
+        <View style={{ padding: 20 }}>
+          <Text style={{ fontFamily: "SpaceGrotesk_500Medium", fontSize: 15, color: colors.mute }}>
+            {error}
+          </Text>
+        </View>
+      </>
+    );
+  } else if (selected === undefined) {
+    body = (
+      <StateSlab
+        color={colors.soft}
+        underStatusBar
+        headline="No guardian role"
+        leading={<AppHeader plain />}
+      />
+    );
+  } else {
+    const view = presentGuardian(selected);
+    body = (
+      <>
+        <StateSlab
+          color={view.slab}
+          underStatusBar
+          eyebrow={view.eyebrow}
+          value={view.value}
+          unit={view.unit}
+          advice={view.advice}
+          leading={<AppHeader plain />}
+        >
+          {view.pauseDays > 0 ? (
+            <DayRuler
+              intervalDays={0}
+              graceDays={view.pauseDays}
+              elapsedDays={view.elapsedPause}
+              legendFrom={view.legendFrom}
+              legendTo={view.legendTo}
+              shortLabel={view.legendTo}
+            />
+          ) : null}
+          <HoldCheckIn
+            label={view.hold}
+            disabled={!view.canHold}
+            onComplete={onPause}
+          />
+        </StateSlab>
+        <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+          <SectionLabel title="Estates you guard" />
+          <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+            {ordered.map((row, index) => (
+              <GuardianListRow
+                key={row.address}
+                row={row}
+                onPress={() => setPicked(index)}
+              />
+            ))}
+            <QuietRow title="Look up by owner and heir" onPress={onLookup} />
+          </View>
+          <View style={{ height: 130 }} />
+        </View>
+      </>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-        <Cap>Guardian</Cap>
-        <H2>Hold the claim window</H2>
-        <Lede>
-          One pause, for the length the owner set. You cannot claim and you
-          cannot check in.
-        </Lede>
-
-        {!account ? (
-          <View style={{ marginTop: 20, gap: 16 }}>
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: colors.ink,
-                borderRadius: 12,
-                backgroundColor: colors.soft,
-                padding: 18,
-                gap: 14,
-              }}
-            >
-              <LatchRail kind="holdable" />
-              <Text
-                style={{
-                  fontFamily: "SpaceGrotesk_600SemiBold",
-                  fontSize: 22,
-                  letterSpacing: -0.4,
-                  color: colors.ink,
-                }}
-              >
-                Connect to hold a window
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 14,
-                  lineHeight: 20,
-                  color: colors.ink,
-                }}
-              >
-                We find estates where this wallet is the guardian. There is no
-                card for this role.
-              </Text>
-              <PrimaryButton
-                label={busy ? "Working…" : "Connect wallet"}
-                tone="ink"
-                onPress={onConnect}
-              />
-            </View>
-          </View>
-        ) : (
-          <GuardianConnected
-            loading={loading}
-            error={error}
-            ordered={ordered}
-            holdableCount={holdableCount}
-            onLookup={onLookup}
-          />
-        )}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+        {body}
       </ScrollView>
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
     </View>
   );
 }

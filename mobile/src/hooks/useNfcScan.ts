@@ -67,6 +67,13 @@ export function useNfcScan() {
     setPhase("idle");
   }, []);
 
+  const reset = useCallback(() => {
+    void cancelScan();
+    setPhase("idle");
+    setTag(undefined);
+    setError(undefined);
+  }, []);
+
   return {
     capability,
     phase,
@@ -75,6 +82,7 @@ export function useNfcScan() {
     refreshCapability,
     startScan,
     stopScan,
+    reset,
     openSettings: openNfcSettings,
   };
 }

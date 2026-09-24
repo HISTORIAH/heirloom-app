@@ -8,3 +8,4 @@ export const SECONDS_PER_DAY = 86_400;
 export const MAX_INTERVAL_DAYS = 365;
 export const DEFAULT_HEARTBEAT_DAYS = 90;
 export const DEFAULT_GRACE_DAYS = 30;
+export const DEFAULT_PAUSE_DAYS = 7;

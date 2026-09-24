@@ -1,6 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import {
   fetchEstatesByAuthority,
@@ -25,43 +25,42 @@ export function useEstates(role: EstateRole) {
   const [rows, setRows] = useState<EstateRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nonce, setNonce] = useState(0);
+  const seen = useRef(false);
 
-  const reload = useCallback(() => {
-    setNonce((n) => n + 1);
-  }, []);
+  const reload = useCallback(async (): Promise<EstateRow[]> => {
+    if (address === undefined) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      seen.current = false;
+      return [];
+    }
+    if (!seen.current) setLoading(true);
+    try {
+      const next = await fetchForRole(role)(client.rpc, address);
+      setRows(next);
+      setError(null);
+      seen.current = true;
+      return next;
+    } catch (cause: unknown) {
+      setRows([]);
+      setError(cause instanceof Error ? cause.message : "Could not load estates");
+      seen.current = false;
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [address, client, role]);
+
+  function drop(target: string) {
+    setRows((prev) => prev.filter((row) => row.address !== target));
+  }
 
   useFocusEffect(
     useCallback(() => {
-      if (!address) {
-        setRows([]);
-        setLoading(false);
-        setError(null);
-        return;
-      }
-
-      let cancelled = false;
-      setLoading(true);
-      setError(null);
-
-      fetchForRole(role)(client.rpc, address)
-        .then((next) => {
-          if (!cancelled) setRows(next);
-        })
-        .catch((cause: unknown) => {
-          if (cancelled) return;
-          setRows([]);
-          setError(cause instanceof Error ? cause.message : "Could not load estates");
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-
-      return () => {
-        cancelled = true;
-      };
-    }, [address, client, role, nonce]),
+      void reload();
+    }, [reload]),
   );
 
-  return { account, rows, loading, error, reload };
+  return { account, rows, loading, error, reload, drop };
 }

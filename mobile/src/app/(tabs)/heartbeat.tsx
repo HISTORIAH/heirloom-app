@@ -1,26 +1,35 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
-import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { AddressLookup } from "@/components/AddressLookup";
+import { ConnectWallet } from "@/components/EmptyState";
 import { AppHeader } from "@/components/AppHeader";
-import { PulseTicket, SignerHoldWell } from "@/components/PulseTicket";
-import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
+import { ChainLoading } from "@/components/ChainLoading";
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { DayRuler } from "@/components/DayRuler";
+import { HoldCheckIn } from "@/components/HoldCheckIn";
+import { InkToast } from "@/components/InkToast";
+import { NfcDummyCard } from "@/components/NfcDummyCard";
+import { QuietRow, RowAddress, SectionLabel } from "@/components/Quiet";
+import { StateSlab } from "@/components/StateSlab";
 import { useEstates } from "@/hooks/useEstates";
 import { useHeirTx } from "@/hooks/useHeirTx";
 import type { EstateUiState } from "@/lib/estateState";
 import { fetchEstateByPair, type EstateRow } from "@/lib/estates";
-import { openExplorerTx } from "@/lib/explorer";
 import { unwrapOption } from "@/lib/option";
 import { parseAddress } from "@/lib/ownerWrites";
 import { presentEstate } from "@/lib/presentEstate";
+import { presentHeartbeat } from "@/lib/presentHeartbeat";
 import { colors } from "@/theme";
+
+function useTick() {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+}
 
 function rank(state: EstateUiState): number {
   if (state === "grace") return 0;
@@ -44,176 +53,27 @@ function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
   return [...byAddr.values()];
 }
 
-function fail(title: string, cause: unknown) {
-  Alert.alert(
-    title,
-    cause instanceof Error ? cause.message : "Something went wrong",
-  );
-}
-
-function HeartbeatConnected({
-  loading,
-  error,
-  ordered,
-  dueCount,
-  busy,
-  showLookup,
-  ownerQuery,
-  heirQuery,
-  setOwnerQuery,
-  setHeirQuery,
-  onBeat,
-  onHold,
-  onToggleLookup,
-  onLookup,
-}: {
-  loading: boolean;
-  error: string | null;
-  ordered: EstateRow[];
-  dueCount: number;
-  busy: boolean;
-  showLookup: boolean;
-  ownerQuery: string;
-  heirQuery: string;
-  setOwnerQuery: (value: string) => void;
-  setHeirQuery: (value: string) => void;
-  onBeat: (row: EstateRow) => void;
-  onHold: () => void;
-  onToggleLookup: () => void;
-  onLookup: () => void;
-}) {
-  const lookup = (
-    <View style={{ gap: 12 }}>
-      <TextLink
-        label={showLookup ? "Hide lookup" : "Look up by owner and heir"}
-        align="left"
-        onPress={onToggleLookup}
-      />
-      {showLookup ? (
-        <AddressLookup
-          fields={[
-            {
-              key: "owner",
-              label: "Owner",
-              value: ownerQuery,
-              onChange: setOwnerQuery,
-            },
-            {
-              key: "heir",
-              label: "Heir",
-              value: heirQuery,
-              onChange: setHeirQuery,
-            },
-          ]}
-          submitLabel="Find estate"
-          busy={busy}
-          onSubmit={onLookup}
-        />
-      ) : null}
-      <SignerHoldWell onHold={onHold} />
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <View style={{ marginTop: 32, alignItems: "center" }}>
-        <ActivityIndicator color={colors.ink} />
-        <Text
-          style={{
-            marginTop: 12,
-            fontFamily: "SpaceGrotesk_500Medium",
-            color: colors.mute,
-          }}
-        >
-          Looking for estates you sign for…
-        </Text>
-      </View>
-    );
-  }
-
-  if (error !== null) {
-    return (
-      <View style={{ marginTop: 20, gap: 16 }}>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_500Medium",
-            color: colors.mute,
-          }}
-        >
-          {error}
-        </Text>
-        {lookup}
-      </View>
-    );
-  }
-
-  if (ordered.length === 0) {
-    return (
-      <View style={{ marginTop: 20, gap: 16 }}>
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: colors.line,
-            borderRadius: 12,
-            backgroundColor: colors.soft,
-            padding: 16,
-            gap: 8,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_600SemiBold",
-              fontSize: 18,
-              color: colors.ink,
-            }}
-          >
-            No signer role
-          </Text>
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_500Medium",
-              fontSize: 14,
-              lineHeight: 20,
-              color: colors.mute,
-            }}
-          >
-            This wallet is not the heartbeat signer on any estate. Look up by
-            owner and heir, or wait for card tap.
-          </Text>
-        </View>
-        {lookup}
-      </View>
-    );
-  }
-
+function HeartbeatListRow({ row, onPress }: { row: EstateRow; onPress: () => void }) {
+  const view = presentHeartbeat(row.data, row.claimableLamports);
+  const name = row.data.label.trim() || "Estate";
+  const ruler = view.showRuler ? (
+    <DayRuler
+      compact
+      intervalDays={view.intervalDays}
+      graceDays={view.graceDays}
+      elapsedDays={view.elapsedDays}
+      legendFrom={view.legendFrom}
+      legendTo={view.legendTo}
+    />
+  ) : undefined;
   return (
-    <View style={{ marginTop: 20, gap: 14 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        <Cap>You keep time</Cap>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_700Bold",
-            fontSize: 11,
-            letterSpacing: 1.4,
-            color: colors.mute,
-          }}
-        >
-          {dueCount === 0
-            ? "All on time"
-            : `${String(dueCount).padStart(2, "0")} due`}
-        </Text>
-      </View>
-      {ordered.map((row) => (
-        <PulseTicket key={row.address} row={row} busy={busy} onBeat={onBeat} />
-      ))}
-      {lookup}
-    </View>
+    <QuietRow
+      title={name}
+      desc={view.eyebrow}
+      onPress={onPress}
+      right={<RowAddress address={String(row.data.authority)} />}
+      footer={ruler}
+    />
   );
 }
 
@@ -222,18 +82,29 @@ export default function HeartbeatScreen() {
   const { rows, loading, error, reload } = useEstates("hbSigner");
   const { sendHeartbeat } = useHeirTx();
   const [busy, setBusy] = useState(false);
+  const [beating, setBeating] = useState(false);
+  const [holding, setHolding] = useState(false);
+  const [toast, setToast] = useState<string | undefined>(undefined);
+  const [picked, setPicked] = useState(0);
   const [showLookup, setShowLookup] = useState(false);
   const [ownerQuery, setOwnerQuery] = useState("");
   const [heirQuery, setHeirQuery] = useState("");
   const [extra, setExtra] = useState<EstateRow[]>([]);
-  const ordered = useMemo(
-    () => sortAsSigner(mergeRows(rows, extra)),
-    [rows, extra],
-  );
-  const dueCount = ordered.filter((row) => {
-    const state = presentEstate(row.data, row.claimableLamports).state;
-    return state === "grace" || state === "claimable";
-  }).length;
+  const { ask, notice, fail, cancel, confirm, extra: runExtra } = useConfirmSheet();
+  useTick();
+
+  const ordered = useMemo(() => sortAsSigner(mergeRows(rows, extra)), [rows, extra]);
+  const selected = ordered[picked];
+
+  useEffect(() => {
+    if (picked >= ordered.length) setPicked(0);
+  }, [picked, ordered.length]);
+
+  useEffect(() => {
+    if (toast === undefined) return;
+    const id = setTimeout(() => setToast(undefined), 2600);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   async function onConnect() {
     if (busy) return;
@@ -247,64 +118,42 @@ export default function HeartbeatScreen() {
     }
   }
 
-  function onHold() {
-    Alert.alert(
-      "Coming next",
-      "Card heartbeat lands with the Java Card slice.",
-    );
+  function onHoldCard() {
+    notice({
+      cap: "Coming next",
+      title: "Card heartbeat lands later",
+    });
   }
 
-  async function runBeat(row: EstateRow) {
-    if (busy) return;
+  function onBeat() {
+    const row = selected;
+    if (!row || busy) return;
+    const view = presentHeartbeat(row.data, row.claimableLamports);
+    if (!view.canHold) return;
     setBusy(true);
-    try {
-      const sig = await sendHeartbeat(row.data.authority, row.data.heir);
-      let next: EstateRow | undefined;
+    setBeating(true);
+    void (async () => {
       try {
-        next = await fetchEstateByPair(
-          client.rpc,
-          row.data.authority,
-          row.data.heir,
-        );
-      } catch {
-        next = undefined;
+        await sendHeartbeat(row.data.authority, row.data.heir);
+        let next: EstateRow | undefined;
+        try {
+          next = await fetchEstateByPair(client.rpc, row.data.authority, row.data.heir);
+        } catch {
+          next = undefined;
+        }
+        setExtra((prev) => {
+          const rest = prev.filter((item) => item.address !== row.address);
+          return next === undefined ? rest : [...rest, next];
+        });
+        await reload();
+        setToast("Checked in.");
+      } catch (cause) {
+        fail("Heartbeat", cause);
+      } finally {
+        setBusy(false);
+        setBeating(false);
       }
-      setExtra((prev) => {
-        const rest = prev.filter((item) => item.address !== row.address);
-        return next === undefined ? rest : [...rest, next];
-      });
-      reload();
-      Alert.alert("Heartbeat sent", "The check-in timer starts again.", [
-        { text: "OK" },
-        { text: "View on explorer", onPress: () => openExplorerTx(sig) },
-      ]);
-    } catch (cause) {
-      fail("Heartbeat", cause);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function onBeat(row: EstateRow) {
-    if (busy) return;
-    const state = presentEstate(row.data, row.claimableLamports).state;
-    if (state === "distributed") {
-      Alert.alert("Ended", "This vault is empty. No pulse left to send.");
-      return;
-    }
-    const label = row.data.label.trim() || "estate";
-    const reclaim = state === "claimable";
-    Alert.alert(
-      reclaim ? `Reclaim ${label}?` : `Send a heartbeat for ${label}?`,
-      "This only resets the timer. It cannot move assets.",
-      [
-        { text: "Not now", style: "cancel" },
-        {
-          text: reclaim ? "I'm alive" : "Send heartbeat",
-          onPress: () => void runBeat(row),
-        },
-      ],
-    );
+    })();
   }
 
   async function onLookup() {
@@ -314,15 +163,14 @@ export default function HeartbeatScreen() {
       const owner = parseAddress(ownerQuery, "owner");
       const heir = parseAddress(heirQuery, "heir");
       const row = await fetchEstateByPair(client.rpc, owner, heir);
-      if (row === undefined) {
-        throw new Error("No estate for that owner and heir.");
-      }
+      if (row === undefined) throw new Error("No estate for that owner and heir.");
       const signer = unwrapOption(row.data.hbSigner);
       if (signer === null || signer !== account.address) {
-        throw new Error("This wallet is not the heartbeat signer on that estate.");
+        throw new Error("This wallet is not the check-in signer on that estate.");
       }
       setExtra((prev) => mergeRows(prev, [row]));
       setShowLookup(false);
+      setPicked(0);
     } catch (cause) {
       fail("Lookup", cause);
     } finally {
@@ -330,78 +178,123 @@ export default function HeartbeatScreen() {
     }
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-        <Cap>Send heartbeat</Cap>
-        <H2>Keep the timer alive</H2>
-        <Lede>
-          You can bump the clock. You cannot move the vault. Grace estates come
-          first.
-        </Lede>
-
-        {!account ? (
-          <View style={{ marginTop: 20, gap: 16 }}>
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: colors.ink,
-                borderRadius: 12,
-                backgroundColor: colors.sage,
-                padding: 18,
-                gap: 10,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: "SpaceGrotesk_600SemiBold",
-                  fontSize: 22,
-                  letterSpacing: -0.4,
-                  color: colors.ink,
-                }}
-              >
-                Connect to keep time
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 14,
-                  lineHeight: 20,
-                  color: colors.ink,
-                }}
-              >
-                We find estates where this wallet is the heartbeat signer. The
-                key on a signer card is the same job.
-              </Text>
-              <PrimaryButton
-                label={busy ? "Working…" : "Connect wallet"}
-                tone="ink"
-                disabled={busy}
-                onPress={onConnect}
+  let body;
+  if (!account) {
+    body = (
+      <ConnectWallet
+        busy={busy}
+        onConnect={() => void onConnect()}
+      />
+    );
+  } else if (loading && ordered.length === 0) {
+    body = (
+      <>
+        <AppHeader />
+        <ChainLoading body="Looking for estates you sign for…" />
+      </>
+    );
+  } else if (error !== null && ordered.length === 0) {
+    body = (
+      <>
+        <AppHeader />
+        <View style={{ padding: 20 }}>
+          <Text style={{ fontFamily: "SpaceGrotesk_500Medium", fontSize: 15, color: colors.mute }}>
+            {error}
+          </Text>
+        </View>
+      </>
+    );
+  } else if (selected === undefined) {
+    body = (
+      <StateSlab
+        color={colors.soft}
+        underStatusBar
+        headline="No check-in role"
+        leading={<AppHeader plain />}
+      >
+        <Pressable
+          onPress={onHoldCard}
+          accessibilityRole="button"
+          accessibilityLabel="Hold the card to the phone"
+          style={{ alignItems: "center", marginTop: 22 }}
+        >
+          <NfcDummyCard width={260} />
+        </Pressable>
+      </StateSlab>
+    );
+  } else {
+    const view = presentHeartbeat(selected.data, selected.claimableLamports);
+    body = (
+      <>
+        <StateSlab
+          color={view.slab}
+          underStatusBar
+          eyebrow={view.eyebrow}
+          value={view.value}
+          unit={view.unit}
+          advice={view.advice}
+          leading={<AppHeader plain />}
+        >
+          {view.showRuler ? (
+            <DayRuler
+              intervalDays={view.intervalDays}
+              graceDays={view.graceDays}
+              elapsedDays={view.elapsedDays}
+              legendFrom={view.legendFrom}
+              legendTo={view.legendTo}
+            />
+          ) : null}
+          <HoldCheckIn
+            label={view.hold}
+            busy={beating}
+            disabled={!view.canHold || busy}
+            onComplete={onBeat}
+            onHoldingChange={setHolding}
+          />
+        </StateSlab>
+        <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
+          <SectionLabel title="Estates you check in for" />
+          <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+            {ordered.map((row, index) => (
+              <HeartbeatListRow
+                key={row.address}
+                row={row}
+                onPress={() => setPicked(index)}
+              />
+            ))}
+          </View>
+          <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: colors.line }}>
+            <QuietRow
+              title={showLookup ? "Hide lookup" : "Look up by owner and heir"}
+              onPress={() => setShowLookup((open) => !open)}
+            />
+          </View>
+          {showLookup ? (
+            <View style={{ marginTop: 12 }}>
+              <AddressLookup
+                fields={[
+                  { key: "owner", label: "Owner", value: ownerQuery, onChange: setOwnerQuery },
+                  { key: "heir", label: "Heir", value: heirQuery, onChange: setHeirQuery },
+                ]}
+                submitLabel="Find estate"
+                busy={busy}
+                onSubmit={() => void onLookup()}
               />
             </View>
-            <SignerHoldWell onHold={onHold} />
-          </View>
-        ) : (
-          <HeartbeatConnected
-            loading={loading}
-            error={error}
-            ordered={ordered}
-            dueCount={dueCount}
-            busy={busy}
-            showLookup={showLookup}
-            ownerQuery={ownerQuery}
-            heirQuery={heirQuery}
-            setOwnerQuery={setOwnerQuery}
-            setHeirQuery={setHeirQuery}
-            onBeat={onBeat}
-            onHold={onHold}
-            onToggleLookup={() => setShowLookup((open) => !open)}
-            onLookup={() => void onLookup()}
-          />
-        )}
+          ) : null}
+        </View>
+        <View style={{ height: 130 }} />
+      </>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} scrollEnabled={!holding}>
+        {body}
       </ScrollView>
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={runExtra} />
+      <InkToast text={toast} />
     </View>
   );
 }

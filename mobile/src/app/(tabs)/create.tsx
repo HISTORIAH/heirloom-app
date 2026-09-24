@@ -1,454 +1,540 @@
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
-  Pressable,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
-import {
-  Cap,
-  H2,
-  Lede,
-  PrimaryButton,
-  Row,
-  TextLink,
-  Tile,
-} from "@/components/ui";
+import { ChainLoading } from "@/components/ChainLoading";
+import { AssetsStep } from "@/components/create/AssetsStep";
+import { CardScanOverlay } from "@/components/create/CardScanOverlay";
+import { HeartbeatStep } from "@/components/create/HeartbeatStep";
+import { HeirsStep } from "@/components/create/HeirsStep";
+import { ReviewStep } from "@/components/create/ReviewStep";
+import { FabClearance, WizardFooter } from "@/components/create/WizardFooter";
+import { WizardRail } from "@/components/create/WizardRail";
+import { useLiftIntoScroll } from "@/components/create/useLiftIntoScroll";
 import { useOwnerTx } from "@/hooks/useOwnerTx";
+import { useSolBalance } from "@/hooks/useSolBalance";
 import { shortAddress } from "@/lib/address";
-import { floatDestinations } from "@/lib/cardFloat";
 import {
-  CARD_FEE_FLOAT_SOL,
   DEFAULT_GRACE_DAYS,
   DEFAULT_HEARTBEAT_DAYS,
+  DEFAULT_PAUSE_DAYS,
+  LABEL_MAX_LEN,
   SECONDS_PER_DAY,
 } from "@/lib/constants";
-import { solToLamports } from "@/lib/lamports";
 import {
-  parseAddress,
-  parseOptionalAddress,
-} from "@/lib/ownerWrites";
-import { colors, space } from "@/theme";
+  GRACE_MAX_DAYS,
+  GRACE_MIN_DAYS,
+  HB_MAX_DAYS,
+  HB_MIN_DAYS,
+  PAUSE_MAX_DAYS,
+  PAUSE_MIN_DAYS,
+  daysRangeError,
+} from "@/lib/estateTiming";
+import { lamportsToSolText, solToLamports } from "@/lib/lamports";
+import { parseAddress, parseOptionalAddress } from "@/lib/ownerWrites";
+import { setFlash } from "@/lib/flash";
+import { cancelScan, scanCardAddress, type CardScan } from "@/lib/nfc";
+import { colors } from "@/theme";
 
-const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
-const HEARTBEAT_DAYS = DEFAULT_HEARTBEAT_DAYS;
-const GRACE_DAYS = DEFAULT_GRACE_DAYS;
+type SubmitState = "idle" | "creating" | "complete";
 
-function Stepper({ step, onJump }: { step: number; onJump: (n: number) => void }) {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 10,
-        height: 48,
-        paddingHorizontal: 20,
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: "SpaceGrotesk_700Bold",
-          fontSize: 11,
-          letterSpacing: 1.98,
-          textTransform: "uppercase",
-          color: colors.ink,
-        }}
-      >
-        {STEPS[step - 1]}
-      </Text>
-      <Text
-        style={{
-          fontFamily: "SpaceGrotesk_700Bold",
-          fontSize: 11,
-          letterSpacing: 1.98,
-          color: colors.ink,
-        }}
-      >
-        {String(step).padStart(2, "0")} / 04
-      </Text>
-      <View style={{ flex: 1 }} />
-      <View style={{ flexDirection: "row", gap: 4 }}>
-        {[1, 2, 3, 4].map((i) => (
-          <Pressable
-            key={i}
-            onPress={() => onJump(i)}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: i === step ? colors.ink : colors.line,
-              backgroundColor: i === step ? colors.ink : colors.bg,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: "SpaceGrotesk_700Bold",
-                fontSize: 11,
-                color: i === step ? colors.white : colors.ink,
-              }}
-            >
-              {String(i).padStart(2, "0")}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
+const CONNECT_WALLET_COPY = "Connect a wallet to create.";
 
-function Field({
-  label,
-  hint,
-  value,
-  placeholder,
-  keyboardType,
-  onChangeText,
-}: {
-  label: string;
-  hint?: string;
-  value: string;
-  placeholder?: string;
-  keyboardType?: "default" | "decimal-pad";
-  onChangeText: (v: string) => void;
-}) {
-  return (
-    <View style={{ marginVertical: 16 }}>
-      <Cap>{label}</Cap>
-      {hint ? (
-        <Text
-          style={{
-            marginTop: 4,
-            fontFamily: "SpaceGrotesk_500Medium",
-            fontSize: 16,
-            lineHeight: 24,
-            color: colors.mute,
-          }}
-        >
-          {hint}
-        </Text>
-      ) : null}
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.mute}
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType={keyboardType}
-        style={{
-          marginTop: 8,
-          paddingVertical: 12,
-          paddingHorizontal: 14,
-          borderWidth: 1,
-          borderColor: colors.line,
-          borderRadius: space.radiusBtn,
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 14,
-          color: colors.ink,
-          backgroundColor: colors.bg,
-        }}
-      />
-    </View>
-  );
-}
-
-function fail(message: string) {
-  Alert.alert("Create estate", message);
-}
-
-function hasSolAmount(text: string): boolean {
+function solIssue(sol: string, balance?: bigint): string | undefined {
   try {
-    return solToLamports(text) > 0n;
+    const lamports = solToLamports(sol);
+    if (balance !== undefined && lamports > balance) {
+      return "Not enough SOL in this wallet.";
+    }
+    return undefined;
+  } catch {
+    return "Enter an amount.";
+  }
+}
+
+function heirsGateReady(
+  label: string,
+  heir: string,
+  guardian: string,
+  signer: string,
+): boolean {
+  if (label.trim().length === 0) return false;
+  try {
+    parseAddress(heir, "heir");
+    parseOptionalAddress(guardian, "guardian");
+    parseOptionalAddress(signer, "check-in signer");
+    return true;
   } catch {
     return false;
   }
 }
 
+function cardScanMessage(
+  result: Exclude<CardScan, { kind: "address" | "cancelled" }>,
+): string {
+  if (result.kind === "off") return "NFC is off. Turn it on, then tap the card again.";
+  if (result.kind === "unsupported") return "This phone cannot read NFC cards.";
+  if (result.kind === "empty") return "This card has no Solana address.";
+  return result.message;
+}
+
+function writeCardScan(
+  result: CardScan,
+  setValue: (value: string) => void,
+  setError: (message: string | undefined) => void,
+) {
+  if (result.kind === "cancelled") return;
+  if (result.kind === "address") {
+    setError(undefined);
+    setValue(result.value);
+    return;
+  }
+  setError(cardScanMessage(result));
+}
+
+function createFailCopy(cause: unknown, walletOn: boolean): string {
+  const raw = cause instanceof Error ? cause.message : "";
+  const aborted =
+    /user (reject|denied|cancel)|rejected the request|cancelled the request|canceled the request/i.test(
+      raw,
+    );
+  if (aborted && !walletOn) return CONNECT_WALLET_COPY;
+  if (aborted) return "Signing cancelled.";
+  return raw.length > 0 ? raw : "Could not create the estate";
+}
+
 export default function CreateScreen() {
   const router = useRouter();
   const { createEstate } = useOwnerTx();
+  const { lamports: balance, loading: balanceLoading, connected, connect } =
+    useSolBalance();
+
   const [step, setStep] = useState(1);
-  const [label, setLabel] = useState("spouse");
+  const [farthest, setFarthest] = useState(1);
+  const [label, setLabel] = useState("");
   const [heir, setHeir] = useState("");
   const [guardian, setGuardian] = useState("");
   const [signer, setSigner] = useState("");
   const [sol, setSol] = useState("");
+  const [solPct, setSolPct] = useState<number | undefined>(undefined);
+  const [heartbeatDays, setHeartbeatDays] = useState(DEFAULT_HEARTBEAT_DAYS);
+  const [graceDays, setGraceDays] = useState(DEFAULT_GRACE_DAYS);
+  const [pauseDays, setPauseDays] = useState(DEFAULT_PAUSE_DAYS);
   const [fundHeir, setFundHeir] = useState(false);
   const [acked, setAcked] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [submit, setSubmit] = useState<SubmitState>("idle");
+  const [submitError, setSubmitError] = useState<string | undefined>(undefined);
+  const [labelError, setLabelError] = useState<string | undefined>(undefined);
+  const [heirError, setHeirError] = useState<string | undefined>(undefined);
+  const [guardianError, setGuardianError] = useState<string | undefined>(undefined);
+  const [signerError, setSignerError] = useState<string | undefined>(undefined);
+  const [scanning, setScanning] = useState<"heir" | "signer" | undefined>(undefined);
 
-  const floatCount = useMemo(() => {
+  const { frameRef, scrollRef, keyboardOpen, kbPad, onLift, onScroll } =
+    useLiftIntoScroll();
+
+  const submitRef = useRef(submit);
+  const connectedRef = useRef(connected);
+  const focusedRef = useRef(true);
+  const scanLock = useRef(false);
+  submitRef.current = submit;
+  connectedRef.current = connected;
+
+  const amountError = useMemo(() => solIssue(sol, balance), [sol, balance]);
+  const hasSol = useMemo(() => {
     try {
-      const heirAddr = parseAddress(heir, "heir");
-      const hbSigner = parseOptionalAddress(signer, "check-in signer");
-      return floatDestinations({
-        heir: heirAddr,
-        hbSigner,
-        fundHeir,
-      }).length;
+      return solToLamports(sol) > 0n;
     } catch {
-      return 0;
+      return false;
     }
-  }, [heir, signer, fundHeir]);
+  }, [sol]);
+  const solEmpty = !hasSol;
+  const hasGuardian = guardian.trim().length > 0;
+  const heartbeatError = daysRangeError(
+    heartbeatDays,
+    HB_MIN_DAYS,
+    HB_MAX_DAYS,
+    "Check-in",
+  );
+  const graceError = daysRangeError(
+    graceDays,
+    GRACE_MIN_DAYS,
+    GRACE_MAX_DAYS,
+    "Grace",
+  );
+  const pauseError = hasGuardian
+    ? daysRangeError(pauseDays, PAUSE_MIN_DAYS, PAUSE_MAX_DAYS, "Pause")
+    : undefined;
+  const timingBlocked =
+    heartbeatError !== undefined ||
+    graceError !== undefined ||
+    pauseError !== undefined;
+  const heirsLooksReady = heirsGateReady(label, heir, guardian, signer);
+  const createReady = acked && hasSol && submit !== "creating";
 
-  function goAssets() {
+  const heirShort =
+    heir.trim().length > 8 ? shortAddress(heir.trim(), 6) : heir.trim() || "—";
+  const guardianShort =
+    guardian.trim().length > 0 ? shortAddress(guardian.trim(), 6) : undefined;
+  const signerShort =
+    signer.trim().length > 0 ? shortAddress(signer.trim(), 6) : undefined;
+
+  const hero = hasSol ? `${sol.trim()} SOL` : "Nothing yet";
+  const balanceLine = connected
+    ? balanceLoading || balance === undefined
+      ? "Balance: …"
+      : `Balance: ${lamportsToSolText(balance)} SOL`
+    : undefined;
+
+  const reviewReason = reviewGate(hasSol, acked);
+
+  useEffect(() => {
+    if (!connected) return;
+    setSubmitError((current) =>
+      current === CONNECT_WALLET_COPY ? undefined : current,
+    );
+  }, [connected]);
+
+  const resetForm = useCallback(() => {
+    setStep(1);
+    setFarthest(1);
+    setLabel("");
+    setHeir("");
+    setGuardian("");
+    setSigner("");
+    setSol("");
+    setSolPct(undefined);
+    setHeartbeatDays(DEFAULT_HEARTBEAT_DAYS);
+    setGraceDays(DEFAULT_GRACE_DAYS);
+    setPauseDays(DEFAULT_PAUSE_DAYS);
+    setFundHeir(false);
+    setAcked(false);
+    setSubmit("idle");
+    setSubmitError(undefined);
+    setLabelError(undefined);
+    setHeirError(undefined);
+    setGuardianError(undefined);
+    setSignerError(undefined);
+    setScanning(undefined);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      focusedRef.current = true;
+      return () => {
+        focusedRef.current = false;
+        void cancelScan();
+        if (submitRef.current === "creating") return;
+        resetForm();
+      };
+    }, [resetForm]),
+  );
+
+  function onScanCard(role: "heir" | "signer") {
+    if (scanLock.current || scanning !== undefined) return;
+    scanLock.current = true;
+    const setValue = role === "heir" ? setHeir : setSigner;
+    const setError = role === "heir" ? setHeirError : setSignerError;
+    void (async () => {
+      try {
+        const result = await scanCardAddress(() => setScanning(role));
+        if (focusedRef.current) writeCardScan(result, setValue, setError);
+      } finally {
+        scanLock.current = false;
+        setScanning(undefined);
+      }
+    })();
+  }
+
+  function validateHeirs(): boolean {
+    let ok = true;
+    if (label.trim().length === 0) {
+      setLabelError("Name this estate.");
+      ok = false;
+    } else {
+      setLabelError(undefined);
+    }
+    if (heir.trim().length === 0) {
+      setHeirError("Enter a valid heir address.");
+      ok = false;
+    } else {
+      try {
+        parseAddress(heir, "heir");
+        setHeirError(undefined);
+      } catch {
+        setHeirError("Enter a valid heir address.");
+        ok = false;
+      }
+    }
     try {
-      parseAddress(heir, "heir");
       parseOptionalAddress(guardian, "guardian");
+      setGuardianError(undefined);
+    } catch {
+      setGuardianError("Check the address");
+      ok = false;
+    }
+    try {
       parseOptionalAddress(signer, "check-in signer");
-    } catch (cause) {
-      fail(cause instanceof Error ? cause.message : "Check the addresses");
+      setSignerError(undefined);
+    } catch {
+      setSignerError("Check the address");
+      ok = false;
+    }
+    return ok;
+  }
+
+  function goJump(n: number) {
+    if (n > 1 && !validateHeirs()) {
+      setStep(1);
       return;
     }
-    setStep(2);
+    if (n > 3 && timingBlocked) {
+      setStep(3);
+      return;
+    }
+    setStep(n);
+  }
+
+  function goNext() {
+    if (step === 1 && !validateHeirs()) return;
+    if (step === 2 && amountError !== undefined) return;
+    if (step === 3 && timingBlocked) return;
+    const opened = Math.min(4, step + 1);
+    let target = Math.max(opened, farthest);
+    if (timingBlocked && target > 3) target = 3;
+    setFarthest(Math.max(farthest, opened));
+    setStep(target);
+  }
+
+  function dropIfLeft(): boolean {
+    if (focusedRef.current) return false;
+    resetForm();
+    return true;
   }
 
   async function onCreate() {
-    if (!acked || busy) return;
-    let amountLamports: bigint;
-    try {
-      amountLamports = solToLamports(sol);
-      if (amountLamports <= 0n) throw new Error("Select at least some SOL to create a vault.");
-      parseAddress(heir, "heir");
-    } catch (cause) {
-      fail(cause instanceof Error ? cause.message : "Check the form");
+    if (!createReady) return;
+    if (!validateHeirs()) {
+      setStep(1);
       return;
     }
-
-    setBusy(true);
+    if (timingBlocked) {
+      setStep(3);
+      return;
+    }
+    setSubmitError(undefined);
+    setSubmit("creating");
     try {
-      const heirAddr = parseAddress(heir, "heir");
       await createEstate({
-        heir: heirAddr,
-        label,
-        heartbeatInterval: BigInt(HEARTBEAT_DAYS * SECONDS_PER_DAY),
-        gracePeriod: BigInt(GRACE_DAYS * SECONDS_PER_DAY),
-        amountLamports,
+        heir: parseAddress(heir, "heir"),
+        label: label.trim().slice(0, LABEL_MAX_LEN),
+        heartbeatInterval: BigInt(heartbeatDays * SECONDS_PER_DAY),
+        gracePeriod: BigInt(graceDays * SECONDS_PER_DAY),
+        pauseDuration: hasGuardian
+          ? BigInt(pauseDays * SECONDS_PER_DAY)
+          : 0n,
+        amountLamports: solToLamports(sol),
         delegate: parseOptionalAddress(guardian, "guardian"),
         hbSigner: parseOptionalAddress(signer, "check-in signer"),
         fundHeir,
       });
-      Alert.alert("Estate created", "Check-in starts now. The vault is on chain.", [
-        { text: "Dashboard", onPress: () => router.replace("/") },
-      ]);
+      if (dropIfLeft()) return;
+      setFlash("Estate open.");
+      router.replace("/");
+      return;
     } catch (cause) {
-      fail(cause instanceof Error ? cause.message : "Could not create the estate");
-    } finally {
-      setBusy(false);
+      setSubmit("idle");
+      if (dropIfLeft()) return;
+      setSubmitError(createFailCopy(cause, connectedRef.current));
     }
   }
 
-  const canSubmit = acked && !busy && hasSolAmount(sol);
-  const heirShort = heir.trim().length > 8 ? shortAddress(heir.trim()) : heir.trim() || "—";
+  async function onConnect() {
+    try {
+      await connect();
+    } catch (cause) {
+      setSubmitError(
+        cause instanceof Error ? cause.message : "Could not connect",
+      );
+    }
+  }
+
+  function onPickPct(pct: number) {
+    if (balance === undefined) return;
+    setSolPct(pct);
+    setSol(lamportsToSolText((balance * BigInt(pct)) / 100n));
+  }
+
+  const complete = submit === "complete";
+  const creating = submit === "creating";
+  const showFooter = !creating && !complete;
+  const errorLine =
+    submitError === CONNECT_WALLET_COPY && connected ? undefined : submitError;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <CardScanOverlay role={scanning} onCancel={() => void cancelScan()} />
       <AppHeader />
-      <Stepper step={step} onJump={setStep} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 110 }}>
-        {step === 1 ? (
+      <WizardRail
+        step={step}
+        farthest={farthest}
+        complete={complete}
+        frozen={creating}
+        onJump={goJump}
+      />
+      <View ref={frameRef} collapsable={false} style={{ flex: 1 }}>
+      <ScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        contentContainerStyle={{ padding: 20, paddingBottom: 24 + kbPad }}
+      >
+        {creating ? (
+          <ChainLoading body="Confirm in your wallet" />
+        ) : (
           <>
-            <Cap>01 / 04</Cap>
-            <H2>Who inherits</H2>
-            <Field
-              label="What to call this estate"
-              hint="Only you see this. It keeps estates apart on your dashboard."
-              value={label}
-              onChangeText={setLabel}
-            />
-            <Field
-              label="Their Solana wallet address"
-              hint="Paste it from your heir's wallet. Assets go here and nowhere else."
-              value={heir}
-              placeholder="Heir address"
-              onChangeText={setHeir}
-            />
-            <TextLink
-              label="Fill from a card"
-              align="left"
-              onPress={() =>
-                Alert.alert(
-                  "Coming next",
-                  "Card fill lands with the Java Card slice.",
-                )
-              }
-            />
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                marginVertical: 20,
-              }}
-            >
-              <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
-              <Cap>Optional</Cap>
-              <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
-            </View>
-            <Field
-              label="Guardian"
-              value={guardian}
-              placeholder="Leave blank to skip"
-              onChangeText={setGuardian}
-            />
-            <Field
-              label="Check-in signer"
-              value={signer}
-              placeholder="Leave blank to skip"
-              onChangeText={setSigner}
-            />
-            <PrimaryButton label="Continue" onPress={goAssets} />
-          </>
-        ) : null}
-
-        {step === 2 ? (
-          <>
-            <Cap>02 / 04</Cap>
-            <H2>What goes in</H2>
-            <Lede>
-              Skip if you want. Review still needs some SOL — the program rejects an empty
-              vault.
-            </Lede>
-            <Field
-              label="SOL"
-              value={sol}
-              placeholder="0"
-              keyboardType="decimal-pad"
-              onChangeText={setSol}
-            />
-            <View style={{ marginTop: 20 }}>
-              <PrimaryButton label="Continue" onPress={() => setStep(3)} />
-              <TextLink label="Skip for now" onPress={() => setStep(3)} />
-            </View>
-          </>
-        ) : null}
-
-        {step === 3 ? (
-          <>
-            <Cap>03 / 04</Cap>
-            <H2>When your heir inherits</H2>
-            <Lede>
-              {`That's ${HEARTBEAT_DAYS + GRACE_DAYS} days from today. Checking in once resets the clock.`}
-            </Lede>
-            <Row left="Check-in" right={`${HEARTBEAT_DAYS} days`} muteLeft />
-            <Row
-              left="Opens"
-              right={`${HEARTBEAT_DAYS} + ${GRACE_DAYS} days`}
-              muteLeft
-            />
-            <View style={{ marginTop: 20 }}>
-              <PrimaryButton label="Continue" onPress={() => setStep(4)} />
-            </View>
-          </>
-        ) : null}
-
-        {step === 4 ? (
-          <>
-            <Cap>04 / 04</Cap>
-            <H2>Check and confirm</H2>
-            <Cap>If you never check in again</Cap>
-            <H2 size={28}>{`${HEARTBEAT_DAYS + GRACE_DAYS} days from today`}</H2>
-            <Tile paper style={{ marginTop: 16 }}>
-              <Cap>Heir</Cap>
-              <Row left={label.trim() || "heir"} right={heirShort} />
-              <Lede>Inherits the whole estate</Lede>
-            </Tile>
-            <Tile style={{ marginTop: 12 }}>
-              <Cap>Going into the estate</Cap>
-              <Row left="SOL" right={sol.trim() || "0"} />
-              {floatCount > 0 ? (
-                <Row
-                  left="Onto the card"
-                  right={`${CARD_FEE_FLOAT_SOL} SOL${floatCount > 1 ? ` × ${floatCount}` : ""}`}
-                />
-              ) : null}
-            </Tile>
-            <Pressable
-              onPress={() => setFundHeir((v) => !v)}
-              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 16 }}
-            >
-              <View
-                style={{
-                  width: 18,
-                  height: 18,
-                  marginTop: 4,
-                  borderWidth: 1,
-                  borderColor: colors.ink,
-                  backgroundColor: fundHeir ? colors.ink : colors.bg,
-                }}
+            {step === 1 ? (
+              <HeirsStep
+                label={label}
+                heir={heir}
+                guardian={guardian}
+                signer={signer}
+                labelError={labelError}
+                heirError={heirError}
+                guardianError={guardianError}
+                signerError={signerError}
+                setLabel={setLabel}
+                setHeir={setHeir}
+                setGuardian={setGuardian}
+                setSigner={setSigner}
+                clearLabelError={() => setLabelError(undefined)}
+                clearHeirError={() => setHeirError(undefined)}
+                clearGuardianError={() => setGuardianError(undefined)}
+                clearSignerError={() => setSignerError(undefined)}
+                scanning={scanning}
+                onScanCard={onScanCard}
+                onLift={onLift}
               />
-              <Text
-                style={{
-                  flex: 1,
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 16,
-                  lineHeight: 24,
-                  color: colors.mute,
-                }}
-              >
-                Send {CARD_FEE_FLOAT_SOL} SOL to the heir so a card can pay claim later.
-                Skip this if the heir is a software wallet.
-              </Text>
-            </Pressable>
-            {signer.trim().length > 0 ? (
-              <Text
-                style={{
-                  marginTop: 12,
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 14,
-                  lineHeight: 20,
-                  color: colors.mute,
-                }}
-              >
-                The check-in signer always gets {CARD_FEE_FLOAT_SOL} SOL in this same
-                transaction.
-              </Text>
             ) : null}
-            <Pressable
-              onPress={() => setAcked((v) => !v)}
-              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 16 }}
-            >
-              <View
-                style={{
-                  width: 18,
-                  height: 18,
-                  marginTop: 4,
-                  borderWidth: 1,
-                  borderColor: colors.ink,
-                  backgroundColor: acked ? colors.ink : colors.bg,
+            {step === 2 ? (
+              <AssetsStep
+                sol={sol}
+                solError={amountError}
+                hero={hero}
+                selectedPct={solPct}
+                chipsDisabled={!connected || balance === undefined || balance <= 0n}
+                showClear={hasSol}
+                balanceLine={balanceLine}
+                disconnected={!connected}
+                onChangeSol={(v) => {
+                  setSolPct(undefined);
+                  setSol(v);
                 }}
-              />
-              <Text
-                style={{
-                  flex: 1,
-                  fontFamily: "SpaceGrotesk_500Medium",
-                  fontSize: 16,
-                  lineHeight: 24,
-                  color: colors.mute,
+                onPickPct={onPickPct}
+                onClear={() => {
+                  setSolPct(undefined);
+                  setSol("");
                 }}
-              >
-                I understand that if I don't check in for {HEARTBEAT_DAYS} days, my heir is
-                notified and can claim the estate {GRACE_DAYS} days after that.
-              </Text>
-            </Pressable>
-            <View style={{ marginTop: 20 }}>
-              <PrimaryButton
-                label={busy ? "Working…" : "Create estate"}
-                disabled={!canSubmit}
-                onPress={() => void onCreate()}
+                onConnect={() => void onConnect()}
+                onLift={onLift}
               />
-            </View>
+            ) : null}
+            {step === 3 ? (
+              <HeartbeatStep
+                heartbeatDays={heartbeatDays}
+                graceDays={graceDays}
+                pauseDays={pauseDays}
+                hasGuardian={hasGuardian}
+                heartbeatError={heartbeatError}
+                graceError={graceError}
+                pauseError={pauseError}
+                onHeartbeat={setHeartbeatDays}
+                onGrace={setGraceDays}
+                onPause={setPauseDays}
+                onLift={onLift}
+              />
+            ) : null}
+            {step === 4 ? (
+              <ReviewStep
+                label={label.trim()}
+                heirShort={heirShort}
+                guardianShort={guardianShort}
+                signerShort={signerShort}
+                solDisplay={sol.trim() || "0"}
+                hasSol={hasSol}
+                fundHeir={fundHeir}
+                heartbeatDays={heartbeatDays}
+                graceDays={graceDays}
+                pauseDays={pauseDays}
+                acked={acked}
+                onEditHeirs={() => setStep(1)}
+                onEditAssets={() => setStep(2)}
+                onEditTiming={() => setStep(3)}
+                onToggleFundHeir={() => setFundHeir((v) => !v)}
+                onToggleAck={() => setAcked((v) => !v)}
+              />
+            ) : null}
           </>
-        ) : null}
+        )}
       </ScrollView>
-    </View>
+      </View>
+      {errorLine !== undefined && showFooter ? (
+        <Text
+          style={{
+            paddingHorizontal: 20,
+            paddingBottom: 8,
+            fontFamily: "SpaceGrotesk_600SemiBold",
+            fontSize: 14,
+            color: colors.claim,
+          }}
+        >
+          {errorLine}
+        </Text>
+      ) : null}
+      {showFooter ? (
+        <WizardFooter
+          step={step}
+          skipAssets={solEmpty && amountError === undefined}
+          busy={creating}
+          createReady={createReady}
+          reason={
+            step === 4
+              ? reviewReason
+              : step === 3
+                ? (heartbeatError ?? graceError ?? pauseError)
+                : undefined
+          }
+          continueDimmed={step === 1 && !heirsLooksReady}
+          amountBlocked={step === 2 && amountError !== undefined}
+          timingBlocked={step === 3 && timingBlocked}
+          onBack={() => setStep((s) => Math.max(1, s - 1))}
+          onPrimary={() => {
+            if (step === 4) void onCreate();
+            else goNext();
+          }}
+        />
+      ) : null}
+      {keyboardOpen ? null : <FabClearance />}
+    </KeyboardAvoidingView>
   );
+}
+
+function reviewGate(hasSol: boolean, acked: boolean): string | undefined {
+  if (!hasSol) return "Add some SOL first.";
+  if (!acked) return "Confirm you understand.";
+  return undefined;
 }

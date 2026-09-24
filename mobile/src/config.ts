@@ -44,6 +44,19 @@ function clusterForRpc(url: string): SolanaCluster {
 
 export const solanaCluster = clusterForRpc(SOLANA_RPC_ENDPOINT);
 
+export function clusterLabel(): string {
+  if (SOLANA_RPC_ENDPOINT.includes("mainnet")) return "Mainnet";
+  if (SOLANA_RPC_ENDPOINT.includes("testnet")) return "Testnet";
+  if (
+    SOLANA_RPC_ENDPOINT.includes("localhost") ||
+    SOLANA_RPC_ENDPOINT.includes("127.0.0.1") ||
+    SOLANA_RPC_ENDPOINT.includes("10.0.2.2")
+  ) {
+    return "Localnet";
+  }
+  return "Devnet";
+}
+
 export const walletIdentity: AppIdentity = {
   name: "Heirloom",
   uri: "https://heirlm.xyz",
