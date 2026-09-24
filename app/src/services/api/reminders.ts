@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { request, requestRaw } from "@/lib/api";
+import { requestRaw } from "@/lib/api";
 import type {
   AddContactRequest,
   AddContactResponse,
@@ -25,7 +25,7 @@ export async function saveReminder(
   recipients: AddRecipientRequest[],
 ): Promise<CreateReminderResponse> {
   const payload: CreateReminderRequest = { estateAddress, estateKind, recipients };
-  return request<CreateReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`, {
+  return requestRaw<CreateReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -36,7 +36,7 @@ export async function addContact(
   recipients: AddRecipientRequest[],
 ): Promise<AddContactResponse> {
   const payload: AddContactRequest = { recipients };
-  return request<AddContactResponse>(`${REMINDERS_API_BASE}/${estateAddress}/add/contact`, {
+  return requestRaw<AddContactResponse>(`${REMINDERS_API_BASE}/${estateAddress}/add/contact`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

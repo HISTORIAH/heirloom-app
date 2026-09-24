@@ -6,13 +6,16 @@ import type { EstateData } from "@/contexts/VaultContext";
 import NotificationsCard from "@/components/dashboard/NotificationsCard";
 import NotificationsSignInPanel from "@/components/dashboard/NotificationsSignInPanel";
 import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
+import TelegramVerifyPanel from "@/components/dashboard/TelegramVerifyPanel";
 import {
   defaultNotificationsConfig,
   notificationsConfigFromRecipients,
+  normalizeChannel,
   summarizeNotifications,
   toAddRecipientRequests,
   type NotificationsCardStatus,
   type NotificationsConfig,
+  type VerificationStatus,
 } from "@/types/reminders";
 import { useReminders, useSaveReminder, useAddContact } from "@/hooks/useReminders";
 import { useAuthenticate } from "@/hooks/useAuth";
@@ -39,6 +42,8 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
 
   const [notifSignInOpen, setNotifSignInOpen] = useState(false);
   const [notifEditOpen, setNotifEditOpen] = useState(false);
+  const [tgVerifyOpen, setTgVerifyOpen] = useState(false);
+  const [saveVerifications, setSaveVerifications] = useState<VerificationStatus[]>([]);
   // ─── Data ───────────────────────────────────────────────────────
 
   // Always try fetching — if the session cookie is still valid this succeeds silently.
@@ -106,12 +111,19 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const handleNotifSave = async (next: NotificationsConfig) => {
     const recipients = toAddRecipientRequests(next);
     try {
+      let verifications: VerificationStatus[] | undefined;
       if (hasSubscription) {
-        await addContactMutation.mutateAsync({ recipients });
+        const res = await addContactMutation.mutateAsync({ recipients });
+        verifications = res.verifications;
       } else {
-        await saveMutation.mutateAsync({ estateKind: "heirloom", recipients });
+        const res = await saveMutation.mutateAsync({ estateKind: "heirloom", recipients });
+        verifications = res.verifications;
       }
+      setSaveVerifications(verifications ?? []);
       setNotifEditOpen(false);
+      if (verifications?.some((v) => normalizeChannel(v.channel) === "telegram")) {
+        setTgVerifyOpen(true);
+      }
     } catch (err) {
       if (err instanceof ApiError && err.code === "unauthorized") {
         // Session expired — prompt re-sign instead of showing error
@@ -167,6 +179,12 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
         saving={notifSaving}
         onClose={() => setNotifEditOpen(false)}
         onSave={handleNotifSave}
+      />
+
+      <TelegramVerifyPanel
+        open={tgVerifyOpen}
+        verifications={saveVerifications}
+        onClose={() => setTgVerifyOpen(false)}
       />
     </>
   );

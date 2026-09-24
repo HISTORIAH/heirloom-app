@@ -657,6 +657,13 @@ const app: AppMessages = {
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
     unverified: "아직 인증되지 않았습니다 — 확인 메시지를 보려면 {{channel}}을(를) 확인하세요.",
+    unverifiedTelegram: "인증되지 않았습니다 — 표시된 Telegram 링크를 열어 활성화하세요.",
+    telegramVerifyTitle: "Telegram 인증",
+    telegramVerifyDesc: "아래를 탭하여 봇을 열고 시작을 누르세요.",
+    telegramVerifyLink: "Telegram 열기",
+    telegramVerifyLater: "나중에 하겠습니다",
+    heirTelegramWarning:
+      "{{name}}님이 봇을 시작하기 전까지는 Telegram으로 메시지를 볼 수 없습니다. 저장 후 {{name}}님에게 인증 링크를 클릭해 달라고 요청하세요.",
   },
   yield: {
     enableLulo: "Lulo 수익 활성화",

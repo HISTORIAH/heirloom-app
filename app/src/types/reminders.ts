@@ -20,12 +20,20 @@ export type CreateReminderRequest = {
   recipients: AddRecipientRequest[]; // 1–2 items max
 };
 
+export type VerificationPrompt = { Instruction: string } | { Link: string } | string;
+
 export type VerificationStatus = {
   reminderRecipientId: string; // uuid
-  channel: ReminderChannel;
-  prompt: string;
+  /** Backend may send PascalCase ("Telegram") — normalize with normalizeChannel() */
+  channel: string;
+  prompt: VerificationPrompt;
   expiresAt: string; // ISO 8601
 };
+
+/** Normalize a channel string from the backend to lowercase ReminderChannel. */
+export function normalizeChannel(ch: string): ReminderChannel {
+  return ch.toLowerCase() as ReminderChannel;
+}
 
 export type CreateReminderResponse = {
   reminderSubscriptionId: string; // uuid
@@ -148,6 +156,27 @@ export function notificationsConfigFromRecipients(
     }
   }
   return config;
+}
+
+/** Extract the human-readable text from a VerificationPrompt regardless of variant. */
+export function verificationPromptText(prompt: VerificationPrompt): string {
+  if (typeof prompt === "string") return prompt;
+  if ("Instruction" in prompt) return prompt.Instruction;
+  if ("Link" in prompt) return prompt.Link;
+  return "";
+}
+
+/**
+ * Extract a Telegram deep-link (t.me/…?start=…) from a verification prompt.
+ * The backend returns VerificationPrompt::Instruction("t.me/{bot}?start={code}") for Telegram.
+ * Returns undefined for other channels or when the prompt is not a t.me link.
+ */
+export function telegramVerificationLink(v: VerificationStatus): string | undefined {
+  if (normalizeChannel(v.channel) !== "telegram") return undefined;
+  const text = verificationPromptText(v.prompt).trim();
+  if (text.startsWith("t.me/")) return `https://${text}`;
+  if (text.startsWith("https://t.me/")) return text;
+  return undefined;
 }
 
 /** Flatten a NotificationsConfig into the backend's AddRecipientRequest list (max 2). */

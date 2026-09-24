@@ -665,6 +665,13 @@ const app: AppMessages = {
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
     unverified: "まだ確認されていません — 確認メッセージについては{{channel}}をご確認ください。",
+    unverifiedTelegram: "未確認 — 表示したTelegramリンクを開いてアクティベートしてください。",
+    telegramVerifyTitle: "Telegramを確認",
+    telegramVerifyDesc: "下をタップしてボットを開き、[開始]を押してください。",
+    telegramVerifyLink: "Telegramを開く",
+    telegramVerifyLater: "後で行う",
+    heirTelegramWarning:
+      "{{name}}さんがボットを開始するまで、Telegramでメッセージを送信できません。保存後に{{name}}さんに確認リンクをクリックするようお伝えください。",
   },
   yield: {
     enableLulo: "Lulo 利回りを有効化",

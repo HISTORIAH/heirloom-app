@@ -639,6 +639,13 @@ const app: AppMessages = {
     placeholderTelegram: "@username",
     placeholderPhone: "+1 234 567 8900",
     unverified: "尚未驗證 — 請查看{{channel}}以獲取確認訊息。",
+    unverifiedTelegram: "未驗證 — 開啟我們展示的 Telegram 連結以啟用。",
+    telegramVerifyTitle: "驗證 Telegram",
+    telegramVerifyDesc: "點擊下方開啟我們的機器人並點擊開始。",
+    telegramVerifyLink: "開啟 Telegram",
+    telegramVerifyLater: "稍後處理",
+    heirTelegramWarning:
+      "在 {{name}} 啟動我們的機器人之前，Telegram 無法向其發送訊息。請讓 {{name}} 在儲存後點擊您的驗證連結。",
   },
   yield: {
     enableLulo: "啟用 Lulo 收益",

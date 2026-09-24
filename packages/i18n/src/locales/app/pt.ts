@@ -675,6 +675,13 @@ const app: AppMessages = {
     placeholderTelegram: "@usuario",
     placeholderPhone: "+1 234 567 8900",
     unverified: "Ainda não verificado — confira o {{channel}} para ver a mensagem de confirmação.",
+    unverifiedTelegram: "Não verificado — abra o link do Telegram que mostramos para ativar.",
+    telegramVerifyTitle: "Verificar Telegram",
+    telegramVerifyDesc: "Toque abaixo para abrir nosso bot e pressione Iniciar.",
+    telegramVerifyLink: "Abrir Telegram",
+    telegramVerifyLater: "Farei isso depois",
+    heirTelegramWarning:
+      "O Telegram não pode enviar mensagens para {{name}} até que ele(a) inicie nosso bot. Peça a {{name}} para clicar no seu link de verificação após salvar.",
   },
   yield: {
     enableLulo: "Ativar Rendimento Lulo",
