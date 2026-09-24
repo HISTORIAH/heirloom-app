@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { request, requestRaw } from "@/lib/api";
+import { requestRaw } from "@/lib/api";
 import type {
   AddContactRequest,
   AddContactResponse,
@@ -8,6 +8,7 @@ import type {
   CreateReminderResponse,
   EstateKind,
   FetchReminderResponse,
+  VerificationStatus,
 } from "@/types/reminders";
 
 const REMINDERS_API_BASE = `${BACKEND_URL}/v1/estates`;
@@ -25,7 +26,7 @@ export async function saveReminder(
   recipients: AddRecipientRequest[],
 ): Promise<CreateReminderResponse> {
   const payload: CreateReminderRequest = { estateAddress, estateKind, recipients };
-  return request<CreateReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`, {
+  return requestRaw<CreateReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -36,8 +37,21 @@ export async function addContact(
   recipients: AddRecipientRequest[],
 ): Promise<AddContactResponse> {
   const payload: AddContactRequest = { recipients };
-  return request<AddContactResponse>(`${REMINDERS_API_BASE}/${estateAddress}/add/contact`, {
+  return requestRaw<AddContactResponse>(`${REMINDERS_API_BASE}/${estateAddress}/add/contact`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// ─── Verification ─────────────────────────────────────────────────
+
+/** Resend verification for an existing recipient. Returns a fresh prompt with a new code. */
+export async function resendVerification(
+  estateAddress: string,
+  recipientId: string,
+): Promise<VerificationStatus> {
+  return requestRaw<VerificationStatus>(
+    `${REMINDERS_API_BASE}/${estateAddress}/recipients/${recipientId}/resend`,
+    { method: "POST" },
+  );
 }
