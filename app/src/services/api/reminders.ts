@@ -8,6 +8,7 @@ import type {
   CreateReminderResponse,
   EstateKind,
   FetchReminderResponse,
+  VerificationStatus,
 } from "@/types/reminders";
 
 const REMINDERS_API_BASE = `${BACKEND_URL}/v1/estates`;
@@ -40,4 +41,17 @@ export async function addContact(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// ─── Verification ─────────────────────────────────────────────────
+
+/** Resend verification for an existing recipient. Returns a fresh prompt with a new code. */
+export async function resendVerification(
+  estateAddress: string,
+  recipientId: string,
+): Promise<VerificationStatus> {
+  return requestRaw<VerificationStatus>(
+    `${REMINDERS_API_BASE}/${estateAddress}/recipients/${recipientId}/resend`,
+    { method: "POST" },
+  );
 }

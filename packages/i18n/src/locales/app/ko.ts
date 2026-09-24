@@ -662,8 +662,10 @@ const app: AppMessages = {
     telegramVerifyDesc: "아래를 탭하여 봇을 열고 시작을 누르세요.",
     telegramVerifyLink: "Telegram 열기",
     telegramVerifyLater: "나중에 하겠습니다",
-    heirTelegramWarning:
-      "{{name}}님이 봇을 시작하기 전까지는 Telegram으로 메시지를 볼 수 없습니다. 저장 후 {{name}}님에게 인증 링크를 클릭해 달라고 요청하세요.",
+    heirTelegramWarning: "{{name}}님이 봇을 시작하기 전까지는 Telegram으로 메시지를 볼 수 없습니다. 저장 후 {{name}}님에게 인증 링크를 클릭해 달라고 요청하세요.",
+    resendVerification: "인증 재전송",
+    resendFailed: "인증을 재전송할 수 없습니다",
+    resendFailedDesc: "문제가 발생했습니다. 다시 시도해 주세요.",
   },
   yield: {
     enableLulo: "Lulo 수익 활성화",

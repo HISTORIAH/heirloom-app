@@ -9,6 +9,7 @@ import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
 import TelegramVerifyPanel from "@/components/dashboard/TelegramVerifyPanel";
 import {
   defaultNotificationsConfig,
+  normalizeChannel,
   notificationsConfigFromRecipients,
   normalizeChannel,
   summarizeNotifications,
@@ -17,7 +18,12 @@ import {
   type NotificationsConfig,
   type VerificationStatus,
 } from "@/types/reminders";
-import { useReminders, useSaveReminder, useAddContact } from "@/hooks/useReminders";
+import {
+  useReminders,
+  useSaveReminder,
+  useAddContact,
+  useResendVerification,
+} from "@/hooks/useReminders";
 import { useAuthenticate } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +50,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const [notifEditOpen, setNotifEditOpen] = useState(false);
   const [tgVerifyOpen, setTgVerifyOpen] = useState(false);
   const [saveVerifications, setSaveVerifications] = useState<VerificationStatus[]>([]);
+  const [resendingId, setResendingId] = useState<string | undefined>();
   // ─── Data ───────────────────────────────────────────────────────
 
   // Always try fetching — if the session cookie is still valid this succeeds silently.
@@ -106,6 +113,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
 
   const saveMutation = useSaveReminder(estate.estatePda);
   const addContactMutation = useAddContact(estate.estatePda);
+  const resendMutation = useResendVerification(estate.estatePda);
   const notifSaving = saveMutation.isPending || addContactMutation.isPending;
 
   const handleNotifSave = async (next: NotificationsConfig) => {
@@ -136,6 +144,28 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
           variant: "destructive",
         });
       }
+    }
+  };
+
+  // ─── Resend verification ────────────────────────────────────────
+
+  const handleResend = async (recipientId: string) => {
+    setResendingId(recipientId);
+    try {
+      const status = await resendMutation.mutateAsync({ recipientId });
+      setSaveVerifications([status]);
+      setNotifEditOpen(false);
+      if (normalizeChannel(status.channel) === "telegram") {
+        setTgVerifyOpen(true);
+      }
+    } catch (err) {
+      toast({
+        title: t("notifications.resendFailed"),
+        description: errMsg(err, t("notifications.resendFailedDesc")),
+        variant: "destructive",
+      });
+    } finally {
+      setResendingId(undefined);
     }
   };
 
@@ -177,6 +207,8 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
         heirLabel={estate.label}
         initialConfig={notifConfig}
         saving={notifSaving}
+        resendingId={resendingId}
+        onResend={handleResend}
         onClose={() => setNotifEditOpen(false)}
         onSave={handleNotifSave}
       />

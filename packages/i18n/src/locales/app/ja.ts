@@ -670,8 +670,10 @@ const app: AppMessages = {
     telegramVerifyDesc: "下をタップしてボットを開き、[開始]を押してください。",
     telegramVerifyLink: "Telegramを開く",
     telegramVerifyLater: "後で行う",
-    heirTelegramWarning:
-      "{{name}}さんがボットを開始するまで、Telegramでメッセージを送信できません。保存後に{{name}}さんに確認リンクをクリックするようお伝えください。",
+    heirTelegramWarning: "{{name}}さんがボットを開始するまで、Telegramでメッセージを送信できません。保存後に{{name}}さんに確認リンクをクリックするようお伝えください。",
+    resendVerification: "確認を再送信",
+    resendFailed: "確認を再送信できませんでした",
+    resendFailedDesc: "問題が発生しました。もう一度お試しください。",
   },
   yield: {
     enableLulo: "Lulo 利回りを有効化",

@@ -672,8 +672,10 @@ const app: AppMessages = {
     telegramVerifyDesc: "Doğrulamak için aşağıya dokunun ve botu başlatın.",
     telegramVerifyLink: "Telegram'ı Aç",
     telegramVerifyLater: "Sonra yapacağım",
-    heirTelegramWarning:
-      "{{name}} botumuzu başlatana kadar Telegram ona mesaj gönderemez. Kaydettikten sonra {{name}} kişisine doğrulama bağlantınıza tıklamasını söyleyin.",
+    heirTelegramWarning: "{{name}} botumuzu başlatana kadar Telegram ona mesaj gönderemez. Kaydettikten sonra {{name}} kişisine doğrulama bağlantınıza tıklamasını söyleyin.",
+    resendVerification: "Doğrulamayı yeniden gönder",
+    resendFailed: "Doğrulama yeniden gönderilemedi",
+    resendFailedDesc: "Bir sorun oluştu. Lütfen tekrar deneyin.",
   },
   yield: {
     enableLulo: "Lulo Getirisini Etkinleştir",

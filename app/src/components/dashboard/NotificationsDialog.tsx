@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Send } from "lucide-react";
+import { AlertTriangle, RefreshCw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/surface/Modal";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,8 @@ interface RoleSectionProps {
   channelLabel: (c: ReminderChannel) => string;
   channelPlaceholder: (c: ReminderChannel) => string;
   unverifiedText: (c: ReminderChannel) => string;
+  resendingId?: string;
+  onResend?: (recipientId: string) => void;
   /** Extra hint rendered under the primary input (e.g. heir Telegram bot warning). */
   primaryHint?: React.ReactNode;
   /** Extra hint rendered under the backup input. */
@@ -55,6 +57,24 @@ const UnverifiedNotice: React.FC<{ children: string }> = ({ children }) => (
     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
     {children}
   </p>
+);
+
+/** Resend button shown next to an unverified channel that has a recipientId. */
+const ResendButton: React.FC<{
+  recipientId: string;
+  resending: boolean;
+  onResend: (recipientId: string) => void;
+  label: string;
+}> = ({ recipientId, resending, onResend, label }) => (
+  <button
+    type="button"
+    onClick={() => onResend(recipientId)}
+    disabled={resending}
+    className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 disabled:opacity-50"
+  >
+    <RefreshCw className={cn("h-3 w-3", resending && "animate-spin")} strokeWidth={2} />
+    {label}
+  </button>
 );
 
 const RoleSection: React.FC<RoleSectionProps> = ({
@@ -69,11 +89,35 @@ const RoleSection: React.FC<RoleSectionProps> = ({
   channelLabel,
   channelPlaceholder,
   unverifiedText,
+  resendingId,
+  onResend,
   primaryHint,
   backupHint,
 }) => {
+  const { t } = useTranslation("app");
   const primaryOptions = channels.filter((c) => c !== config.backup?.channel);
   const backupOptions = channels.filter((c) => c !== config.primary.channel);
+
+  const renderUnverified = (sel: {
+    channel: ReminderChannel;
+    verified?: boolean;
+    recipientId?: string;
+  }) => {
+    if (sel.verified !== false) return null;
+    return (
+      <div>
+        <UnverifiedNotice>{unverifiedText(sel.channel)}</UnverifiedNotice>
+        {sel.recipientId && onResend && (
+          <ResendButton
+            recipientId={sel.recipientId}
+            resending={resendingId === sel.recipientId}
+            onResend={onResend}
+            label={t("notifications.resendVerification")}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="py-4">
@@ -115,9 +159,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({
             placeholder={channelPlaceholder(config.primary.channel)}
             className="ed-input"
           />
-          {config.primary.verified === false && (
-            <UnverifiedNotice>{unverifiedText(config.primary.channel)}</UnverifiedNotice>
-          )}
+          {renderUnverified(config.primary)}
           {primaryHint}
 
           {config.backup ? (
@@ -152,9 +194,7 @@ const RoleSection: React.FC<RoleSectionProps> = ({
                 placeholder={channelPlaceholder(config.backup.channel)}
                 className="ed-input"
               />
-              {config.backup.verified === false && (
-                <UnverifiedNotice>{unverifiedText(config.backup.channel)}</UnverifiedNotice>
-              )}
+              {renderUnverified(config.backup)}
               {backupHint}
             </div>
           ) : (
@@ -181,6 +221,8 @@ interface Props {
   heirLabel: string;
   initialConfig: NotificationsConfig;
   saving?: boolean;
+  resendingId?: string;
+  onResend?: (recipientId: string) => void;
   onClose: () => void;
   onSave: (config: NotificationsConfig) => void;
 }
@@ -190,6 +232,8 @@ const NotificationsDialog: React.FC<Props> = ({
   heirLabel,
   initialConfig,
   saving,
+  resendingId,
+  onResend,
   onClose,
   onSave,
 }) => {
@@ -217,7 +261,6 @@ const NotificationsDialog: React.FC<Props> = ({
       : t("notifications.unverified", { channel: channelLabel(c) });
 
   // Heir Telegram warning — shown when the heir has Telegram selected (primary or backup).
-  // Amber styling matches the UnverifiedNotice so it doesn't blend into the background.
   const heirTgWarning = (sel: { channel: ReminderChannel; value: string }) =>
     sel.channel === "telegram" && sel.value ? (
       <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
@@ -269,6 +312,8 @@ const NotificationsDialog: React.FC<Props> = ({
           channelLabel={channelLabel}
           channelPlaceholder={channelPlaceholder}
           unverifiedText={unverifiedText}
+          resendingId={resendingId}
+          onResend={onResend}
         />
         <RoleSection
           title={t("notifications.notifyName", { name: heirLabel })}
@@ -282,6 +327,8 @@ const NotificationsDialog: React.FC<Props> = ({
           channelLabel={channelLabel}
           channelPlaceholder={channelPlaceholder}
           unverifiedText={unverifiedText}
+          resendingId={resendingId}
+          onResend={onResend}
           primaryHint={heirTgWarning(config.heir.primary)}
           backupHint={config.heir.backup ? heirTgWarning(config.heir.backup) : undefined}
         />
