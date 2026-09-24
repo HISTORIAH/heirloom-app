@@ -1,11 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addContact, fetchReminders, saveReminder } from "@/services/api/reminders";
+import {
+  addContact,
+  fetchReminders,
+  resendVerification,
+  saveReminder,
+} from "@/services/api/reminders";
 import type {
   AddContactResponse,
   AddRecipientRequest,
   CreateReminderResponse,
   EstateKind,
   FetchReminderResponse,
+  VerificationStatus,
 } from "@/types/reminders";
 
 // ─── Queries ──────────────────────────────────────────────────────
@@ -40,6 +46,16 @@ export function useAddContact(estateAddress: string) {
   const queryClient = useQueryClient();
   return useMutation<AddContactResponse, Error, { recipients: AddRecipientRequest[] }>({
     mutationFn: ({ recipients }) => addContact(estateAddress, recipients),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
+    },
+  });
+}
+
+export function useResendVerification(estateAddress: string) {
+  const queryClient = useQueryClient();
+  return useMutation<VerificationStatus, Error, { recipientId: string }>({
+    mutationFn: ({ recipientId }) => resendVerification(estateAddress, recipientId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
     },

@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * Shown after a successful save when the backend returns Telegram verifications.
+ * Shown after a successful save or resend when the backend returns Telegram verifications.
  * Each verification contains a t.me deep-link the user must click to activate
  * the bot — without it we cannot send them messages.
  */

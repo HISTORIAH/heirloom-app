@@ -680,8 +680,10 @@ const app: AppMessages = {
     telegramVerifyDesc: "Toque abaixo para abrir nosso bot e pressione Iniciar.",
     telegramVerifyLink: "Abrir Telegram",
     telegramVerifyLater: "Farei isso depois",
-    heirTelegramWarning:
-      "O Telegram não pode enviar mensagens para {{name}} até que ele(a) inicie nosso bot. Peça a {{name}} para clicar no seu link de verificação após salvar.",
+    heirTelegramWarning: "O Telegram não pode enviar mensagens para {{name}} até que ele(a) inicie nosso bot. Peça a {{name}} para clicar no seu link de verificação após salvar.",
+    resendVerification: "Reenviar verificação",
+    resendFailed: "Não foi possível reenviar a verificação",
+    resendFailedDesc: "Algo deu errado. Tente novamente.",
   },
   yield: {
     enableLulo: "Ativar Rendimento Lulo",

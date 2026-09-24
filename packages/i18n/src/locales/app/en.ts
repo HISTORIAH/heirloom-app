@@ -669,8 +669,10 @@ const app = {
     telegramVerifyDesc: "Tap below to open our bot and press Start.",
     telegramVerifyLink: "Open Telegram",
     telegramVerifyLater: "I'll do it later",
-    heirTelegramWarning:
-      "Telegram can't message {{name}} until they start our bot. Ask {{name}} to click your verification link after you save.",
+    heirTelegramWarning: "Telegram can't message {{name}} until they start our bot. Ask {{name}} to click your verification link after you save.",
+    resendVerification: "Resend verification",
+    resendFailed: "Couldn't resend verification",
+    resendFailedDesc: "Something went wrong. Please try again.",
   },
   yield: {
     enableLulo: "Enable Lulo Yield",

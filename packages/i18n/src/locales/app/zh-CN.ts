@@ -644,8 +644,10 @@ const app: AppMessages = {
     telegramVerifyDesc: "点击下方打开我们的机器人并点击开始。",
     telegramVerifyLink: "打开 Telegram",
     telegramVerifyLater: "稍后处理",
-    heirTelegramWarning:
-      "在 {{name}} 启动我们的机器人之前，Telegram 无法向其发送消息。请让 {{name}} 在保存后点击您的验证链接。",
+    heirTelegramWarning: "在 {{name}} 启动我们的机器人之前，Telegram 无法向其发送消息。请让 {{name}} 在保存后点击您的验证链接。",
+    resendVerification: "重新发送验证",
+    resendFailed: "无法重新发送验证",
+    resendFailedDesc: "出了点问题。请重试。",
   },
   yield: {
     enableLulo: "启用 Lulo 收益",

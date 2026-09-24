@@ -666,8 +666,10 @@ const app: AppMessages = {
     telegramVerifyDesc: "Chạm bên dưới để mở bot và nhấn Bắt đầu.",
     telegramVerifyLink: "Mở Telegram",
     telegramVerifyLater: "Tôi sẽ làm sau",
-    heirTelegramWarning:
-      "Telegram không thể nhắn tin cho {{name}} cho đến khi họ khởi động bot của chúng tôi. Yêu cầu {{name}} nhấp vào liên kết xác minh của bạn sau khi lưu.",
+    heirTelegramWarning: "Telegram không thể nhắn tin cho {{name}} cho đến khi họ khởi động bot của chúng tôi. Yêu cầu {{name}} nhấp vào liên kết xác minh của bạn sau khi lưu.",
+    resendVerification: "Gửi lại xác minh",
+    resendFailed: "Không thể gửi lại xác minh",
+    resendFailedDesc: "Đã xảy ra lỗi. Vui lòng thử lại.",
   },
   yield: {
     enableLulo: "Bật Lợi suất Lulo",
