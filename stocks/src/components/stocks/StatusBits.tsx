@@ -1,9 +1,9 @@
 import { useTranslation } from "@heirloom/i18n";
 import type { CoverageHealth } from "@/services/coverage";
 import type { MintDetails } from "@/services/mints";
-import { planTimeline, type PlanPhase, type PlanView } from "@/services/plans";
+import { planTimeline, timedInSeconds, type PlanPhase, type PlanView } from "@/services/plans";
 import { riskFlags, type RiskFlag } from "@/services/risk";
-import { formatDate, formatShortDate } from "@/lib/format";
+import { formatCountdown, formatDate, formatShortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Tone = "ok" | "warn" | "danger" | "quiet";
@@ -90,14 +90,16 @@ const PHASE_FILL: Record<PlanPhase, string> = {
 
 /**
  * Where a plan is in its check-in cycle: the phase, the next date that
- * matters, and the cycle drawn as a track from the last check-in to the
- * moment it becomes recoverable, with a notch where the grace period begins.
+ * matters, a timer running down to it (or up, once the plan is recoverable),
+ * and the cycle drawn as a track from the last check-in to the moment it
+ * becomes recoverable, with a notch where the grace period begins. The timer
+ * moves once a second only if the page passes a `now` that does.
  */
 export const PlanClock: React.FC<{ plan: PlanView; now: number }> = ({ plan, now }) => {
   const { t, i18n } = useTranslation("stocks");
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const timeline = planTimeline(plan, now);
-  const date = (seconds: number) => formatDate(seconds, locale);
+  const date = (seconds: number) => formatDate(seconds, locale, timedInSeconds(plan));
 
   const next =
     timeline.phase === "active"
@@ -105,6 +107,12 @@ export const PlanClock: React.FC<{ plan: PlanView; now: number }> = ({ plan, now
       : timeline.phase === "grace"
         ? t("clock.recoverableFrom", { date: date(timeline.recoverableAt) })
         : t("clock.recoverableSince", { date: date(timeline.recoverableAt) });
+  const remaining =
+    timeline.phase === "active"
+      ? timeline.graceStartsAt - now
+      : timeline.phase === "grace"
+        ? timeline.recoverableAt - now
+        : now - timeline.recoverableAt;
 
   const start = plan.lastCheckinTs;
   const span = Math.max(1, timeline.recoverableAt - start);
@@ -117,13 +125,22 @@ export const PlanClock: React.FC<{ plan: PlanView; now: number }> = ({ plan, now
         <p className="hs-h4">{next}</p>
       </div>
       <div>
+        <p className="hs-mono-xs text-muted-foreground">{t(`clock.timer.${timeline.phase}`)}</p>
+        <p role="timer" className="hs-figure mt-1.5">
+          {formatCountdown(remaining)}
+        </p>
+      </div>
+      <div>
         <div
           className="relative h-1.5 rounded-full bg-tile-line"
           role="img"
           aria-label={`${t("clock.lastCheckIn", { date: date(start) })} · ${next}`}
         >
           <span
-            className={cn("absolute inset-y-0 left-0 rounded-full", PHASE_FILL[timeline.phase])}
+            className={cn(
+              "absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ease-linear motion-reduce:transition-none",
+              PHASE_FILL[timeline.phase],
+            )}
             style={{ width: `${at(now)}%` }}
           />
           <span

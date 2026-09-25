@@ -31,7 +31,7 @@ import {
 import { fetchPrices } from "@/services/jupiter";
 import { coverBlockers } from "@/services/holdings";
 import type { OwnerOverview } from "@/services/overview";
-import { planTimeline } from "@/services/plans";
+import { planTimeline, timedInSeconds } from "@/services/plans";
 import { ISSUER_POWERS, riskFlags } from "@/services/risk";
 
 /** Shortcuts into the browse page from an empty wallet. Each is listed by both issuers. */
@@ -218,7 +218,7 @@ function PortfolioView({ data }: { data: OwnerOverview }) {
           note={
             nextDeadline ? (
               <span className="hs-mono-xs text-muted-foreground">
-                {formatDate(nextDeadline, locale)}
+                {formatDate(nextDeadline, locale, plans.some(timedInSeconds))}
               </span>
             ) : undefined
           }

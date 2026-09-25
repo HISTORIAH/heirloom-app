@@ -22,6 +22,7 @@ import {
   STOCK_PLAN_DISCRIMINATOR,
   type StockPlan,
 } from "@historiah/heirloom-stocks";
+import { SECONDS_PER_DAY } from "@/lib/format";
 import { getCoveredAssetAddress, getPlanAddress, type PlanMode } from "@/lib/stocks";
 import { chunk } from "@/services/mints";
 
@@ -89,6 +90,13 @@ export function planTimeline(plan: PlanView, now: number): PlanTimeline {
 /** A guardian may defer once, and only before the plan becomes recoverable. */
 export function canDefer(plan: PlanView, now: number): boolean {
   return plan.pausedUntil === 0 && now < planTimeline(plan, now).recoverableAt;
+}
+
+/** Whether any of a plan's timings isn't a whole number of days, as with the Seconds preset. */
+export function timedInSeconds(plan: PlanView): boolean {
+  return [plan.checkinIntervalSecs, plan.gracePeriodSecs, plan.pauseDurationSecs].some(
+    (secs) => secs % SECONDS_PER_DAY !== 0,
+  );
 }
 
 // ------------------------------------------------------------------ fetching

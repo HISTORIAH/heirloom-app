@@ -1,25 +1,42 @@
 import { useEffect, useId, useState } from "react";
 import { isAddress, type Address } from "@solana/kit";
+import { MAX_INTERVAL_SECONDS } from "@historiah/heirloom-stocks";
 import { useTranslation } from "@heirloom/i18n";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IS_MAINNET } from "@/config";
 import { useDraft, useResume } from "@/contexts/PageSession";
 import { cn } from "@/lib/utils";
 import type { PlanMode, PlanChanges, PlanTiming } from "@/lib/stocks";
-import { SECONDS_PER_DAY } from "@/lib/format";
-import type { PlanView } from "@/services/plans";
+import { formatNumber, SECONDS_PER_DAY } from "@/lib/format";
+import { timedInSeconds, type PlanView } from "@/services/plans";
 
-/** 365 days, the program's `MAX_INTERVAL_SECONDS`. */
-const MAX_DAYS = 365;
+/** Timings are typed in days, or in seconds for the Seconds preset. */
+type TimeUnit = "days" | "seconds";
+const UNIT_SECONDS: Record<TimeUnit, number> = { days: SECONDS_PER_DAY, seconds: 1 };
 
 interface Fields {
   destination: string;
-  intervalDays: string;
-  graceDays: string;
-  deferDays: string;
+  unit: TimeUnit;
+  interval: string;
+  grace: string;
+  defer: string;
   guardian: string;
   checkinSigner: string;
 }
+
+type Timing = Pick<Fields, "unit" | "interval" | "grace" | "defer">;
+
+/**
+ * Timings a form can start from. Seconds lets a plan lapse and be recovered in
+ * one sitting, so the whole flow can be tried end to end; it's offered only off
+ * mainnet.
+ */
+const PRESETS = {
+  standard: { unit: "days", interval: "30", grace: "7", defer: "7" },
+  seconds: { unit: "seconds", interval: "30", grace: "15", defer: "15" },
+} satisfies Record<string, Timing>;
+type Preset = keyof typeof PRESETS;
 
 export interface PlanInput extends PlanTiming {
   destination: Address;
@@ -29,10 +46,11 @@ export interface PlanInput extends PlanTiming {
 
 type FieldErrors = Partial<Record<keyof Fields, string>>;
 
-function days(text: string, min: number): bigint | null {
+function duration(text: string, unit: TimeUnit, min: number): bigint | null {
   const value = Number(text);
-  if (!Number.isInteger(value) || value < min || value > MAX_DAYS) return null;
-  return BigInt(value * SECONDS_PER_DAY);
+  if (!Number.isInteger(value) || value < min || value * UNIT_SECONDS[unit] > MAX_INTERVAL_SECONDS)
+    return null;
+  return BigInt(value * UNIT_SECONDS[unit]);
 }
 
 /** Checks the fields the way the program would, so a bad value never reaches a signature. */
@@ -41,6 +59,7 @@ function validate(
   // Null before a wallet is connected: the one check that needs it waits.
   owner: Address | null,
   t: (key: string, options?: Record<string, unknown>) => string,
+  locale: string,
 ): { input: PlanInput | null; errors: FieldErrors } {
   const errors: FieldErrors = {};
   const address = (key: keyof Fields, required: boolean): Address | undefined => {
@@ -59,13 +78,19 @@ function validate(
   const guardian = address("guardian", false);
   const checkinSigner = address("checkinSigner", false);
 
-  const interval = days(fields.intervalDays, 1);
-  if (interval === null)
-    errors.intervalDays = t("planForm.errors.range", { min: 1, max: MAX_DAYS });
-  const grace = days(fields.graceDays, 0);
-  if (grace === null) errors.graceDays = t("planForm.errors.range", { min: 0, max: MAX_DAYS });
-  const defer = days(fields.deferDays, 1);
-  if (defer === null) errors.deferDays = t("planForm.errors.range", { min: 1, max: MAX_DAYS });
+  const { unit } = fields;
+  const range = (min: number) =>
+    t("planForm.errors.range", {
+      unit: t(`planForm.units.${unit}`),
+      min,
+      max: formatNumber(MAX_INTERVAL_SECONDS / UNIT_SECONDS[unit], locale),
+    });
+  const interval = duration(fields.interval, unit, 1);
+  if (interval === null) errors.interval = range(1);
+  const grace = duration(fields.grace, unit, 0);
+  if (grace === null) errors.grace = range(0);
+  const defer = duration(fields.defer, unit, 1);
+  if (defer === null) errors.defer = range(1);
 
   if (Object.keys(errors).length > 0 || !destination) return { input: null, errors };
   return {
@@ -154,19 +179,54 @@ const Group: React.FC<{ title: string; hint?: string; children: React.ReactNode 
   );
 };
 
+/** Picks a preset timing; neither is pressed once the numbers are edited by hand. */
+function PresetPicker({
+  fields,
+  update,
+}: {
+  fields: Fields;
+  update: (patch: Partial<Fields>) => void;
+}) {
+  const { t } = useTranslation("stocks");
+  const id = useId();
+  const current = (Object.keys(PRESETS) as Preset[]).find((p) =>
+    (Object.keys(PRESETS[p]) as (keyof Timing)[]).every((k) => fields[k] === PRESETS[p][k]),
+  );
+  return (
+    <div className="space-y-2">
+      <span id={id} className="hs-label">
+        {t("planForm.presets.label")}
+      </span>
+      <div role="group" aria-labelledby={id} className="hs-seg">
+        {(Object.keys(PRESETS) as Preset[]).map((p) => (
+          <button
+            key={p}
+            type="button"
+            aria-pressed={p === current}
+            onClick={() => update(PRESETS[p])}
+          >
+            {t(`planForm.presets.${p}`)}
+          </button>
+        ))}
+      </div>
+      <p className="hs-hint">{t("planForm.presets.hint")}</p>
+    </div>
+  );
+}
+
 function PlanFieldsView({
   mode,
   fields,
-  setField,
+  update,
   errors,
 }: {
   mode: PlanMode;
   fields: Fields;
-  setField: (key: keyof Fields, value: string) => void;
+  update: (patch: Partial<Fields>) => void;
   errors: FieldErrors;
 }) {
   const { t } = useTranslation("stocks");
-  const unit = t("planForm.unit");
+  const unit = t(`planForm.units.${fields.unit}`);
   return (
     <>
       <Group title={t("planForm.groups.recipient")}>
@@ -174,29 +234,30 @@ function PlanFieldsView({
           id={`${mode}-destination`}
           label={mode === "backup" ? t("planForm.recoveryWallet") : t("planForm.heir")}
           value={fields.destination}
-          onChange={(v) => setField("destination", v)}
+          onChange={(v) => update({ destination: v })}
           error={errors.destination}
           mono
         />
       </Group>
       <Group title={t("planForm.groups.timing")} hint={t("planForm.groups.timingHint")}>
+        {!IS_MAINNET && <PresetPicker fields={fields} update={update} />}
         <div className="grid gap-5 sm:grid-cols-2">
           <TextField
             id={`${mode}-interval`}
             label={t("planForm.interval")}
             hint={t("planForm.intervalHint")}
-            value={fields.intervalDays}
-            onChange={(v) => setField("intervalDays", v)}
-            error={errors.intervalDays}
+            value={fields.interval}
+            onChange={(v) => update({ interval: v })}
+            error={errors.interval}
             unit={unit}
           />
           <TextField
             id={`${mode}-grace`}
             label={t("planForm.grace")}
             hint={t("planForm.graceHint")}
-            value={fields.graceDays}
-            onChange={(v) => setField("graceDays", v)}
-            error={errors.graceDays}
+            value={fields.grace}
+            onChange={(v) => update({ grace: v })}
+            error={errors.grace}
             unit={unit}
           />
         </div>
@@ -208,16 +269,16 @@ function PlanFieldsView({
             label={t("planForm.guardian")}
             hint={t("planForm.guardianHint")}
             value={fields.guardian}
-            onChange={(v) => setField("guardian", v)}
+            onChange={(v) => update({ guardian: v })}
             error={errors.guardian}
             mono
           />
           <TextField
             id={`${mode}-defer`}
             label={t("planForm.defer")}
-            value={fields.deferDays}
-            onChange={(v) => setField("deferDays", v)}
-            error={errors.deferDays}
+            value={fields.defer}
+            onChange={(v) => update({ defer: v })}
+            error={errors.defer}
             unit={unit}
           />
         </div>
@@ -226,7 +287,7 @@ function PlanFieldsView({
           label={t("planForm.checkinWallet")}
           hint={t("planForm.checkinWalletHint")}
           value={fields.checkinSigner}
-          onChange={(v) => setField("checkinSigner", v)}
+          onChange={(v) => update({ checkinSigner: v })}
           error={errors.checkinSigner}
           mono
         />
@@ -252,19 +313,22 @@ function useFieldEditor([fields, setFields]: [
   React.Dispatch<React.SetStateAction<Fields>>,
 ]) {
   const [errors, setErrors] = useState<FieldErrors>({});
-  const setField = (key: keyof Fields, value: string) => {
-    setFields((f) => ({ ...f, [key]: value }));
-    setErrors((e) => ({ ...e, [key]: undefined }));
+  /** Changes some fields and clears their errors. */
+  const update = (patch: Partial<Fields>) => {
+    setFields((f) => ({ ...f, ...patch }));
+    setErrors((e) => {
+      const next = { ...e };
+      for (const key of Object.keys(patch)) delete next[key as keyof Fields];
+      return next;
+    });
   };
-  return { fields, setField, errors, setErrors };
+  return { fields, update, errors, setErrors };
 }
 
 /** Creates a backup plan or a vault. */
 const EMPTY_FIELDS: Fields = {
   destination: "",
-  intervalDays: "30",
-  graceDays: "7",
-  deferDays: "7",
+  ...PRESETS.standard,
   guardian: "",
   checkinSigner: "",
 };
@@ -283,12 +347,13 @@ export const PlanForm: React.FC<{
   onSubmit: (input: PlanInput) => void;
   resumeKey?: string;
 }> = ({ mode, owner, pending, onSubmit, resumeKey }) => {
-  const { t } = useTranslation("stocks");
-  const { fields, setField, errors, setErrors } = useFieldEditor(
+  const { t, i18n } = useTranslation("stocks");
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const { fields, update, errors, setErrors } = useFieldEditor(
     useDraft(`plan-form-${mode}`, EMPTY_FIELDS),
   );
   const submit = () => {
-    const { input, errors: found } = validate(fields, owner, t);
+    const { input, errors: found } = validate(fields, owner, t, locale);
     setErrors(found);
     if (input) onSubmit(input);
   };
@@ -318,7 +383,7 @@ export const PlanForm: React.FC<{
           {mode === "backup" ? t("planForm.backupDescription") : t("planForm.vaultDescription")}
         </p>
       </div>
-      <PlanFieldsView mode={mode} fields={fields} setField={setField} errors={errors} />
+      <PlanFieldsView mode={mode} fields={fields} update={update} errors={errors} />
       <FormFooter
         note={
           owner === null
@@ -338,7 +403,17 @@ export const PlanForm: React.FC<{
   );
 };
 
-const toDays = (seconds: number) => String(Math.round(seconds / SECONDS_PER_DAY));
+/** A live plan's timings as the form shows them: in days, unless one isn't a whole number of them. */
+function planTiming(plan: PlanView): Timing {
+  const unit: TimeUnit = timedInSeconds(plan) ? "seconds" : "days";
+  const show = (seconds: number) => String(seconds / UNIT_SECONDS[unit]);
+  return {
+    unit,
+    interval: show(plan.checkinIntervalSecs),
+    grace: show(plan.gracePeriodSecs),
+    defer: show(plan.pauseDurationSecs),
+  };
+}
 
 /**
  * Edits a live plan. Only the fields that changed are sent, and clearing an
@@ -350,13 +425,12 @@ export const PlanSettings: React.FC<{
   onSave: (changes: PlanChanges) => void;
   onClose: () => void;
 }> = ({ plan, pending, onSave, onClose }) => {
-  const { t } = useTranslation("stocks");
-  const { fields, setField, errors, setErrors } = useFieldEditor(
+  const { t, i18n } = useTranslation("stocks");
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const { fields, update, errors, setErrors } = useFieldEditor(
     useState<Fields>({
       destination: plan.destination,
-      intervalDays: toDays(plan.checkinIntervalSecs),
-      graceDays: toDays(plan.gracePeriodSecs),
-      deferDays: toDays(plan.pauseDurationSecs),
+      ...planTiming(plan),
       guardian: plan.guardian ?? "",
       checkinSigner: plan.checkinSigner ?? "",
     }),
@@ -395,7 +469,7 @@ export const PlanSettings: React.FC<{
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            const { input, errors: found } = validate(fields, plan.owner, t);
+            const { input, errors: found } = validate(fields, plan.owner, t, locale);
             setErrors(found);
             if (!input) return;
             const changes: PlanChanges = {};
@@ -420,7 +494,7 @@ export const PlanSettings: React.FC<{
             if (Object.keys(changes).length > 0) onSave(changes);
           }}
         >
-          <PlanFieldsView mode={plan.mode} fields={fields} setField={setField} errors={errors} />
+          <PlanFieldsView mode={plan.mode} fields={fields} update={update} errors={errors} />
           <FormFooter note={t("settings.closeHint")}>
             <Button type="submit" variant="ink" disabled={pending !== null}>
               {pending === "settings" ? t("tx.signing") : t("settings.save")}

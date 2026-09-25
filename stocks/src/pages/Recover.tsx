@@ -18,13 +18,13 @@ import {
 } from "@/lib/stocks";
 import {
   formatDate,
+  formatDuration,
   formatPercent,
   formatUiAmount,
-  SECONDS_PER_DAY,
   truncateAddress,
 } from "@/lib/format";
 import type { CoveredRow, NamedPlanOverview } from "@/services/overview";
-import { canDefer, planTimeline } from "@/services/plans";
+import { canDefer, planTimeline, timedInSeconds } from "@/services/plans";
 
 const PAYOUT_COLS = "minmax(0,1.4fr) minmax(0,0.9fr) minmax(0,1.6fr) minmax(7rem,auto)";
 
@@ -110,7 +110,7 @@ function NamedPlanPanel({
 }) {
   const { t, i18n } = useTranslation("stocks");
   const locale = i18n.resolvedLanguage ?? i18n.language;
-  const now = useNow();
+  const now = useNow(1_000);
   const { plan, roles, rows } = named;
   const timeline = planTimeline(plan, now);
   const recoverable = timeline.phase === "recoverable";
@@ -195,11 +195,7 @@ function NamedPlanPanel({
               >
                 {tx.pending === `defer-${plan.address}`
                   ? t("tx.signing")
-                  : t("recover.defer", {
-                      duration: t("common.days", {
-                        count: Math.round(plan.pauseDurationSecs / SECONDS_PER_DAY),
-                      }),
-                    })}
+                  : t("recover.defer", { duration: formatDuration(plan.pauseDurationSecs, t) })}
               </Button>
             ) : (
               <p className="text-sm text-muted-foreground">{t("recover.deferUnavailable")}</p>
@@ -275,7 +271,9 @@ function NamedPlanPanel({
                 )
               ) : (
                 <p className="text-sm font-medium">
-                  {t("recover.notYet", { date: formatDate(timeline.recoverableAt, locale) })}
+                  {t("recover.notYet", {
+                    date: formatDate(timeline.recoverableAt, locale, timedInSeconds(plan)),
+                  })}
                 </p>
               )}
             </div>

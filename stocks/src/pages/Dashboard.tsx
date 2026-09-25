@@ -69,7 +69,7 @@ function DashboardBody({ wallet }: { wallet: WalletCtx }) {
 function DashboardView({ wallet, data }: { wallet: WalletCtx; data: OwnerOverview }) {
   const { t } = useTranslation("stocks");
   const tx = useStocksTx(wallet.signer);
-  const now = useNow();
+  const now = useNow(1_000);
 
   if (!data.backup && !data.vault) {
     return (

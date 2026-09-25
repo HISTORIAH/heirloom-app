@@ -146,7 +146,7 @@ function VaultView({
   tx: ReturnType<typeof useStocksTx>;
 }) {
   const { t } = useTranslation("stocks");
-  const now = useNow();
+  const now = useNow(1_000);
   // Asked to create a vault, but the wallet that connected already has one.
   const alreadyHad = useResume(CREATE, true);
 

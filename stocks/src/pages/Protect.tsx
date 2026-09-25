@@ -14,7 +14,7 @@ import { usePageSession, useResume } from "@/contexts/PageSession";
 import { useNow, useOwnerOverview } from "@/hooks/useStocks";
 import { useStocksTx } from "@/hooks/useStocksTx";
 import { buildCoverAssetIx, buildInitializePlanIx, buildUncoverAssetIx } from "@/lib/stocks";
-import { formatPercent, formatUiAmount, SECONDS_PER_DAY, truncateAddress } from "@/lib/format";
+import { formatDuration, formatPercent, formatUiAmount, truncateAddress } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { coverBlockers, type StockHolding } from "@/services/holdings";
 import type { OwnerOverview, PlanOverview } from "@/services/overview";
@@ -76,13 +76,11 @@ function ConnectedProtect({ wallet }: { wallet: WalletCtx }) {
 function PlanTerms({ backup }: { backup: PlanOverview }) {
   const { t } = useTranslation("stocks");
   const { plan } = backup;
-  const days = (seconds: number) =>
-    t("common.days", { count: Math.round(seconds / SECONDS_PER_DAY) });
   // Label, value, and whether the value is an address (set in mono).
   const rows: [string, string, boolean][] = [
     [t("common.recoveryWallet"), truncateAddress(plan.destination, 6), true],
-    [t("planForm.interval"), days(plan.checkinIntervalSecs), false],
-    [t("planForm.grace"), days(plan.gracePeriodSecs), false],
+    [t("planForm.interval"), formatDuration(plan.checkinIntervalSecs, t), false],
+    [t("planForm.grace"), formatDuration(plan.gracePeriodSecs, t), false],
     [
       t("common.guardian"),
       plan.guardian ? truncateAddress(plan.guardian, 6) : t("common.none"),

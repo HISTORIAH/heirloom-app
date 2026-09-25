@@ -313,6 +313,8 @@ const stocks = {
     max: "Max",
     days_one: "{{count}} day",
     days_other: "{{count}} days",
+    seconds_one: "{{count}} second",
+    seconds_other: "{{count}} seconds",
     backup: "Backup",
     notProtected: "Not protected",
     allocation: "Allocation",
@@ -394,6 +396,11 @@ const stocks = {
     recoverableSince: "Recoverable since {{date}}",
     deferred: "A guardian has deferred this plan until {{date}}.",
     lastCheckIn: "Last check-in {{date}}",
+    timer: {
+      active: "Left to check in",
+      grace: "Left until recoverable",
+      recoverable: "Recoverable for",
+    },
   },
   planForm: {
     backupTitle: "Name a recovery wallet",
@@ -413,7 +420,13 @@ const stocks = {
     defer: "Guardian can defer by",
     checkinWallet: "Check-in wallet (optional)",
     checkinWalletHint: "A hot wallet that can check in for you but can do nothing else.",
-    unit: "days",
+    units: { days: "days", seconds: "seconds" },
+    presets: {
+      label: "Preset",
+      standard: "Standard",
+      seconds: "Seconds",
+      hint: "Standard is 30 days with 7 of grace. Seconds is 30 seconds with 15 of grace, for trying the whole flow in under a minute. Test networks only.",
+    },
     submitBackup: "Create backup plan",
     submitVault: "Create vault",
     backupNote: "Creating the plan moves nothing. You choose what it covers next.",
@@ -430,7 +443,7 @@ const stocks = {
     errors: {
       address: "Enter a valid Solana address.",
       self: "This has to be a different wallet from the one connected.",
-      range: "Enter a whole number of days between {{min}} and {{max}}.",
+      range: "Enter a whole number of {{unit}} between {{min}} and {{max}}.",
     },
   },
   settings: {

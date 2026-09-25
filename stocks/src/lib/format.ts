@@ -40,10 +40,11 @@ export function formatUsd(value: number, locale: string): string {
   });
 }
 
-export function formatDate(seconds: number, locale: string): string {
+/** A date and time, to the second for a plan timed in seconds. */
+export function formatDate(seconds: number, locale: string, withSeconds = false): string {
   return new Date(seconds * 1000).toLocaleString(locale, {
     dateStyle: "medium",
-    timeStyle: "short",
+    timeStyle: withSeconds ? "medium" : "short",
   });
 }
 
@@ -62,6 +63,31 @@ export function truncateAddress(address: string, chars = 4): string {
 }
 
 export const SECONDS_PER_DAY = 86_400;
+
+/** A span of time as a timer shows it: "00:00:27", with the days in front past one: "29d 23:59:41". */
+export function formatCountdown(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const days = Math.floor(total / SECONDS_PER_DAY);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const clock = [
+    Math.floor((total % SECONDS_PER_DAY) / 3600),
+    Math.floor((total % 3600) / 60),
+    total % 60,
+  ]
+    .map(pad)
+    .join(":");
+  return days > 0 ? `${days}d ${clock}` : clock;
+}
+
+/** A plan's interval, grace, or defer: in days, unless it isn't a whole number of them. */
+export function formatDuration(
+  seconds: number,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  return seconds % SECONDS_PER_DAY === 0
+    ? t("common.days", { count: seconds / SECONDS_PER_DAY })
+    : t("common.seconds", { count: seconds });
+}
 
 export function explorerTxUrl(signature: string): string {
   const base = `https://explorer.solana.com/tx/${signature}`;

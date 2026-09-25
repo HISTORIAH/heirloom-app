@@ -8,14 +8,40 @@ import { loadNamedPlans, loadOwnerOverview } from "@/services/overview";
 /** Every query this app makes sits under this key, so one invalidation refreshes all of it. */
 export const STOCKS_QUERY_KEY = "stocks";
 
-/** Seconds since the epoch, ticking so countdowns and phases stay current. */
+/**
+ * How far the cluster's clock sits from this machine's, in seconds. Plans lapse
+ * by the chain's clock, which can trail wall time by a few seconds, so a timer
+ * on wall time alone would reach zero while the program still says not yet.
+ * Measured against the newest confirmed block, which errs on the late side.
+ */
+function useChainClockOffset(): number {
+  const { rpc } = useWallet();
+  const { data } = useQuery({
+    queryKey: [STOCKS_QUERY_KEY, "clock-offset"],
+    queryFn: async () => {
+      const slot = await rpc.getSlot({ commitment: "confirmed" }).send();
+      const blockTime = await rpc.getBlockTime(slot).send();
+      return blockTime === null ? 0 : Number(blockTime) - Date.now() / 1000;
+    },
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+  return data ?? 0;
+}
+
+/**
+ * Seconds since the epoch by the chain's clock, ticking so countdowns and
+ * phases stay current. Pages that show a `PlanClock` pass 1_000, so its timer
+ * runs by the second and their buttons change phase the moment it reaches zero.
+ */
 export function useNow(intervalMs = 15_000): number {
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const offset = useChainClockOffset();
+  const [wall, setWall] = useState(() => Date.now() / 1000);
   useEffect(() => {
-    const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), intervalMs);
+    const id = setInterval(() => setWall(Date.now() / 1000), intervalMs);
     return () => clearInterval(id);
   }, [intervalMs]);
-  return now;
+  return Math.floor(wall + offset);
 }
 
 /** The shipped issuer catalog, keyed by mint. Empty while loading or if it failed. */
