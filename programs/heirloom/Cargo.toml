@@ -15,20 +15,22 @@ cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-log-ix-name = []
 idl-build = []
-profile = ["anchor-v2-testing/profile"]
+# profile = ["anchor-v2-testing/profile"]
 
 [dependencies]
-anchor-lang = { version = "2.0.0-rc.1", features = [] }
-anchor-spl = "2.0.0-rc.1"
+# anchor-lang = { version = "2.0.0-rc.1", features = [] }
+# anchor-spl = "2.0.0-rc.1"
+anchor-lang = { git = "https://github.com/otter-sec/anchor.git", branch = "anchor-next" }
+anchor-spl = { git = "https://github.com/otter-sec/anchor.git", branch = "anchor-next" }
 bytemuck = "1.25"
 solana-program-log = { version = "1.1", features = ["macro"] }
-wincode = { version = "0.5", features = ["derive"] }
+wincode = { version = "0.6", features = ["derive"] }
 
 solana-security-txt = "1.1.3"
 solana-instructions-sysvar = "3.0.1"
 
-[dev-dependencies]
-anchor-v2-testing = { git = "https://github.com/otter-sec/anchor.git", branch = "anchor-next" }
+# [dev-dependencies]
+# anchor-v2-testing = { git = "https://github.com/otter-sec/anchor.git", branch = "anchor-next" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

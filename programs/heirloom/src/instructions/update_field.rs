@@ -24,10 +24,9 @@ pub struct UpdateField {
 impl UpdateField {
     pub fn update_fields_handler(
         ctx: &mut Context<UpdateField>,
-        heartbeat_interval: Option<i64>,
-        grace_period: Option<i64>,
-        pause_duration: Option<i64>,
-        label: Option<String>,
+        checkin_interval_secs: Option<i64>,
+        grace_period_secs: Option<i64>,
+        delegate_pause_duration_secs: Option<i64>,
     ) -> Result<()> {
         ctx.accounts.validate()?;
 
@@ -35,29 +34,25 @@ impl UpdateField {
         let authority_key = ctx.accounts.authority.address();
         let estate = &mut ctx.accounts.estate;
 
-        estate.last_heartbeat = now;
+        estate.last_checkin_ts = now;
 
-        // Clear deferred state when the authority returns and sends heartbeat
-        if estate.paused_until > 0 && now >= estate.paused_until {
-            estate.paused_until = 0;
+        // Clear expired delegate pause on checkin
+        if estate.delegate_pause_expires_at > 0 && now >= estate.delegate_pause_expires_at {
+            estate.delegate_pause_expires_at = 0;
         }
 
         if *authority_key == estate.authority {
-            if let Some(hi) = heartbeat_interval {
-                validate_interval(hi)?;
-                estate.heartbeat_interval = hi;
+            if let Some(ci) = checkin_interval_secs {
+                validate_interval(ci)?;
+                estate.checkin_interval_secs = ci;
             }
-            if let Some(gp) = grace_period {
+            if let Some(gp) = grace_period_secs {
                 validate_interval(gp)?;
-                estate.grace_period = gp;
+                estate.grace_period_secs = gp;
             }
-            if let Some(pd) = pause_duration {
-                validate_interval(pd)?;
-                estate.pause_duration = pd;
-            }
-            if let Some(l) = label {
-                require!(l.len() <= 32, HeirloomError::LabelTooLong);
-                estate.label = l;
+            if let Some(dpd) = delegate_pause_duration_secs {
+                validate_interval(dpd)?;
+                estate.delegate_pause_duration_secs = dpd;
             }
         }
 
@@ -67,8 +62,8 @@ impl UpdateField {
     pub fn validate(&self) -> Result<()> {
         let signer = *self.authority.address();
         if signer != self.estate.authority {
-            match self.estate.hb_signer {
-                Some(hb) if signer == hb => {}
+            match self.estate.checkin_signer {
+                Some(cs) if signer == cs => {}
                 _ => return Err(HeirloomError::Unauthorized.into()),
             }
         }
