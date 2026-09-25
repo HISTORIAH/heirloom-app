@@ -26,8 +26,6 @@ pub enum HeirloomError {
     ZeroDepositAmount,
     #[msg("Resolve token assets first, then SOL.")]
     TokensFirst,
-    #[msg("Label too long")]
-    LabelTooLong,
     #[msg("Math overflow")]
     MathOverflow,
     #[msg("Math underflow")]

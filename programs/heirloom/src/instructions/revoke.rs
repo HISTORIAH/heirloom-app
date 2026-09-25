@@ -237,18 +237,12 @@ impl Revoke {
                 token_interface::close_account(close_ctx)?;
             }
             None => {
-                let vault_view = self.vault.account();
-                let treasury_view = self.treasury.account();
-
+                let vault_lamports = self.vault.get_lamports();
                 let (protocol_fee, _) =
-                    calculate_distribution(vault_view.get_lamports(), EMERGENCY_EXIT_FEE_BPS)?;
+                    calculate_distribution(vault_lamports, EMERGENCY_EXIT_FEE_BPS)?;
 
-                vault_view.sub_lamports(protocol_fee)?;
-                treasury_view.add_lamports(protocol_fee)?;
-
-                // ! REMOVED SINCE acc close above will move funds into auth acc
-                // vault_info.sub_lamports(return_amount)?;
-                // authority_info.add_lamports(return_amount)?;
+                self.vault.sub_lamports(protocol_fee)?;
+                self.treasury.add_lamports(protocol_fee)?;
             }
         }
 

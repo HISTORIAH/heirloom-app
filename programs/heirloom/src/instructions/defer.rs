@@ -31,8 +31,8 @@ impl DelegateDefer {
         ctx.accounts.validate()?;
 
         let now = Clock::get()?.unix_timestamp;
-        ctx.accounts.estate.paused_until = now
-            .checked_add(ctx.accounts.estate.pause_duration)
+        ctx.accounts.estate.delegate_pause_expires_at = now
+            .checked_add(ctx.accounts.estate.delegate_pause_duration_secs)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         Ok(())
@@ -40,16 +40,16 @@ impl DelegateDefer {
 
     pub fn validate(&self) -> Result<()> {
         require!(
-            self.estate.paused_until == 0,
+            self.estate.delegate_pause_expires_at == 0,
             HeirloomError::AlreadyDeferred
         );
 
         let now = Clock::get()?.unix_timestamp;
         let claimable_at = self
             .estate
-            .last_heartbeat
-            .checked_add(self.estate.heartbeat_interval)
-            .and_then(|t| t.checked_add(self.estate.grace_period))
+            .last_checkin_ts
+            .checked_add(self.estate.checkin_interval_secs)
+            .and_then(|t| t.checked_add(self.estate.grace_period_secs))
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         require!(now < claimable_at, HeirloomError::DeferWindowExpired);

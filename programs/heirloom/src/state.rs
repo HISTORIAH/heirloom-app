@@ -7,43 +7,35 @@ pub struct Estate {
 
     pub heir: Address,
 
-    // TODO: RENAME TO checkin_interval_secs
-    pub heartbeat_interval: i64, // checkin_interval_secs
+    /// Seconds between required check-ins
+    pub checkin_interval_secs: i64,
 
-    // TODO: RENAME TO grace_period_secs
-    pub grace_period: i64, // grace_period_secs
+    /// Extra seconds after interval before claimable
+    pub grace_period_secs: i64,
 
-    // last check in seconds
-    // TODO: RENAME TO last_checkin_ts
-    pub last_heartbeat: i64, // last_checkin_ts
+    /// Timestamp of last check-in
+    pub last_checkin_ts: i64,
 
     pub created_at: i64,
 
     pub bump: u8,
 
-    pub pause_duration: i64,
+    /// Duration of one-time delegate pause in seconds
+    pub delegate_pause_duration_secs: i64,
 
-    // TODO: USE BOOLEAN FOR PAUSES, E.G IS_PAUSED E.T.C
-    pub paused_until: i64,
+    /// Timestamp when one-time delegate pause expires (0 = never used)
+    pub delegate_pause_expires_at: i64,
 
-    // TODO: RENAME TO is_moving_funds
+    /// True while assets are being migrated to new estate
     pub is_migrating: bool,
 
     pub delegate: Option<Address>,
 
-    // TODO: RENAME TO checkin_signer
-    /// hot signer wallet
-    pub hb_signer: Option<Address>,
+    /// Optional hot wallet signer for checkins
+    pub checkin_signer: Option<Address>,
 
-    /// number of vault token accounts (ATAs) still open under this estate
+    /// Number of remaining claimable assets (tokens + 1 for SOL)
     pub claimable_assets: u8,
-
-    // TODO:  ADD THE VERSIONING FOR ACCOUNTS BELOW
-    // version: u8
-
-    // TODO: GET RID OF ME, wasted space
-    #[max_len(32)]
-    pub label: String,
 }
 
 impl Estate {
@@ -52,18 +44,17 @@ impl Estate {
     pub const LEN: usize = 8         // discriminator
     + 32                             // authority
     + 32                             // heir
-    + 8                              // heartbeat_interval
-    + 8                              // grace period
-    + 8                              // last heartbeat
-    + 8                              // created at
+    + 8                              // checkin_interval_secs
+    + 8                              // grace_period_secs
+    + 8                              // last_checkin_ts
+    + 8                              // created_at
     + 1                              // bump
-    + 8                              // pause duration
-    + 8                              // paused until
-    + 1                              // is migrating
+    + 8                              // delegate_pause_duration_secs
+    + 8                              // delegate_pause_expires_at
+    + 1                              // is_migrating
     + 1 + 32                         // delegate
-    + 1 + 32                         // hb signer
-    + 1                              // claimable assets
-    + 4 + 32; // label
+    + 1 + 32                         // checkin_signer
+    + 1; // claimable_assets
 }
 
 #[account]

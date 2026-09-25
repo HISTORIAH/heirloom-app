@@ -130,7 +130,10 @@ impl UpdateHeir {
 
     pub fn validate(&self) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
-        require!(now >= self.estate.paused_until, HeirloomError::EstatePaused);
+        require!(
+            now >= self.estate.delegate_pause_expires_at,
+            HeirloomError::EstatePaused
+        );
 
         let is_first_call = self.new_estate.authority == Address::default();
 
@@ -182,17 +185,16 @@ impl UpdateHeir {
 
         self.new_estate.authority = *authority_key;
         self.new_estate.heir = *new_heir_key;
-        self.new_estate.heartbeat_interval = self.estate.heartbeat_interval;
-        self.new_estate.grace_period = self.estate.grace_period;
-        self.new_estate.last_heartbeat = self.estate.last_heartbeat;
+        self.new_estate.checkin_interval_secs = self.estate.checkin_interval_secs;
+        self.new_estate.grace_period_secs = self.estate.grace_period_secs;
+        self.new_estate.last_checkin_ts = self.estate.last_checkin_ts;
         self.new_estate.created_at = self.estate.created_at;
         self.new_estate.bump = new_estate_bump;
         self.new_estate.delegate = self.estate.delegate;
-        self.new_estate.hb_signer = self.estate.hb_signer;
+        self.new_estate.checkin_signer = self.estate.checkin_signer;
         self.new_estate.claimable_assets = self.estate.claimable_assets;
-        self.new_estate.label = self.estate.label.clone();
-        self.new_estate.pause_duration = self.estate.pause_duration;
-        self.new_estate.paused_until = 0;
+        self.new_estate.delegate_pause_duration_secs = self.estate.delegate_pause_duration_secs;
+        self.new_estate.delegate_pause_expires_at = 0;
         // Block claim on new estate until migration is complete.
         self.new_estate.is_migrating = true;
 

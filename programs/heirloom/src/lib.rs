@@ -31,19 +31,17 @@ pub mod heirloom {
 
     pub fn initialize(
         ctx: &mut Context<Initialize>,
-        heartbeat_interval: i64,
-        grace_period: i64,
-        pause_duration: i64,
+        checkin_interval_secs: i64,
+        grace_period_secs: i64,
+        delegate_pause_duration_secs: i64,
         amount: u64,
-        label: String,
     ) -> Result<()> {
         Initialize::initialize_handler(
             ctx,
-            heartbeat_interval,
-            grace_period,
-            pause_duration,
+            checkin_interval_secs,
+            grace_period_secs,
+            delegate_pause_duration_secs,
             amount,
-            label,
         )
     }
 
@@ -65,17 +63,15 @@ pub mod heirloom {
 
     pub fn update_field(
         ctx: &mut Context<UpdateField>,
-        heartbeat_interval: Option<i64>,
-        grace_period: Option<i64>,
-        pause_duration: Option<i64>,
-        label: Option<String>,
+        checkin_interval_secs: Option<i64>,
+        grace_period_secs: Option<i64>,
+        delegate_pause_duration_secs: Option<i64>,
     ) -> Result<()> {
         UpdateField::update_fields_handler(
             ctx,
-            heartbeat_interval,
-            grace_period,
-            pause_duration,
-            label,
+            checkin_interval_secs,
+            grace_period_secs,
+            delegate_pause_duration_secs,
         )
     }
 
