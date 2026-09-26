@@ -1,9 +1,11 @@
 import { Helmet } from "react-helmet-async";
-import { LANDING_URL } from "@/config";
 
 const STOCKS_URL = "https://stocks.heirlm.xyz";
-/** One copy of the artwork, served by the marketing site. */
-const OG_IMAGE = `${LANDING_URL}/og-image.png`;
+/**
+ * The stocks share card, served from this app's public/. index.html names it
+ * too, for the link previews that never run this code.
+ */
+const OG_IMAGE = `${STOCKS_URL}/og-image.png`;
 
 export interface SeoProps {
   title: string;

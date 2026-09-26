@@ -6,6 +6,10 @@
 # its script runs. Google renders it, but only with the files it is allowed to
 # fetch, so the bundle, the catalog the landing counts from, and the icons have
 # to be open too — with `Disallow: /` alone the crawler sees a blank page.
+#
+# The share card is open for the same reason: X, Slack and the rest fetch it
+# from index.html's og:image, and Twitterbot won't show an image it is barred
+# from.
 User-agent: *
 Allow: /$
 Allow: /assets/
@@ -13,4 +17,5 @@ Allow: /catalog.json$
 Allow: /favicon
 Allow: /apple-touch-icon.png$
 Allow: /site.webmanifest$
+Allow: /og-image.png$
 Disallow: /
