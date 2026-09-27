@@ -647,33 +647,6 @@ select.hs-input {
     0 30px 60px -32px hsl(var(--foreground) / 0.4);
 }
 
-/* --------------------------------------------------------------- marquee */
-.hs-marquee {
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-}
-.hs-marquee-track {
-  display: flex;
-  width: max-content;
-  /* Linear on purpose: a ticker moves at one speed. */
-  animation: hs-marquee 80s linear infinite;
-}
-.hs-marquee-track[data-reverse] { animation-direction: reverse; }
-.hs-marquee:hover .hs-marquee-track { animation-play-state: paused; }
-@keyframes hs-marquee {
-  to { transform: translateX(-50%); }
-}
-.hs-logo-mono {
-  filter: grayscale(1);
-  opacity: 0.8;
-  transition: filter 100ms ease-out, opacity 100ms ease-out;
-}
-.hs-marquee-item:hover .hs-logo-mono {
-  filter: none;
-  opacity: 1;
-}
-
 /* ------------------------------------------------------------- carousel */
 .hs-rail {
   display: flex;
@@ -721,7 +694,6 @@ select.hs-input {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hs-marquee-track,
   .hs-skel,
   .hs-rise { animation: none; }
   .hs-btn,
@@ -731,6 +703,5 @@ select.hs-input {
   .hs-input,
   .hs-check,
   .hs-nav-link,
-  .hs-menu-item,
-  .hs-logo-mono { transition: none; }
+  .hs-menu-item { transition: none; }
 }

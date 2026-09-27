@@ -87,9 +87,14 @@ const stocks = {
       },
     },
     catalog: {
+      tag: "issuer registry",
       title: "Every stock\nthey issue.",
       body: "Heirloom registers issuers, not tickers. One entry admits an issuer's whole catalogue, including listings added later.",
-      count: "{{formatted}} stocks from xStocks and Ondo",
+      issuerLabel: "Issuer",
+      listings: "listings",
+      more: "more",
+      companies: "{{formatted}} companies",
+      both: "{{formatted}} listed by both",
     },
     cycle: {
       title: "The check-in cycle",

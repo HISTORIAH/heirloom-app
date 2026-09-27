@@ -2,7 +2,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { Hero } from "@/components/landing/Hero";
 import { Intro, Pillars } from "@/components/landing/Intro";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { CatalogMarquee } from "@/components/landing/CatalogMarquee";
+import { Registry } from "@/components/landing/Registry";
 import { Cycle } from "@/components/landing/Cycle";
 import { LivePrice } from "@/components/landing/LivePrice";
 import { OpenApp } from "@/components/landing/OpenApp";
@@ -42,7 +42,7 @@ const Landing = () => (
         <Gap />
         <HowItWorks />
         <Gap />
-        <CatalogMarquee />
+        <Registry />
         <Gap />
         <Cycle />
         <Gap />
