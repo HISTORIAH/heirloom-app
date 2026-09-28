@@ -37,8 +37,8 @@ advance.
 
 <Code caption="programs/heirloom/src/instructions/claim.rs">
 ```rust
-let claimable_at = estate.last_checkin_ts
-    + estate.checkin_interval_secs
+let claimable_at = estate.last_check_in_ts
+    + estate.check_in_interval_secs
     + estate.grace_period_secs;
 
 require!(now >= claimable_at.max(estate.delegate_pause_expires_at), NotYetClaimable);

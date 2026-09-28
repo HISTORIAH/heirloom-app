@@ -3,7 +3,7 @@ title: Roles & permissions
 description: Authority, heir, guardian, hot signer — what each one can sign for, and what the program refuses them.
 section: concepts
 order: 4
-keywords: ["roles", "permissions", "authority", "heir", "guardian", "delegate", "checkin_signer", "hot signer"]
+keywords: ["roles", "permissions", "authority", "heir", "guardian", "delegate", "check_in_signer", "hot signer"]
 ---
 
 Four roles, two of them optional. Each is a public key stored on the estate account, and
@@ -67,7 +67,7 @@ pub delegate: Signer,
 Naming one is a real reduction in your own risk and costs you nothing in control. The
 worst a hostile guardian can do is delay an inheritance by your own `delegate_pause_duration_secs`.
 
-## Hot signer (`checkin_signer`)
+## Hot signer (`check_in_signer`)
 
 Optional. A second wallet of yours that may send check-ins — and only check-ins.
 
@@ -76,7 +76,7 @@ branch is gated separately on the signer being the authority:
 
 <Code caption="programs/heirloom/src/instructions/update_field.rs">
 ```rust
-estate.last_checkin_ts = now;
+estate.last_check_in_ts = now;
 
 if *authority_key == estate.authority {
     // interval / grace / delegate_pause_duration_secs are applied here only

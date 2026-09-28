@@ -1,5 +1,16 @@
 # Agent conventions
 
+## Changelogs
+
+- `programs/heirloom` and `programs/heirloom-ika` each keep a `CHANGELOG.md`
+  ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)) covering the program and
+  its generated clients.
+- When a change affects a program's interface or its generated client (accounts,
+  instruction args, errors, client API, client dependencies), add an entry under
+  `## [Unreleased]` in that program's changelog, in the same change. Mark breaking
+  changes with **Breaking:**.
+- Don't add changelog entries for app/, mobile/, landing/ or docs/.
+
 ## app/ — TypeScript types
 
 - Use `export type X = { ... }`, never `interface`.

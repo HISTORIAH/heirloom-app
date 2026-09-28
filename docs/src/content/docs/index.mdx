@@ -41,15 +41,14 @@ wallet and your heir's.
 ```txt
 authority                    7xKX…9Wm2     the wallet that opened it — yours
 heir                         4Bn8…Qp1a     the one wallet that can claim
-checkin_interval_secs        2592000       30 days, in seconds
+check_in_interval_secs       2592000       30 days, in seconds
 grace_period_secs            604800        7 more days after the interval lapses
-last_checkin_ts              1757260800    the check-in that reset the clock
+last_check_in_ts             1757260800    the check-in that reset the clock
 delegate_pause_duration_secs 2592000       how far a guardian may push the deadline
 delegate_pause_expires_at    0             not paused
 delegate                     Some(9fR2…)   the guardian, optional
-checkin_signer               Some(2dLp…)   a hot wallet allowed to check in, optional
+check_in_signer              Some(2dLp…)   a hot wallet allowed to check in, optional
 claimable_assets             3             vault token accounts still open
-label                        "Family estate"  <!-- TODO(backend): label is backend-only, not stored on-chain -->
 ```
 </Code>
 
@@ -74,7 +73,7 @@ nothing at all from the principal.
 | **Authority** | You, the owner | Everything: fund, check in, change settings and heir, route yield, withdraw early |
 | **Heir** | One wallet you name | Claim the estate — and only once it is claimable |
 | **Guardian** *(optional)* | A person you trust, stored as `delegate` | Push the deadline out once, by your `delegate_pause_duration_secs`. Cannot move funds or change anything else |
-| **Hot signer** *(optional)* | A second wallet of your own, stored as `checkin_signer` | Send check-ins, so your cold key can stay cold. Nothing else |
+| **Hot signer** *(optional)* | A second wallet of your own, stored as `check_in_signer` | Send check-ins, so your cold key can stay cold. Nothing else |
 
 The heir does not have to be another person. Point an estate at a **second wallet you
 control** and Heirloom becomes wallet recovery: a lost key stops being the end of the

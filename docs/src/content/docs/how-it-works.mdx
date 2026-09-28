@@ -16,15 +16,15 @@ estate becomes claimable:
 
 <Code caption="The claim condition, from the program">
 ```rust
-let claimable_at = estate.last_checkin_ts
-    + estate.checkin_interval_secs
+let claimable_at = estate.last_check_in_ts
+    + estate.check_in_interval_secs
     + estate.grace_period_secs;
 
 require!(now >= claimable_at.max(estate.delegate_pause_expires_at), NotYetClaimable);
 ```
 </Code>
 
-Every check-in writes `now` into `last_checkin_ts`, which moves `claimable_at` forward by
+Every check-in writes `now` into `last_check_in_ts`, which moves `claimable_at` forward by
 the same amount. As long as you keep signing, the condition is never true and the heir
 can do nothing at all.
 
@@ -36,7 +36,7 @@ never disagree.
 
 | State | When | What can happen |
 |---|---|---|
-| **Active** | Before `last_checkin_ts + checkin_interval_secs` | Business as usual. Fund it, route yield, change settings |
+| **Active** | Before `last_check_in_ts + check_in_interval_secs` | Business as usual. Fund it, route yield, change settings |
 | **Grace** | Interval lapsed, grace period still running | Same as active, plus: a guardian may defer, and the app starts warning |
 | **Claimable** | `now >= claimable_at` | The heir can claim. You can still withdraw first — whoever signs first wins |
 | **Distributed** | Vault empty, accounts closed | Nothing. The estate is gone and its rent has been returned |

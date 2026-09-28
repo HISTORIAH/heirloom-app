@@ -14,7 +14,7 @@ Eleven instructions. No admin instruction exists.
 |---|---|---|
 | `initialize` | Authority | Creates the estate and vault, optionally registers a first mint, moves opening deposits in |
 | `register_asset` | Authority | Creates an `AssetRecord` and vault token account for a mint, and deposits |
-| `update_field` | Authority **or** `checkin_signer` | Writes `last_checkin_ts`. Applies settings only for the authority |
+| `update_field` | Authority **or** `check_in_signer` | Writes `last_check_in_ts`. Applies settings only for the authority |
 | `update_heir` | Authority | Migrates the estate to a new PDA pair for a new heir, one asset per call |
 | `claim` | Heir | Pays out one asset to the heir, minus 0.75% |
 | `revoke` | Authority | Returns one asset to the authority, minus 0.5% |
@@ -30,21 +30,19 @@ Eleven instructions. No admin instruction exists.
 ```rust
 pub fn initialize(
     ctx: &mut Context<Initialize>,
-    checkin_interval_secs: i64,
+    check_in_interval_secs: i64,
     grace_period_secs: i64,
     delegate_pause_duration_secs: i64,
     amount: u64,
-    // TODO(backend): label is backend-only, not stored on-chain
 ) -> Result<()>;
 
 pub fn register_asset(ctx: &mut Context<RegisterAsset>, amount: u64) -> Result<()>;
 
 pub fn update_field(
     ctx: &mut Context<UpdateField>,
-    checkin_interval_secs: Option<i64>,
+    check_in_interval_secs: Option<i64>,
     grace_period_secs: Option<i64>,
     delegate_pause_duration_secs: Option<i64>,
-    // TODO(backend): label is backend-only, not stored on-chain
 ) -> Result<()>;
 
 pub fn update_heir(ctx: &mut Context<UpdateHeir>) -> Result<()>;
@@ -75,7 +73,7 @@ pub fn complete_withdraw_regular_lulo(
 
 ### `update_field` is both the heartbeat and the settings editor
 
-It writes `last_checkin_ts = now` unconditionally, *then* applies the optional arguments —
+It writes `last_check_in_ts = now` unconditionally, *then* applies the optional arguments —
 and only if the signer is the authority. Pass all as `None` and it is a pure
 check-in. Pass settings as a hot signer and they are silently ignored while the check-in
 still lands.
@@ -100,9 +98,9 @@ lands. Run it to completion.
 
 ### Optional accounts
 
-`initialize` takes `delegate`, `checkin_signer`, `mint`, `vault_token_account`,
+`initialize` takes `delegate`, `check_in_signer`, `mint`, `vault_token_account`,
 `authority_token_account` and `asset_record` as optional accounts. Omitting the mint
-group opens a SOL-only estate; omitting `delegate` or `checkin_signer` leaves those roles
+group opens a SOL-only estate; omitting `delegate` or `check_in_signer` leaves those roles
 unset for the life of the estate.
 
 <Callout type="tip" title="Do not hand-roll these">

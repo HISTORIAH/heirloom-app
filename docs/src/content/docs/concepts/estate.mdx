@@ -38,18 +38,17 @@ system are the wallets you already have.
 pub struct Estate {
     pub authority: Address,                   // owner
     pub heir: Address,                        // the one wallet that can claim
-    pub checkin_interval_secs: i64,           // seconds you may go quiet
+    pub check_in_interval_secs: i64,          // seconds you may go quiet
     pub grace_period_secs: i64,               // seconds after that, before claim opens
-    pub last_checkin_ts: i64,                 // unix time of the last check-in
+    pub last_check_in_ts: i64,                // unix time of the last check-in
     pub created_at: i64,
     pub bump: u8,
     pub delegate_pause_duration_secs: i64,    // how far a guardian may push the deadline
     pub delegate_pause_expires_at: i64,       // 0 when not paused
     pub is_migrating: bool,                   // set only during a change-heir migration
     pub delegate: Option<Address>,            // guardian
-    pub checkin_signer: Option<Address>,      // hot wallet allowed to check in
+    pub check_in_signer: Option<Address>,     // hot wallet allowed to check in
     pub claimable_assets: u8,                 // vault token accounts still open
-    // TODO(backend): label is backend-only, not stored on-chain
 }
 ```
 </Code>
@@ -75,17 +74,6 @@ that is not yours to spend. The app subtracts it before showing a balance, which
 a vault you funded with 1 SOL reports slightly less than 1 SOL claimable. The reserve is
 returned when the estate closes.
 </Callout>
-
-## The label
-
-<!-- TODO(backend): label is backend-only, not stored on-chain -->
-
-`label` is up to 32 bytes of your own text, stored by the backend. It exists because a
-wallet with three estates otherwise shows three identical rows of base58. It has no effect
-on anything the program does, and it is public — do not write anything into it you would
-not publish.
-
-Longer than 32 bytes and the instruction fails with `LabelTooLong`.
 
 ## One estate, one heir
 
