@@ -5,7 +5,6 @@ import {
   findEstatePda,
   HEIRLOOM_PROGRAM_ADDRESS,
   type Estate,
-  type InitializeAsyncInput,
 } from "@historiah/heirloom";
 import {
   type Address,
@@ -17,6 +16,7 @@ import {
   address as toAddress,
 } from "@solana/kit";
 import type { VaultTokenHolding } from "@/types";
+import type { InitializeInput } from "@/types/program";
 import { fetchAssetsByOwner } from "@/services/das";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import {
@@ -388,7 +388,7 @@ export interface TokenRegistration {
 export async function initialize(
   client: HeirloomClient,
   authority: TransactionSigner,
-  input: Omit<InitializeAsyncInput, "authority" | "estate" | "vault">,
+  input: InitializeInput,
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, input.heir);
   const assetRecord = input.mint ? await getAssetRecordAddress(estate, input.mint) : undefined;
@@ -666,7 +666,7 @@ export async function updateHeirAll(
 export async function initializeWithTokens(
   client: HeirloomClient,
   authority: TransactionSigner,
-  initInput: Omit<InitializeAsyncInput, "authority" | "estate" | "vault">,
+  initInput: InitializeInput,
   extraTokens: TokenRegistration[],
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, initInput.heir);
