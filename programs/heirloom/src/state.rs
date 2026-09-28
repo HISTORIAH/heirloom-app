@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 #[account(borsh)]
-#[derive(InitSpace)]
 pub struct Estate {
     pub authority: Address,
 
@@ -77,7 +76,6 @@ impl Vault {
 /// since ATA creation is permissionless and can't be used as a registration
 /// check without allowing front-running / double counting.
 #[account(borsh)]
-#[derive(InitSpace)]
 pub struct AssetRecord {
     pub bump: u8,
 
