@@ -23,7 +23,7 @@ heir.
 ### `NotYetClaimable`
 
 The deadline has not passed. Remember the claim moment is
-`max(last_heartbeat + interval + grace, paused_until)` — a guardian's pause is a floor, so
+`max(last_checkin_ts + checkin_interval_secs + grace_period_secs, delegate_pause_expires_at)` — a guardian's pause is a floor, so
 an estate past its grace period can still be blocked.
 
 ### `TokensFirst`
@@ -40,6 +40,7 @@ not completed. Recall it — as the authority; an heir cannot — and retry.
 ### `LabelTooLong`
 
 32 **bytes**, not characters. Emoji and non-Latin scripts cost several bytes each.
+<!-- TODO(backend): label is backend-only, not stored on-chain -->
 
 ### A deposit fails on one specific token
 
@@ -62,7 +63,7 @@ affected; this is display only.
 
 ### A heartbeat from `/heartbeat` is rejected
 
-The connected wallet is not the estate's registered `hb_signer`. The page shows the
+The connected wallet is not the estate's registered `checkin_signer`. The page shows the
 registered signer under the lookup result — compare them.
 
 ### The yield or notifications surface is missing

@@ -41,20 +41,18 @@ export function buildUpdateFieldsIx(
   heir: Address,
   estate: Address,
   fields: {
-    heartbeatInterval?: number | bigint | null;
-    gracePeriod?: number | bigint | null;
-    pauseDuration?: number | bigint | null;
-    label?: string | null;
+    checkInIntervalSecs?: number | bigint | null;
+    gracePeriodSecs?: number | bigint | null;
+    delegatePauseDurationSecs?: number | bigint | null;
   },
 ): Instruction {
   return getUpdateFieldInstruction({
     authority,
     heir,
     estate,
-    heartbeatInterval: fields.heartbeatInterval ?? null,
-    gracePeriod: fields.gracePeriod ?? null,
-    pauseDuration: fields.pauseDuration ?? null,
-    label: fields.label ?? null,
+    checkInIntervalSecs: fields.checkInIntervalSecs ?? null,
+    gracePeriodSecs: fields.gracePeriodSecs ?? null,
+    delegatePauseDurationSecs: fields.delegatePauseDurationSecs ?? null,
   });
 }
 

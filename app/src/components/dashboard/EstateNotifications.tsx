@@ -26,7 +26,7 @@ import {
 import { useAuthenticate } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { errMsg } from "@/lib/utils";
+import { errMsg, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
@@ -79,9 +79,12 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
     return "authorized";
   })();
 
+  // TODO(backend): Label comes from backend API, fallback to truncated heir address
+  const heirLabel = estate.label ?? truncateAddress(estate.heir, 4);
+
   const notifSummary =
     remindersQuery.data && hasSubscription
-      ? summarizeNotifications(notifConfig, estate.label, t)
+      ? summarizeNotifications(notifConfig, heirLabel, t)
       : undefined;
 
   // ─── Auth ───────────────────────────────────────────────────────
@@ -203,7 +206,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
 
       <NotificationsDialog
         open={notifEditOpen}
-        heirLabel={estate.label}
+        heirLabel={heirLabel}
         initialConfig={notifConfig}
         saving={notifSaving}
         resendingId={resendingId}

@@ -4,19 +4,19 @@ import { useCallback, useRef, useState } from "react";
 
 import {
   fetchEstatesByAuthority,
+  fetchEstatesByCheckinSigner,
   fetchEstatesByDelegate,
-  fetchEstatesByHbSigner,
   fetchEstatesByHeir,
   type EstateRow,
 } from "@/lib/estates";
 
-export type EstateRole = "authority" | "heir" | "hbSigner" | "delegate";
+export type EstateRole = "authority" | "heir" | "checkInSigner" | "delegate";
 
 function fetchForRole(role: EstateRole) {
   if (role === "authority") return fetchEstatesByAuthority;
   if (role === "heir") return fetchEstatesByHeir;
   if (role === "delegate") return fetchEstatesByDelegate;
-  return fetchEstatesByHbSigner;
+  return fetchEstatesByCheckinSigner;
 }
 
 export function useEstates(role: EstateRole) {

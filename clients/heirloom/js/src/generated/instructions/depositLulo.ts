@@ -30,14 +30,17 @@ import {
   type InstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
-  type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
   getAddressFromResolvedInstructionAccount,
+  type InstructionAccountInput,
+  type InstructionAccountInputAddress,
+  type InstructionSignerInput,
   type ResolvedInstructionAccount,
+  type ResolvedInstructionAccountMeta,
 } from "@solana/program-client-core";
 import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
@@ -174,83 +177,83 @@ export function getDepositLuloInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type DepositLuloAsyncInput<
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountEstate extends string = string,
-  TAccountAssetRecord extends string = string,
-  TAccountPoolUser extends string = string,
-  TAccountPoolUserTokenAccount extends string = string,
-  TAccountPoolUserLpTokenAccount extends string = string,
-  TAccountReferrerPoolUser extends string = string,
-  TAccountInputMint extends string = string,
-  TAccountPoolReserveTokenAccount extends string = string,
-  TAccountLpMint extends string = string,
-  TAccountPoolAccount extends string = string,
-  TAccountProgramId extends string = string,
-  TAccountInputMintTokenProgram extends string = string,
-  TAccountLpMintTokenProgram extends string = string,
-  TAccountAssociatedTokenProgram extends string = string,
-  TAccountRent extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountAuthority extends InstructionSignerInput = InstructionSignerInput,
+  TAccountHeir extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountRent extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: heir pubkey, stored in estate */
-  heir: Address<TAccountHeir>;
-  vault?: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  estate?: Address<TAccountEstate>;
-  assetRecord: Address<TAccountAssetRecord>;
+  heir: TAccountHeir;
+  vault?: TAccountVault;
+  vaultTokenAccount: TAccountVaultTokenAccount;
+  estate?: TAccountEstate;
+  assetRecord: TAccountAssetRecord;
   /** CHECK: Lulo position PDA. */
-  poolUser: Address<TAccountPoolUser>;
+  poolUser: TAccountPoolUser;
   /** CHECK: Pool user input-mint ATA; intermediate hop. */
-  poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  poolUserTokenAccount: TAccountPoolUserTokenAccount;
   /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
-  poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  poolUserLpTokenAccount: TAccountPoolUserLpTokenAccount;
   /** CHECK: Referrer's pool_user; must be owned by this program. */
-  referrerPoolUser: Address<TAccountReferrerPoolUser>;
-  inputMint: Address<TAccountInputMint>;
+  referrerPoolUser: TAccountReferrerPoolUser;
+  inputMint: TAccountInputMint;
   /** Pool's reserve token account (authority = pool_account). */
-  poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
+  poolReserveTokenAccount: TAccountPoolReserveTokenAccount;
   /** The pool's LP/share mint (Token-2022). */
-  lpMint: Address<TAccountLpMint>;
+  lpMint: TAccountLpMint;
   /** CHECK: Lulo pool state. */
-  poolAccount: Address<TAccountPoolAccount>;
+  poolAccount: TAccountPoolAccount;
   /** CHECK: Lulo program. */
-  programId?: Address<TAccountProgramId>;
+  programId?: TAccountProgramId;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  inputMintTokenProgram: TAccountInputMintTokenProgram;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
-  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  rent?: Address<TAccountRent>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  lpMintTokenProgram: TAccountLpMintTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  rent?: TAccountRent;
+  systemProgram?: TAccountSystemProgram;
   amount: DepositLuloInstructionDataArgs["amount"];
   depositType: DepositLuloInstructionDataArgs["depositType"];
 };
 
 export async function getDepositLuloInstructionAsync<
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountEstate extends string,
-  TAccountAssetRecord extends string,
-  TAccountPoolUser extends string,
-  TAccountPoolUserTokenAccount extends string,
-  TAccountPoolUserLpTokenAccount extends string,
-  TAccountReferrerPoolUser extends string,
-  TAccountInputMint extends string,
-  TAccountPoolReserveTokenAccount extends string,
-  TAccountLpMint extends string,
-  TAccountPoolAccount extends string,
-  TAccountProgramId extends string,
-  TAccountInputMintTokenProgram extends string,
-  TAccountLpMintTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountRent extends string,
-  TAccountSystemProgram extends string,
+  TAccountAuthority extends InstructionSignerInput,
+  TAccountHeir extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountRent extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: DepositLuloAsyncInput<
@@ -279,53 +282,129 @@ export async function getDepositLuloInstructionAsync<
 ): Promise<
   DepositLuloInstruction<
     TProgramAddress,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountEstate,
-    TAccountAssetRecord,
-    TAccountPoolUser,
-    TAccountPoolUserTokenAccount,
-    TAccountPoolUserLpTokenAccount,
-    TAccountReferrerPoolUser,
-    TAccountInputMint,
-    TAccountPoolReserveTokenAccount,
-    TAccountLpMint,
-    TAccountPoolAccount,
-    TAccountProgramId,
-    TAccountInputMintTokenProgram,
-    TAccountLpMintTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountRent,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUser,
+      InstructionAccountInputAddress<TAccountPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserLpTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReferrerPoolUser,
+      InstructionAccountInputAddress<TAccountReferrerPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMint,
+      InstructionAccountInputAddress<TAccountInputMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolReserveTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolAccount,
+      InstructionAccountInputAddress<TAccountPoolAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProgramId,
+      InstructionAccountInputAddress<TAccountProgramId>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMintTokenProgram,
+      InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLpMintTokenProgram,
+      InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<TAccountRent, InstructionAccountInputAddress<TAccountRent>>,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: false },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
-    estate: { value: input.estate ?? null, isWritable: true },
-    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
-    poolUser: { value: input.poolUser ?? null, isWritable: true },
-    poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
-    poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
-    referrerPoolUser: { value: input.referrerPoolUser ?? null, isWritable: true },
-    inputMint: { value: input.inputMint ?? null, isWritable: false },
-    poolReserveTokenAccount: { value: input.poolReserveTokenAccount ?? null, isWritable: true },
-    lpMint: { value: input.lpMint ?? null, isWritable: true },
-    poolAccount: { value: input.poolAccount ?? null, isWritable: true },
-    programId: { value: input.programId ?? null, isWritable: true },
-    inputMintTokenProgram: { value: input.inputMintTokenProgram ?? null, isWritable: false },
-    lpMintTokenProgram: { value: input.lpMintTokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
-    rent: { value: input.rent ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    authority: { value: input.authority ?? null, isSigner: true, isWritable: true },
+    heir: { value: input.heir ?? null, isSigner: false, isWritable: false },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    poolUser: { value: input.poolUser ?? null, isSigner: false, isWritable: true },
+    poolUserTokenAccount: {
+      value: input.poolUserTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    poolUserLpTokenAccount: {
+      value: input.poolUserLpTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    referrerPoolUser: { value: input.referrerPoolUser ?? null, isSigner: false, isWritable: true },
+    inputMint: { value: input.inputMint ?? null, isSigner: false, isWritable: false },
+    poolReserveTokenAccount: {
+      value: input.poolReserveTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    lpMint: { value: input.lpMint ?? null, isSigner: false, isWritable: true },
+    poolAccount: { value: input.poolAccount ?? null, isSigner: false, isWritable: true },
+    programId: { value: input.programId ?? null, isSigner: false, isWritable: true },
+    inputMintTokenProgram: {
+      value: input.inputMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    lpMintTokenProgram: {
+      value: input.lpMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    rent: { value: input.rent ?? null, isSigner: false, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -337,16 +416,22 @@ export async function getDepositLuloInstructionAsync<
 
   // Resolve default values.
   if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.vault.value = await findVaultPda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.estate.value = await findEstatePda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.programId.value) {
     accounts.programId.value =
@@ -365,7 +450,6 @@ export async function getDepositLuloInstructionAsync<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("authority", accounts.authority),
@@ -393,107 +477,152 @@ export async function getDepositLuloInstructionAsync<
     programAddress,
   } as DepositLuloInstruction<
     TProgramAddress,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountEstate,
-    TAccountAssetRecord,
-    TAccountPoolUser,
-    TAccountPoolUserTokenAccount,
-    TAccountPoolUserLpTokenAccount,
-    TAccountReferrerPoolUser,
-    TAccountInputMint,
-    TAccountPoolReserveTokenAccount,
-    TAccountLpMint,
-    TAccountPoolAccount,
-    TAccountProgramId,
-    TAccountInputMintTokenProgram,
-    TAccountLpMintTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountRent,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUser,
+      InstructionAccountInputAddress<TAccountPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserLpTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReferrerPoolUser,
+      InstructionAccountInputAddress<TAccountReferrerPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMint,
+      InstructionAccountInputAddress<TAccountInputMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolReserveTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolAccount,
+      InstructionAccountInputAddress<TAccountPoolAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProgramId,
+      InstructionAccountInputAddress<TAccountProgramId>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMintTokenProgram,
+      InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLpMintTokenProgram,
+      InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<TAccountRent, InstructionAccountInputAddress<TAccountRent>>,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 
 export type DepositLuloInput<
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountEstate extends string = string,
-  TAccountAssetRecord extends string = string,
-  TAccountPoolUser extends string = string,
-  TAccountPoolUserTokenAccount extends string = string,
-  TAccountPoolUserLpTokenAccount extends string = string,
-  TAccountReferrerPoolUser extends string = string,
-  TAccountInputMint extends string = string,
-  TAccountPoolReserveTokenAccount extends string = string,
-  TAccountLpMint extends string = string,
-  TAccountPoolAccount extends string = string,
-  TAccountProgramId extends string = string,
-  TAccountInputMintTokenProgram extends string = string,
-  TAccountLpMintTokenProgram extends string = string,
-  TAccountAssociatedTokenProgram extends string = string,
-  TAccountRent extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountAuthority extends InstructionSignerInput = InstructionSignerInput,
+  TAccountHeir extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountRent extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: heir pubkey, stored in estate */
-  heir: Address<TAccountHeir>;
-  vault: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  estate: Address<TAccountEstate>;
-  assetRecord: Address<TAccountAssetRecord>;
+  heir: TAccountHeir;
+  vault: TAccountVault;
+  vaultTokenAccount: TAccountVaultTokenAccount;
+  estate: TAccountEstate;
+  assetRecord: TAccountAssetRecord;
   /** CHECK: Lulo position PDA. */
-  poolUser: Address<TAccountPoolUser>;
+  poolUser: TAccountPoolUser;
   /** CHECK: Pool user input-mint ATA; intermediate hop. */
-  poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  poolUserTokenAccount: TAccountPoolUserTokenAccount;
   /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
-  poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  poolUserLpTokenAccount: TAccountPoolUserLpTokenAccount;
   /** CHECK: Referrer's pool_user; must be owned by this program. */
-  referrerPoolUser: Address<TAccountReferrerPoolUser>;
-  inputMint: Address<TAccountInputMint>;
+  referrerPoolUser: TAccountReferrerPoolUser;
+  inputMint: TAccountInputMint;
   /** Pool's reserve token account (authority = pool_account). */
-  poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
+  poolReserveTokenAccount: TAccountPoolReserveTokenAccount;
   /** The pool's LP/share mint (Token-2022). */
-  lpMint: Address<TAccountLpMint>;
+  lpMint: TAccountLpMint;
   /** CHECK: Lulo pool state. */
-  poolAccount: Address<TAccountPoolAccount>;
+  poolAccount: TAccountPoolAccount;
   /** CHECK: Lulo program. */
-  programId?: Address<TAccountProgramId>;
+  programId?: TAccountProgramId;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  inputMintTokenProgram: TAccountInputMintTokenProgram;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
-  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  rent?: Address<TAccountRent>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  lpMintTokenProgram: TAccountLpMintTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  rent?: TAccountRent;
+  systemProgram?: TAccountSystemProgram;
   amount: DepositLuloInstructionDataArgs["amount"];
   depositType: DepositLuloInstructionDataArgs["depositType"];
 };
 
 export function getDepositLuloInstruction<
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountEstate extends string,
-  TAccountAssetRecord extends string,
-  TAccountPoolUser extends string,
-  TAccountPoolUserTokenAccount extends string,
-  TAccountPoolUserLpTokenAccount extends string,
-  TAccountReferrerPoolUser extends string,
-  TAccountInputMint extends string,
-  TAccountPoolReserveTokenAccount extends string,
-  TAccountLpMint extends string,
-  TAccountPoolAccount extends string,
-  TAccountProgramId extends string,
-  TAccountInputMintTokenProgram extends string,
-  TAccountLpMintTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountRent extends string,
-  TAccountSystemProgram extends string,
+  TAccountAuthority extends InstructionSignerInput,
+  TAccountHeir extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountRent extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: DepositLuloInput<
@@ -521,52 +650,128 @@ export function getDepositLuloInstruction<
   config?: { programAddress?: TProgramAddress },
 ): DepositLuloInstruction<
   TProgramAddress,
-  TAccountAuthority,
-  TAccountHeir,
-  TAccountVault,
-  TAccountVaultTokenAccount,
-  TAccountEstate,
-  TAccountAssetRecord,
-  TAccountPoolUser,
-  TAccountPoolUserTokenAccount,
-  TAccountPoolUserLpTokenAccount,
-  TAccountReferrerPoolUser,
-  TAccountInputMint,
-  TAccountPoolReserveTokenAccount,
-  TAccountLpMint,
-  TAccountPoolAccount,
-  TAccountProgramId,
-  TAccountInputMintTokenProgram,
-  TAccountLpMintTokenProgram,
-  TAccountAssociatedTokenProgram,
-  TAccountRent,
-  TAccountSystemProgram
+  ResolvedInstructionAccountMeta<
+    TAccountAuthority,
+    InstructionAccountInputAddress<TAccountAuthority>
+  >,
+  ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+  ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+  ResolvedInstructionAccountMeta<
+    TAccountVaultTokenAccount,
+    InstructionAccountInputAddress<TAccountVaultTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+  ResolvedInstructionAccountMeta<
+    TAccountAssetRecord,
+    InstructionAccountInputAddress<TAccountAssetRecord>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolUser,
+    InstructionAccountInputAddress<TAccountPoolUser>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolUserTokenAccount,
+    InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolUserLpTokenAccount,
+    InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountReferrerPoolUser,
+    InstructionAccountInputAddress<TAccountReferrerPoolUser>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountInputMint,
+    InstructionAccountInputAddress<TAccountInputMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolReserveTokenAccount,
+    InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolAccount,
+    InstructionAccountInputAddress<TAccountPoolAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountProgramId,
+    InstructionAccountInputAddress<TAccountProgramId>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountInputMintTokenProgram,
+    InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountLpMintTokenProgram,
+    InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountAssociatedTokenProgram,
+    InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<TAccountRent, InstructionAccountInputAddress<TAccountRent>>,
+  ResolvedInstructionAccountMeta<
+    TAccountSystemProgram,
+    InstructionAccountInputAddress<TAccountSystemProgram>
+  >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: true },
-    heir: { value: input.heir ?? null, isWritable: false },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
-    estate: { value: input.estate ?? null, isWritable: true },
-    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
-    poolUser: { value: input.poolUser ?? null, isWritable: true },
-    poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
-    poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
-    referrerPoolUser: { value: input.referrerPoolUser ?? null, isWritable: true },
-    inputMint: { value: input.inputMint ?? null, isWritable: false },
-    poolReserveTokenAccount: { value: input.poolReserveTokenAccount ?? null, isWritable: true },
-    lpMint: { value: input.lpMint ?? null, isWritable: true },
-    poolAccount: { value: input.poolAccount ?? null, isWritable: true },
-    programId: { value: input.programId ?? null, isWritable: true },
-    inputMintTokenProgram: { value: input.inputMintTokenProgram ?? null, isWritable: false },
-    lpMintTokenProgram: { value: input.lpMintTokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
-    rent: { value: input.rent ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    authority: { value: input.authority ?? null, isSigner: true, isWritable: true },
+    heir: { value: input.heir ?? null, isSigner: false, isWritable: false },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    poolUser: { value: input.poolUser ?? null, isSigner: false, isWritable: true },
+    poolUserTokenAccount: {
+      value: input.poolUserTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    poolUserLpTokenAccount: {
+      value: input.poolUserLpTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    referrerPoolUser: { value: input.referrerPoolUser ?? null, isSigner: false, isWritable: true },
+    inputMint: { value: input.inputMint ?? null, isSigner: false, isWritable: false },
+    poolReserveTokenAccount: {
+      value: input.poolReserveTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    lpMint: { value: input.lpMint ?? null, isSigner: false, isWritable: true },
+    poolAccount: { value: input.poolAccount ?? null, isSigner: false, isWritable: true },
+    programId: { value: input.programId ?? null, isSigner: false, isWritable: true },
+    inputMintTokenProgram: {
+      value: input.inputMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    lpMintTokenProgram: {
+      value: input.lpMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    rent: { value: input.rent ?? null, isSigner: false, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -594,7 +799,6 @@ export function getDepositLuloInstruction<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("authority", accounts.authority),
@@ -622,26 +826,71 @@ export function getDepositLuloInstruction<
     programAddress,
   } as DepositLuloInstruction<
     TProgramAddress,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountEstate,
-    TAccountAssetRecord,
-    TAccountPoolUser,
-    TAccountPoolUserTokenAccount,
-    TAccountPoolUserLpTokenAccount,
-    TAccountReferrerPoolUser,
-    TAccountInputMint,
-    TAccountPoolReserveTokenAccount,
-    TAccountLpMint,
-    TAccountPoolAccount,
-    TAccountProgramId,
-    TAccountInputMintTokenProgram,
-    TAccountLpMintTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountRent,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUser,
+      InstructionAccountInputAddress<TAccountPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserLpTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReferrerPoolUser,
+      InstructionAccountInputAddress<TAccountReferrerPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMint,
+      InstructionAccountInputAddress<TAccountInputMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolReserveTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolAccount,
+      InstructionAccountInputAddress<TAccountPoolAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProgramId,
+      InstructionAccountInputAddress<TAccountProgramId>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMintTokenProgram,
+      InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLpMintTokenProgram,
+      InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<TAccountRent, InstructionAccountInputAddress<TAccountRent>>,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 

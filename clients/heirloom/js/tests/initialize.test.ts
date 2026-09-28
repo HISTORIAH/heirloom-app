@@ -35,7 +35,6 @@ test("it creates a native solana estate", async () => {
   const [estateAccData] = await Promise.all([fetchEstate(client.rpc, estate)]);
 
   expect(estateAccData.data.claimableAssets).toBe(1);
-  expect(estateAccData.data.label).toBe("test-sol");
   expect(vaultBal >= 1_000_000_000n).toBe(true);
 });
 
@@ -73,7 +72,6 @@ test("it creates a token solana estate", async () => {
   ]);
 
   expect(estateAccData.data.claimableAssets).toBe(2);
-  expect(estateAccData.data.label).toBe("test-tokens");
   expect(assetRecordAccData.data.principalDeployed).toBe(0n);
   expect(vaultTokenAccData.data.amount).toBe(amount);
 });

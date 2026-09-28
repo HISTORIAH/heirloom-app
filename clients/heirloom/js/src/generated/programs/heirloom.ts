@@ -53,7 +53,7 @@ import {
   getInitWithdrawRegularLuloInstructionAsync,
   getRegisterAssetInstructionAsync,
   getRevokeInstructionAsync,
-  getUpdateFieldInstruction,
+  getUpdateFieldInstructionAsync,
   getUpdateHeirInstructionAsync,
   getWithdrawProtectedLuloInstructionAsync,
   parseClaimInstruction,
@@ -86,7 +86,7 @@ import {
   type ParsedWithdrawProtectedLuloInstruction,
   type RegisterAssetAsyncInput,
   type RevokeAsyncInput,
-  type UpdateFieldInput,
+  type UpdateFieldAsyncInput,
   type UpdateHeirAsyncInput,
   type WithdrawProtectedLuloAsyncInput,
 } from "../instructions";
@@ -443,8 +443,8 @@ export type HeirloomPluginInstructions = {
     input: RevokeAsyncInput,
   ) => ReturnType<typeof getRevokeInstructionAsync> & SelfPlanAndSendFunctions;
   updateField: (
-    input: UpdateFieldInput,
-  ) => ReturnType<typeof getUpdateFieldInstruction> & SelfPlanAndSendFunctions;
+    input: UpdateFieldAsyncInput,
+  ) => ReturnType<typeof getUpdateFieldInstructionAsync> & SelfPlanAndSendFunctions;
   updateHeir: (
     input: UpdateHeirAsyncInput,
   ) => ReturnType<typeof getUpdateHeirInstructionAsync> & SelfPlanAndSendFunctions;
@@ -494,7 +494,7 @@ export function heirloomProgram() {
             addSelfPlanAndSendFunctions(client, getRegisterAssetInstructionAsync(input)),
           revoke: (input) => addSelfPlanAndSendFunctions(client, getRevokeInstructionAsync(input)),
           updateField: (input) =>
-            addSelfPlanAndSendFunctions(client, getUpdateFieldInstruction(input)),
+            addSelfPlanAndSendFunctions(client, getUpdateFieldInstructionAsync(input)),
           updateHeir: (input) =>
             addSelfPlanAndSendFunctions(client, getUpdateHeirInstructionAsync(input)),
           withdrawProtectedLulo: (input) =>

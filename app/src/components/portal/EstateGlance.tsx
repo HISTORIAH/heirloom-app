@@ -6,7 +6,8 @@ import { cn, getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
 export const EstateGlance: React.FC<{
-  label: string;
+  // TODO(backend): Label comes from backend API, may be undefined
+  label?: string;
   state: string;
   children: ReactNode;
 }> = ({ label, state, children }) => {
@@ -46,7 +47,10 @@ export const GlanceStats: React.FC<{ children: ReactNode }> = ({ children }) => 
   <div className="mt-5 divide-y divide-tile-line border-y border-tile-line">{children}</div>
 );
 
-export const ExplorerLink: React.FC<{ txId: string; children: ReactNode }> = ({ txId, children }) => (
+export const ExplorerLink: React.FC<{ txId: string; children: ReactNode }> = ({
+  txId,
+  children,
+}) => (
   <a
     href={getSolanaExplorerTxUrl(txId)}
     target="_blank"

@@ -54,24 +54,31 @@ export interface EstateStateResult {
 }
 
 export interface ComputeEstateStateArgs {
-  lastHeartbeat: number;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  pausedUntil: number;
+  lastCheckInTs: number;
+  checkInIntervalSecs: number;
+  gracePeriodSecs: number;
+  delegatePauseExpiresAt: number;
   createdAt: number;
   vaultEmpty: boolean;
 }
 
 export function computeEstateState(args: ComputeEstateStateArgs): EstateStateResult {
-  const { lastHeartbeat, heartbeatInterval, gracePeriod, pausedUntil, createdAt, vaultEmpty } = args;
+  const {
+    lastCheckInTs,
+    checkInIntervalSecs,
+    gracePeriodSecs,
+    delegatePauseExpiresAt,
+    createdAt,
+    vaultEmpty,
+  } = args;
 
   if (vaultEmpty) {
     return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
   }
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
+  const anchor = lastCheckInTs > 0 ? lastCheckInTs : createdAt;
   const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + heartbeatInterval;
-  const claimableAt = Math.max(graceDeadline + gracePeriod, pausedUntil);
+  const graceDeadline = anchor + checkInIntervalSecs;
+  const claimableAt = Math.max(graceDeadline + gracePeriodSecs, delegatePauseExpiresAt);
 
   if (now >= claimableAt) {
     return { state: "claimable", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
@@ -79,7 +86,11 @@ export function computeEstateState(args: ComputeEstateStateArgs): EstateStateRes
   if (now >= graceDeadline) {
     return { state: "grace", secondsUntilGrace: 0, secondsUntilClaimable: claimableAt - now };
   }
-  return { state: "active", secondsUntilGrace: graceDeadline - now, secondsUntilClaimable: claimableAt - now };
+  return {
+    state: "active",
+    secondsUntilGrace: graceDeadline - now,
+    secondsUntilClaimable: claimableAt - now,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -91,33 +102,34 @@ export function computeEstateState(args: ComputeEstateStateArgs): EstateStateRes
 // compile instead of EstateLike silently drifting out of sync.
 export type EstateMirroredFields = Pick<
   Estate,
-  | "label"
   | "delegate"
-  | "hbSigner"
-  | "heartbeatInterval"
-  | "gracePeriod"
-  | "pauseDuration"
-  | "lastHeartbeat"
+  | "checkInSigner"
+  | "checkInIntervalSecs"
+  | "gracePeriodSecs"
+  | "delegatePauseDurationSecs"
+  | "lastCheckInTs"
   | "createdAt"
-  | "pausedUntil"
+  | "delegatePauseExpiresAt"
   | "claimableAssets"
 >;
 
 export interface EstateSnapshot {
   authority: string;
   heir: string;
-  label: string;
-  // Derived from pausedUntil, not a stored field — see delegate_defer's
-  // `paused_until == 0` check, which is the on-chain source of truth for this.
+  // TODO: Fetch label/description from backend API (not stored on-chain)
+  label?: string;
+  description?: string;
+  // Derived from delegatePauseExpiresAt, not a stored field — see delegate_defer's
+  // `delegate_pause_expires_at == 0` check, which is the on-chain source of truth for this.
   isDeferred: boolean;
   delegate: string | null;
-  hbSigner: string | null;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  pauseDuration: number;
-  lastHeartbeat: number;
+  checkInSigner: string | null;
+  checkInIntervalSecs: number;
+  gracePeriodSecs: number;
+  delegatePauseDurationSecs: number;
+  lastCheckInTs: number;
   createdAt: number;
-  pausedUntil: number;
+  delegatePauseExpiresAt: number;
   claimableAssets: number;
   solBalance: number;
   vaultTokens: VaultTokenHolding[];
@@ -127,15 +139,14 @@ export interface EstateSnapshot {
 }
 
 export interface EstateLike {
-  label: string;
   delegate: unknown;
-  hbSigner: unknown;
-  heartbeatInterval: bigint | number;
-  gracePeriod: bigint | number;
-  pauseDuration: bigint | number;
-  lastHeartbeat: bigint | number;
+  checkInSigner: unknown;
+  checkInIntervalSecs: bigint | number;
+  gracePeriodSecs: bigint | number;
+  delegatePauseDurationSecs: bigint | number;
+  lastCheckInTs: bigint | number;
   createdAt: bigint | number;
-  pausedUntil: bigint | number;
+  delegatePauseExpiresAt: bigint | number;
   claimableAssets: number;
 }
 
@@ -167,19 +178,19 @@ export async function buildSnapshotFromEstate(
     discoverVaultTokenAccounts(vaultPda),
   ]);
 
-  const lastHeartbeat = Number(estateData.lastHeartbeat);
-  const heartbeatInterval = Number(estateData.heartbeatInterval);
-  const gracePeriod = Number(estateData.gracePeriod);
-  const pausedUntil = Number(estateData.pausedUntil);
+  const lastCheckInTs = Number(estateData.lastCheckInTs);
+  const checkInIntervalSecs = Number(estateData.checkInIntervalSecs);
+  const gracePeriodSecs = Number(estateData.gracePeriodSecs);
+  const delegatePauseExpiresAt = Number(estateData.delegatePauseExpiresAt);
   const createdAt = Number(estateData.createdAt);
   const claimableAssets = estateData.claimableAssets;
   const vaultEmpty = claimableAssets === 0 && Number(lamports) === 0 && vaultTokens.length === 0;
 
   const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
-    lastHeartbeat,
-    heartbeatInterval,
-    gracePeriod,
-    pausedUntil,
+    lastCheckInTs,
+    checkInIntervalSecs,
+    gracePeriodSecs,
+    delegatePauseExpiresAt,
     createdAt,
     vaultEmpty,
   });
@@ -187,16 +198,18 @@ export async function buildSnapshotFromEstate(
   return {
     authority: authorityStr,
     heir: heirStr,
-    label: estateData.label,
-    isDeferred: pausedUntil > 0,
+    // TODO: Fetch label/description from backend API
+    label: undefined,
+    description: undefined,
+    isDeferred: delegatePauseExpiresAt > 0,
     delegate: unwrapOption(estateData.delegate),
-    hbSigner: unwrapOption(estateData.hbSigner),
-    heartbeatInterval,
-    gracePeriod,
-    pauseDuration: Number(estateData.pauseDuration),
-    lastHeartbeat,
+    checkInSigner: unwrapOption(estateData.checkInSigner),
+    checkInIntervalSecs,
+    gracePeriodSecs,
+    delegatePauseDurationSecs: Number(estateData.delegatePauseDurationSecs),
+    lastCheckInTs,
     createdAt,
-    pausedUntil,
+    delegatePauseExpiresAt,
     claimableAssets,
     solBalance: Number(lamports),
     vaultTokens,
@@ -324,7 +337,11 @@ async function fetchEstatesByMemcmp(
 export async function discoverVaultTokenAccounts(vaultPda: Address): Promise<VaultTokenHolding[]> {
   if (!SOLANA_RPC_ENDPOINT) return [];
 
-  const assets = await fetchAssetsByOwner(SOLANA_RPC_ENDPOINT, vaultPda, new AbortController().signal);
+  const assets = await fetchAssetsByOwner(
+    SOLANA_RPC_ENDPOINT,
+    vaultPda,
+    new AbortController().signal,
+  );
 
   return Promise.all(
     assets.map(async (asset) => {
@@ -385,19 +402,17 @@ export async function updateFields(
   input: {
     heir: Address;
     authorityAddress?: Address;
-    heartbeatInterval?: number | bigint | null;
-    gracePeriod?: number | bigint | null;
-    pauseDuration?: number | bigint | null;
-    label?: string | null;
+    checkInIntervalSecs?: number | bigint | null;
+    gracePeriodSecs?: number | bigint | null;
+    delegatePauseDurationSecs?: number | bigint | null;
   },
 ): Promise<string> {
   const authorityAddr = input.authorityAddress ?? authority.address;
   const estate = await getEstateAddress(authorityAddr, input.heir);
   const ix = buildUpdateFieldsIx(authority, input.heir, estate, {
-    heartbeatInterval: input.heartbeatInterval,
-    gracePeriod: input.gracePeriod,
-    pauseDuration: input.pauseDuration,
-    label: input.label,
+    checkInIntervalSecs: input.checkInIntervalSecs,
+    gracePeriodSecs: input.gracePeriodSecs,
+    delegatePauseDurationSecs: input.delegatePauseDurationSecs,
   });
   return sendTx(client, authority, ix);
 }
@@ -502,7 +517,16 @@ export async function registerSolDeposit(
   input: { heir: Address; amount: bigint },
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, input.heir);
-  const ix = await buildRegisterAssetIx(authority, input.heir, estate, vault, input.heir, input.amount, estate, estate);
+  const ix = await buildRegisterAssetIx(
+    authority,
+    input.heir,
+    estate,
+    vault,
+    input.heir,
+    input.amount,
+    estate,
+    estate,
+  );
   return sendTx(client, authority, ix);
 }
 
@@ -603,18 +627,35 @@ export async function updateHeirAll(
       getAssetRecordAddress(newEstate, token.mint as Address),
     ]);
 
-    const ix = await buildUpdateHeirIx(authority, heir, newHeir, newEstate, newVault, estate, vault, {
-      mint: token.mint as Address,
-      tokenProgram: token.tokenProgram as Address,
-      vaultTokenAccount: token.ata as Address,
-      newVaultTokenAccount,
-      assetRecord,
-      newAssetRecord,
-    });
+    const ix = await buildUpdateHeirIx(
+      authority,
+      heir,
+      newHeir,
+      newEstate,
+      newVault,
+      estate,
+      vault,
+      {
+        mint: token.mint as Address,
+        tokenProgram: token.tokenProgram as Address,
+        vaultTokenAccount: token.ata as Address,
+        newVaultTokenAccount,
+        assetRecord,
+        newAssetRecord,
+      },
+    );
     ixs.push(ix as Instruction);
   }
 
-  const finalIx = await buildUpdateHeirIx(authority, heir, newHeir, newEstate, newVault, estate, vault);
+  const finalIx = await buildUpdateHeirIx(
+    authority,
+    heir,
+    newHeir,
+    newEstate,
+    newVault,
+    estate,
+    vault,
+  );
   ixs.push(finalIx as Instruction);
 
   const txId = await sendTx(client, authority, ixs);

@@ -9,8 +9,8 @@ interface Props {
   setLabel: (s: string) => void;
   delegate: string;
   setDelegate: (s: string) => void;
-  hbSigner: string;
-  setHbSigner: (s: string) => void;
+  checkInSigner: string;
+  setCheckinSigner: (s: string) => void;
 }
 
 const HeirStep: React.FC<Props> = ({
@@ -20,14 +20,17 @@ const HeirStep: React.FC<Props> = ({
   setLabel,
   delegate,
   setDelegate,
-  hbSigner,
-  setHbSigner,
+  checkInSigner,
+  setCheckinSigner,
 }) => {
   const { t } = useTranslation("app");
 
   return (
     <div>
-      <StepHeader cap={t("createVault.wizard.step01")} title={t("createVault.wizard.whoInheritsTitle")} />
+      <StepHeader
+        cap={t("createVault.wizard.step01")}
+        title={t("createVault.wizard.whoInheritsTitle")}
+      />
 
       <div className="space-y-5 border-t border-tile-line pt-6">
         <Field
@@ -98,8 +101,8 @@ const HeirStep: React.FC<Props> = ({
           <input
             id="signer-address"
             type="text"
-            value={hbSigner}
-            onChange={(e) => setHbSigner(e.target.value)}
+            value={checkInSigner}
+            onChange={(e) => setCheckinSigner(e.target.value)}
             maxLength={128}
             spellCheck={false}
             autoComplete="off"

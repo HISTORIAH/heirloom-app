@@ -203,10 +203,10 @@ export async function genInitSolEstateIx(input: {
   authority: KeyPairSigner;
   heir: KeyPairSigner;
   amount: bigint;
-  heartbeatInterval?: bigint;
-  gracePeriod?: bigint;
-  pauseDuration?: bigint;
-  hbSigner?: Address;
+  checkInIntervalSecs?: bigint;
+  gracePeriodSecs?: bigint;
+  delegatePauseDurationSecs?: bigint;
+  checkInSigner?: Address;
   delegate?: Address;
 }) {
   let {
@@ -214,10 +214,10 @@ export async function genInitSolEstateIx(input: {
     authority,
     heir,
     amount,
-    heartbeatInterval,
-    gracePeriod,
-    pauseDuration,
-    hbSigner,
+    checkInIntervalSecs,
+    gracePeriodSecs,
+    delegatePauseDurationSecs,
+    checkInSigner,
     delegate,
   } = input;
 
@@ -230,12 +230,11 @@ export async function genInitSolEstateIx(input: {
     authority: authority,
     heir: heir.address,
     delegate,
-    heartbeatInterval: heartbeatInterval ?? 0,
-    gracePeriod: gracePeriod ?? 0,
-    pauseDuration: pauseDuration ?? 0,
-    hbSigner,
+    checkInIntervalSecs: checkInIntervalSecs ?? 0,
+    gracePeriodSecs: gracePeriodSecs ?? 0,
+    delegatePauseDurationSecs: delegatePauseDurationSecs ?? 0,
+    checkInSigner,
     amount,
-    label: "test-sol",
   });
 
   return { ix, estate, vault };
@@ -266,11 +265,10 @@ export async function genInitTokenEstateIx(input: {
     vaultTokenAccount,
     authorityTokenAccount,
     assetRecord,
-    heartbeatInterval: 0,
-    gracePeriod: 0,
-    pauseDuration: 0,
+    checkInIntervalSecs: 0,
+    gracePeriodSecs: 0,
+    delegatePauseDurationSecs: 0,
     amount,
-    label: "test-tokens",
   });
 
   return { ix, estate, vault, assetRecord, vaultTokenAccount, authorityTokenAccount };
@@ -472,24 +470,29 @@ export async function genUpdateFieldsIx(input: {
   authority: KeyPairSigner;
   heir: Address;
   signer?: KeyPairSigner;
-  heartbeatInterval?: bigint;
-  gracePeriod?: bigint;
-  pauseDuration?: bigint;
-  label?: string;
+  checkInIntervalSecs?: bigint;
+  gracePeriodSecs?: bigint;
+  delegatePauseDurationSecs?: bigint;
 }) {
-  const { client, authority, heir, heartbeatInterval, gracePeriod, pauseDuration, label } = input;
+  const {
+    client,
+    authority,
+    heir,
+    checkInIntervalSecs,
+    gracePeriodSecs,
+    delegatePauseDurationSecs,
+  } = input;
   const signer = input.signer ?? authority;
 
   const [estate] = await findEstatePda({ authority: authority.address, heir });
 
-  const ix = client.heirloom.instructions.updateField({
+  const ix = await client.heirloom.instructions.updateField({
     authority: signer,
     heir,
     estate,
-    heartbeatInterval: heartbeatInterval ?? null,
-    gracePeriod: gracePeriod ?? null,
-    pauseDuration: pauseDuration ?? null,
-    label: label ?? null,
+    checkInIntervalSecs: checkInIntervalSecs ?? null,
+    gracePeriodSecs: gracePeriodSecs ?? null,
+    delegatePauseDurationSecs: delegatePauseDurationSecs ?? null,
   });
 
   return { ix, estate };

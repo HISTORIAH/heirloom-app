@@ -29,18 +29,18 @@ The rules. One per (authority, heir) pair.
 |---|---|---|
 | `authority` | `Address` | Owner. Also a seed — immutable |
 | `heir` | `Address` | The only wallet that can claim. Also a seed |
-| `heartbeat_interval` | `i64` | Seconds of silence allowed. Max 365 days |
-| `grace_period` | `i64` | Seconds after the interval, before claim opens |
-| `last_heartbeat` | `i64` | Unix time of the last `update_field` |
+| `checkin_interval_secs` | `i64` | Seconds of silence allowed. Max 365 days |
+| `grace_period_secs` | `i64` | Seconds after the interval, before claim opens |
+| `last_checkin_ts` | `i64` | Unix time of the last `update_field` |
 | `created_at` | `i64` | Unix time of `initialize` |
 | `bump` | `u8` | PDA bump |
-| `pause_duration` | `i64` | How far a guardian may push the deadline |
-| `paused_until` | `i64` | Floor on the claim time. `0` when not paused |
+| `delegate_pause_duration_secs` | `i64` | How far a guardian may push the deadline |
+| `delegate_pause_expires_at` | `i64` | Floor on the claim time. `0` when not paused |
 | `is_migrating` | `bool` | True on a half-built change-of-heir destination |
 | `delegate` | `Option<Address>` | Guardian |
-| `hb_signer` | `Option<Address>` | Hot wallet allowed to check in |
+| `checkin_signer` | `Option<Address>` | Hot wallet allowed to check in |
 | `claimable_assets` | `u8` | Open vault token accounts, plus one for the SOL leg |
-| `label` | `String` | Up to 32 bytes, public |
+| `label` | `String` | Up to 32 bytes, public. <!-- TODO(backend): label is backend-only, not stored on-chain --> |
 
 `claimable_assets` starts at `1` and rises with each registered mint. It is what enforces
 exit ordering: the SOL branch of `claim` and `revoke` requires it to be at most `1`.

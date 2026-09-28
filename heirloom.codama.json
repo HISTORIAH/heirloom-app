@@ -25,6 +25,30 @@
           }
         }
       ]
+    },
+    {
+      "$comment": "TEMPORARY: anchor-v2 drops IDL pda seeds for `bump = <expr>` (otter-sec/anchor#4997), so estate/vault lose auto-derivation outside initialize. Our stored bumps are canonical (set via `init` + bare `bump`). Remove once anchor can mark explicit bumps as canonical.",
+      "from": "@codama/visitors#setInstructionAccountDefaultValuesVisitor",
+      "args": [
+        [
+          {
+            "account": "estate",
+            "ignoreIfOptional": true,
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": { "kind": "pdaLinkNode", "name": "estate" }
+            }
+          },
+          {
+            "account": "vault",
+            "ignoreIfOptional": true,
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": { "kind": "pdaLinkNode", "name": "vault" }
+            }
+          }
+        ]
+      ]
     }
   ],
   "scripts": {

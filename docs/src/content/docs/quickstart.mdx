@@ -24,8 +24,8 @@ faucet before you start. See [Addresses & clusters](/docs/reference/addresses/).
 
   <Step title="Name an heir">
     Go to **Create Estate**. Paste the address of the wallet that should inherit, and give
-    the estate a label (up to 32 characters — it is stored on-chain and it is how you tell
-    two estates apart).
+    the estate a label (up to 32 characters — it is how you tell two estates apart).
+    <!-- TODO(backend): label is backend-only, not stored on-chain -->
 
     One estate has exactly one heir. If you want two people to inherit different things,
     open two estates. If you want a way back into your own funds, name a second wallet of
@@ -65,8 +65,8 @@ faucet before you start. See [Addresses & clusters](/docs/reference/addresses/).
   </Step>
 
   <Step title="Check in">
-    On the dashboard, press **Send heartbeat**. That writes the current time to
-    `last_heartbeat` and pushes the whole deadline forward by your interval. It costs a
+    On the dashboard, press **Send check-in**. That writes the current time to
+    `last_checkin_ts` and pushes the whole deadline forward by your interval. It costs a
     signature and network fees — there is no protocol fee on a check-in.
 
     Do this whenever the dashboard says the window is closing. If you would rather not

@@ -23,8 +23,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { account, connect, disconnect, client } = useMobileWallet();
   const { rows, loading, error, reload, drop } = useEstates("authority");
-  const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } =
-    useOwnerTx();
+  const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } = useOwnerTx();
   const [picked, setPicked] = useState(0);
   const [busy, setBusy] = useState(false);
   const [checkInBusy, setCheckInBusy] = useState(false);
@@ -98,9 +97,7 @@ export default function DashboardScreen() {
       }
       const next = await reload();
       if (gone !== undefined && next.some((row) => row.address === gone)) {
-        throw new Error(
-          "This estate is still on chain. Open the dashboard again in a moment.",
-        );
+        throw new Error("This estate is still on chain. Open the dashboard again in a moment.");
       }
       notice(
         {
@@ -146,12 +143,7 @@ export default function DashboardScreen() {
         title: "Lock this SOL in the vault?",
         confirmLabel: "Add SOL",
       },
-      () =>
-        void runOwner(
-          "Top up",
-          () => topUpSol(row.data.heir, lamports),
-          "SOL added",
-        ),
+      () => void runOwner("Top up", () => topUpSol(row.data.heir, lamports), "SOL added"),
     );
   }
 
@@ -176,10 +168,9 @@ export default function DashboardScreen() {
   }
 
   function onTiming(fields: {
-    heartbeatInterval?: bigint;
-    gracePeriod?: bigint;
-    pauseDuration?: bigint;
-    label?: string;
+    checkInIntervalSecs?: bigint;
+    gracePeriodSecs?: bigint;
+    delegatePauseDurationSecs?: bigint;
   }) {
     const row = selected;
     if (!row || busy) return;
@@ -190,12 +181,7 @@ export default function DashboardScreen() {
         body: "This also counts as a check-in.",
         confirmLabel: "Save",
       },
-      () =>
-        void runOwner(
-          "Update timing",
-          () => updateSettings(row, fields),
-          "Timing saved",
-        ),
+      () => void runOwner("Update timing", () => updateSettings(row, fields), "Timing saved"),
     );
   }
 
@@ -209,12 +195,7 @@ export default function DashboardScreen() {
         body: "Not a top-up of a token already in this vault.",
         confirmLabel: "Add token",
       },
-      () =>
-        void runOwner(
-          "Add asset",
-          () => addToken(row, mint, amount),
-          "Token added",
-        ),
+      () => void runOwner("Add asset", () => addToken(row, mint, amount), "Token added"),
     );
   }
 
@@ -309,12 +290,7 @@ export default function DashboardScreen() {
         </View>
       )}
       {body}
-      <ConfirmSheet
-        ask={ask}
-        onCancel={cancel}
-        onConfirm={confirm}
-        onExtra={extra}
-      />
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
       <InkToast text={toast} />
     </View>
   );

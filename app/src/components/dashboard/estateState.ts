@@ -73,18 +73,16 @@ export function isVaultEmpty(estate: EstateData): boolean {
 
 export function computeTick(estate: EstateData, vaultEmpty: boolean, t: TFn): TickResult {
   const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
-    lastHeartbeat: estate.lastHeartbeat,
-    heartbeatInterval: estate.heartbeatInterval,
-    gracePeriod: estate.gracePeriod,
-    pausedUntil: estate.pausedUntil,
+    lastCheckInTs: estate.lastCheckInTs,
+    checkInIntervalSecs: estate.checkInIntervalSecs,
+    gracePeriodSecs: estate.gracePeriodSecs,
+    delegatePauseExpiresAt: estate.delegatePauseExpiresAt,
     createdAt: estate.createdAt,
     vaultEmpty,
   });
 
   const remaining =
-    state === "active" ? secondsUntilGrace :
-    state === "grace" ? secondsUntilClaimable :
-    0;
+    state === "active" ? secondsUntilGrace : state === "grace" ? secondsUntilClaimable : 0;
 
   return {
     state,
@@ -101,9 +99,17 @@ export function computeTick(estate: EstateData, vaultEmpty: boolean, t: TFn): Ti
 export function getEstateStripMeta(estate: EstateData, t: TFn) {
   const { state, countdown } = computeTick(estate, isVaultEmpty(estate), t);
   const timeLabel =
-    state === "active" ? t("dashboard.timeLeft", { days: countdown.days }) :
-    state === "grace" ? t("dashboard.graceDays", { days: countdown.days }) :
-    state === "claimable" ? t("dashboard.claimable") :
-    t("dashboard.distributed");
-  return { state, dotColor: STATE_DOT[state], timeLabel, assetCount: 1 + estate.vaultTokens.length };
+    state === "active"
+      ? t("dashboard.timeLeft", { days: countdown.days })
+      : state === "grace"
+        ? t("dashboard.graceDays", { days: countdown.days })
+        : state === "claimable"
+          ? t("dashboard.claimable")
+          : t("dashboard.distributed");
+  return {
+    state,
+    dotColor: STATE_DOT[state],
+    timeLabel,
+    assetCount: 1 + estate.vaultTokens.length,
+  };
 }

@@ -61,14 +61,12 @@ const CreateVaultPage = () => {
   const [heirAddress, setHeirAddress] = useState("");
   const [label, setLabel] = useState("spouse");
   const [delegate, setDelegate] = useState("");
-  const [hbSigner, setHbSigner] = useState("");
+  const [checkInSigner, setCheckinSigner] = useState("");
 
   const { data: tokens, isLoading: tokensLoading } = useWalletSplTokens(
     isConnected ? publicKey : null,
   );
-  const { sol: solBalance, loading: solLoading } = useTokenBalances(
-    isConnected ? publicKey : null,
-  );
+  const { sol: solBalance, loading: solLoading } = useTokenBalances(isConnected ? publicKey : null);
 
   const [solAmount, setSolAmount] = useState<number>(0);
   const [tokenSelections, setTokenSelections] = useState<Record<string, TokenSelection>>({});
@@ -104,7 +102,7 @@ const CreateVaultPage = () => {
     try {
       track("vault_creation_started", {
         has_delegate: Boolean(delegate.trim()),
-        has_heartbeat_signer: Boolean(hbSigner.trim()),
+        has_heartbeat_signer: Boolean(checkInSigner.trim()),
         token_count: selectedTokenEntries.length,
       });
       setSubmitState("creating");
@@ -129,20 +127,21 @@ const CreateVaultPage = () => {
 
       const createTxId = await createEstateOnChain({
         heir: heirAddress.trim(),
-        label: label.trim().slice(0, LABEL_MAX_LEN),
-        heartbeatInterval: heartbeatSeconds,
-        gracePeriod: graceSeconds,
-        pauseDuration: pauseSeconds,
+        // TODO(backend): Send label to backend API after tx confirmation (not stored on-chain)
+        label: label.trim().slice(0, LABEL_MAX_LEN) || undefined,
+        checkInIntervalSecs: heartbeatSeconds,
+        gracePeriodSecs: graceSeconds,
+        delegatePauseDurationSecs: pauseSeconds,
         amountLamports: lamports,
         delegate: delegate.trim() || undefined,
-        hbSigner: hbSigner.trim() || undefined,
+        checkInSigner: checkInSigner.trim() || undefined,
         tokens: tokenDeposits,
       });
       setTxId(createTxId);
       setSubmitState("complete");
       track("vault_created", {
         has_delegate: Boolean(delegate.trim()),
-        has_heartbeat_signer: Boolean(hbSigner.trim()),
+        has_heartbeat_signer: Boolean(checkInSigner.trim()),
         token_count: tokenDeposits.length,
       });
       toast({
@@ -177,7 +176,7 @@ const CreateVaultPage = () => {
     setHeirAddress("");
     setLabel("spouse");
     setDelegate("");
-    setHbSigner("");
+    setCheckinSigner("");
     setSolAmount(0);
     setTokenSelections({});
     setHeartbeatSeconds(90 * SECONDS_PER_DAY);
@@ -216,7 +215,9 @@ const CreateVaultPage = () => {
           <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
             <Panel className="mx-auto max-w-xl text-center">
               <span className="ed-label">{t("createVault.wizard.confirmed")}</span>
-              <h2 className="ed-h2 mt-3">{label && t("createVault.successTitle", { label: t(label) })}</h2>
+              <h2 className="ed-h2 mt-3">
+                {label && t("createVault.successTitle", { label: t(label) })}
+              </h2>
               <p className="ed-lede mx-auto mt-4 max-w-[42ch] text-muted-foreground">
                 {truncateAddress(heirAddress)}) {t("createVault.successBody1")}{" "}
                 <strong>
@@ -276,8 +277,8 @@ const CreateVaultPage = () => {
                     setLabel={setLabel}
                     delegate={delegate}
                     setDelegate={setDelegate}
-                    hbSigner={hbSigner}
-                    setHbSigner={setHbSigner}
+                    checkInSigner={checkInSigner}
+                    setCheckinSigner={setCheckinSigner}
                   />
                 </div>
               )}
@@ -317,7 +318,7 @@ const CreateVaultPage = () => {
                     heirAddress={heirAddress}
                     label={label}
                     delegate={delegate}
-                    hbSigner={hbSigner}
+                    checkInSigner={checkInSigner}
                     solAmount={solAmount}
                     tokenSelections={tokenSelections}
                     tokens={tokens}
@@ -361,9 +362,7 @@ const CreateVaultPage = () => {
                       size="default"
                       onClick={handleSubmit}
                       disabled={!canProceed() || isSubmitting}
-                      aria-label={
-                        !hasAnyDeposit ? t("createVault.selectAssetFirst") : undefined
-                      }
+                      aria-label={!hasAnyDeposit ? t("createVault.selectAssetFirst") : undefined}
                     >
                       {isSubmitting ? (
                         <>
@@ -405,7 +404,7 @@ const CreateVaultPage = () => {
                   intervalDays={intervalDays}
                   graceDays={graceDays}
                   delegate={delegate}
-                  hbSigner={hbSigner}
+                  checkInSigner={checkInSigner}
                 />
               </Panel>
             </div>
@@ -414,11 +413,7 @@ const CreateVaultPage = () => {
       </div>
 
       {submitState !== "idle" && submitState !== "error" && (
-        <SubmitOverlay
-          submitState={submitState}
-          submitProgress={submitProgress}
-          txId={txId}
-        />
+        <SubmitOverlay submitState={submitState} submitProgress={submitProgress} txId={txId} />
       )}
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </>

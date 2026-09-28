@@ -17,8 +17,8 @@ pub struct Initialize {
     /// CHECK: optional delegate pubkey
     pub delegate: Option<UncheckedAccount>,
 
-    /// CHECK: optional checkin signer pubkey
-    pub checkin_signer: Option<UncheckedAccount>,
+    /// CHECK: optional check_in signer pubkey
+    pub check_in_signer: Option<UncheckedAccount>,
 
     #[account(mut)]
     pub authority_token_account: Option<InterfaceAccount<TokenAccount>>,
@@ -76,20 +76,20 @@ pub struct Initialize {
 impl Initialize {
     pub fn initialize_handler(
         ctx: &mut Context<Initialize>,
-        checkin_interval_secs: i64,
+        check_in_interval_secs: i64,
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
         amount: u64,
     ) -> Result<()> {
         ctx.accounts.validate(
             amount,
-            checkin_interval_secs,
+            check_in_interval_secs,
             grace_period_secs,
             delegate_pause_duration_secs,
         )?;
 
         ctx.accounts.set_acc_fields(
-            checkin_interval_secs,
+            check_in_interval_secs,
             grace_period_secs,
             delegate_pause_duration_secs,
             ctx.bumps.estate,
@@ -106,13 +106,13 @@ impl Initialize {
     pub fn validate(
         &self,
         amount: u64,
-        checkin_interval_secs: i64,
+        check_in_interval_secs: i64,
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
     ) -> Result<()> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
-        validate_interval(checkin_interval_secs)?;
+        validate_interval(check_in_interval_secs)?;
         validate_interval(grace_period_secs)?;
         validate_interval(delegate_pause_duration_secs)?;
 
@@ -159,7 +159,7 @@ impl Initialize {
 
     pub fn set_acc_fields(
         &mut self,
-        checkin_interval_secs: i64,
+        check_in_interval_secs: i64,
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
         estate_bump: u8,
@@ -169,13 +169,13 @@ impl Initialize {
 
         self.estate.authority = *self.authority.address();
         self.estate.heir = *self.heir.address();
-        self.estate.checkin_interval_secs = checkin_interval_secs;
+        self.estate.check_in_interval_secs = check_in_interval_secs;
         self.estate.grace_period_secs = grace_period_secs;
-        self.estate.last_checkin_ts = now;
+        self.estate.last_check_in_ts = now;
         self.estate.created_at = now;
         self.estate.bump = estate_bump;
         self.estate.delegate = self.delegate.as_ref().map(|a| *a.address());
-        self.estate.checkin_signer = self.checkin_signer.as_ref().map(|a| *a.address());
+        self.estate.check_in_signer = self.check_in_signer.as_ref().map(|a| *a.address());
         self.estate.claimable_assets = 1;
         self.estate.delegate_pause_duration_secs = delegate_pause_duration_secs;
         self.estate.delegate_pause_expires_at = 0;

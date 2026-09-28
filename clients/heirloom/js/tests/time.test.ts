@@ -54,13 +54,13 @@ test("claim succeeds after heartbeat interval + grace period", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 3_600n,
-    gracePeriod: 600n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 3_600n,
+    gracePeriodSecs: 600n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
-  // Warp exactly to claimable time (heartbeat + grace)
+  // Warp exactly to claimable time (checkin interval + grace)
   warpSeconds(client, 4_200n);
 
   const { ix: claimIx } = await genClaimIx({
@@ -87,9 +87,9 @@ test("claim fails before grace period ends", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 3_600n,
-    gracePeriod: 600n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 3_600n,
+    gracePeriodSecs: 600n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
@@ -119,13 +119,13 @@ test("claim fails before heartbeat interval ends", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 3_600n,
-    gracePeriod: 600n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 3_600n,
+    gracePeriodSecs: 600n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
-  // Warp barely past lastHeartbeat but before grace deadline
+  // Warp barely past lastCheckInTs but before grace deadline
   warpSeconds(client, 100n);
 
   const { ix: claimIx } = await genClaimIx({
@@ -155,19 +155,19 @@ test("heartbeat via updateField resets claim timer", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 3_600n,
-    gracePeriod: 600n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 3_600n,
+    gracePeriodSecs: 600n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
   const estateBefore = await fetchEstate(client.rpc, estate);
-  const originalClaimableAt = estateBefore.data.lastHeartbeat + 3_600n + 600n;
+  const originalClaimableAt = estateBefore.data.lastCheckInTs + 3_600n + 600n;
 
   // Warp close to original claimable time
   warpSeconds(client, 3_600n + 600n - 100n);
 
-  // Send heartbeat (empty updateField bumps lastHeartbeat)
+  // Send heartbeat (empty updateField bumps lastCheckInTs)
   const { ix: heartbeatIx } = await genUpdateFieldsIx({
     client,
     authority,
@@ -176,7 +176,7 @@ test("heartbeat via updateField resets claim timer", async () => {
   await client.sendTransaction(heartbeatIx);
 
   const estateAfterHeartbeat = await fetchEstate(client.rpc, estate);
-  const newClaimableAt = estateAfterHeartbeat.data.lastHeartbeat + 3_600n + 600n;
+  const newClaimableAt = estateAfterHeartbeat.data.lastCheckInTs + 3_600n + 600n;
 
   // Warp past original claimable but before new claimable. This has to be
   // computed relative to the current clock rather than as a flat "+4200"
@@ -205,11 +205,11 @@ test("heartbeat via updateField resets claim timer", async () => {
   expect(await accountExists(client, estate)).toBe(false);
 });
 
-test("hbSigner heartbeat extends timer but cannot change config", async () => {
+test("checkInSigner heartbeat extends timer but cannot change config", async () => {
   const client = await createTestClient();
   await fundTreasury(client);
 
-  const [authority, heir, hbSigner] = await Promise.all([
+  const [authority, heir, checkInSigner] = await Promise.all([
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
     generateKeyPairSignerWithSol(client),
@@ -220,38 +220,38 @@ test("hbSigner heartbeat extends timer but cannot change config", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 3_600n,
-    gracePeriod: 600n,
-    pauseDuration: 0n,
-    hbSigner: hbSigner.address,
+    checkInIntervalSecs: 3_600n,
+    gracePeriodSecs: 600n,
+    delegatePauseDurationSecs: 0n,
+    checkInSigner: checkInSigner.address,
   });
   await client.sendTransaction(initIx);
 
   const estateBefore = await fetchEstate(client.rpc, estate);
-  const originalClaimableAt = estateBefore.data.lastHeartbeat + 3_600n + 600n;
+  const originalClaimableAt = estateBefore.data.lastCheckInTs + 3_600n + 600n;
 
   // Warp close to claimable
   warpSeconds(client, 3_600n + 600n - 100n);
 
-  // hbSigner sends heartbeat and also tries to change config — the program
-  // should bump lastHeartbeat but silently ignore the config fields since
-  // only the authority (not hbSigner) is allowed to change them.
+  // checkInSigner sends heartbeat and also tries to change config — the program
+  // should bump lastCheckInTs but silently ignore the config fields since
+  // only the authority (not checkInSigner) is allowed to change them.
   const { ix: heartbeatIx } = await genUpdateFieldsIx({
     client,
     authority,
     heir: heir.address,
-    signer: hbSigner,
-    gracePeriod: 9_999n,
-    heartbeatInterval: 9_999n,
+    signer: checkInSigner,
+    gracePeriodSecs: 9_999n,
+    checkInIntervalSecs: 9_999n,
   });
   await client.sendTransaction(heartbeatIx);
 
   const estateAfterHeartbeat = await fetchEstate(client.rpc, estate);
-  expect(estateAfterHeartbeat.data.lastHeartbeat).toBeGreaterThan(estateBefore.data.lastHeartbeat);
-  expect(estateAfterHeartbeat.data.gracePeriod).toBe(600n);
-  expect(estateAfterHeartbeat.data.heartbeatInterval).toBe(3_600n);
+  expect(estateAfterHeartbeat.data.lastCheckInTs).toBeGreaterThan(estateBefore.data.lastCheckInTs);
+  expect(estateAfterHeartbeat.data.gracePeriodSecs).toBe(600n);
+  expect(estateAfterHeartbeat.data.checkInIntervalSecs).toBe(3_600n);
 
-  const newClaimableAt = estateAfterHeartbeat.data.lastHeartbeat + 3_600n + 600n;
+  const newClaimableAt = estateAfterHeartbeat.data.lastCheckInTs + 3_600n + 600n;
 
   // Warp past original claimable but still short of the heartbeat-reset
   // claimable time — same relative-offset pitfall as the plain-authority
@@ -284,30 +284,30 @@ test("updateField with config changes still bumps heartbeat", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 3_600n,
-    gracePeriod: 600n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 3_600n,
+    gracePeriodSecs: 600n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
   const estateBefore = await fetchEstate(client.rpc, estate);
-  const originalLastHeartbeat = estateBefore.data.lastHeartbeat;
+  const originalLastCheckinTs = estateBefore.data.lastCheckInTs;
 
   // Warp forward a bit
   warpSeconds(client, 500n);
 
-  // Update fields with config change — should also bump heartbeat
+  // Update fields with config change — should also bump lastCheckInTs
   const { ix: updateIx } = await genUpdateFieldsIx({
     client,
     authority,
     heir: heir.address,
-    gracePeriod: 1_200n,
+    gracePeriodSecs: 1_200n,
   });
   await client.sendTransaction(updateIx);
 
   const estateAfter = await fetchEstate(client.rpc, estate);
-  expect(estateAfter.data.lastHeartbeat).toBeGreaterThan(originalLastHeartbeat);
-  expect(estateAfter.data.gracePeriod).toBe(1_200n);
+  expect(estateAfter.data.lastCheckInTs).toBeGreaterThan(originalLastCheckinTs);
+  expect(estateAfter.data.gracePeriodSecs).toBe(1_200n);
 });
 
 // ---------------------------------------------------------------------------
@@ -328,9 +328,9 @@ test("claim immediately after initialization with zero intervals", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 0n,
-    gracePeriod: 0n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 0n,
+    gracePeriodSecs: 0n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
@@ -360,9 +360,9 @@ test("multiple heartbeats push claim time back repeatedly", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 1_000n,
-    gracePeriod: 100n,
-    pauseDuration: 0n,
+    checkInIntervalSecs: 1_000n,
+    gracePeriodSecs: 100n,
+    delegatePauseDurationSecs: 0n,
   });
   await client.sendTransaction(initIx);
 
@@ -381,7 +381,7 @@ test("multiple heartbeats push claim time back repeatedly", async () => {
     await client.sendTransaction(heartbeatIx);
 
     const after = await fetchEstate(client.rpc, estate);
-    expect(after.data.lastHeartbeat).toBeGreaterThan(before.data.lastHeartbeat);
+    expect(after.data.lastCheckInTs).toBeGreaterThan(before.data.lastCheckInTs);
   }
 
   // Final claim should work after the last heartbeat's timer

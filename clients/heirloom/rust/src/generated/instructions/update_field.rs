@@ -81,10 +81,9 @@ impl Default for UpdateFieldInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UpdateFieldInstructionArgs {
-    pub heartbeat_interval: Option<i64>,
-    pub grace_period: Option<i64>,
-    pub pause_duration: Option<i64>,
-    pub label: Option<String>,
+    pub check_in_interval_secs: Option<i64>,
+    pub grace_period_secs: Option<i64>,
+    pub delegate_pause_duration_secs: Option<i64>,
 }
 
 impl UpdateFieldInstructionArgs {
@@ -107,10 +106,9 @@ pub struct UpdateFieldBuilder {
     heir: Option<solana_address::Address>,
     estate: Option<solana_address::Address>,
     system_program: Option<solana_address::Address>,
-    heartbeat_interval: Option<i64>,
-    grace_period: Option<i64>,
-    pause_duration: Option<i64>,
-    label: Option<String>,
+    check_in_interval_secs: Option<i64>,
+    grace_period_secs: Option<i64>,
+    delegate_pause_duration_secs: Option<i64>,
     __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
@@ -142,26 +140,20 @@ impl UpdateFieldBuilder {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn heartbeat_interval(&mut self, heartbeat_interval: i64) -> &mut Self {
-        self.heartbeat_interval = Some(heartbeat_interval);
+    pub fn check_in_interval_secs(&mut self, check_in_interval_secs: i64) -> &mut Self {
+        self.check_in_interval_secs = Some(check_in_interval_secs);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn grace_period(&mut self, grace_period: i64) -> &mut Self {
-        self.grace_period = Some(grace_period);
+    pub fn grace_period_secs(&mut self, grace_period_secs: i64) -> &mut Self {
+        self.grace_period_secs = Some(grace_period_secs);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn pause_duration(&mut self, pause_duration: i64) -> &mut Self {
-        self.pause_duration = Some(pause_duration);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn label(&mut self, label: String) -> &mut Self {
-        self.label = Some(label);
+    pub fn delegate_pause_duration_secs(&mut self, delegate_pause_duration_secs: i64) -> &mut Self {
+        self.delegate_pause_duration_secs = Some(delegate_pause_duration_secs);
         self
     }
     /// Add an additional account to the instruction.
@@ -190,10 +182,9 @@ impl UpdateFieldBuilder {
                 .unwrap_or(solana_address::address!("11111111111111111111111111111111")),
         };
         let args = UpdateFieldInstructionArgs {
-            heartbeat_interval: self.heartbeat_interval.clone(),
-            grace_period: self.grace_period.clone(),
-            pause_duration: self.pause_duration.clone(),
-            label: self.label.clone(),
+            check_in_interval_secs: self.check_in_interval_secs.clone(),
+            grace_period_secs: self.grace_period_secs.clone(),
+            delegate_pause_duration_secs: self.delegate_pause_duration_secs.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -337,10 +328,9 @@ impl<'a, 'b> UpdateFieldCpiBuilder<'a, 'b> {
             heir: None,
             estate: None,
             system_program: None,
-            heartbeat_interval: None,
-            grace_period: None,
-            pause_duration: None,
-            label: None,
+            check_in_interval_secs: None,
+            grace_period_secs: None,
+            delegate_pause_duration_secs: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -371,26 +361,20 @@ impl<'a, 'b> UpdateFieldCpiBuilder<'a, 'b> {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn heartbeat_interval(&mut self, heartbeat_interval: i64) -> &mut Self {
-        self.instruction.heartbeat_interval = Some(heartbeat_interval);
+    pub fn check_in_interval_secs(&mut self, check_in_interval_secs: i64) -> &mut Self {
+        self.instruction.check_in_interval_secs = Some(check_in_interval_secs);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn grace_period(&mut self, grace_period: i64) -> &mut Self {
-        self.instruction.grace_period = Some(grace_period);
+    pub fn grace_period_secs(&mut self, grace_period_secs: i64) -> &mut Self {
+        self.instruction.grace_period_secs = Some(grace_period_secs);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn pause_duration(&mut self, pause_duration: i64) -> &mut Self {
-        self.instruction.pause_duration = Some(pause_duration);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn label(&mut self, label: String) -> &mut Self {
-        self.instruction.label = Some(label);
+    pub fn delegate_pause_duration_secs(&mut self, delegate_pause_duration_secs: i64) -> &mut Self {
+        self.instruction.delegate_pause_duration_secs = Some(delegate_pause_duration_secs);
         self
     }
     /// Add an additional account to the instruction.
@@ -428,10 +412,9 @@ impl<'a, 'b> UpdateFieldCpiBuilder<'a, 'b> {
     #[allow(clippy::vec_init_then_push)]
     pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
         let args = UpdateFieldInstructionArgs {
-            heartbeat_interval: self.instruction.heartbeat_interval.clone(),
-            grace_period: self.instruction.grace_period.clone(),
-            pause_duration: self.instruction.pause_duration.clone(),
-            label: self.instruction.label.clone(),
+            check_in_interval_secs: self.instruction.check_in_interval_secs.clone(),
+            grace_period_secs: self.instruction.grace_period_secs.clone(),
+            delegate_pause_duration_secs: self.instruction.delegate_pause_duration_secs.clone(),
         };
         let instruction = UpdateFieldCpi {
             __program: self.instruction.__program,
@@ -462,10 +445,9 @@ struct UpdateFieldCpiBuilderInstruction<'a, 'b> {
     heir: Option<&'b solana_account_info::AccountInfo<'a>>,
     estate: Option<&'b solana_account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-    heartbeat_interval: Option<i64>,
-    grace_period: Option<i64>,
-    pause_duration: Option<i64>,
-    label: Option<String>,
+    check_in_interval_secs: Option<i64>,
+    grace_period_secs: Option<i64>,
+    delegate_pause_duration_secs: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

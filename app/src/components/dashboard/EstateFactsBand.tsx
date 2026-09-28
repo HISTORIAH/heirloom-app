@@ -16,7 +16,7 @@ export const EstateFactsBand: React.FC<EstateFactsBandProps> = ({
   className,
 }) => {
   const { t, i18n } = useTranslation("app");
-  const stamp = estate.lastHeartbeat > 0 ? estate.lastHeartbeat : estate.createdAt;
+  const stamp = estate.lastCheckInTs > 0 ? estate.lastCheckInTs : estate.createdAt;
   const lastCheckIn = new Date(stamp * 1000).toLocaleString(i18n.language, {
     day: "numeric",
     month: "short",
@@ -27,17 +27,14 @@ export const EstateFactsBand: React.FC<EstateFactsBandProps> = ({
 
   const cells = [
     { cap: t("dashboard.lastCheckIn"), value: lastCheckIn },
-    { cap: t("dashboard.checkInInterval"), value: formatDuration(estate.heartbeatInterval) },
-    { cap: t("dashboard.gracePeriod"), value: formatDuration(estate.gracePeriod) },
+    { cap: t("dashboard.checkInInterval"), value: formatDuration(estate.checkInIntervalSecs) },
+    { cap: t("dashboard.gracePeriod"), value: formatDuration(estate.gracePeriodSecs) },
   ];
 
   return (
     <Panel className={className}>
       <div
-        className={cn(
-          "grid gap-5",
-          lastTxId ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3",
-        )}
+        className={cn("grid gap-5", lastTxId ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3")}
       >
         {cells.map((cell) => (
           <div key={cell.cap} className="min-w-0">

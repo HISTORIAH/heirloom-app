@@ -6,7 +6,7 @@ order: 3
 keywords: ["check in", "heartbeat", "keep alive", "hot signer", "phone", "reset clock"]
 ---
 
-A check-in is a signed transaction that writes the current time into `last_heartbeat`.
+A check-in is a signed transaction that writes the current time into `last_checkin_ts`.
 It pushes the deadline forward by your full interval and costs nothing but network fees.
 
 ## From the dashboard
@@ -17,7 +17,7 @@ press **Send heartbeat**. The countdown resets while the transaction confirms.
 ## From a phone, with a hot signer
 
 If the wallet that owns the estate is cold, checking in with it every month is exactly
-the friction that makes people stop. Register an `hb_signer` — a hot wallet you keep on
+the friction that makes people stop. Register a `checkin_signer` — a hot wallet you keep on
 your phone — and use the single-purpose page instead:
 
 <Steps>
@@ -30,7 +30,7 @@ your phone — and use the single-purpose page instead:
     the page can look it up without knowing anything else.
   </Step>
   <Step title="Sign">
-    The page checks the connected wallet against the estate's registered `hb_signer` and
+    The page checks the connected wallet against the estate's registered `checkin_signer` and
     shows you both for comparison before it lets you sign.
   </Step>
 </Steps>
@@ -49,10 +49,9 @@ import { updateFields } from "@/services/heirloom";
 
 await updateFields(client, signer, {
   heir,
-  heartbeatInterval: null,
-  gracePeriod: null,
-  pauseDuration: null,
-  label: null,
+  checkinIntervalSecs: null,
+  gracePeriodSecs: null,
+  delegatePauseDurationSecs: null,
 });
 ```
 </Code>
@@ -70,19 +69,19 @@ something only you can renew — a key that expires, a bill you pay, a device yo
 
 ## Changing settings counts as a check-in
 
-`update_field` writes `last_heartbeat` unconditionally, before it looks at any of the
-optional arguments. Editing your interval, grace period, pause duration, or label
+`update_field` writes `last_checkin_ts` unconditionally, before it looks at any of the
+optional arguments. Editing your interval, grace period, or pause duration
 therefore also resets the clock. There is no way to change a setting without checking in.
 
 ## What does not count
 
 Depositing, registering an asset, routing yield, and recalling yield all leave
-`last_heartbeat` untouched. A busy estate can still lapse. Only `update_field` resets the
+`last_checkin_ts` untouched. A busy estate can still lapse. Only `update_field` resets the
 clock.
 
 ## After a pause
 
-If a guardian deferred the estate, `paused_until` holds a future timestamp. Checking in
-during that window updates `last_heartbeat` normally but leaves the pause in place. The
+If a guardian deferred the estate, `delegate_pause_expires_at` holds a future timestamp. Checking in
+during that window updates `last_checkin_ts` normally but leaves the pause in place. The
 pause is cleared by the first check-in sent **after** it expires — see
 [Heartbeats & the grace period](/docs/concepts/heartbeat/#checking-in-while-paused).

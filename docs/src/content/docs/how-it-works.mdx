@@ -16,15 +16,15 @@ estate becomes claimable:
 
 <Code caption="The claim condition, from the program">
 ```rust
-let claimable_at = estate.last_heartbeat
-    + estate.heartbeat_interval
-    + estate.grace_period;
+let claimable_at = estate.last_checkin_ts
+    + estate.checkin_interval_secs
+    + estate.grace_period_secs;
 
-require!(now >= claimable_at.max(estate.paused_until), NotYetClaimable);
+require!(now >= claimable_at.max(estate.delegate_pause_expires_at), NotYetClaimable);
 ```
 </Code>
 
-Every check-in writes `now` into `last_heartbeat`, which moves `claimable_at` forward by
+Every check-in writes `now` into `last_checkin_ts`, which moves `claimable_at` forward by
 the same amount. As long as you keep signing, the condition is never true and the heir
 can do nothing at all.
 
@@ -36,7 +36,7 @@ never disagree.
 
 | State | When | What can happen |
 |---|---|---|
-| **Active** | Before `last_heartbeat + heartbeat_interval` | Business as usual. Fund it, route yield, change settings |
+| **Active** | Before `last_checkin_ts + checkin_interval_secs` | Business as usual. Fund it, route yield, change settings |
 | **Grace** | Interval lapsed, grace period still running | Same as active, plus: a guardian may defer, and the app starts warning |
 | **Claimable** | `now >= claimable_at` | The heir can claim. You can still withdraw first — whoever signs first wins |
 | **Distributed** | Vault empty, accounts closed | Nothing. The estate is gone and its rent has been returned |
@@ -70,7 +70,7 @@ and a hot signer is not a spare owner.
 | | Authority | Heir | Guardian | Hot signer |
 |---|---|---|---|---|
 | Send a check-in | ✓ | | | ✓ |
-| Change interval / grace / pause / label | ✓ | | | |
+| Change interval / grace / pause | ✓ | | | |
 | Add or fund assets | ✓ | | | |
 | Route or recall yield | ✓ | | | |
 | Change the heir | ✓ | | | |
@@ -78,7 +78,7 @@ and a hot signer is not a spare owner.
 | Push the deadline out, once | | | ✓ | |
 | Claim, once claimable | | ✓ | | |
 
-A guardian's only power is to set `paused_until`, and they may use it **once per estate**.
+A guardian's only power is to set `delegate_pause_expires_at`, and they may use it **once per estate**.
 A hot signer's check-in resets the clock but cannot change a single setting, because the
 program only applies the settings arguments when the signer is the authority itself.
 

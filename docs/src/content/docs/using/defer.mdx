@@ -23,7 +23,7 @@ The guardian can push the deadline out. That is all they can do.
     The owner's address and the heir's address — those two derive the estate PDA.
   </Step>
   <Step title="Sign">
-    One transaction. `paused_until` is set to `now + pause_duration`.
+    One transaction. `delegate_pause_expires_at` is set to `now + delegate_pause_duration_secs`.
   </Step>
 </Steps>
 
@@ -31,24 +31,24 @@ The guardian can push the deadline out. That is all they can do.
 
 <Code caption="programs/heirloom/src/instructions/defer.rs">
 ```rust
-estate.paused_until = now + estate.pause_duration;
+estate.delegate_pause_expires_at = now + estate.delegate_pause_duration_secs;
 ```
 </Code>
 
-`paused_until` acts as a floor on the claim time: the estate is claimable at
-`max(claimable_at, paused_until)`. So even if the grace period ran out days ago, a live
+`delegate_pause_expires_at` acts as a floor on the claim time: the estate is claimable at
+`max(claimable_at, delegate_pause_expires_at)`. So even if the grace period ran out days ago, a live
 pause keeps the heir out until it expires.
 
 ## Two conditions
 
 <Code caption="The validate step">
 ```rust
-require!(estate.paused_until == 0, AlreadyDeferred);
+require!(estate.delegate_pause_expires_at == 0, AlreadyDeferred);
 require!(now < claimable_at,       DeferWindowExpired);
 ```
 </Code>
 
-- **Once per estate.** `paused_until` has to be zero on entry. After a deferral it stays
+- **Once per estate.** `delegate_pause_expires_at` has to be zero on entry. After a deferral it stays
   non-zero until the owner returns and checks in *after* it expires, which is what resets
   it to zero and frees the guardian to act again.
 - **Before the deadline.** A deferral is only accepted while the estate is still active or
@@ -69,7 +69,7 @@ the estate can pull it back except the owner's own withdrawal.
 - Stop the owner from doing anything at all
 
 The worst a hostile guardian can do is delay an inheritance by exactly the
-`pause_duration` the owner chose — once.
+`delegate_pause_duration_secs` the owner chose — once.
 
 ## Choosing one
 

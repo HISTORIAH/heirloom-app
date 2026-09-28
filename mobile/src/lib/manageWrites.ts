@@ -9,12 +9,7 @@ import {
   getUpdateHeirInstructionAsync,
   TREASURY_ADDRESS,
 } from "@historiah/heirloom";
-import {
-  address,
-  type Address,
-  type Instruction,
-  type TransactionSigner,
-} from "@solana/kit";
+import { address, type Address, type Instruction, type TransactionSigner } from "@solana/kit";
 
 import { findAtaPda, TOKEN_2022_PROGRAM_ADDRESS, TOKEN_PROGRAM_ADDRESS } from "@/lib/ata";
 import { LABEL_MAX_LEN } from "@/lib/constants";
@@ -35,13 +30,13 @@ function requireTokens(found: number, claimableAssets: number): void {
   }
 }
 
-export function isPausedNow(pausedUntil: bigint | number): boolean {
-  const until = Number(pausedUntil);
+export function isPausedNow(delegatePauseExpiresAt: bigint | number): boolean {
+  const until = Number(delegatePauseExpiresAt);
   return until > 0 && until > Date.now() / 1000;
 }
 
-export function assertNotPaused(pausedUntil: bigint | number): void {
-  if (isPausedNow(pausedUntil)) {
+export function assertNotPaused(delegatePauseExpiresAt: bigint | number): void {
+  if (isPausedNow(delegatePauseExpiresAt)) {
     throw new Error("This estate is paused. Wait until the pause ends.");
   }
 }
@@ -98,7 +93,7 @@ export async function buildReassignIxs(
   if (newHeir === row.data.heir) {
     throw new Error("That address is already the heir.");
   }
-  assertNotPaused(row.data.pausedUntil);
+  assertNotPaused(row.data.delegatePauseExpiresAt);
   await assertEstateFree(rpc, authority.address, newHeir);
   const heir = row.data.heir;
   const [[estate], [vault], [newEstate], [newVault]] = await Promise.all([
@@ -149,23 +144,23 @@ export function buildSettingsIx(
   heir: Address,
   estate: Address,
   fields: {
-    heartbeatInterval?: bigint;
-    gracePeriod?: bigint;
-    pauseDuration?: bigint;
-    label?: string;
+    checkInIntervalSecs?: bigint;
+    gracePeriodSecs?: bigint;
+    delegatePauseDurationSecs?: bigint;
   },
 ): Instruction {
   return getUpdateFieldInstruction({
     authority,
     heir,
     estate,
-    heartbeatInterval: fields.heartbeatInterval ?? null,
-    gracePeriod: fields.gracePeriod ?? null,
-    pauseDuration: fields.pauseDuration ?? null,
-    label: fields.label ?? null,
+    checkInIntervalSecs: fields.checkInIntervalSecs ?? null,
+    gracePeriodSecs: fields.gracePeriodSecs ?? null,
+    delegatePauseDurationSecs: fields.delegatePauseDurationSecs ?? null,
   });
 }
 
+// TODO(backend): label is no longer stored on-chain. This helper will be
+// replaced by a backend API call to save/update the label.
 export function trimmedLabel(label: string): string {
   const next = label.trim();
   if (next.length === 0) throw new Error("Enter a label");
@@ -179,15 +174,10 @@ export async function fetchMintMeta(
   rpc: EstateRpc,
   mint: Address,
 ): Promise<{ decimals: number; tokenProgram: Address }> {
-  const { value } = await rpc
-    .getAccountInfo(mint, { encoding: "jsonParsed" })
-    .send();
+  const { value } = await rpc.getAccountInfo(mint, { encoding: "jsonParsed" }).send();
   if (!value) throw new Error("Mint not found");
   const tokenProgram = address(String(value.owner));
-  if (
-    tokenProgram !== TOKEN_PROGRAM_ADDRESS &&
-    tokenProgram !== TOKEN_2022_PROGRAM_ADDRESS
-  ) {
+  if (tokenProgram !== TOKEN_PROGRAM_ADDRESS && tokenProgram !== TOKEN_2022_PROGRAM_ADDRESS) {
     throw new Error("That address is not an SPL mint");
   }
   const data: unknown = value.data;
@@ -209,9 +199,7 @@ export async function assertMintUnregistered(
   const [assetRecord] = await findAssetRecordPda({ estate, mint });
   const maybe = await fetchMaybeAssetRecord(rpc, assetRecord);
   if (maybe.exists) {
-    throw new Error(
-      "This mint is already in the vault. This screen only registers a new mint.",
-    );
+    throw new Error("This mint is already in the vault. This screen only registers a new mint.");
   }
 }
 
@@ -223,9 +211,7 @@ export async function assertWalletCanDeposit(
   amount: bigint,
 ): Promise<void> {
   const ata = await findAtaPda(owner, mint, tokenProgram);
-  const { value } = await rpc
-    .getAccountInfo(ata, { encoding: "jsonParsed" })
-    .send();
+  const { value } = await rpc.getAccountInfo(ata, { encoding: "jsonParsed" }).send();
   if (!value) {
     throw new Error("This wallet has no token account for that mint.");
   }
@@ -233,9 +219,11 @@ export async function assertWalletCanDeposit(
   const payload = Array.isArray(data) ? data[0] : data;
   const parsed =
     typeof payload === "object" && payload !== null && "parsed" in payload
-      ? (payload as {
-          parsed?: { info?: { tokenAmount?: { amount?: string } } };
-        }).parsed
+      ? (
+          payload as {
+            parsed?: { info?: { tokenAmount?: { amount?: string } } };
+          }
+        ).parsed
       : undefined;
   const raw = parsed?.info?.tokenAmount?.amount;
   if (typeof raw !== "string") {
@@ -266,19 +254,12 @@ export async function buildRegisterTokenIx(
     findVaultPda({ authority: authority.address, heir }),
   ]);
   await assertMintUnregistered(rpc, estate, mint);
-  await assertWalletCanDeposit(
-    rpc,
-    authority.address,
-    mint,
-    tokenProgram,
-    amount,
-  );
-  const [vaultTokenAccount, authorityTokenAccount, [assetRecord]] =
-    await Promise.all([
-      findAtaPda(vault, mint, tokenProgram),
-      findAtaPda(authority.address, mint, tokenProgram),
-      findAssetRecordPda({ estate, mint }),
-    ]);
+  await assertWalletCanDeposit(rpc, authority.address, mint, tokenProgram, amount);
+  const [vaultTokenAccount, authorityTokenAccount, [assetRecord]] = await Promise.all([
+    findAtaPda(vault, mint, tokenProgram),
+    findAtaPda(authority.address, mint, tokenProgram),
+    findAssetRecordPda({ estate, mint }),
+  ]);
   return getRegisterAssetInstructionAsync({
     authority,
     heir,

@@ -30,28 +30,38 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
   const { toast } = useToast();
 
   const [open, setOpen] = useState(false);
-  const [editIntervalSec, setEditIntervalSec] = useState(estate.heartbeatInterval);
-  const [editGraceSec, setEditGraceSec] = useState(estate.gracePeriod);
-  const [editPauseSec, setEditPauseSec] = useState(estate.pauseDuration);
-  const [editLabel, setEditLabel] = useState(estate.label);
+  const [editIntervalSec, setEditIntervalSec] = useState(estate.checkInIntervalSecs);
+  const [editGraceSec, setEditGraceSec] = useState(estate.gracePeriodSecs);
+  const [editPauseSec, setEditPauseSec] = useState(estate.delegatePauseDurationSecs);
+  // TODO(backend): Label editing requires backend API integration (not stored on-chain)
+  const [editLabel, setEditLabel] = useState(estate.label ?? "");
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsConfirmOpen, setSettingsConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setEditIntervalSec(estate.heartbeatInterval);
-      setEditGraceSec(estate.gracePeriod);
-      setEditPauseSec(estate.pauseDuration);
-      setEditLabel(estate.label);
+      setEditIntervalSec(estate.checkInIntervalSecs);
+      setEditGraceSec(estate.gracePeriodSecs);
+      setEditPauseSec(estate.delegatePauseDurationSecs);
+      // TODO(backend): Label editing requires backend API integration (not stored on-chain)
+      setEditLabel(estate.label ?? "");
     }
-  }, [open, estate.heartbeatInterval, estate.gracePeriod, estate.pauseDuration, estate.label]);
+  }, [
+    open,
+    estate.checkInIntervalSecs,
+    estate.gracePeriodSecs,
+    estate.delegatePauseDurationSecs,
+    estate.label,
+  ]);
 
   const settingsDirty =
-    editIntervalSec !== estate.heartbeatInterval ||
-    editGraceSec !== estate.gracePeriod ||
-    editPauseSec !== estate.pauseDuration ||
-    editLabel.trim() !== estate.label;
+    editIntervalSec !== estate.checkInIntervalSecs ||
+    editGraceSec !== estate.gracePeriodSecs ||
+    editPauseSec !== estate.delegatePauseDurationSecs ||
+    // TODO(backend): Label dirty check requires backend API integration
+    editLabel.trim() !== (estate.label ?? "");
 
+  // TODO(backend): Label validation for backend API integration
   const labelValid = editLabel.trim().length > 0 && editLabel.length <= LABEL_MAX_LEN;
   const settingsValid = editIntervalSec > 0 && editGraceSec > 0 && editPauseSec >= 0 && labelValid;
 
@@ -64,19 +74,28 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
     setSavingSettings(true);
     try {
       const tx = await updateEstateFieldsOnChain(estate.heir, {
-        heartbeatInterval:
-          editIntervalSec !== estate.heartbeatInterval ? BigInt(editIntervalSec) : undefined,
-        gracePeriod: editGraceSec !== estate.gracePeriod ? BigInt(editGraceSec) : undefined,
-        pauseDuration: editPauseSec !== estate.pauseDuration ? BigInt(editPauseSec) : undefined,
-        label: editLabel.trim() !== estate.label ? editLabel.trim() : undefined,
+        checkInIntervalSecs:
+          editIntervalSec !== estate.checkInIntervalSecs ? BigInt(editIntervalSec) : undefined,
+        gracePeriodSecs: editGraceSec !== estate.gracePeriodSecs ? BigInt(editGraceSec) : undefined,
+        delegatePauseDurationSecs:
+          editPauseSec !== estate.delegatePauseDurationSecs ? BigInt(editPauseSec) : undefined,
+        // TODO(backend): Send label updates to backend API (requires SIWS auth)
+        label: editLabel.trim() !== (estate.label ?? "") ? editLabel.trim() : undefined,
       });
       onTx(tx);
       setSettingsConfirmOpen(false);
       setOpen(false);
-      toast({ title: t("dashboard.manage.settingsUpdatedTitle"), description: t("dashboard.manage.nowUsesTimings") });
+      toast({
+        title: t("dashboard.manage.settingsUpdatedTitle"),
+        description: t("dashboard.manage.nowUsesTimings"),
+      });
       await fetchEstates();
     } catch (err: unknown) {
-      toast({ title: t("dashboard.manage.updateFailedTitle"), description: errMsg(err), variant: "destructive" });
+      toast({
+        title: t("dashboard.manage.updateFailedTitle"),
+        description: errMsg(err),
+        variant: "destructive",
+      });
     } finally {
       setSavingSettings(false);
     }
@@ -205,27 +224,32 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
         }}
       >
         <div className="space-y-2">
-          {editLabel.trim() !== estate.label && (
-            <Delta label={t("dashboard.manage.label")} from={estate.label} to={editLabel.trim()} />
+          {editLabel.trim() !== (estate.label ?? "") && (
+            // TODO(backend): Label delta display requires backend API integration
+            <Delta
+              label={t("dashboard.manage.label")}
+              from={estate.label ?? ""}
+              to={editLabel.trim()}
+            />
           )}
-          {editIntervalSec !== estate.heartbeatInterval && (
+          {editIntervalSec !== estate.checkInIntervalSecs && (
             <Delta
               label={t("dashboard.manage.interval")}
-              from={formatDuration(estate.heartbeatInterval)}
+              from={formatDuration(estate.checkInIntervalSecs)}
               to={formatDuration(editIntervalSec)}
             />
           )}
-          {editGraceSec !== estate.gracePeriod && (
+          {editGraceSec !== estate.gracePeriodSecs && (
             <Delta
               label={t("dashboard.manage.grace")}
-              from={formatDuration(estate.gracePeriod)}
+              from={formatDuration(estate.gracePeriodSecs)}
               to={formatDuration(editGraceSec)}
             />
           )}
-          {editPauseSec !== estate.pauseDuration && (
+          {editPauseSec !== estate.delegatePauseDurationSecs && (
             <Delta
               label={t("dashboard.manage.pause")}
-              from={formatDuration(estate.pauseDuration)}
+              from={formatDuration(estate.delegatePauseDurationSecs)}
               to={formatDuration(editPauseSec)}
             />
           )}

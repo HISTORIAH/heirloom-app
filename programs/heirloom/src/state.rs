@@ -8,13 +8,13 @@ pub struct Estate {
     pub heir: Address,
 
     /// Seconds between required check-ins
-    pub checkin_interval_secs: i64,
+    pub check_in_interval_secs: i64,
 
     /// Extra seconds after interval before claimable
     pub grace_period_secs: i64,
 
     /// Timestamp of last check-in
-    pub last_checkin_ts: i64,
+    pub last_check_in_ts: i64,
 
     pub created_at: i64,
 
@@ -31,8 +31,8 @@ pub struct Estate {
 
     pub delegate: Option<Address>,
 
-    /// Optional hot wallet signer for checkins
-    pub checkin_signer: Option<Address>,
+    /// Optional hot wallet signer for check_ins
+    pub check_in_signer: Option<Address>,
 
     /// Number of remaining claimable assets (tokens + 1 for SOL)
     pub claimable_assets: u8,
@@ -44,16 +44,16 @@ impl Estate {
     pub const LEN: usize = 8         // discriminator
     + 32                             // authority
     + 32                             // heir
-    + 8                              // checkin_interval_secs
+    + 8                              // check_in_interval_secs
     + 8                              // grace_period_secs
-    + 8                              // last_checkin_ts
+    + 8                              // last_check_in_ts
     + 8                              // created_at
     + 1                              // bump
     + 8                              // delegate_pause_duration_secs
     + 8                              // delegate_pause_expires_at
     + 1                              // is_migrating
     + 1 + 32                         // delegate
-    + 1 + 32                         // checkin_signer
+    + 1 + 32                         // check_in_signer
     + 1; // claimable_assets
 }
 

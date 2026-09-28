@@ -28,14 +28,17 @@ import {
   type InstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
-  type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
   getAddressFromResolvedInstructionAccount,
+  type InstructionAccountInput,
+  type InstructionAccountInputAddress,
+  type InstructionSignerInput,
   type ResolvedInstructionAccount,
+  type ResolvedInstructionAccountMeta,
 } from "@solana/program-client-core";
 import { findEstatePda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
@@ -99,27 +102,27 @@ export function getDelegateDeferInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type DelegateDeferAsyncInput<
-  TAccountDelegate extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountEstate extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountDelegate extends InstructionSignerInput = InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  delegate: TransactionSigner<TAccountDelegate>;
+  delegate: TAccountDelegate;
   /** CHECK: authority verified via estate */
-  authority: Address<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: heir verified via estate */
-  heir: Address<TAccountHeir>;
-  estate?: Address<TAccountEstate>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  heir: TAccountHeir;
+  estate?: TAccountEstate;
+  systemProgram?: TAccountSystemProgram;
 };
 
 export async function getDelegateDeferInstructionAsync<
-  TAccountDelegate extends string,
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountEstate extends string,
-  TAccountSystemProgram extends string,
+  TAccountDelegate extends InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: DelegateDeferAsyncInput<
@@ -133,23 +136,35 @@ export async function getDelegateDeferInstructionAsync<
 ): Promise<
   DelegateDeferInstruction<
     TProgramAddress,
-    TAccountDelegate,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<
+      TAccountDelegate,
+      InstructionAccountInputAddress<TAccountDelegate>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    delegate: { value: input.delegate ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    heir: { value: input.heir ?? null, isWritable: false },
-    estate: { value: input.estate ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    delegate: { value: input.delegate ?? null, isSigner: true, isWritable: true },
+    authority: { value: input.authority ?? null, isSigner: false, isWritable: false },
+    heir: { value: input.heir ?? null, isSigner: false, isWritable: false },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -158,17 +173,19 @@ export async function getDelegateDeferInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.estate.value = await findEstatePda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("delegate", accounts.delegate),
@@ -181,36 +198,45 @@ export async function getDelegateDeferInstructionAsync<
     programAddress,
   } as DelegateDeferInstruction<
     TProgramAddress,
-    TAccountDelegate,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<
+      TAccountDelegate,
+      InstructionAccountInputAddress<TAccountDelegate>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 
 export type DelegateDeferInput<
-  TAccountDelegate extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountEstate extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountDelegate extends InstructionSignerInput = InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  delegate: TransactionSigner<TAccountDelegate>;
+  delegate: TAccountDelegate;
   /** CHECK: authority verified via estate */
-  authority: Address<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: heir verified via estate */
-  heir: Address<TAccountHeir>;
-  estate: Address<TAccountEstate>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  heir: TAccountHeir;
+  estate: TAccountEstate;
+  systemProgram?: TAccountSystemProgram;
 };
 
 export function getDelegateDeferInstruction<
-  TAccountDelegate extends string,
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountEstate extends string,
-  TAccountSystemProgram extends string,
+  TAccountDelegate extends InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: DelegateDeferInput<
@@ -223,22 +249,34 @@ export function getDelegateDeferInstruction<
   config?: { programAddress?: TProgramAddress },
 ): DelegateDeferInstruction<
   TProgramAddress,
-  TAccountDelegate,
-  TAccountAuthority,
-  TAccountHeir,
-  TAccountEstate,
-  TAccountSystemProgram
+  ResolvedInstructionAccountMeta<
+    TAccountDelegate,
+    InstructionAccountInputAddress<TAccountDelegate>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountAuthority,
+    InstructionAccountInputAddress<TAccountAuthority>
+  >,
+  ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+  ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+  ResolvedInstructionAccountMeta<
+    TAccountSystemProgram,
+    InstructionAccountInputAddress<TAccountSystemProgram>
+  >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    delegate: { value: input.delegate ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    heir: { value: input.heir ?? null, isWritable: false },
-    estate: { value: input.estate ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    delegate: { value: input.delegate ?? null, isSigner: true, isWritable: true },
+    authority: { value: input.authority ?? null, isSigner: false, isWritable: false },
+    heir: { value: input.heir ?? null, isSigner: false, isWritable: false },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -251,7 +289,6 @@ export function getDelegateDeferInstruction<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("delegate", accounts.delegate),
@@ -264,11 +301,20 @@ export function getDelegateDeferInstruction<
     programAddress,
   } as DelegateDeferInstruction<
     TProgramAddress,
-    TAccountDelegate,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<
+      TAccountDelegate,
+      InstructionAccountInputAddress<TAccountDelegate>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 

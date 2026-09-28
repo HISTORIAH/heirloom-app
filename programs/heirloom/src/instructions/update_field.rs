@@ -24,7 +24,7 @@ pub struct UpdateField {
 impl UpdateField {
     pub fn update_fields_handler(
         ctx: &mut Context<UpdateField>,
-        checkin_interval_secs: Option<i64>,
+        check_in_interval_secs: Option<i64>,
         grace_period_secs: Option<i64>,
         delegate_pause_duration_secs: Option<i64>,
     ) -> Result<()> {
@@ -34,17 +34,17 @@ impl UpdateField {
         let authority_key = ctx.accounts.authority.address();
         let estate = &mut ctx.accounts.estate;
 
-        estate.last_checkin_ts = now;
+        estate.last_check_in_ts = now;
 
-        // Clear expired delegate pause on checkin
+        // Clear expired delegate pause on check_in
         if estate.delegate_pause_expires_at > 0 && now >= estate.delegate_pause_expires_at {
             estate.delegate_pause_expires_at = 0;
         }
 
         if *authority_key == estate.authority {
-            if let Some(ci) = checkin_interval_secs {
+            if let Some(ci) = check_in_interval_secs {
                 validate_interval(ci)?;
-                estate.checkin_interval_secs = ci;
+                estate.check_in_interval_secs = ci;
             }
             if let Some(gp) = grace_period_secs {
                 validate_interval(gp)?;
@@ -62,7 +62,7 @@ impl UpdateField {
     pub fn validate(&self) -> Result<()> {
         let signer = *self.authority.address();
         if signer != self.estate.authority {
-            match self.estate.checkin_signer {
+            match self.estate.check_in_signer {
                 Some(cs) if signer == cs => {}
                 _ => return Err(HeirloomError::Unauthorized.into()),
             }

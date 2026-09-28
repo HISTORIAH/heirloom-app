@@ -60,12 +60,12 @@ const HeartbeatPageInner: React.FC<{
     const result = await lookupEstateSnapshot(client, a, h);
     if (!result) {
       setLookupError(t("heartbeat.notFoundError"));
-    } else if (!result.hbSigner) {
+    } else if (!result.checkInSigner) {
       setLookupError(t("heartbeat.noSignerError"));
       setEstate(result);
-    } else if (walletAddress && result.hbSigner !== walletAddress.toString()) {
+    } else if (walletAddress && result.checkInSigner !== walletAddress.toString()) {
       setLookupError(
-        t("heartbeat.wrongSignerError", { signer: result.hbSigner.slice(0, 8) }),
+        t("heartbeat.wrongSignerError", { signer: result.checkInSigner.slice(0, 8) }),
       );
       setEstate(result);
     } else {
@@ -106,7 +106,7 @@ const HeartbeatPageInner: React.FC<{
   const canSign =
     estate !== null &&
     walletAddress !== null &&
-    estate.hbSigner === walletAddress.toString() &&
+    estate.checkInSigner === walletAddress.toString() &&
     estate.vaultState !== "distributed";
 
   return (
@@ -178,23 +178,24 @@ const HeartbeatPageInner: React.FC<{
         </div>
 
         {estate && (
-          <EstateGlance label={estate.label} state={estate.vaultState}>
+          // TODO(backend): Label comes from backend API, may be undefined
+          <EstateGlance label={estate.label ?? truncateAddress(estate.heir, 4)} state={estate.vaultState}>
             <GlanceStats>
               <GlanceRow label={SOL_LABEL} value={formatSol(estate.solBalance)} />
-              <GlanceRow label={t("heartbeat.interval")} value={formatDuration(estate.heartbeatInterval)} />
+              <GlanceRow label={t("heartbeat.interval")} value={formatDuration(estate.checkInIntervalSecs)} />
               <GlanceRow
                 label={t("heartbeat.lastHeartbeat")}
                 value={
-                  estate.lastHeartbeat > 0
-                    ? new Date(estate.lastHeartbeat * 1000).toLocaleString(i18n.language)
+                  estate.lastCheckInTs > 0
+                    ? new Date(estate.lastCheckInTs * 1000).toLocaleString(i18n.language)
                     : t("common.na")
                 }
               />
               <GlanceRow
                 label={t("heartbeat.heartbeatSigner")}
                 value={
-                  estate.hbSigner ? (
-                    <span title={estate.hbSigner}>{truncateAddress(estate.hbSigner, 4)}</span>
+                  estate.checkInSigner ? (
+                    <span title={estate.checkInSigner}>{truncateAddress(estate.checkInSigner, 4)}</span>
                   ) : (
                     t("common.none")
                   )
@@ -233,7 +234,7 @@ const HeartbeatPageInner: React.FC<{
                     <><Loader2 className="h-4 w-4 animate-spin" /> {t("heartbeat.signing")}</>
                   ) : estate.vaultState === "distributed" ? (
                     t("heartbeat.vaultDistributed")
-                  ) : estate.hbSigner !== walletAddress?.toString() ? (
+                  ) : estate.checkInSigner !== walletAddress?.toString() ? (
                     t("heartbeat.notSigner")
                   ) : (
                     t("heartbeat.sendHeartbeat")

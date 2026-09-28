@@ -6,10 +6,10 @@ import type {
   AddRecipientRequest,
   CreateReminderRequest,
   CreateReminderResponse,
-  EstateKind,
   FetchReminderResponse,
   VerificationStatus,
 } from "@/types/reminders";
+import type { EstateKind } from "@/types/estate";
 
 const REMINDERS_API_BASE = `${BACKEND_URL}/v1/estates`;
 

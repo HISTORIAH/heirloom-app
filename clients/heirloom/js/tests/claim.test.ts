@@ -150,8 +150,8 @@ test("it rejects a claim before the estate is claimable", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 86_400n,
-    gracePeriod: 3_600n,
+    checkInIntervalSecs: 86_400n,
+    gracePeriodSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 

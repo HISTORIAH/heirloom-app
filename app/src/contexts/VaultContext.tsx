@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
 import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
 import { useWallet } from "./WalletContext";
@@ -29,7 +37,6 @@ import {
 import { errMsg } from "@/lib/utils";
 import { TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
 
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -39,35 +46,36 @@ import { TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
 // fails to compile instead of EstateData silently drifting out of sync.
 export type EstateMirroredFields = Pick<
   Estate,
-  | "label"
-  | "heartbeatInterval"
-  | "gracePeriod"
-  | "lastHeartbeat"
-  | "pauseDuration"
-  | "pausedUntil"
+  | "checkInIntervalSecs"
+  | "gracePeriodSecs"
+  | "lastCheckInTs"
+  | "delegatePauseDurationSecs"
+  | "delegatePauseExpiresAt"
   | "createdAt"
   | "isMigrating"
   | "delegate"
-  | "hbSigner"
+  | "checkInSigner"
   | "claimableAssets"
 >;
 
 export interface EstateData {
   authority: string;
   heir: string;
-  label: string;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  lastHeartbeat: number;
-  pauseDuration: number;
-  pausedUntil: number;
+  // TODO: Fetch label/description from backend API (not stored on-chain)
+  label?: string;
+  description?: string;
+  checkInIntervalSecs: number;
+  gracePeriodSecs: number;
+  lastCheckInTs: number;
+  delegatePauseDurationSecs: number;
+  delegatePauseExpiresAt: number;
   createdAt: number;
   isMigrating: boolean;
-  // Derived from pausedUntil, not a stored field — see delegate_defer's
-  // `paused_until == 0` check, which is the on-chain source of truth for this.
+  // Derived from delegatePauseExpiresAt, not a stored field — see delegate_defer's
+  // `delegate_pause_expires_at == 0` check, which is the on-chain source of truth for this.
   isDeferred: boolean;
   delegate: string | null;
-  hbSigner: string | null;
+  checkInSigner: string | null;
   claimableAssets: number;
   estatePda: string;
   vaultPda: string;
@@ -87,21 +95,25 @@ export interface TokenDeposit {
 
 export interface CreateEstateInput {
   heir: string;
-  label: string;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  pauseDuration: number;
+  // TODO: Send label/description to backend after tx confirmation (via memo)
+  label?: string;
+  description?: string;
+  checkInIntervalSecs: number;
+  gracePeriodSecs: number;
+  delegatePauseDurationSecs: number;
   amountLamports: bigint;
   delegate?: string;
-  hbSigner?: string;
+  checkInSigner?: string;
   tokens?: TokenDeposit[];
 }
 
 export interface UpdateEstateFields {
-  heartbeatInterval?: bigint;
-  gracePeriod?: bigint;
-  pauseDuration?: bigint;
+  checkInIntervalSecs?: bigint;
+  gracePeriodSecs?: bigint;
+  delegatePauseDurationSecs?: bigint;
+  // TODO: Send label/description updates to backend API (requires SIWS auth)
   label?: string;
+  description?: string;
 }
 
 interface VaultState {
@@ -179,20 +191,20 @@ const VaultProviderInner: React.FC<{
             discoverVaultTokenAccounts(vaultPda),
           ]);
 
-          const lastHeartbeat = Number(estate.data.lastHeartbeat);
-          const heartbeatInterval = Number(estate.data.heartbeatInterval);
-          const gracePeriod = Number(estate.data.gracePeriod);
-          const pausedUntil = Number(estate.data.pausedUntil);
+          const lastCheckInTs = Number(estate.data.lastCheckInTs);
+          const checkInIntervalSecs = Number(estate.data.checkInIntervalSecs);
+          const gracePeriodSecs = Number(estate.data.gracePeriodSecs);
+          const delegatePauseExpiresAt = Number(estate.data.delegatePauseExpiresAt);
           const createdAt = Number(estate.data.createdAt);
           const hasTokenBalance = vaultTokens.length > 0;
           const vaultEmpty =
             estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
 
           const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
-            lastHeartbeat,
-            heartbeatInterval,
-            gracePeriod,
-            pausedUntil,
+            lastCheckInTs,
+            checkInIntervalSecs,
+            gracePeriodSecs,
+            delegatePauseExpiresAt,
             createdAt,
             vaultEmpty,
           });
@@ -200,17 +212,19 @@ const VaultProviderInner: React.FC<{
           results.push({
             authority: estate.data.authority,
             heir: estate.data.heir,
-            label: estate.data.label,
-            heartbeatInterval,
-            gracePeriod,
-            lastHeartbeat,
-            pauseDuration: Number(estate.data.pauseDuration),
-            pausedUntil,
+            // TODO: Fetch label/description from backend API
+            label: undefined,
+            description: undefined,
+            checkInIntervalSecs,
+            gracePeriodSecs,
+            lastCheckInTs,
+            delegatePauseDurationSecs: Number(estate.data.delegatePauseDurationSecs),
+            delegatePauseExpiresAt,
             createdAt,
             isMigrating: estate.data.isMigrating,
-            isDeferred: pausedUntil > 0,
+            isDeferred: delegatePauseExpiresAt > 0,
             delegate: unwrapOption(estate.data.delegate),
-            hbSigner: unwrapOption(estate.data.hbSigner),
+            checkInSigner: unwrapOption(estate.data.checkInSigner),
             claimableAssets: estate.data.claimableAssets,
             estatePda: estate.address,
             vaultPda,
@@ -316,12 +330,11 @@ const VaultProviderInner: React.FC<{
         initArgs = {
           heir: heirAddress,
           amount: input.amountLamports,
-          label: input.label,
-          heartbeatInterval: BigInt(input.heartbeatInterval),
-          gracePeriod: BigInt(input.gracePeriod),
-          pauseDuration: BigInt(input.pauseDuration),
+          checkInIntervalSecs: BigInt(input.checkInIntervalSecs),
+          gracePeriodSecs: BigInt(input.gracePeriodSecs),
+          delegatePauseDurationSecs: BigInt(input.delegatePauseDurationSecs),
           delegate: input.delegate ? toAddress(input.delegate) : undefined,
-          hbSigner: input.hbSigner ? toAddress(input.hbSigner) : undefined,
+          checkInSigner: input.checkInSigner ? toAddress(input.checkInSigner) : undefined,
         };
         extraTokens = validTokens.map((tok) => ({
           mint: toAddress(tok.mint),
@@ -347,12 +360,11 @@ const VaultProviderInner: React.FC<{
         initArgs = {
           heir: heirAddress,
           amount: primaryToken.amount,
-          label: input.label,
-          heartbeatInterval: BigInt(input.heartbeatInterval),
-          gracePeriod: BigInt(input.gracePeriod),
-          pauseDuration: BigInt(input.pauseDuration),
+          checkInIntervalSecs: BigInt(input.checkInIntervalSecs),
+          gracePeriodSecs: BigInt(input.gracePeriodSecs),
+          delegatePauseDurationSecs: BigInt(input.delegatePauseDurationSecs),
           delegate: input.delegate ? toAddress(input.delegate) : undefined,
-          hbSigner: input.hbSigner ? toAddress(input.hbSigner) : undefined,
+          checkInSigner: input.checkInSigner ? toAddress(input.checkInSigner) : undefined,
           mint: mintAddr,
           tokenProgram,
           vaultTokenAccount,
@@ -436,11 +448,12 @@ const VaultProviderInner: React.FC<{
       const { signer } = requireAuth();
       const txId = await updateFields(client, signer, {
         heir: toAddress(heir),
-        heartbeatInterval: fields.heartbeatInterval,
-        gracePeriod: fields.gracePeriod,
-        pauseDuration: fields.pauseDuration,
-        label: fields.label,
+        checkInIntervalSecs: fields.checkInIntervalSecs,
+        gracePeriodSecs: fields.gracePeriodSecs,
+        delegatePauseDurationSecs: fields.delegatePauseDurationSecs,
       });
+      // TODO: If fields.label or fields.description provided, send to backend API
+      // POST /v1/estates/:estatePda/metadata (requires SIWS auth cookie)
       setPendingTxId(txId);
       return txId;
     },
@@ -524,7 +537,6 @@ const VaultProviderInner: React.FC<{
 
   return <VaultContext.Provider value={value}>{children}</VaultContext.Provider>;
 };
-
 
 // ---------------------------------------------------------------------------
 // Public provider

@@ -9,13 +9,13 @@ export type GateKind = "holdable" | "unset" | "holding" | "spent" | "late" | "en
 export function gateKind(row: EstateRow): GateKind {
   const { state } = presentEstate(row.data, row.claimableLamports);
   const now = Math.floor(Date.now() / 1000);
-  const pausedUntil = Number(row.data.pausedUntil);
-  const pauseDuration = Number(row.data.pauseDuration);
+  const delegatePauseExpiresAt = Number(row.data.delegatePauseExpiresAt);
+  const delegatePauseDurationSecs = Number(row.data.delegatePauseDurationSecs);
   if (state === "distributed") return "ended";
-  if (pausedUntil > now) return "holding";
+  if (delegatePauseExpiresAt > now) return "holding";
   if (state === "claimable") return "late";
-  if (pausedUntil > 0) return "spent";
-  if (pauseDuration <= 0) return "unset";
+  if (delegatePauseExpiresAt > 0) return "spent";
+  if (delegatePauseDurationSecs <= 0) return "unset";
   return "holdable";
 }
 
@@ -44,9 +44,9 @@ function pauseDaysOf(seconds: number): number {
 export function presentGuardian(row: EstateRow): GuardianView {
   const kind = gateKind(row);
   const span = estateSpan(row.data, row.claimableLamports);
-  const pauseDays = pauseDaysOf(Number(row.data.pauseDuration));
+  const pauseDays = pauseDaysOf(Number(row.data.delegatePauseDurationSecs));
   const now = Math.floor(Date.now() / 1000);
-  const left = Math.max(0, Number(row.data.pausedUntil) - now);
+  const left = Math.max(0, Number(row.data.delegatePauseExpiresAt) - now);
   const daysLeft = kind === "holding" ? Math.floor(left / SECONDS_PER_DAY) : pauseDays;
   const elapsedPause = kind === "holding" ? Math.max(0, pauseDays - daysLeft) : 0;
 

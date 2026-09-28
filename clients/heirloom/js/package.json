@@ -13,12 +13,12 @@
   "keywords": [],
   "author": "",
   "peerDependencies": {
-    "@solana/kit": "^7.1.1"
+    "@solana/kit": "^8.3.0"
   },
   "dependencies": {
     "@solana-program/token-2022": "^0.15.0",
     "@solana/kit-plugin-rpc": "^0.16.0",
-    "@solana/program-client-core": "^7.1.1"
+    "@solana/program-client-core": "^8.4.0"
   },
   "devDependencies": {
     "@solana-program/system": "^0.13.0",

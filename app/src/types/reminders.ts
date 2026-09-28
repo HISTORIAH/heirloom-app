@@ -1,3 +1,5 @@
+import type { EstateKind } from "@/types/estate";
+
 export type ReminderChannel = "email" | "sms" | "whatsapp" | "telegram";
 export type ReminderRole = "check_in_signer" | "heir";
 
@@ -11,9 +13,6 @@ export type RecipientResponse = AddRecipientRequest & {
   reminderRecipientId: string; // uuid
   verified: boolean; // destination is decrypted by the server in responses
 };
-
-// is it from ika or heirloom program
-export type EstateKind = "heirloom" | "ika";
 
 export type CreateReminderRequest = {
   estateAddress: string;

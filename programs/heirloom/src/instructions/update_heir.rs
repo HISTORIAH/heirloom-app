@@ -185,13 +185,13 @@ impl UpdateHeir {
 
         self.new_estate.authority = *authority_key;
         self.new_estate.heir = *new_heir_key;
-        self.new_estate.checkin_interval_secs = self.estate.checkin_interval_secs;
+        self.new_estate.check_in_interval_secs = self.estate.check_in_interval_secs;
         self.new_estate.grace_period_secs = self.estate.grace_period_secs;
-        self.new_estate.last_checkin_ts = self.estate.last_checkin_ts;
+        self.new_estate.last_check_in_ts = self.estate.last_check_in_ts;
         self.new_estate.created_at = self.estate.created_at;
         self.new_estate.bump = new_estate_bump;
         self.new_estate.delegate = self.estate.delegate;
-        self.new_estate.checkin_signer = self.estate.checkin_signer;
+        self.new_estate.check_in_signer = self.estate.check_in_signer;
         self.new_estate.claimable_assets = self.estate.claimable_assets;
         self.new_estate.delegate_pause_duration_secs = self.estate.delegate_pause_duration_secs;
         self.new_estate.delegate_pause_expires_at = 0;
