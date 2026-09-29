@@ -28,14 +28,17 @@ import {
   type InstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
-  type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
   getAddressFromResolvedInstructionAccount,
+  type InstructionAccountInput,
+  type InstructionAccountInputAddress,
+  type InstructionSignerInput,
   type ResolvedInstructionAccount,
+  type ResolvedInstructionAccountMeta,
 } from "@solana/program-client-core";
 import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
@@ -129,62 +132,62 @@ export function getClaimInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type ClaimAsyncInput<
-  TAccountHeir extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountDelegate extends string = string,
-  TAccountHeirTokenAccount extends string = string,
-  TAccountEstate extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountMint extends string = string,
-  TAccountAssetRecord extends string = string,
-  TAccountTreasury extends string = string,
-  TAccountTreasuryTokenAccount extends string = string,
-  TAccountTokenProgram extends string = string,
-  TAccountAssociatedTokenProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountHeir extends InstructionSignerInput = InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountDelegate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountHeirTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  heir: TransactionSigner<TAccountHeir>;
+  heir: TAccountHeir;
   /** CHECK: authority verified via estate.authority */
-  authority: Address<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: optional delegate */
-  delegate?: Address<TAccountDelegate>;
+  delegate?: TAccountDelegate;
   /** CHECK: heir's ATA, created idempotently if needed */
-  heirTokenAccount?: Address<TAccountHeirTokenAccount>;
-  estate?: Address<TAccountEstate>;
-  vault?: Address<TAccountVault>;
-  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
-  mint?: Address<TAccountMint>;
+  heirTokenAccount?: TAccountHeirTokenAccount;
+  estate?: TAccountEstate;
+  vault?: TAccountVault;
+  vaultTokenAccount?: TAccountVaultTokenAccount;
+  mint?: TAccountMint;
   /**
    * Proves `mint` was actually registered as a claimable asset for this
    * estate, rather than an arbitrary vault-owned token account.
    */
-  assetRecord?: Address<TAccountAssetRecord>;
+  assetRecord?: TAccountAssetRecord;
   /** CHECK: treasury address */
-  treasury?: Address<TAccountTreasury>;
+  treasury?: TAccountTreasury;
   /** CHECK: treasury ATA, created idempotently if needed */
-  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
+  treasuryTokenAccount?: TAccountTreasuryTokenAccount;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  tokenProgram?: TAccountTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  systemProgram?: TAccountSystemProgram;
 };
 
 export async function getClaimInstructionAsync<
-  TAccountHeir extends string,
-  TAccountAuthority extends string,
-  TAccountDelegate extends string,
-  TAccountHeirTokenAccount extends string,
-  TAccountEstate extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountMint extends string,
-  TAccountAssetRecord extends string,
-  TAccountTreasury extends string,
-  TAccountTreasuryTokenAccount extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountSystemProgram extends string,
+  TAccountHeir extends InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput,
+  TAccountDelegate extends InstructionAccountInput,
+  TAccountHeirTokenAccount extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput,
+  TAccountMint extends InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: ClaimAsyncInput<
@@ -207,41 +210,86 @@ export async function getClaimInstructionAsync<
 ): Promise<
   ClaimInstruction<
     TProgramAddress,
-    TAccountHeir,
-    TAccountAuthority,
-    TAccountDelegate,
-    TAccountHeirTokenAccount,
-    TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountAssetRecord,
-    TAccountTreasury,
-    TAccountTreasuryTokenAccount,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountDelegate,
+      InstructionAccountInputAddress<TAccountDelegate>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountHeirTokenAccount,
+      InstructionAccountInputAddress<TAccountHeirTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasury,
+      InstructionAccountInputAddress<TAccountTreasury>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasuryTokenAccount,
+      InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    heir: { value: input.heir ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    delegate: { value: input.delegate ?? null, isWritable: true },
-    heirTokenAccount: { value: input.heirTokenAccount ?? null, isWritable: true },
-    estate: { value: input.estate ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: true },
-    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
-    treasury: { value: input.treasury ?? null, isWritable: true },
-    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    heir: { value: input.heir ?? null, isSigner: true, isWritable: true },
+    authority: { value: input.authority ?? null, isSigner: false, isWritable: false },
+    delegate: { value: input.delegate ?? null, isSigner: false, isWritable: true },
+    heirTokenAccount: { value: input.heirTokenAccount ?? null, isSigner: false, isWritable: true },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    mint: { value: input.mint ?? null, isSigner: false, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    treasury: { value: input.treasury ?? null, isSigner: false, isWritable: true },
+    treasuryTokenAccount: {
+      value: input.treasuryTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: { value: input.tokenProgram ?? null, isSigner: false, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -250,16 +298,22 @@ export async function getClaimInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.estate.value = await findEstatePda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.vault.value = await findVaultPda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.treasury.value) {
     accounts.treasury.value =
@@ -278,7 +332,6 @@ export async function getClaimInstructionAsync<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("heir", accounts.heir),
@@ -300,80 +353,110 @@ export async function getClaimInstructionAsync<
     programAddress,
   } as ClaimInstruction<
     TProgramAddress,
-    TAccountHeir,
-    TAccountAuthority,
-    TAccountDelegate,
-    TAccountHeirTokenAccount,
-    TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountAssetRecord,
-    TAccountTreasury,
-    TAccountTreasuryTokenAccount,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountDelegate,
+      InstructionAccountInputAddress<TAccountDelegate>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountHeirTokenAccount,
+      InstructionAccountInputAddress<TAccountHeirTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasury,
+      InstructionAccountInputAddress<TAccountTreasury>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasuryTokenAccount,
+      InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 
 export type ClaimInput<
-  TAccountHeir extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountDelegate extends string = string,
-  TAccountHeirTokenAccount extends string = string,
-  TAccountEstate extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountMint extends string = string,
-  TAccountAssetRecord extends string = string,
-  TAccountTreasury extends string = string,
-  TAccountTreasuryTokenAccount extends string = string,
-  TAccountTokenProgram extends string = string,
-  TAccountAssociatedTokenProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountHeir extends InstructionSignerInput = InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountDelegate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountHeirTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  heir: TransactionSigner<TAccountHeir>;
+  heir: TAccountHeir;
   /** CHECK: authority verified via estate.authority */
-  authority: Address<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: optional delegate */
-  delegate?: Address<TAccountDelegate>;
+  delegate?: TAccountDelegate;
   /** CHECK: heir's ATA, created idempotently if needed */
-  heirTokenAccount?: Address<TAccountHeirTokenAccount>;
-  estate: Address<TAccountEstate>;
-  vault: Address<TAccountVault>;
-  vaultTokenAccount?: Address<TAccountVaultTokenAccount>;
-  mint?: Address<TAccountMint>;
+  heirTokenAccount?: TAccountHeirTokenAccount;
+  estate: TAccountEstate;
+  vault: TAccountVault;
+  vaultTokenAccount?: TAccountVaultTokenAccount;
+  mint?: TAccountMint;
   /**
    * Proves `mint` was actually registered as a claimable asset for this
    * estate, rather than an arbitrary vault-owned token account.
    */
-  assetRecord?: Address<TAccountAssetRecord>;
+  assetRecord?: TAccountAssetRecord;
   /** CHECK: treasury address */
-  treasury?: Address<TAccountTreasury>;
+  treasury?: TAccountTreasury;
   /** CHECK: treasury ATA, created idempotently if needed */
-  treasuryTokenAccount?: Address<TAccountTreasuryTokenAccount>;
+  treasuryTokenAccount?: TAccountTreasuryTokenAccount;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  tokenProgram?: Address<TAccountTokenProgram>;
-  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  tokenProgram?: TAccountTokenProgram;
+  associatedTokenProgram?: TAccountAssociatedTokenProgram;
+  systemProgram?: TAccountSystemProgram;
 };
 
 export function getClaimInstruction<
-  TAccountHeir extends string,
-  TAccountAuthority extends string,
-  TAccountDelegate extends string,
-  TAccountHeirTokenAccount extends string,
-  TAccountEstate extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountMint extends string,
-  TAccountAssetRecord extends string,
-  TAccountTreasury extends string,
-  TAccountTreasuryTokenAccount extends string,
-  TAccountTokenProgram extends string,
-  TAccountAssociatedTokenProgram extends string,
-  TAccountSystemProgram extends string,
+  TAccountHeir extends InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput,
+  TAccountDelegate extends InstructionAccountInput,
+  TAccountHeirTokenAccount extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput,
+  TAccountMint extends InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput,
+  TAccountTokenProgram extends InstructionAccountInput,
+  TAccountAssociatedTokenProgram extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: ClaimInput<
@@ -395,40 +478,85 @@ export function getClaimInstruction<
   config?: { programAddress?: TProgramAddress },
 ): ClaimInstruction<
   TProgramAddress,
-  TAccountHeir,
-  TAccountAuthority,
-  TAccountDelegate,
-  TAccountHeirTokenAccount,
-  TAccountEstate,
-  TAccountVault,
-  TAccountVaultTokenAccount,
-  TAccountMint,
-  TAccountAssetRecord,
-  TAccountTreasury,
-  TAccountTreasuryTokenAccount,
-  TAccountTokenProgram,
-  TAccountAssociatedTokenProgram,
-  TAccountSystemProgram
+  ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+  ResolvedInstructionAccountMeta<
+    TAccountAuthority,
+    InstructionAccountInputAddress<TAccountAuthority>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountDelegate,
+    InstructionAccountInputAddress<TAccountDelegate>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountHeirTokenAccount,
+    InstructionAccountInputAddress<TAccountHeirTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+  ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+  ResolvedInstructionAccountMeta<
+    TAccountVaultTokenAccount,
+    InstructionAccountInputAddress<TAccountVaultTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+  ResolvedInstructionAccountMeta<
+    TAccountAssetRecord,
+    InstructionAccountInputAddress<TAccountAssetRecord>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTreasury,
+    InstructionAccountInputAddress<TAccountTreasury>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTreasuryTokenAccount,
+    InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTokenProgram,
+    InstructionAccountInputAddress<TAccountTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountAssociatedTokenProgram,
+    InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountSystemProgram,
+    InstructionAccountInputAddress<TAccountSystemProgram>
+  >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    heir: { value: input.heir ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    delegate: { value: input.delegate ?? null, isWritable: true },
-    heirTokenAccount: { value: input.heirTokenAccount ?? null, isWritable: true },
-    estate: { value: input.estate ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: true },
-    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
-    treasury: { value: input.treasury ?? null, isWritable: true },
-    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    associatedTokenProgram: { value: input.associatedTokenProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    heir: { value: input.heir ?? null, isSigner: true, isWritable: true },
+    authority: { value: input.authority ?? null, isSigner: false, isWritable: false },
+    delegate: { value: input.delegate ?? null, isSigner: false, isWritable: true },
+    heirTokenAccount: { value: input.heirTokenAccount ?? null, isSigner: false, isWritable: true },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    mint: { value: input.mint ?? null, isSigner: false, isWritable: true },
+    assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    treasury: { value: input.treasury ?? null, isSigner: false, isWritable: true },
+    treasuryTokenAccount: {
+      value: input.treasuryTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    tokenProgram: { value: input.tokenProgram ?? null, isSigner: false, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -453,7 +581,6 @@ export function getClaimInstruction<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("heir", accounts.heir),
@@ -475,20 +602,50 @@ export function getClaimInstruction<
     programAddress,
   } as ClaimInstruction<
     TProgramAddress,
-    TAccountHeir,
-    TAccountAuthority,
-    TAccountDelegate,
-    TAccountHeirTokenAccount,
-    TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountMint,
-    TAccountAssetRecord,
-    TAccountTreasury,
-    TAccountTreasuryTokenAccount,
-    TAccountTokenProgram,
-    TAccountAssociatedTokenProgram,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountDelegate,
+      InstructionAccountInputAddress<TAccountDelegate>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountHeirTokenAccount,
+      InstructionAccountInputAddress<TAccountHeirTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasury,
+      InstructionAccountInputAddress<TAccountTreasury>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasuryTokenAccount,
+      InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTokenProgram,
+      InstructionAccountInputAddress<TAccountTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssociatedTokenProgram,
+      InstructionAccountInputAddress<TAccountAssociatedTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 

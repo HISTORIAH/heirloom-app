@@ -30,14 +30,17 @@ import {
   type InstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
-  type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
   getAddressFromResolvedInstructionAccount,
+  type InstructionAccountInput,
+  type InstructionAccountInputAddress,
+  type InstructionSignerInput,
   type ResolvedInstructionAccount,
+  type ResolvedInstructionAccountMeta,
 } from "@solana/program-client-core";
 import { findEstatePda, findVaultPda } from "../pdas";
 import { HEIRLOOM_PROGRAM_ADDRESS } from "../programs";
@@ -232,152 +235,152 @@ export function getCompleteWithdrawRegularLuloInstructionDataCodec(): FixedSizeC
 }
 
 export type CompleteWithdrawRegularLuloAsyncInput<
-  TAccountCaller extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountEstate extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountAssetRecord extends string = string,
-  TAccountPendingWithdrawalAccount extends string = string,
-  TAccountPoolUser extends string = string,
-  TAccountPoolUserTokenAccount extends string = string,
-  TAccountPoolUserLpTokenAccount extends string = string,
-  TAccountReferrerPoolUser extends string = string,
-  TAccountInputMint extends string = string,
-  TAccountPoolReserveTokenAccount extends string = string,
-  TAccountLpMint extends string = string,
-  TAccountPoolAccount extends string = string,
-  TAccountProgramId extends string = string,
-  TAccountInputMintTokenProgram extends string = string,
-  TAccountLpMintTokenProgram extends string = string,
-  TAccountMarket extends string = string,
-  TAccountObligation extends string = string,
-  TAccountReserve extends string = string,
-  TAccountReserveLiquiditySupply extends string = string,
-  TAccountLendingMarketAuthority extends string = string,
-  TAccountCollateralMint extends string = string,
-  TAccountCollateralTokenAccount extends string = string,
-  TAccountReserveCollateralSupply extends string = string,
-  TAccountCollateralTokenProgram extends string = string,
-  TAccountInstructionsSysvar extends string = string,
-  TAccountKaminoProgram extends string = string,
-  TAccountFarmsProgram extends string = string,
-  TAccountReserveFarmState extends string = string,
-  TAccountObligationFarmUserState extends string = string,
-  TAccountScopePrices extends string = string,
-  TAccountProtocolAuthority extends string = string,
-  TAccountTreasuryTokenAccount extends string = string,
-  TAccountProtocolAuthorityTokenAccount extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountCaller extends InstructionSignerInput = InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPendingWithdrawalAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountMarket extends InstructionAccountInput = InstructionAccountInput,
+  TAccountObligation extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserve extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserveLiquiditySupply extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLendingMarketAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCollateralMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCollateralTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserveCollateralSupply extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCollateralTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInstructionsSysvar extends InstructionAccountInput = InstructionAccountInput,
+  TAccountKaminoProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountFarmsProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserveFarmState extends InstructionAccountInput = InstructionAccountInput,
+  TAccountObligationFarmUserState extends InstructionAccountInput = InstructionAccountInput,
+  TAccountScopePrices extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProtocolAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProtocolAuthorityTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  caller: TransactionSigner<TAccountCaller>;
+  caller: TAccountCaller;
   /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
-  authority: Address<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: heir pubkey, stored in estate */
-  heir: Address<TAccountHeir>;
-  estate?: Address<TAccountEstate>;
-  vault?: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  assetRecord: Address<TAccountAssetRecord>;
+  heir: TAccountHeir;
+  estate?: TAccountEstate;
+  vault?: TAccountVault;
+  vaultTokenAccount: TAccountVaultTokenAccount;
+  assetRecord: TAccountAssetRecord;
   /** CHECK: Lulo CPI */
-  pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
+  pendingWithdrawalAccount: TAccountPendingWithdrawalAccount;
   /** CHECK: Lulo position PDA. */
-  poolUser: Address<TAccountPoolUser>;
+  poolUser: TAccountPoolUser;
   /** CHECK: Pool user input-mint ATA; intermediate hop. */
-  poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  poolUserTokenAccount: TAccountPoolUserTokenAccount;
   /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
-  poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  poolUserLpTokenAccount: TAccountPoolUserLpTokenAccount;
   /** CHECK: Referrer's pool_user; must be owned by this program. */
-  referrerPoolUser: Address<TAccountReferrerPoolUser>;
-  inputMint: Address<TAccountInputMint>;
+  referrerPoolUser: TAccountReferrerPoolUser;
+  inputMint: TAccountInputMint;
   /** Pool's reserve token account (authority = pool_account). */
-  poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
+  poolReserveTokenAccount: TAccountPoolReserveTokenAccount;
   /** The pool's LP/share mint (Token-2022). */
-  lpMint: Address<TAccountLpMint>;
+  lpMint: TAccountLpMint;
   /** CHECK: Lulo pool state. */
-  poolAccount: Address<TAccountPoolAccount>;
+  poolAccount: TAccountPoolAccount;
   /** CHECK: Lulo program. */
-  programId?: Address<TAccountProgramId>;
+  programId?: TAccountProgramId;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  inputMintTokenProgram: TAccountInputMintTokenProgram;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
+  lpMintTokenProgram: TAccountLpMintTokenProgram;
   /** CHECK: CPI */
-  market: Address<TAccountMarket>;
+  market: TAccountMarket;
   /** CHECK: CPI */
-  obligation: Address<TAccountObligation>;
+  obligation: TAccountObligation;
   /** CHECK: CPI */
-  reserve: Address<TAccountReserve>;
-  reserveLiquiditySupply: Address<TAccountReserveLiquiditySupply>;
+  reserve: TAccountReserve;
+  reserveLiquiditySupply: TAccountReserveLiquiditySupply;
   /** CHECK: CPI */
-  lendingMarketAuthority: Address<TAccountLendingMarketAuthority>;
+  lendingMarketAuthority: TAccountLendingMarketAuthority;
   /** Collateral mint; needs mut. */
-  collateralMint: Address<TAccountCollateralMint>;
-  collateralTokenAccount: Address<TAccountCollateralTokenAccount>;
-  reserveCollateralSupply: Address<TAccountReserveCollateralSupply>;
+  collateralMint: TAccountCollateralMint;
+  collateralTokenAccount: TAccountCollateralTokenAccount;
+  reserveCollateralSupply: TAccountReserveCollateralSupply;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  collateralTokenProgram: Address<TAccountCollateralTokenProgram>;
+  collateralTokenProgram: TAccountCollateralTokenProgram;
   /** CHECK: SysInstructions */
-  instructionsSysvar?: Address<TAccountInstructionsSysvar>;
+  instructionsSysvar?: TAccountInstructionsSysvar;
   /** CHECK: CPI */
-  kaminoProgram?: Address<TAccountKaminoProgram>;
+  kaminoProgram?: TAccountKaminoProgram;
   /** CHECK: CPI */
-  farmsProgram?: Address<TAccountFarmsProgram>;
+  farmsProgram?: TAccountFarmsProgram;
   /** CHECK: CPI */
-  reserveFarmState?: Address<TAccountReserveFarmState>;
+  reserveFarmState?: TAccountReserveFarmState;
   /** CHECK: CPI */
-  obligationFarmUserState?: Address<TAccountObligationFarmUserState>;
+  obligationFarmUserState?: TAccountObligationFarmUserState;
   /** CHECK: CPI */
-  scopePrices?: Address<TAccountScopePrices>;
+  scopePrices?: TAccountScopePrices;
   /** CHECK: Lulo CPI */
-  protocolAuthority?: Address<TAccountProtocolAuthority>;
-  treasuryTokenAccount: Address<TAccountTreasuryTokenAccount>;
+  protocolAuthority?: TAccountProtocolAuthority;
+  treasuryTokenAccount: TAccountTreasuryTokenAccount;
   /** CHECK: Lulo CPI */
-  protocolAuthorityTokenAccount?: Address<TAccountProtocolAuthorityTokenAccount>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  protocolAuthorityTokenAccount?: TAccountProtocolAuthorityTokenAccount;
+  systemProgram?: TAccountSystemProgram;
   withdrawalId: CompleteWithdrawRegularLuloInstructionDataArgs["withdrawalId"];
 };
 
 export async function getCompleteWithdrawRegularLuloInstructionAsync<
-  TAccountCaller extends string,
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountEstate extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountAssetRecord extends string,
-  TAccountPendingWithdrawalAccount extends string,
-  TAccountPoolUser extends string,
-  TAccountPoolUserTokenAccount extends string,
-  TAccountPoolUserLpTokenAccount extends string,
-  TAccountReferrerPoolUser extends string,
-  TAccountInputMint extends string,
-  TAccountPoolReserveTokenAccount extends string,
-  TAccountLpMint extends string,
-  TAccountPoolAccount extends string,
-  TAccountProgramId extends string,
-  TAccountInputMintTokenProgram extends string,
-  TAccountLpMintTokenProgram extends string,
-  TAccountMarket extends string,
-  TAccountObligation extends string,
-  TAccountReserve extends string,
-  TAccountReserveLiquiditySupply extends string,
-  TAccountLendingMarketAuthority extends string,
-  TAccountCollateralMint extends string,
-  TAccountCollateralTokenAccount extends string,
-  TAccountReserveCollateralSupply extends string,
-  TAccountCollateralTokenProgram extends string,
-  TAccountInstructionsSysvar extends string,
-  TAccountKaminoProgram extends string,
-  TAccountFarmsProgram extends string,
-  TAccountReserveFarmState extends string,
-  TAccountObligationFarmUserState extends string,
-  TAccountScopePrices extends string,
-  TAccountProtocolAuthority extends string,
-  TAccountTreasuryTokenAccount extends string,
-  TAccountProtocolAuthorityTokenAccount extends string,
-  TAccountSystemProgram extends string,
+  TAccountCaller extends InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput,
+  TAccountPendingWithdrawalAccount extends InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput,
+  TAccountMarket extends InstructionAccountInput,
+  TAccountObligation extends InstructionAccountInput,
+  TAccountReserve extends InstructionAccountInput,
+  TAccountReserveLiquiditySupply extends InstructionAccountInput,
+  TAccountLendingMarketAuthority extends InstructionAccountInput,
+  TAccountCollateralMint extends InstructionAccountInput,
+  TAccountCollateralTokenAccount extends InstructionAccountInput,
+  TAccountReserveCollateralSupply extends InstructionAccountInput,
+  TAccountCollateralTokenProgram extends InstructionAccountInput,
+  TAccountInstructionsSysvar extends InstructionAccountInput,
+  TAccountKaminoProgram extends InstructionAccountInput,
+  TAccountFarmsProgram extends InstructionAccountInput,
+  TAccountReserveFarmState extends InstructionAccountInput,
+  TAccountObligationFarmUserState extends InstructionAccountInput,
+  TAccountScopePrices extends InstructionAccountInput,
+  TAccountProtocolAuthority extends InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput,
+  TAccountProtocolAuthorityTokenAccount extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: CompleteWithdrawRegularLuloAsyncInput<
@@ -424,92 +427,256 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
 ): Promise<
   CompleteWithdrawRegularLuloInstruction<
     TProgramAddress,
-    TAccountCaller,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountAssetRecord,
-    TAccountPendingWithdrawalAccount,
-    TAccountPoolUser,
-    TAccountPoolUserTokenAccount,
-    TAccountPoolUserLpTokenAccount,
-    TAccountReferrerPoolUser,
-    TAccountInputMint,
-    TAccountPoolReserveTokenAccount,
-    TAccountLpMint,
-    TAccountPoolAccount,
-    TAccountProgramId,
-    TAccountInputMintTokenProgram,
-    TAccountLpMintTokenProgram,
-    TAccountMarket,
-    TAccountObligation,
-    TAccountReserve,
-    TAccountReserveLiquiditySupply,
-    TAccountLendingMarketAuthority,
-    TAccountCollateralMint,
-    TAccountCollateralTokenAccount,
-    TAccountReserveCollateralSupply,
-    TAccountCollateralTokenProgram,
-    TAccountInstructionsSysvar,
-    TAccountKaminoProgram,
-    TAccountFarmsProgram,
-    TAccountReserveFarmState,
-    TAccountObligationFarmUserState,
-    TAccountScopePrices,
-    TAccountProtocolAuthority,
-    TAccountTreasuryTokenAccount,
-    TAccountProtocolAuthorityTokenAccount,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountCaller, InstructionAccountInputAddress<TAccountCaller>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPendingWithdrawalAccount,
+      InstructionAccountInputAddress<TAccountPendingWithdrawalAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUser,
+      InstructionAccountInputAddress<TAccountPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserLpTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReferrerPoolUser,
+      InstructionAccountInputAddress<TAccountReferrerPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMint,
+      InstructionAccountInputAddress<TAccountInputMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolReserveTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolAccount,
+      InstructionAccountInputAddress<TAccountPoolAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProgramId,
+      InstructionAccountInputAddress<TAccountProgramId>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMintTokenProgram,
+      InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLpMintTokenProgram,
+      InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<TAccountMarket, InstructionAccountInputAddress<TAccountMarket>>,
+    ResolvedInstructionAccountMeta<
+      TAccountObligation,
+      InstructionAccountInputAddress<TAccountObligation>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserve,
+      InstructionAccountInputAddress<TAccountReserve>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveLiquiditySupply,
+      InstructionAccountInputAddress<TAccountReserveLiquiditySupply>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLendingMarketAuthority,
+      InstructionAccountInputAddress<TAccountLendingMarketAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralMint,
+      InstructionAccountInputAddress<TAccountCollateralMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralTokenAccount,
+      InstructionAccountInputAddress<TAccountCollateralTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveCollateralSupply,
+      InstructionAccountInputAddress<TAccountReserveCollateralSupply>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralTokenProgram,
+      InstructionAccountInputAddress<TAccountCollateralTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInstructionsSysvar,
+      InstructionAccountInputAddress<TAccountInstructionsSysvar>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountKaminoProgram,
+      InstructionAccountInputAddress<TAccountKaminoProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountFarmsProgram,
+      InstructionAccountInputAddress<TAccountFarmsProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveFarmState,
+      InstructionAccountInputAddress<TAccountReserveFarmState>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountObligationFarmUserState,
+      InstructionAccountInputAddress<TAccountObligationFarmUserState>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountScopePrices,
+      InstructionAccountInputAddress<TAccountScopePrices>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProtocolAuthority,
+      InstructionAccountInputAddress<TAccountProtocolAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasuryTokenAccount,
+      InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProtocolAuthorityTokenAccount,
+      InstructionAccountInputAddress<TAccountProtocolAuthorityTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    caller: { value: input.caller ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    heir: { value: input.heir ?? null, isWritable: false },
-    estate: { value: input.estate ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
-    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
-    pendingWithdrawalAccount: { value: input.pendingWithdrawalAccount ?? null, isWritable: true },
-    poolUser: { value: input.poolUser ?? null, isWritable: true },
-    poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
-    poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
-    referrerPoolUser: { value: input.referrerPoolUser ?? null, isWritable: true },
-    inputMint: { value: input.inputMint ?? null, isWritable: false },
-    poolReserveTokenAccount: { value: input.poolReserveTokenAccount ?? null, isWritable: true },
-    lpMint: { value: input.lpMint ?? null, isWritable: true },
-    poolAccount: { value: input.poolAccount ?? null, isWritable: true },
-    programId: { value: input.programId ?? null, isWritable: true },
-    inputMintTokenProgram: { value: input.inputMintTokenProgram ?? null, isWritable: false },
-    lpMintTokenProgram: { value: input.lpMintTokenProgram ?? null, isWritable: false },
-    market: { value: input.market ?? null, isWritable: true },
-    obligation: { value: input.obligation ?? null, isWritable: true },
-    reserve: { value: input.reserve ?? null, isWritable: true },
-    reserveLiquiditySupply: { value: input.reserveLiquiditySupply ?? null, isWritable: true },
-    lendingMarketAuthority: { value: input.lendingMarketAuthority ?? null, isWritable: false },
-    collateralMint: { value: input.collateralMint ?? null, isWritable: true },
-    collateralTokenAccount: { value: input.collateralTokenAccount ?? null, isWritable: true },
-    reserveCollateralSupply: { value: input.reserveCollateralSupply ?? null, isWritable: true },
-    collateralTokenProgram: { value: input.collateralTokenProgram ?? null, isWritable: false },
-    instructionsSysvar: { value: input.instructionsSysvar ?? null, isWritable: false },
-    kaminoProgram: { value: input.kaminoProgram ?? null, isWritable: false },
-    farmsProgram: { value: input.farmsProgram ?? null, isWritable: false },
-    reserveFarmState: { value: input.reserveFarmState ?? null, isWritable: true },
-    obligationFarmUserState: { value: input.obligationFarmUserState ?? null, isWritable: true },
-    scopePrices: { value: input.scopePrices ?? null, isWritable: false },
-    protocolAuthority: { value: input.protocolAuthority ?? null, isWritable: true },
-    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
-    protocolAuthorityTokenAccount: {
-      value: input.protocolAuthorityTokenAccount ?? null,
+    caller: { value: input.caller ?? null, isSigner: true, isWritable: true },
+    authority: { value: input.authority ?? null, isSigner: false, isWritable: false },
+    heir: { value: input.heir ?? null, isSigner: false, isWritable: false },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isSigner: false,
       isWritable: true,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    pendingWithdrawalAccount: {
+      value: input.pendingWithdrawalAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    poolUser: { value: input.poolUser ?? null, isSigner: false, isWritable: true },
+    poolUserTokenAccount: {
+      value: input.poolUserTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    poolUserLpTokenAccount: {
+      value: input.poolUserLpTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    referrerPoolUser: { value: input.referrerPoolUser ?? null, isSigner: false, isWritable: true },
+    inputMint: { value: input.inputMint ?? null, isSigner: false, isWritable: false },
+    poolReserveTokenAccount: {
+      value: input.poolReserveTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    lpMint: { value: input.lpMint ?? null, isSigner: false, isWritable: true },
+    poolAccount: { value: input.poolAccount ?? null, isSigner: false, isWritable: true },
+    programId: { value: input.programId ?? null, isSigner: false, isWritable: true },
+    inputMintTokenProgram: {
+      value: input.inputMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    lpMintTokenProgram: {
+      value: input.lpMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    market: { value: input.market ?? null, isSigner: false, isWritable: true },
+    obligation: { value: input.obligation ?? null, isSigner: false, isWritable: true },
+    reserve: { value: input.reserve ?? null, isSigner: false, isWritable: true },
+    reserveLiquiditySupply: {
+      value: input.reserveLiquiditySupply ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    lendingMarketAuthority: {
+      value: input.lendingMarketAuthority ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    collateralMint: { value: input.collateralMint ?? null, isSigner: false, isWritable: true },
+    collateralTokenAccount: {
+      value: input.collateralTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    reserveCollateralSupply: {
+      value: input.reserveCollateralSupply ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    collateralTokenProgram: {
+      value: input.collateralTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    instructionsSysvar: {
+      value: input.instructionsSysvar ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    kaminoProgram: { value: input.kaminoProgram ?? null, isSigner: false, isWritable: false },
+    farmsProgram: { value: input.farmsProgram ?? null, isSigner: false, isWritable: false },
+    reserveFarmState: { value: input.reserveFarmState ?? null, isSigner: false, isWritable: true },
+    obligationFarmUserState: {
+      value: input.obligationFarmUserState ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    scopePrices: { value: input.scopePrices ?? null, isSigner: false, isWritable: false },
+    protocolAuthority: {
+      value: input.protocolAuthority ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    treasuryTokenAccount: {
+      value: input.treasuryTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    protocolAuthorityTokenAccount: {
+      value: input.protocolAuthorityTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -521,16 +688,22 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
 
   // Resolve default values.
   if (!accounts.estate.value) {
-    accounts.estate.value = await findEstatePda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.estate.value = await findEstatePda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.vault.value) {
-    accounts.vault.value = await findVaultPda({
-      authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
-      heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
-    });
+    accounts.vault.value = await findVaultPda(
+      {
+        authority: getAddressFromResolvedInstructionAccount("authority", accounts.authority.value),
+        heir: getAddressFromResolvedInstructionAccount("heir", accounts.heir.value),
+      },
+      { programAddress },
+    );
   }
   if (!accounts.programId.value) {
     accounts.programId.value =
@@ -561,7 +734,6 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("caller", accounts.caller),
@@ -609,194 +781,290 @@ export async function getCompleteWithdrawRegularLuloInstructionAsync<
     programAddress,
   } as CompleteWithdrawRegularLuloInstruction<
     TProgramAddress,
-    TAccountCaller,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountAssetRecord,
-    TAccountPendingWithdrawalAccount,
-    TAccountPoolUser,
-    TAccountPoolUserTokenAccount,
-    TAccountPoolUserLpTokenAccount,
-    TAccountReferrerPoolUser,
-    TAccountInputMint,
-    TAccountPoolReserveTokenAccount,
-    TAccountLpMint,
-    TAccountPoolAccount,
-    TAccountProgramId,
-    TAccountInputMintTokenProgram,
-    TAccountLpMintTokenProgram,
-    TAccountMarket,
-    TAccountObligation,
-    TAccountReserve,
-    TAccountReserveLiquiditySupply,
-    TAccountLendingMarketAuthority,
-    TAccountCollateralMint,
-    TAccountCollateralTokenAccount,
-    TAccountReserveCollateralSupply,
-    TAccountCollateralTokenProgram,
-    TAccountInstructionsSysvar,
-    TAccountKaminoProgram,
-    TAccountFarmsProgram,
-    TAccountReserveFarmState,
-    TAccountObligationFarmUserState,
-    TAccountScopePrices,
-    TAccountProtocolAuthority,
-    TAccountTreasuryTokenAccount,
-    TAccountProtocolAuthorityTokenAccount,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountCaller, InstructionAccountInputAddress<TAccountCaller>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPendingWithdrawalAccount,
+      InstructionAccountInputAddress<TAccountPendingWithdrawalAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUser,
+      InstructionAccountInputAddress<TAccountPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserLpTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReferrerPoolUser,
+      InstructionAccountInputAddress<TAccountReferrerPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMint,
+      InstructionAccountInputAddress<TAccountInputMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolReserveTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolAccount,
+      InstructionAccountInputAddress<TAccountPoolAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProgramId,
+      InstructionAccountInputAddress<TAccountProgramId>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMintTokenProgram,
+      InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLpMintTokenProgram,
+      InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<TAccountMarket, InstructionAccountInputAddress<TAccountMarket>>,
+    ResolvedInstructionAccountMeta<
+      TAccountObligation,
+      InstructionAccountInputAddress<TAccountObligation>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserve,
+      InstructionAccountInputAddress<TAccountReserve>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveLiquiditySupply,
+      InstructionAccountInputAddress<TAccountReserveLiquiditySupply>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLendingMarketAuthority,
+      InstructionAccountInputAddress<TAccountLendingMarketAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralMint,
+      InstructionAccountInputAddress<TAccountCollateralMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralTokenAccount,
+      InstructionAccountInputAddress<TAccountCollateralTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveCollateralSupply,
+      InstructionAccountInputAddress<TAccountReserveCollateralSupply>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralTokenProgram,
+      InstructionAccountInputAddress<TAccountCollateralTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInstructionsSysvar,
+      InstructionAccountInputAddress<TAccountInstructionsSysvar>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountKaminoProgram,
+      InstructionAccountInputAddress<TAccountKaminoProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountFarmsProgram,
+      InstructionAccountInputAddress<TAccountFarmsProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveFarmState,
+      InstructionAccountInputAddress<TAccountReserveFarmState>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountObligationFarmUserState,
+      InstructionAccountInputAddress<TAccountObligationFarmUserState>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountScopePrices,
+      InstructionAccountInputAddress<TAccountScopePrices>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProtocolAuthority,
+      InstructionAccountInputAddress<TAccountProtocolAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasuryTokenAccount,
+      InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProtocolAuthorityTokenAccount,
+      InstructionAccountInputAddress<TAccountProtocolAuthorityTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 
 export type CompleteWithdrawRegularLuloInput<
-  TAccountCaller extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountHeir extends string = string,
-  TAccountEstate extends string = string,
-  TAccountVault extends string = string,
-  TAccountVaultTokenAccount extends string = string,
-  TAccountAssetRecord extends string = string,
-  TAccountPendingWithdrawalAccount extends string = string,
-  TAccountPoolUser extends string = string,
-  TAccountPoolUserTokenAccount extends string = string,
-  TAccountPoolUserLpTokenAccount extends string = string,
-  TAccountReferrerPoolUser extends string = string,
-  TAccountInputMint extends string = string,
-  TAccountPoolReserveTokenAccount extends string = string,
-  TAccountLpMint extends string = string,
-  TAccountPoolAccount extends string = string,
-  TAccountProgramId extends string = string,
-  TAccountInputMintTokenProgram extends string = string,
-  TAccountLpMintTokenProgram extends string = string,
-  TAccountMarket extends string = string,
-  TAccountObligation extends string = string,
-  TAccountReserve extends string = string,
-  TAccountReserveLiquiditySupply extends string = string,
-  TAccountLendingMarketAuthority extends string = string,
-  TAccountCollateralMint extends string = string,
-  TAccountCollateralTokenAccount extends string = string,
-  TAccountReserveCollateralSupply extends string = string,
-  TAccountCollateralTokenProgram extends string = string,
-  TAccountInstructionsSysvar extends string = string,
-  TAccountKaminoProgram extends string = string,
-  TAccountFarmsProgram extends string = string,
-  TAccountReserveFarmState extends string = string,
-  TAccountObligationFarmUserState extends string = string,
-  TAccountScopePrices extends string = string,
-  TAccountProtocolAuthority extends string = string,
-  TAccountTreasuryTokenAccount extends string = string,
-  TAccountProtocolAuthorityTokenAccount extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountCaller extends InstructionSignerInput = InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput = InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput = InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPendingWithdrawalAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountMarket extends InstructionAccountInput = InstructionAccountInput,
+  TAccountObligation extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserve extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserveLiquiditySupply extends InstructionAccountInput = InstructionAccountInput,
+  TAccountLendingMarketAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCollateralMint extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCollateralTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserveCollateralSupply extends InstructionAccountInput = InstructionAccountInput,
+  TAccountCollateralTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountInstructionsSysvar extends InstructionAccountInput = InstructionAccountInput,
+  TAccountKaminoProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountFarmsProgram extends InstructionAccountInput = InstructionAccountInput,
+  TAccountReserveFarmState extends InstructionAccountInput = InstructionAccountInput,
+  TAccountObligationFarmUserState extends InstructionAccountInput = InstructionAccountInput,
+  TAccountScopePrices extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProtocolAuthority extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountProtocolAuthorityTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-  caller: TransactionSigner<TAccountCaller>;
+  caller: TAccountCaller;
   /** CHECK: estate authority pubkey, stored in estate; used for PDA seeds */
-  authority: Address<TAccountAuthority>;
+  authority: TAccountAuthority;
   /** CHECK: heir pubkey, stored in estate */
-  heir: Address<TAccountHeir>;
-  estate: Address<TAccountEstate>;
-  vault: Address<TAccountVault>;
-  vaultTokenAccount: Address<TAccountVaultTokenAccount>;
-  assetRecord: Address<TAccountAssetRecord>;
+  heir: TAccountHeir;
+  estate: TAccountEstate;
+  vault: TAccountVault;
+  vaultTokenAccount: TAccountVaultTokenAccount;
+  assetRecord: TAccountAssetRecord;
   /** CHECK: Lulo CPI */
-  pendingWithdrawalAccount: Address<TAccountPendingWithdrawalAccount>;
+  pendingWithdrawalAccount: TAccountPendingWithdrawalAccount;
   /** CHECK: Lulo position PDA. */
-  poolUser: Address<TAccountPoolUser>;
+  poolUser: TAccountPoolUser;
   /** CHECK: Pool user input-mint ATA; intermediate hop. */
-  poolUserTokenAccount: Address<TAccountPoolUserTokenAccount>;
+  poolUserTokenAccount: TAccountPoolUserTokenAccount;
   /** CHECK: Pool user's LP-receipt ATA; created by the deposit ix if missing. */
-  poolUserLpTokenAccount: Address<TAccountPoolUserLpTokenAccount>;
+  poolUserLpTokenAccount: TAccountPoolUserLpTokenAccount;
   /** CHECK: Referrer's pool_user; must be owned by this program. */
-  referrerPoolUser: Address<TAccountReferrerPoolUser>;
-  inputMint: Address<TAccountInputMint>;
+  referrerPoolUser: TAccountReferrerPoolUser;
+  inputMint: TAccountInputMint;
   /** Pool's reserve token account (authority = pool_account). */
-  poolReserveTokenAccount: Address<TAccountPoolReserveTokenAccount>;
+  poolReserveTokenAccount: TAccountPoolReserveTokenAccount;
   /** The pool's LP/share mint (Token-2022). */
-  lpMint: Address<TAccountLpMint>;
+  lpMint: TAccountLpMint;
   /** CHECK: Lulo pool state. */
-  poolAccount: Address<TAccountPoolAccount>;
+  poolAccount: TAccountPoolAccount;
   /** CHECK: Lulo program. */
-  programId?: Address<TAccountProgramId>;
+  programId?: TAccountProgramId;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  inputMintTokenProgram: Address<TAccountInputMintTokenProgram>;
+  inputMintTokenProgram: TAccountInputMintTokenProgram;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  lpMintTokenProgram: Address<TAccountLpMintTokenProgram>;
+  lpMintTokenProgram: TAccountLpMintTokenProgram;
   /** CHECK: CPI */
-  market: Address<TAccountMarket>;
+  market: TAccountMarket;
   /** CHECK: CPI */
-  obligation: Address<TAccountObligation>;
+  obligation: TAccountObligation;
   /** CHECK: CPI */
-  reserve: Address<TAccountReserve>;
-  reserveLiquiditySupply: Address<TAccountReserveLiquiditySupply>;
+  reserve: TAccountReserve;
+  reserveLiquiditySupply: TAccountReserveLiquiditySupply;
   /** CHECK: CPI */
-  lendingMarketAuthority: Address<TAccountLendingMarketAuthority>;
+  lendingMarketAuthority: TAccountLendingMarketAuthority;
   /** Collateral mint; needs mut. */
-  collateralMint: Address<TAccountCollateralMint>;
-  collateralTokenAccount: Address<TAccountCollateralTokenAccount>;
-  reserveCollateralSupply: Address<TAccountReserveCollateralSupply>;
+  collateralMint: TAccountCollateralMint;
+  collateralTokenAccount: TAccountCollateralTokenAccount;
+  reserveCollateralSupply: TAccountReserveCollateralSupply;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-  collateralTokenProgram: Address<TAccountCollateralTokenProgram>;
+  collateralTokenProgram: TAccountCollateralTokenProgram;
   /** CHECK: SysInstructions */
-  instructionsSysvar?: Address<TAccountInstructionsSysvar>;
+  instructionsSysvar?: TAccountInstructionsSysvar;
   /** CHECK: CPI */
-  kaminoProgram?: Address<TAccountKaminoProgram>;
+  kaminoProgram?: TAccountKaminoProgram;
   /** CHECK: CPI */
-  farmsProgram?: Address<TAccountFarmsProgram>;
+  farmsProgram?: TAccountFarmsProgram;
   /** CHECK: CPI */
-  reserveFarmState?: Address<TAccountReserveFarmState>;
+  reserveFarmState?: TAccountReserveFarmState;
   /** CHECK: CPI */
-  obligationFarmUserState?: Address<TAccountObligationFarmUserState>;
+  obligationFarmUserState?: TAccountObligationFarmUserState;
   /** CHECK: CPI */
-  scopePrices?: Address<TAccountScopePrices>;
+  scopePrices?: TAccountScopePrices;
   /** CHECK: Lulo CPI */
-  protocolAuthority?: Address<TAccountProtocolAuthority>;
-  treasuryTokenAccount: Address<TAccountTreasuryTokenAccount>;
+  protocolAuthority?: TAccountProtocolAuthority;
+  treasuryTokenAccount: TAccountTreasuryTokenAccount;
   /** CHECK: Lulo CPI */
-  protocolAuthorityTokenAccount?: Address<TAccountProtocolAuthorityTokenAccount>;
-  systemProgram?: Address<TAccountSystemProgram>;
+  protocolAuthorityTokenAccount?: TAccountProtocolAuthorityTokenAccount;
+  systemProgram?: TAccountSystemProgram;
   withdrawalId: CompleteWithdrawRegularLuloInstructionDataArgs["withdrawalId"];
 };
 
 export function getCompleteWithdrawRegularLuloInstruction<
-  TAccountCaller extends string,
-  TAccountAuthority extends string,
-  TAccountHeir extends string,
-  TAccountEstate extends string,
-  TAccountVault extends string,
-  TAccountVaultTokenAccount extends string,
-  TAccountAssetRecord extends string,
-  TAccountPendingWithdrawalAccount extends string,
-  TAccountPoolUser extends string,
-  TAccountPoolUserTokenAccount extends string,
-  TAccountPoolUserLpTokenAccount extends string,
-  TAccountReferrerPoolUser extends string,
-  TAccountInputMint extends string,
-  TAccountPoolReserveTokenAccount extends string,
-  TAccountLpMint extends string,
-  TAccountPoolAccount extends string,
-  TAccountProgramId extends string,
-  TAccountInputMintTokenProgram extends string,
-  TAccountLpMintTokenProgram extends string,
-  TAccountMarket extends string,
-  TAccountObligation extends string,
-  TAccountReserve extends string,
-  TAccountReserveLiquiditySupply extends string,
-  TAccountLendingMarketAuthority extends string,
-  TAccountCollateralMint extends string,
-  TAccountCollateralTokenAccount extends string,
-  TAccountReserveCollateralSupply extends string,
-  TAccountCollateralTokenProgram extends string,
-  TAccountInstructionsSysvar extends string,
-  TAccountKaminoProgram extends string,
-  TAccountFarmsProgram extends string,
-  TAccountReserveFarmState extends string,
-  TAccountObligationFarmUserState extends string,
-  TAccountScopePrices extends string,
-  TAccountProtocolAuthority extends string,
-  TAccountTreasuryTokenAccount extends string,
-  TAccountProtocolAuthorityTokenAccount extends string,
-  TAccountSystemProgram extends string,
+  TAccountCaller extends InstructionSignerInput,
+  TAccountAuthority extends InstructionAccountInput,
+  TAccountHeir extends InstructionAccountInput,
+  TAccountEstate extends InstructionAccountInput,
+  TAccountVault extends InstructionAccountInput,
+  TAccountVaultTokenAccount extends InstructionAccountInput,
+  TAccountAssetRecord extends InstructionAccountInput,
+  TAccountPendingWithdrawalAccount extends InstructionAccountInput,
+  TAccountPoolUser extends InstructionAccountInput,
+  TAccountPoolUserTokenAccount extends InstructionAccountInput,
+  TAccountPoolUserLpTokenAccount extends InstructionAccountInput,
+  TAccountReferrerPoolUser extends InstructionAccountInput,
+  TAccountInputMint extends InstructionAccountInput,
+  TAccountPoolReserveTokenAccount extends InstructionAccountInput,
+  TAccountLpMint extends InstructionAccountInput,
+  TAccountPoolAccount extends InstructionAccountInput,
+  TAccountProgramId extends InstructionAccountInput,
+  TAccountInputMintTokenProgram extends InstructionAccountInput,
+  TAccountLpMintTokenProgram extends InstructionAccountInput,
+  TAccountMarket extends InstructionAccountInput,
+  TAccountObligation extends InstructionAccountInput,
+  TAccountReserve extends InstructionAccountInput,
+  TAccountReserveLiquiditySupply extends InstructionAccountInput,
+  TAccountLendingMarketAuthority extends InstructionAccountInput,
+  TAccountCollateralMint extends InstructionAccountInput,
+  TAccountCollateralTokenAccount extends InstructionAccountInput,
+  TAccountReserveCollateralSupply extends InstructionAccountInput,
+  TAccountCollateralTokenProgram extends InstructionAccountInput,
+  TAccountInstructionsSysvar extends InstructionAccountInput,
+  TAccountKaminoProgram extends InstructionAccountInput,
+  TAccountFarmsProgram extends InstructionAccountInput,
+  TAccountReserveFarmState extends InstructionAccountInput,
+  TAccountObligationFarmUserState extends InstructionAccountInput,
+  TAccountScopePrices extends InstructionAccountInput,
+  TAccountProtocolAuthority extends InstructionAccountInput,
+  TAccountTreasuryTokenAccount extends InstructionAccountInput,
+  TAccountProtocolAuthorityTokenAccount extends InstructionAccountInput,
+  TAccountSystemProgram extends InstructionAccountInput,
   TProgramAddress extends Address = typeof HEIRLOOM_PROGRAM_ADDRESS,
 >(
   input: CompleteWithdrawRegularLuloInput<
@@ -842,91 +1110,252 @@ export function getCompleteWithdrawRegularLuloInstruction<
   config?: { programAddress?: TProgramAddress },
 ): CompleteWithdrawRegularLuloInstruction<
   TProgramAddress,
-  TAccountCaller,
-  TAccountAuthority,
-  TAccountHeir,
-  TAccountEstate,
-  TAccountVault,
-  TAccountVaultTokenAccount,
-  TAccountAssetRecord,
-  TAccountPendingWithdrawalAccount,
-  TAccountPoolUser,
-  TAccountPoolUserTokenAccount,
-  TAccountPoolUserLpTokenAccount,
-  TAccountReferrerPoolUser,
-  TAccountInputMint,
-  TAccountPoolReserveTokenAccount,
-  TAccountLpMint,
-  TAccountPoolAccount,
-  TAccountProgramId,
-  TAccountInputMintTokenProgram,
-  TAccountLpMintTokenProgram,
-  TAccountMarket,
-  TAccountObligation,
-  TAccountReserve,
-  TAccountReserveLiquiditySupply,
-  TAccountLendingMarketAuthority,
-  TAccountCollateralMint,
-  TAccountCollateralTokenAccount,
-  TAccountReserveCollateralSupply,
-  TAccountCollateralTokenProgram,
-  TAccountInstructionsSysvar,
-  TAccountKaminoProgram,
-  TAccountFarmsProgram,
-  TAccountReserveFarmState,
-  TAccountObligationFarmUserState,
-  TAccountScopePrices,
-  TAccountProtocolAuthority,
-  TAccountTreasuryTokenAccount,
-  TAccountProtocolAuthorityTokenAccount,
-  TAccountSystemProgram
+  ResolvedInstructionAccountMeta<TAccountCaller, InstructionAccountInputAddress<TAccountCaller>>,
+  ResolvedInstructionAccountMeta<
+    TAccountAuthority,
+    InstructionAccountInputAddress<TAccountAuthority>
+  >,
+  ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+  ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+  ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+  ResolvedInstructionAccountMeta<
+    TAccountVaultTokenAccount,
+    InstructionAccountInputAddress<TAccountVaultTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountAssetRecord,
+    InstructionAccountInputAddress<TAccountAssetRecord>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPendingWithdrawalAccount,
+    InstructionAccountInputAddress<TAccountPendingWithdrawalAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolUser,
+    InstructionAccountInputAddress<TAccountPoolUser>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolUserTokenAccount,
+    InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolUserLpTokenAccount,
+    InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountReferrerPoolUser,
+    InstructionAccountInputAddress<TAccountReferrerPoolUser>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountInputMint,
+    InstructionAccountInputAddress<TAccountInputMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolReserveTokenAccount,
+    InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+  ResolvedInstructionAccountMeta<
+    TAccountPoolAccount,
+    InstructionAccountInputAddress<TAccountPoolAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountProgramId,
+    InstructionAccountInputAddress<TAccountProgramId>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountInputMintTokenProgram,
+    InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountLpMintTokenProgram,
+    InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<TAccountMarket, InstructionAccountInputAddress<TAccountMarket>>,
+  ResolvedInstructionAccountMeta<
+    TAccountObligation,
+    InstructionAccountInputAddress<TAccountObligation>
+  >,
+  ResolvedInstructionAccountMeta<TAccountReserve, InstructionAccountInputAddress<TAccountReserve>>,
+  ResolvedInstructionAccountMeta<
+    TAccountReserveLiquiditySupply,
+    InstructionAccountInputAddress<TAccountReserveLiquiditySupply>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountLendingMarketAuthority,
+    InstructionAccountInputAddress<TAccountLendingMarketAuthority>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCollateralMint,
+    InstructionAccountInputAddress<TAccountCollateralMint>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCollateralTokenAccount,
+    InstructionAccountInputAddress<TAccountCollateralTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountReserveCollateralSupply,
+    InstructionAccountInputAddress<TAccountReserveCollateralSupply>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountCollateralTokenProgram,
+    InstructionAccountInputAddress<TAccountCollateralTokenProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountInstructionsSysvar,
+    InstructionAccountInputAddress<TAccountInstructionsSysvar>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountKaminoProgram,
+    InstructionAccountInputAddress<TAccountKaminoProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountFarmsProgram,
+    InstructionAccountInputAddress<TAccountFarmsProgram>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountReserveFarmState,
+    InstructionAccountInputAddress<TAccountReserveFarmState>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountObligationFarmUserState,
+    InstructionAccountInputAddress<TAccountObligationFarmUserState>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountScopePrices,
+    InstructionAccountInputAddress<TAccountScopePrices>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountProtocolAuthority,
+    InstructionAccountInputAddress<TAccountProtocolAuthority>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTreasuryTokenAccount,
+    InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountProtocolAuthorityTokenAccount,
+    InstructionAccountInputAddress<TAccountProtocolAuthorityTokenAccount>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountSystemProgram,
+    InstructionAccountInputAddress<TAccountSystemProgram>
+  >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? HEIRLOOM_PROGRAM_ADDRESS;
 
+  // Account meta helper.
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+
   // Original accounts.
   const originalAccounts = {
-    caller: { value: input.caller ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    heir: { value: input.heir ?? null, isWritable: false },
-    estate: { value: input.estate ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
-    vaultTokenAccount: { value: input.vaultTokenAccount ?? null, isWritable: true },
-    assetRecord: { value: input.assetRecord ?? null, isWritable: true },
-    pendingWithdrawalAccount: { value: input.pendingWithdrawalAccount ?? null, isWritable: true },
-    poolUser: { value: input.poolUser ?? null, isWritable: true },
-    poolUserTokenAccount: { value: input.poolUserTokenAccount ?? null, isWritable: true },
-    poolUserLpTokenAccount: { value: input.poolUserLpTokenAccount ?? null, isWritable: true },
-    referrerPoolUser: { value: input.referrerPoolUser ?? null, isWritable: true },
-    inputMint: { value: input.inputMint ?? null, isWritable: false },
-    poolReserveTokenAccount: { value: input.poolReserveTokenAccount ?? null, isWritable: true },
-    lpMint: { value: input.lpMint ?? null, isWritable: true },
-    poolAccount: { value: input.poolAccount ?? null, isWritable: true },
-    programId: { value: input.programId ?? null, isWritable: true },
-    inputMintTokenProgram: { value: input.inputMintTokenProgram ?? null, isWritable: false },
-    lpMintTokenProgram: { value: input.lpMintTokenProgram ?? null, isWritable: false },
-    market: { value: input.market ?? null, isWritable: true },
-    obligation: { value: input.obligation ?? null, isWritable: true },
-    reserve: { value: input.reserve ?? null, isWritable: true },
-    reserveLiquiditySupply: { value: input.reserveLiquiditySupply ?? null, isWritable: true },
-    lendingMarketAuthority: { value: input.lendingMarketAuthority ?? null, isWritable: false },
-    collateralMint: { value: input.collateralMint ?? null, isWritable: true },
-    collateralTokenAccount: { value: input.collateralTokenAccount ?? null, isWritable: true },
-    reserveCollateralSupply: { value: input.reserveCollateralSupply ?? null, isWritable: true },
-    collateralTokenProgram: { value: input.collateralTokenProgram ?? null, isWritable: false },
-    instructionsSysvar: { value: input.instructionsSysvar ?? null, isWritable: false },
-    kaminoProgram: { value: input.kaminoProgram ?? null, isWritable: false },
-    farmsProgram: { value: input.farmsProgram ?? null, isWritable: false },
-    reserveFarmState: { value: input.reserveFarmState ?? null, isWritable: true },
-    obligationFarmUserState: { value: input.obligationFarmUserState ?? null, isWritable: true },
-    scopePrices: { value: input.scopePrices ?? null, isWritable: false },
-    protocolAuthority: { value: input.protocolAuthority ?? null, isWritable: true },
-    treasuryTokenAccount: { value: input.treasuryTokenAccount ?? null, isWritable: true },
-    protocolAuthorityTokenAccount: {
-      value: input.protocolAuthorityTokenAccount ?? null,
+    caller: { value: input.caller ?? null, isSigner: true, isWritable: true },
+    authority: { value: input.authority ?? null, isSigner: false, isWritable: false },
+    heir: { value: input.heir ?? null, isSigner: false, isWritable: false },
+    estate: { value: input.estate ?? null, isSigner: false, isWritable: true },
+    vault: { value: input.vault ?? null, isSigner: false, isWritable: true },
+    vaultTokenAccount: {
+      value: input.vaultTokenAccount ?? null,
+      isSigner: false,
       isWritable: true,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    pendingWithdrawalAccount: {
+      value: input.pendingWithdrawalAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    poolUser: { value: input.poolUser ?? null, isSigner: false, isWritable: true },
+    poolUserTokenAccount: {
+      value: input.poolUserTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    poolUserLpTokenAccount: {
+      value: input.poolUserLpTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    referrerPoolUser: { value: input.referrerPoolUser ?? null, isSigner: false, isWritable: true },
+    inputMint: { value: input.inputMint ?? null, isSigner: false, isWritable: false },
+    poolReserveTokenAccount: {
+      value: input.poolReserveTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    lpMint: { value: input.lpMint ?? null, isSigner: false, isWritable: true },
+    poolAccount: { value: input.poolAccount ?? null, isSigner: false, isWritable: true },
+    programId: { value: input.programId ?? null, isSigner: false, isWritable: true },
+    inputMintTokenProgram: {
+      value: input.inputMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    lpMintTokenProgram: {
+      value: input.lpMintTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    market: { value: input.market ?? null, isSigner: false, isWritable: true },
+    obligation: { value: input.obligation ?? null, isSigner: false, isWritable: true },
+    reserve: { value: input.reserve ?? null, isSigner: false, isWritable: true },
+    reserveLiquiditySupply: {
+      value: input.reserveLiquiditySupply ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    lendingMarketAuthority: {
+      value: input.lendingMarketAuthority ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    collateralMint: { value: input.collateralMint ?? null, isSigner: false, isWritable: true },
+    collateralTokenAccount: {
+      value: input.collateralTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    reserveCollateralSupply: {
+      value: input.reserveCollateralSupply ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    collateralTokenProgram: {
+      value: input.collateralTokenProgram ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    instructionsSysvar: {
+      value: input.instructionsSysvar ?? null,
+      isSigner: false,
+      isWritable: false,
+    },
+    kaminoProgram: { value: input.kaminoProgram ?? null, isSigner: false, isWritable: false },
+    farmsProgram: { value: input.farmsProgram ?? null, isSigner: false, isWritable: false },
+    reserveFarmState: { value: input.reserveFarmState ?? null, isSigner: false, isWritable: true },
+    obligationFarmUserState: {
+      value: input.obligationFarmUserState ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    scopePrices: { value: input.scopePrices ?? null, isSigner: false, isWritable: false },
+    protocolAuthority: {
+      value: input.protocolAuthority ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    treasuryTokenAccount: {
+      value: input.treasuryTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    protocolAuthorityTokenAccount: {
+      value: input.protocolAuthorityTokenAccount ?? null,
+      isSigner: false,
+      isWritable: true,
+    },
+    systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -966,7 +1395,6 @@ export function getCompleteWithdrawRegularLuloInstruction<
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("caller", accounts.caller),
@@ -1014,44 +1442,140 @@ export function getCompleteWithdrawRegularLuloInstruction<
     programAddress,
   } as CompleteWithdrawRegularLuloInstruction<
     TProgramAddress,
-    TAccountCaller,
-    TAccountAuthority,
-    TAccountHeir,
-    TAccountEstate,
-    TAccountVault,
-    TAccountVaultTokenAccount,
-    TAccountAssetRecord,
-    TAccountPendingWithdrawalAccount,
-    TAccountPoolUser,
-    TAccountPoolUserTokenAccount,
-    TAccountPoolUserLpTokenAccount,
-    TAccountReferrerPoolUser,
-    TAccountInputMint,
-    TAccountPoolReserveTokenAccount,
-    TAccountLpMint,
-    TAccountPoolAccount,
-    TAccountProgramId,
-    TAccountInputMintTokenProgram,
-    TAccountLpMintTokenProgram,
-    TAccountMarket,
-    TAccountObligation,
-    TAccountReserve,
-    TAccountReserveLiquiditySupply,
-    TAccountLendingMarketAuthority,
-    TAccountCollateralMint,
-    TAccountCollateralTokenAccount,
-    TAccountReserveCollateralSupply,
-    TAccountCollateralTokenProgram,
-    TAccountInstructionsSysvar,
-    TAccountKaminoProgram,
-    TAccountFarmsProgram,
-    TAccountReserveFarmState,
-    TAccountObligationFarmUserState,
-    TAccountScopePrices,
-    TAccountProtocolAuthority,
-    TAccountTreasuryTokenAccount,
-    TAccountProtocolAuthorityTokenAccount,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountCaller, InstructionAccountInputAddress<TAccountCaller>>,
+    ResolvedInstructionAccountMeta<
+      TAccountAuthority,
+      InstructionAccountInputAddress<TAccountAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountHeir, InstructionAccountInputAddress<TAccountHeir>>,
+    ResolvedInstructionAccountMeta<TAccountEstate, InstructionAccountInputAddress<TAccountEstate>>,
+    ResolvedInstructionAccountMeta<TAccountVault, InstructionAccountInputAddress<TAccountVault>>,
+    ResolvedInstructionAccountMeta<
+      TAccountVaultTokenAccount,
+      InstructionAccountInputAddress<TAccountVaultTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountAssetRecord,
+      InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPendingWithdrawalAccount,
+      InstructionAccountInputAddress<TAccountPendingWithdrawalAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUser,
+      InstructionAccountInputAddress<TAccountPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolUserLpTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolUserLpTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReferrerPoolUser,
+      InstructionAccountInputAddress<TAccountReferrerPoolUser>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMint,
+      InstructionAccountInputAddress<TAccountInputMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolReserveTokenAccount,
+      InstructionAccountInputAddress<TAccountPoolReserveTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountLpMint, InstructionAccountInputAddress<TAccountLpMint>>,
+    ResolvedInstructionAccountMeta<
+      TAccountPoolAccount,
+      InstructionAccountInputAddress<TAccountPoolAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProgramId,
+      InstructionAccountInputAddress<TAccountProgramId>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInputMintTokenProgram,
+      InstructionAccountInputAddress<TAccountInputMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLpMintTokenProgram,
+      InstructionAccountInputAddress<TAccountLpMintTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<TAccountMarket, InstructionAccountInputAddress<TAccountMarket>>,
+    ResolvedInstructionAccountMeta<
+      TAccountObligation,
+      InstructionAccountInputAddress<TAccountObligation>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserve,
+      InstructionAccountInputAddress<TAccountReserve>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveLiquiditySupply,
+      InstructionAccountInputAddress<TAccountReserveLiquiditySupply>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountLendingMarketAuthority,
+      InstructionAccountInputAddress<TAccountLendingMarketAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralMint,
+      InstructionAccountInputAddress<TAccountCollateralMint>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralTokenAccount,
+      InstructionAccountInputAddress<TAccountCollateralTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveCollateralSupply,
+      InstructionAccountInputAddress<TAccountReserveCollateralSupply>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountCollateralTokenProgram,
+      InstructionAccountInputAddress<TAccountCollateralTokenProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountInstructionsSysvar,
+      InstructionAccountInputAddress<TAccountInstructionsSysvar>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountKaminoProgram,
+      InstructionAccountInputAddress<TAccountKaminoProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountFarmsProgram,
+      InstructionAccountInputAddress<TAccountFarmsProgram>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountReserveFarmState,
+      InstructionAccountInputAddress<TAccountReserveFarmState>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountObligationFarmUserState,
+      InstructionAccountInputAddress<TAccountObligationFarmUserState>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountScopePrices,
+      InstructionAccountInputAddress<TAccountScopePrices>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProtocolAuthority,
+      InstructionAccountInputAddress<TAccountProtocolAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasuryTokenAccount,
+      InstructionAccountInputAddress<TAccountTreasuryTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountProtocolAuthorityTokenAccount,
+      InstructionAccountInputAddress<TAccountProtocolAuthorityTokenAccount>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountSystemProgram,
+      InstructionAccountInputAddress<TAccountSystemProgram>
+    >
   >);
 }
 

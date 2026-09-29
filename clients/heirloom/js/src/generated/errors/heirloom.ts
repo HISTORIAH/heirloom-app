@@ -38,18 +38,16 @@ export const HEIRLOOM_ERROR__INVALID_ACCOUNT = 0x1779; // 6009
 export const HEIRLOOM_ERROR__ZERO_DEPOSIT_AMOUNT = 0x177a; // 6010
 /** TokensFirst: Resolve token assets first, then SOL. */
 export const HEIRLOOM_ERROR__TOKENS_FIRST = 0x177b; // 6011
-/** LabelTooLong: Label too long */
-export const HEIRLOOM_ERROR__LABEL_TOO_LONG = 0x177c; // 6012
 /** MathOverflow: Math overflow */
-export const HEIRLOOM_ERROR__MATH_OVERFLOW = 0x177d; // 6013
+export const HEIRLOOM_ERROR__MATH_OVERFLOW = 0x177c; // 6012
 /** MathUnderflow: Math underflow */
-export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x177e; // 6014
+export const HEIRLOOM_ERROR__MATH_UNDERFLOW = 0x177d; // 6013
 /** IntervalTooLong: Interval exceeds maximum of 365 days. */
-export const HEIRLOOM_ERROR__INTERVAL_TOO_LONG = 0x177f; // 6015
+export const HEIRLOOM_ERROR__INTERVAL_TOO_LONG = 0x177e; // 6014
 /** IntervalNegative: Interval cannot be less than 0. */
-export const HEIRLOOM_ERROR__INTERVAL_NEGATIVE = 0x1780; // 6016
+export const HEIRLOOM_ERROR__INTERVAL_NEGATIVE = 0x177f; // 6015
 /** FundsStillDeployed: Cannot claim/close while funds are still deployed. */
-export const HEIRLOOM_ERROR__FUNDS_STILL_DEPLOYED = 0x1781; // 6017
+export const HEIRLOOM_ERROR__FUNDS_STILL_DEPLOYED = 0x1780; // 6016
 
 export type HeirloomError =
   | typeof HEIRLOOM_ERROR__ALREADY_DEFERRED
@@ -60,7 +58,6 @@ export type HeirloomError =
   | typeof HEIRLOOM_ERROR__INTERVAL_NEGATIVE
   | typeof HEIRLOOM_ERROR__INTERVAL_TOO_LONG
   | typeof HEIRLOOM_ERROR__INVALID_ACCOUNT
-  | typeof HEIRLOOM_ERROR__LABEL_TOO_LONG
   | typeof HEIRLOOM_ERROR__MATH_OVERFLOW
   | typeof HEIRLOOM_ERROR__MATH_UNDERFLOW
   | typeof HEIRLOOM_ERROR__MINT_MISMATCH
@@ -82,7 +79,6 @@ if (process.env["NODE_ENV"] !== "production") {
     [HEIRLOOM_ERROR__INTERVAL_NEGATIVE]: `Interval cannot be less than 0.`,
     [HEIRLOOM_ERROR__INTERVAL_TOO_LONG]: `Interval exceeds maximum of 365 days.`,
     [HEIRLOOM_ERROR__INVALID_ACCOUNT]: `Invalid account`,
-    [HEIRLOOM_ERROR__LABEL_TOO_LONG]: `Label too long`,
     [HEIRLOOM_ERROR__MATH_OVERFLOW]: `Math overflow`,
     [HEIRLOOM_ERROR__MATH_UNDERFLOW]: `Math underflow`,
     [HEIRLOOM_ERROR__MINT_MISMATCH]: `Mint mismatch`,

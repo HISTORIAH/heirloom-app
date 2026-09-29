@@ -1,7 +1,7 @@
-export interface ChallengeResponse {
+export type ChallengeResponse = {
   message: string; // SIWS-style message for the wallet to sign
-}
+};
 
-export interface VerifyResponse {
+export type VerifyResponse = {
   address: string;
-}
+};

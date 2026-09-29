@@ -1,9 +1,9 @@
-export interface ApiSuccess<T> {
+export type ApiSuccess<T> = {
   data: T;
-}
+};
 
-export interface ApiErrorBody {
+export type ApiErrorBody = {
   code: string;
   message: string;
   details?: Record<string, unknown>;
-}
+};

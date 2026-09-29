@@ -52,18 +52,15 @@ export function assetCount(claimableAssets: number): number {
   return claimableAssets;
 }
 
-export function presentEstate(
-  data: Estate,
-  claimableLamports: bigint,
-): EstatePresentation {
+export function presentEstate(data: Estate, claimableLamports: bigint): EstatePresentation {
   const vaultEmpty = isVaultEmpty(data.claimableAssets, claimableLamports);
-  const interval = Number(data.heartbeatInterval);
-  const grace = Number(data.gracePeriod);
+  const interval = Number(data.checkInIntervalSecs);
+  const grace = Number(data.gracePeriodSecs);
   const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
-    lastHeartbeat: Number(data.lastHeartbeat),
-    heartbeatInterval: interval,
-    gracePeriod: grace,
-    pausedUntil: Number(data.pausedUntil),
+    lastCheckInTs: Number(data.lastCheckInTs),
+    checkInIntervalSecs: interval,
+    gracePeriodSecs: grace,
+    delegatePauseExpiresAt: Number(data.delegatePauseExpiresAt),
     createdAt: Number(data.createdAt),
     vaultEmpty,
   });

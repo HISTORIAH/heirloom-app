@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { VaultMark } from "@/components/VaultMark";
+import { shortAddress } from "@/lib/address";
 import type { EstateRow } from "@/lib/estates";
 import { formatSol, presentEstate } from "@/lib/presentEstate";
 import { colors } from "@/theme";
@@ -29,7 +30,8 @@ export function EstatePicker({ rows, selected, onSelect }: EstatePickerProps) {
       {rows.map((row, i) => {
         const on = i === selected;
         const presentation = presentEstate(row.data, row.claimableLamports);
-        const chipLabel = row.data.label.trim() || "Estate";
+        // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
+        const chipLabel = shortAddress(String(row.data.authority), 6);
         const meta = `${formatSol(row.claimableLamports)} SOL`;
         const fg = on ? colors.white : colors.ink;
         return (

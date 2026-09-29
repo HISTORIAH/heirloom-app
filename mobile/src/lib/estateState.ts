@@ -10,23 +10,29 @@ export const STATUS_COLOR: Record<EstateUiState, string> = {
 };
 
 export function computeEstateState(args: {
-  lastHeartbeat: number;
-  heartbeatInterval: number;
-  gracePeriod: number;
-  pausedUntil: number;
+  lastCheckInTs: number;
+  checkInIntervalSecs: number;
+  gracePeriodSecs: number;
+  delegatePauseExpiresAt: number;
   createdAt: number;
   vaultEmpty: boolean;
 }): { state: EstateUiState; secondsUntilGrace: number; secondsUntilClaimable: number } {
-  const { lastHeartbeat, heartbeatInterval, gracePeriod, pausedUntil, createdAt, vaultEmpty } =
-    args;
+  const {
+    lastCheckInTs,
+    checkInIntervalSecs,
+    gracePeriodSecs,
+    delegatePauseExpiresAt,
+    createdAt,
+    vaultEmpty,
+  } = args;
 
   if (vaultEmpty) {
     return { state: "distributed", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
   }
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
+  const anchor = lastCheckInTs > 0 ? lastCheckInTs : createdAt;
   const now = Math.floor(Date.now() / 1000);
-  const graceDeadline = anchor + heartbeatInterval;
-  const claimableAt = Math.max(graceDeadline + gracePeriod, pausedUntil);
+  const graceDeadline = anchor + checkInIntervalSecs;
+  const claimableAt = Math.max(graceDeadline + gracePeriodSecs, delegatePauseExpiresAt);
 
   if (now >= claimableAt) {
     return { state: "claimable", secondsUntilGrace: 0, secondsUntilClaimable: 0 };
@@ -68,10 +74,10 @@ export function estateStatusLine(
   vaultEmpty: boolean,
 ): { state: EstateUiState; line: string } {
   const result = computeEstateState({
-    lastHeartbeat: Number(data.lastHeartbeat),
-    heartbeatInterval: Number(data.heartbeatInterval),
-    gracePeriod: Number(data.gracePeriod),
-    pausedUntil: Number(data.pausedUntil),
+    lastCheckInTs: Number(data.lastCheckInTs),
+    checkInIntervalSecs: Number(data.checkInIntervalSecs),
+    gracePeriodSecs: Number(data.gracePeriodSecs),
+    delegatePauseExpiresAt: Number(data.delegatePauseExpiresAt),
     createdAt: Number(data.createdAt),
     vaultEmpty,
   });

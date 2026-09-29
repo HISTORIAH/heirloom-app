@@ -9,10 +9,10 @@ import type {
   AddContactResponse,
   AddRecipientRequest,
   CreateReminderResponse,
-  EstateKind,
   FetchReminderResponse,
   VerificationStatus,
 } from "@/types/reminders";
+import type { EstateKind } from "@/types/estate";
 
 // ─── Queries ──────────────────────────────────────────────────────
 

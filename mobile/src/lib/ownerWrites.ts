@@ -15,28 +15,23 @@ import {
 } from "@solana/kit";
 
 import { floatDestinations } from "@/lib/cardFloat";
-import { CARD_FEE_FLOAT_LAMPORTS, LABEL_MAX_LEN } from "@/lib/constants";
+import { CARD_FEE_FLOAT_LAMPORTS } from "@/lib/constants";
 import { transferSolIx } from "@/lib/transferSol";
 
 export type EstateRpc = Rpc<SolanaRpcApi>;
 
 export type CreateEstateInput = {
   heir: Address;
+  // TODO(backend): label is no longer stored on-chain. Send it to the backend API instead.
   label: string;
-  heartbeatInterval: bigint;
-  gracePeriod: bigint;
+  checkInIntervalSecs: bigint;
+  gracePeriodSecs: bigint;
   amountLamports: bigint;
   delegate?: Address;
-  hbSigner?: Address;
+  checkInSigner?: Address;
   fundHeir?: boolean;
-  pauseDuration?: bigint;
+  delegatePauseDurationSecs?: bigint;
 };
-
-function trimmedLabel(label: string): string {
-  const next = label.trim();
-  if (next.length === 0) return "estate";
-  return next.slice(0, LABEL_MAX_LEN);
-}
 
 export function parseAddress(raw: string, label: string): Address {
   const value = raw.trim();
@@ -62,10 +57,9 @@ export async function buildHeartbeatIx(
     authority,
     heir,
     estate,
-    heartbeatInterval: null,
-    gracePeriod: null,
-    pauseDuration: null,
-    label: null,
+    checkInIntervalSecs: null,
+    gracePeriodSecs: null,
+    delegatePauseDurationSecs: null,
   });
 }
 
@@ -85,9 +79,7 @@ export async function assertEstateFree(
   const [estatePda] = await findEstatePda({ authority, heir });
   const maybe = await fetchMaybeEstate(rpc, estatePda);
   if (maybe.exists && maybe.lamports > 0n) {
-    throw new Error(
-      "An estate already exists for this heir. Close it or pick a different heir.",
-    );
+    throw new Error("An estate already exists for this heir. Close it or pick a different heir.");
   }
 }
 
@@ -98,21 +90,21 @@ export async function buildCreateEstateIxs(
   if (input.amountLamports <= 0n) {
     throw new Error("Select at least some SOL to create a vault.");
   }
+  // TODO(backend): send input.label to the backend API for display purposes.
   const initIx = await getInitializeInstructionAsync({
     authority,
     heir: input.heir,
     amount: input.amountLamports,
-    label: trimmedLabel(input.label),
-    heartbeatInterval: input.heartbeatInterval,
-    gracePeriod: input.gracePeriod,
-    pauseDuration: input.pauseDuration ?? 0n,
+    checkInIntervalSecs: input.checkInIntervalSecs,
+    gracePeriodSecs: input.gracePeriodSecs,
+    delegatePauseDurationSecs: input.delegatePauseDurationSecs ?? 0n,
     delegate: input.delegate,
-    hbSigner: input.hbSigner,
+    checkInSigner: input.checkInSigner,
   });
   // Testing: typed signer / fund-heir checkbox. Product: only after "add card".
   const dests = floatDestinations({
     heir: input.heir,
-    hbSigner: input.hbSigner,
+    checkInSigner: input.checkInSigner,
     fundHeir: input.fundHeir,
   });
   const floatIxs = dests.map((destination) =>

@@ -1,11 +1,7 @@
 import type { Estate } from "@historiah/heirloom";
 
 import { SECONDS_PER_DAY } from "@/lib/constants";
-import {
-  computeEstateState,
-  isVaultEmpty,
-  type EstateUiState,
-} from "@/lib/estateState";
+import { computeEstateState, isVaultEmpty, type EstateUiState } from "@/lib/estateState";
 import { colors } from "@/theme";
 
 export type DashboardView = {
@@ -39,29 +35,26 @@ export function chipSwatch(state: EstateUiState): string {
   return colors.yellow;
 }
 
-export function presentDashboard(
-  data: Estate,
-  claimableLamports: bigint,
-): DashboardView {
+export function presentDashboard(data: Estate, claimableLamports: bigint): DashboardView {
   const vaultEmpty = isVaultEmpty(data.claimableAssets, claimableLamports);
-  const interval = Number(data.heartbeatInterval);
-  const grace = Number(data.gracePeriod);
-  const lastHeartbeat = Number(data.lastHeartbeat);
+  const interval = Number(data.checkInIntervalSecs);
+  const grace = Number(data.gracePeriodSecs);
+  const lastCheckInTs = Number(data.lastCheckInTs);
   const createdAt = Number(data.createdAt);
-  const pausedUntil = Number(data.pausedUntil);
+  const delegatePauseExpiresAt = Number(data.delegatePauseExpiresAt);
   const { state } = computeEstateState({
-    lastHeartbeat,
-    heartbeatInterval: interval,
-    gracePeriod: grace,
-    pausedUntil,
+    lastCheckInTs,
+    checkInIntervalSecs: interval,
+    gracePeriodSecs: grace,
+    delegatePauseExpiresAt,
     createdAt,
     vaultEmpty,
   });
 
   const now = Math.floor(Date.now() / 1000);
-  const anchor = lastHeartbeat > 0 ? lastHeartbeat : createdAt;
+  const anchor = lastCheckInTs > 0 ? lastCheckInTs : createdAt;
   const graceDeadline = anchor + interval;
-  const claimableAt = Math.max(graceDeadline + grace, pausedUntil);
+  const claimableAt = Math.max(graceDeadline + grace, delegatePauseExpiresAt);
   const intervalDays = Math.max(1, Math.round(interval / SECONDS_PER_DAY));
   const graceDays = Math.max(0, Math.round(grace / SECONDS_PER_DAY));
   const totalDays = Math.max(1, intervalDays + graceDays);

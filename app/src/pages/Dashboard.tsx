@@ -16,7 +16,7 @@ import { getEstateStripMeta } from "@/components/dashboard/estateState";
 import VaultMark from "@/components/VaultMark";
 import { useWallet } from "@/contexts/WalletContext";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
-import { cn, getSolanaExplorerTxUrl } from "@/lib/utils";
+import { cn, getSolanaExplorerTxUrl, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
 const ESTATE_STRIP_CAP = 5;
@@ -46,7 +46,8 @@ const EstatePillButton = ({
       )}
     >
       <span className="flex w-full min-w-0 items-center gap-2 text-sm font-semibold">
-        <span className="truncate">{estate.label}</span>
+        {/* TODO(backend): Label comes from backend API, fallback to truncated heir address */}
+        <span className="truncate">{estate.label ?? truncateAddress(estate.heir, 4)}</span>
       </span>
       <span
         className={cn(
@@ -73,7 +74,11 @@ const DashboardPage = () => {
   const selectedEstate = estates[selectedIndex] ?? estates[0];
   const filteredSwitcherEstates = estates
     .map((estate, index) => ({ estate, index }))
-    .filter(({ estate }) => estate.label.toLowerCase().includes(switcherQuery.trim().toLowerCase()));
+    .filter(({ estate }) =>
+      (estate.label ?? truncateAddress(estate.heir, 4))
+        .toLowerCase()
+        .includes(switcherQuery.trim().toLowerCase()),
+    );
 
   // Visible strip always includes the selected estate, even if it's outside the capped range —
   // the first CAP-1 slots stay stable, the last slot swaps to the current selection when needed.
@@ -135,9 +140,7 @@ const DashboardPage = () => {
         >
           <div className="mx-auto max-w-xl text-center">
             <VaultMark className="mark-lg mx-auto text-tile-line" />
-            {isConnected && (
-              <h2 className="ed-h2 mt-8">{t("dashboard.noVaultYet")}</h2>
-            )}
+            {isConnected && <h2 className="ed-h2 mt-8">{t("dashboard.noVaultYet")}</h2>}
             <p
               className={
                 isConnected
@@ -153,11 +156,7 @@ const DashboardPage = () => {
                   {t("dashboard.createYourVault")}
                 </Button>
               ) : (
-                <Button
-                  variant="flat-yellow"
-                  size="lg"
-                  onClick={() => setWalletDialogOpen(true)}
-                >
+                <Button variant="flat-yellow" size="lg" onClick={() => setWalletDialogOpen(true)}>
                   <Wallet className="h-5 w-5" /> {t("dashboard.connectWallet")}
                 </Button>
               )}

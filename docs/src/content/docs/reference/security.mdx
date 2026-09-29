@@ -16,7 +16,7 @@ keywords: ["security", "audit", "trust", "risk", "disclosure", "assumptions", "p
 - **Fixed fee terms.** The three fee rates and the treasury address are compile-time
   constants. Changing them means deploying a new program.
 - **Deterministic entitlement.** An heir can claim exactly when
-  `now >= max(last_heartbeat + interval + grace, paused_until)`, and never before.
+  `now >= max(last_check_in_ts + check_in_interval_secs + grace_period_secs, delegate_pause_expires_at)`, and never before.
 
 The program is deployed to devnet and has been **independently audited**.
 
@@ -51,11 +51,10 @@ in this protocol will tell them.
 ## What is public
 
 Everything on-chain, which is the whole arrangement: your address, your heir's address,
-your guardian's address, your durations, your label, and every balance and transaction.
+your guardian's address, your durations, and every balance and transaction.
 Anyone can read it and anyone can correlate it.
 
-That is a property of Solana, not a Heirloom decision, but it is worth stating plainly
-before you write a name into a label.
+That is a property of Solana, not a Heirloom decision, but it is worth stating plainly.
 
 ## What the app collects
 
@@ -75,7 +74,7 @@ everything, because there is nothing on it a crawler should hold.
     Keep the owning key cold. A hot signer can only ever send check-ins.
   </Card>
   <Card title="Name a guardian" icon="shield">
-    The worst a hostile one can do is delay by your own pause duration, once.
+    The worst a hostile one can do is delay by your own `delegate_pause_duration_secs`, once.
   </Card>
   <Card title="Verify the heir address" icon="scan-line">
     No name resolution, no undo. Send a small transfer first.

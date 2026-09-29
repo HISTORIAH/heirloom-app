@@ -16,6 +16,7 @@ import { StateSlab } from "@/components/StateSlab";
 import { useEstates } from "@/hooks/useEstates";
 import { useHeirTx } from "@/hooks/useHeirTx";
 import type { EstateUiState } from "@/lib/estateState";
+import { shortAddress } from "@/lib/address";
 import { fetchEstateByPair, type EstateRow } from "@/lib/estates";
 import { unwrapOption } from "@/lib/option";
 import { parseAddress } from "@/lib/ownerWrites";
@@ -55,7 +56,8 @@ function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
 
 function HeartbeatListRow({ row, onPress }: { row: EstateRow; onPress: () => void }) {
   const view = presentHeartbeat(row.data, row.claimableLamports);
-  const name = row.data.label.trim() || "Estate";
+  // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
+  const name = shortAddress(String(row.data.authority), 6);
   const ruler = view.showRuler ? (
     <DayRuler
       compact
@@ -79,7 +81,7 @@ function HeartbeatListRow({ row, onPress }: { row: EstateRow; onPress: () => voi
 
 export default function HeartbeatScreen() {
   const { account, client, connect } = useMobileWallet();
-  const { rows, loading, error, reload } = useEstates("hbSigner");
+  const { rows, loading, error, reload } = useEstates("checkInSigner");
   const { sendHeartbeat } = useHeirTx();
   const [busy, setBusy] = useState(false);
   const [beating, setBeating] = useState(false);
@@ -164,7 +166,7 @@ export default function HeartbeatScreen() {
       const heir = parseAddress(heirQuery, "heir");
       const row = await fetchEstateByPair(client.rpc, owner, heir);
       if (row === undefined) throw new Error("No estate for that owner and heir.");
-      const signer = unwrapOption(row.data.hbSigner);
+      const signer = unwrapOption(row.data.checkInSigner);
       if (signer === null || signer !== account.address) {
         throw new Error("This wallet is not the check-in signer on that estate.");
       }
@@ -180,12 +182,7 @@ export default function HeartbeatScreen() {
 
   let body;
   if (!account) {
-    body = (
-      <ConnectWallet
-        busy={busy}
-        onConnect={() => void onConnect()}
-      />
-    );
+    body = <ConnectWallet busy={busy} onConnect={() => void onConnect()} />;
   } else if (loading && ordered.length === 0) {
     body = (
       <>
@@ -256,11 +253,7 @@ export default function HeartbeatScreen() {
           <SectionLabel title="Estates you check in for" />
           <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
             {ordered.map((row, index) => (
-              <HeartbeatListRow
-                key={row.address}
-                row={row}
-                onPress={() => setPicked(index)}
-              />
+              <HeartbeatListRow key={row.address} row={row} onPress={() => setPicked(index)} />
             ))}
           </View>
           <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: colors.line }}>
@@ -290,7 +283,11 @@ export default function HeartbeatScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} scrollEnabled={!holding}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        scrollEnabled={!holding}
+      >
         {body}
       </ScrollView>
       <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={runExtra} />

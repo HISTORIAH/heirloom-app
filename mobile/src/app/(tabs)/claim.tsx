@@ -17,6 +17,7 @@ import { StateSlab } from "@/components/StateSlab";
 import { useEstates } from "@/hooks/useEstates";
 import { useHeirTx } from "@/hooks/useHeirTx";
 import type { EstateUiState } from "@/lib/estateState";
+import { shortAddress } from "@/lib/address";
 import { fetchEstateByPair, type EstateRow } from "@/lib/estates";
 import { parseAddress } from "@/lib/ownerWrites";
 import { presentClaim } from "@/lib/presentClaim";
@@ -156,12 +157,7 @@ export default function ClaimScreen() {
 
   let body;
   if (!account) {
-    body = (
-      <ConnectWallet
-        busy={busy}
-        onConnect={() => void onConnect()}
-      />
-    );
+    body = <ConnectWallet busy={busy} onConnect={() => void onConnect()} />;
   } else if (loading && ordered.length === 0) {
     body = (
       <>
@@ -264,7 +260,8 @@ export default function ClaimScreen() {
           <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
             {ordered.map((row, index) => {
               const claim = presentClaim(row.data, row.claimableLamports);
-              const name = row.data.label.trim() || "Estate";
+              // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
+              const name = shortAddress(String(row.data.authority), 6);
               return (
                 <QuietRow
                   key={row.address}

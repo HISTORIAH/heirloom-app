@@ -92,10 +92,7 @@ async function fetchEstatesByMemcmp(
 
 const rentBySpace = new Map<string, bigint>();
 
-async function claimableLamportsForVault(
-  rpc: EstateRpc,
-  vaultPda: Address,
-): Promise<bigint> {
+async function claimableLamportsForVault(rpc: EstateRpc, vaultPda: Address): Promise<bigint> {
   const { value } = await rpc
     .getAccountInfo(vaultPda, { encoding: "base64", commitment: "confirmed" })
     .send();
@@ -110,10 +107,7 @@ async function claimableLamportsForVault(
   return balance > rentMin ? balance - rentMin : 0n;
 }
 
-async function withClaimableLamports(
-  rpc: EstateRpc,
-  rows: DecodedEstate[],
-): Promise<EstateRow[]> {
+async function withClaimableLamports(rpc: EstateRpc, rows: DecodedEstate[]): Promise<EstateRow[]> {
   return Promise.all(
     rows.map(async (row) => {
       const [vaultPda] = await findVaultPda({
@@ -137,9 +131,7 @@ export async function fetchEstateByPair(
   const maybe = await fetchMaybeEstate(rpc, pda);
   if (!maybe.exists) return undefined;
   if (maybe.lamports <= 0n) return undefined;
-  const [row] = await withClaimableLamports(rpc, [
-    { address: maybe.address, data: maybe.data },
-  ]);
+  const [row] = await withClaimableLamports(rpc, [{ address: maybe.address, data: maybe.data }]);
   return row;
 }
 
@@ -153,13 +145,8 @@ export async function fetchEstatesByAuthority(
   return withClaimableLamports(rpc, rows);
 }
 
-export async function fetchEstatesByHeir(
-  rpc: EstateRpc,
-  heir: Address,
-): Promise<EstateRow[]> {
-  const rows = await fetchEstatesByMemcmp(rpc, [
-    { offset: 40n, bytes: heir, encoding: "base58" },
-  ]);
+export async function fetchEstatesByHeir(rpc: EstateRpc, heir: Address): Promise<EstateRow[]> {
+  const rows = await fetchEstatesByMemcmp(rpc, [{ offset: 40n, bytes: heir, encoding: "base58" }]);
   return withClaimableLamports(rpc, rows);
 }
 
@@ -174,13 +161,13 @@ export async function fetchEstatesByDelegate(
   return withClaimableLamports(rpc, rows);
 }
 
-export async function fetchEstatesByHbSigner(
+export async function fetchEstatesByCheckinSigner(
   rpc: EstateRpc,
-  hbSigner: Address,
+  checkInSigner: Address,
 ): Promise<EstateRow[]> {
   const rows = await fetchEstatesByMemcmp(rpc, [
     { offset: 155n, bytes: bytesToBase64(new Uint8Array([1])), encoding: "base64" },
-    { offset: 156n, bytes: hbSigner, encoding: "base58" },
+    { offset: 156n, bytes: checkInSigner, encoding: "base58" },
   ]);
   return withClaimableLamports(rpc, rows);
 }

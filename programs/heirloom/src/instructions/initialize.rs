@@ -17,8 +17,8 @@ pub struct Initialize {
     /// CHECK: optional delegate pubkey
     pub delegate: Option<UncheckedAccount>,
 
-    /// CHECK: optional hot-signer pubkey
-    pub hb_signer: Option<UncheckedAccount>,
+    /// CHECK: optional check_in signer pubkey
+    pub check_in_signer: Option<UncheckedAccount>,
 
     #[account(mut)]
     pub authority_token_account: Option<InterfaceAccount<TokenAccount>>,
@@ -76,25 +76,22 @@ pub struct Initialize {
 impl Initialize {
     pub fn initialize_handler(
         ctx: &mut Context<Initialize>,
-        heartbeat_interval: i64,
-        grace_period: i64,
-        pause_duration: i64,
+        check_in_interval_secs: i64,
+        grace_period_secs: i64,
+        delegate_pause_duration_secs: i64,
         amount: u64,
-        label: String,
     ) -> Result<()> {
         ctx.accounts.validate(
             amount,
-            &label,
-            heartbeat_interval,
-            grace_period,
-            pause_duration,
+            check_in_interval_secs,
+            grace_period_secs,
+            delegate_pause_duration_secs,
         )?;
 
         ctx.accounts.set_acc_fields(
-            heartbeat_interval,
-            grace_period,
-            pause_duration,
-            &label,
+            check_in_interval_secs,
+            grace_period_secs,
+            delegate_pause_duration_secs,
             ctx.bumps.estate,
             ctx.bumps.vault,
         )?;
@@ -106,13 +103,18 @@ impl Initialize {
         Ok(())
     }
 
-    pub fn validate(&self, amount: u64, label: &str, hb: i64, gp: i64, pd: i64) -> Result<()> {
+    pub fn validate(
+        &self,
+        amount: u64,
+        check_in_interval_secs: i64,
+        grace_period_secs: i64,
+        delegate_pause_duration_secs: i64,
+    ) -> Result<()> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
-        require!(label.len() <= 32, HeirloomError::LabelTooLong);
 
-        validate_interval(hb)?; // heartbeat interval
-        validate_interval(gp)?; // grace period
-        validate_interval(pd)?; // pause duration
+        validate_interval(check_in_interval_secs)?;
+        validate_interval(grace_period_secs)?;
+        validate_interval(delegate_pause_duration_secs)?;
 
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
@@ -157,10 +159,9 @@ impl Initialize {
 
     pub fn set_acc_fields(
         &mut self,
-        heartbeat_interval: i64,
-        grace_period: i64,
-        pause_duration: i64,
-        label: &str,
+        check_in_interval_secs: i64,
+        grace_period_secs: i64,
+        delegate_pause_duration_secs: i64,
         estate_bump: u8,
         vault_bump: u8,
     ) -> Result<()> {
@@ -168,17 +169,16 @@ impl Initialize {
 
         self.estate.authority = *self.authority.address();
         self.estate.heir = *self.heir.address();
-        self.estate.heartbeat_interval = heartbeat_interval;
-        self.estate.grace_period = grace_period;
-        self.estate.last_heartbeat = now;
+        self.estate.check_in_interval_secs = check_in_interval_secs;
+        self.estate.grace_period_secs = grace_period_secs;
+        self.estate.last_check_in_ts = now;
         self.estate.created_at = now;
         self.estate.bump = estate_bump;
         self.estate.delegate = self.delegate.as_ref().map(|a| *a.address());
-        self.estate.hb_signer = self.hb_signer.as_ref().map(|a| *a.address());
+        self.estate.check_in_signer = self.check_in_signer.as_ref().map(|a| *a.address());
         self.estate.claimable_assets = 1;
-        self.estate.label = label.to_string();
-        self.estate.pause_duration = pause_duration;
-        self.estate.paused_until = 0;
+        self.estate.delegate_pause_duration_secs = delegate_pause_duration_secs;
+        self.estate.delegate_pause_expires_at = 0;
 
         self.vault.estate = *self.estate.address();
         self.vault.bump = vault_bump;

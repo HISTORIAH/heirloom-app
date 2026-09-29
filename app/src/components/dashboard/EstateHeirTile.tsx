@@ -38,7 +38,8 @@ export const EstateHeirTile: React.FC<{ estate: EstateData; className?: string }
       >
         <div className="min-w-0">
           <PanelCap className="text-muted-foreground">{t("dashboard.heir")}</PanelCap>
-          <p className="mt-1.5 font-semibold">{estate.label}</p>
+          {/* TODO(backend): Label comes from backend API, fallback to truncated heir address */}
+          <p className="mt-1.5 font-semibold">{estate.label ?? truncateAddress(estate.heir, 4)}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             <Addr value={estate.heir} empty={t("common.notSet")} />
           </p>
@@ -64,7 +65,7 @@ export const EstateHeirTile: React.FC<{ estate: EstateData; className?: string }
         <div className="py-4">
           <PanelCap className="text-muted-foreground">{t("dashboard.heartbeatSigner")}</PanelCap>
           <p className="mt-1.5 text-sm">
-            <Addr value={estate.hbSigner} empty={t("common.notSet")} />
+            <Addr value={estate.checkInSigner} empty={t("common.notSet")} />
           </p>
         </div>
       </div>

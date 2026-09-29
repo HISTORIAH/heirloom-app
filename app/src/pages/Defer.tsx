@@ -193,12 +193,13 @@ const DeferPageInner: React.FC<{
         </Panel>
 
         {estate && (
-          <EstateGlance label={estate.label} state={estate.vaultState}>
+          // TODO(backend): Label comes from backend API, may be undefined
+          <EstateGlance label={estate.label ?? truncateAddress(estate.heir, 4)} state={estate.vaultState}>
             <GlanceStats>
               <GlanceRow label={SOL_LABEL} value={formatSol(estate.solBalance)} />
               <GlanceRow
                 label={t("defer.pauseDuration")}
-                value={formatDuration(estate.pauseDuration)}
+                value={formatDuration(estate.delegatePauseDurationSecs)}
               />
               <GlanceRow
                 label={t("defer.pauseUsed")}
@@ -266,7 +267,7 @@ const DeferPageInner: React.FC<{
         title={t("defer.confirmTitle")}
         description={
           estate
-            ? t("defer.confirmDesc", { duration: formatDuration(estate.pauseDuration) })
+            ? t("defer.confirmDesc", { duration: formatDuration(estate.delegatePauseDurationSecs) })
             : undefined
         }
         confirmLabel={t("defer.confirmLabel")}

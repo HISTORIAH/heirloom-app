@@ -11,6 +11,7 @@ import { HoldCheckIn } from "@/components/HoldCheckIn";
 import { QuietRow, RowAddress, SectionLabel } from "@/components/Quiet";
 import { StateSlab } from "@/components/StateSlab";
 import { useEstates } from "@/hooks/useEstates";
+import { shortAddress } from "@/lib/address";
 import type { EstateRow } from "@/lib/estates";
 import { gateKind, presentGuardian } from "@/lib/presentGuardian";
 import { colors } from "@/theme";
@@ -35,7 +36,8 @@ function rank(row: EstateRow): number {
 
 function GuardianListRow({ row, onPress }: { row: EstateRow; onPress: () => void }) {
   const view = presentGuardian(row);
-  const name = row.data.label.trim() || "Estate";
+  // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
+  const name = shortAddress(String(row.data.authority), 6);
   return (
     <QuietRow
       title={name}
@@ -93,12 +95,7 @@ export default function GuardianScreen() {
 
   let body;
   if (!account) {
-    body = (
-      <ConnectWallet
-        busy={busy}
-        onConnect={() => void onConnect()}
-      />
-    );
+    body = <ConnectWallet busy={busy} onConnect={() => void onConnect()} />;
   } else if (loading && ordered.length === 0) {
     body = (
       <>
@@ -149,21 +146,13 @@ export default function GuardianScreen() {
               shortLabel={view.legendTo}
             />
           ) : null}
-          <HoldCheckIn
-            label={view.hold}
-            disabled={!view.canHold}
-            onComplete={onPause}
-          />
+          <HoldCheckIn label={view.hold} disabled={!view.canHold} onComplete={onPause} />
         </StateSlab>
         <View style={{ paddingHorizontal: 20, paddingTop: 30 }}>
           <SectionLabel title="Estates you guard" />
           <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
             {ordered.map((row, index) => (
-              <GuardianListRow
-                key={row.address}
-                row={row}
-                onPress={() => setPicked(index)}
-              />
+              <GuardianListRow key={row.address} row={row} onPress={() => setPicked(index)} />
             ))}
             <QuietRow title="Look up by owner and heir" onPress={onLookup} />
           </View>

@@ -14,20 +14,25 @@ pub struct Estate {
     pub discriminator: [u8; 8],
     pub authority: Address,
     pub heir: Address,
-    pub heartbeat_interval: i64,
-    pub grace_period: i64,
-    pub last_heartbeat: i64,
+    /// Seconds between required check-ins
+    pub check_in_interval_secs: i64,
+    /// Extra seconds after interval before claimable
+    pub grace_period_secs: i64,
+    /// Timestamp of last check-in
+    pub last_check_in_ts: i64,
     pub created_at: i64,
     pub bump: u8,
-    pub pause_duration: i64,
-    pub paused_until: i64,
+    /// Duration of one-time delegate pause in seconds
+    pub delegate_pause_duration_secs: i64,
+    /// Timestamp when one-time delegate pause expires (0 = never used)
+    pub delegate_pause_expires_at: i64,
+    /// True while assets are being migrated to new estate
     pub is_migrating: bool,
     pub delegate: Option<Address>,
-    /// hot signer wallet
-    pub hb_signer: Option<Address>,
-    /// number of vault token accounts (ATAs) still open under this estate
+    /// Optional hot wallet signer for check_ins
+    pub check_in_signer: Option<Address>,
+    /// Number of remaining claimable assets (tokens + 1 for SOL)
     pub claimable_assets: u8,
-    pub label: String,
 }
 
 pub const ESTATE_DISCRIMINATOR: [u8; 8] = [193, 23, 206, 61, 104, 225, 211, 221];

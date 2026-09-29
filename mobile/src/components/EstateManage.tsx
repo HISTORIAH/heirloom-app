@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { Cap, PrimaryButton } from "@/components/ui";
-import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS, SECONDS_PER_DAY } from "@/lib/constants";
+import { MAX_INTERVAL_DAYS, SECONDS_PER_DAY } from "@/lib/constants";
 import type { EstateRow } from "@/lib/estates";
 import { uiAmountToRaw } from "@/lib/lamports";
 import {
@@ -11,7 +11,6 @@ import {
   assertWalletCanDeposit,
   fetchMintMeta,
   isPausedNow,
-  trimmedLabel,
 } from "@/lib/manageWrites";
 import { parseAddress } from "@/lib/ownerWrites";
 import { colors, space } from "@/theme";
@@ -19,10 +18,7 @@ import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
 
 type EverydayAction = "heir" | "timing" | "asset";
 
-const EVERYDAY: Record<
-  EverydayAction,
-  { title: string; fallback?: string }
-> = {
+const EVERYDAY: Record<EverydayAction, { title: string; fallback?: string }> = {
   heir: {
     title: "Change heir",
   },
@@ -167,35 +163,36 @@ function changedDayField(
 
 function collectTimingFields(
   row: EstateRow,
-  label: string,
   heartbeat: string,
   grace: string,
   pause: string,
 ): {
-  heartbeatInterval?: bigint;
-  gracePeriod?: bigint;
-  pauseDuration?: bigint;
-  label?: string;
+  checkInIntervalSecs?: bigint;
+  gracePeriodSecs?: bigint;
+  delegatePauseDurationSecs?: bigint;
 } {
-  const nextLabel = trimmedLabel(label);
-  const heartbeatInterval = changedDayField(
+  const checkInIntervalSecs = changedDayField(
     heartbeat,
-    row.data.heartbeatInterval,
+    row.data.checkInIntervalSecs,
     "check-in",
     false,
   );
-  const gracePeriod = changedDayField(grace, row.data.gracePeriod, "grace", false);
-  const pauseDuration = changedDayField(pause, row.data.pauseDuration, "pause", true);
+  const gracePeriodSecs = changedDayField(grace, row.data.gracePeriodSecs, "grace", false);
+  const delegatePauseDurationSecs = changedDayField(
+    pause,
+    row.data.delegatePauseDurationSecs,
+    "pause",
+    true,
+  );
   const fields: {
-    heartbeatInterval?: bigint;
-    gracePeriod?: bigint;
-    pauseDuration?: bigint;
-    label?: string;
+    checkInIntervalSecs?: bigint;
+    gracePeriodSecs?: bigint;
+    delegatePauseDurationSecs?: bigint;
   } = {};
-  if (heartbeatInterval !== undefined) fields.heartbeatInterval = heartbeatInterval;
-  if (gracePeriod !== undefined) fields.gracePeriod = gracePeriod;
-  if (pauseDuration !== undefined) fields.pauseDuration = pauseDuration;
-  if (nextLabel !== row.data.label.trim()) fields.label = nextLabel;
+  if (checkInIntervalSecs !== undefined) fields.checkInIntervalSecs = checkInIntervalSecs;
+  if (gracePeriodSecs !== undefined) fields.gracePeriodSecs = gracePeriodSecs;
+  if (delegatePauseDurationSecs !== undefined)
+    fields.delegatePauseDurationSecs = delegatePauseDurationSecs;
   if (Object.keys(fields).length === 0) {
     throw new Error("Nothing changed");
   }
@@ -267,10 +264,9 @@ interface EstateManageProps {
   busy?: boolean;
   onReassign: (newHeir: Address) => void;
   onTiming: (fields: {
-    heartbeatInterval?: bigint;
-    gracePeriod?: bigint;
-    pauseDuration?: bigint;
-    label?: string;
+    checkInIntervalSecs?: bigint;
+    gracePeriodSecs?: bigint;
+    delegatePauseDurationSecs?: bigint;
   }) => void;
   onAddAsset: (mint: Address, amount: bigint) => void;
   onClose: () => void;
@@ -288,7 +284,9 @@ function HeirForm({
   const [raw, setRaw] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
   return (
-    <View style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+    <View
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+    >
       <Field
         label="New heir"
         value={raw}
@@ -339,23 +337,15 @@ function TimingForm({
   busy?: boolean;
   onSubmit: EstateManageProps["onTiming"];
 }) {
-  const [label, setLabel] = useState(row.data.label);
-  const [heartbeat, setHeartbeat] = useState(daysFromSeconds(row.data.heartbeatInterval));
-  const [grace, setGrace] = useState(daysFromSeconds(row.data.gracePeriod));
-  const [pause, setPause] = useState(daysFromSeconds(row.data.pauseDuration));
+  // TODO(backend): label editing will be moved to a backend API call.
+  const [heartbeat, setHeartbeat] = useState(daysFromSeconds(row.data.checkInIntervalSecs));
+  const [grace, setGrace] = useState(daysFromSeconds(row.data.gracePeriodSecs));
+  const [pause, setPause] = useState(daysFromSeconds(row.data.delegatePauseDurationSecs));
   const [error, setError] = useState<string | undefined>(undefined);
   return (
-    <View style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-      <Field
-        label="Label"
-        value={label}
-        onChangeText={(value) => {
-          setError(undefined);
-          setLabel(value);
-        }}
-        editable={!busy}
-        maxLength={LABEL_MAX_LEN}
-      />
+    <View
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+    >
       <Field
         label="Check-in days"
         value={heartbeat}
@@ -396,7 +386,7 @@ function TimingForm({
         disabled={busy}
         onPress={() => {
           try {
-            onSubmit(collectTimingFields(row, label, heartbeat, grace, pause));
+            onSubmit(collectTimingFields(row, heartbeat, grace, pause));
           } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Check the form");
           }
@@ -425,7 +415,9 @@ function AssetForm({
   const [error, setError] = useState<string | undefined>(undefined);
   const locked = Boolean(busy) || checking;
   return (
-    <View style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+    <View
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+    >
       <Field
         label="Mint"
         value={mint}
@@ -461,13 +453,7 @@ function AssetForm({
               const raw = uiAmountToRaw(amount, meta.decimals);
               if (raw <= 0n) throw new Error("Enter an amount greater than zero");
               await assertMintUnregistered(rpc, estate, mintAddr);
-              await assertWalletCanDeposit(
-                rpc,
-                owner,
-                mintAddr,
-                meta.tokenProgram,
-                raw,
-              );
+              await assertWalletCanDeposit(rpc, owner, mintAddr, meta.tokenProgram, raw);
               onSubmit(mintAddr, raw);
             } catch (cause) {
               setError(cause instanceof Error ? cause.message : "Check mint and amount");
@@ -491,9 +477,9 @@ export function EstateManage({
   onClose,
 }: EstateManageProps) {
   const [open, setOpen] = useState<EverydayAction | undefined>(undefined);
-  const intervalDays = Math.round(Number(row.data.heartbeatInterval) / SECONDS_PER_DAY);
-  const graceDays = Math.round(Number(row.data.gracePeriod) / SECONDS_PER_DAY);
-  const paused = isPausedNow(row.data.pausedUntil);
+  const intervalDays = Math.round(Number(row.data.checkInIntervalSecs) / SECONDS_PER_DAY);
+  const graceDays = Math.round(Number(row.data.gracePeriodSecs) / SECONDS_PER_DAY);
+  const paused = isPausedNow(row.data.delegatePauseExpiresAt);
 
   function toggle(action: EverydayAction) {
     if (busy) return;
@@ -502,28 +488,16 @@ export function EstateManage({
 
   return (
     <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
-      <EverydayRow
-        action="heir"
-        disabled={busy}
-        onPress={() => toggle("heir")}
-      />
-      {open === "heir" ? (
-        <HeirForm busy={busy} paused={paused} onSubmit={onReassign} />
-      ) : null}
+      <EverydayRow action="heir" disabled={busy} onPress={() => toggle("heir")} />
+      {open === "heir" ? <HeirForm busy={busy} paused={paused} onSubmit={onReassign} /> : null}
       <EverydayRow
         action="timing"
         desc={`Every ${intervalDays} days, ${graceDays}-day grace`}
         disabled={busy}
         onPress={() => toggle("timing")}
       />
-      {open === "timing" ? (
-        <TimingForm row={row} busy={busy} onSubmit={onTiming} />
-      ) : null}
-      <EverydayRow
-        action="asset"
-        disabled={busy}
-        onPress={() => toggle("asset")}
-      />
+      {open === "timing" ? <TimingForm row={row} busy={busy} onSubmit={onTiming} /> : null}
+      <EverydayRow action="asset" disabled={busy} onPress={() => toggle("asset")} />
       {open === "asset" ? (
         <AssetForm
           rpc={rpc}
@@ -533,13 +507,7 @@ export function EstateManage({
           onSubmit={onAddAsset}
         />
       ) : null}
-      <EverydayRow
-        action="close"
-        desc="0.5% fee"
-        danger
-        disabled={busy}
-        onPress={onClose}
-      />
+      <EverydayRow action="close" desc="0.5% fee" danger disabled={busy} onPress={onClose} />
     </View>
   );
 }

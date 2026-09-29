@@ -23,10 +23,7 @@ export function useOwnerTx() {
     return sendIxs(async (signer) => [await buildHeartbeatIx(signer, heir)]);
   }
 
-  async function topUpSol(
-    heir: CreateEstateInput["heir"],
-    lamports: bigint,
-  ): Promise<string> {
+  async function topUpSol(heir: CreateEstateInput["heir"], lamports: bigint): Promise<string> {
     if (lamports <= 0n) throw new Error("Enter a SOL amount");
     return sendIxs(async (signer) => {
       const [vault] = await findVaultPda({ authority: signer.address, heir });
@@ -52,22 +49,15 @@ export function useOwnerTx() {
   async function updateSettings(
     row: EstateRow,
     fields: {
-      heartbeatInterval?: bigint;
-      gracePeriod?: bigint;
-      pauseDuration?: bigint;
-      label?: string;
+      checkInIntervalSecs?: bigint;
+      gracePeriodSecs?: bigint;
+      delegatePauseDurationSecs?: bigint;
     },
   ): Promise<string> {
-    return sendIxs(async (signer) => [
-      buildSettingsIx(signer, row.data.heir, row.address, fields),
-    ]);
+    return sendIxs(async (signer) => [buildSettingsIx(signer, row.data.heir, row.address, fields)]);
   }
 
-  async function addToken(
-    row: EstateRow,
-    mint: Address,
-    amount: bigint,
-  ): Promise<string> {
+  async function addToken(row: EstateRow, mint: Address, amount: bigint): Promise<string> {
     return sendIxs(async (signer) => [
       await buildRegisterTokenIx(client.rpc, signer, row.data.heir, mint, amount),
     ]);

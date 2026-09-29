@@ -409,13 +409,13 @@ impl CompleteWithdrawRegular {
         if caller == self.estate.heir {
             let claimable_at = self
                 .estate
-                .last_heartbeat
-                .checked_add(self.estate.heartbeat_interval)
-                .and_then(|t| t.checked_add(self.estate.grace_period))
+                .last_check_in_ts
+                .checked_add(self.estate.check_in_interval_secs)
+                .and_then(|t| t.checked_add(self.estate.grace_period_secs))
                 .ok_or(ProgramError::ArithmeticOverflow)?;
 
             require!(
-                now >= claimable_at.max(self.estate.paused_until),
+                now >= claimable_at.max(self.estate.delegate_pause_expires_at),
                 HeirloomError::NotYetClaimable
             );
 

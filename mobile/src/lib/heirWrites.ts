@@ -41,9 +41,7 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   return value as Record<string, unknown>;
 }
 
-function parsedMintAndAmount(
-  data: unknown,
-): { mint: string; amount: string } | undefined {
+function parsedMintAndAmount(data: unknown): { mint: string; amount: string } | undefined {
   const payload = Array.isArray(data) ? data[0] : data;
   const info = asRecord(asRecord(payload)?.parsed)?.info;
   const rec = asRecord(info);
@@ -81,9 +79,7 @@ async function maybeVaultToken(
   const maybe = await fetchMaybeAssetRecord(rpc, assetRecord);
   if (!maybe.exists) return undefined;
   if (maybe.data.hasProtectedExposure || maybe.data.hasBoostedExposure) {
-    throw new Error(
-      "This vault still has yield deployed. Recall it on the web app first.",
-    );
+    throw new Error("This vault still has yield deployed. Recall it on the web app first.");
   }
   let amount: bigint;
   try {
@@ -103,13 +99,7 @@ async function maybeVaultToken(
 async function listVaultAccounts(rpc: EstateRpc, vault: Address) {
   return Promise.all(
     tokenProgramList().map((programId) =>
-      rpc
-        .getTokenAccountsByOwner(
-          vault,
-          { programId },
-          { encoding: "jsonParsed" },
-        )
-        .send(),
+      rpc.getTokenAccountsByOwner(vault, { programId }, { encoding: "jsonParsed" }).send(),
     ),
   );
 }
@@ -208,10 +198,9 @@ export async function buildSignerHeartbeatIx(
     authority: signer,
     heir,
     estate,
-    heartbeatInterval: null,
-    gracePeriod: null,
-    pauseDuration: null,
-    label: null,
+    checkInIntervalSecs: null,
+    gracePeriodSecs: null,
+    delegatePauseDurationSecs: null,
   });
 }
 

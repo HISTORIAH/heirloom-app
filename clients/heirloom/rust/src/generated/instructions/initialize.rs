@@ -18,8 +18,8 @@ pub struct Initialize {
     pub heir: solana_address::Address,
     /// CHECK: optional delegate pubkey
     pub delegate: Option<solana_address::Address>,
-    /// CHECK: optional hot-signer pubkey
-    pub hb_signer: Option<solana_address::Address>,
+    /// CHECK: optional check_in signer pubkey
+    pub check_in_signer: Option<solana_address::Address>,
 
     pub authority_token_account: Option<solana_address::Address>,
 
@@ -66,9 +66,10 @@ impl Initialize {
                 false,
             ));
         }
-        if let Some(hb_signer) = self.hb_signer {
+        if let Some(check_in_signer) = self.check_in_signer {
             accounts.push(solana_instruction::AccountMeta::new_readonly(
-                hb_signer, false,
+                check_in_signer,
+                false,
             ));
         } else {
             accounts.push(solana_instruction::AccountMeta::new_readonly(
@@ -166,11 +167,10 @@ impl Default for InitializeInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 pub struct InitializeInstructionArgs {
-    pub heartbeat_interval: i64,
-    pub grace_period: i64,
-    pub pause_duration: i64,
+    pub check_in_interval_secs: i64,
+    pub grace_period_secs: i64,
+    pub delegate_pause_duration_secs: i64,
     pub amount: u64,
-    pub label: String,
 }
 
 impl InitializeInstructionArgs {
@@ -186,7 +186,7 @@ impl InitializeInstructionArgs {
 ///   0. `[writable, signer]` authority
 ///   1. `[]` heir
 ///   2. `[optional]` delegate
-///   3. `[optional]` hb_signer
+///   3. `[optional]` check_in_signer
 ///   4. `[writable, optional]` authority_token_account
 ///   5. `[writable]` estate
 ///   6. `[writable]` vault
@@ -201,7 +201,7 @@ pub struct InitializeBuilder {
     authority: Option<solana_address::Address>,
     heir: Option<solana_address::Address>,
     delegate: Option<solana_address::Address>,
-    hb_signer: Option<solana_address::Address>,
+    check_in_signer: Option<solana_address::Address>,
     authority_token_account: Option<solana_address::Address>,
     estate: Option<solana_address::Address>,
     vault: Option<solana_address::Address>,
@@ -211,11 +211,10 @@ pub struct InitializeBuilder {
     token_program: Option<solana_address::Address>,
     associated_token_program: Option<solana_address::Address>,
     system_program: Option<solana_address::Address>,
-    heartbeat_interval: Option<i64>,
-    grace_period: Option<i64>,
-    pause_duration: Option<i64>,
+    check_in_interval_secs: Option<i64>,
+    grace_period_secs: Option<i64>,
+    delegate_pause_duration_secs: Option<i64>,
     amount: Option<u64>,
-    label: Option<String>,
     __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
@@ -242,10 +241,13 @@ impl InitializeBuilder {
         self
     }
     /// `[optional account]`
-    /// CHECK: optional hot-signer pubkey
+    /// CHECK: optional check_in signer pubkey
     #[inline(always)]
-    pub fn hb_signer(&mut self, hb_signer: Option<solana_address::Address>) -> &mut Self {
-        self.hb_signer = hb_signer;
+    pub fn check_in_signer(
+        &mut self,
+        check_in_signer: Option<solana_address::Address>,
+    ) -> &mut Self {
+        self.check_in_signer = check_in_signer;
         self
     }
     /// `[optional account]`
@@ -313,28 +315,23 @@ impl InitializeBuilder {
         self
     }
     #[inline(always)]
-    pub fn heartbeat_interval(&mut self, heartbeat_interval: i64) -> &mut Self {
-        self.heartbeat_interval = Some(heartbeat_interval);
+    pub fn check_in_interval_secs(&mut self, check_in_interval_secs: i64) -> &mut Self {
+        self.check_in_interval_secs = Some(check_in_interval_secs);
         self
     }
     #[inline(always)]
-    pub fn grace_period(&mut self, grace_period: i64) -> &mut Self {
-        self.grace_period = Some(grace_period);
+    pub fn grace_period_secs(&mut self, grace_period_secs: i64) -> &mut Self {
+        self.grace_period_secs = Some(grace_period_secs);
         self
     }
     #[inline(always)]
-    pub fn pause_duration(&mut self, pause_duration: i64) -> &mut Self {
-        self.pause_duration = Some(pause_duration);
+    pub fn delegate_pause_duration_secs(&mut self, delegate_pause_duration_secs: i64) -> &mut Self {
+        self.delegate_pause_duration_secs = Some(delegate_pause_duration_secs);
         self
     }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.amount = Some(amount);
-        self
-    }
-    #[inline(always)]
-    pub fn label(&mut self, label: String) -> &mut Self {
-        self.label = Some(label);
         self
     }
     /// Add an additional account to the instruction.
@@ -358,7 +355,7 @@ impl InitializeBuilder {
             authority: self.authority.expect("authority is not set"),
             heir: self.heir.expect("heir is not set"),
             delegate: self.delegate,
-            hb_signer: self.hb_signer,
+            check_in_signer: self.check_in_signer,
             authority_token_account: self.authority_token_account,
             estate: self.estate.expect("estate is not set"),
             vault: self.vault.expect("vault is not set"),
@@ -376,17 +373,19 @@ impl InitializeBuilder {
                 .unwrap_or(solana_address::address!("11111111111111111111111111111111")),
         };
         let args = InitializeInstructionArgs {
-            heartbeat_interval: self
-                .heartbeat_interval
+            check_in_interval_secs: self
+                .check_in_interval_secs
                 .clone()
-                .expect("heartbeat_interval is not set"),
-            grace_period: self.grace_period.clone().expect("grace_period is not set"),
-            pause_duration: self
-                .pause_duration
+                .expect("check_in_interval_secs is not set"),
+            grace_period_secs: self
+                .grace_period_secs
                 .clone()
-                .expect("pause_duration is not set"),
+                .expect("grace_period_secs is not set"),
+            delegate_pause_duration_secs: self
+                .delegate_pause_duration_secs
+                .clone()
+                .expect("delegate_pause_duration_secs is not set"),
             amount: self.amount.clone().expect("amount is not set"),
-            label: self.label.clone().expect("label is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -400,8 +399,8 @@ pub struct InitializeCpiAccounts<'a, 'b> {
     pub heir: &'b solana_account_info::AccountInfo<'a>,
     /// CHECK: optional delegate pubkey
     pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-    /// CHECK: optional hot-signer pubkey
-    pub hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: optional check_in signer pubkey
+    pub check_in_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
 
     pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
 
@@ -432,8 +431,8 @@ pub struct InitializeCpi<'a, 'b> {
     pub heir: &'b solana_account_info::AccountInfo<'a>,
     /// CHECK: optional delegate pubkey
     pub delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-    /// CHECK: optional hot-signer pubkey
-    pub hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
+    /// CHECK: optional check_in signer pubkey
+    pub check_in_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
 
     pub authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
 
@@ -467,7 +466,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             authority: accounts.authority,
             heir: accounts.heir,
             delegate: accounts.delegate,
-            hb_signer: accounts.hb_signer,
+            check_in_signer: accounts.check_in_signer,
             authority_token_account: accounts.authority_token_account,
             estate: accounts.estate,
             vault: accounts.vault,
@@ -523,9 +522,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
                 false,
             ));
         }
-        if let Some(hb_signer) = self.hb_signer {
+        if let Some(check_in_signer) = self.check_in_signer {
             accounts.push(solana_instruction::AccountMeta::new_readonly(
-                *hb_signer.key,
+                *check_in_signer.key,
                 false,
             ));
         } else {
@@ -617,8 +616,8 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         if let Some(delegate) = self.delegate {
             account_infos.push(delegate.clone());
         }
-        if let Some(hb_signer) = self.hb_signer {
-            account_infos.push(hb_signer.clone());
+        if let Some(check_in_signer) = self.check_in_signer {
+            account_infos.push(check_in_signer.clone());
         }
         if let Some(authority_token_account) = self.authority_token_account {
             account_infos.push(authority_token_account.clone());
@@ -656,7 +655,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 ///   0. `[writable, signer]` authority
 ///   1. `[]` heir
 ///   2. `[optional]` delegate
-///   3. `[optional]` hb_signer
+///   3. `[optional]` check_in_signer
 ///   4. `[writable, optional]` authority_token_account
 ///   5. `[writable]` estate
 ///   6. `[writable]` vault
@@ -678,7 +677,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
             authority: None,
             heir: None,
             delegate: None,
-            hb_signer: None,
+            check_in_signer: None,
             authority_token_account: None,
             estate: None,
             vault: None,
@@ -688,11 +687,10 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
             token_program: None,
             associated_token_program: None,
             system_program: None,
-            heartbeat_interval: None,
-            grace_period: None,
-            pause_duration: None,
+            check_in_interval_secs: None,
+            grace_period_secs: None,
+            delegate_pause_duration_secs: None,
             amount: None,
-            label: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -719,13 +717,13 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
     }
     /// `[optional account]`
-    /// CHECK: optional hot-signer pubkey
+    /// CHECK: optional check_in signer pubkey
     #[inline(always)]
-    pub fn hb_signer(
+    pub fn check_in_signer(
         &mut self,
-        hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
+        check_in_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
     ) -> &mut Self {
-        self.instruction.hb_signer = hb_signer;
+        self.instruction.check_in_signer = check_in_signer;
         self
     }
     /// `[optional account]`
@@ -799,28 +797,23 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn heartbeat_interval(&mut self, heartbeat_interval: i64) -> &mut Self {
-        self.instruction.heartbeat_interval = Some(heartbeat_interval);
+    pub fn check_in_interval_secs(&mut self, check_in_interval_secs: i64) -> &mut Self {
+        self.instruction.check_in_interval_secs = Some(check_in_interval_secs);
         self
     }
     #[inline(always)]
-    pub fn grace_period(&mut self, grace_period: i64) -> &mut Self {
-        self.instruction.grace_period = Some(grace_period);
+    pub fn grace_period_secs(&mut self, grace_period_secs: i64) -> &mut Self {
+        self.instruction.grace_period_secs = Some(grace_period_secs);
         self
     }
     #[inline(always)]
-    pub fn pause_duration(&mut self, pause_duration: i64) -> &mut Self {
-        self.instruction.pause_duration = Some(pause_duration);
+    pub fn delegate_pause_duration_secs(&mut self, delegate_pause_duration_secs: i64) -> &mut Self {
+        self.instruction.delegate_pause_duration_secs = Some(delegate_pause_duration_secs);
         self
     }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.instruction.amount = Some(amount);
-        self
-    }
-    #[inline(always)]
-    pub fn label(&mut self, label: String) -> &mut Self {
-        self.instruction.label = Some(label);
         self
     }
     /// Add an additional account to the instruction.
@@ -858,23 +851,22 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
     #[allow(clippy::vec_init_then_push)]
     pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
         let args = InitializeInstructionArgs {
-            heartbeat_interval: self
+            check_in_interval_secs: self
                 .instruction
-                .heartbeat_interval
+                .check_in_interval_secs
                 .clone()
-                .expect("heartbeat_interval is not set"),
-            grace_period: self
+                .expect("check_in_interval_secs is not set"),
+            grace_period_secs: self
                 .instruction
-                .grace_period
+                .grace_period_secs
                 .clone()
-                .expect("grace_period is not set"),
-            pause_duration: self
+                .expect("grace_period_secs is not set"),
+            delegate_pause_duration_secs: self
                 .instruction
-                .pause_duration
+                .delegate_pause_duration_secs
                 .clone()
-                .expect("pause_duration is not set"),
+                .expect("delegate_pause_duration_secs is not set"),
             amount: self.instruction.amount.clone().expect("amount is not set"),
-            label: self.instruction.label.clone().expect("label is not set"),
         };
         let instruction = InitializeCpi {
             __program: self.instruction.__program,
@@ -885,7 +877,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
 
             delegate: self.instruction.delegate,
 
-            hb_signer: self.instruction.hb_signer,
+            check_in_signer: self.instruction.check_in_signer,
 
             authority_token_account: self.instruction.authority_token_account,
 
@@ -928,7 +920,7 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
     authority: Option<&'b solana_account_info::AccountInfo<'a>>,
     heir: Option<&'b solana_account_info::AccountInfo<'a>>,
     delegate: Option<&'b solana_account_info::AccountInfo<'a>>,
-    hb_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
+    check_in_signer: Option<&'b solana_account_info::AccountInfo<'a>>,
     authority_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     estate: Option<&'b solana_account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_account_info::AccountInfo<'a>>,
@@ -938,11 +930,10 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
     token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-    heartbeat_interval: Option<i64>,
-    grace_period: Option<i64>,
-    pause_duration: Option<i64>,
+    check_in_interval_secs: Option<i64>,
+    grace_period_secs: Option<i64>,
+    delegate_pause_duration_secs: Option<i64>,
     amount: Option<u64>,
-    label: Option<String>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

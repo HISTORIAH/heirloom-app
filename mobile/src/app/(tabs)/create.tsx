@@ -1,12 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 
 import { AppHeader } from "@/components/AppHeader";
 import { ChainLoading } from "@/components/ChainLoading";
@@ -59,12 +53,7 @@ function solIssue(sol: string, balance?: bigint): string | undefined {
   }
 }
 
-function heirsGateReady(
-  label: string,
-  heir: string,
-  guardian: string,
-  signer: string,
-): boolean {
+function heirsGateReady(label: string, heir: string, guardian: string, signer: string): boolean {
   if (label.trim().length === 0) return false;
   try {
     parseAddress(heir, "heir");
@@ -76,9 +65,7 @@ function heirsGateReady(
   }
 }
 
-function cardScanMessage(
-  result: Exclude<CardScan, { kind: "address" | "cancelled" }>,
-): string {
+function cardScanMessage(result: Exclude<CardScan, { kind: "address" | "cancelled" }>): string {
   if (result.kind === "off") return "NFC is off. Turn it on, then tap the card again.";
   if (result.kind === "unsupported") return "This phone cannot read NFC cards.";
   if (result.kind === "empty") return "This card has no Solana address.";
@@ -113,8 +100,7 @@ function createFailCopy(cause: unknown, walletOn: boolean): string {
 export default function CreateScreen() {
   const router = useRouter();
   const { createEstate } = useOwnerTx();
-  const { lamports: balance, loading: balanceLoading, connected, connect } =
-    useSolBalance();
+  const { lamports: balance, loading: balanceLoading, connected, connect } = useSolBalance();
 
   const [step, setStep] = useState(1);
   const [farthest, setFarthest] = useState(1);
@@ -137,8 +123,7 @@ export default function CreateScreen() {
   const [signerError, setSignerError] = useState<string | undefined>(undefined);
   const [scanning, setScanning] = useState<"heir" | "signer" | undefined>(undefined);
 
-  const { frameRef, scrollRef, keyboardOpen, kbPad, onLift, onScroll } =
-    useLiftIntoScroll();
+  const { frameRef, scrollRef, keyboardOpen, kbPad, onLift, onScroll } = useLiftIntoScroll();
 
   const submitRef = useRef(submit);
   const connectedRef = useRef(connected);
@@ -157,34 +142,19 @@ export default function CreateScreen() {
   }, [sol]);
   const solEmpty = !hasSol;
   const hasGuardian = guardian.trim().length > 0;
-  const heartbeatError = daysRangeError(
-    heartbeatDays,
-    HB_MIN_DAYS,
-    HB_MAX_DAYS,
-    "Check-in",
-  );
-  const graceError = daysRangeError(
-    graceDays,
-    GRACE_MIN_DAYS,
-    GRACE_MAX_DAYS,
-    "Grace",
-  );
+  const heartbeatError = daysRangeError(heartbeatDays, HB_MIN_DAYS, HB_MAX_DAYS, "Check-in");
+  const graceError = daysRangeError(graceDays, GRACE_MIN_DAYS, GRACE_MAX_DAYS, "Grace");
   const pauseError = hasGuardian
     ? daysRangeError(pauseDays, PAUSE_MIN_DAYS, PAUSE_MAX_DAYS, "Pause")
     : undefined;
   const timingBlocked =
-    heartbeatError !== undefined ||
-    graceError !== undefined ||
-    pauseError !== undefined;
+    heartbeatError !== undefined || graceError !== undefined || pauseError !== undefined;
   const heirsLooksReady = heirsGateReady(label, heir, guardian, signer);
   const createReady = acked && hasSol && submit !== "creating";
 
-  const heirShort =
-    heir.trim().length > 8 ? shortAddress(heir.trim(), 6) : heir.trim() || "—";
-  const guardianShort =
-    guardian.trim().length > 0 ? shortAddress(guardian.trim(), 6) : undefined;
-  const signerShort =
-    signer.trim().length > 0 ? shortAddress(signer.trim(), 6) : undefined;
+  const heirShort = heir.trim().length > 8 ? shortAddress(heir.trim(), 6) : heir.trim() || "—";
+  const guardianShort = guardian.trim().length > 0 ? shortAddress(guardian.trim(), 6) : undefined;
+  const signerShort = signer.trim().length > 0 ? shortAddress(signer.trim(), 6) : undefined;
 
   const hero = hasSol ? `${sol.trim()} SOL` : "Nothing yet";
   const balanceLine = connected
@@ -197,9 +167,7 @@ export default function CreateScreen() {
 
   useEffect(() => {
     if (!connected) return;
-    setSubmitError((current) =>
-      current === CONNECT_WALLET_COPY ? undefined : current,
-    );
+    setSubmitError((current) => (current === CONNECT_WALLET_COPY ? undefined : current));
   }, [connected]);
 
   const resetForm = useCallback(() => {
@@ -332,17 +300,16 @@ export default function CreateScreen() {
     setSubmitError(undefined);
     setSubmit("creating");
     try {
+      // TODO(backend): send label to backend API for display purposes.
       await createEstate({
         heir: parseAddress(heir, "heir"),
         label: label.trim().slice(0, LABEL_MAX_LEN),
-        heartbeatInterval: BigInt(heartbeatDays * SECONDS_PER_DAY),
-        gracePeriod: BigInt(graceDays * SECONDS_PER_DAY),
-        pauseDuration: hasGuardian
-          ? BigInt(pauseDays * SECONDS_PER_DAY)
-          : 0n,
+        checkInIntervalSecs: BigInt(heartbeatDays * SECONDS_PER_DAY),
+        gracePeriodSecs: BigInt(graceDays * SECONDS_PER_DAY),
+        delegatePauseDurationSecs: hasGuardian ? BigInt(pauseDays * SECONDS_PER_DAY) : 0n,
         amountLamports: solToLamports(sol),
         delegate: parseOptionalAddress(guardian, "guardian"),
-        hbSigner: parseOptionalAddress(signer, "check-in signer"),
+        checkInSigner: parseOptionalAddress(signer, "check-in signer"),
         fundHeir,
       });
       if (dropIfLeft()) return;
@@ -360,9 +327,7 @@ export default function CreateScreen() {
     try {
       await connect();
     } catch (cause) {
-      setSubmitError(
-        cause instanceof Error ? cause.message : "Could not connect",
-      );
+      setSubmitError(cause instanceof Error ? cause.message : "Could not connect");
     }
   }
 
@@ -375,8 +340,7 @@ export default function CreateScreen() {
   const complete = submit === "complete";
   const creating = submit === "creating";
   const showFooter = !creating && !complete;
-  const errorLine =
-    submitError === CONNECT_WALLET_COPY && connected ? undefined : submitError;
+  const errorLine = submitError === CONNECT_WALLET_COPY && connected ? undefined : submitError;
 
   return (
     <KeyboardAvoidingView
@@ -393,104 +357,104 @@ export default function CreateScreen() {
         onJump={goJump}
       />
       <View ref={frameRef} collapsable={false} style={{ flex: 1 }}>
-      <ScrollView
-        ref={scrollRef}
-        style={{ flex: 1 }}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        automaticallyAdjustKeyboardInsets
-        scrollEventThrottle={16}
-        onScroll={onScroll}
-        contentContainerStyle={{ padding: 20, paddingBottom: 24 + kbPad }}
-      >
-        {creating ? (
-          <ChainLoading body="Confirm in your wallet" />
-        ) : (
-          <>
-            {step === 1 ? (
-              <HeirsStep
-                label={label}
-                heir={heir}
-                guardian={guardian}
-                signer={signer}
-                labelError={labelError}
-                heirError={heirError}
-                guardianError={guardianError}
-                signerError={signerError}
-                setLabel={setLabel}
-                setHeir={setHeir}
-                setGuardian={setGuardian}
-                setSigner={setSigner}
-                clearLabelError={() => setLabelError(undefined)}
-                clearHeirError={() => setHeirError(undefined)}
-                clearGuardianError={() => setGuardianError(undefined)}
-                clearSignerError={() => setSignerError(undefined)}
-                scanning={scanning}
-                onScanCard={onScanCard}
-                onLift={onLift}
-              />
-            ) : null}
-            {step === 2 ? (
-              <AssetsStep
-                sol={sol}
-                solError={amountError}
-                hero={hero}
-                selectedPct={solPct}
-                chipsDisabled={!connected || balance === undefined || balance <= 0n}
-                showClear={hasSol}
-                balanceLine={balanceLine}
-                disconnected={!connected}
-                onChangeSol={(v) => {
-                  setSolPct(undefined);
-                  setSol(v);
-                }}
-                onPickPct={onPickPct}
-                onClear={() => {
-                  setSolPct(undefined);
-                  setSol("");
-                }}
-                onConnect={() => void onConnect()}
-                onLift={onLift}
-              />
-            ) : null}
-            {step === 3 ? (
-              <HeartbeatStep
-                heartbeatDays={heartbeatDays}
-                graceDays={graceDays}
-                pauseDays={pauseDays}
-                hasGuardian={hasGuardian}
-                heartbeatError={heartbeatError}
-                graceError={graceError}
-                pauseError={pauseError}
-                onHeartbeat={setHeartbeatDays}
-                onGrace={setGraceDays}
-                onPause={setPauseDays}
-                onLift={onLift}
-              />
-            ) : null}
-            {step === 4 ? (
-              <ReviewStep
-                label={label.trim()}
-                heirShort={heirShort}
-                guardianShort={guardianShort}
-                signerShort={signerShort}
-                solDisplay={sol.trim() || "0"}
-                hasSol={hasSol}
-                fundHeir={fundHeir}
-                heartbeatDays={heartbeatDays}
-                graceDays={graceDays}
-                pauseDays={pauseDays}
-                acked={acked}
-                onEditHeirs={() => setStep(1)}
-                onEditAssets={() => setStep(2)}
-                onEditTiming={() => setStep(3)}
-                onToggleFundHeir={() => setFundHeir((v) => !v)}
-                onToggleAck={() => setAcked((v) => !v)}
-              />
-            ) : null}
-          </>
-        )}
-      </ScrollView>
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
+          scrollEventThrottle={16}
+          onScroll={onScroll}
+          contentContainerStyle={{ padding: 20, paddingBottom: 24 + kbPad }}
+        >
+          {creating ? (
+            <ChainLoading body="Confirm in your wallet" />
+          ) : (
+            <>
+              {step === 1 ? (
+                <HeirsStep
+                  label={label}
+                  heir={heir}
+                  guardian={guardian}
+                  signer={signer}
+                  labelError={labelError}
+                  heirError={heirError}
+                  guardianError={guardianError}
+                  signerError={signerError}
+                  setLabel={setLabel}
+                  setHeir={setHeir}
+                  setGuardian={setGuardian}
+                  setSigner={setSigner}
+                  clearLabelError={() => setLabelError(undefined)}
+                  clearHeirError={() => setHeirError(undefined)}
+                  clearGuardianError={() => setGuardianError(undefined)}
+                  clearSignerError={() => setSignerError(undefined)}
+                  scanning={scanning}
+                  onScanCard={onScanCard}
+                  onLift={onLift}
+                />
+              ) : null}
+              {step === 2 ? (
+                <AssetsStep
+                  sol={sol}
+                  solError={amountError}
+                  hero={hero}
+                  selectedPct={solPct}
+                  chipsDisabled={!connected || balance === undefined || balance <= 0n}
+                  showClear={hasSol}
+                  balanceLine={balanceLine}
+                  disconnected={!connected}
+                  onChangeSol={(v) => {
+                    setSolPct(undefined);
+                    setSol(v);
+                  }}
+                  onPickPct={onPickPct}
+                  onClear={() => {
+                    setSolPct(undefined);
+                    setSol("");
+                  }}
+                  onConnect={() => void onConnect()}
+                  onLift={onLift}
+                />
+              ) : null}
+              {step === 3 ? (
+                <HeartbeatStep
+                  heartbeatDays={heartbeatDays}
+                  graceDays={graceDays}
+                  pauseDays={pauseDays}
+                  hasGuardian={hasGuardian}
+                  heartbeatError={heartbeatError}
+                  graceError={graceError}
+                  pauseError={pauseError}
+                  onHeartbeat={setHeartbeatDays}
+                  onGrace={setGraceDays}
+                  onPause={setPauseDays}
+                  onLift={onLift}
+                />
+              ) : null}
+              {step === 4 ? (
+                <ReviewStep
+                  label={label.trim()}
+                  heirShort={heirShort}
+                  guardianShort={guardianShort}
+                  signerShort={signerShort}
+                  solDisplay={sol.trim() || "0"}
+                  hasSol={hasSol}
+                  fundHeir={fundHeir}
+                  heartbeatDays={heartbeatDays}
+                  graceDays={graceDays}
+                  pauseDays={pauseDays}
+                  acked={acked}
+                  onEditHeirs={() => setStep(1)}
+                  onEditAssets={() => setStep(2)}
+                  onEditTiming={() => setStep(3)}
+                  onToggleFundHeir={() => setFundHeir((v) => !v)}
+                  onToggleAck={() => setAcked((v) => !v)}
+                />
+              ) : null}
+            </>
+          )}
+        </ScrollView>
       </View>
       {errorLine !== undefined && showFooter ? (
         <Text

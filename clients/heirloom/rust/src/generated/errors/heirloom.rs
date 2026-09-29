@@ -46,24 +46,21 @@ pub enum HeirloomError {
     /// 6011 - Resolve token assets first, then SOL.
     #[error("Resolve token assets first, then SOL.")]
     TokensFirst = 0x177B,
-    /// 6012 - Label too long
-    #[error("Label too long")]
-    LabelTooLong = 0x177C,
-    /// 6013 - Math overflow
+    /// 6012 - Math overflow
     #[error("Math overflow")]
-    MathOverflow = 0x177D,
-    /// 6014 - Math underflow
+    MathOverflow = 0x177C,
+    /// 6013 - Math underflow
     #[error("Math underflow")]
-    MathUnderflow = 0x177E,
-    /// 6015 - Interval exceeds maximum of 365 days.
+    MathUnderflow = 0x177D,
+    /// 6014 - Interval exceeds maximum of 365 days.
     #[error("Interval exceeds maximum of 365 days.")]
-    IntervalTooLong = 0x177F,
-    /// 6016 - Interval cannot be less than 0.
+    IntervalTooLong = 0x177E,
+    /// 6015 - Interval cannot be less than 0.
     #[error("Interval cannot be less than 0.")]
-    IntervalNegative = 0x1780,
-    /// 6017 - Cannot claim/close while funds are still deployed.
+    IntervalNegative = 0x177F,
+    /// 6016 - Cannot claim/close while funds are still deployed.
     #[error("Cannot claim/close while funds are still deployed.")]
-    FundsStillDeployed = 0x1781,
+    FundsStillDeployed = 0x1780,
 }
 
 impl From<HeirloomError> for solana_program_error::ProgramError {

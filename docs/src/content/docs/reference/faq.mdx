@@ -77,7 +77,7 @@ your wallet minus 0.5%.
 
 ### Does depositing count as a check-in?
 
-No. Only `update_field` resets `last_heartbeat`. Deposits, registrations and yield
+No. Only `update_field` resets `last_check_in_ts`. Deposits, registrations and yield
 operations leave the clock untouched.
 
 ### Can I automate my check-ins?
@@ -98,7 +98,7 @@ them.
 ### What if my heir claims too early?
 
 They cannot. The program rejects it with `NotYetClaimable` until
-`now >= max(last_heartbeat + interval + grace, paused_until)`.
+`now >= max(last_check_in_ts + check_in_interval_secs + grace_period_secs, delegate_pause_expires_at)`.
 
 ### What if we both sign at once?
 
@@ -149,5 +149,5 @@ control as the heir, and a lost key stops being permanent.
 
 ### Is any of this private?
 
-No. Every address, duration, label and balance is public on-chain, and anyone can
-correlate them. Do not write anything into a label you would not publish.
+No. Every address, duration and balance is public, and anyone can
+correlate them.

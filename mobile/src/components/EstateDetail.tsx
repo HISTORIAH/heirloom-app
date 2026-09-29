@@ -22,10 +22,9 @@ interface EstateDetailProps {
   onAddSol?: (lamports: bigint) => void;
   onReassign?: (newHeir: Address) => void;
   onTiming?: (fields: {
-    heartbeatInterval?: bigint;
-    gracePeriod?: bigint;
-    pauseDuration?: bigint;
-    label?: string;
+    checkInIntervalSecs?: bigint;
+    gracePeriodSecs?: bigint;
+    delegatePauseDurationSecs?: bigint;
   }) => void;
   onAddAsset?: (mint: Address, amount: bigint) => void;
   onCloseEstate?: () => void;
@@ -86,11 +85,12 @@ export function EstateDetail({
 }: EstateDetailProps) {
   const view = useDashboardView(row.data, row.claimableLamports);
   const heir = String(row.data.heir);
-  const hbRaw = unwrapOption(row.data.hbSigner);
+  const signerRaw = unwrapOption(row.data.checkInSigner);
   const guardianRaw = unwrapOption(row.data.delegate);
-  const heartbeat = hbRaw === null ? undefined : hbRaw;
+  const heartbeat = signerRaw === null ? undefined : signerRaw;
   const guardian = guardianRaw === null ? undefined : guardianRaw;
-  const label = row.data.label.trim() || shortAddress(heir);
+  // TODO(backend): fetch label from backend API. Fall back to truncated heir address.
+  const label = shortAddress(heir);
   const live = view.state !== "distributed";
   const canManage =
     live &&

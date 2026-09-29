@@ -3,7 +3,7 @@ title: Roles & permissions
 description: Authority, heir, guardian, hot signer — what each one can sign for, and what the program refuses them.
 section: concepts
 order: 4
-keywords: ["roles", "permissions", "authority", "heir", "guardian", "delegate", "hb_signer", "hot signer"]
+keywords: ["roles", "permissions", "authority", "heir", "guardian", "delegate", "check_in_signer", "hot signer"]
 ---
 
 Four roles, two of them optional. Each is a public key stored on the estate account, and
@@ -18,7 +18,7 @@ its whole life.
 The authority can:
 
 - register assets and deposit into them
-- send check-ins and edit the interval, grace period, pause duration, and label
+- send check-ins and edit the interval, grace period, and pause duration
 - route balances into a yield strategy and recall them
 - reassign the heir, which migrates the estate to a new PDA pair
 - withdraw everything at any time
@@ -45,12 +45,12 @@ lands where you think it does.
 
 ## Guardian (`delegate`)
 
-Optional. A wallet you name that may **defer the deadline once**, pushing `paused_until`
-to `now + pause_duration`.
+Optional. A wallet you name that may **defer the deadline once**, pushing `delegate_pause_expires_at`
+to `now + delegate_pause_duration_secs`.
 
 That is the entire power. A guardian cannot move funds, cannot see anything you cannot,
 cannot change the heir, cannot alter a single duration, and cannot defer twice — the
-program requires `paused_until == 0` on entry, so once used it stays used until you come
+program requires `delegate_pause_expires_at == 0` on entry, so once used it stays used until you come
 back and check in after it has expired.
 
 <Code caption="programs/heirloom/src/instructions/defer.rs">
@@ -65,9 +65,9 @@ pub delegate: Signer,
 </Code>
 
 Naming one is a real reduction in your own risk and costs you nothing in control. The
-worst a hostile guardian can do is delay an inheritance by your own `pause_duration`.
+worst a hostile guardian can do is delay an inheritance by your own `delegate_pause_duration_secs`.
 
-## Hot signer (`hb_signer`)
+## Hot signer (`check_in_signer`)
 
 Optional. A second wallet of yours that may send check-ins — and only check-ins.
 
@@ -76,10 +76,10 @@ branch is gated separately on the signer being the authority:
 
 <Code caption="programs/heirloom/src/instructions/update_field.rs">
 ```rust
-estate.last_heartbeat = now;
+estate.last_check_in_ts = now;
 
 if *authority_key == estate.authority {
-    // interval / grace / pause_duration / label are applied here only
+    // interval / grace / delegate_pause_duration_secs are applied here only
 }
 ```
 </Code>

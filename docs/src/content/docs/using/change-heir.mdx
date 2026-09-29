@@ -26,14 +26,14 @@ The new estate is the old one, re-keyed:
 
 | Carried | Reset |
 |---|---|
-| `heartbeat_interval` | `paused_until` → `0` |
-| `grace_period` | |
-| `last_heartbeat` — your clock is not restarted | |
-| `pause_duration` | |
-| `delegate` and `hb_signer` | |
+| `check_in_interval_secs` | `delegate_pause_expires_at` → `0` |
+| `grace_period_secs` | |
+| `last_check_in_ts` — your clock is not restarted | |
+| `delegate_pause_duration_secs` | |
+| `delegate` and `check_in_signer` | |
 | `claimable_assets` | |
 
-Because `last_heartbeat` carries over, reassigning an heir does not buy you time and does
+Because `last_check_in_ts` carries over, reassigning an heir does not buy you time and does
 not cost you any.
 
 ## Migration is not atomic across assets
@@ -59,12 +59,12 @@ completion — an abandoned migration leaves two estates where you meant to have
 | Requirement | Error if unmet |
 |---|---|
 | Signer is the authority | `Unauthorized` |
-| The estate is not paused (`now >= paused_until`) | `EstatePaused` |
+| The estate is not paused (`now >= delegate_pause_expires_at`) | `EstatePaused` |
 | The destination estate is the migration target | `InvalidAccount` |
 | The asset has no open yield exposure | `FundsStillDeployed` |
 
 <Callout type="warning" title="You cannot reassign a paused estate">
-A live guardian pause blocks the migration. Wait for `paused_until` to expire, check in
+A live guardian pause blocks the migration. Wait for `delegate_pause_expires_at` to expire, check in
 once to clear it, then reassign.
 </Callout>
 

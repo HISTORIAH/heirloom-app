@@ -7,8 +7,6 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
   assertAccountExists,
   assertAccountsExist,
   combineCodec,
@@ -29,12 +27,8 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
   getU8Decoder,
   getU8Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
   transformEncoder,
   type Account,
   type Address,
@@ -63,39 +57,49 @@ export type Estate = {
   discriminator: ReadonlyUint8Array;
   authority: Address;
   heir: Address;
-  heartbeatInterval: bigint;
-  gracePeriod: bigint;
-  lastHeartbeat: bigint;
+  /** Seconds between required check-ins */
+  checkInIntervalSecs: bigint;
+  /** Extra seconds after interval before claimable */
+  gracePeriodSecs: bigint;
+  /** Timestamp of last check-in */
+  lastCheckInTs: bigint;
   createdAt: bigint;
   bump: number;
-  pauseDuration: bigint;
-  pausedUntil: bigint;
+  /** Duration of one-time delegate pause in seconds */
+  delegatePauseDurationSecs: bigint;
+  /** Timestamp when one-time delegate pause expires (0 = never used) */
+  delegatePauseExpiresAt: bigint;
+  /** True while assets are being migrated to new estate */
   isMigrating: boolean;
   delegate: Option<Address>;
-  /** hot signer wallet */
-  hbSigner: Option<Address>;
-  /** number of vault token accounts (ATAs) still open under this estate */
+  /** Optional hot wallet signer for check_ins */
+  checkInSigner: Option<Address>;
+  /** Number of remaining claimable assets (tokens + 1 for SOL) */
   claimableAssets: number;
-  label: string;
 };
 
 export type EstateArgs = {
   authority: Address;
   heir: Address;
-  heartbeatInterval: number | bigint;
-  gracePeriod: number | bigint;
-  lastHeartbeat: number | bigint;
+  /** Seconds between required check-ins */
+  checkInIntervalSecs: number | bigint;
+  /** Extra seconds after interval before claimable */
+  gracePeriodSecs: number | bigint;
+  /** Timestamp of last check-in */
+  lastCheckInTs: number | bigint;
   createdAt: number | bigint;
   bump: number;
-  pauseDuration: number | bigint;
-  pausedUntil: number | bigint;
+  /** Duration of one-time delegate pause in seconds */
+  delegatePauseDurationSecs: number | bigint;
+  /** Timestamp when one-time delegate pause expires (0 = never used) */
+  delegatePauseExpiresAt: number | bigint;
+  /** True while assets are being migrated to new estate */
   isMigrating: boolean;
   delegate: OptionOrNullable<Address>;
-  /** hot signer wallet */
-  hbSigner: OptionOrNullable<Address>;
-  /** number of vault token accounts (ATAs) still open under this estate */
+  /** Optional hot wallet signer for check_ins */
+  checkInSigner: OptionOrNullable<Address>;
+  /** Number of remaining claimable assets (tokens + 1 for SOL) */
   claimableAssets: number;
-  label: string;
 };
 
 /** Gets the encoder for {@link EstateArgs} account data. */
@@ -105,18 +109,17 @@ export function getEstateEncoder(): Encoder<EstateArgs> {
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["authority", getAddressEncoder()],
       ["heir", getAddressEncoder()],
-      ["heartbeatInterval", getI64Encoder()],
-      ["gracePeriod", getI64Encoder()],
-      ["lastHeartbeat", getI64Encoder()],
+      ["checkInIntervalSecs", getI64Encoder()],
+      ["gracePeriodSecs", getI64Encoder()],
+      ["lastCheckInTs", getI64Encoder()],
       ["createdAt", getI64Encoder()],
       ["bump", getU8Encoder()],
-      ["pauseDuration", getI64Encoder()],
-      ["pausedUntil", getI64Encoder()],
+      ["delegatePauseDurationSecs", getI64Encoder()],
+      ["delegatePauseExpiresAt", getI64Encoder()],
       ["isMigrating", getBooleanEncoder()],
       ["delegate", getOptionEncoder(getAddressEncoder())],
-      ["hbSigner", getOptionEncoder(getAddressEncoder())],
+      ["checkInSigner", getOptionEncoder(getAddressEncoder())],
       ["claimableAssets", getU8Encoder()],
-      ["label", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ]),
     (value) => ({ ...value, discriminator: ESTATE_DISCRIMINATOR }),
   );
@@ -128,18 +131,17 @@ export function getEstateDecoder(): Decoder<Estate> {
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["authority", getAddressDecoder()],
     ["heir", getAddressDecoder()],
-    ["heartbeatInterval", getI64Decoder()],
-    ["gracePeriod", getI64Decoder()],
-    ["lastHeartbeat", getI64Decoder()],
+    ["checkInIntervalSecs", getI64Decoder()],
+    ["gracePeriodSecs", getI64Decoder()],
+    ["lastCheckInTs", getI64Decoder()],
     ["createdAt", getI64Decoder()],
     ["bump", getU8Decoder()],
-    ["pauseDuration", getI64Decoder()],
-    ["pausedUntil", getI64Decoder()],
+    ["delegatePauseDurationSecs", getI64Decoder()],
+    ["delegatePauseExpiresAt", getI64Decoder()],
     ["isMigrating", getBooleanDecoder()],
     ["delegate", getOptionDecoder(getAddressDecoder())],
-    ["hbSigner", getOptionDecoder(getAddressDecoder())],
+    ["checkInSigner", getOptionDecoder(getAddressDecoder())],
     ["claimableAssets", getU8Decoder()],
-    ["label", addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
   ]);
 }
 

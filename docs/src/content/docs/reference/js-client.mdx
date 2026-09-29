@@ -55,11 +55,10 @@ import { getInitializeInstructionAsync } from "@historiah/heirloom";
 const ix = await getInitializeInstructionAsync({
   authority: signer,
   heir,
-  heartbeatInterval: 30n * 86_400n,
-  gracePeriod: 7n * 86_400n,
-  pauseDuration: 30n * 86_400n,
+  checkInIntervalSecs: 30n * 86_400n,
+  gracePeriodSecs: 7n * 86_400n,
+  delegatePauseDurationSecs: 30n * 86_400n,
   amount: 1_000_000_000n,   // 1 SOL, in lamports
-  label: "Family estate",
 });
 ```
 
@@ -76,7 +75,7 @@ import { fetchMaybeEstate, decodeEstate } from "@historiah/heirloom";
 
 const maybe = await fetchMaybeEstate(rpc, estate);
 if (maybe.exists) {
-  console.log(maybe.data.heir, maybe.data.lastHeartbeat);
+  console.log(maybe.data.heir, maybe.data.lastCheckInTs);
 }
 ```
 

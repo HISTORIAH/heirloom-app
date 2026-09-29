@@ -15,7 +15,7 @@ interface Props {
   heirAddress: string;
   label: string;
   delegate: string;
-  hbSigner: string;
+  checkInSigner: string;
   solAmount: number;
   tokenSelections: Record<string, TokenSelection>;
   tokens: SplTokenAsset[] | undefined;
@@ -30,7 +30,7 @@ const ReviewStep: React.FC<Props> = ({
   heirAddress,
   label,
   delegate,
-  hbSigner,
+  checkInSigner,
   solAmount,
   tokenSelections,
   tokens,
@@ -49,7 +49,10 @@ const ReviewStep: React.FC<Props> = ({
 
   return (
     <div>
-      <StepHeader cap={t("createVault.wizard.step04")} title={t("createVault.wizard.checkAndConfirm")} />
+      <StepHeader
+        cap={t("createVault.wizard.step04")}
+        title={t("createVault.wizard.checkAndConfirm")}
+      />
 
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -58,7 +61,11 @@ const ReviewStep: React.FC<Props> = ({
             {date.long(totalDays)}
           </p>
         </div>
-        <EditLink onClick={() => onEdit(2)} label={t("createVault.wizard.editTiming")} editLabel={t("createVault.wizard.edit")} />
+        <EditLink
+          onClick={() => onEdit(2)}
+          label={t("createVault.wizard.editTiming")}
+          editLabel={t("createVault.wizard.edit")}
+        />
       </div>
       <EstateTimelineMini className="mt-5" heartbeatDays={heartbeatDays} graceDays={graceDays} />
 
@@ -69,12 +76,14 @@ const ReviewStep: React.FC<Props> = ({
         onEdit={() => onEdit(0)}
       >
         <p className="text-sm font-semibold">
-          {label || t("createVault.yourHeir")} · <span className="font-mono">{truncateAddress(heirAddress, 4)}</span>
+          {label || t("createVault.yourHeir")} ·{" "}
+          <span className="font-mono">{truncateAddress(heirAddress, 4)}</span>
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("createVault.wizard.inheritsWhole")}
           {delegate && t("createVault.wizard.guardianDot", { addr: truncateAddress(delegate, 4) })}
-          {hbSigner && t("createVault.wizard.signerDot", { addr: truncateAddress(hbSigner, 4) })}
+          {checkInSigner &&
+            t("createVault.wizard.signerDot", { addr: truncateAddress(checkInSigner, 4) })}
         </p>
       </Section>
 

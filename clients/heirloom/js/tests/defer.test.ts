@@ -26,9 +26,9 @@ test("it defers an estate within the defer window", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 86_400n,
-    gracePeriod: 3_600n,
-    pauseDuration: 7_200n,
+    checkInIntervalSecs: 86_400n,
+    gracePeriodSecs: 3_600n,
+    delegatePauseDurationSecs: 7_200n,
     delegate: delegate.address,
   });
   await client.sendTransaction(initIx);
@@ -36,7 +36,7 @@ test("it defers an estate within the defer window", async () => {
   // Verify estate starts with the correct delegate and not paused
   const estateBefore = await fetchEstate(client.rpc, estate);
   expect(estateBefore.data.delegate).toEqual({ __option: "Some", value: delegate.address });
-  expect(estateBefore.data.pausedUntil).toBe(0n);
+  expect(estateBefore.data.delegatePauseExpiresAt).toBe(0n);
 
   // Now defer the estate
   const { ix: deferIx } = await genDelegateDeferIx({
@@ -49,7 +49,7 @@ test("it defers an estate within the defer window", async () => {
 
   // Verify estate is now paused
   const estateAfter = await fetchEstate(client.rpc, estate);
-  expect(estateAfter.data.pausedUntil).toBeGreaterThan(0n);
+  expect(estateAfter.data.delegatePauseExpiresAt).toBeGreaterThan(0n);
 });
 
 test("it rejects defer from an unauthorized delegate", async () => {
@@ -66,9 +66,9 @@ test("it rejects defer from an unauthorized delegate", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 86_400n,
-    gracePeriod: 3_600n,
-    pauseDuration: 7_200n,
+    checkInIntervalSecs: 86_400n,
+    gracePeriodSecs: 3_600n,
+    delegatePauseDurationSecs: 7_200n,
     delegate: delegate.address,
   });
   await client.sendTransaction(initIx);
@@ -85,7 +85,7 @@ test("it rejects defer from an unauthorized delegate", async () => {
 
   // Estate should still be unpaused
   const estateAfter = await fetchEstate(client.rpc, estate);
-  expect(estateAfter.data.pausedUntil).toBe(0n);
+  expect(estateAfter.data.delegatePauseExpiresAt).toBe(0n);
 });
 
 test("it rejects defer when estate is already deferred", async () => {
@@ -101,9 +101,9 @@ test("it rejects defer when estate is already deferred", async () => {
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 86_400n,
-    gracePeriod: 3_600n,
-    pauseDuration: 7_200n,
+    checkInIntervalSecs: 86_400n,
+    gracePeriodSecs: 3_600n,
+    delegatePauseDurationSecs: 7_200n,
     delegate: delegate.address,
   });
   await client.sendTransaction(initIx);
@@ -118,7 +118,7 @@ test("it rejects defer when estate is already deferred", async () => {
   await client.sendTransaction(deferIx1);
 
   const estateAfterFirst = await fetchEstate(client.rpc, estate);
-  expect(estateAfterFirst.data.pausedUntil).toBeGreaterThan(0n);
+  expect(estateAfterFirst.data.delegatePauseExpiresAt).toBeGreaterThan(0n);
 
   // Expire blockhash so the next transaction is not a duplicate
   client.svm.expireBlockhash();
@@ -142,17 +142,17 @@ test("it rejects defer when the defer window has expired", async () => {
     generateKeyPairSignerWithSol(client),
   ]);
 
-  // Set heartbeatInterval = 0 and gracePeriod = 0 so claimable_at = last_heartbeat + 0 + 0 = last_heartbeat
-  // Since last_heartbeat is set to `now` at initialization, and time has passed,
+  // Set checkInIntervalSecs = 0 and gracePeriodSecs = 0 so claimable_at = last_checkin_ts + 0 + 0 = last_checkin_ts
+  // Since last_checkin_ts is set to `now` at initialization, and time has passed,
   // now >= claimable_at, so the defer window is expired
   const { ix: initIx, estate } = await genInitSolEstateIx({
     client,
     authority,
     heir,
     amount: 1_000_000_000n,
-    heartbeatInterval: 0n,
-    gracePeriod: 0n,
-    pauseDuration: 7_200n,
+    checkInIntervalSecs: 0n,
+    gracePeriodSecs: 0n,
+    delegatePauseDurationSecs: 7_200n,
     delegate: delegate.address,
   });
   await client.sendTransaction(initIx);
@@ -169,5 +169,5 @@ test("it rejects defer when the defer window has expired", async () => {
 
   // Estate should still be unpaused
   const estateAfter = await fetchEstate(client.rpc, estate);
-  expect(estateAfter.data.pausedUntil).toBe(0n);
+  expect(estateAfter.data.delegatePauseExpiresAt).toBe(0n);
 });
