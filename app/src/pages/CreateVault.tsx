@@ -127,7 +127,7 @@ const CreateVaultPage = () => {
 
       const createTxId = await createEstateOnChain({
         heir: heirAddress.trim(),
-        // TODO(backend): Send label to backend API after tx confirmation (not stored on-chain)
+        // Estate name: written as a memo in the create tx, then registered with the backend
         label: label.trim().slice(0, LABEL_MAX_LEN) || undefined,
         checkInIntervalSecs: heartbeatSeconds,
         gracePeriodSecs: graceSeconds,

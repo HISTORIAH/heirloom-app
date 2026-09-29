@@ -1,14 +1,6 @@
 // is it from ika or heirloom program
 export type EstateKind = "heirloom" | "ika";
 
-// TODO(backend): Temp shape mirroring the backend `EstateResponse`, may change
-
-/** Editable metadata; `name` is shown as the estate label in the UI. */
-export type EstateMetadata = {
-  name?: string;
-  description?: string;
-};
-
 export type EstateResponse = {
   id: string; // uuid
   address: string;
@@ -16,4 +8,17 @@ export type EstateResponse = {
   name: string | null; // null for estates registered without a name (e.g. ika)
   description: string | null;
   createdAt: string; // ISO timestamp — temp, backend will remove this
+};
+
+/** Request body for POST /v1/estates (register after on-chain creation). */
+export type RegisterEstateRequest = {
+  estateAddress: string;
+  txSignature: string;
+  description?: string;
+};
+
+/** Request body for PATCH /v1/estates/:estateAddress (rename / edit description). */
+export type UpdateEstateRequest = {
+  name?: string;
+  description?: string;
 };

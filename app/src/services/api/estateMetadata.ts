@@ -1,99 +1,55 @@
-// TODO: Uncomment when backend is ready (unused while the calls below are stubbed)
-// import { BACKEND_URL } from "@/config";
-// import { request } from "@/lib/api";
-//
-// const API_BASE = `${BACKEND_URL}/v1/estates`;
-import type { EstateMetadata, EstateResponse } from "@/types/estate";
+import { BACKEND_URL } from "@/config";
+import { ApiError, requestRaw } from "@/lib/api";
+import type { EstateResponse, RegisterEstateRequest, UpdateEstateRequest } from "@/types/estate";
 
-// ---------------------------------------------------------------------------
-// API stubs — TODO: Implement backend endpoints
-// ---------------------------------------------------------------------------
+const API_BASE = `${BACKEND_URL}/v1/estates`;
+
+// All estate endpoints return the resource directly — not wrapped in { data }.
 
 /**
- * Register estate metadata after on-chain creation.
- * Called after the estate creation transaction is confirmed.
- *
- * TODO(backend): Implement POST /v1/estates/register
- * - Verify tx signature
- * - Extract memo instruction (name/description)
- * - Store in database
+ * Register an estate after its create tx is finalized. The name is read by the
+ * backend from the SPL Memo in that tx, so no session cookie is needed.
  */
-export async function registerEstateMetadata(
-  txSignature: string,
-  metadata: EstateMetadata,
-): Promise<EstateResponse> {
-  // FIXME: Stub implementation — replace with actual API call
-  console.warn("[estateMetadata] registerEstateMetadata: Stub implementation", {
-    txSignature,
-    metadata,
+export async function registerEstate(payload: RegisterEstateRequest): Promise<EstateResponse> {
+  return requestRaw<EstateResponse>(API_BASE, {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
-
-  // TODO: Uncomment when backend is ready
-  // return request<EstateResponse>(`${API_BASE}/register`, {
-  //   method: "POST",
-  //   body: JSON.stringify({ txSignature, ...metadata }),
-  // });
-
-  throw new Error("registerEstateMetadata: Not implemented — backend endpoint needed");
 }
 
-/**
- * Fetch metadata for a single estate.
- *
- * TODO(backend): Implement GET /v1/estates/:estatePda/metadata
- */
-export async function fetchEstateMetadata(estatePda: string): Promise<EstateResponse | null> {
-  // FIXME: Stub implementation — replace with actual API call
-  console.warn("[estateMetadata] fetchEstateMetadata: Stub implementation", { estatePda });
-
-  // TODO: Uncomment when backend is ready
-  // return request<EstateResponse>(`${API_BASE}/${estatePda}/metadata`);
-
-  return null; // No metadata until the backend exists
+/** DB-only read. Resolves to null when the backend isn't tracking the estate (404). */
+export async function fetchEstate(estateAddress: string): Promise<EstateResponse | null> {
+  try {
+    return await requestRaw<EstateResponse>(`${API_BASE}/${estateAddress}`);
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "NOT_FOUND") return null;
+    throw err;
+  }
 }
 
-/**
- * Fetch metadata for multiple estates (batch).
- *
- * TODO(backend): Implement GET /v1/estates/metadata?estatePdas=...
- */
-export async function fetchEstatesMetadata(
-  estatePdas: string[],
+/** No batch endpoint — fans out to GET per estate; missing or failed lookups are omitted. */
+export async function fetchEstates(
+  estateAddresses: string[],
 ): Promise<Record<string, EstateResponse>> {
-  // FIXME: Stub implementation — replace with actual API call
-  console.warn("[estateMetadata] fetchEstatesMetadata: Stub implementation", { estatePdas });
-
-  // TODO: Uncomment when backend is ready
-  // const params = new URLSearchParams({ estatePdas: estatePdas.join(",") });
-  // return request<Record<string, EstateResponse>>(`${API_BASE}/metadata?${params}`);
-
-  return {}; // No metadata until the backend exists
+  const results = await Promise.allSettled(estateAddresses.map(fetchEstate));
+  const byAddress: Record<string, EstateResponse> = {};
+  results.forEach((res, i) => {
+    if (res.status === "fulfilled" && res.value) byAddress[estateAddresses[i]] = res.value;
+  });
+  return byAddress;
 }
 
 /**
- * Update estate metadata (name/description).
- * Requires SIWS authentication (cookie-based session).
- *
- * TODO(backend): Implement POST /v1/estates/:estatePda/metadata
- * - Verify SIWS session cookie
- * - Verify caller is the estate authority
- * - Update metadata in database
+ * Rename / edit description. Requires the SIWS session cookie, and the session
+ * wallet must be the estate's on-chain authority.
+ * `description`: omitted or null keeps it, "" clears it.
  */
-export async function updateEstateMetadata(
-  estatePda: string,
-  metadata: EstateMetadata,
+export async function updateEstate(
+  estateAddress: string,
+  payload: UpdateEstateRequest,
 ): Promise<EstateResponse> {
-  // FIXME: Stub implementation — replace with actual API call
-  console.warn("[estateMetadata] updateEstateMetadata: Stub implementation", {
-    estatePda,
-    metadata,
+  return requestRaw<EstateResponse>(`${API_BASE}/${estateAddress}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
-
-  // TODO: Uncomment when backend is ready
-  // return request<EstateResponse>(`${API_BASE}/${estatePda}/metadata`, {
-  //   method: "POST",
-  //   body: JSON.stringify(metadata),
-  // });
-
-  throw new Error("updateEstateMetadata: Not implemented — backend endpoint needed");
 }

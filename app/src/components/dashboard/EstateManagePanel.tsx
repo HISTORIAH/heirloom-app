@@ -5,6 +5,7 @@ import AddAssetSection from "@/components/dashboard/AddAssetSection";
 import EmergencyWithdrawSection from "@/components/dashboard/EmergencyWithdrawSection";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
+import { useWallet } from "@/contexts/WalletContext";
 import type { EstateData } from "@/contexts/VaultContext";
 
 interface EstateManagePanelProps {
@@ -19,6 +20,7 @@ export const EstateManagePanel: React.FC<EstateManagePanelProps> = ({
   className,
 }) => {
   const { t } = useTranslation("app");
+  const { account } = useWallet();
 
   return (
     <Panel className={cn("h-full gap-6", className)}>
@@ -29,7 +31,7 @@ export const EstateManagePanel: React.FC<EstateManagePanelProps> = ({
           <PanelCap className="text-muted-foreground">{t("dashboard.heirTiming")}</PanelCap>
           <div className="mt-2.5 grid grid-cols-2 gap-2">
             <ReassignHeirSection estate={estate} onTx={onTx} />
-            <EditSettingsSection estate={estate} onTx={onTx} />
+            {account && <EditSettingsSection estate={estate} account={account} onTx={onTx} />}
           </div>
         </section>
 

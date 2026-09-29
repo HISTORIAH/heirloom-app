@@ -34,7 +34,13 @@ import {
   type EstateUiState,
   type VaultTokenHolding,
 } from "@/services/heirloom";
+import { waitForFinalized } from "@/lib/heirloom/client";
+import { ApiError } from "@/lib/api";
 import { errMsg } from "@/lib/utils";
+import {
+  fetchEstates as fetchEstatesMetadata,
+  registerEstate,
+} from "@/services/api/estateMetadata";
 import { TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
 
 // ---------------------------------------------------------------------------
@@ -61,7 +67,7 @@ export type EstateMirroredFields = Pick<
 export interface EstateData {
   authority: string;
   heir: string;
-  // TODO: Fetch label/description from backend API (not stored on-chain)
+  // Off-chain metadata from the backend (null/undefined until registered)
   label?: string;
   description?: string;
   checkInIntervalSecs: number;
@@ -95,7 +101,7 @@ export interface TokenDeposit {
 
 export interface CreateEstateInput {
   heir: string;
-  // TODO: Send label/description to backend after tx confirmation (via memo)
+  // Estate name — sent as a memo in the create tx, then registered with the backend
   label?: string;
   description?: string;
   checkInIntervalSecs: number;
@@ -111,9 +117,6 @@ export interface UpdateEstateFields {
   checkInIntervalSecs?: bigint;
   gracePeriodSecs?: bigint;
   delegatePauseDurationSecs?: bigint;
-  // TODO: Send label/description updates to backend API (requires SIWS auth)
-  label?: string;
-  description?: string;
 }
 
 interface VaultState {
@@ -180,6 +183,10 @@ const VaultProviderInner: React.FC<{
     }
     try {
       const onChainEstates = await fetchEstatesByAuthority(client, authority);
+      // Names live off-chain; a backend outage shouldn't hide the estates themselves.
+      const metadata = await fetchEstatesMetadata(onChainEstates.map((e) => e.address)).catch(
+        () => ({}) as Awaited<ReturnType<typeof fetchEstatesMetadata>>,
+      );
 
       const results: EstateData[] = [];
       for (const estate of onChainEstates) {
@@ -212,9 +219,8 @@ const VaultProviderInner: React.FC<{
           results.push({
             authority: estate.data.authority,
             heir: estate.data.heir,
-            // TODO: Fetch label/description from backend API
-            label: undefined,
-            description: undefined,
+            label: metadata[estate.address]?.name ?? undefined,
+            description: metadata[estate.address]?.description ?? undefined,
             checkInIntervalSecs,
             gracePeriodSecs,
             lastCheckInTs,
@@ -275,6 +281,22 @@ const VaultProviderInner: React.FC<{
   const trackTx = useCallback((txId: string) => {
     setPendingTxId(txId);
   }, []);
+
+  const registerCreatedEstate = useCallback(
+    async (estatePda: Address, txSignature: string, description?: string) => {
+      await waitForFinalized(client, txSignature);
+      // The backend's RPC can lag ours by a slot or two — retry 502s with backoff.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await registerEstate({ estateAddress: estatePda, txSignature, description });
+        } catch (e) {
+          if (!(e instanceof ApiError && e.code === "BAD_GATEWAY") || attempt >= 4) throw e;
+          await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+        }
+      }
+    },
+    [client],
+  );
 
   // -------------------------------------------------------------------------
   // On-chain operations
@@ -377,12 +399,22 @@ const VaultProviderInner: React.FC<{
         }));
       }
 
-      const txId = await initializeWithTokens(client, signer, initArgs, extraTokens);
+      const name = input.label?.trim() || undefined;
+      const txId = await initializeWithTokens(client, signer, initArgs, extraTokens, name);
       setPendingTxId(txId);
       setPendingCreate(true);
+
+      // Registration needs a finalized tx (~13s) — run it in the background so the
+      // wizard can complete immediately. The estate still works if this fails; it can
+      // be named later via PATCH.
+      if (name) {
+        registerCreatedEstate(estatePda, txId, input.description)
+          .then(fetchEstates)
+          .catch((e) => console.error("[vault] estate registration failed", e));
+      }
       return txId;
     },
-    [client, rpc, requireAuth],
+    [client, rpc, requireAuth, registerCreatedEstate, fetchEstates],
   );
 
   const registerAssetOnChain = useCallback(
@@ -452,8 +484,6 @@ const VaultProviderInner: React.FC<{
         gracePeriodSecs: fields.gracePeriodSecs,
         delegatePauseDurationSecs: fields.delegatePauseDurationSecs,
       });
-      // TODO: If fields.label or fields.description provided, send to backend API
-      // POST /v1/estates/:estatePda/metadata (requires SIWS auth cookie)
       setPendingTxId(txId);
       return txId;
     },
