@@ -15,7 +15,7 @@ const posts = (await getCollection("blog"))
 const allTags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
 
 // Separate featured (latest announcement) from regular posts
-const featured = posts.find((p) => p.data.featured && p.data.tags.includes("announcement"));
+const featured = posts.find((p) => p.data.tags.includes("announcement"));
 const regular = posts.filter((p) => p !== featured);
 ---
 

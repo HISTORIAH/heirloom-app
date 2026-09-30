@@ -1,0 +1,66 @@
+---
+title: "Reminders are live, starting with Telegram"
+description: "Heirloom can now remind you before your check-in is due, and tell your heir the moment an estate becomes claimable. Telegram is the first channel. Opt-in, verified, and encrypted at rest."
+pubDate: 2026-09-30
+tags: ["announcement"]
+draft: true
+author: "Heirloom Team"
+cover: "/blog/images/reminders-live-cover.png"
+---
+
+An inheritance plan that relies on you remembering a date is a plan with a hole in it. Starting today, Heirloom can remind you before your check-in is due, and let your heir know the moment an estate becomes claimable. Telegram is the first channel, with more to follow.
+
+## Why reminders
+
+Heirloom works on a simple rule: as long as you keep checking in, nothing happens. Miss a check-in and the countdown to your heir's claim begins.
+
+That rule is only fair if you actually know the deadline is coming. Check-in intervals are measured in months, and nobody keeps a months-away date in their head. Reminders were the most requested feature we had.
+
+## What's new
+
+### Reminders for you
+
+Turn on reminders for an estate and we'll message you:
+
+- **7 days before** your check-in is due
+- **When the countdown elapses**
+- **When the grace period starts**
+- **Halfway through** the grace period
+- **24 hours before** the grace period ends
+
+Check in at any point and the remaining reminders for that cycle are cancelled. The same goes if you pause or close the estate.
+
+### A message for your heir
+
+Your heir doesn't need to watch a dashboard or know what a grace period is. Once the estate is claimable, they get a message telling them so, with instructions on how to claim. If the estate stays unclaimed, we follow up.
+
+### Telegram first
+
+We're launching with Telegram. Telegram bots can't message someone who hasn't started them, and we think that's the right default. Every contact is verified through a one-tap link that opens our bot. Until it's tapped, nothing is sent. If the link expires or gets lost, you can resend it from the dashboard.
+
+## How to turn it on
+
+1. Open the [app](https://app.heirlm.xyz) and find your estate on the dashboard
+2. Under **Notifications**, click **Set up**
+3. Sign the message to prove you own the wallet. No transaction, no gas
+4. Choose **Telegram** and enter your username
+5. Save, then tap **Open Telegram** and press **Start** in our bot
+
+To notify your heir, add their Telegram username in the same dialog. They'll need to open the verification link and press **Start** too, so send it to them after you save.
+
+## Your contact details
+
+We held off on reminders for a long time because it meant storing contact details, and we've all seen what happens when a crypto product leaks its customer list. So we built this with as little exposure as we could:
+
+- **Opt-in, per estate.** Nothing is collected unless you turn reminders on.
+- **Encrypted at rest.** Contact details are only decrypted at the moment a reminder is sent.
+- **Wallet-gated.** Viewing or changing notification settings requires a signature from the estate owner's wallet, valid for that session only.
+- **Offchain by design.** Your contact details never touch the chain.
+
+If you want the engineering details, we wrote about the reminder pipeline in [Rust Background Jobs with Apalis and Postgres](/blog/apalis-reminder-workers-solana/).
+
+## What's next
+
+Telegram is the first channel, not the last. Email and Discord are next, and the schedule above will work the same way on each. If there's a channel you'd like us to prioritise, tell us.
+
+Reminders are a safety net, not a replacement for checking in. But a safety net is exactly what a plan like this should have. [Set yours up](https://app.heirlm.xyz) today.

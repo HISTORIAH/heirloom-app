@@ -10,16 +10,9 @@ import {
   lookupEstateSnapshot,
   type EstateSnapshot,
 } from "@/services/heirloom";
-import {
-  getAtaAddress,
-  type HeirloomClient,
-} from "@/lib/heirloom";
+import { getAtaAddress, type HeirloomClient } from "@/lib/heirloom";
 import { formatSol, formatTokenAmount, errMsg, truncateAddress } from "@/lib/utils";
-import {
-  address as toAddress,
-  type Address,
-  type TransactionSigner,
-} from "@solana/kit";
+import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
 import { Search, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import TokenAvatar from "@/components/TokenAvatar";
@@ -70,7 +63,10 @@ const ClaimPageInner: React.FC<{
   const { t } = useTranslation("app");
   const [searchParams] = useSearchParams();
 
-  const client: HeirloomClient = useMemo(() => ({ rpc, rpcSubscriptions }), [rpc, rpcSubscriptions]);
+  const client: HeirloomClient = useMemo(
+    () => ({ rpc, rpcSubscriptions }),
+    [rpc, rpcSubscriptions],
+  );
 
   const [searching, setSearching] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
@@ -191,14 +187,18 @@ const ClaimPageInner: React.FC<{
 
       const updated = await lookupEstateSnapshot(client, inh.authority, heirAddress.toString());
       if (updated) {
-        setInheritances((prev) =>
-          prev.map((i) => (i.authority === inh.authority ? updated : i)),
-        );
+        setInheritances((prev) => prev.map((i) => (i.authority === inh.authority ? updated : i)));
       } else {
         setInheritances((prev) =>
           prev.map((i) =>
             i.authority === inh.authority
-              ? { ...i, vaultState: "distributed", solBalance: 0, claimableAssets: 0, vaultTokens: [] }
+              ? {
+                  ...i,
+                  vaultState: "distributed",
+                  solBalance: 0,
+                  claimableAssets: 0,
+                  vaultTokens: [],
+                }
               : i,
           ),
         );
@@ -236,11 +236,15 @@ const ClaimPageInner: React.FC<{
         {!isConnected && (
           <div data-tour="claim-connect">
             <Panel className="text-center">
-            <h2 className="ed-h3">{t("claim.connectTitle")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">{t("claim.connectDesc")}</p>
-            <Button variant="flat-yellow" className="mt-5" onClick={() => setWalletDialogOpen(true)}>
-              {t("common.connectWallet")}
-            </Button>
+              <h2 className="ed-h3">{t("claim.connectTitle")}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{t("claim.connectDesc")}</p>
+              <Button
+                variant="flat-yellow"
+                className="mt-5"
+                onClick={() => setWalletDialogOpen(true)}
+              >
+                {t("common.connectWallet")}
+              </Button>
             </Panel>
           </div>
         )}
@@ -280,14 +284,16 @@ const ClaimPageInner: React.FC<{
           const txId = claimTxIds[inh.authority];
           const isClaiming = claimingOwner === inh.authority;
           const nothingToClaim =
-            inh.solBalance === 0 &&
-            inh.vaultTokens.length === 0 &&
-            inh.claimableAssets === 0;
+            inh.solBalance === 0 && inh.vaultTokens.length === 0 && inh.claimableAssets === 0;
           const canClaim = inh.vaultState === "claimable" && !nothingToClaim;
 
           return (
             // TODO(backend): Label comes from backend API, may be undefined
-            <EstateGlance key={inh.authority} label={inh.label ?? truncateAddress(inh.authority, 4)} state={inh.vaultState}>
+            <EstateGlance
+              key={inh.authority}
+              label={inh.label ?? truncateAddress(inh.authority, 4)}
+              state={inh.vaultState}
+            >
               <GlanceStats>
                 <GlanceRow
                   label={t("claim.owner")}
@@ -306,8 +312,7 @@ const ClaimPageInner: React.FC<{
                     const name = meta?.name;
                     const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
                     const primary = symbol || name || shortMint;
-                    const secondary =
-                      name && name !== primary ? name : symbol ? shortMint : null;
+                    const secondary = name && name !== primary ? name : symbol ? shortMint : null;
                     return (
                       <div key={vt.ata} className="flex items-center gap-3 py-3">
                         <TokenAvatar
@@ -319,7 +324,9 @@ const ClaimPageInner: React.FC<{
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold leading-tight">{primary}</p>
                           {secondary && (
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{secondary}</p>
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                              {secondary}
+                            </p>
                           )}
                         </div>
                         <span className="shrink-0 text-sm font-semibold tabular-nums">
@@ -349,7 +356,9 @@ const ClaimPageInner: React.FC<{
                     disabled={!canClaim || isClaiming}
                   >
                     {isClaiming ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> {t("claim.claiming")}</>
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> {t("claim.claiming")}
+                      </>
                     ) : nothingToClaim ? (
                       t("claim.nothingToClaim")
                     ) : inh.vaultState !== "claimable" ? (
@@ -365,49 +374,51 @@ const ClaimPageInner: React.FC<{
         })}
 
         <div data-tour="claim-manual">
-        <Panel>
-          <button
-            type="button"
-            onClick={() => setShowManual(!showManual)}
-            className="flex w-full items-center justify-between text-left"
-          >
-            <span className="ed-label">{t("claim.lookUpAnother")}</span>
-            <span className="text-sm text-muted-foreground">{showManual ? "−" : "+"}</span>
-          </button>
-          {showManual && (
-            <div className="mt-4 space-y-3">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={manualAddress}
-                  onChange={(e) => setManualAddress(e.target.value)}
-                  maxLength={128}
-                  spellCheck={false}
-                  autoComplete="off"
-                  className="ed-input flex-1 font-mono"
-                  placeholder={t("claim.ownerPlaceholder")}
-                />
-                <Button
-                  variant="flat"
-                  onClick={handleManualLookup}
-                  disabled={manualLoading || !manualAddress.trim()}
-                >
-                  {manualLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <><Search className="h-4 w-4" /> {t("claim.lookup")}</>
-                  )}
-                </Button>
+          <Panel>
+            <button
+              type="button"
+              onClick={() => setShowManual(!showManual)}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <span className="ed-label">{t("claim.lookUpAnother")}</span>
+              <span className="text-sm text-muted-foreground">{showManual ? "−" : "+"}</span>
+            </button>
+            {showManual && (
+              <div className="mt-4 space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualAddress}
+                    onChange={(e) => setManualAddress(e.target.value)}
+                    maxLength={128}
+                    spellCheck={false}
+                    autoComplete="off"
+                    className="ed-input flex-1 font-mono"
+                    placeholder={t("claim.ownerPlaceholder")}
+                  />
+                  <Button
+                    variant="flat"
+                    onClick={handleManualLookup}
+                    disabled={manualLoading || !manualAddress.trim()}
+                  >
+                    {manualLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4" /> {t("claim.lookup")}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {manualError && (
+                  <p className="flex items-center gap-2 text-sm font-semibold text-accent-red">
+                    <AlertTriangle className="h-4 w-4" />
+                    {manualError}
+                  </p>
+                )}
               </div>
-              {manualError && (
-                <p className="flex items-center gap-2 text-sm font-semibold text-accent-red">
-                  <AlertTriangle className="h-4 w-4" />
-                  {manualError}
-                </p>
-              )}
-            </div>
-          )}
-        </Panel>
+            )}
+          </Panel>
         </div>
       </PortalLayout>
 
