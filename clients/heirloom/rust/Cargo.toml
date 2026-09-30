@@ -1,12 +1,14 @@
 [package]
 name = "heirloom-client"
-version = "0.0.1"
+version = "0.1.2"
 edition.workspace = true
 rust-version = "1.98.0"
 description = "Heirloom client generated with Codama."
-repository = "https://github.com/smithii/mixoor"
+repository = "https://github.com/historiah/heirloom-app"
 readme = "README.md"
-license-file = "../../LICENSE"
+keywords = ["solana", "sdk", "defi"]
+license = "MIT"
+categories = ["cryptography::cryptocurrencies"]
 
 [dependencies]
 anchor-lang = { version = "2.0.0-rc.1", optional = true }
