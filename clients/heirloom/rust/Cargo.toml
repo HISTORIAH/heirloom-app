@@ -1,6 +1,6 @@
 [package]
 name = "heirloom-client"
-version = "0.1.2"
+version = "0.1.3"
 edition.workspace = true
 rust-version = "1.98.0"
 description = "Heirloom client generated with Codama."
@@ -15,7 +15,7 @@ anchor-lang = { version = "2.0.0-rc.1", optional = true }
 borsh = { version = "1.8.1", features = ["derive"] }
 num-derive = "0.5.1"
 num-traits = "0.2.19"
-solana-account = "4.7.0"
+solana-account = "5.1.0"
 solana-account-info = "3.1.1"
 solana-address = { version = "2.7.0", features = ["borsh"] }
 solana-cpi = "3.1.0"
