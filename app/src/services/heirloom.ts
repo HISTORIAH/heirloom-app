@@ -1,4 +1,5 @@
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { getAddMemoInstruction } from "@solana-program/memo";
 import {
   decodeEstate,
   fetchMaybeEstate,
@@ -668,6 +669,8 @@ export async function initializeWithTokens(
   authority: TransactionSigner,
   initInput: InitializeInput,
   extraTokens: TokenRegistration[],
+  /** Estate name — written as an SPL Memo in the same tx; the backend reads it on register. */
+  name?: string,
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, initInput.heir);
 
@@ -702,7 +705,10 @@ export async function initializeWithTokens(
     }),
   );
 
-  return sendTx(client, authority, [initIx, ...registerIxs]);
+  // Backend only reads the first memo, so there must be at most one.
+  const memoIxs = name ? [getAddMemoInstruction({ memo: name })] : [];
+
+  return sendTx(client, authority, [initIx, ...registerIxs, ...memoIxs]);
 }
 
 export async function depositSol(

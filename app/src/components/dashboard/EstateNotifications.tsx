@@ -79,7 +79,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
     return "authorized";
   })();
 
-  // TODO(backend): Label comes from backend API, fallback to truncated heir address
+  // Name comes from the backend; fall back to the truncated heir address
   const heirLabel = estate.label ?? truncateAddress(estate.heir, 4);
 
   const notifSummary =

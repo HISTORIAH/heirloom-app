@@ -7,6 +7,7 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   signAndSendTransactionMessageWithSigners,
   type Instruction,
+  type Signature,
   type TransactionSigner,
 } from "@solana/kit";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
@@ -42,4 +43,24 @@ export async function sendTx(
 
   const signatureBytes = await signAndSendTransactionMessageWithSigners(message);
   return base58.decode(signatureBytes);
+}
+
+/**
+ * Poll until `signature` reaches `finalized` commitment (~13s after landing).
+ * Throws if the tx failed on-chain or isn't finalized within `timeoutMs`.
+ */
+export async function waitForFinalized(
+  client: HeirloomClient,
+  signature: string,
+  timeoutMs = 90_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const { value } = await client.rpc.getSignatureStatuses([signature as Signature]).send();
+    const status = value[0];
+    if (status?.err) throw new Error("Transaction failed on-chain");
+    if (status?.confirmationStatus === "finalized") return;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error("Timed out waiting for transaction finalization");
 }

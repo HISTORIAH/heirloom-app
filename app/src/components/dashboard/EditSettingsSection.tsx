@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
+import { useSignMessage } from "@solana/react";
+import type { UiWalletAccount } from "@wallet-standard/ui";
+import bs58 from "bs58";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Modal } from "@/components/surface/Modal";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthenticate } from "@/hooks/useAuth";
+import { ApiError } from "@/lib/api";
+import { updateEstate } from "@/services/api/estateMetadata";
 import { LABEL_MAX_LEN } from "@/lib/constants";
 import { errMsg, formatDuration } from "@/lib/utils";
 import { Pencil } from "lucide-react";
@@ -11,6 +17,8 @@ import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   estate: EstateData;
+  /** Needed to sign in (SIWS) — renaming goes through the backend, not the chain. */
+  account: UiWalletAccount;
   onTx: (id: string) => void;
 }
 
@@ -24,16 +32,16 @@ const Delta: React.FC<{ label: string; from: string; to: string }> = ({ label, f
   </div>
 );
 
-const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
+const EditSettingsSection: React.FC<Props> = ({ estate, account, onTx }) => {
   const { t } = useTranslation("app");
   const { updateEstateFieldsOnChain, fetchEstates } = useVault();
   const { toast } = useToast();
+  const authMutation = useAuthenticate(useSignMessage(account));
 
   const [open, setOpen] = useState(false);
   const [editIntervalSec, setEditIntervalSec] = useState(estate.checkInIntervalSecs);
   const [editGraceSec, setEditGraceSec] = useState(estate.gracePeriodSecs);
   const [editPauseSec, setEditPauseSec] = useState(estate.delegatePauseDurationSecs);
-  // TODO(backend): Label editing requires backend API integration (not stored on-chain)
   const [editLabel, setEditLabel] = useState(estate.label ?? "");
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsConfirmOpen, setSettingsConfirmOpen] = useState(false);
@@ -43,7 +51,6 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
       setEditIntervalSec(estate.checkInIntervalSecs);
       setEditGraceSec(estate.gracePeriodSecs);
       setEditPauseSec(estate.delegatePauseDurationSecs);
-      // TODO(backend): Label editing requires backend API integration (not stored on-chain)
       setEditLabel(estate.label ?? "");
     }
   }, [
@@ -54,14 +61,13 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
     estate.label,
   ]);
 
-  const settingsDirty =
+  const timingDirty =
     editIntervalSec !== estate.checkInIntervalSecs ||
     editGraceSec !== estate.gracePeriodSecs ||
-    editPauseSec !== estate.delegatePauseDurationSecs ||
-    // TODO(backend): Label dirty check requires backend API integration
-    editLabel.trim() !== (estate.label ?? "");
+    editPauseSec !== estate.delegatePauseDurationSecs;
+  const labelDirty = editLabel.trim() !== (estate.label ?? "");
+  const settingsDirty = timingDirty || labelDirty;
 
-  // TODO(backend): Label validation for backend API integration
   const labelValid = editLabel.trim().length > 0 && editLabel.length <= LABEL_MAX_LEN;
   const settingsValid = editIntervalSec > 0 && editGraceSec > 0 && editPauseSec >= 0 && labelValid;
 
@@ -70,19 +76,35 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
     setSettingsConfirmOpen(true);
   };
 
+  // PATCH needs the session cookie; on 401 sign in once and retry.
+  const saveName = async (name: string) => {
+    try {
+      await updateEstate(estate.estatePda, { name });
+    } catch (err) {
+      const unauthorized =
+        err instanceof ApiError && (err.code === "UNAUTHORIZED" || err.code === "unauthorized");
+      if (!unauthorized) throw err;
+      await authMutation.mutateAsync({ address: account.address, encode: bs58.encode });
+      await updateEstate(estate.estatePda, { name });
+    }
+  };
+
   const performSaveSettings = async () => {
     setSavingSettings(true);
     try {
-      const tx = await updateEstateFieldsOnChain(estate.heir, {
-        checkInIntervalSecs:
-          editIntervalSec !== estate.checkInIntervalSecs ? BigInt(editIntervalSec) : undefined,
-        gracePeriodSecs: editGraceSec !== estate.gracePeriodSecs ? BigInt(editGraceSec) : undefined,
-        delegatePauseDurationSecs:
-          editPauseSec !== estate.delegatePauseDurationSecs ? BigInt(editPauseSec) : undefined,
-        // TODO(backend): Send label updates to backend API (requires SIWS auth)
-        label: editLabel.trim() !== (estate.label ?? "") ? editLabel.trim() : undefined,
-      });
-      onTx(tx);
+      // Name first: it may prompt a sign-in, and shouldn't be lost if the tx is rejected.
+      if (labelDirty) await saveName(editLabel.trim());
+      if (timingDirty) {
+        const tx = await updateEstateFieldsOnChain(estate.heir, {
+          checkInIntervalSecs:
+            editIntervalSec !== estate.checkInIntervalSecs ? BigInt(editIntervalSec) : undefined,
+          gracePeriodSecs:
+            editGraceSec !== estate.gracePeriodSecs ? BigInt(editGraceSec) : undefined,
+          delegatePauseDurationSecs:
+            editPauseSec !== estate.delegatePauseDurationSecs ? BigInt(editPauseSec) : undefined,
+        });
+        onTx(tx);
+      }
       setSettingsConfirmOpen(false);
       setOpen(false);
       toast({
@@ -224,8 +246,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
         }}
       >
         <div className="space-y-2">
-          {editLabel.trim() !== (estate.label ?? "") && (
-            // TODO(backend): Label delta display requires backend API integration
+          {labelDirty && (
             <Delta
               label={t("dashboard.manage.label")}
               from={estate.label ?? ""}
