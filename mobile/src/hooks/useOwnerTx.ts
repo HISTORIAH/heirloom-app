@@ -1,3 +1,5 @@
+import { findEstatePda } from "@historiah/heirloom";
+
 import { useSendIxs } from "@/hooks/useSendIxs";
 import {
   assertEstateFree,
@@ -31,11 +33,17 @@ export function useOwnerTx() {
     });
   }
 
-  async function createEstate(input: CreateEstateInput): Promise<string> {
-    return sendIxs(async (signer) => {
+  async function createEstate(
+    input: CreateEstateInput,
+  ): Promise<{ signature: string; estatePda: Address }> {
+    const authority = account?.address;
+    if (!authority) throw new Error("Connect a wallet first");
+    const [estatePda] = await findEstatePda({ authority, heir: input.heir });
+    const signature = await sendIxs(async (signer) => {
       await assertEstateFree(client.rpc, signer.address, input.heir);
       return buildCreateEstateIxs(signer, input);
     });
+    return { signature, estatePda };
   }
 
   async function reassignHeir(row: EstateRow, newHeir: Address): Promise<string> {

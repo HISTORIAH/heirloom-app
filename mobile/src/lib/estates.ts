@@ -19,6 +19,8 @@ export type EstateRow = {
   address: Address;
   data: Estate;
   claimableLamports: bigint;
+  /** Off-chain label from the backend. Falls back to a truncated address when absent. */
+  label?: string;
 };
 
 type DecodedEstate = {

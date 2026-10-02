@@ -10,8 +10,7 @@ import {
 // Public Solana devnet. Override for a laptop validator
 // (`http://10.0.2.2:8899` from the Android emulator).
 export const SOLANA_RPC_ENDPOINT =
-  process.env.EXPO_PUBLIC_SOLANA_RPC_ENDPOINT ??
-  "https://api.devnet.solana.com";
+  process.env.EXPO_PUBLIC_SOLANA_RPC_ENDPOINT ?? "https://api.devnet.solana.com";
 
 function websocketUrl(httpUrl: string): string {
   const fromEnv = process.env.EXPO_PUBLIC_SOLANA_RPC_WS_ENDPOINT;
@@ -32,11 +31,7 @@ function clusterForRpc(url: string): SolanaCluster {
   const props = { url, urlWs };
   if (url.includes("mainnet")) return createSolanaMainnet(props);
   if (url.includes("testnet")) return createSolanaTestnet(props);
-  if (
-    url.includes("localhost") ||
-    url.includes("127.0.0.1") ||
-    url.includes("10.0.2.2")
-  ) {
+  if (url.includes("localhost") || url.includes("127.0.0.1") || url.includes("10.0.2.2")) {
     return createSolanaLocalnet(props);
   }
   return createSolanaDevnet(props);
@@ -62,3 +57,5 @@ export const walletIdentity: AppIdentity = {
   uri: "https://heirlm.xyz",
   icon: "favicon.png",
 };
+
+export const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;

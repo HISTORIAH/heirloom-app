@@ -9,6 +9,7 @@ import {
   fetchEstatesByHeir,
   type EstateRow,
 } from "@/lib/estates";
+import { useEstateMetadata } from "@/hooks/useEstateMetadata";
 
 export type EstateRole = "authority" | "heir" | "checkInSigner" | "delegate";
 
@@ -26,6 +27,8 @@ export function useEstates(role: EstateRole) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const seen = useRef(false);
+
+  const { names, reload: reloadMetadata } = useEstateMetadata(rows.map((r) => String(r.address)));
 
   const reload = useCallback(async (): Promise<EstateRow[]> => {
     if (address === undefined) {
@@ -62,5 +65,11 @@ export function useEstates(role: EstateRole) {
     }, [reload]),
   );
 
-  return { account, rows, loading, error, reload, drop };
+  // Merge backend names into rows once metadata arrives.
+  const labelled = rows.map((row) => {
+    const name = names[String(row.address)];
+    return name !== undefined ? { ...row, label: name } : row;
+  });
+
+  return { account, rows: labelled, loading, error, reload, drop, reloadMetadata };
 }

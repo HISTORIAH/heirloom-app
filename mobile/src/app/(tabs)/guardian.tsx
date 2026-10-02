@@ -36,8 +36,7 @@ function rank(row: EstateRow): number {
 
 function GuardianListRow({ row, onPress }: { row: EstateRow; onPress: () => void }) {
   const view = presentGuardian(row);
-  // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
-  const name = shortAddress(String(row.data.authority), 6);
+  const name = row.label ?? shortAddress(String(row.data.authority), 6);
   return (
     <QuietRow
       title={name}

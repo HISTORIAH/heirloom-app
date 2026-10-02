@@ -12,6 +12,7 @@ import { EstateDetail } from "@/components/EstateDetail";
 import { InkToast } from "@/components/InkToast";
 import { useEstates } from "@/hooks/useEstates";
 import { useOwnerTx } from "@/hooks/useOwnerTx";
+import { useRenameEstate } from "@/hooks/useRenameEstate";
 import { waitUntilAccountGone } from "@/lib/confirm";
 import { openExplorerTx } from "@/lib/explorer";
 import { takeFlash } from "@/lib/flash";
@@ -24,6 +25,7 @@ export default function DashboardScreen() {
   const { account, connect, disconnect, client } = useMobileWallet();
   const { rows, loading, error, reload, drop } = useEstates("authority");
   const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } = useOwnerTx();
+  const renameMutation = useRenameEstate();
   const [picked, setPicked] = useState(0);
   const [busy, setBusy] = useState(false);
   const [checkInBusy, setCheckInBusy] = useState(false);
@@ -199,6 +201,18 @@ export default function DashboardScreen() {
     );
   }
 
+  async function onRename(name: string): Promise<void> {
+    const row = selected;
+    if (!row) throw new Error("No estate selected");
+    try {
+      await renameMutation.mutateAsync({ estateAddress: String(row.address), name });
+      setToast("Name saved.");
+    } catch (cause) {
+      fail("Rename", cause);
+      throw cause;
+    }
+  }
+
   function onCloseEstate() {
     const row = selected;
     if (!row || busy) return;
@@ -267,6 +281,7 @@ export default function DashboardScreen() {
             onTiming={onTiming}
             onAddAsset={onAddAsset}
             onCloseEstate={onCloseEstate}
+            onRename={(name) => onRename(name)}
             adding={busy}
             checkingIn={checkInBusy}
             onHoldingChange={setHolding}

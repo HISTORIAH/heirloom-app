@@ -159,8 +159,7 @@ export function buildSettingsIx(
   });
 }
 
-// TODO(backend): label is no longer stored on-chain. This helper will be
-// replaced by a backend API call to save/update the label.
+/** Validates a label for backend storage. */
 export function trimmedLabel(label: string): string {
   const next = label.trim();
   if (next.length === 0) throw new Error("Enter a label");

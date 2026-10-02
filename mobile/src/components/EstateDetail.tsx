@@ -28,6 +28,7 @@ interface EstateDetailProps {
   }) => void;
   onAddAsset?: (mint: Address, amount: bigint) => void;
   onCloseEstate?: () => void;
+  onRename?: (name: string) => Promise<void>;
   adding?: boolean;
   checkingIn?: boolean;
   onHoldingChange?: (holding: boolean) => void;
@@ -79,6 +80,7 @@ export function EstateDetail({
   onTiming,
   onAddAsset,
   onCloseEstate,
+  onRename,
   adding,
   checkingIn,
   onHoldingChange,
@@ -89,8 +91,7 @@ export function EstateDetail({
   const guardianRaw = unwrapOption(row.data.delegate);
   const heartbeat = signerRaw === null ? undefined : signerRaw;
   const guardian = guardianRaw === null ? undefined : guardianRaw;
-  // TODO(backend): fetch label from backend API. Fall back to truncated heir address.
-  const label = shortAddress(heir);
+  const label = row.label ?? shortAddress(heir);
   const live = view.state !== "distributed";
   const canManage =
     live &&
@@ -144,6 +145,7 @@ export function EstateDetail({
             onTiming={onTiming}
             onAddAsset={onAddAsset}
             onClose={onCloseEstate}
+            onRename={onRename}
           />
         </View>
       ) : null}

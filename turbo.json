@@ -20,5 +20,6 @@
     "test": {
       "dependsOn": ["build"]
     }
-  }
+  },
+  "globalPassThroughEnv": ["ANDROID_HOME", "JAVA_HOME"]
 }
