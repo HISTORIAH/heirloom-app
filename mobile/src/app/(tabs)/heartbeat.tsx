@@ -56,8 +56,7 @@ function mergeRows(discovered: EstateRow[], extra: EstateRow[]): EstateRow[] {
 
 function HeartbeatListRow({ row, onPress }: { row: EstateRow; onPress: () => void }) {
   const view = presentHeartbeat(row.data, row.claimableLamports);
-  // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
-  const name = shortAddress(String(row.data.authority), 6);
+  const name = row.label ?? shortAddress(String(row.data.authority), 6);
   const ruler = view.showRuler ? (
     <DayRuler
       compact

@@ -260,8 +260,7 @@ export default function ClaimScreen() {
           <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
             {ordered.map((row, index) => {
               const claim = presentClaim(row.data, row.claimableLamports);
-              // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
-              const name = shortAddress(String(row.data.authority), 6);
+              const name = row.label ?? shortAddress(String(row.data.authority), 6);
               return (
                 <QuietRow
                   key={row.address}

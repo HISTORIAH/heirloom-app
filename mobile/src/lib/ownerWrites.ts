@@ -5,6 +5,7 @@ import {
   getInitializeInstructionAsync,
   getUpdateFieldInstruction,
 } from "@historiah/heirloom";
+import { getAddMemoInstruction } from "@solana-program/memo";
 import {
   address,
   type Address,
@@ -22,7 +23,7 @@ export type EstateRpc = Rpc<SolanaRpcApi>;
 
 export type CreateEstateInput = {
   heir: Address;
-  // TODO(backend): label is no longer stored on-chain. Send it to the backend API instead.
+  /** Off-chain display name. Sent to the backend via SPL Memo in the create tx. */
   label: string;
   checkInIntervalSecs: bigint;
   gracePeriodSecs: bigint;
@@ -90,7 +91,6 @@ export async function buildCreateEstateIxs(
   if (input.amountLamports <= 0n) {
     throw new Error("Select at least some SOL to create a vault.");
   }
-  // TODO(backend): send input.label to the backend API for display purposes.
   const initIx = await getInitializeInstructionAsync({
     authority,
     heir: input.heir,
@@ -110,7 +110,10 @@ export async function buildCreateEstateIxs(
   const floatIxs = dests.map((destination) =>
     transferSolIx(authority, destination, CARD_FEE_FLOAT_LAMPORTS),
   );
-  return [initIx, ...floatIxs];
+  // Backend only reads the first memo, so there must be at most one.
+  const trimmed = input.label.trim();
+  const memoIxs = trimmed.length > 0 ? [getAddMemoInstruction({ memo: trimmed })] : [];
+  return [initIx, ...floatIxs, ...memoIxs];
 }
 
 export { findVaultPda };

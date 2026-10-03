@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { Cap, PrimaryButton } from "@/components/ui";
-import { MAX_INTERVAL_DAYS, SECONDS_PER_DAY } from "@/lib/constants";
+import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS, SECONDS_PER_DAY } from "@/lib/constants";
 import type { EstateRow } from "@/lib/estates";
 import { uiAmountToRaw } from "@/lib/lamports";
 import {
@@ -16,7 +16,7 @@ import { parseAddress } from "@/lib/ownerWrites";
 import { colors, space } from "@/theme";
 import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
 
-type EverydayAction = "heir" | "timing" | "asset";
+type EverydayAction = "heir" | "timing" | "asset" | "rename";
 
 const EVERYDAY: Record<EverydayAction, { title: string; fallback?: string }> = {
   heir: {
@@ -28,6 +28,9 @@ const EVERYDAY: Record<EverydayAction, { title: string; fallback?: string }> = {
   },
   asset: {
     title: "Add token",
+  },
+  rename: {
+    title: "Rename estate",
   },
 };
 
@@ -270,6 +273,7 @@ interface EstateManageProps {
   }) => void;
   onAddAsset: (mint: Address, amount: bigint) => void;
   onClose: () => void;
+  onRename?: (name: string) => Promise<void>;
 }
 
 function HeirForm({
@@ -328,6 +332,59 @@ function HeirForm({
   );
 }
 
+function RenameForm({
+  row,
+  busy,
+  onSubmit,
+}: {
+  row: EstateRow;
+  busy?: boolean;
+  onSubmit: (name: string) => Promise<void>;
+}) {
+  const [name, setName] = useState(row.label ?? "");
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [saving, setSaving] = useState(false);
+
+  const trimmed = name.trim();
+  const valid = trimmed.length > 0 && trimmed.length <= LABEL_MAX_LEN;
+
+  return (
+    <View
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+    >
+      <Field
+        label="Estate name"
+        value={name}
+        onChangeText={(value) => {
+          setError(undefined);
+          setName(value);
+        }}
+        editable={!busy && !saving}
+        maxLength={LABEL_MAX_LEN}
+        hint={`Max ${LABEL_MAX_LEN} characters`}
+        error={error}
+      />
+      <PrimaryButton
+        label={saving || busy ? "Working…" : "Save name"}
+        tone="ink"
+        disabled={busy || saving || !valid}
+        onPress={() => {
+          void (async () => {
+            setSaving(true);
+            try {
+              await onSubmit(trimmed);
+            } catch (cause) {
+              setError(cause instanceof Error ? cause.message : "Could not save name");
+            } finally {
+              setSaving(false);
+            }
+          })();
+        }}
+      />
+    </View>
+  );
+}
+
 function TimingForm({
   row,
   busy,
@@ -337,7 +394,6 @@ function TimingForm({
   busy?: boolean;
   onSubmit: EstateManageProps["onTiming"];
 }) {
-  // TODO(backend): label editing will be moved to a backend API call.
   const [heartbeat, setHeartbeat] = useState(daysFromSeconds(row.data.checkInIntervalSecs));
   const [grace, setGrace] = useState(daysFromSeconds(row.data.gracePeriodSecs));
   const [pause, setPause] = useState(daysFromSeconds(row.data.delegatePauseDurationSecs));
@@ -475,6 +531,7 @@ export function EstateManage({
   onTiming,
   onAddAsset,
   onClose,
+  onRename,
 }: EstateManageProps) {
   const [open, setOpen] = useState<EverydayAction | undefined>(undefined);
   const intervalDays = Math.round(Number(row.data.checkInIntervalSecs) / SECONDS_PER_DAY);
@@ -497,6 +554,12 @@ export function EstateManage({
         onPress={() => toggle("timing")}
       />
       {open === "timing" ? <TimingForm row={row} busy={busy} onSubmit={onTiming} /> : null}
+      {onRename ? (
+        <>
+          <EverydayRow action="rename" disabled={busy} onPress={() => toggle("rename")} />
+          {open === "rename" ? <RenameForm row={row} busy={busy} onSubmit={onRename} /> : null}
+        </>
+      ) : null}
       <EverydayRow action="asset" disabled={busy} onPress={() => toggle("asset")} />
       {open === "asset" ? (
         <AssetForm

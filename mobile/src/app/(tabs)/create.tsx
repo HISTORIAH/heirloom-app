@@ -14,6 +14,7 @@ import { WizardRail } from "@/components/create/WizardRail";
 import { useLiftIntoScroll } from "@/components/create/useLiftIntoScroll";
 import { useOwnerTx } from "@/hooks/useOwnerTx";
 import { useSolBalance } from "@/hooks/useSolBalance";
+import { BACKEND_URL } from "@/config";
 import { shortAddress } from "@/lib/address";
 import {
   DEFAULT_GRACE_DAYS,
@@ -35,6 +36,7 @@ import { lamportsToSolText, solToLamports } from "@/lib/lamports";
 import { parseAddress, parseOptionalAddress } from "@/lib/ownerWrites";
 import { setFlash } from "@/lib/flash";
 import { cancelScan, scanCardAddress, type CardScan } from "@/lib/nfc";
+import { registerEstate } from "@/services/api/estateMetadata";
 import { colors } from "@/theme";
 
 type SubmitState = "idle" | "creating" | "complete";
@@ -300,8 +302,7 @@ export default function CreateScreen() {
     setSubmitError(undefined);
     setSubmit("creating");
     try {
-      // TODO(backend): send label to backend API for display purposes.
-      await createEstate({
+      const { signature, estatePda } = await createEstate({
         heir: parseAddress(heir, "heir"),
         label: label.trim().slice(0, LABEL_MAX_LEN),
         checkInIntervalSecs: BigInt(heartbeatDays * SECONDS_PER_DAY),
@@ -312,6 +313,18 @@ export default function CreateScreen() {
         checkInSigner: parseOptionalAddress(signer, "check-in signer"),
         fundHeir,
       });
+      // Register with the backend so the label is stored off-chain.
+      // The backend reads the name from the SPL Memo in the create tx.
+      if (BACKEND_URL) {
+        try {
+          await registerEstate({
+            estateAddress: String(estatePda),
+            txSignature: signature,
+          });
+        } catch {
+          // Non-blocking: estate exists on-chain even if backend registration fails.
+        }
+      }
       if (dropIfLeft()) return;
       setFlash("Estate open.");
       router.replace("/");

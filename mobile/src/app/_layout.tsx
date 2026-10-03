@@ -4,6 +4,7 @@ import {
   SpaceGrotesk_700Bold,
   useFonts,
 } from "@expo-google-fonts/space-grotesk";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MobileWalletProvider } from "@wallet-ui/react-native-kit";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -17,6 +18,8 @@ import { solanaCluster, walletIdentity } from "@/config";
 import { tamaguiConfig } from "../../tamagui.config";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -39,12 +42,14 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-        <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
-        </MobileWalletProvider>
-      </TamaguiProvider>
+      <QueryClientProvider client={queryClient}>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+          <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
+            <StatusBar style="dark" />
+            <Stack screenOptions={{ headerShown: false }} />
+          </MobileWalletProvider>
+        </TamaguiProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

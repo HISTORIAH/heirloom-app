@@ -30,8 +30,7 @@ export function EstatePicker({ rows, selected, onSelect }: EstatePickerProps) {
       {rows.map((row, i) => {
         const on = i === selected;
         const presentation = presentEstate(row.data, row.claimableLamports);
-        // TODO(backend): fetch label from backend API. Fall back to truncated authority address.
-        const chipLabel = shortAddress(String(row.data.authority), 6);
+        const chipLabel = row.label ?? shortAddress(String(row.data.authority), 6);
         const meta = `${formatSol(row.claimableLamports)} SOL`;
         const fg = on ? colors.white : colors.ink;
         return (
