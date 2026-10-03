@@ -2,18 +2,23 @@ import type { ApiErrorBody } from "@/types/api";
 
 export class ApiError extends Error {
   code: string;
+  /** HTTP status. 401 means the SIWS session is missing or expired. */
+  status?: number;
   details?: Record<string, unknown>;
 
-  constructor(body: ApiErrorBody) {
+  constructor(body: ApiErrorBody, status?: number) {
     super(body.message);
     this.name = "ApiError";
     this.code = body.code;
+    this.status = status;
     this.details = body.details;
   }
 }
 
 async function fetchJson(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
+    // The SIWS session is an HttpOnly cookie; native fetch keeps it in the platform cookie store.
+    credentials: "include",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -28,6 +33,7 @@ async function fetchJson(url: string, options: RequestInit = {}): Promise<unknow
       body && typeof body === "object" && "code" in body
         ? (body as ApiErrorBody)
         : { code: res.status === 401 ? "unauthorized" : "unknown", message: res.statusText },
+      res.status,
     );
   }
 

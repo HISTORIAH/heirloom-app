@@ -1,3 +1,5 @@
+import type { Address } from "@solana/kit";
+
 export type EstateKind = "heirloom" | "ika";
 
 export type EstateResponse = {
@@ -82,3 +84,45 @@ export type DashboardView = {
   graceDays: number;
   elapsedDays: number;
 };
+
+/** One asset sitting in an estate's vault: native SOL or a registered token. */
+export type EstateHolding = {
+  /** SOL_ASSET_ID for native SOL, else the mint. */
+  id: string;
+  /** Undefined for native SOL. */
+  mint?: Address;
+  symbol: string;
+  name: string;
+  image?: string;
+  decimals: number;
+  /** Raw units in the vault. */
+  amount: bigint;
+  /** USD value of `amount`; null when DAS has no price. */
+  usd: number | null;
+  /** False when DAS had neither a name nor a symbol for the mint. */
+  named: boolean;
+};
+
+/** One row in the top-up picker: something the wallet holds, and what the estate already has of it. */
+export type TopUpAsset = {
+  /** SOL_ASSET_ID for native SOL, else the mint. */
+  id: string;
+  /** Undefined for native SOL. */
+  mint?: Address;
+  symbol: string;
+  name: string;
+  image?: string;
+  decimals: number;
+  /** Raw units in the wallet. */
+  held: bigint;
+  /** Raw units already in the estate. */
+  inEstate: bigint;
+  /** On the estate already. A new token is registered (opened) instead of transferred. */
+  registered: boolean;
+  /** USD value of `held`; null when DAS has no price. */
+  usd: number | null;
+  named: boolean;
+};
+
+/** What the owner chose on the top-up sheet. `amount` is in raw units. */
+export type TopUpPick = { asset: TopUpAsset; amount: bigint };

@@ -10,22 +10,26 @@ import { EstateAssets } from "@/components/EstateAssets";
 import { EstateManage } from "@/components/EstateManage";
 import { EstatePeople } from "@/components/EstatePeople";
 import { InkToast } from "@/components/InkToast";
+import { RemindersSection } from "@/components/reminders/RemindersSection";
+import { TopUpSheet } from "@/components/topUp/TopUpSheet";
 import { EstateHero } from "@/components/home/EstateHero";
 import { Cap, IconButton } from "@/components/ui";
+import { BACKEND_URL } from "@/config";
 import { colors, space } from "@/theme";
-import type { EstateTimingFields } from "@/types/estate";
+import type { EstateTimingFields, TopUpPick } from "@/types/estate";
 import type { Address } from "@solana/kit";
-import { useEstates, useRenameEstate } from "@/hooks";
+import { useEstateHoldings, useEstates, useOwnerTx, useRenameEstate } from "@/hooks";
 import {
   estateName,
   estateSpan,
   openExplorerTx,
+  rawToUiText,
   registeredTokenCount,
   setFlash,
+  shortAddress,
   unwrapOption,
   waitUntilAccountGone,
 } from "@/lib";
-import { useOwnerTx } from "@/hooks/useOwnerTx";
 
 export default function EstateScreen() {
   const router = useRouter();
@@ -33,14 +37,17 @@ export default function EstateScreen() {
   const { address } = useLocalSearchParams<{ address: string }>();
   const { client } = useMobileWallet();
   const { rows, loading, reload, drop } = useEstates("authority");
-  const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } = useOwnerTx();
+  const { checkIn, topUpSol, topUpToken, reassignHeir, closeEstate, updateSettings, addToken } = useOwnerTx();
   const renameMutation = useRenameEstate();
   const [busy, setBusy] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [toast, setToast] = useState<string | undefined>(undefined);
+  /** Open deposit sheet; `startAt` jumps to one asset's amount step. */
+  const [topUp, setTopUp] = useState<{ startAt?: string } | undefined>(undefined);
   const { ask, prompt, notice, fail, cancel, confirm, extra } = useConfirmSheet();
 
   const row = rows.find((item) => item.address === address);
+  const holdings = useEstateHoldings(row);
 
   useEffect(() => {
     if (toast === undefined) return;
@@ -71,7 +78,7 @@ export default function EstateScreen() {
         back();
         return;
       }
-      await reload();
+      await Promise.all([reload(), holdings.refetch()]);
       notice({ cap: "Done", title: okTitle, extraLabel: "View on explorer" }, () =>
         openExplorerTx(sig),
       );
@@ -122,11 +129,19 @@ export default function EstateScreen() {
     })();
   }
 
-  function onAddSol(lamports: bigint) {
-    prompt(
-      { cap: "Add SOL", title: "Move this SOL into the estate?", confirmLabel: "Add SOL" },
-      () => void runOwner("Add SOL", () => topUpSol(current.data.heir, lamports), "SOL added"),
-    );
+  function onTopUp({ asset, amount }: TopUpPick) {
+    setTopUp(undefined);
+    const heir = current.data.heir;
+    const mint = asset.mint;
+    const done = `${rawToUiText(amount, asset.decimals)} ${asset.symbol} deposited`;
+    if (mint === undefined) {
+      void runOwner("Deposit", () => topUpSol(heir, amount), done);
+    } else if (asset.registered) {
+      void runOwner("Deposit", () => topUpToken(heir, mint, amount), done);
+    } else {
+      // Not in the estate yet: register_asset opens the vault account and moves the first amount.
+      void runOwner("Deposit", () => addToken(current, mint, amount), done);
+    }
   }
 
   function onReassign(newHeir: Address) {
@@ -151,18 +166,6 @@ export default function EstateScreen() {
         confirmLabel: "Save",
       },
       () => void runOwner("Update timing", () => updateSettings(current, fields), "Timing saved"),
-    );
-  }
-
-  function onAddAsset(mint: Address, amount: bigint) {
-    prompt(
-      {
-        cap: "Add token",
-        title: "Add this token to the estate?",
-        body: "Registers a new mint. It does not top up a token already here.",
-        confirmLabel: "Add token",
-      },
-      () => void runOwner("Add token", () => addToken(current, mint, amount), "Token added"),
     );
   }
 
@@ -213,25 +216,30 @@ export default function EstateScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: space.pad,
-          paddingTop: 8,
+          paddingTop: 2,
           paddingBottom: Math.max(insets.bottom, 16) + 40,
-          gap: 30,
+          gap: 16,
         }}
       >
-        <EstateHero row={current} busy={checkingIn} disabled={busy} onCheckIn={onCheckIn} />
+        <EstateHero
+          row={current}
+          compact
+          busy={checkingIn}
+          disabled={busy}
+          onCheckIn={onCheckIn}
+        />
 
-        <View style={{ gap: 14 }}>
-          <Cap>In this estate</Cap>
-          <EstateAssets
-            claimableLamports={current.claimableLamports}
-            tokenAccounts={registeredTokenCount(current.data.claimableAssets)}
-            distributed={!live}
-            onAddSol={onAddSol}
-            adding={busy}
-          />
-        </View>
+        <EstateAssets
+          holdings={holdings.holdings}
+          totalUsd={holdings.totalUsd}
+          loading={holdings.loading && registeredTokenCount(current.data.claimableAssets) > 0}
+          error={holdings.error}
+          distributed={!live}
+          onTopUp={(startAt) => setTopUp({ startAt })}
+          adding={busy}
+        />
 
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 12 }}>
           <Cap>Named on this estate</Cap>
           <EstatePeople
             heir={String(current.data.heir)}
@@ -240,22 +248,37 @@ export default function EstateScreen() {
           />
         </View>
 
+        {live && BACKEND_URL !== undefined ? (
+          <RemindersSection
+            estateAddress={String(current.address)}
+            estateName={estateName(current)}
+            heirLabel={`Heir ${shortAddress(String(current.data.heir))}`}
+          />
+        ) : null}
+
         {live ? (
-          <View style={{ gap: 14 }}>
+          <View style={{ gap: 12 }}>
             <Cap>Manage</Cap>
             <EstateManage
               row={current}
-              rpc={client.rpc}
               busy={busy}
               onReassign={onReassign}
               onTiming={onTiming}
-              onAddAsset={onAddAsset}
               onClose={onClose}
               onRename={onRename}
             />
           </View>
         ) : null}
       </ScrollView>
+      {topUp !== undefined ? (
+        <TopUpSheet
+          row={current}
+          holdings={holdings.holdings}
+          startAt={topUp.startAt}
+          onClose={() => setTopUp(undefined)}
+          onSubmit={onTopUp}
+        />
+      ) : null}
       <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
       <InkToast text={toast} />
     </View>

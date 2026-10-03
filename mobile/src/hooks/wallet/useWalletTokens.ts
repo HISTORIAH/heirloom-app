@@ -1,17 +1,15 @@
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { useEffect, useState } from "react";
 
 import { HELIUS_DAS_URL } from "@/config";
-import { fetchAssetsByOwner, type DasFungibleAsset } from "@/services/api/das";
-
-export type WalletToken = {
-  mint: string;
-  symbol: string;
-  name: string;
-  balance: string;
-  decimals: number;
-  tokenProgram: string;
-  image?: string;
-};
+import { toBigInt } from "@/lib/solana/parsed";
+import {
+  fetchAssetsByOwner,
+  pickImage,
+  pickLabel,
+  type DasFungibleAsset,
+} from "@/services/api/das";
+import type { WalletToken } from "@/types/wallet";
 
 /** Fungible tokens held by `owner`, with metadata from the DAS API. */
 export function useWalletTokens(owner: string | undefined) {
@@ -57,20 +55,20 @@ function toWalletToken(asset: DasFungibleAsset): WalletToken {
   const info = asset.token_info;
   const rawBalance = Number(info?.balance ?? 0);
   const decimals = info?.decimals ?? 0;
+  const { symbol, name, named } = pickLabel(asset.id, info?.symbol, asset.content);
   return {
     mint: asset.id,
-    symbol: info?.symbol ?? asset.id.slice(0, 4),
-    name: asset.content?.metadata?.name ?? info?.symbol ?? "Unknown",
+    symbol,
+    name,
     balance: formatBalance(rawBalance, decimals),
+    raw: toBigInt(info?.balance) ?? 0n,
     decimals,
-    tokenProgram: info?.token_program ?? "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    tokenProgram: info?.token_program ?? TOKEN_PROGRAM_ADDRESS,
     image: pickImage(asset.content),
+    named,
+    usd: info?.price_info?.total_price ?? null,
+    usdPerToken: info?.price_info?.price_per_token ?? null,
   };
-}
-
-function pickImage(content?: DasFungibleAsset["content"]): string | undefined {
-  const file = content?.files?.find((f) => !f.mime || f.mime.startsWith("image/"));
-  return file?.cdn_uri || content?.links?.image || file?.uri;
 }
 
 function formatBalance(raw: number, decimals: number): string {

@@ -9,30 +9,36 @@ export function TokenAvatar({
   image,
   symbol,
   kind,
-  checked,
+  checked = false,
   size = 44,
+  round,
+  fill = colors.paper,
 }: {
   image?: string;
   symbol: string;
   kind: string;
-  checked: boolean;
+  checked?: boolean;
   size?: number;
+  /** Circle instead of the rounded square: estate holdings and the top-up sheet. */
+  round?: boolean;
+  /** Face colour behind the symbol fallback. */
+  fill?: string;
 }) {
   return (
     <View
       style={{
         width: size,
         height: size,
-        borderRadius: space.radiusBtn,
+        borderRadius: round ? size / 2 : space.radiusBtn,
         borderWidth: space.rule,
         borderColor: colors.ink,
-        backgroundColor: checked ? colors.yellow : colors.paper,
+        backgroundColor: checked ? colors.yellow : fill,
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
       }}
     >
-      <AvatarImage image={image} symbol={symbol} kind={kind} size={size} />
+      <AvatarImage image={image} symbol={symbol} kind={kind} size={size} round={round} />
       {checked ? (
         <View
           style={{
@@ -60,16 +66,18 @@ function AvatarImage({
   symbol,
   kind,
   size,
+  round,
 }: {
   image?: string;
   symbol: string;
   kind: string;
   size: number;
+  round?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   if (!image || failed) {
     return (
-      <Text style={{ fontFamily: font.bold, fontSize: 10, color: colors.ink }}>
+      <Text style={{ fontFamily: font.bold, fontSize: size < 36 ? 8 : size < 44 ? 9 : 10, color: colors.ink }}>
         {symbol.slice(0, 4)}
       </Text>
     );
@@ -77,7 +85,11 @@ function AvatarImage({
   return (
     <Image
       source={{ uri: image }}
-      style={{ width: size - 6, height: size - 6, borderRadius: space.radiusBtn - 3 }}
+      style={{
+        width: size - 6,
+        height: size - 6,
+        borderRadius: round ? (size - 6) / 2 : space.radiusBtn - 3,
+      }}
       onError={() => setFailed(true)}
     />
   );

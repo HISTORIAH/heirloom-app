@@ -1,8 +1,8 @@
 import { fetchMaybeAssetRecord, findAssetRecordPda, TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
+import { findAssociatedTokenPda } from "@solana-program/token";
 import { address, type Address } from "@solana/kit";
 
 import { TOKEN_PROGRAMS } from "@/constants/solana";
-import { findAtaPda } from "@/lib/solana/ata";
 import { unwrapOption } from "@/lib/solana/option";
 import { parsedTokenAccount, toBigInt } from "@/lib/solana/parsed";
 import type { ClaimToken, EstateRpc, VaultToken } from "@/types/program";
@@ -42,7 +42,9 @@ async function maybeVaultToken(
   const tokenProgram = safeAddress(vaultAccount.account.owner);
   const mint = safeAddress(parsed?.mint);
   const amount = toBigInt(parsed?.amount);
+  const decimals = parsed?.decimals;
   if (tokenProgram === undefined || mint === undefined || amount === undefined || amount <= 0n) return undefined;
+  if (decimals === undefined) return undefined;
 
   const [assetRecord] = await findAssetRecordPda({ estate, mint });
   const maybe = await fetchMaybeAssetRecord(rpc, assetRecord);
@@ -50,7 +52,7 @@ async function maybeVaultToken(
   if (maybe.data.hasProtectedExposure || maybe.data.hasBoostedExposure) {
     throw new Error("This estate still has yield deployed. Recall it on the web app first.");
   }
-  return { mint, vaultTokenAccount: vaultAccount.pubkey, tokenProgram, assetRecord };
+  return { mint, vaultTokenAccount: vaultAccount.pubkey, tokenProgram, assetRecord, amount, decimals };
 }
 
 /** Every registered, non-empty token in an estate's vault. */
@@ -64,14 +66,11 @@ export async function discoverVaultRegisteredTokens(
       rpc.getTokenAccountsByOwner(vault, { programId }, { encoding: "jsonParsed" }).send(),
     ),
   );
-  const found: VaultToken[] = [];
-  for (const group of groups) {
-    for (const item of group.value) {
-      const tok = await maybeVaultToken(rpc, item, estate);
-      if (tok !== undefined) found.push(tok);
-    }
-  }
-  return found;
+  // One asset-record lookup per token account; run them together rather than one by one.
+  const found = await Promise.all(
+    groups.flatMap((group) => group.value.map((item) => maybeVaultToken(rpc, item, estate))),
+  );
+  return found.filter((tok): tok is VaultToken => tok !== undefined);
 }
 
 /** Vault tokens plus the heir and treasury accounts a claim pays into. */
@@ -84,9 +83,9 @@ export async function discoverVaultClaimTokens(
   const registered = await discoverVaultRegisteredTokens(rpc, vault, estate);
   return Promise.all(
     registered.map(async (tok) => {
-      const [heirTokenAccount, treasuryTokenAccount] = await Promise.all([
-        findAtaPda(heir, tok.mint, tok.tokenProgram),
-        findAtaPda(TREASURY_ADDRESS, tok.mint, tok.tokenProgram),
+      const [[heirTokenAccount], [treasuryTokenAccount]] = await Promise.all([
+        findAssociatedTokenPda({ owner: heir, mint: tok.mint, tokenProgram: tok.tokenProgram }),
+        findAssociatedTokenPda({ owner: TREASURY_ADDRESS, mint: tok.mint, tokenProgram: tok.tokenProgram }),
       ]);
       return { ...tok, heirTokenAccount, treasuryTokenAccount };
     }),

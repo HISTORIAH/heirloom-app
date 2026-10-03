@@ -19,3 +19,12 @@ export const WAIT_CHOICES = [7, 14, 30, 90] as const;
 
 /** A check-in this close turns its list tag yellow. */
 export const DUE_SOON_DAYS = 14;
+
+/** Estate detail lists this many holdings (SOL first, then by value) before "Show all". */
+export const HOLDINGS_PREVIEW = 4;
+/** Wallet holdings worth less than this (USD) sit under "Hide dust" in the top-up picker. */
+export const DUST_USD = 1;
+/** Quick-fill chips on the top-up amount step, as percent of what the wallet holds. MAX is separate. */
+export const TOP_UP_QUICK_PERCENTS = [25, 50] as const;
+/** Quick picks round down to this many places; MAX on a token stays exact so the whole balance moves. */
+export const TOP_UP_QUICK_PLACES = 4;

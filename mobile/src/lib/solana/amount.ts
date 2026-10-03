@@ -22,14 +22,34 @@ export function solToLamports(text: string): bigint {
   return uiAmountToRaw(text, SOL_DECIMALS);
 }
 
-/** Exact, no trailing zeros: 1500000000n → "1.5". */
-export function lamportsToSolText(lamports: bigint): string {
-  const neg = lamports < 0n;
-  const abs = neg ? -lamports : lamports;
-  const whole = abs / LAMPORTS_PER_SOL;
-  const frac = (abs % LAMPORTS_PER_SOL).toString().padStart(SOL_DECIMALS, "0").replace(/0+$/, "");
+/** Raw units → exact UI text, no trailing zeros: (1500000n, 6) → "1.5". */
+export function rawToUiText(raw: bigint, decimals: number): string {
+  const neg = raw < 0n;
+  const abs = neg ? -raw : raw;
+  const unit = 10n ** BigInt(decimals);
+  const whole = abs / unit;
+  const frac = decimals === 0 ? "" : (abs % unit).toString().padStart(decimals, "0").replace(/0+$/, "");
   const body = frac.length === 0 ? whole.toString() : `${whole.toString()}.${frac}`;
   return neg ? `-${body}` : body;
+}
+
+/** Exact, no trailing zeros: 1500000000n → "1.5". */
+export function lamportsToSolText(lamports: bigint): string {
+  return rawToUiText(lamports, SOL_DECIMALS);
+}
+
+/** For display: grouped, between `minFrac` and `maxFrac` places. (98889980000n, 6) → "98,889.98". */
+export function unitsLabel(raw: bigint, decimals: number, maxFrac = 2, minFrac = 0): string {
+  return (Number(raw) / 10 ** decimals).toLocaleString("en-US", {
+    minimumFractionDigits: minFrac,
+    maximumFractionDigits: maxFrac,
+  });
+}
+
+/** "$145", "$0.42", "<$0.01". */
+export function usdLabel(usd: number): string {
+  if (usd > 0 && usd < 0.01) return "<$0.01";
+  return `$${usd.toLocaleString("en-US", { maximumFractionDigits: usd < 100 ? 2 : 0 })}`;
 }
 
 /** For display: "1.25 SOL", up to four places. */

@@ -1,13 +1,16 @@
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import { address } from "@solana/kit";
 
 export const LAMPORTS_PER_SOL = 1_000_000_000n;
 export const SOL_DECIMALS = 9;
 
-export const SYSTEM_PROGRAM_ADDRESS = address("11111111111111111111111111111111");
-export const TOKEN_PROGRAM_ADDRESS = address("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-export const TOKEN_2022_PROGRAM_ADDRESS = address("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
-export const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = address("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 export const TOKEN_PROGRAMS = [TOKEN_PROGRAM_ADDRESS, TOKEN_2022_PROGRAM_ADDRESS] as const;
+
+/** Wrapped SOL. DAS prices native SOL under this mint. */
+export const WSOL_MINT = address("So11111111111111111111111111111111111111112");
+export const SOL_LOGO_URL =
+  "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png";
 
 /** Base58 run that can be a Solana address. */
 export const ADDRESS_PATTERN = /[1-9A-HJ-NP-Za-km-z]{32,44}/g;

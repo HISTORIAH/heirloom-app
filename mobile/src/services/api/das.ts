@@ -6,7 +6,9 @@ export type DasContent = {
   links?: DasLinks;
   files?: DasFile[];
 };
-export type DasTokenInfo = { symbol?: string };
+/** USD price DAS attaches to well-known fungibles. Absent for most long-tail mints. */
+export type DasPriceInfo = { price_per_token?: number; total_price?: number; currency?: string };
+export type DasTokenInfo = { symbol?: string; decimals?: number; price_info?: DasPriceInfo };
 export type DasAsset = {
   id?: string;
   content?: DasContent;
@@ -20,9 +22,33 @@ export type DasFungibleAsset = {
     decimals?: number;
     symbol?: string;
     token_program?: string;
+    price_info?: DasPriceInfo;
   };
   content?: DasContent;
 };
+
+function present(text: string | undefined): string | undefined {
+  const trimmed = text?.trim();
+  return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
+}
+
+/**
+ * Symbol and name for a mint. DAS often sends "" for mints without metadata, so blanks count
+ * as missing; with neither, the token is "Unknown token" and `named` is false.
+ */
+export function pickLabel(
+  mint: string,
+  tokenSymbol: string | undefined,
+  content?: DasContent,
+): { symbol: string; name: string; named: boolean } {
+  const symbol = present(tokenSymbol) ?? present(content?.metadata?.symbol);
+  const name = present(content?.metadata?.name) ?? symbol;
+  return {
+    symbol: symbol ?? mint.slice(0, 4),
+    name: name ?? "Unknown token",
+    named: name !== undefined,
+  };
+}
 
 export function pickImage(content?: DasContent): string | undefined {
   const file = content?.files?.find((f) => !f.mime || f.mime.startsWith("image/"));

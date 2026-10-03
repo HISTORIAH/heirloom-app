@@ -18,8 +18,8 @@ import {
   Dashed,
   Display,
   GhostAdd,
-  IconButton,
   Lede,
+  PillButton,
   PrimaryButton,
   Steps,
   TextLink,
@@ -89,7 +89,7 @@ function ListHead({ count, onCreate }: { count: number; onCreate: () => void }) 
       }}
     >
       <Cap>{`Estates · ${count} · soonest first`}</Cap>
-      <IconButton icon="plus" label="New estate" size={36} onPress={onCreate} />
+      <PillButton icon="plus" label="New estate" onPress={onCreate} />
     </View>
   );
 }

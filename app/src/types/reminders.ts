@@ -15,12 +15,17 @@ export type RecipientResponse = AddRecipientRequest & {
 };
 
 export type CreateReminderRequest = {
-  estateAddress: string;
   estateKind: EstateKind;
   recipients: AddRecipientRequest[]; // 1–2 items max
 };
 
-export type VerificationPrompt = { Instruction: string } | { Link: string } | string;
+/**
+ * `message`: the backend sent something to the contact (email/SMS) — show "check your inbox".
+ * `instruction`: nothing was sent — the UI must show `value`. For Telegram it's the t.me deep link.
+ */
+export type VerificationPrompt =
+  | { type: "message" }
+  | { type: "instruction"; value: string };
 
 export type VerificationStatus = {
   reminderRecipientId: string; // uuid
@@ -35,17 +40,15 @@ export function normalizeChannel(ch: string): ReminderChannel {
   return ch.toLowerCase() as ReminderChannel;
 }
 
-/** Extract the human-readable text from a VerificationPrompt regardless of variant. */
+/** The text the UI must show for an `instruction` prompt; empty for `message`. */
 export function verificationPromptText(prompt: VerificationPrompt): string {
-  if (typeof prompt === "string") return prompt;
-  if ("Instruction" in prompt) return prompt.Instruction;
-  if ("Link" in prompt) return prompt.Link;
-  return "";
+  return prompt.type === "instruction" ? prompt.value : "";
 }
 
 /**
  * Extract a Telegram deep-link (t.me/…?start=…) from a verification prompt.
- * The backend returns VerificationPrompt::Instruction("t.me/{bot}?start={code}") for Telegram.
+ * The backend returns { type: "instruction", value: "t.me/{bot}?start={code}" } for Telegram.
+ * The link works once and expires at `expiresAt`; after that, call resend.
  * Returns undefined for other channels or when the prompt is not a t.me link.
  */
 export function telegramVerificationLink(v: VerificationStatus): string | undefined {
@@ -61,12 +64,12 @@ export type CreateReminderResponse = {
   verifications: VerificationStatus[];
 };
 
-export type AddContactRequest = {
-  recipients: AddRecipientRequest[];
-};
+/** POST /reminders/add/contact takes one contact per call. */
+export type AddContactRequest = AddRecipientRequest;
 
 export type AddContactResponse = {
-  recipientIds: string[]; // uuid[]
+  recipientId: string; // uuid
+  /** Can be empty even on success if verification hit a transient error — offer resend. */
   verifications: VerificationStatus[];
 };
 
@@ -100,8 +103,13 @@ export type NotificationsConfig = {
 export type NotificationsCardStatus =
   "loading" | "locked" | "off" | "authorized" | "expired" | "error";
 
-export const CREATOR_CHANNELS: ReminderChannel[] = ["email", "telegram", "whatsapp"];
-export const HEIR_CHANNELS: ReminderChannel[] = ["email", "sms", "whatsapp", "telegram"];
+/**
+ * Only Telegram delivers today. The API accepts email/SMS but doesn't send them, and
+ * POST /reminders saves the subscription before rejecting them — offering them can leave an
+ * estate stuck with a broken subscription. WhatsApp is rejected outright (400).
+ */
+export const CREATOR_CHANNELS: ReminderChannel[] = ["telegram"];
+export const HEIR_CHANNELS: ReminderChannel[] = ["telegram"];
 
 export const CHANNEL_META: Record<
   ReminderChannel,
@@ -115,7 +123,7 @@ export const CHANNEL_META: Record<
 
 export const defaultRoleConfig = (): RoleNotificationConfig => ({
   enabled: false,
-  primary: { channel: "email", value: "" },
+  primary: { channel: "telegram", value: "" },
   backup: null,
 });
 
@@ -182,7 +190,7 @@ export function notificationsConfigFromRecipients(
   return config;
 }
 
-/** Flatten a NotificationsConfig into the backend's AddRecipientRequest list (max 2). */
+/** Flatten a NotificationsConfig into the backend's AddRecipientRequest list. */
 export function toAddRecipientRequests(config: NotificationsConfig): AddRecipientRequest[] {
   const recipients: AddRecipientRequest[] = [];
   if (config.creator.enabled && config.creator.primary.value) {
@@ -200,4 +208,16 @@ export function toAddRecipientRequests(config: NotificationsConfig): AddRecipien
     });
   }
   return recipients;
+}
+
+/**
+ * Contacts in `config` that aren't saved yet. The backend allows one contact per role+channel
+ * and has no edit, so re-sending a saved one is a 409 — only new ones go to add/contact.
+ */
+export function newRecipientRequests(
+  config: NotificationsConfig,
+  saved: RecipientResponse[],
+): AddRecipientRequest[] {
+  const taken = new Set(saved.map((r) => `${r.role}:${normalizeChannel(r.channel)}`));
+  return toAddRecipientRequests(config).filter((r) => !taken.has(`${r.role}:${r.channel}`));
 }

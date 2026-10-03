@@ -652,6 +652,83 @@ export function ToggleChip({
   );
 }
 
+/** Labelled on/off switch (Hide dust). */
+export function Toggle({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: on }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        height: 44,
+        paddingHorizontal: 4,
+      }}
+    >
+      <View
+        style={{
+          width: 44,
+          height: 26,
+          borderRadius: 13,
+          padding: 2,
+          borderWidth: space.rule,
+          borderColor: colors.ink,
+          backgroundColor: on ? colors.yellow : colors.paper,
+          alignItems: on ? "flex-end" : "flex-start",
+        }}
+      >
+        <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.ink }} />
+      </View>
+      <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.ink }}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/** Small round-ended button: "+ Add", "Sort: Value ⌄". */
+export function PillButton({
+  label,
+  onPress,
+  icon,
+  trailingIcon,
+  accessibilityLabel,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  icon?: IconName;
+  trailingIcon?: IconName;
+  accessibilityLabel?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        height: 36,
+        paddingHorizontal: 12,
+        borderRadius: 999,
+        borderWidth: space.rule,
+        borderColor: colors.ink,
+        backgroundColor: colors.paper,
+        opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+      })}
+    >
+      {icon !== undefined ? <Icon name={icon} size={16} weight={2.5} /> : null}
+      <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.ink }}>{label}</Text>
+      {trailingIcon !== undefined ? <Icon name={trailingIcon} size={16} weight={2.5} /> : null}
+    </Pressable>
+  );
+}
+
 // --------------------------------------------------------------- lists
 
 /** Numbered how-it-works list (01 / 02 / 03), ruled between rows. */

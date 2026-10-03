@@ -7,11 +7,11 @@ import {
   getUpdateHeirInstructionAsync,
   TREASURY_ADDRESS,
 } from "@historiah/heirloom";
+import { findAssociatedTokenPda } from "@solana-program/token";
 import type { Address, Instruction, TransactionSigner } from "@solana/kit";
 
 import { assertEstateFree, assertMintUnregistered, assertNotPaused } from "@/lib/estate/guards";
 import { assertAllTokensListed, discoverVaultRegisteredTokens } from "@/lib/estate/tokens";
-import { findAtaPda } from "@/lib/solana/ata";
 import { assertWalletCanDeposit, fetchMintMeta } from "@/lib/solana/mint";
 import type { EstateRow, EstateRpc } from "@/types/program";
 
@@ -30,9 +30,9 @@ export async function buildRevokeAllIxs(
   assertAllTokensListed(tokens.length, row.data.claimableAssets);
   const tokenIxs = await Promise.all(
     tokens.map(async (tok) => {
-      const [authorityTokenAccount, treasuryTokenAccount] = await Promise.all([
-        findAtaPda(authority.address, tok.mint, tok.tokenProgram),
-        findAtaPda(TREASURY_ADDRESS, tok.mint, tok.tokenProgram),
+      const [[authorityTokenAccount], [treasuryTokenAccount]] = await Promise.all([
+        findAssociatedTokenPda({ owner: authority.address, mint: tok.mint, tokenProgram: tok.tokenProgram }),
+        findAssociatedTokenPda({ owner: TREASURY_ADDRESS, mint: tok.mint, tokenProgram: tok.tokenProgram }),
       ]);
       return getRevokeInstructionAsync({
         authority,
@@ -82,8 +82,8 @@ export async function buildReassignIxs(
   assertAllTokensListed(tokens.length, row.data.claimableAssets);
   const tokenIxs = await Promise.all(
     tokens.map(async (tok) => {
-      const [newVaultTokenAccount, newAssetRecord] = await Promise.all([
-        findAtaPda(newVault, tok.mint, tok.tokenProgram),
+      const [[newVaultTokenAccount], newAssetRecord] = await Promise.all([
+        findAssociatedTokenPda({ owner: newVault, mint: tok.mint, tokenProgram: tok.tokenProgram }),
         findAssetRecordPda({ estate: newEstate, mint: tok.mint }),
       ]);
       return getUpdateHeirInstructionAsync({
@@ -131,9 +131,9 @@ export async function buildRegisterTokenIx(
   ]);
   await assertMintUnregistered(rpc, estate, mint);
   await assertWalletCanDeposit(rpc, authority.address, mint, tokenProgram, amount);
-  const [vaultTokenAccount, authorityTokenAccount, [assetRecord]] = await Promise.all([
-    findAtaPda(vault, mint, tokenProgram),
-    findAtaPda(authority.address, mint, tokenProgram),
+  const [[vaultTokenAccount], [authorityTokenAccount], [assetRecord]] = await Promise.all([
+    findAssociatedTokenPda({ owner: vault, mint, tokenProgram }),
+    findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram }),
     findAssetRecordPda({ estate, mint }),
   ]);
   return getRegisterAssetInstructionAsync({

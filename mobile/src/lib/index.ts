@@ -11,7 +11,10 @@ export {
 export {
   uiAmountToRaw,
   solToLamports,
+  rawToUiText,
   lamportsToSolText,
+  unitsLabel,
+  usdLabel,
   solLabel,
   solFixed,
 } from "./solana/amount";
@@ -27,12 +30,6 @@ export { unwrapOption } from "./solana/option";
 
 // Parsed utilities
 export { asRecord, parsedInfo, parsedTokenAccount, toBigInt } from "./solana/parsed";
-
-// Transfer utilities
-export { transferSolIx } from "./solana/transfer";
-
-// ATA utilities
-export { findAtaPda } from "./solana/ata";
 
 // Mint utilities
 export { fetchMintMeta, assertWalletCanDeposit } from "./solana/mint";
@@ -85,7 +82,7 @@ export { buildClaimIxs } from "./tx/heir";
 export { buildRevokeAllIxs, buildReassignIxs, buildRegisterTokenIx } from "./tx/manage";
 
 // TX - Owner
-export { buildCreateEstateIxs, buildTopUpSolIx } from "./tx/owner";
+export { buildCreateEstateIxs, buildTopUpSolIx, buildTopUpTokenIx } from "./tx/owner";
 
 // TX - Update field
 export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";

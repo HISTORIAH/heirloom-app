@@ -1,25 +1,16 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import { Pressable, Text, TextInput, View } from "react-native";
 
-import { TokenAvatar } from "@/components/TokenAvatar";
+import { Icon } from "@/components/Icon";
 import { Cap, PrimaryButton } from "@/components/ui";
 import { colors, font, space } from "@/theme";
-import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
+import type { Address } from "@solana/kit";
 import { SECONDS_PER_DAY } from "@/constants/time";
 import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS } from "@/constants/estate";
-import { useWalletTokens } from "@/hooks";
 import { EstateRow } from "@/types/program";
-import {
-  assertMintUnregistered,
-  assertWalletCanDeposit,
-  fetchMintMeta,
-  isPausedNow,
-  parseAddress,
-  uiAmountToRaw,
-} from "@/lib";
+import { isPausedNow, parseAddress } from "@/lib";
 
-type EverydayAction = "heir" | "timing" | "asset" | "rename";
+type EverydayAction = "heir" | "timing" | "rename";
 
 const EVERYDAY: Record<EverydayAction, { title: string; fallback?: string }> = {
   heir: {
@@ -29,27 +20,10 @@ const EVERYDAY: Record<EverydayAction, { title: string; fallback?: string }> = {
     title: "Update timing",
     fallback: "Check-in, grace, and pause length",
   },
-  asset: {
-    title: "Add token",
-  },
   rename: {
     title: "Rename estate",
   },
 };
-
-function Chevron() {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M9 5.5L15.5 12 9 18.5"
-        stroke={colors.ink}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function Field({
   label,
@@ -229,17 +203,18 @@ function EverydayRow({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        paddingVertical: 15,
+        minHeight: 48,
+        paddingVertical: 12,
         opacity: disabled ? 0.45 : pressed ? 0.72 : 1,
-        borderBottomWidth: 2,
+        borderBottomWidth: space.rule,
         borderBottomColor: colors.line,
       })}
     >
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, gap: 2 }}>
         <Text
           style={{
-            fontFamily: "SpaceGrotesk_600SemiBold",
-            fontSize: 16,
+            fontFamily: font.bold,
+            fontSize: 15,
             color: danger ? colors.claim : colors.ink,
           }}
         >
@@ -248,8 +223,7 @@ function EverydayRow({
         {desc !== undefined ? (
           <Text
             style={{
-              marginTop: 3,
-              fontFamily: "SpaceGrotesk_500Medium",
+              fontFamily: font.regular,
               fontSize: 13,
               lineHeight: 18,
               color: colors.mute,
@@ -259,14 +233,13 @@ function EverydayRow({
           </Text>
         ) : null}
       </View>
-      <Chevron />
+      <Icon name="chevronRight" size={18} weight={2} />
     </Pressable>
   );
 }
 
 interface EstateManageProps {
   row: EstateRow;
-  rpc: Rpc<SolanaRpcApi>;
   busy?: boolean;
   onReassign: (newHeir: Address) => void;
   onTiming: (fields: {
@@ -274,7 +247,6 @@ interface EstateManageProps {
     gracePeriodSecs?: bigint;
     delegatePauseDurationSecs?: bigint;
   }) => void;
-  onAddAsset: (mint: Address, amount: bigint) => void;
   onClose: () => void;
   onRename?: (name: string) => Promise<void>;
 }
@@ -455,148 +427,11 @@ function TimingForm({
   );
 }
 
-function AssetForm({
-  rpc,
-  estate,
-  owner,
-  busy,
-  onSubmit,
-}: {
-  rpc: Rpc<SolanaRpcApi>;
-  estate: Address;
-  owner: Address;
-  busy?: boolean;
-  onSubmit: (mint: Address, amount: bigint) => void;
-}) {
-  const { tokens, loading } = useWalletTokens(owner);
-  const [selectedMint, setSelectedMint] = useState<string | undefined>(undefined);
-  const [amount, setAmount] = useState("");
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
-  const locked = Boolean(busy) || checking;
-
-  const selected = tokens.find((t) => t.mint === selectedMint);
-
-  return (
-    <View
-      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 2, borderBottomColor: colors.line }}
-    >
-      <Cap>Your tokens</Cap>
-      {loading ? (
-        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}>
-          Loading tokens…
-        </Text>
-      ) : tokens.length === 0 ? (
-        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}>
-          No tokens in this wallet.
-        </Text>
-      ) : (
-        <ScrollView
-          style={{ maxHeight: 220 }}
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-        >
-          {tokens.map((item) => {
-            const on = item.mint === selectedMint;
-            return (
-              <Pressable
-                key={item.mint}
-                onPress={() => {
-                  setError(undefined);
-                  setSelectedMint(on ? undefined : item.mint);
-                  if (on) setAmount("");
-                }}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: on }}
-                accessibilityLabel={item.symbol}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  paddingVertical: 8,
-                  paddingHorizontal: 10,
-                  borderRadius: space.radiusBtn,
-                  borderWidth: space.rule,
-                  borderColor: on ? colors.ink : colors.line,
-                  backgroundColor: on ? colors.paper : "transparent",
-                  marginBottom: 6,
-                }}
-              >
-                <TokenAvatar
-                  image={item.image}
-                  symbol={item.symbol}
-                  kind="token"
-                  checked={on}
-                  size={36}
-                />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.ink }}>
-                    {item.symbol}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: font.regular,
-                      fontSize: 12,
-                      fontVariant: ["tabular-nums"],
-                      color: colors.mute,
-                    }}
-                  >
-                    {item.balance}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      )}
-      {selected ? (
-        <Field
-          label={`Amount (${selected.symbol})`}
-          value={amount}
-          onChangeText={(value) => {
-            setError(undefined);
-            setAmount(value);
-          }}
-          keyboardType="decimal-pad"
-          editable={!locked}
-        />
-      ) : null}
-      <FormIssue text={error} />
-      <PrimaryButton
-        label={busy || checking ? "Working…" : "Add token"}
-        tone="ink"
-        disabled={locked || !selected}
-        onPress={() => {
-          if (locked || !selected) return;
-          void (async () => {
-            setChecking(true);
-            try {
-              const mintAddr = parseAddress(selected.mint, "mint");
-              const meta = await fetchMintMeta(rpc, mintAddr);
-              const raw = uiAmountToRaw(amount, meta.decimals);
-              if (raw <= 0n) throw new Error("Enter an amount greater than zero");
-              await assertMintUnregistered(rpc, estate, mintAddr);
-              await assertWalletCanDeposit(rpc, owner, mintAddr, meta.tokenProgram, raw);
-              onSubmit(mintAddr, raw);
-            } catch (cause) {
-              setError(cause instanceof Error ? cause.message : "Check the amount");
-            } finally {
-              setChecking(false);
-            }
-          })();
-        }}
-      />
-    </View>
-  );
-}
-
 export function EstateManage({
   row,
-  rpc,
   busy,
   onReassign,
   onTiming,
-  onAddAsset,
   onClose,
   onRename,
 }: EstateManageProps) {
@@ -611,7 +446,7 @@ export function EstateManage({
   }
 
   return (
-    <View style={{ borderTopWidth: 2, borderTopColor: colors.line }}>
+    <View style={{ borderTopWidth: space.rule, borderTopColor: colors.line }}>
       <EverydayRow action="heir" disabled={busy} onPress={() => toggle("heir")} />
       {open === "heir" ? <HeirForm busy={busy} paused={paused} onSubmit={onReassign} /> : null}
       <EverydayRow
@@ -626,16 +461,6 @@ export function EstateManage({
           <EverydayRow action="rename" disabled={busy} onPress={() => toggle("rename")} />
           {open === "rename" ? <RenameForm row={row} busy={busy} onSubmit={onRename} /> : null}
         </>
-      ) : null}
-      <EverydayRow action="asset" disabled={busy} onPress={() => toggle("asset")} />
-      {open === "asset" ? (
-        <AssetForm
-          rpc={rpc}
-          estate={row.address}
-          owner={row.data.authority}
-          busy={busy}
-          onSubmit={onAddAsset}
-        />
       ) : null}
       <EverydayRow action="close" desc="0.5% fee" danger disabled={busy} onPress={onClose} />
     </View>

@@ -4,7 +4,7 @@ import type { Address } from "@solana/kit";
 import { useSendIxs } from "@/hooks/tx/useSendIxs";
 import { assertEstateFree } from "@/lib/estate/guards";
 import { buildReassignIxs, buildRegisterTokenIx, buildRevokeAllIxs } from "@/lib/tx/manage";
-import { buildCreateEstateIxs, buildTopUpSolIx } from "@/lib/tx/owner";
+import { buildCreateEstateIxs, buildTopUpSolIx, buildTopUpTokenIx } from "@/lib/tx/owner";
 import { buildCheckInIx, buildUpdateFieldIx } from "@/lib/tx/updateField";
 import type { EstateTimingFields } from "@/types/estate";
 import type { CreateEstateInput, EstateRow } from "@/types/program";
@@ -24,6 +24,10 @@ export function useOwnerTx() {
 
   async function topUpSol(heir: Address, lamports: bigint): Promise<string> {
     return sendIxs(async (signer) => [await buildTopUpSolIx(signer, heir, lamports)]);
+  }
+
+  async function topUpToken(heir: Address, mint: Address, amount: bigint): Promise<string> {
+    return sendIxs(async (signer) => [await buildTopUpTokenIx(client.rpc, signer, heir, mint, amount)]);
   }
 
   async function createEstate(input: CreateEstateInput): Promise<{ signature: string; estatePda: Address }> {
@@ -53,5 +57,5 @@ export function useOwnerTx() {
     return sendIxs(async (signer) => [await buildRegisterTokenIx(client.rpc, signer, row.data.heir, mint, amount)]);
   }
 
-  return { account, checkIn, checkInAll, topUpSol, createEstate, reassignHeir, closeEstate, updateSettings, addToken };
+  return { account, checkIn, checkInAll, topUpSol, topUpToken, createEstate, reassignHeir, closeEstate, updateSettings, addToken };
 }

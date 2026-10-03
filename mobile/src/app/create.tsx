@@ -47,6 +47,7 @@ import {
   LABEL_MAX_LEN,
 } from "@/constants/estate";
 import { CARD_FEE_FLOAT_LAMPORTS, CREATE_FEE_RESERVE_LAMPORTS } from "@/constants/fees";
+import { SOL_LOGO_URL } from "@/constants/solana";
 import {
   cancelScan,
   dateLong,
@@ -138,8 +139,7 @@ export default function CreateScreen() {
       balanceRaw: solBalance,
       usd: null,
       dust: false,
-      image:
-        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      image: SOL_LOGO_URL,
     };
     const spl: AssetOption[] = walletTokens.map((t) => ({
       id: t.mint,

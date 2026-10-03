@@ -27,6 +27,8 @@ export const colors = {
   brass: "#C9A54A",
   /** Face of a drawn credential card. */
   cardFace: "#1A1A1A",
+  /** Dim behind bottom sheets. */
+  scrim: "rgba(10,10,10,0.55)",
 } as const;
 
 export const space = {

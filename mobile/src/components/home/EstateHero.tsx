@@ -23,23 +23,31 @@ function heroUnit(state: EstateUiState, days: number): string {
   return `${word} to check in`;
 }
 
-/** The estate that needs you most: countdown, ruler, check-in. Fill follows state. */
+/**
+ * The estate that needs you most: countdown, ruler, check-in. Fill follows state.
+ * `compact` is the estate-detail cut: the screen header already names the estate, so the
+ * top line shows the cadence instead, the count is smaller and the ruler goes.
+ */
 export function EstateHero({
   row,
   busy,
   disabled,
   onCheckIn,
   onOpen,
+  compact,
 }: {
   row: EstateRow;
   busy?: boolean;
   disabled?: boolean;
   onCheckIn: () => void;
   onOpen?: () => void;
+  compact?: boolean;
 }) {
   const view = useDashboardView(row.data, row.claimableLamports);
   const name = estateName(row);
   const live = view.state !== "distributed";
+  const count = compact ? 76 : 88;
+  const topLine = compact ? `Every ${view.intervalDays} days · ${view.graceDays}-day wait` : name;
 
   return (
     <View
@@ -49,7 +57,8 @@ export function EstateHero({
         borderWidth: space.rule,
         borderColor: colors.ink,
         borderRadius: space.radiusHero,
-        padding: 18,
+        paddingVertical: compact ? 16 : 18,
+        paddingHorizontal: 18,
         gap: 10,
       }}
     >
@@ -69,9 +78,14 @@ export function EstateHero({
         <View style={{ flexDirection: "row", alignItems: "center", gap: 2, flexShrink: 1 }}>
           <Text
             numberOfLines={1}
-            style={{ fontFamily: font.bold, fontSize: 16, color: colors.ink, flexShrink: 1 }}
+            style={{
+              fontFamily: font.bold,
+              fontSize: compact ? 13 : 16,
+              color: colors.ink,
+              flexShrink: 1,
+            }}
           >
-            {name}
+            {topLine}
           </Text>
           {onOpen !== undefined ? <Icon name="chevronRight" size={18} weight={2.5} /> : null}
         </View>
@@ -83,9 +97,9 @@ export function EstateHero({
           <Text
             style={{
               fontFamily: font.semibold,
-              fontSize: 88,
-              lineHeight: 88,
-              letterSpacing: -4,
+              fontSize: count,
+              lineHeight: count,
+              letterSpacing: count * -0.045,
               fontVariant: ["tabular-nums"],
               color: colors.ink,
               marginBottom: -6,
@@ -98,8 +112,8 @@ export function EstateHero({
               flex: 1,
               paddingBottom: 6,
               fontFamily: font.bold,
-              fontSize: 18,
-              lineHeight: 22,
+              fontSize: compact ? 17 : 18,
+              lineHeight: compact ? 21 : 22,
               color: colors.ink,
             }}
           >
@@ -114,7 +128,7 @@ export function EstateHero({
         </Text>
       )}
 
-      {live ? (
+      {live && !compact ? (
         <CheckInBars
           intervalDays={view.intervalDays}
           graceDays={view.graceDays}

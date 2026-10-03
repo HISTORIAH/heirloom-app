@@ -11,13 +11,17 @@ export function parsedInfo(data: unknown): Record<string, unknown> | undefined {
   return asRecord(asRecord(asRecord(payload)?.parsed)?.info);
 }
 
-/** Mint and raw amount of a parsed token account. */
-export function parsedTokenAccount(data: unknown): { mint: string; amount: string } | undefined {
+/** Mint, raw amount and decimals of a parsed token account. */
+export function parsedTokenAccount(
+  data: unknown,
+): { mint: string; amount: string; decimals?: number } | undefined {
   const info = parsedInfo(data);
   const mint = info?.mint;
-  const amount = asRecord(info?.tokenAmount)?.amount;
+  const tokenAmount = asRecord(info?.tokenAmount);
+  const amount = tokenAmount?.amount;
   if (typeof mint !== "string" || typeof amount !== "string") return undefined;
-  return { mint, amount };
+  const decimals = typeof tokenAmount?.decimals === "number" ? tokenAmount.decimals : undefined;
+  return { mint, amount, decimals };
 }
 
 /** Raw amount string → bigint, or undefined if it isn't one. */

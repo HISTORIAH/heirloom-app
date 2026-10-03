@@ -42,10 +42,11 @@ export function useSaveReminder(estateAddress: string) {
   });
 }
 
+/** One contact per call — the backend has no batch add. */
 export function useAddContact(estateAddress: string) {
   const queryClient = useQueryClient();
-  return useMutation<AddContactResponse, Error, { recipients: AddRecipientRequest[] }>({
-    mutationFn: ({ recipients }) => addContact(estateAddress, recipients),
+  return useMutation<AddContactResponse, Error, { recipient: AddRecipientRequest }>({
+    mutationFn: ({ recipient }) => addContact(estateAddress, recipient),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
     },

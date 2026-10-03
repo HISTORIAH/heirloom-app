@@ -4,7 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { ErrorLine, StepHead } from "@/components/create/WizardChrome";
 import { Icon } from "@/components/Icon";
 import { TokenAvatar } from "@/components/TokenAvatar";
-import { Cap } from "@/components/ui";
+import { Cap, PillButton, Toggle } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import type { AssetOption, AssetSort, AssetTab } from "@/types/create";
 
@@ -72,39 +72,6 @@ function Segmented({ tab, onTab }: { tab: AssetTab; onTab: (tab: AssetTab) => vo
         );
       })}
     </View>
-  );
-}
-
-function Toggle({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: on }}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 10,
-        height: 44,
-        paddingHorizontal: 4,
-      }}
-    >
-      <View
-        style={{
-          width: 44,
-          height: 26,
-          borderRadius: 13,
-          padding: 2,
-          borderWidth: space.rule,
-          borderColor: colors.ink,
-          backgroundColor: on ? colors.yellow : colors.paper,
-          alignItems: on ? "flex-end" : "flex-start",
-        }}
-      >
-        <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.ink }} />
-      </View>
-      <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.ink }}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -349,27 +316,12 @@ export function AssetsStep({
         }}
       >
         <Toggle on={hideDust} label="Hide dust" onPress={() => onHideDust(!hideDust)} />
-        <Pressable
-          onPress={() => onSort(sort === "value" ? "name" : "value")}
-          accessibilityRole="button"
+        <PillButton
+          label={`Sort: ${sort === "value" ? "Value" : "Name"}`}
+          trailingIcon="chevronDown"
           accessibilityLabel={`Sort by ${sort}, tap to change`}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
-            height: 36,
-            paddingHorizontal: 12,
-            borderRadius: 999,
-            borderWidth: space.rule,
-            borderColor: colors.ink,
-            backgroundColor: colors.paper,
-          }}
-        >
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.ink }}>
-            Sort: {sort === "value" ? "Value" : "Name"}
-          </Text>
-          <Icon name="chevronDown" size={16} weight={2.5} />
-        </Pressable>
+          onPress={() => onSort(sort === "value" ? "name" : "value")}
+        />
       </View>
 
       {showTokens ? (

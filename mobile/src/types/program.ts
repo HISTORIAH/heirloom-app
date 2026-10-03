@@ -36,6 +36,9 @@ export type VaultToken = {
   vaultTokenAccount: Address;
   tokenProgram: Address;
   assetRecord: Address;
+  /** Raw units held in the vault. */
+  amount: bigint;
+  decimals: number;
 };
 
 /** A vault token plus the accounts a claim pays into. */

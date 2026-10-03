@@ -1,249 +1,161 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import { Pressable, Text, View } from "react-native";
 
-import { colors } from "@/theme";
-import { solToLamports } from "@/lib";
+import { TokenAvatar } from "@/components/TokenAvatar";
+import { Cap, PillButton, TextLink } from "@/components/ui";
+import { SOL_ASSET_ID } from "@/constants/create";
+import { HOLDINGS_PREVIEW } from "@/constants/estate";
+import { shortAddress, unitsLabel, usdLabel } from "@/lib";
+import { colors, font, space } from "@/theme";
+import type { EstateHolding } from "@/types/estate";
 
-interface EstateAssetsProps {
-  claimableLamports: bigint;
-  tokenAccounts: number;
+type EstateAssetsProps = {
+  holdings: EstateHolding[];
+  totalUsd: number | null;
+  /** Tokens still loading. SOL always shows. */
+  loading?: boolean;
+  error?: string;
   distributed?: boolean;
-  onAddSol?: (lamports: bigint) => void;
+  /** Opens the deposit sheet; with an id, straight on that asset's amount step. */
+  onTopUp?: (id?: string) => void;
   adding?: boolean;
-}
+};
 
-function vaultSol(lamports: bigint): string {
-  return (Number(lamports) / 1e9).toFixed(2);
-}
-
-function PlusMark() {
+function HoldingRow({ holding, onPress }: { holding: EstateHolding; onPress?: () => void }) {
+  const isSol = holding.id === SOL_ASSET_ID;
+  const title = holding.named ? holding.symbol : "Unknown token";
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 5v14M5 12h14" stroke={colors.ink} strokeWidth="2.2" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function Figure({
-  value,
-  unit,
-  cap,
-  empty,
-  ruled,
-}: {
-  value: string;
-  unit?: string;
-  cap: string;
-  empty: boolean;
-  ruled?: boolean;
-}) {
-  return (
-    <View
-      style={{
-        flex: 1,
-        borderLeftWidth: ruled ? 1 : 0,
-        borderLeftColor: colors.line,
-        paddingLeft: ruled ? 18 : 0,
-      }}
+    <Pressable
+      onPress={onPress}
+      disabled={onPress === undefined}
+      accessibilityRole={onPress === undefined ? undefined : "button"}
+      accessibilityHint={onPress === undefined ? undefined : `Deposit more ${title}`}
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        minHeight: 44,
+        paddingVertical: 12,
+        borderTopWidth: space.rule,
+        borderTopColor: colors.line,
+        opacity: pressed ? 0.7 : 1,
+      })}
     >
-      <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
-        <Text
-          style={{
-            fontFamily: "SpaceGrotesk_700Bold",
-            fontSize: 44,
-            letterSpacing: -2.2,
-            lineHeight: 44,
-            fontVariant: ["tabular-nums"],
-            color: empty ? colors.line : colors.ink,
-          }}
-        >
-          {value}
+      <TokenAvatar
+        image={holding.image}
+        symbol={holding.symbol}
+        kind="token"
+        size={36}
+        round
+        fill={isSol ? colors.sky : colors.line}
+      />
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Text numberOfLines={1} style={{ fontFamily: font.bold, fontSize: 16, color: colors.ink }}>
+          {title}
         </Text>
-        {unit !== undefined ? (
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_600SemiBold",
-              fontSize: 18,
-              letterSpacing: -0.2,
-              marginLeft: 4,
-              marginBottom: 4,
-              color: empty ? colors.line : colors.ink,
-            }}
-          >
-            {unit}
-          </Text>
-        ) : null}
+        <Text
+          numberOfLines={1}
+          style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}
+        >
+          {isSol || holding.mint === undefined ? "Native SOL" : shortAddress(holding.mint)}
+        </Text>
       </View>
-      <Text
-        style={{
-          marginTop: 6,
-          fontFamily: "SpaceGrotesk_500Medium",
-          fontSize: 13,
-          color: colors.mute,
-        }}
-      >
-        {cap}
-      </Text>
-    </View>
-  );
-}
-
-function AddSolRow({
-  onAddSol,
-  adding,
-}: {
-  onAddSol: (lamports: bigint) => void;
-  adding?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  function submit() {
-    try {
-      const lamports = solToLamports(amount);
-      if (lamports <= 0n) {
-        setError("Enter an amount above 0.");
-        return;
-      }
-      setError(undefined);
-      onAddSol(lamports);
-    } catch {
-      setError("Enter an amount above 0.");
-    }
-  }
-
-  if (!open) {
-    return (
-      <Pressable
-        onPress={() => setOpen(true)}
-        disabled={adding}
-        accessibilityRole="button"
-        accessibilityLabel="Add SOL"
-        style={({ pressed }) => ({
-          marginTop: 20,
-          height: 50,
-          borderRadius: 12,
-          borderWidth: 2,
-          borderColor: colors.ink,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          opacity: adding ? 0.45 : pressed ? 0.88 : 1,
-          transform: [{ scale: pressed ? 0.99 : 1 }],
-        })}
-      >
-        <PlusMark />
+      <View style={{ alignItems: "flex-end", gap: 2 }}>
         <Text
           style={{
-            fontFamily: "SpaceGrotesk_600SemiBold",
-            fontSize: 15,
-            color: colors.ink,
-          }}
-        >
-          Add SOL
-        </Text>
-      </Pressable>
-    );
-  }
-
-  return (
-    <View style={{ marginTop: 20, gap: 10 }}>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <TextInput
-          value={amount}
-          onChangeText={(value) => {
-            setError(undefined);
-            setAmount(value);
-          }}
-          placeholder="Amount in SOL"
-          placeholderTextColor={colors.mute}
-          keyboardType="decimal-pad"
-          editable={!adding}
-          accessibilityLabel="Amount in SOL"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            height: 50,
-            borderWidth: 2,
-            borderColor: colors.ink,
-            borderRadius: 12,
-            paddingHorizontal: 14,
-            fontFamily: "SpaceGrotesk_500Medium",
+            fontFamily: font.bold,
             fontSize: 16,
             fontVariant: ["tabular-nums"],
             color: colors.ink,
-            backgroundColor: colors.paper,
           }}
-        />
-        <Pressable
-          onPress={submit}
-          disabled={adding}
-          accessibilityRole="button"
-          accessibilityLabel="Add SOL"
-          style={({ pressed }) => ({
-            width: 120,
-            height: 50,
-            borderRadius: 12,
-            borderWidth: 2,
-            borderColor: colors.ink,
-            backgroundColor: colors.ink,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: adding ? 0.45 : pressed ? 0.88 : 1,
-          })}
         >
-          <Text
-            style={{
-              fontFamily: "SpaceGrotesk_600SemiBold",
-              fontSize: 15,
-              color: colors.white,
-            }}
-          >
-            {adding ? "Working…" : "Add SOL"}
-          </Text>
-        </Pressable>
-      </View>
-      {error !== undefined ? (
+          {unitsLabel(holding.amount, holding.decimals, 2, 2)}
+        </Text>
         <Text
           style={{
-            fontFamily: "SpaceGrotesk_600SemiBold",
+            fontFamily: font.regular,
             fontSize: 13,
-            color: colors.claim,
+            fontVariant: ["tabular-nums"],
+            color: colors.mute,
           }}
         >
-          {error}
+          {holding.usd === null ? "—" : usdLabel(holding.usd)}
         </Text>
-      ) : null}
-    </View>
+      </View>
+    </Pressable>
   );
 }
 
+/** "In this estate": the vault's assets, most valuable first, with the deposit entry point. */
 export function EstateAssets({
-  claimableLamports,
-  tokenAccounts,
+  holdings,
+  totalUsd,
+  loading,
+  error,
   distributed = false,
-  onAddSol,
+  onTopUp,
   adding,
 }: EstateAssetsProps) {
-  const hasSol = claimableLamports > 0n;
-  const hasTokens = tokenAccounts > 0;
-  const tokenCap = tokenAccounts === 1 ? "Token account" : "Token accounts";
+  const total = totalUsd === null ? "" : ` · ≈ ${usdLabel(totalUsd)}`;
+  const topUp = distributed || adding ? undefined : onTopUp;
+  const [expanded, setExpanded] = useState(false);
+  // One extra row isn't worth a "Show all" tap.
+  const collapsible = holdings.length > HOLDINGS_PREVIEW + 1;
+  const shown = collapsible && !expanded ? holdings.slice(0, HOLDINGS_PREVIEW) : holdings;
 
   return (
-    <View>
-      <View style={{ flexDirection: "row" }}>
-        <Figure
-          value={hasSol ? vaultSol(claimableLamports) : "0.00"}
-          unit="SOL"
-          cap="Native SOL"
-          empty={!hasSol}
-        />
-        <Figure value={String(tokenAccounts)} cap={tokenCap} empty={!hasTokens} ruled />
+    <View style={{ gap: 12 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <Cap>{`In this estate${total}`}</Cap>
+        {onTopUp !== undefined && !distributed ? (
+          <PillButton
+            label={adding ? "Working…" : "Deposit"}
+            icon="plus"
+            accessibilityLabel="Deposit into this estate"
+            disabled={adding}
+            onPress={() => onTopUp()}
+          />
+        ) : null}
       </View>
-      {onAddSol && !distributed ? <AddSolRow onAddSol={onAddSol} adding={adding} /> : null}
+      <View>
+        {shown.map((holding) => (
+          <HoldingRow
+            key={holding.id}
+            holding={holding}
+            onPress={topUp === undefined ? undefined : () => topUp(holding.id)}
+          />
+        ))}
+        {collapsible ? (
+          <TextLink
+            label={expanded ? "Show less" : `Show all ${holdings.length}`}
+            align="left"
+            quiet
+            flush
+            onPress={() => setExpanded(!expanded)}
+          />
+        ) : null}
+        {loading ? (
+          <Text
+            style={{
+              paddingVertical: 12,
+              borderTopWidth: space.rule,
+              borderTopColor: colors.line,
+              fontFamily: font.regular,
+              fontSize: 13,
+              color: colors.mute,
+            }}
+          >
+            Loading tokens…
+          </Text>
+        ) : null}
+        {error !== undefined ? (
+          <Text
+            style={{ paddingTop: 8, fontFamily: font.semibold, fontSize: 13, color: colors.claim }}
+          >
+            {error}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 }

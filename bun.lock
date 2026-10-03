@@ -229,7 +229,10 @@
         "@expo-google-fonts/space-grotesk": "^0.4.1",
         "@expo/metro-runtime": "~57.0.15",
         "@historiah/heirloom": "workspace:*",
-        "@solana-program/memo": "^0.15.0",
+        "@solana-program/memo": "^0.12.0",
+        "@solana-program/system": "^0.13.0",
+        "@solana-program/token": "^0.15.0",
+        "@solana-program/token-2022": "^0.15.0",
         "@solana/kit": "^7.1.1",
         "@tamagui/config": "2.0.0-rc.19",
         "@tanstack/react-query": "^5.62.0",
@@ -4805,6 +4808,8 @@
     "micromatch/picomatch": ["picomatch@2.3.2", "", {}, "sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA=="],
 
     "miniflare/ws": ["ws@8.21.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g=="],
+
+    "mobile/@solana-program/memo": ["@solana-program/memo@0.12.0", "", { "peerDependencies": { "@solana/kit": "^7.0.0" } }, "sha512-sOY182HLdngvlfjg1n1e8mXIz5nP4kNZRWBT33mk6SJsMXwUahL5w/XwaeQ8cj8PYPf2FiH0IpZ2tbZW6f0SBQ=="],
 
     "mobile/@solana/kit": ["@solana/kit@7.1.1", "", { "dependencies": { "@solana/accounts": "7.1.1", "@solana/addresses": "7.1.1", "@solana/codecs": "7.1.1", "@solana/errors": "7.1.1", "@solana/functional": "7.1.1", "@solana/instruction-plans": "7.1.1", "@solana/instructions": "7.1.1", "@solana/keys": "7.1.1", "@solana/offchain-messages": "7.1.1", "@solana/plugin-core": "7.1.1", "@solana/plugin-interfaces": "7.1.1", "@solana/program-client-core": "7.1.1", "@solana/programs": "7.1.1", "@solana/promises": "7.1.1", "@solana/rpc": "7.1.1", "@solana/rpc-api": "7.1.1", "@solana/rpc-parsed-types": "7.1.1", "@solana/rpc-spec-types": "7.1.1", "@solana/rpc-subscriptions": "7.1.1", "@solana/rpc-types": "7.1.1", "@solana/signers": "7.1.1", "@solana/subscribable": "7.1.1", "@solana/sysvars": "7.1.1", "@solana/transaction-confirmation": "7.1.1", "@solana/transaction-introspection": "7.1.1", "@solana/transaction-messages": "7.1.1", "@solana/transactions": "7.1.1" }, "peerDependencies": { "typescript": ">=5.4.0" }, "optionalPeers": ["typescript"] }, "sha512-By3kv5d8fIMr2SPmvI41hBXUwn0XuDu2MC8B7anaLHtY8MENTKhjg8sSfybf/RTH3387ErxhxmrAijTiHqTy/g=="],
 

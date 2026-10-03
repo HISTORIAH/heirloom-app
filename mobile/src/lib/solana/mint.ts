@@ -1,7 +1,7 @@
+import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { TOKEN_2022_PROGRAM_ADDRESS } from "@solana-program/token-2022";
 import { address, type Address } from "@solana/kit";
 
-import { TOKEN_2022_PROGRAM_ADDRESS, TOKEN_PROGRAM_ADDRESS } from "@/constants/solana";
-import { findAtaPda } from "@/lib/solana/ata";
 import { parsedInfo, parsedTokenAccount, toBigInt } from "@/lib/solana/parsed";
 import type { EstateRpc, MintMeta } from "@/types/program";
 
@@ -26,7 +26,7 @@ export async function assertWalletCanDeposit(
   tokenProgram: Address,
   amount: bigint,
 ): Promise<void> {
-  const ata = await findAtaPda(owner, mint, tokenProgram);
+  const [ata] = await findAssociatedTokenPda({ owner, mint, tokenProgram });
   const { value } = await rpc.getAccountInfo(ata, { encoding: "jsonParsed" }).send();
   if (!value) throw new Error("This wallet has no token account for that mint.");
   const have = toBigInt(parsedTokenAccount(value.data)?.amount);
