@@ -1,4 +1,5 @@
 import {
+  SpaceGrotesk_400Regular,
   SpaceGrotesk_500Medium,
   SpaceGrotesk_600SemiBold,
   SpaceGrotesk_700Bold,
@@ -15,6 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TamaguiProvider } from "tamagui";
 
 import { solanaCluster, walletIdentity } from "@/config";
+import { colors } from "@/theme";
 import { tamaguiConfig } from "../../tamagui.config";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -23,6 +25,7 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
+    SpaceGrotesk_400Regular,
     SpaceGrotesk_500Medium,
     SpaceGrotesk_600SemiBold,
     SpaceGrotesk_700Bold,
@@ -46,7 +49,17 @@ export default function RootLayout() {
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
             <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false }} />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+              <Stack.Screen
+                name="wallet"
+                options={{ presentation: "transparentModal", animation: "fade" }}
+              />
+              <Stack.Screen
+                name="tap"
+                options={{ presentation: "transparentModal", animation: "fade" }}
+              />
+              <Stack.Screen name="create" options={{ gestureEnabled: false }} />
+            </Stack>
           </MobileWalletProvider>
         </TamaguiProvider>
       </QueryClientProvider>

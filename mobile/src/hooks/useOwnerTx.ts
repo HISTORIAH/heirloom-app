@@ -1,35 +1,38 @@
 import { findEstatePda } from "@historiah/heirloom";
 
-import { useSendIxs } from "@/hooks/useSendIxs";
+import type { EstateTimingFields } from "@/types/estate";
+import type { Address } from "@solana/kit";
+import { useSendIxs } from "./tx/useSendIxs";
+import { CreateEstateInput, EstateRow } from "@/types/program";
 import {
   assertEstateFree,
+  buildCheckInIx,
   buildCreateEstateIxs,
-  buildHeartbeatIx,
-  buildTopUpSolIx,
-  findVaultPda,
-  type CreateEstateInput,
-} from "@/lib/ownerWrites";
-import {
   buildReassignIxs,
   buildRegisterTokenIx,
   buildRevokeAllIxs,
-  buildSettingsIx,
-} from "@/lib/manageWrites";
-import type { EstateRow } from "@/lib/estates";
-import type { Address } from "@solana/kit";
+  buildTopUpSolIx,
+  buildUpdateFieldIx,
+} from "@/lib";
 
 export function useOwnerTx() {
   const { account, client, sendIxs } = useSendIxs();
 
   async function checkIn(heir: CreateEstateInput["heir"]): Promise<string> {
-    return sendIxs(async (signer) => [await buildHeartbeatIx(signer, heir)]);
+    return sendIxs(async (signer) => [await buildCheckInIx(signer, signer.address, heir)]);
+  }
+
+  /** One transaction, one signature. Keep it to a handful: each estate adds an instruction. */
+  async function checkInAll(heirs: CreateEstateInput["heir"][]): Promise<string> {
+    return sendIxs((signer) =>
+      Promise.all(heirs.map((heir) => buildCheckInIx(signer, signer.address, heir))),
+    );
   }
 
   async function topUpSol(heir: CreateEstateInput["heir"], lamports: bigint): Promise<string> {
     if (lamports <= 0n) throw new Error("Enter a SOL amount");
     return sendIxs(async (signer) => {
-      const [vault] = await findVaultPda({ authority: signer.address, heir });
-      return [buildTopUpSolIx(signer, vault, lamports)];
+      return [await buildTopUpSolIx(signer, heir, lamports)];
     });
   }
 
@@ -54,15 +57,10 @@ export function useOwnerTx() {
     return sendIxs((signer) => buildRevokeAllIxs(client.rpc, signer, row));
   }
 
-  async function updateSettings(
-    row: EstateRow,
-    fields: {
-      checkInIntervalSecs?: bigint;
-      gracePeriodSecs?: bigint;
-      delegatePauseDurationSecs?: bigint;
-    },
-  ): Promise<string> {
-    return sendIxs(async (signer) => [buildSettingsIx(signer, row.data.heir, row.address, fields)]);
+  async function updateSettings(row: EstateRow, fields: EstateTimingFields): Promise<string> {
+    return sendIxs(async (signer) => [
+      buildUpdateFieldIx(signer, row.data.heir, row.address, fields),
+    ]);
   }
 
   async function addToken(row: EstateRow, mint: Address, amount: bigint): Promise<string> {
@@ -74,6 +72,7 @@ export function useOwnerTx() {
   return {
     account,
     checkIn,
+    checkInAll,
     topUpSol,
     createEstate,
     reassignHeir,

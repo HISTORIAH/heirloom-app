@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { shortAddress } from "@/lib/address";
 import { colors } from "@/theme";
+import { shortAddress } from "@/lib";
 
 export function SectionLabel({ title, aside }: { title: string; aside?: string }) {
   return (
@@ -27,7 +27,7 @@ export function SectionLabel({ title, aside }: { title: string; aside?: string }
       {aside !== undefined ? (
         <Text
           style={{
-            fontFamily: "SpaceGrotesk_500Medium",
+            fontFamily: "SpaceGrotesk_400Regular",
             fontSize: 13,
             color: colors.mute,
           }}
@@ -104,7 +104,7 @@ export function QuietRow({
             <Text
               style={{
                 marginTop: 3,
-                fontFamily: "SpaceGrotesk_500Medium",
+                fontFamily: "SpaceGrotesk_400Regular",
                 fontSize: 13,
                 lineHeight: 18,
                 color: colors.mute,
@@ -123,9 +123,9 @@ export function QuietRow({
 
   const frame = {
     paddingVertical: 15,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: rule,
-    backgroundColor: selected ? colors.soft : "transparent",
+    backgroundColor: selected ? colors.paper : "transparent",
   };
 
   if (onPress === undefined) {

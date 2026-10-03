@@ -2,14 +2,7 @@ import { Text, View } from "react-native";
 
 import { colors } from "@/theme";
 
-export function ChainLoading({
-  body,
-  compact,
-}: {
-  cap?: string;
-  body: string;
-  compact?: boolean;
-}) {
+export function ChainLoading({ body, compact }: { cap?: string; body: string; compact?: boolean }) {
   return (
     <View
       style={{

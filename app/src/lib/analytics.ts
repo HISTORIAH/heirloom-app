@@ -1,6 +1,5 @@
 import posthog from "posthog-js";
-import { ANALYTICS_ENABLED, POSTHOG_PROJECT_TOKEN } from "@/config";
-import { POSTHOG_HOST } from "@/lib/constants";
+import { ANALYTICS_ENABLED, POSTHOG_HOST, POSTHOG_PROJECT_TOKEN } from "@/config";
 import type { AnalyticsEvent, AnalyticsProperties } from "@/types";
 
 let initialized = false;
@@ -32,10 +31,7 @@ export const initializeAnalytics = (): boolean => {
   return true;
 };
 
-export const trackAnalyticsEvent = (
-  event: AnalyticsEvent,
-  properties?: AnalyticsProperties,
-) => {
+export const trackAnalyticsEvent = (event: AnalyticsEvent, properties?: AnalyticsProperties) => {
   if (!initialized) return;
   posthog.capture(event, properties);
 };

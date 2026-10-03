@@ -9,6 +9,7 @@ import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
 import TelegramVerifyPanel from "@/components/dashboard/TelegramVerifyPanel";
 import {
   defaultNotificationsConfig,
+  newRecipientRequests,
   normalizeChannel,
   notificationsConfigFromRecipients,
   summarizeNotifications,
@@ -119,13 +120,18 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const notifSaving = saveMutation.isPending || addContactMutation.isPending;
 
   const handleNotifSave = async (next: NotificationsConfig) => {
-    const recipients = toAddRecipientRequests(next);
     try {
       let verifications: VerificationStatus[] | undefined;
       if (hasSubscription) {
-        const res = await addContactMutation.mutateAsync({ recipients });
-        verifications = res.verifications;
+        // add/contact takes one contact at a time, and saved contacts can't be re-sent (409).
+        const fresh = newRecipientRequests(next, remindersQuery.data?.recipients ?? []);
+        verifications = [];
+        for (const recipient of fresh) {
+          const res = await addContactMutation.mutateAsync({ recipient });
+          verifications.push(...res.verifications);
+        }
       } else {
+        const recipients = toAddRecipientRequests(next);
         const res = await saveMutation.mutateAsync({ estateKind: "heirloom", recipients });
         verifications = res.verifications;
       }
