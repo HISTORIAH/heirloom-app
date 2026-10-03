@@ -1,11 +1,5 @@
 import { Text, View } from "react-native";
-import Svg, {
-  Defs,
-  LinearGradient as SvgGradient,
-  Path,
-  Rect,
-  Stop,
-} from "react-native-svg";
+import Svg, { Defs, LinearGradient as SvgGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { colors } from "@/theme";
 
@@ -65,12 +59,7 @@ function ContactlessMark({ size = 34 }: { size?: number }) {
   const stroke = "rgba(243,242,234,0.92)";
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M9.8 7.6c2 1.9 2 5.1 0 7"
-        stroke={stroke}
-        strokeWidth="1.85"
-        strokeLinecap="round"
-      />
+      <Path d="M9.8 7.6c2 1.9 2 5.1 0 7" stroke={stroke} strokeWidth="1.85" strokeLinecap="round" />
       <Path
         d="M12.2 5.6c3 2.8 3 8.2 0 11"
         stroke={stroke}
@@ -204,7 +193,7 @@ export function NfcDummyCard({ width = 300 }: NfcDummyCardProps) {
                   color: "rgba(197,212,182,0.75)",
                 }}
               >
-                NFC card
+                Heir credential
               </Text>
             </View>
             <VaultMarkMini />

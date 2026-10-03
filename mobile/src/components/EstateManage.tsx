@@ -1,20 +1,23 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
+import { TokenAvatar } from "@/components/TokenAvatar";
 import { Cap, PrimaryButton } from "@/components/ui";
-import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS, SECONDS_PER_DAY } from "@/lib/constants";
-import type { EstateRow } from "@/lib/estates";
-import { uiAmountToRaw } from "@/lib/lamports";
+import { colors, font, space } from "@/theme";
+import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
+import { SECONDS_PER_DAY } from "@/constants/time";
+import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS } from "@/constants/estate";
+import { useWalletTokens } from "@/hooks";
+import { EstateRow } from "@/types/program";
 import {
   assertMintUnregistered,
   assertWalletCanDeposit,
   fetchMintMeta,
   isPausedNow,
-} from "@/lib/manageWrites";
-import { parseAddress } from "@/lib/ownerWrites";
-import { colors, space } from "@/theme";
-import type { Address, Rpc, SolanaRpcApi } from "@solana/kit";
+  parseAddress,
+  uiAmountToRaw,
+} from "@/lib";
 
 type EverydayAction = "heir" | "timing" | "asset" | "rename";
 
@@ -96,13 +99,13 @@ function Field({
           marginTop: 8,
           paddingVertical: 12,
           paddingHorizontal: 14,
-          borderWidth: 1,
-          borderColor: error !== undefined ? colors.claim : colors.line,
+          borderWidth: 2,
+          borderColor: error !== undefined ? colors.claim : colors.ink,
           borderRadius: space.radiusBtn,
           fontFamily: "SpaceGrotesk_500Medium",
           fontSize: 14,
           color: colors.ink,
-          backgroundColor: colors.bg,
+          backgroundColor: colors.paper,
         }}
       />
       {error !== undefined ? (
@@ -228,7 +231,7 @@ function EverydayRow({
         gap: 12,
         paddingVertical: 15,
         opacity: disabled ? 0.45 : pressed ? 0.72 : 1,
-        borderBottomWidth: 1,
+        borderBottomWidth: 2,
         borderBottomColor: colors.line,
       })}
     >
@@ -289,7 +292,7 @@ function HeirForm({
   const [error, setError] = useState<string | undefined>(undefined);
   return (
     <View
-      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 2, borderBottomColor: colors.line }}
     >
       <Field
         label="New heir"
@@ -350,7 +353,7 @@ function RenameForm({
 
   return (
     <View
-      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 2, borderBottomColor: colors.line }}
     >
       <Field
         label="Estate name"
@@ -400,7 +403,7 @@ function TimingForm({
   const [error, setError] = useState<string | undefined>(undefined);
   return (
     <View
-      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 2, borderBottomColor: colors.line }}
     >
       <Field
         label="Check-in days"
@@ -465,46 +468,110 @@ function AssetForm({
   busy?: boolean;
   onSubmit: (mint: Address, amount: bigint) => void;
 }) {
-  const [mint, setMint] = useState("");
+  const { tokens, loading } = useWalletTokens(owner);
+  const [selectedMint, setSelectedMint] = useState<string | undefined>(undefined);
   const [amount, setAmount] = useState("");
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const locked = Boolean(busy) || checking;
+
+  const selected = tokens.find((t) => t.mint === selectedMint);
+
   return (
     <View
-      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}
+      style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 2, borderBottomColor: colors.line }}
     >
-      <Field
-        label="Mint"
-        value={mint}
-        onChangeText={(value) => {
-          setError(undefined);
-          setMint(value);
-        }}
-        editable={!locked}
-        hint="A mint that is not already in this vault."
-      />
-      <Field
-        label="Amount"
-        value={amount}
-        onChangeText={(value) => {
-          setError(undefined);
-          setAmount(value);
-        }}
-        keyboardType="decimal-pad"
-        editable={!locked}
-      />
+      <Cap>Your tokens</Cap>
+      {loading ? (
+        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}>
+          Loading tokens…
+        </Text>
+      ) : tokens.length === 0 ? (
+        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}>
+          No tokens in this wallet.
+        </Text>
+      ) : (
+        <ScrollView
+          style={{ maxHeight: 220 }}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+        >
+          {tokens.map((item) => {
+            const on = item.mint === selectedMint;
+            return (
+              <Pressable
+                key={item.mint}
+                onPress={() => {
+                  setError(undefined);
+                  setSelectedMint(on ? undefined : item.mint);
+                  if (on) setAmount("");
+                }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={item.symbol}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  paddingVertical: 8,
+                  paddingHorizontal: 10,
+                  borderRadius: space.radiusBtn,
+                  borderWidth: space.rule,
+                  borderColor: on ? colors.ink : colors.line,
+                  backgroundColor: on ? colors.paper : "transparent",
+                  marginBottom: 6,
+                }}
+              >
+                <TokenAvatar
+                  image={item.image}
+                  symbol={item.symbol}
+                  kind="token"
+                  checked={on}
+                  size={36}
+                />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.ink }}>
+                    {item.symbol}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: font.regular,
+                      fontSize: 12,
+                      fontVariant: ["tabular-nums"],
+                      color: colors.mute,
+                    }}
+                  >
+                    {item.balance}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+      {selected ? (
+        <Field
+          label={`Amount (${selected.symbol})`}
+          value={amount}
+          onChangeText={(value) => {
+            setError(undefined);
+            setAmount(value);
+          }}
+          keyboardType="decimal-pad"
+          editable={!locked}
+        />
+      ) : null}
       <FormIssue text={error} />
       <PrimaryButton
         label={busy || checking ? "Working…" : "Add token"}
         tone="ink"
-        disabled={locked}
+        disabled={locked || !selected}
         onPress={() => {
-          if (locked) return;
+          if (locked || !selected) return;
           void (async () => {
             setChecking(true);
             try {
-              const mintAddr = parseAddress(mint, "mint");
+              const mintAddr = parseAddress(selected.mint, "mint");
               const meta = await fetchMintMeta(rpc, mintAddr);
               const raw = uiAmountToRaw(amount, meta.decimals);
               if (raw <= 0n) throw new Error("Enter an amount greater than zero");
@@ -512,7 +579,7 @@ function AssetForm({
               await assertWalletCanDeposit(rpc, owner, mintAddr, meta.tokenProgram, raw);
               onSubmit(mintAddr, raw);
             } catch (cause) {
-              setError(cause instanceof Error ? cause.message : "Check mint and amount");
+              setError(cause instanceof Error ? cause.message : "Check the amount");
             } finally {
               setChecking(false);
             }
@@ -544,7 +611,7 @@ export function EstateManage({
   }
 
   return (
-    <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+    <View style={{ borderTopWidth: 2, borderTopColor: colors.line }}>
       <EverydayRow action="heir" disabled={busy} onPress={() => toggle("heir")} />
       {open === "heir" ? <HeirForm busy={busy} paused={paused} onSubmit={onReassign} /> : null}
       <EverydayRow

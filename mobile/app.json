@@ -27,6 +27,14 @@
       "expo-router",
       "react-native-quick-crypto",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Heirloom to scan an heir's wallet QR code.",
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "react-native-nfc-manager",
         {
           "nfcPermission": "Allow Heirloom to read NFC cards for inheritance actions."

@@ -1,21 +1,13 @@
 import { Tabs } from "expo-router";
 
-import { PillTabBar } from "@/components/PillTabBar";
+import { FloatingTabBar } from "@/components/FloatingTabBar";
+import { colors } from "@/theme";
 
 export default function TabsLayout() {
   return (
-    <Tabs
-      tabBar={(props) => <PillTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: "Dashboard" }} />
-      <Tabs.Screen name="claim" options={{ title: "Claim" }} />
-      <Tabs.Screen name="scan" options={{ href: null, title: "Scan" }} />
-      <Tabs.Screen name="heartbeat" options={{ title: "Heartbeat" }} />
-      <Tabs.Screen name="guardian" options={{ title: "Guardian" }} />
-      <Tabs.Screen name="create" options={{ href: null, title: "Create" }} />
+    <Tabs tabBar={(props) => <FloatingTabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
+      <Tabs.Screen name="index" options={{ title: "Estates" }} />
+      <Tabs.Screen name="alerts" options={{ title: "Alerts" }} />
     </Tabs>
   );
 }

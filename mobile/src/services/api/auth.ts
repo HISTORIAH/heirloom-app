@@ -1,13 +1,6 @@
 import { BACKEND_URL } from "@/config";
-import { request } from "@/lib/api";
-
-type ChallengeResponse = {
-  message: string; // SIWS-style message for the wallet to sign
-};
-
-type VerifyResponse = {
-  address: string;
-};
+import { request } from "@/services/api/request";
+import type { ChallengeResponse, VerifyResponse } from "@/types/api";
 
 const API_BASE = `${BACKEND_URL}/v1/auth`;
 

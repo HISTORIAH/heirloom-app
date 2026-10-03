@@ -1,7 +1,7 @@
 import { Text, View } from "react-native";
 
-import { shortAddress } from "@/lib/address";
 import { colors } from "@/theme";
+import { shortAddress } from "@/lib";
 
 interface EstatePeopleProps {
   heir: string;
@@ -9,13 +9,7 @@ interface EstatePeopleProps {
   guardian?: string;
 }
 
-function PersonRow({
-  title,
-  address,
-}: {
-  title: string;
-  address?: string;
-}) {
+function PersonRow({ title, address }: { title: string; address?: string }) {
   const named = address !== undefined;
   return (
     <View
@@ -24,7 +18,7 @@ function PersonRow({
         alignItems: "center",
         gap: 12,
         paddingVertical: 15,
-        borderBottomWidth: 1,
+        borderBottomWidth: 2,
         borderBottomColor: colors.line,
       }}
     >
@@ -41,7 +35,7 @@ function PersonRow({
       </View>
       <Text
         style={{
-          fontFamily: named ? "SpaceGrotesk_600SemiBold" : "SpaceGrotesk_500Medium",
+          fontFamily: named ? "SpaceGrotesk_600SemiBold" : "SpaceGrotesk_400Regular",
           fontSize: 15,
           fontVariant: ["tabular-nums"],
           color: named ? colors.ink : colors.mute,
@@ -55,7 +49,7 @@ function PersonRow({
 
 export function EstatePeople({ heir, heartbeat, guardian }: EstatePeopleProps) {
   return (
-    <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
+    <View style={{ borderTopWidth: 2, borderTopColor: colors.line }}>
       <PersonRow title="Heir" address={heir} />
       <PersonRow title="Check-in signer" address={heartbeat} />
       <PersonRow title="Guardian" address={guardian} />

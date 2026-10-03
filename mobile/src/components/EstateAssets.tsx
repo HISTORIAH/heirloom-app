@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { solToLamports } from "@/lib/lamports";
 import { colors } from "@/theme";
+import { solToLamports } from "@/lib";
 
 interface EstateAssetsProps {
   claimableLamports: bigint;
@@ -20,12 +20,7 @@ function vaultSol(lamports: bigint): string {
 function PlusMark() {
   return (
     <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 5v14M5 12h14"
-        stroke={colors.ink}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
+      <Path d="M12 5v14M5 12h14" stroke={colors.ink} strokeWidth="2.2" strokeLinecap="round" />
     </Svg>
   );
 }
@@ -129,8 +124,8 @@ function AddSolRow({
         style={({ pressed }) => ({
           marginTop: 20,
           height: 50,
-          borderRadius: 14,
-          borderWidth: 1.5,
+          borderRadius: 12,
+          borderWidth: 2,
           borderColor: colors.ink,
           flexDirection: "row",
           alignItems: "center",
@@ -172,15 +167,15 @@ function AddSolRow({
             flex: 1,
             minWidth: 0,
             height: 50,
-            borderWidth: 1.5,
+            borderWidth: 2,
             borderColor: colors.ink,
-            borderRadius: 14,
+            borderRadius: 12,
             paddingHorizontal: 14,
             fontFamily: "SpaceGrotesk_500Medium",
             fontSize: 16,
             fontVariant: ["tabular-nums"],
             color: colors.ink,
-            backgroundColor: colors.bg,
+            backgroundColor: colors.paper,
           }}
         />
         <Pressable
@@ -191,8 +186,8 @@ function AddSolRow({
           style={({ pressed }) => ({
             width: 120,
             height: 50,
-            borderRadius: 14,
-            borderWidth: 1.5,
+            borderRadius: 12,
+            borderWidth: 2,
             borderColor: colors.ink,
             backgroundColor: colors.ink,
             alignItems: "center",
@@ -246,16 +241,9 @@ export function EstateAssets({
           cap="Native SOL"
           empty={!hasSol}
         />
-        <Figure
-          value={String(tokenAccounts)}
-          cap={tokenCap}
-          empty={!hasTokens}
-          ruled
-        />
+        <Figure value={String(tokenAccounts)} cap={tokenCap} empty={!hasTokens} ruled />
       </View>
-      {onAddSol && !distributed ? (
-        <AddSolRow onAddSol={onAddSol} adding={adding} />
-      ) : null}
+      {onAddSol && !distributed ? <AddSolRow onAddSol={onAddSol} adding={adding} /> : null}
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { ApiError, requestRaw } from "@/lib/api";
+import { ApiError, requestRaw } from "@/services/api/request";
 import type { EstateResponse, RegisterEstateRequest, UpdateEstateRequest } from "@/types/estate";
 
 const API_BASE = `${BACKEND_URL}/v1/estates`;

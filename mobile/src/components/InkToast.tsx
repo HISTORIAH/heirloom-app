@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { Text } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { colors } from "@/theme";
 
@@ -40,7 +36,7 @@ export function InkToast({ text }: { text?: string }) {
           position: "absolute",
           left: 16,
           right: 16,
-          bottom: 104,
+          bottom: 124,
           backgroundColor: colors.ink,
           borderRadius: 16,
           paddingVertical: 14,

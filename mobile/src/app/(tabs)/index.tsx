@@ -1,42 +1,111 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { ChainLoading } from "@/components/ChainLoading";
 import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
-import { DashboardHeader } from "@/components/DashboardHeader";
-import { ConnectWallet, EmptyState } from "@/components/EmptyState";
-import { EstateDetail } from "@/components/EstateDetail";
+import { TAB_BAR_CLEARANCE } from "@/components/FloatingTabBar";
 import { InkToast } from "@/components/InkToast";
-import { useEstates } from "@/hooks/useEstates";
-import { useOwnerTx } from "@/hooks/useOwnerTx";
-import { useRenameEstate } from "@/hooks/useRenameEstate";
-import { waitUntilAccountGone } from "@/lib/confirm";
-import { openExplorerTx } from "@/lib/explorer";
+import { TopBar } from "@/components/TopBar";
+import { EstateFacts } from "@/components/home/EstateFacts";
+import { EstateHero } from "@/components/home/EstateHero";
+import { EstateListRow } from "@/components/home/EstateList";
+import { RoleSections } from "@/components/home/RoleSections";
+import { Welcome } from "@/components/home/Welcome";
+import {
+  Cap,
+  Dashed,
+  Display,
+  GhostAdd,
+  IconButton,
+  Lede,
+  PrimaryButton,
+  Steps,
+  TextLink,
+} from "@/components/ui";
 import { takeFlash } from "@/lib/flash";
-import { colors } from "@/theme";
-import type { Address } from "@solana/kit";
+import { colors, font, space } from "@/theme";
+import { useEstates, useHeirTx, useOwnerTx, useRoles } from "@/hooks";
+import { bySoonest, estateSpan, presentGuardian } from "@/lib";
+import { EstateRow } from "@/types/program";
 
-export default function DashboardScreen() {
+function NothingYet({ onCreate }: { onCreate: () => void }) {
+  return (
+    <View style={{ gap: 18 }}>
+      <Cap>Estates</Cap>
+      <Display size={34}>Nothing protected yet.</Display>
+      <Lede>An estate holds assets for one heir. You check in to show you’re still around.</Lede>
+      <Steps
+        items={[
+          {
+            title: "Pick an heir",
+            body: "A wallet address, or a Heirloom credential you hand them.",
+          },
+          { title: "Choose assets", body: "SOL and tokens from this wallet." },
+          { title: "Set your check-in", body: "How often, and how long your heir waits." },
+        ]}
+      />
+      <PrimaryButton icon="plus" label="Create an estate" onPress={onCreate} />
+    </View>
+  );
+}
+
+function NoRolesNote() {
+  return (
+    <Dashed style={{ gap: 6 }}>
+      <Cap>Roles on this wallet</Cap>
+      <Text style={{ fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: colors.mute }}>
+        If someone names this wallet as heir, guardian or check-in signer, it shows up here.
+      </Text>
+    </Dashed>
+  );
+}
+
+function CreateNudge({ onCreate }: { onCreate: () => void }) {
+  return (
+    <Dashed style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.ink }}>
+          No estate of your own yet
+        </Text>
+        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}>
+          Takes a few minutes.
+        </Text>
+      </View>
+      <PrimaryButton compact tone="paper" icon="plus" label="Create" onPress={onCreate} />
+    </Dashed>
+  );
+}
+
+function ListHead({ count, onCreate }: { count: number; onCreate: () => void }) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 8,
+      }}
+    >
+      <Cap>{`Estates · ${count} · soonest first`}</Cap>
+      <IconButton icon="plus" label="New estate" size={36} onPress={onCreate} />
+    </View>
+  );
+}
+
+export default function HomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { account, connect, disconnect, client } = useMobileWallet();
-  const { rows, loading, error, reload, drop } = useEstates("authority");
-  const { checkIn, topUpSol, reassignHeir, closeEstate, updateSettings, addToken } = useOwnerTx();
-  const renameMutation = useRenameEstate();
-  const [picked, setPicked] = useState(0);
+  const { account, connect } = useMobileWallet();
+  const { rows, loading, error, reload } = useEstates("authority");
+  const roles = useRoles();
+  const { checkIn, checkInAll } = useOwnerTx();
+  const { sendHeartbeat } = useHeirTx();
   const [busy, setBusy] = useState(false);
-  const [checkInBusy, setCheckInBusy] = useState(false);
-  const [holding, setHolding] = useState(false);
+  const [working, setWorking] = useState<string | undefined>(undefined);
+  const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState<string | undefined>(undefined);
-  const { ask, prompt, notice, fail, cancel, confirm, extra } = useConfirmSheet();
-  const filled = Boolean(account) && !loading && error === null && rows.length > 0;
-
-  useEffect(() => {
-    if (picked >= rows.length) setPicked(0);
-  }, [picked, rows.length]);
+  const { ask, notice, fail, cancel, confirm, extra } = useConfirmSheet();
 
   useEffect(() => {
     if (toast === undefined) return;
@@ -63,248 +132,176 @@ export default function DashboardScreen() {
     }
   }
 
-  async function onDisconnect() {
+  async function run(key: string, title: string, work: () => Promise<unknown>, done: string) {
     if (busy) return;
     setBusy(true);
+    setWorking(key);
     try {
-      await disconnect();
-    } catch (cause) {
-      fail("Wallet", cause);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function onNewEstate() {
-    router.push("/create");
-  }
-
-  const selected = rows[picked];
-
-  async function runOwner(
-    title: string,
-    work: () => Promise<string>,
-    okTitle: string,
-    okBody?: string,
-    gone?: Address,
-  ) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const sig = await work();
-      if (gone !== undefined) {
-        await waitUntilAccountGone(client.rpc, gone);
-        drop(gone);
-        setPicked(0);
-      }
-      const next = await reload();
-      if (gone !== undefined && next.some((row) => row.address === gone)) {
-        throw new Error("This estate is still on chain. Open the dashboard again in a moment.");
-      }
-      notice(
-        {
-          cap: "Done",
-          title: okTitle,
-          body: okBody,
-          extraLabel: "View on explorer",
-        },
-        () => openExplorerTx(sig),
-      );
+      await work();
+      await Promise.all([reload(), roles.reload()]);
+      setToast(done);
     } catch (cause) {
       fail(title, cause);
     } finally {
       setBusy(false);
+      setWorking(undefined);
     }
   }
 
-  function onCheckIn() {
-    const row = selected;
-    if (!row || busy) return;
-    setBusy(true);
-    setCheckInBusy(true);
-    void (async () => {
-      try {
-        await checkIn(row.data.heir);
-        await reload();
-        setToast("Checked in.");
-      } catch (cause) {
-        fail("Check-in", cause);
-      } finally {
-        setBusy(false);
-        setCheckInBusy(false);
+  function onGuardian(row: EstateRow) {
+    const view = presentGuardian(row);
+    notice({
+      cap: "Guardian",
+      title: view.canHold ? "Pausing from the app comes next" : view.eyebrow,
+      body: view.advice,
+    });
+  }
+
+  const onCreate = () => router.push("/create");
+  const openEstate = (row: EstateRow) => router.push(`/estate/${row.address}`);
+  const openClaim = (row: EstateRow) => router.push(`/claim?estate=${row.address}`);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await Promise.all([reload(), roles.reload()]);
+    setRefreshing(false);
+  }
+
+  if (!account) {
+    return (
+      <View style={{ flex: 1 }}>
+        <Welcome busy={busy} onConnect={() => void onConnect()} />
+        <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
+      </View>
+    );
+  }
+
+  const sorted = bySoonest(rows);
+  const hero = sorted[0];
+  const live = sorted.filter(
+    (row) => estateSpan(row.data, row.claimableLamports).state !== "distributed",
+  );
+  const hasRoles = roles.count > 0;
+
+  const roleSections = hasRoles ? (
+    <RoleSections
+      heir={roles.heir}
+      signer={roles.signer}
+      guardian={roles.guardian}
+      signingFor={working}
+      busy={busy}
+      onSignerCheckIn={(row) =>
+        void run(
+          row.address,
+          "Check-in",
+          () => sendHeartbeat(row.data.authority, row.data.heir),
+          "Checked in for them.",
+        )
       }
-    })();
-  }
-
-  function onAddSol(lamports: bigint) {
-    const row = selected;
-    if (!row || busy) return;
-    prompt(
-      {
-        cap: "Add SOL",
-        title: "Lock this SOL in the vault?",
-        confirmLabel: "Add SOL",
-      },
-      () => void runOwner("Top up", () => topUpSol(row.data.heir, lamports), "SOL added"),
-    );
-  }
-
-  function onReassign(newHeir: Address) {
-    const row = selected;
-    if (!row || busy) return;
-    prompt(
-      {
-        cap: "Change heir",
-        title: "Move this vault to a new heir?",
-        confirmLabel: "Change heir",
-      },
-      () =>
-        void runOwner(
-          "Change heir",
-          () => reassignHeir(row, newHeir),
-          "Heir changed",
-          undefined,
-          row.address,
-        ),
-    );
-  }
-
-  function onTiming(fields: {
-    checkInIntervalSecs?: bigint;
-    gracePeriodSecs?: bigint;
-    delegatePauseDurationSecs?: bigint;
-  }) {
-    const row = selected;
-    if (!row || busy) return;
-    prompt(
-      {
-        cap: "Update timing",
-        title: "Save these timings?",
-        body: "This also counts as a check-in.",
-        confirmLabel: "Save",
-      },
-      () => void runOwner("Update timing", () => updateSettings(row, fields), "Timing saved"),
-    );
-  }
-
-  function onAddAsset(mint: Address, amount: bigint) {
-    const row = selected;
-    if (!row || busy) return;
-    prompt(
-      {
-        cap: "Add asset",
-        title: "Register this mint?",
-        body: "Not a top-up of a token already in this vault.",
-        confirmLabel: "Add token",
-      },
-      () => void runOwner("Add asset", () => addToken(row, mint, amount), "Token added"),
-    );
-  }
-
-  async function onRename(name: string): Promise<void> {
-    const row = selected;
-    if (!row) throw new Error("No estate selected");
-    try {
-      await renameMutation.mutateAsync({ estateAddress: String(row.address), name });
-      setToast("Name saved.");
-    } catch (cause) {
-      fail("Rename", cause);
-      throw cause;
-    }
-  }
-
-  function onCloseEstate() {
-    const row = selected;
-    if (!row || busy) return;
-    prompt(
-      {
-        cap: "Danger",
-        title: "Close this estate?",
-        body: "0.5% fee. This cannot be undone.",
-        cancelLabel: "Keep estate",
-        confirmLabel: "Close estate",
-      },
-      () =>
-        void runOwner(
-          "Close estate",
-          () => closeEstate(row),
-          "Estate closed",
-          undefined,
-          row.address,
-        ),
-    );
-  }
+      onGuardian={onGuardian}
+      onHeir={openClaim}
+    />
+  ) : null;
 
   let body;
-  if (!account) {
-    body = <ConnectWallet busy={busy} onConnect={onConnect} />;
-  } else if (loading) {
-    body = <ChainLoading body="Looking for your estates…" />;
-  } else if (error !== null) {
+  if (loading && rows.length === 0) {
+    body = <ChainLoading compact body="Looking for your estates…" />;
+  } else if (error !== null && rows.length === 0) {
     body = (
-      <EmptyState
-        title="Could not load"
-        body={error}
-        primaryLabel="Disconnect"
-        onPrimary={onDisconnect}
-      />
+      <View style={{ gap: 8 }}>
+        <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.claim }}>
+          {error}
+        </Text>
+        <TextLink align="left" label="Try again" onPress={() => void reload()} />
+      </View>
     );
-  } else if (rows.length === 0) {
+  } else if (hero === undefined) {
+    body = hasRoles ? (
+      <View style={{ gap: 24 }}>
+        {roleSections}
+        <CreateNudge onCreate={onCreate} />
+      </View>
+    ) : (
+      <View style={{ gap: 22 }}>
+        <NothingYet onCreate={onCreate} />
+        <NoRolesNote />
+      </View>
+    );
+  } else if (sorted.length === 1) {
     body = (
-      <EmptyState
-        title="No vault yet"
-        primaryLabel="Create your estate"
-        onPrimary={onNewEstate}
-        secondaryLabel="Claim inheritance"
-        onSecondary={() => router.push("/claim")}
-        tertiaryLabel="Disconnect wallet"
-        onTertiary={onDisconnect}
-      />
+      <View style={{ gap: 14 }}>
+        <EstateHero
+          row={hero}
+          busy={working === hero.address}
+          disabled={busy}
+          onCheckIn={() =>
+            void run(hero.address, "Check-in", () => checkIn(hero.data.heir), "Checked in.")
+          }
+          onOpen={() => openEstate(hero)}
+        />
+        <EstateFacts row={hero} />
+        <GhostAdd label="Add another estate" onPress={onCreate} />
+        {roleSections !== null ? <View style={{ marginTop: 12 }}>{roleSections}</View> : null}
+      </View>
     );
   } else {
     body = (
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1 }}
-        scrollEnabled={!holding}
-      >
-        {selected ? (
-          <EstateDetail
-            row={selected}
-            rows={rows}
-            picked={picked}
-            onSelect={setPicked}
-            rpc={client.rpc}
-            onCheckIn={onCheckIn}
-            onAddSol={onAddSol}
-            onReassign={onReassign}
-            onTiming={onTiming}
-            onAddAsset={onAddAsset}
-            onCloseEstate={onCloseEstate}
-            onRename={(name) => onRename(name)}
-            adding={busy}
-            checkingIn={checkInBusy}
-            onHoldingChange={setHolding}
+      <View style={{ gap: 12 }}>
+        <EstateHero
+          row={hero}
+          busy={working === hero.address}
+          disabled={busy}
+          onCheckIn={() =>
+            void run(hero.address, "Check-in", () => checkIn(hero.data.heir), "Checked in.")
+          }
+          onOpen={() => openEstate(hero)}
+        />
+        {live.length > 1 ? (
+          <PrimaryButton
+            tone="paper"
+            label={
+              working === "all"
+                ? "Confirm in wallet…"
+                : `Check in on all ${live.length} · one signature`
+            }
+            disabled={busy}
+            onPress={() =>
+              void run(
+                "all",
+                "Check-in",
+                () => checkInAll(live.map((row) => row.data.heir)),
+                `Checked in on ${live.length} estates.`,
+              )
+            }
           />
         ) : null}
-      </ScrollView>
+        <View style={{ marginTop: 10 }}>
+          <ListHead count={sorted.length} onCreate={onCreate} />
+          {sorted.map((row) => (
+            <EstateListRow key={row.address} row={row} onPress={() => openEstate(row)} />
+          ))}
+        </View>
+        {roleSections !== null ? <View style={{ marginTop: 16 }}>{roleSections}</View> : null}
+      </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {filled || !account ? null : (
-        <View
-          style={{
-            paddingTop: Math.max(insets.top, 8),
-            paddingHorizontal: 20,
-            backgroundColor: colors.bg,
-          }}
-        >
-          <DashboardHeader />
-        </View>
-      )}
-      {body}
+      <TopBar />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: space.pad,
+          paddingTop: 8,
+          paddingBottom: TAB_BAR_CLEARANCE,
+        }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />
+        }
+      >
+        {body}
+      </ScrollView>
       <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
       <InkToast text={toast} />
     </View>
