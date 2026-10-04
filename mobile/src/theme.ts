@@ -17,6 +17,8 @@ export const colors = {
   yellow: "#FFD400",
   lime: "#A1E633",
   orange: "#FF7B00",
+  /** Grace-period stops on the reminder timeline, before the heir is told. */
+  orangeSoft: "#FFD9B3",
   sage: "#C8D7C1",
   sky: "#BED5E4",
   claim: "#FF3838",

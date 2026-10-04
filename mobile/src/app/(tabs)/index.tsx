@@ -40,7 +40,7 @@ function NothingYet({ onCreate }: { onCreate: () => void }) {
         items={[
           {
             title: "Pick an heir",
-            body: "A wallet address, or a Heirloom credential you hand them.",
+            body: "A wallet address, or an Heirloom credential you hand them.",
           },
           { title: "Choose assets", body: "SOL and tokens from this wallet." },
           { title: "Set your check-in", body: "How often, and how long your heir waits." },

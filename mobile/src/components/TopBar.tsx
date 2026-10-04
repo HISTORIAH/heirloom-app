@@ -80,7 +80,8 @@ export function TopBar() {
         backgroundColor: colors.bg,
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      {/* The gap clears the status dot, which hangs 4pt past the avatar. */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         {account ? (
           <Pressable
             onPress={() => router.push("/wallet")}
@@ -92,7 +93,7 @@ export function TopBar() {
             <WalletAvatar label={account.label} address={String(account.address)} />
           </Pressable>
         ) : null}
-        <View style={{ marginLeft: account ? -4 : -14 }}>
+        <View style={{ marginLeft: account ? 0 : -14 }}>
           <Wordmark height={40} />
         </View>
       </View>

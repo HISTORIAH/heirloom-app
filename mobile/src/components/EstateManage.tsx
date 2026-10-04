@@ -21,7 +21,7 @@ const EVERYDAY: Record<EverydayAction, { title: string; fallback?: string }> = {
     fallback: "Check-in, grace, and pause length",
   },
   rename: {
-    title: "Rename estate",
+    title: "Rename",
   },
 };
 
@@ -238,7 +238,7 @@ function EverydayRow({
   );
 }
 
-interface EstateManageProps {
+type EstateManageProps = {
   row: EstateRow;
   busy?: boolean;
   onReassign: (newHeir: Address) => void;
@@ -249,7 +249,7 @@ interface EstateManageProps {
   }) => void;
   onClose: () => void;
   onRename?: (name: string) => Promise<void>;
-}
+};
 
 function HeirForm({
   busy,
@@ -451,7 +451,7 @@ export function EstateManage({
       {open === "heir" ? <HeirForm busy={busy} paused={paused} onSubmit={onReassign} /> : null}
       <EverydayRow
         action="timing"
-        desc={`Every ${intervalDays} days, ${graceDays}-day grace`}
+        desc={`Every ${intervalDays} days · ${graceDays}-day grace`}
         disabled={busy}
         onPress={() => toggle("timing")}
       />

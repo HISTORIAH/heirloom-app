@@ -1,78 +1,170 @@
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
 import { TAB_BAR_CLEARANCE } from "@/components/FloatingTabBar";
 import { Icon } from "@/components/Icon";
+import { InkToast } from "@/components/InkToast";
+import { ReminderTimeline } from "@/components/reminders/ReminderTimeline";
 import { TopBar } from "@/components/TopBar";
-import { Cap, Display, Lede, PrimaryButton, TickList } from "@/components/ui";
+import { Badge, Cap, Lede, PrimaryButton } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
-import { HEIR_ALERT_TIMING, REMINDER_SCHEDULE } from "@/constants/alerts";
-import { useEstates, useRemindersFor, useSession } from "@/hooks";
-import { estateName } from "@/lib";
-import { contactState } from "@/lib/reminders";
+import { useEstates, useOwnerTx, useRemindersFor, useSession } from "@/hooks";
+import { estateName, estateSpan } from "@/lib";
+import { needsAttention } from "@/lib/attention";
+import { channelLine, remindersOn } from "@/lib/reminders";
 import { colors, font, space } from "@/theme";
-import type { RecipientResponse, RemindersStatus } from "@/types/reminders";
+import type { EstateRow } from "@/types/program";
+import type { AttentionItem, EstateReminders } from "@/types/reminders";
 
-function Locked({ signing, onUnlock }: { signing: boolean; onUnlock: () => void }) {
+function AttentionRow({
+  item,
+  busy,
+  disabled,
+  onPress,
+}: {
+  item: AttentionItem;
+  busy: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}) {
   return (
-    <View style={{ gap: 18 }}>
-      <Cap>Alerts</Cap>
-      <View
-        style={{
-          width: 72,
-          height: 72,
-          borderRadius: space.radiusTile,
-          borderWidth: space.rule,
-          borderColor: colors.ink,
-          backgroundColor: colors.yellow,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Icon name="lock" size={34} weight={2.2} />
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 12,
+        borderWidth: space.rule,
+        borderColor: colors.ink,
+        borderRadius: space.radiusBtn,
+        backgroundColor: item.fill,
+      }}
+    >
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text numberOfLines={1} style={{ fontFamily: font.bold, fontSize: 15, color: colors.ink }}>
+          {item.estateName}
+        </Text>
+        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.ink }}>
+          {item.text}
+        </Text>
       </View>
-      <Display size={34}>Your alerts are private.</Display>
-      <Lede>
-        Who gets reminded, and which heirs get told, only shows once you prove this is your wallet.
-      </Lede>
-      <TickList
-        boxed
-        items={[
-          "Sign a message, not a transaction. No fee.",
-          "Stays signed in while you use the app",
-          "Asks again after a while away",
-        ]}
-      />
       <PrimaryButton
-        icon="unlock"
-        label={signing ? "Check your wallet…" : "Sign to unlock"}
-        disabled={signing}
-        onPress={onUnlock}
+        compact
+        tone="paper"
+        label={busy ? "Confirm…" : item.actionLabel}
+        disabled={disabled}
+        onPress={onPress}
       />
     </View>
   );
 }
 
-/** One line per estate: who's connected, or what's still to do. */
-function summary(status: RemindersStatus, recipients: RecipientResponse[]): string {
-  if (status === "loading") return "Loading…";
-  if (status === "error") return "Couldn't load";
-  const self = contactState(recipients, "check_in_signer");
-  const heir = contactState(recipients, "heir");
-  if (self.kind === "none" && heir.kind === "none") return "Off";
-  if (self.kind === "waiting" || heir.kind === "waiting") return "Waiting for Telegram";
-  const you = self.kind === "connected" ? "You: on" : "You: off";
-  const them = heir.kind === "connected" ? "Heir: on" : "Heir: off";
-  return `${you} · ${them}`;
+function EstateRemindersRow({
+  row,
+  reminders,
+  onPress,
+}: {
+  row: EstateRow;
+  reminders?: EstateReminders;
+  onPress: () => void;
+}) {
+  const status = reminders?.status ?? "loading";
+  const ready = status === "ready" && reminders !== undefined;
+  const line =
+    status === "locked"
+      ? "Private until you sign in"
+      : status === "error"
+        ? "Couldn't load"
+        : ready
+          ? channelLine(reminders.recipients)
+          : "Loading…";
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityHint="Opens this estate's reminders"
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        minHeight: 48,
+        paddingVertical: 12,
+        borderBottomWidth: space.rule,
+        borderBottomColor: colors.line,
+        opacity: pressed ? 0.72 : 1,
+      })}
+    >
+      <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Text
+            numberOfLines={1}
+            style={{ flexShrink: 1, fontFamily: font.bold, fontSize: 16, color: colors.ink }}
+          >
+            {estateName(row)}
+          </Text>
+          {ready ? (
+            remindersOn(reminders.recipients) ? (
+              <Badge label="On" fill={colors.lime} />
+            ) : (
+              <Badge label="Off" />
+            )
+          ) : status === "locked" ? (
+            <Icon name="lock" size={14} color={colors.mute} />
+          ) : null}
+        </View>
+        <Text style={{ fontFamily: font.regular, fontSize: 13, color: colors.mute }}>{line}</Text>
+      </View>
+      <Icon name="chevronRight" size={18} weight={2} />
+    </Pressable>
+  );
 }
 
-/** Reminders across every estate this wallet owns. Each estate is set up on its own screen. */
+/**
+ * What needs the owner across every estate, then each estate's reminders. Chain items show
+ * straight away; reminder state (and the reminder gaps in "Needs attention") once signed in.
+ * Contact values never show here, only on an estate's reminders screen.
+ */
 export default function AlertsScreen() {
   const router = useRouter();
-  const { rows } = useEstates("authority");
+  const { rows, reload } = useEstates("authority");
   const session = useSession();
-  const reminders = useRemindersFor(rows.map((row) => String(row.address)));
+  const { checkIn } = useOwnerTx();
+  const { ask, fail, cancel, confirm, extra } = useConfirmSheet();
+  const [working, setWorking] = useState<string | undefined>(undefined);
+  const [toast, setToast] = useState<string | undefined>(undefined);
+
+  const live = rows.filter(
+    (row) => estateSpan(row.data, row.claimableLamports).state !== "distributed",
+  );
+  const reminders = useRemindersFor(live.map((row) => String(row.address)));
   const locked = reminders.some((r) => r.status === "locked");
+  const attention = needsAttention(live, reminders);
+
+  useEffect(() => {
+    if (toast === undefined) return;
+    const id = setTimeout(() => setToast(undefined), 2600);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const openReminders = (estateAddress: string) =>
+    router.push(`/reminders?estate=${estateAddress}`);
+
+  async function onCheckIn(item: AttentionItem) {
+    const row = live.find((r) => String(r.address) === item.estateAddress);
+    if (row === undefined || working !== undefined) return;
+    setWorking(item.key);
+    try {
+      await checkIn(row.data.heir);
+      await reload();
+      setToast("Checked in.");
+    } catch (cause) {
+      fail("Check-in", cause);
+    } finally {
+      setWorking(undefined);
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -80,77 +172,113 @@ export default function AlertsScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: space.pad,
-          paddingTop: 12,
+          paddingTop: 16,
           paddingBottom: TAB_BAR_CLEARANCE,
+          gap: 32,
         }}
       >
-        {BACKEND_URL === undefined ? (
-          <Lede>Alerts aren't available in this build.</Lede>
-        ) : locked ? (
-          <Locked
-            signing={session.signing}
-            onUnlock={() => void session.signIn().catch(() => undefined)}
-          />
+        {live.length === 0 ? (
+          <Lede>Create an estate to set up reminders.</Lede>
         ) : (
-          <View style={{ gap: 12 }}>
-            <Cap>Reminders by estate</Cap>
-            {rows.length === 0 ? (
-              <Text style={{ fontFamily: font.regular, fontSize: 14, color: colors.mute }}>
-                Create an estate to set up reminders.
-              </Text>
+          <>
+            <View style={{ gap: 14 }}>
+              <Cap>Needs attention</Cap>
+              {attention.length === 0 ? (
+                <Text style={{ fontFamily: font.regular, fontSize: 14, color: colors.mute }}>
+                  {locked
+                    ? "Nothing on-chain. Sign in to check reminders too."
+                    : "Nothing right now."}
+                </Text>
+              ) : (
+                attention.map((item) => (
+                  <AttentionRow
+                    key={item.key}
+                    item={item}
+                    busy={working === item.key}
+                    disabled={working !== undefined}
+                    onPress={() =>
+                      item.action === "check-in"
+                        ? void onCheckIn(item)
+                        : openReminders(item.estateAddress)
+                    }
+                  />
+                ))
+              )}
+            </View>
+
+            {BACKEND_URL === undefined ? (
+              <Lede>Reminders aren’t available in this build.</Lede>
             ) : (
-              <View style={{ borderTopWidth: space.rule, borderTopColor: colors.line }}>
-                {rows.map((row, i) => {
-                  const r = reminders[i];
-                  const line = summary(r?.status ?? "loading", r?.recipients ?? []);
-                  return (
-                    <Pressable
-                      key={row.address}
-                      onPress={() => router.push(`/estate/${row.address}`)}
-                      accessibilityRole="button"
-                      accessibilityHint="Opens the estate to set up reminders"
-                      style={({ pressed }) => ({
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 12,
-                        minHeight: 48,
-                        paddingVertical: 12,
-                        borderBottomWidth: space.rule,
-                        borderBottomColor: colors.line,
-                        opacity: pressed ? 0.72 : 1,
-                      })}
-                    >
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.ink }}>
-                          {estateName(row)}
-                        </Text>
+              <>
+                <View style={{ gap: 14 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Cap>Reminders by estate</Cap>
+                    {locked ? (
+                      <Pressable
+                        onPress={() => void session.signIn().catch(() => undefined)}
+                        disabled={session.signing}
+                        accessibilityRole="button"
+                        hitSlop={8}
+                        style={({ pressed }) => ({
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                          opacity: session.signing ? 0.45 : pressed ? 0.7 : 1,
+                        })}
+                      >
+                        <Icon name="lock" size={14} weight={2.2} />
                         <Text
                           style={{
-                            fontFamily: font.regular,
+                            fontFamily: font.bold,
                             fontSize: 13,
-                            color: line === "Waiting for Telegram" ? colors.claim : colors.mute,
+                            color: colors.ink,
+                            textDecorationLine: "underline",
                           }}
                         >
-                          {line}
+                          {session.signing ? "Check your wallet…" : "Sign in to see"}
                         </Text>
-                      </View>
-                      <Icon name="chevronRight" size={18} weight={2} />
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <View style={{ borderTopWidth: space.rule, borderTopColor: colors.line }}>
+                    {live.map((row, i) => (
+                      <EstateRemindersRow
+                        key={row.address}
+                        row={row}
+                        reminders={reminders[i]}
+                        onPress={() => openReminders(String(row.address))}
+                      />
+                    ))}
+                  </View>
+                </View>
 
-            <View style={{ marginTop: 14 }}>
-              <Cap>When reminders go out</Cap>
-            </View>
-            <TickList items={[...REMINDER_SCHEDULE, `Your heir: ${HEIR_ALERT_TIMING}`]} />
-            <Text style={{ fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: colors.mute }}>
-              Checking in resets them. A paused estate gets none.
-            </Text>
-          </View>
+                <View style={{ gap: 14 }}>
+                  <Cap>When reminders go out</Cap>
+                  <ReminderTimeline />
+                  <Text
+                    style={{
+                      fontFamily: font.regular,
+                      fontSize: 13,
+                      lineHeight: 18,
+                      color: colors.mute,
+                    }}
+                  >
+                    Checking in resets the clock. Paused estates get nothing.
+                  </Text>
+                </View>
+              </>
+            )}
+          </>
         )}
       </ScrollView>
+      <ConfirmSheet ask={ask} onCancel={cancel} onConfirm={confirm} onExtra={extra} />
+      <InkToast text={toast} />
     </View>
   );
 }

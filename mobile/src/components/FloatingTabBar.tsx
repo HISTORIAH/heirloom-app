@@ -109,7 +109,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
       <Pressable
         onPress={() => router.push("/tap")}
         accessibilityRole="button"
-        accessibilityLabel="Tap a Heirloom card, ring or band"
+        accessibilityLabel="Tap an Heirloom card, ring or band"
         style={({ pressed }) => ({
           width: HEIGHT,
           height: HEIGHT,

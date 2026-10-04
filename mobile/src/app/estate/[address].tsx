@@ -10,15 +10,21 @@ import { EstateAssets } from "@/components/EstateAssets";
 import { EstateManage } from "@/components/EstateManage";
 import { EstatePeople } from "@/components/EstatePeople";
 import { InkToast } from "@/components/InkToast";
-import { RemindersSection } from "@/components/reminders/RemindersSection";
 import { TopUpSheet } from "@/components/topUp/TopUpSheet";
 import { EstateHero } from "@/components/home/EstateHero";
 import { Cap, IconButton } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
+import { remindersOn } from "@/lib/reminders";
 import { colors, space } from "@/theme";
 import type { EstateTimingFields, TopUpPick } from "@/types/estate";
 import type { Address } from "@solana/kit";
-import { useEstateHoldings, useEstates, useOwnerTx, useRenameEstate } from "@/hooks";
+import {
+  useEstateHoldings,
+  useEstates,
+  useOwnerTx,
+  useReminders,
+  useRenameEstate,
+} from "@/hooks";
 import {
   estateName,
   estateSpan,
@@ -26,7 +32,6 @@ import {
   rawToUiText,
   registeredTokenCount,
   setFlash,
-  shortAddress,
   unwrapOption,
   waitUntilAccountGone,
 } from "@/lib";
@@ -48,6 +53,7 @@ export default function EstateScreen() {
 
   const row = rows.find((item) => item.address === address);
   const holdings = useEstateHoldings(row);
+  const reminders = useReminders(String(address));
 
   useEffect(() => {
     if (toast === undefined) return;
@@ -144,6 +150,24 @@ export default function EstateScreen() {
     }
   }
 
+  function remindersLabel(): string {
+    if (reminders.status === "locked") return "Sign in";
+    if (reminders.status === "loading") return "…";
+    if (reminders.status === "error") return "—";
+    return remindersOn(reminders.recipients) ? "On" : "Off";
+  }
+
+  function onAddRole(role: "Check-in signer" | "Guardian") {
+    notice({
+      cap: role,
+      title: "Adding one after creation comes next",
+      body:
+        role === "Guardian"
+          ? "A guardian can pause the countdown once if something is wrong."
+          : "A check-in signer can check in for you from their own wallet.",
+    });
+  }
+
   function onReassign(newHeir: Address) {
     prompt(
       { cap: "Change heir", title: "Move this estate to a new heir?", confirmLabel: "Change heir" },
@@ -216,9 +240,9 @@ export default function EstateScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: space.pad,
-          paddingTop: 2,
+          paddingTop: 8,
           paddingBottom: Math.max(insets.bottom, 16) + 40,
-          gap: 16,
+          gap: 32,
         }}
       >
         <EstateHero
@@ -239,25 +263,27 @@ export default function EstateScreen() {
           adding={busy}
         />
 
-        <View style={{ gap: 12 }}>
-          <Cap>Named on this estate</Cap>
+        <View style={{ gap: 14 }}>
+          <Cap>People</Cap>
           <EstatePeople
             heir={String(current.data.heir)}
             heartbeat={signer ?? undefined}
             guardian={guardian ?? undefined}
+            onAddHeartbeat={live ? () => onAddRole("Check-in signer") : undefined}
+            onAddGuardian={live ? () => onAddRole("Guardian") : undefined}
+            reminders={
+              live && BACKEND_URL !== undefined
+                ? {
+                    label: remindersLabel(),
+                    onPress: () => router.push(`/reminders?estate=${current.address}`),
+                  }
+                : undefined
+            }
           />
         </View>
 
-        {live && BACKEND_URL !== undefined ? (
-          <RemindersSection
-            estateAddress={String(current.address)}
-            estateName={estateName(current)}
-            heirLabel={`Heir ${shortAddress(String(current.data.heir))}`}
-          />
-        ) : null}
-
         {live ? (
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: 14 }}>
             <Cap>Manage</Cap>
             <EstateManage
               row={current}
