@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { requestRaw } from "@/lib/api";
+import { ApiError, requestRaw } from "@/lib/api";
 import type {
   AddContactResponse,
   AddRecipientRequest,
@@ -21,7 +21,13 @@ function remindersUrl(estateAddress: string, path = ""): string {
 
 // Unlike the other reminder endpoints, GET returns the resource directly — not wrapped in { data }.
 export async function fetchReminders(estateAddress: string): Promise<FetchReminderResponse> {
-  return requestRaw<FetchReminderResponse>(remindersUrl(estateAddress));
+  try {
+    return await requestRaw<FetchReminderResponse>(remindersUrl(estateAddress));
+  } catch (err) {
+    // No subscription yet reads as no contacts, not as a failure.
+    if (err instanceof ApiError && err.code === "NOT_FOUND") return { estateAddress, recipients: [] };
+    throw err;
+  }
 }
 
 export async function saveReminder(

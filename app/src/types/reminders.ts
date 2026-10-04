@@ -9,9 +9,16 @@ export type AddRecipientRequest = {
   role: ReminderRole;
 };
 
-export type RecipientResponse = AddRecipientRequest & {
+/**
+ * `channel` and `role` are backend enums whose casing comes from each enum's own serde attrs,
+ * so they're read as strings and compared with `sameEnum`, never `===`.
+ */
+export type RecipientResponse = {
   reminderRecipientId: string; // uuid
-  verified: boolean; // destination is decrypted by the server in responses
+  channel: string;
+  destination: string; // decrypted by the server in responses
+  role: string;
+  verified: boolean;
 };
 
 export type CreateReminderRequest = {
@@ -29,16 +36,11 @@ export type VerificationPrompt =
 
 export type VerificationStatus = {
   reminderRecipientId: string; // uuid
-  /** Backend may send PascalCase ("Telegram") — normalize with normalizeChannel() */
+  /** Backend may send PascalCase ("Telegram") — compare with sameEnum() */
   channel: string;
   prompt: VerificationPrompt;
   expiresAt: string; // ISO 8601
 };
-
-/** Normalize a channel string from the backend to lowercase ReminderChannel. */
-export function normalizeChannel(ch: string): ReminderChannel {
-  return ch.toLowerCase() as ReminderChannel;
-}
 
 /** The text the UI must show for an `instruction` prompt; empty for `message`. */
 export function verificationPromptText(prompt: VerificationPrompt): string {
@@ -52,7 +54,7 @@ export function verificationPromptText(prompt: VerificationPrompt): string {
  * Returns undefined for other channels or when the prompt is not a t.me link.
  */
 export function telegramVerificationLink(v: VerificationStatus): string | undefined {
-  if (normalizeChannel(v.channel) !== "telegram") return undefined;
+  if (!sameEnum(v.channel, "telegram")) return undefined;
   const text = verificationPromptText(v.prompt).trim();
   if (text.startsWith("t.me/")) return `https://${text}`;
   if (text.startsWith("https://t.me/")) return text;
@@ -78,146 +80,61 @@ export type FetchReminderResponse = {
   recipients: RecipientResponse[];
 };
 
-// ─── UI-specific types ────────────────────────────────────────────
-
-export type ChannelSelection = {
-  channel: ReminderChannel;
-  value: string;
-  /** Only known for a channel loaded from a saved recipient — absent for one the user is still editing. */
-  verified?: boolean;
-  /** Server-assigned UUID — only present for saved recipients, needed for resend. */
-  recipientId?: string;
-};
-
-export type RoleNotificationConfig = {
-  enabled: boolean;
-  primary: ChannelSelection;
-  backup: ChannelSelection | null;
-};
-
-export type NotificationsConfig = {
-  creator: RoleNotificationConfig;
-  heir: RoleNotificationConfig;
-};
-
-export type NotificationsCardStatus =
-  "loading" | "locked" | "off" | "authorized" | "expired" | "error";
+// ─── UI helpers ───────────────────────────────────────────────────
 
 /**
- * Only Telegram delivers today. The API accepts email/SMS but doesn't send them, and
- * POST /reminders saves the subscription before rejecting them — offering them can leave an
- * estate stuck with a broken subscription. WhatsApp is rejected outright (400).
+ * Backend enum values compared loosely: "CheckInSigner", "checkInSigner" and "check_in_signer"
+ * are the same role; "Telegram" and "telegram" the same channel.
  */
-export const CREATOR_CHANNELS: ReminderChannel[] = ["telegram"];
-export const HEIR_CHANNELS: ReminderChannel[] = ["telegram"];
+export function sameEnum(a: string, b: string): boolean {
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return key(a) === key(b);
+}
 
-export const CHANNEL_META: Record<
-  ReminderChannel,
-  { label: string; placeholder: string; inputType: "email" | "text" | "tel" }
-> = {
-  email: { label: "Email", placeholder: "you@email.com", inputType: "email" },
-  telegram: { label: "Telegram", placeholder: "@username", inputType: "text" },
-  whatsapp: { label: "WhatsApp", placeholder: "+1 234 567 8900", inputType: "tel" },
-  sms: { label: "SMS", placeholder: "+1 234 567 8900", inputType: "tel" },
-};
+/** "@Alice " → "Alice". The bot matches without case or the leading @. */
+export function telegramHandle(text: string): string {
+  return text.trim().replace(/^@/, "");
+}
 
-export const defaultRoleConfig = (): RoleNotificationConfig => ({
-  enabled: false,
-  primary: { channel: "telegram", value: "" },
-  backup: null,
-});
+/** One role's Telegram contact. Contacts can't be edited or removed, so this is read-only state. */
+export type ContactState =
+  | { kind: "none" }
+  | { kind: "waiting"; recipient: RecipientResponse }
+  | { kind: "connected"; recipient: RecipientResponse };
 
-export const defaultNotificationsConfig = (): NotificationsConfig => ({
-  creator: defaultRoleConfig(),
-  heir: defaultRoleConfig(),
-});
+export function contactState(recipients: RecipientResponse[], role: ReminderRole): ContactState {
+  const recipient = recipients.find(
+    (r) => sameEnum(r.role, role) && sameEnum(r.channel, "telegram"),
+  );
+  if (!recipient) return { kind: "none" };
+  return recipient.verified ? { kind: "connected", recipient } : { kind: "waiting", recipient };
+}
+
+/** `pending`: a contact is saved but not verified yet, so nothing reaches it. */
+export type NotificationsCardStatus =
+  | "loading"
+  | "locked"
+  | "off"
+  | "authorized"
+  | "pending"
+  | "expired"
+  | "error";
 
 type Translate = (key: string, opts?: Record<string, string>) => string;
 
-const CHANNEL_KEYS: Record<ReminderChannel, string> = {
-  email: "notifications.channelEmail",
-  telegram: "notifications.channelTelegram",
-  whatsapp: "notifications.channelWhatsapp",
-  sms: "notifications.channelSms",
-};
-
-export function summarizeNotifications(
-  config: NotificationsConfig,
+/** Card line, e.g. "You: Telegram · Sarah: waiting for Telegram". Undefined when nothing is set. */
+export function summarizeReminders(
+  recipients: RecipientResponse[],
   heirLabel: string,
   t: Translate,
-): string {
+): string | undefined {
+  const channel = t("notifications.channelTelegram");
+  const self = contactState(recipients, "check_in_signer");
+  const heir = contactState(recipients, "heir");
   const parts: string[] = [];
-  if (config.creator.enabled) {
-    const channel = t(CHANNEL_KEYS[config.creator.primary.channel]);
-    parts.push(
-      t(config.creator.backup ? "notifications.summaryYouPlus" : "notifications.summaryYou", {
-        channel,
-      }),
-    );
-  }
-  if (config.heir.enabled) {
-    const channel = t(CHANNEL_KEYS[config.heir.primary.channel]);
-    parts.push(
-      t(config.heir.backup ? "notifications.summaryHeirPlus" : "notifications.summaryHeir", {
-        name: heirLabel,
-        channel,
-      }),
-    );
-  }
-  return parts.join(" · ");
-}
-
-/** Inverse of toAddRecipientRequests — rebuild UI config from the server's saved recipients. */
-export function notificationsConfigFromRecipients(
-  recipients: RecipientResponse[],
-): NotificationsConfig {
-  const config = defaultNotificationsConfig();
-  for (const recipient of recipients) {
-    const target = recipient.role === "heir" ? config.heir : config.creator;
-    const slot = {
-      channel: recipient.channel,
-      value: recipient.destination,
-      verified: recipient.verified,
-      recipientId: recipient.reminderRecipientId,
-    };
-    if (!target.enabled) {
-      target.enabled = true;
-      target.primary = slot;
-    } else {
-      target.backup = slot;
-    }
-  }
-  return config;
-}
-
-/** Flatten a NotificationsConfig into the backend's AddRecipientRequest list. */
-export function toAddRecipientRequests(config: NotificationsConfig): AddRecipientRequest[] {
-  const recipients: AddRecipientRequest[] = [];
-  if (config.creator.enabled && config.creator.primary.value) {
-    recipients.push({
-      channel: config.creator.primary.channel,
-      destination: config.creator.primary.value,
-      role: "check_in_signer",
-    });
-  }
-  if (config.heir.enabled && config.heir.primary.value) {
-    recipients.push({
-      channel: config.heir.primary.channel,
-      destination: config.heir.primary.value,
-      role: "heir",
-    });
-  }
-  return recipients;
-}
-
-/**
- * Contacts in `config` that aren't saved yet. The backend allows one contact per role+channel
- * and has no edit, so re-sending a saved one is a 409 — only new ones go to add/contact.
- */
-export function newRecipientRequests(
-  config: NotificationsConfig,
-  saved: RecipientResponse[],
-): AddRecipientRequest[] {
-  const taken = new Set(saved.map((r) => `${r.role}:${normalizeChannel(r.channel)}`));
-  return toAddRecipientRequests(config).filter((r) => !taken.has(`${r.role}:${r.channel}`));
+  if (self.kind === "connected") parts.push(t("notifications.summaryYou", { channel }));
+  if (self.kind === "waiting") parts.push(t("notifications.summaryYouWaiting"));
+  if (heir.kind === "connected") parts.push(t("notifications.summaryHeir", { name: heirLabel, channel }));
+  if (heir.kind === "waiting") parts.push(t("notifications.summaryHeirWaiting", { name: heirLabel }));
+  return parts.length > 0 ? parts.join(" · ") : undefined;
 }

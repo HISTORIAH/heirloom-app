@@ -11,9 +11,18 @@ export function telegramHandle(text: string): string {
   return text.trim().replace(/^@/, "");
 }
 
+/**
+ * Backend enum values compared loosely: "CheckInSigner", "checkInSigner" and "check_in_signer"
+ * are the same role; "Telegram" and "telegram" the same channel.
+ */
+export function sameEnum(a: string, b: string): boolean {
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return key(a) === key(b);
+}
+
 /** The t.me deep link in a Telegram verification, as an https URL. */
 export function telegramLink(verification: VerificationStatus): string | undefined {
-  if (verification.channel.toLowerCase() !== "telegram") return undefined;
+  if (!sameEnum(verification.channel, "telegram")) return undefined;
   if (verification.prompt.type !== "instruction") return undefined;
   const text = verification.prompt.value.trim();
   if (text.startsWith("https://t.me/")) return text;
@@ -24,7 +33,7 @@ export function telegramLink(verification: VerificationStatus): string | undefin
 /** This role's Telegram contact, if any. */
 export function contactState(recipients: RecipientResponse[], role: ReminderRole): ContactState {
   const recipient = recipients.find(
-    (r) => r.role === role && r.channel.toLowerCase() === "telegram",
+    (r) => sameEnum(r.role, role) && sameEnum(r.channel, "telegram"),
   );
   if (recipient === undefined) return { kind: "none" };
   return recipient.verified ? { kind: "connected", recipient } : { kind: "waiting", recipient };

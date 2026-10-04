@@ -108,12 +108,20 @@ export function useAddReminderContact(estateAddress: string) {
     }): Promise<PendingVerification | undefined> => {
       const destination = telegramHandle(username);
       const recipient = { channel: "telegram" as const, destination, role };
-      if (hasSubscription) {
+      const viaAdd = async () => {
         const res = await withSession(() => addContact(estateAddress, recipient));
         return pendingFrom(res.verifications[0], { recipientId: res.recipientId, role, destination });
+      };
+      if (hasSubscription) return viaAdd();
+      try {
+        const res = await withSession(() => createReminders(estateAddress, [recipient]));
+        return pendingFrom(res.verifications[0], { role, destination });
+      } catch (cause) {
+        // Our list was empty but the estate already has a subscription (made elsewhere, or a list
+        // we couldn't read): add the contact to it instead.
+        if (cause instanceof ApiError && cause.code === "CONFLICT") return viaAdd();
+        throw cause;
       }
-      const res = await withSession(() => createReminders(estateAddress, [recipient]));
-      return pendingFrom(res.verifications[0], { role, destination });
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: remindersKey(estateAddress) }),
   });

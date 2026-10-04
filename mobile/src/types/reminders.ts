@@ -11,8 +11,16 @@ export type AddRecipientRequest = {
   role: ReminderRole;
 };
 
-export type RecipientResponse = AddRecipientRequest & {
+/**
+ * `channel` and `role` are backend enums. Their casing depends on each enum's own serde attrs
+ * (the struct's camelCase doesn't reach them), so they're read as strings and compared with
+ * `sameEnum` rather than `===`.
+ */
+export type RecipientResponse = {
   reminderRecipientId: string;
+  channel: string;
+  destination: string;
+  role: string;
   /** No reminders go to a contact until this is true. */
   verified: boolean;
 };
