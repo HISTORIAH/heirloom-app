@@ -656,7 +656,7 @@ export default function CreateScreen() {
             onPress={() =>
               void Share.share({
                 message:
-                  "I’ve set up a Heirloom credential for you. If something happens to me, tap it on your phone.",
+                  "I’ve set up an Heirloom credential for you. If something happens to me, tap it on your phone.",
               })
             }
           />

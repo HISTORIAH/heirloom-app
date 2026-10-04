@@ -70,6 +70,32 @@ export type ContactState =
 /** `locked`: no session yet, the owner has to sign in to see or change reminders. */
 export type RemindersStatus = "loading" | "locked" | "ready" | "error";
 
+/** One stop on the reminder timeline. `phase` picks its colour: before due, in grace, heir told. */
+export type TimelineStop = {
+  title: string;
+  sub: string;
+  phase: "check-in" | "grace" | "heir";
+};
+
+/** One estate's reminders as the Alerts tab and estate screen read them. */
+export type EstateReminders = {
+  estateAddress: string;
+  recipients: RecipientResponse[];
+  status: RemindersStatus;
+};
+
+/** Something on one estate the owner should act on, from the chain or from its reminders. */
+export type AttentionItem = {
+  key: string;
+  estateAddress: string;
+  estateName: string;
+  text: string;
+  action: "check-in" | "reminders";
+  actionLabel: string;
+  /** Fill: the estate's state colour for check-in items, paper for reminder gaps. */
+  fill: string;
+};
+
 /** A verification link on screen, for the contact it belongs to. */
 export type PendingVerification = {
   recipientId: string;

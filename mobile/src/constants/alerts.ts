@@ -1,3 +1,5 @@
+import type { TimelineStop } from "@/types/reminders";
+
 /** Re-fetch reminders this often while a Telegram link is on screen; nothing is pushed when it's verified. */
 export const REMINDER_POLL_MS = 3000;
 
@@ -18,3 +20,15 @@ export const REMINDER_SCHEDULE = [
   "1 day before the grace period ends",
 ] as const;
 export const HEIR_ALERT_TIMING = "1 hour after the grace period ends";
+
+/** REMINDER_SCHEDULE plus the heir alert, drawn as the five-stop timeline. */
+export const REMINDER_TIMELINE: readonly TimelineStop[] = [
+  { title: "7 days", sub: "before due", phase: "check-in" },
+  { title: "Due", sub: "day", phase: "check-in" },
+  { title: "Mid", sub: "grace", phase: "grace" },
+  { title: "1 day", sub: "left", phase: "grace" },
+  { title: "Heir", sub: "told", phase: "heir" },
+];
+
+/** A check-in this close lists the estate under "Needs attention". Matches the first reminder. */
+export const ATTENTION_DUE_DAYS = 7;

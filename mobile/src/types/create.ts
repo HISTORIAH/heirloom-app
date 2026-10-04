@@ -1,4 +1,4 @@
-/** Who inherits: a Heirloom credential, someone else's wallet, or my own backup. */
+/** Who inherits: an Heirloom credential, someone else's wallet, or my own backup. */
 export type HeirKind = "credential" | "wallet" | "mine";
 
 /** How the heir uses their credential. */

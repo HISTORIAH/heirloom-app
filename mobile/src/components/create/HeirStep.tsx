@@ -43,7 +43,7 @@ export function HeirStep({
       <OptionCard
         on={kind === "credential"}
         icon="tap"
-        title="Give them a Heirloom credential"
+        title="Give them an Heirloom credential"
         body="A card, ring or band they tap to claim. No wallet, no seed phrase."
         tagAs="badge"
         tag={

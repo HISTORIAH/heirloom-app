@@ -39,6 +39,27 @@ export function contactState(recipients: RecipientResponse[], role: ReminderRole
   return recipient.verified ? { kind: "connected", recipient } : { kind: "waiting", recipient };
 }
 
+/** On once the owner has a connected contact: that's who check-in reminders reach. */
+export function remindersOn(recipients: RecipientResponse[]): boolean {
+  return contactState(recipients, "check_in_signer").kind === "connected";
+}
+
+function channelsFor(recipients: RecipientResponse[], role: ReminderRole): string[] {
+  const names = recipients
+    .filter((r) => sameEnum(r.role, role))
+    .map((r) => r.channel.toLowerCase().replace(/^\w/, (c) => c.toUpperCase()));
+  return [...new Set(names)];
+}
+
+/** "You: Telegram · Heir: Telegram". Channel types only; the contacts themselves stay off the list. */
+export function channelLine(recipients: RecipientResponse[]): string {
+  const you = channelsFor(recipients, "check_in_signer");
+  const heir = channelsFor(recipients, "heir");
+  if (you.length === 0 && heir.length === 0) return "Not set up";
+  const list = (names: string[]) => (names.length === 0 ? "not set" : names.join(", "));
+  return `You: ${list(you)} · Heir: ${list(heir)}`;
+}
+
 /** No session, or it expired: sign the challenge again. */
 export function isUnauthorized(cause: unknown): boolean {
   return cause instanceof ApiError && (cause.status === 401 || cause.code === "unauthorized");
