@@ -5,7 +5,7 @@ import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   status: NotificationsCardStatus;
-  /** Only rendered when status === "authorized" — e.g. "You: Email · Sarah: Email + SMS" */
+  /** Rendered for "authorized" and "pending", e.g. "You: Telegram · Sarah: waiting for Telegram" */
   summary?: string;
   onAction: () => void;
 }
@@ -42,6 +42,14 @@ const STATE_META: Record<
     badgeClass: "bg-accent-cyan",
     textKey: "",
     textClass: "text-green-700 font-semibold",
+    buttonKey: "notifications.edit",
+    buttonClass: "bg-background hover:bg-secondary",
+  },
+  pending: {
+    icon: Clock,
+    badgeClass: "bg-accent-yellow",
+    textKey: "",
+    textClass: "text-amber-700 font-semibold",
     buttonKey: "notifications.edit",
     buttonClass: "bg-background hover:bg-secondary",
   },
@@ -95,7 +103,7 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
           <div className="min-w-0">
             <h3 className="ed-h3">{t("notifications.title")}</h3>
             <p className={cn("text-sm truncate mt-0.5", meta.textClass)}>
-              {status === "authorized" ? summary : t(meta.textKey)}
+              {status === "authorized" || status === "pending" ? summary : t(meta.textKey)}
             </p>
           </div>
         </div>

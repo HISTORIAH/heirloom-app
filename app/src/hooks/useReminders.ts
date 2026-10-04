@@ -13,16 +13,22 @@ import type {
   VerificationStatus,
 } from "@/types/reminders";
 import type { EstateKind } from "@/types/estate";
+import { REMINDER_POLL_MS } from "@/lib/constants";
 
 // ─── Queries ──────────────────────────────────────────────────────
 
-export function useReminders(estateAddress: string, enabled = true) {
+/**
+ * `poll` while a verification link is on screen: Telegram verifies out of band and nothing is
+ * pushed, so we look. Always re-fetches on focus, since people come back from Telegram.
+ */
+export function useReminders(estateAddress: string, { poll = false }: { poll?: boolean } = {}) {
   return useQuery<FetchReminderResponse>({
     queryKey: ["reminders", estateAddress],
     queryFn: () => fetchReminders(estateAddress),
-    enabled: !!estateAddress && enabled,
-    staleTime: 60_000,
+    enabled: !!estateAddress,
     retry: false,
+    refetchOnWindowFocus: "always",
+    refetchInterval: poll ? REMINDER_POLL_MS : false,
   });
 }
 
@@ -42,10 +48,11 @@ export function useSaveReminder(estateAddress: string) {
   });
 }
 
+/** One contact per call — the backend has no batch add. */
 export function useAddContact(estateAddress: string) {
   const queryClient = useQueryClient();
-  return useMutation<AddContactResponse, Error, { recipients: AddRecipientRequest[] }>({
-    mutationFn: ({ recipients }) => addContact(estateAddress, recipients),
+  return useMutation<AddContactResponse, Error, { recipient: AddRecipientRequest }>({
+    mutationFn: ({ recipient }) => addContact(estateAddress, recipient),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
     },
@@ -56,7 +63,8 @@ export function useResendVerification(estateAddress: string) {
   const queryClient = useQueryClient();
   return useMutation<VerificationStatus, Error, { recipientId: string }>({
     mutationFn: ({ recipientId }) => resendVerification(estateAddress, recipientId),
-    onSuccess: () => {
+    // Settled, not success: a 409 means it's already verified, and the list should show that.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
     },
   });

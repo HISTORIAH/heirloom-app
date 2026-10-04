@@ -1,7 +1,6 @@
 import { BACKEND_URL } from "@/config";
-import { requestRaw } from "@/lib/api";
+import { ApiError, requestRaw } from "@/lib/api";
 import type {
-  AddContactRequest,
   AddContactResponse,
   AddRecipientRequest,
   CreateReminderRequest,
@@ -11,13 +10,24 @@ import type {
 } from "@/types/reminders";
 import type { EstateKind } from "@/types/estate";
 
-const REMINDERS_API_BASE = `${BACKEND_URL}/v1/estates`;
+const ESTATES_API_BASE = `${BACKEND_URL}/v1/estates`;
+
+/** Every reminders endpoint lives under /v1/estates/{estateAddress}/reminders. */
+function remindersUrl(estateAddress: string, path = ""): string {
+  return `${ESTATES_API_BASE}/${estateAddress}/reminders${path}`;
+}
 
 // ─── Per-estate reminders ─────────────────────────────────────────
 
 // Unlike the other reminder endpoints, GET returns the resource directly — not wrapped in { data }.
 export async function fetchReminders(estateAddress: string): Promise<FetchReminderResponse> {
-  return requestRaw<FetchReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`);
+  try {
+    return await requestRaw<FetchReminderResponse>(remindersUrl(estateAddress));
+  } catch (err) {
+    // No subscription yet reads as no contacts, not as a failure.
+    if (err instanceof ApiError && err.code === "NOT_FOUND") return { estateAddress, recipients: [] };
+    throw err;
+  }
 }
 
 export async function saveReminder(
@@ -25,21 +35,21 @@ export async function saveReminder(
   estateKind: EstateKind,
   recipients: AddRecipientRequest[],
 ): Promise<CreateReminderResponse> {
-  const payload: CreateReminderRequest = { estateAddress, estateKind, recipients };
-  return requestRaw<CreateReminderResponse>(`${REMINDERS_API_BASE}/${estateAddress}/reminders`, {
+  const payload: CreateReminderRequest = { estateKind, recipients };
+  return requestRaw<CreateReminderResponse>(remindersUrl(estateAddress), {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
+/** Adds one contact to an existing subscription. 404 if the estate has no subscription yet. */
 export async function addContact(
   estateAddress: string,
-  recipients: AddRecipientRequest[],
+  recipient: AddRecipientRequest,
 ): Promise<AddContactResponse> {
-  const payload: AddContactRequest = { recipients };
-  return requestRaw<AddContactResponse>(`${REMINDERS_API_BASE}/${estateAddress}/add/contact`, {
+  return requestRaw<AddContactResponse>(remindersUrl(estateAddress, "/add/contact"), {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(recipient),
   });
 }
 
@@ -51,7 +61,7 @@ export async function resendVerification(
   recipientId: string,
 ): Promise<VerificationStatus> {
   return requestRaw<VerificationStatus>(
-    `${REMINDERS_API_BASE}/${estateAddress}/recipients/${recipientId}/resend`,
+    remindersUrl(estateAddress, `/recipients/${recipientId}/resend`),
     { method: "POST" },
   );
 }

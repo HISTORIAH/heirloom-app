@@ -10,8 +10,9 @@ export const SECONDS_PER_MINUTE = 60;
 export const SECONDS_PER_HOUR = 3600;
 export const SECONDS_PER_DAY = 86400;
 
-export const POSTHOG_HOST =
-  import.meta.env.VITE_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
+export const USDC_DEVNET_MINT = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
 
-export const USDC_DEVNET_MINT =
-  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+/** Re-fetch reminders this often while a Telegram link is on screen; nothing is pushed on verify. */
+export const REMINDER_POLL_MS = 3000;
+/** Telegram usernames: 5–32 letters, digits or underscores. The leading @ is optional. */
+export const TELEGRAM_USERNAME_PATTERN = /^@?[A-Za-z0-9_]{5,32}$/;

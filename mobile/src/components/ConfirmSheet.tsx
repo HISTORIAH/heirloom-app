@@ -55,11 +55,7 @@ function SheetActions({
       }}
     >
       <View style={{ flex: 1 }}>
-        <PrimaryButton
-          label={ask.cancelLabel ?? "Not now"}
-          tone="sage"
-          onPress={onCancel}
-        />
+        <PrimaryButton label={ask.cancelLabel ?? "Not now"} tone="paper" onPress={onCancel} />
       </View>
       <View style={{ flex: 1 }}>
         <PrimaryButton
@@ -85,17 +81,12 @@ export function ConfirmSheet({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <Modal
-      visible={ask !== undefined}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={ask !== undefined} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable
         onPress={onCancel}
         style={{
           flex: 1,
-          backgroundColor: "rgba(10,10,10,0.28)",
+          backgroundColor: "rgba(10,10,10,0.55)",
           justifyContent: "flex-end",
         }}
       >
@@ -103,38 +94,33 @@ export function ConfirmSheet({
           onPress={() => undefined}
           style={{
             backgroundColor: colors.soft,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
             paddingHorizontal: 20,
             paddingTop: 12,
             paddingBottom: Math.max(insets.bottom, 16) + 12,
-            borderTopWidth: 1,
-            borderColor: colors.line,
+            borderTopWidth: 2,
+            borderLeftWidth: 2,
+            borderRightWidth: 2,
+            borderColor: colors.ink,
           }}
         >
           <View
             style={{
               width: 36,
               height: 4,
-              borderRadius: 2,
-              backgroundColor: colors.line,
+              borderRadius: 3,
+              backgroundColor: colors.quiet,
               alignSelf: "center",
               marginBottom: 18,
             }}
           />
           {ask ? (
             <>
-              <Cap color={ask.kind === "fail" ? colors.claim : colors.mute}>
-                {ask.cap}
-              </Cap>
+              <Cap color={ask.kind === "fail" ? colors.claim : colors.mute}>{ask.cap}</Cap>
               <H2 size={22}>{ask.title}</H2>
               {ask.body !== undefined ? <Lede>{ask.body}</Lede> : null}
-              <SheetActions
-                ask={ask}
-                onCancel={onCancel}
-                onConfirm={onConfirm}
-                onExtra={onExtra}
-              />
+              <SheetActions ask={ask} onCancel={onCancel} onConfirm={onConfirm} onExtra={onExtra} />
             </>
           ) : null}
         </Pressable>
