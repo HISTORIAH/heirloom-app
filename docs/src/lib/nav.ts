@@ -8,10 +8,9 @@ import { docHref } from "./site";
  */
 export const SECTIONS = [
   { id: "getting-started", label: "Getting started" },
-  { id: "concepts", label: "Core concepts" },
   { id: "using", label: "Using Heirloom" },
   { id: "stocks", label: "Tokenized stocks" },
-  { id: "program", label: "On-chain program" },
+  { id: "developers", label: "Developers" },
   { id: "reference", label: "Reference" },
 ] as const;
 

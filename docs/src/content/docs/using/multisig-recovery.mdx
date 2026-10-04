@@ -1,0 +1,40 @@
+---
+title: Multisig recovery (Squads)
+description: Planned. Using an estate to protect a Squads multisig from threshold lockout.
+section: using
+order: 10
+keywords: ["squads", "multisig", "threshold", "lockout", "lost key", "recovery", "dao", "treasury"]
+---
+
+<Callout type="warning" title="Planned, not yet tested">
+This setup should work with the program as it is, but it hasn't been tested end to end.
+Don't rely on it for real funds until this notice is gone.
+</Callout>
+
+## The problem: threshold lockout
+
+A Squads multisig needs a minimum number of members to approve each transaction, its
+threshold. If enough members lose their keys that the threshold can't be reached, the
+funds in the Squads vault are stuck for good. This is called threshold lockout.
+
+## The idea
+
+The Squads vault owns an estate and checks in through normal Squads proposals. The
+estate's heir is a recovery wallet, or a second multisig, kept separately.
+
+While the members can still approve proposals, they keep checking in and nothing moves.
+If they lose the ability to reach the threshold, the check-ins stop. Once the interval
+and grace period run out, the recovery wallet claims the estate.
+
+It works the same way as [wallet recovery](/docs/using/wallet-recovery/), with a
+multisig in place of a single wallet.
+
+## Things to think through
+
+- **Check-ins need a proposal each time.** Pick an interval the members can comfortably
+  approve, or name a [check-in signer](/docs/how-it-works/#who-can-do-what) so one
+  member can check in alone.
+- **Guard the recovery wallet.** Whoever holds it can take everything once the deadline
+  passes.
+- **Only what is in the estate is protected.** Funds left in the Squads vault itself are
+  not covered.

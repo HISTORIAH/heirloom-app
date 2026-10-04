@@ -1,55 +1,41 @@
 ---
 title: Delegate eviction
-description: Why approving another app can silently break a backup, how the dashboard notices, and how one approval fixes it.
+description: How approving another app can quietly break a backup, and how to fix it.
 section: stocks
 order: 2
-keywords: ["delegate", "eviction", "approve", "revoke", "re-approve", "coverage lost", "cpi guard", "backup mode"]
+keywords: ["delegate", "eviction", "approval", "coverage lost", "re-approve", "cpi guard"]
 ---
 
-Backup mode works by making your plan the **delegate** of each covered token account. SPL
-Token allows exactly **one** delegate per account. So if you later approve something else on
-that account — a DEX order, a lending deposit — the new approval **replaces** Heirloom's.
+Backup mode works by approving your plan to move a token account. A token account can
+have only **one** approval at a time, so approving anything else on it, like a DEX order
+or a lending deposit, replaces Heirloom's. Nothing warns you. The holding just stops
+being recoverable.
 
-Nothing fails when that happens. There is no error and no warning from your wallet. The
-position just stops being recoverable, and a recovery attempt would be refused with
-`DelegateEvicted`.
+## What breaks it
 
-## What does not cause it
+- Approving another app or wallet on the same token account
+- Revoking approvals in your wallet's security settings
+- Closing the token account, for example after selling everything
 
-- **Trading.** Selling or sending part of a covered position doesn't touch the approval.
-  Token-2022 only reduces an allowance when the *delegate* spends from it, never when you
-  do, so an unlimited approval survives any amount of trading.
-- **Receiving more.** Buying more of a covered stock into the same account is covered
-  automatically, at the same share.
-
-## What does
-
-- Approving another program or wallet on the same token account.
-- Revoking approvals in your wallet's security settings.
-- Closing the token account, for example after selling out.
+Trading part of the position or buying more does **not** break it.
 
 ## How you find out
 
-The dashboard reads every covered account's current delegate and allowance and compares
-them against your plan. An evicted holding shows as **Coverage lost**, and a banner at the top
-of the dashboard says how many are affected. The portfolio marks it the same way.
+The dashboard checks every covered holding against your plan. A broken one shows
+**Coverage lost**, with a banner saying how many are affected.
 
 ## How to fix it
 
-Press **Re-approve** on the holding. It is one transaction that retires the old coverage
-record and covers the holding again, approving the plan once more at the same share.
-
-If you sold out and closed the account, press **Remove record** instead. It tidies up the
-plan — a plan can only be closed once nothing is left covered.
+Press **Re-approve** on the holding. One transaction covers it again at the same share.
+If you sold out and closed the account, press **Remove record** instead.
 
 <Callout type="tip" title="If you approve apps often">
-Every approval is a chance to evict the backup. For stocks you mean to hold untouched for a
-long time, a [vault](/docs/stocks/overview/#vault-mode) can't be displaced at all.
+For stocks you plan to hold untouched, [vault mode](/docs/stocks/overview/#vault-mode)
+can't be broken this way.
 </Callout>
 
 ## CPI Guard
 
-Some wallets offer **CPI Guard**, a Token-2022 setting that stops programs from acting on
-your account on your behalf. While it is on, a holding can't be *covered*, because the
-approval is made through the program. Once covered, turning it on does no harm: recovery
-moves tokens as the delegate, which CPI Guard allows, and you can still stop covering.
+Some wallets offer CPI Guard, which stops programs acting on your account. While it is
+on, you can't cover a new holding. Turning it on after a holding is covered is fine:
+recovery still works, and you can still stop covering.

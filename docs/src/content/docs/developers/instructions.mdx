@@ -1,0 +1,55 @@
+---
+title: Instructions
+description: Every instruction, who can sign it, and the rules to know when calling it.
+section: developers
+order: 2
+keywords: ["instructions", "ix", "update_field", "claim", "revoke", "initialize", "update_heir", "delegate_defer", "lulo"]
+---
+
+Program ID: `heirRS7LknVZiPvnZqEpfcAzFDvXgv96wMH7ByGHukg` (devnet). There are no admin
+instructions. The [program source](https://github.com/HISTORIAH/Heirloom-app/tree/main/programs/heirloom)
+has the full account lists.
+
+| Instruction | Signer | What it does |
+|---|---|---|
+| `initialize` | Owner | Opens an estate, optionally with a first token, and moves the opening deposit in |
+| `register_asset` | Owner | Adds a new token to an estate, with a deposit |
+| `update_field` | Owner or check-in signer | Checks in. Timing changes apply only when the owner signs |
+| `update_heir` | Owner | Moves the estate to a new heir, one asset per call |
+| `claim` | Heir | Pays one asset to the heir, minus 0.75% |
+| `revoke` | Owner | Returns one asset to the owner, minus 0.5% |
+| `delegate_defer` | Guardian | Pauses the deadline, once |
+| `deposit_lulo` | Owner | Moves an amount into Lulo, protected or boosted |
+| `withdraw_protected_lulo` | Owner | Recalls a protected position |
+| `init_withdraw_regular_lulo` | Owner | Starts a boosted withdrawal |
+| `complete_withdraw_regular_lulo` | Owner | Finishes a boosted withdrawal |
+
+## Rules to know
+
+### update_field
+
+Always records the check-in, then applies any timing arguments, but only if the owner
+signed. Pass all three as `null` for a plain check-in. Timing sent by the check-in signer
+is ignored without an error.
+
+### claim and revoke
+
+Each call moves one asset. The SOL call closes the estate, so put every token call first
+and the SOL call last, in one transaction. Otherwise it fails with `TokensFirst`. Both fail
+with `FundsStillDeployed` while the asset is in Lulo.
+
+### update_heir
+
+One asset per call. Run every call to the end, or assets are left split across two
+estates. It fails with `EstatePaused` during a guardian pause.
+
+### delegate_defer
+
+Works once, and only before the estate is claimable. Otherwise it fails with
+`AlreadyDeferred` or `DeferWindowExpired`.
+
+### initialize
+
+The guardian (`delegate`) and check-in signer (`check_in_signer`) are optional accounts.
+Leave either out and that role stays empty for the life of the estate. Leave out the
+mint accounts for a SOL-only estate.

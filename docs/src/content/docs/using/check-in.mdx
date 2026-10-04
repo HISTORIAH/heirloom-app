@@ -1,87 +1,62 @@
 ---
 title: Check in
-description: The one habit an estate asks of you — from the dashboard, from a phone, or from a script.
+description: How the deadline works, how to check in, and how to choose your timing.
 section: using
 order: 3
-keywords: ["check in", "heartbeat", "keep alive", "hot signer", "phone", "reset clock"]
+keywords: ["check in", "heartbeat", "grace period", "deadline", "interval", "timer", "check-in signer"]
 ---
 
-A check-in is a signed transaction that writes the current time into `last_check_in_ts`.
-It pushes the deadline forward by your full interval and costs nothing but network fees.
+A check-in is a transaction that tells the program you are still here. It pushes the
+deadline forward by your full interval, moves no funds, and costs only a network fee.
 
-## From the dashboard
+## The deadline
 
-Open [app.heirlm.xyz/dashboard](https://app.heirlm.xyz/dashboard), find the estate, and
-press **Send heartbeat**. The countdown resets while the transaction confirms.
+Your estate becomes claimable at your last check-in, plus your check-in interval, plus
+your grace period. With a 30-day interval and a 7-day grace, the heir can claim 37 days
+after your last check-in.
 
-## From a phone, with a hot signer
+The two numbers mean different things. Miss the interval and you are late: the estate
+enters grace and the app warns you. Only when grace also runs out can the heir claim.
+That gap is your chance to be reminded, and your guardian's chance to step in.
 
-If the wallet that owns the estate is cold, checking in with it every month is exactly
-the friction that makes people stop. Register a `check_in_signer` — a hot wallet you keep on
-your phone — and use the single-purpose page instead:
+## How to check in
 
-<Steps>
-  <Step title="Open the heartbeat page">
-    [app.heirlm.xyz/heartbeat](https://app.heirlm.xyz/heartbeat), with the hot wallet
-    connected.
-  </Step>
-  <Step title="Enter the pair">
-    Your authority address and the heir's address. Those two derive the estate PDA, so
-    the page can look it up without knowing anything else.
-  </Step>
-  <Step title="Sign">
-    The page checks the connected wallet against the estate's registered `check_in_signer` and
-    shows you both for comparison before it lets you sign.
-  </Step>
-</Steps>
+- **From the dashboard.** Open the estate and press check in.
+- **From your phone, with a check-in signer.** If the owner wallet is a hardware wallet,
+  name a [check-in signer](/docs/how-it-works/#who-can-do-what) and check in with it at
+  [app.heirlm.xyz/heartbeat](https://app.heirlm.xyz/heartbeat). Enter your address and
+  your heir's, and sign. The signer can check in and do nothing else.
+- **From a script.** A check-in is the `update_field` instruction with no settings. See
+  [Clients](/docs/developers/clients/#check-in).
 
-The hot signer can send check-ins and nothing else. It cannot change a duration, add an
-asset, reassign the heir, or move a lamport.
-
-## From a script
-
-A check-in is `update_field` with every optional argument set to null, so it is a
-two-line call against the generated client:
-
-<Code caption="Using @historiah/heirloom">
-```ts
-import { updateFields } from "@/services/heirloom";
-
-await updateFields(client, signer, {
-  heir,
-  checkInIntervalSecs: null,
-  gracePeriodSecs: null,
-  delegatePauseDurationSecs: null,
-});
-```
-</Code>
-
-Run it from a cron job with a hot signer key and the estate keeps itself alive. That is a
-deliberate design point rather than a loophole: the signer can only ever perform this one
-action, so the blast radius of that key leaking is "someone else keeps your estate
-alive".
-
-<Callout type="warning" title="Automating away the whole point">
-An estate that a script keeps alive forever will never reach your heir, which is the one
-thing it exists to do. If you automate check-ins, make sure the automation depends on
-something only you can renew — a key that expires, a bill you pay, a device you carry.
+<Callout type="warning" title="Don't automate away the point">
+An estate a script keeps alive forever never reaches your heir. If you automate
+check-ins, make the automation depend on something only you can keep going, like a
+device you carry or a bill you pay.
 </Callout>
 
-## Changing settings counts as a check-in
+## What counts
 
-`update_field` writes `last_check_in_ts` unconditionally, before it looks at any of the
-optional arguments. Editing your interval, grace period, or pause duration
-therefore also resets the clock. There is no way to change a setting without checking in.
+| Counts as a check-in | Does not |
+|---|---|
+| Checking in | Adding assets |
+| Changing the interval, grace or pause length | Earning or recalling yield |
+| | Changing the heir |
 
-## What does not count
+## Choosing your timing
 
-Depositing, registering an asset, routing yield, and recalling yield all leave
-`last_check_in_ts` untouched. A busy estate can still lapse. Only `update_field` resets the
-clock.
+- **Short interval:** your heir gets access sooner when it matters, and you check in
+  more often.
+- **Long interval:** less to think about, and a longer wait for your heir.
 
-## After a pause
+Most people start around **30 days with a 7-day grace** and adjust after a month. You can
+change both at any time, up to 365 days each.
 
-If a guardian deferred the estate, `delegate_pause_expires_at` holds a future timestamp. Checking in
-during that window updates `last_check_in_ts` normally but leaves the pause in place. The
-pause is cleared by the first check-in sent **after** it expires — see
-[Heartbeats & the grace period](/docs/concepts/heartbeat/#checking-in-while-paused).
+An interval and grace of zero are allowed, but the estate is then claimable right away.
+That is useful for testing and almost never what you want.
+
+## After a guardian pause
+
+A check-in during a guardian's pause works as normal but leaves the pause in place. The
+first check-in after the pause ends clears it, which lets the guardian pause again if
+they ever need to.
