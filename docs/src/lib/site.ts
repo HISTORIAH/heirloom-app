@@ -33,7 +33,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export const withBase = (path: string) => `${BASE}/${path.replace(/^\//, "")}`;
 
-/** A doc entry's id ("concepts/estate", or "index") as a site path. */
+/** A doc entry's id ("using/claim", or "index") as a site path. */
 export const docHref = (id: string) => (id === "index" ? `${BASE}/` : `${BASE}/${id}/`);
 
 /** Any route on the app. */

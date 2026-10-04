@@ -1,0 +1,78 @@
+---
+title: Clients
+description: Install the TypeScript or Rust client and make your first calls.
+section: developers
+order: 1
+keywords: ["javascript", "typescript", "rust", "client", "sdk", "codama", "kit", "npm", "crate", "integrate"]
+---
+
+Both clients are generated from the program's IDL, so they always match the program.
+
+| | Package | Install |
+|---|---|---|
+| TypeScript | `@historiah/heirloom` | `bun add @historiah/heirloom` |
+| Rust | [`heirloom-client`](https://crates.io/crates/heirloom-client) | `cargo add heirloom-client` |
+
+The TypeScript client is built on [`@solana/kit`](https://github.com/anza-xyz/kit) v7,
+not `web3.js`. The program ID and treasury address are built in. The examples below use
+TypeScript.
+
+## Open an estate
+
+```ts
+import { getInitializeInstructionAsync } from "@historiah/heirloom";
+
+const ix = await getInitializeInstructionAsync({
+  authority: signer, // the owner
+  heir,
+  checkInIntervalSecs: 30n * 86_400n,
+  gracePeriodSecs: 7n * 86_400n,
+  delegatePauseDurationSecs: 30n * 86_400n,
+  amount: 1_000_000_000n, // 1 SOL, in lamports
+});
+```
+
+## Check in
+
+A check-in is `update_field` with no settings. The signer can be the owner or the
+check-in signer.
+
+```ts
+import { findEstatePda, getUpdateFieldInstruction } from "@historiah/heirloom";
+
+const [estate] = await findEstatePda({ authority: owner, heir });
+const ix = getUpdateFieldInstruction({
+  authority: signer,
+  heir,
+  estate,
+  checkInIntervalSecs: null,
+  gracePeriodSecs: null,
+  delegatePauseDurationSecs: null,
+});
+```
+
+## Read an estate
+
+```ts
+import { fetchMaybeEstate } from "@historiah/heirloom";
+
+const maybe = await fetchMaybeEstate(rpc, estate);
+if (maybe.exists) console.log(maybe.data.heir, maybe.data.lastCheckInTs);
+```
+
+To list estates by owner or by heir alone, call `getProgramAccounts` with a `memcmp`
+filter on the `authority` or `heir` field, and decode the results with `decodeEstate`.
+
+## Addresses
+
+Each estate is two accounts, derived from the owner and heir, plus one record per token:
+
+```ts
+import { findEstatePda, findVaultPda, findAssetRecordPda } from "@historiah/heirloom";
+
+const [estate] = await findEstatePda({ authority: owner, heir });
+const [vault] = await findVaultPda({ authority: owner, heir }); // holds the assets
+const [record] = await findAssetRecordPda({ estate, mint });
+```
+
+Every other instruction has a builder too. See [Instructions](/docs/developers/instructions/).

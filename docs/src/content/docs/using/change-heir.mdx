@@ -1,76 +1,35 @@
 ---
 title: Change the heir
-description: Why reassigning an heir migrates the whole estate to new accounts, and what that means for your assets mid-flight.
+description: Moving an estate to a new heir without taking anything out.
 section: using
-order: 5
-keywords: ["change heir", "reassign", "update heir", "migrate", "beneficiary"]
+order: 4
+keywords: ["change heir", "reassign", "update heir", "migrate"]
 ---
 
-The heir's address is a seed of the estate PDA. Changing it therefore cannot be an edit —
-it is a **migration**: the program opens a new estate and vault for the new pair, moves
-every asset across, and closes the old accounts.
-
-<Code caption="Before and after">
-```txt
-old   estate = PDA(["estate", authority, old_heir])
-      vault  = PDA(["vault",  authority, old_heir])
-
-new   estate = PDA(["estate", authority, new_heir])
-      vault  = PDA(["vault",  authority, new_heir])
-```
-</Code>
+The estate's address is derived from your wallet and the heir's, so changing the heir
+moves everything to a **new estate** for the new heir and closes the old one. Assets go
+straight from one estate to the other and never pass through a wallet.
 
 ## What carries over
 
-The new estate is the old one, re-keyed:
+Your timing, your last check-in, your guardian and your check-in signer all carry over.
+Your clock is not restarted, so changing the heir neither buys nor costs you time. Any
+guardian pause is cleared. It is free apart from network fees.
 
-| Carried | Reset |
-|---|---|
-| `check_in_interval_secs` | `delegate_pause_expires_at` → `0` |
-| `grace_period_secs` | |
-| `last_check_in_ts` — your clock is not restarted | |
-| `delegate_pause_duration_secs` | |
-| `delegate` and `check_in_signer` | |
-| `claimable_assets` | |
+The old heir is not notified. They had nothing to lose unless the estate was already
+claimable.
 
-Because `last_check_in_ts` carries over, reassigning an heir does not buy you time and does
-not cost you any.
+## Before you start
 
-## Migration is not atomic across assets
+- **The estate can't be paused.** If a guardian has paused it, wait for the pause to
+  end, check in once, then change the heir. Otherwise it fails with `EstatePaused`.
+- **Recall any yield first.** Assets in a Lulo position can't move. See
+  [Earn yield](/docs/using/yield/).
+- **The new heir can't already have an estate from you.** One owner and heir pair can
+  have only one estate.
 
-`update_heir` moves one asset per call. Between the first call and the last, the estate is
-mid-flight: the new estate exists with `is_migrating: true`, and the old one still holds
-whatever has not moved yet. The program uses that flag to make sure the destination it is
-writing into is a half-built migration rather than an unrelated live estate.
+## Change the heir or start over?
 
-The app drives this for you with `updateHeirAll`, which derives both PDA pairs and
-sequences the asset moves. If you are calling the program directly, run the calls to
-completion — an abandoned migration leaves two estates where you meant to have one.
-
-## What it does not do
-
-- **It never sends assets to an outside wallet.** Everything moves PDA to PDA.
-- **It does not notify anyone.** The old heir is simply no longer named. They had no
-  entitlement to lose unless the estate was already claimable.
-- **It does not restart your clock.**
-
-## Guards
-
-| Requirement | Error if unmet |
-|---|---|
-| Signer is the authority | `Unauthorized` |
-| The estate is not paused (`now >= delegate_pause_expires_at`) | `EstatePaused` |
-| The destination estate is the migration target | `InvalidAccount` |
-| The asset has no open yield exposure | `FundsStillDeployed` |
-
-<Callout type="warning" title="You cannot reassign a paused estate">
-A live guardian pause blocks the migration. Wait for `delegate_pause_expires_at` to expire, check in
-once to clear it, then reassign.
-</Callout>
-
-## When to use it instead of a new estate
-
-Reassigning keeps your clock, your settings, and your assets in place — no exit fee, no
-re-deposit, no gap in coverage. Opening a fresh estate is the right move only when you
-want different terms, or when you need to change a guardian or hot signer, which
-migration carries over unchanged.
+Changing the heir keeps your clock, timing and assets in place, with no fee. Open a new
+estate instead only if you want to change your guardian or check-in signer, which
+changing the heir carries over as they are.

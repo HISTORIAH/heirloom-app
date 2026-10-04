@@ -1,0 +1,40 @@
+---
+title: Fees
+description: What Heirloom charges, when, and what is free.
+section: getting-started
+order: 4
+keywords: ["fees", "cost", "pricing", "bps", "treasury", "protocol fee"]
+---
+
+| Action | Fee | Charged on |
+|---|---|---|
+| Open an estate, add assets, check in | Free | |
+| Change the heir, pause as a guardian | Free | |
+| Heir claims | **0.75%** | Each asset paid out |
+| Owner closes the estate | **0.5%** | Each asset returned |
+| Yield | **10%** | The yield only, never the principal |
+
+Every action also costs a Solana network fee, a fraction of a cent. Fees go to the
+Heirloom treasury when assets leave the estate.
+
+Rent is not a fee. Every account an estate creates holds a little SOL to stay alive on
+Solana, and you get it back when the estate closes. The app leaves it out of the balance
+it shows, which is why an estate funded with 1 SOL shows slightly less.
+
+## Examples
+
+- An heir claiming 100 USDC receives 99.25 USDC.
+- An owner closing an estate with 10 SOL gets back 9.95 SOL, plus the rent.
+- A Lulo position that put in 1,000 USDC and returned 1,050 USDC pays 5 USDC: 10% of
+  the 50 USDC earned. A position that returns the same or less pays nothing.
+
+## Details
+
+- Fees are rounded up to the nearest base unit, so on any normal balance the difference
+  is at most one unit.
+- The rates and the treasury address are fixed in the program. Changing them would
+  require deploying a new program; no transaction can change them.
+- Closing costs less than claiming on purpose, so taking your own assets back is never
+  the expensive option.
+
+The exact constants are in [Addresses & clusters](/docs/reference/addresses/#protocol-constants).

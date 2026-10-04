@@ -1,74 +1,39 @@
 ---
 title: Fund an estate
-description: Adding SOL and new tokens to a live estate, topping up what is already registered, and what each costs.
+description: Adding SOL and tokens to an estate, and which tokens need care.
 section: using
 order: 2
-keywords: ["fund", "deposit", "top up", "add tokens", "register asset", "sol"]
+keywords: ["deposit", "top up", "add asset", "register", "fund", "tokens", "spl", "token-2022", "freeze", "transfer hook", "nft"]
 ---
 
-A live estate takes deposits at any time, from the authority wallet. Nothing about
-funding touches the clock — a deposit is not a check-in.
+You can add assets to a live estate at any time from the owner wallet. There is no
+protocol fee and no limit on how often.
 
-## Adding a new token
+## What you can add
 
-The first time a mint enters an estate it has to be registered. That single instruction
-does three things: creates the `AssetRecord` marker PDA, creates the vault's associated
-token account for that mint, and moves your opening balance in.
+SOL and any SPL token, from both the classic Token program and Token-2022. NFTs and
+compressed assets aren't supported.
 
-```ts
-await registerAsset(client, signer, { heir, mint, amount });
-```
+The first time a token goes into an estate it is registered, which costs a little rent
+for its accounts. You get that back when the estate closes. After that, adding more of
+the same token is a plain transfer.
 
-From the dashboard: open the estate card, choose **Add asset**, pick a token from your
-wallet's holdings, and enter an amount.
+## Tokens that need care
 
-## Topping up
-
-Once a mint is registered, adding more is a plain transfer into an account that already
-exists:
-
-```ts
-await depositToken(client, signer, { heir, mint, amount });
-await depositSol(client, signer, { heir, lamports });
-```
-
-There is no protocol fee on either, and no limit on how many times you do it.
-
-## Topping up SOL
-
-SOL is slightly different because it has no token account. `registerSolDeposit` is what
-the app uses when an estate's SOL leg needs to be established, and `depositSol` is a
-plain lamport transfer into the vault after that.
-
-<Callout type="note" title="The rent reserve">
-The vault must stay rent-exempt, so a small SOL balance is always locked. The app
-subtracts it when displaying a claimable balance — a vault holding exactly the reserve
-reports zero, correctly. The reserve is returned when the estate closes.
+<Callout type="danger" title="Freeze authority">
+If a token's issuer freezes the estate's account for it, that asset is stuck until they
+unfreeze it. Most regulated stablecoins, USDC and USDT included, have this power. It is a
+property of the token, and no program can work around it.
 </Callout>
 
-## What it costs
+- **Transfer hooks.** A token with an active transfer hook is rejected when you add it.
+  If an issuer turns a hook on after you added the token, that asset can't leave.
+- **Transfer fees.** A token that charges a fee on transfer simply arrives a little
+  smaller.
 
-Nothing, to Heirloom. You pay Solana network fees, plus rent for any account the
-transaction creates — the `AssetRecord` and the vault token account on a first
-registration. Rent is refunded when those accounts close.
+## Good to know
 
-## What you cannot deposit
-
-- **NFTs and compressed assets.** The program moves fungible balances with
-  `transfer_checked`; there is no NFT path.
-- **Mints with an active transfer hook.** They fail at deposit and never enter the
-  estate. See [Assets & the vault](/docs/concepts/assets/#mints-that-do-not-work).
-- **Zero.** `ZeroDepositAmount` rejects it.
-
-## Removing an asset
-
-There is no "unregister" instruction. Funds leave through
-[emergency withdraw](/docs/using/emergency-withdraw/), which returns the balance and
-closes the asset's accounts. Withdrawing one asset does not close the estate — only
-clearing the last one does, because the SOL leg is what closes the vault.
-
-<Callout type="warning" title="Recall yield first">
-An asset with an open Lulo position cannot be withdrawn or claimed: the program checks
-the exposure flags on its `AssetRecord` and fails with `FundsStillDeployed`. Recall the
-strategy first, then withdraw.
-</Callout>
+- **Adding assets is not a check-in.** Only a check-in or a timing change resets the
+  clock, so a busy estate can still run out.
+- **To take assets back,** [close the estate](/docs/using/close-estate/). The app returns
+  everything at once.

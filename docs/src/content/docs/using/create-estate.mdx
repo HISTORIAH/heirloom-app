@@ -1,97 +1,58 @@
 ---
 title: Create an estate
-description: The four steps of the creation wizard, what each field does on-chain, and what the single transaction actually contains.
+description: What you choose when you open an estate, and what happens when you sign.
 section: using
 order: 1
 keywords: ["create", "new estate", "open", "wizard", "initialize", "create vault"]
 ---
 
-Creating an estate is one transaction. The app's wizard collects four screens of input
-and then sends `initialize` — plus one `register_asset` per additional token — as a
-single atomic instruction bundle.
+Creating an estate takes four choices and one signature. Start at
+[app.heirlm.xyz/create-vault](https://app.heirlm.xyz/create-vault) with a wallet
+connected. That wallet becomes the owner.
 
-Open [app.heirlm.xyz/create-vault](https://app.heirlm.xyz/create-vault) with a wallet
-connected.
+## 1. Heir
 
-## Step 1 — Heir
+The wallet that can claim once the deadline passes. One estate has one heir, and the
+estate is tied to that address, so check it twice. You can
+[change it later](/docs/using/change-heir/).
 
-| Field | On-chain | Notes |
+To recover your own wallet rather than leave assets to someone, name a second wallet of
+yours. See [Wallet recovery](/docs/using/wallet-recovery/).
+
+## 2. Assets
+
+SOL, tokens, or both. This is only an opening balance: you can
+[add more](/docs/using/fund-estate/) whenever you like. Check
+[which tokens need care](/docs/using/fund-estate/#tokens-that-need-care) before adding
+anything unusual.
+
+## 3. Timing
+
+| Setting | What it means | Limit |
 |---|---|---|
-| Heir address | `heir` | A raw address. It is a PDA seed, so it fixes the estate's identity |
-| Guardian *(optional)* | `delegate` | May defer the deadline once. Cannot move funds |
+| Check-in interval | How long you can go without checking in | 365 days |
+| Grace period | Extra time after a missed check-in, before the heir can claim | 365 days |
+| Pause length | How far a guardian can push the deadline, once | 365 days |
 
-<Callout type="warning" title="Check the heir address twice">
-There is no name resolution and no undo. If you mistype it, the estate belongs to a
-wallet nobody controls, and your only exit is an emergency withdraw. Paste from the
-wallet, and consider sending a small transfer first to confirm it arrives.
-</Callout>
+All three can be changed later, and changing them counts as a check-in. For help
+choosing, see [Check in](/docs/using/check-in/#choosing-your-timing).
 
-## Step 2 — Deposit
+You can also name two optional helpers here: a **guardian** who can pause the deadline
+once, and a **check-in signer** that can check in for you. Neither can move funds, and
+neither can be changed after creation yet. See [How it works](/docs/how-it-works/#who-can-do-what).
 
-Choose an opening SOL amount, any SPL tokens, or both. Every token you pick here is
-registered, which creates its `AssetRecord` marker and the vault's token account in this
-same transaction.
+## 4. Review and sign
 
-You are not committing to a final amount. Assets can be added and topped up at any time
-— see [Fund an estate](/docs/using/fund-estate/).
+The review screen shows the estate exactly as it will exist. Read the timing back in
+days, confirm the heir, and sign.
 
-## Step 3 — Heartbeat
+One transaction creates the estate and moves every asset in. Either all of it happens or
+none of it does. The clock starts the moment it lands.
 
-| Field | On-chain | Cap |
-|---|---|---|
-| Heartbeat interval | `check_in_interval_secs` | 365 days |
-| Grace period | `grace_period_secs` | 365 days |
-| Pause duration | `delegate_pause_duration_secs` | 365 days |
-| Hot signer *(optional)* | `check_in_signer` | — |
-
-The first two define the deadline; the third is how much time a guardian may add. All
-three are editable later, and editing them counts as a check-in.
-
-A **hot signer** is a second wallet of yours that may send check-ins and nothing else. If
-the wallet that owns the estate is a hardware or cold wallet, register one — it is the
-difference between a monthly ritual with a Ledger and tapping a button on your phone.
-
-## Step 4 — Review
-
-The review screen is the estate as it will exist. Read the two durations back to yourself
-in days, confirm the heir, and sign.
-
-## What the transaction does
-
-<Code caption="One transaction, in order">
-```txt
-initialize(check_in_interval_secs, grace_period_secs, delegate_pause_duration_secs, amount)
-  ├─ create estate PDA          seeds ["estate", authority, heir]
-  ├─ create vault PDA           seeds ["vault",  authority, heir]
-  ├─ create asset record        seeds ["asset", estate, mint]      (if a mint was given)
-  ├─ create vault token account                                    (if a mint was given)
-  ├─ transfer the token deposit into the vault
-  └─ transfer the SOL deposit into the vault
-
-register_asset(amount)   ×N     one per additional token
-```
-</Code>
-
-Because it is one transaction, it either all happens or none of it does. There is no
-state where an estate exists but its funding failed.
-
-## After it lands
-
-The clock starts immediately — `last_check_in_ts` is set to the transaction's timestamp,
-not to zero. Your estate appears on the dashboard as **active**, with a countdown to the
-grace window.
-
-<Callout type="note" title="Re-creating an estate you just closed">
-The estate PDA is derived from your address and your heir's, so closing one and
-immediately reopening the same pair can fail while RPC snapshots still show the old
-account. The app polls for up to 20 seconds and retries before surfacing
-`Prior estate/vault PDAs not yet cleared on-chain.` — wait a few seconds and try again.
-</Callout>
-
-## Common failures
+## If it fails
 
 | Error | Cause |
 |---|---|
-| `IntervalTooLong` | A duration above 365 days |
-| `IntervalNegative` | A negative duration |
-| `ZeroDepositAmount` | A registration with an amount of zero |
+| `IntervalTooLong` | A setting above 365 days |
+| `ZeroDepositAmount` | An asset added with an amount of zero |
+| "Prior estate/vault PDAs not yet cleared on-chain" | You just closed an estate for the same heir. Wait a few seconds and retry |

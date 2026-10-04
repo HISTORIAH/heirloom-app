@@ -1,111 +1,76 @@
 ---
 title: How it works
-description: The whole lifecycle, from opening an estate to the moment an heir claims it — and every exit in between.
+description: The deadline, the four states an estate moves through, who can do what, and how assets leave.
 section: getting-started
 order: 3
-keywords: ["lifecycle", "overview", "flow", "how", "mechanism"]
+keywords: ["lifecycle", "states", "deadline", "roles", "owner", "heir", "guardian", "check-in signer", "permissions"]
 ---
 
-Heirloom has one moving part: **a deadline that you push forward by signing.** Everything
-else in the protocol is a consequence of that.
+Heirloom has one moving part: **a deadline you push forward by checking in.** Everything
+else follows from it.
 
-## The clock
+## The deadline
 
-When you open an estate you choose two durations. Together they define the moment the
-estate becomes claimable:
+An estate becomes claimable at:
 
-<Code caption="The claim condition, from the program">
-```rust
-let claimable_at = estate.last_check_in_ts
-    + estate.check_in_interval_secs
-    + estate.grace_period_secs;
-
-require!(now >= claimable_at.max(estate.delegate_pause_expires_at), NotYetClaimable);
+```txt
+last check-in + check-in interval + grace period
 ```
-</Code>
 
-Every check-in writes `now` into `last_check_in_ts`, which moves `claimable_at` forward by
-the same amount. As long as you keep signing, the condition is never true and the heir
-can do nothing at all.
+Each check-in resets the starting point, so as long as you keep checking in, the heir
+can never claim. A 30-day interval with a 7-day grace means the heir can claim 37 days
+after your last check-in, and not a second before.
 
-## Four states
+If a guardian has paused the estate, the deadline is the later of that time and the end
+of the pause.
 
-An estate is always in exactly one of these. The app derives them from the same three
-numbers the program uses, so the badge on your dashboard and the guard in the program
-never disagree.
+## The four states
 
 | State | When | What can happen |
 |---|---|---|
-| **Active** | Before `last_check_in_ts + check_in_interval_secs` | Business as usual. Fund it, route yield, change settings |
-| **Grace** | Interval lapsed, grace period still running | Same as active, plus: a guardian may defer, and the app starts warning |
-| **Claimable** | `now >= claimable_at` | The heir can claim. You can still withdraw first — whoever signs first wins |
-| **Distributed** | Vault empty, accounts closed | Nothing. The estate is gone and its rent has been returned |
+| **Active** | Within your check-in interval | Everything. Only you can act |
+| **Grace** | Interval missed, grace still running | The same, and the app warns you. A guardian can pause it |
+| **Claimable** | Grace has run out | The heir can claim. You can still take everything back first |
+| **Claimed** | The estate is empty | Nothing. The estate is closed |
 
-## The four ways assets leave
-
-There is no fifth. Nothing else in the program can move a lamport out of a vault.
-
-<Cards>
-  <Card title="You withdraw" icon="undo-2">
-    **Emergency withdraw**, any time, any state before distribution. Everything goes back
-    to your wallet minus a 0.5% fee.
-  </Card>
-  <Card title="Your heir claims" icon="gift">
-    Only once `claimable_at` has passed. Everything goes to the heir minus a 0.75% fee.
-  </Card>
-  <Card title="You reassign" icon="user-round-cog">
-    **Change heir** migrates the whole estate to a new PDA pair for the new heir. Assets
-    never touch an outside wallet.
-  </Card>
-  <Card title="A strategy recalls" icon="trending-up">
-    Yield withdrawals return principal and yield to the vault, not to anyone's wallet.
-  </Card>
-</Cards>
+Nothing happens on its own. A claimable estate waits, indefinitely and at no cost, until
+the heir signs.
 
 ## Who can do what
 
-Each of the three optional roles is deliberately narrow. A guardian is not a co-signer,
-and a hot signer is not a spare owner.
+Every estate has an **owner** (the wallet that opened it) and an **heir**. It can also
+name two optional helpers:
 
-| | Authority | Heir | Guardian | Hot signer |
+- **Guardian:** someone you trust who can pause the deadline once, for when you are fine
+  but can't check in. See [Pause as a guardian](/docs/using/defer/).
+- **Check-in signer:** a second wallet of yours, usually on your phone, that can check
+  in and nothing else. It lets the owner key stay on a hardware wallet.
+
+| | Owner | Heir | Guardian | Check-in signer |
 |---|---|---|---|---|
-| Send a check-in | ✓ | | | ✓ |
-| Change interval / grace / pause | ✓ | | | |
-| Add or fund assets | ✓ | | | |
-| Route or recall yield | ✓ | | | |
+| Check in | ✓ | | | ✓ |
+| Change timing | ✓ | | | |
+| Add assets, earn yield | ✓ | | | |
 | Change the heir | ✓ | | | |
-| Emergency withdraw | ✓ | | | |
-| Push the deadline out, once | | | ✓ | |
+| Close the estate | ✓ | | | |
+| Pause the deadline, once | | | ✓ | |
 | Claim, once claimable | | ✓ | | |
 
-A guardian's only power is to set `delegate_pause_expires_at`, and they may use it **once per estate**.
-A hot signer's check-in resets the clock but cannot change a single setting, because the
-program only applies the settings arguments when the signer is the authority itself.
+The owner can never change. The heir can be [changed](/docs/using/change-heir/). The
+guardian and check-in signer are set when the estate is created and can't be changed
+yet; to change them, close the estate and open a new one.
 
-## What happens if you never come back
+## One estate, one heir
 
-Nothing dramatic, and nothing automatic. The estate crosses into `claimable` and then
-waits — indefinitely, at no cost, earning whatever a strategy was earning. There is no
-keeper, no cron job, and no party with an incentive to act on your behalf. The heir has
-to show up and sign.
+Every asset in an estate goes to the one heir it names. To split an inheritance, open
+one estate per person and fund each with what they should get.
 
-When they do, the program pays out every registered asset in one transaction, tokens
-first and SOL last, skimming 0.75% per asset to the treasury. The SOL leg closes the
-estate and vault accounts and returns their rent, which is why it has to go last.
+## How assets leave
 
-<Callout type="tip" title="Your heir needs one thing from you">
-Their wallet address is already stored on-chain, so they do not need a document, a
-password, or your seed phrase. They need to know Heirloom exists. The claim page finds
-every estate that names them — they never need your address.
-</Callout>
-
-## Where the money goes
-
-| Event | Fee | Charged on |
+| Exit | Who | Fee |
 |---|---|---|
-| Open an estate, deposit, check in | **0** | — |
-| Claim | **0.75%** | Each asset paid out |
-| Emergency withdraw | **0.5%** | Each asset returned |
-| Yield | **10%** | The yield only, never the principal |
+| [Close the estate](/docs/using/close-estate/) | You, any time before it is claimed | 0.5% |
+| [Claim](/docs/using/claim/) | The heir, once claimable | 0.75% |
+| [Change the heir](/docs/using/change-heir/) | You. Assets move to a new estate, not a wallet | Free |
 
-Full detail, including how the split is rounded, is in [Fees](/docs/concepts/fees/).
+Once an estate is claimable, both you and the heir can act. Whoever signs first wins.

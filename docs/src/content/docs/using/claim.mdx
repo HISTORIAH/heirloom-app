@@ -1,20 +1,18 @@
 ---
 title: Claim an inheritance
-description: What an heir does, what they need to know in advance, and exactly when the program will let them sign.
+description: What an heir does, what they need, and when they can do it.
 section: using
-order: 7
-keywords: ["claim", "heir", "inherit", "beneficiary", "receive", "payout"]
+order: 8
+keywords: ["claim", "heir", "inherit", "receive", "beneficiary"]
 ---
 
-If you have been named as an heir, this is the only page you need. You do not need the
-owner's address, a document, a password, or anything they would have had to give you in
-advance.
+If you have been named as an heir, this is the only page you need. You don't need the
+owner's address, a document, or a password.
 
 ## What you need
 
-- The wallet whose address the owner named. That wallet is the entitlement.
+- The wallet the owner named. Holding it is what entitles you.
 - A little SOL for network fees.
-- Enough time to have passed.
 
 ## How to claim
 
@@ -22,68 +20,46 @@ advance.
   <Step title="Open the claim page">
     [app.heirlm.xyz/claim](https://app.heirlm.xyz/claim), with your wallet connected.
   </Step>
-  <Step title="Let it find you">
-    The page scans the program for every estate whose `heir` field is your address. You
-    do not enter anything — if an estate names you, it appears, along with its state and
-    what it holds.
+  <Step title="Find your estates">
+    The page lists every estate that names your wallet, with its state and what it
+    holds. There is nothing to enter.
   </Step>
   <Step title="Claim">
-    Pick the estate and sign once. The transaction pays out every registered asset:
-    tokens first, then SOL, which closes the vault and returns its rent.
+    Pick the estate and sign once. Every asset is sent to your wallet and the estate
+    closes.
   </Step>
 </Steps>
 
-## When the program will allow it
+## When you can claim
 
-<Code caption="programs/heirloom/src/instructions/claim.rs">
-```rust
-let claimable_at = estate.last_check_in_ts
-    + estate.check_in_interval_secs
-    + estate.grace_period_secs;
+Once the owner's last check-in, plus their check-in interval, plus their grace period,
+has passed. If a guardian paused the estate, you also have to wait for the pause to end.
+The claim page shows the countdown.
 
-require!(now >= claimable_at.max(estate.delegate_pause_expires_at), NotYetClaimable);
-```
-</Code>
+There is no rush. A claimable estate stays claimable until someone acts. But until you
+claim, the owner can still close the estate and take everything back, so if it matters,
+claim it.
 
-Before that moment, a claim fails with `NotYetClaimable` — there is no partial state, no
-queue, and no way to register intent early. After it, the estate stays claimable
-indefinitely; nothing expires and nothing is forfeited by waiting.
+## What you receive
 
-## What arrives
+Every asset in the estate, minus a **0.75%** fee each. An estate holding 10 SOL and 5,000
+USDC pays out 9.925 SOL and 4,962.5 USDC. Token accounts you don't have yet are created
+for you.
 
-Every registered asset, minus a **0.75%** protocol fee each. If the estate held 10 SOL
-and 5,000 USDC, you receive 9.925 SOL and 4,962.5 USDC.
+## If it fails
 
-Token accounts are created for you if you do not already have one for a mint.
-
-## What can stop it
-
-| Error | What it means | What to do |
+| Error | Meaning | What to do |
 |---|---|---|
-| `NotYetClaimable` | The deadline has not passed, or a guardian's pause is still live | Wait. The page shows the countdown |
-| `FundsStillDeployed` | An asset is out in a yield strategy | Only the owner can recall it. See below |
-| `TokensFirst` | The SOL leg was attempted while token accounts were still open | Use the app, which orders them correctly |
-| `InsufficientVaultBalance` | The vault is empty for that asset | It was already claimed or withdrawn |
+| `NotYetClaimable` | The deadline hasn't passed, or a pause is still running | Wait for the countdown |
+| `FundsStillDeployed` | An asset is in a yield position | Only the owner can recall it |
+| `InsufficientVaultBalance` | Nothing left for that asset | It was already claimed or the estate was closed |
 
-<Callout type="danger" title="Deployed funds are a real dead end">
-If an asset is sitting in a Lulo position when the owner goes quiet, only the authority
-can recall it — the heir has no instruction that can. Those funds stay in the strategy
-until the authority's key acts. If you are an owner reading this: recall your positions
-before you stop using the estate actively.
+<Callout type="danger" title="Funds in yield are stuck until the owner acts">
+If the owner left assets in a Lulo position, only the owner's wallet can bring them
+back. Owners: recall your positions before you stop using an estate actively.
 </Callout>
 
-## The owner can still take it back
-
-Until you sign, the owner's emergency withdraw works, even while the estate is claimable.
-Whoever signs first wins. If the estate matters and it is claimable, claim it.
-
-## After the claim
-
-The estate and vault accounts are closed. The arrangement is over, and nothing further is
-owed to you or by you. The assets are in your wallet, held by your keys.
-
-<Callout type="tip" title="If you are an owner reading this page">
-Everything above is what your heir will face. The one thing they cannot work out for
-themselves is that Heirloom exists and that they were named. Tell them, and tell them
-nothing else is required — no seed phrase, no address, no paperwork.
+<Callout type="tip" title="If you are an owner">
+This is everything your heir will face. The one thing they can't find out for
+themselves is that Heirloom exists and that they were named. Tell them.
 </Callout>

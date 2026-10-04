@@ -19,6 +19,21 @@ export default defineConfig({
   trailingSlash: "always",
   build: { format: "directory" },
   integrations: [mdx(), sitemap()],
+  // Pages merged or renamed in the docs trim, so old links still land somewhere.
+  redirects: {
+    "/concepts/heartbeat": "/docs/using/check-in/",
+    "/concepts/lifecycle": "/docs/how-it-works/",
+    "/concepts/estate": "/docs/how-it-works/",
+    "/using/emergency-withdraw": "/docs/using/close-estate/",
+    "/concepts/roles": "/docs/how-it-works/",
+    "/concepts/assets": "/docs/using/fund-estate/",
+    "/concepts/fees": "/docs/fees/",
+    "/program/architecture": "/docs/developers/clients/",
+    "/program/accounts": "/docs/developers/clients/",
+    "/program/instructions": "/docs/developers/instructions/",
+    "/program/errors": "/docs/developers/errors/",
+    "/reference/js-client": "/docs/developers/clients/",
+  },
   markdown: {
     // Ink-black code blocks, to match the one dark surface the landing uses.
     shikiConfig: { theme: "github-dark-default", wrap: false },

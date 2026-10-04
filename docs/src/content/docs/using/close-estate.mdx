@@ -1,0 +1,34 @@
+---
+title: Close an estate
+description: Taking everything back, at any time before the heir claims.
+section: using
+order: 5
+keywords: ["close", "emergency withdraw", "withdraw", "revoke", "exit", "take back"]
+---
+
+Closing an estate returns everything in it to your wallet and ends the estate. You can
+do it at any time before the heir claims, including after the estate has become
+claimable. Your own assets are never out of reach.
+
+## The fee
+
+**0.5%** of each asset. You also get back the rent the estate's accounts were holding.
+
+## Before you close
+
+- **Recall any yield first.** Assets in a Lulo position can't leave, and closing fails
+  with `FundsStillDeployed`. For a boosted position, both steps of the withdrawal must
+  finish. See [Earn yield](/docs/using/yield/).
+- **Closing is final.** The timing, guardian, check-in signer and the heir's claim all
+  go with it. To keep protecting the assets, you have to open a new estate.
+
+## If the estate is already claimable
+
+You and the heir can both act. There is no lock: whoever's transaction lands first wins,
+and the other one fails.
+
+## Reopening for the same heir
+
+Right after closing, creating a new estate for the same heir can fail for a few seconds
+while the network catches up. The app retries for up to 20 seconds; if it still fails,
+wait a moment and try again.
