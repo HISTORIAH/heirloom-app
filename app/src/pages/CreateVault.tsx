@@ -16,7 +16,6 @@ import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
 import ReviewStep from "@/components/create-vault/ReviewStep";
 import { ArrowLeft, ArrowRight, Bell, Loader2 } from "lucide-react";
-import { FEATURE_NOTIFICATIONS_UI } from "@/config";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import Stepper from "@/components/create-vault/Stepper";
 import SummaryColumn from "@/components/create-vault/SummaryColumn";
@@ -241,12 +240,10 @@ const CreateVaultPage = () => {
                   {t("createVault.createAnother")}
                 </Button>
               </div>
-              {FEATURE_NOTIFICATIONS_UI && (
-                <p className="mt-6 flex items-center justify-center gap-2 border-t border-tile-line pt-5 text-sm font-medium text-muted-foreground">
-                  <Bell className="h-4 w-4" strokeWidth={2} />
-                  {t("createVault.remindersNote")}
-                </p>
-              )}
+              <p className="mt-6 flex items-center justify-center gap-2 border-t border-tile-line pt-5 text-sm font-medium text-muted-foreground">
+                <Bell className="h-4 w-4" strokeWidth={2} />
+                {t("createVault.remindersNote")}
+              </p>
             </Panel>
           </main>
         </div>

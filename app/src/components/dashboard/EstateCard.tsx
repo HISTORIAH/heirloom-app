@@ -8,7 +8,7 @@ import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { SOL_DECIMALS } from "@/lib/constants";
 import { errMsg, getClusterFromEndpoint, toRawTokenAmount } from "@/lib/utils";
-import { FEATURE_NOTIFICATIONS_UI, FEATURE_YIELD_STAKING_UI } from "@/config";
+import { FEATURE_YIELD_STAKING_UI } from "@/config";
 import { EstateStatusTile } from "@/components/dashboard/EstateStatusTile";
 import { EstateAssetsPanel } from "@/components/dashboard/EstateAssetsPanel";
 import { EstateHeirTile } from "@/components/dashboard/EstateHeirTile";
@@ -299,9 +299,7 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
           <EstateManagePanel estate={estate} onTx={setLastTxId} className="lg:col-span-5" />
         )}
         <EstateFactsBand estate={estate} lastTxId={lastTxId} className="lg:col-span-12" />
-        {FEATURE_NOTIFICATIONS_UI && account && (
-          <EstateNotifications estate={estate} account={account} />
-        )}
+        {account && <EstateNotifications estate={estate} account={account} />}
       </div>
 
       {showYieldStaking && activeLuloHolding && (
@@ -359,7 +357,6 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
           step={strategyProgress}
         />
       )}
-
     </>
   );
 };

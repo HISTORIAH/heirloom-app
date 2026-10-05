@@ -14,7 +14,7 @@ export const APP_URL = "https://app.heirlm.xyz";
 
 export const GITHUB_URL = "https://github.com/HISTORIAH/Heirloom-app";
 export const TWITTER_URL = "https://x.com/heirloom_app";
-export const CONTACT_EMAIL = "info@heirlm.xyz";
+export const CONTACT_EMAIL = "hey@heirlm.xyz";
 export const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 /** Where the "Edit this page" link on every document points. */
