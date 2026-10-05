@@ -61,4 +61,4 @@ See [`app-ika/README.md`](./app-ika/README.md) for the cross-chain IKA variant.
 
 ## Security
 
-The program has been independently audited. For responsible disclosure, contact `info@heirlm.xyz` or DM `@heirloom_app`.
+The program has been independently audited. For responsible disclosure, contact `hey@heirlm.xyz` or DM `@heirloom_app`.

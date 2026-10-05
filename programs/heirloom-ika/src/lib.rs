@@ -17,7 +17,7 @@ declare_id!("9ogYSCmYTW7a1fUcxcdj6cFHqdWpCmCHugjkZLHdAyGP");
 security_txt! {
     name: "Heirloom Ika Program",
     project_url: "https://heirlm.xyz/",
-    contacts: "email:info@heirlm.xyz, twitter:@heirloom_app",
+    contacts: "email:hey@heirlm.xyz, twitter:@heirloom_app",
     policy: "https://github.com/HISTORIAH/Heirloom-app",
     preferred_languages: "en",
     source_code: "https://github.com/HISTORIAH/Heirloom-app"

@@ -269,12 +269,11 @@ POSTHOG_PROJECT_TOKEN           = VITE_POSTHOG_PROJECT_TOKEN            || ""
 POSTHOG_HOST                    = VITE_POSTHOG_HOST                     || "https://us.i.posthog.com"
 ANALYTICS_ENABLED               = VITE_ANALYTICS_ENABLED === "true"
 FEATURE_YIELD_STAKING_UI        = VITE_FEATURE_YIELD_STAKING_UI !== "false"   // on by default
-FEATURE_NOTIFICATIONS_UI        = VITE_FEATURE_NOTIFICATIONS_UI === "true"    // off by default
 ```
 
 The program ID and treasury address are not configurable here — they come from the generated client. Non-environment constants (token labels, decimals, `LABEL_MAX_LEN`, time units, the PostHog host, the devnet USDC mint) live in `src/lib/constants.ts`.
 
-**Both feature flags are temporary.** The yield and staking flows render against `lib/strategies.ts` placeholder generators and the placeholder APYs in `lib/yieldTokens.ts`; no strategy is wired to a real program yet. `services/api/notifications.ts` is an empty placeholder, which is why the notifications flag defaults off.
+**The yield feature flag is temporary.** The yield and staking flows render against `lib/strategies.ts` placeholder generators and the placeholder APYs in `lib/yieldTokens.ts`; no strategy is wired to a real program yet.
 
 ### Product analytics: PostHog
 
@@ -341,9 +340,8 @@ VITE_ANALYTICS_ENABLED=false
 VITE_POSTHOG_PROJECT_TOKEN=
 VITE_POSTHOG_HOST=https://us.i.posthog.com
 
-# Temporary feature flags — local only, the flows behind them are mocked
+# Temporary feature flag — local only, the flow behind it is mocked
 VITE_FEATURE_YIELD_STAKING_UI=true
-VITE_FEATURE_NOTIFICATIONS_UI=true
 ```
 
 Without an RPC endpoint the app targets a local validator at `127.0.0.1:8899`. Vite exposes any `VITE_`-prefixed variable through `import.meta.env`.
@@ -376,4 +374,4 @@ That rebuilds `clients/heirloom/js/src/generated/`. Because `@historiah/heirloom
 - **Tokens not showing in the estate card**: `discoverVaultTokenAccounts` filters out zero-balance accounts; confirm the deposit landed via the Explorer link.
 - **Heartbeat from `/heartbeat` rejected**: confirm the connected wallet matches the estate's `hb_signer`. The page renders the registered signer under the lookup result for comparison.
 - **Token metadata missing, icons falling back to mint addresses**: `VITE_SOLANA_RPC_ENDPOINT` is not a DAS-capable endpoint. Point it at Helius.
-- **Yield or notifications UI missing**: both sit behind feature flags in `src/config/index.ts`. Neither is wired to a backend yet.
+- **Yield UI missing**: it sits behind a feature flag in `src/config/index.ts`. Not wired to a backend yet.

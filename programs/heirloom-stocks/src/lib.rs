@@ -44,7 +44,7 @@ declare_id!("8ZwqSnyXupsKsFqseEP62P9pw6hmvaBRu52PeYGo21mm");
 security_txt! {
     name: "Heirloom Stocks Program",
     project_url: "https://stocks.heirlm.xyz/",
-    contacts: "email:info@heirlm.xyz, twitter:@heirloom_app",
+    contacts: "email:hey@heirlm.xyz, twitter:@heirloom_app",
     policy: "https://github.com/HISTORIAH/Heirloom-app",
     preferred_languages: "en",
     source_code: "https://github.com/HISTORIAH/Heirloom-app"
