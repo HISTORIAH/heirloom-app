@@ -91,8 +91,15 @@ export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
 export { floatDestinations } from "./tx/cardFloat";
 
 // NFC
-export { scanProblemMessage } from "./nfc/messages";
-export { readNfcCapability, openNfcSettings, scanCardAddress, cancelScan } from "./nfc/reader";
+export { scanProblemMessage, setupProblemMessage, cardProblemMessage } from "./nfc/messages";
+export {
+  readNfcCapability,
+  openNfcSettings,
+  scanCardAddress,
+  setupBlankCard,
+  cancelScan,
+} from "./nfc/reader";
+export { createNfcJavaCardSigner } from "./nfc/signer";
 export { addressInTag, summarizeTag } from "./nfc/tag";
 
 // Flash
