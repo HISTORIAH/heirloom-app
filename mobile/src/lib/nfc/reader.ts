@@ -1,16 +1,14 @@
-import NfcManager, { NfcTech } from "react-native-nfc-manager";
+import NfcManager from "react-native-nfc-manager";
 
-import { addressInTag, summarizeTag } from "@/lib/nfc/tag";
-import { errorMessage, isUserCancel } from "@/lib/text";
-import type { CardScan, NfcCapability, TagSummary } from "@/types/nfc";
+import { isCardApduError } from "./apdu";
+import { cancelScan, ensureNfcStarted } from "./isoDep";
+import { cardProblemMessage } from "./messages";
+import { createNfcJavaCardSigner } from "./signer";
+import { isUserCancel } from "@/lib/text";
+import type { CardScan, NfcCapability } from "@/types/nfc";
+import type { TapProgress } from "@/types/create";
 
-let started = false;
-
-async function ensureNfcStarted(): Promise<void> {
-  if (started) return;
-  await NfcManager.start();
-  started = true;
-}
+export { cancelScan };
 
 export async function readNfcCapability(): Promise<NfcCapability> {
   await ensureNfcStarted();
@@ -23,23 +21,19 @@ export async function openNfcSettings(): Promise<void> {
   await NfcManager.goToNfcSetting();
 }
 
-/** Temporary: read any nearby tag. Replaced by Java Card APDUs later. */
-async function scanAnyTag(): Promise<TagSummary> {
-  await ensureNfcStarted();
-  try {
-    await NfcManager.requestTechnology([NfcTech.Ndef, NfcTech.NfcA, NfcTech.IsoDep], {
-      alertMessage: "Hold the credential to the phone",
-    });
-    const tag = await NfcManager.getTag();
-    if (!tag) throw new Error("No tag data returned");
-    return summarizeTag(tag);
-  } finally {
-    await cancelScan();
+function scanCatch(cause: unknown, treatNoKeyAsEmpty: boolean): CardScan {
+  if (isUserCancel(cause)) return { kind: "cancelled" };
+  if (treatNoKeyAsEmpty && isCardApduError(cause) && cause.kind === "no_key") {
+    return { kind: "empty" };
   }
+  return { kind: "failed", message: cardProblemMessage(cause, "Could not read the credential") };
 }
 
-/** Tap a credential and read the address on it. Never throws. */
-export async function scanCardAddress(onListening?: () => void): Promise<CardScan> {
+async function withCapability(
+  onListening: (() => void) | undefined,
+  run: () => Promise<string>,
+  treatNoKeyAsEmpty: boolean,
+): Promise<CardScan> {
   let cap: NfcCapability;
   try {
     cap = await readNfcCapability();
@@ -50,14 +44,20 @@ export async function scanCardAddress(onListening?: () => void): Promise<CardSca
   if (cap.status === "disabled") return { kind: "off" };
   onListening?.();
   try {
-    const value = addressInTag(await scanAnyTag());
-    return value === undefined ? { kind: "empty" } : { kind: "address", value };
+    return { kind: "address", value: await run() };
   } catch (cause) {
-    if (isUserCancel(cause)) return { kind: "cancelled" };
-    return { kind: "failed", message: errorMessage(cause, "Could not read the credential") };
+    return scanCatch(cause, treatNoKeyAsEmpty);
   }
 }
 
-export async function cancelScan(): Promise<void> {
-  await NfcManager.cancelTechnologyRequest().catch(() => undefined);
+export async function scanCardAddress(onListening?: () => void): Promise<CardScan> {
+  const signer = createNfcJavaCardSigner();
+  return withCapability(onListening, () => signer.getPublicKey(), true);
+}
+
+export async function setupBlankCard(
+  onProgress?: (progress: TapProgress) => void,
+): Promise<CardScan> {
+  const signer = createNfcJavaCardSigner();
+  return withCapability(undefined, () => signer.generateKeypair(onProgress), false);
 }

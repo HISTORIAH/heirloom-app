@@ -1,6 +1,6 @@
 # Heirloom signer APDUs
 
-Source of truth for factory USB (`gp.jar`) and later `NfcJavaCardSigner`. Not GlobalPlatform. SELECT this applet first. Not default-selected.
+Source of truth for factory USB (`gp.jar`) and `NfcJavaCardSigner`. Not GlobalPlatform. SELECT this applet first. Not default-selected.
 
 | | Hex |
 |--|-----|
@@ -41,7 +41,7 @@ NXP `getW` and each 32-byte half of `CryptoBaseX.sign(..., ALG_ED25519PH_SHA_512
 | `6E00` | CLA not `00` |
 | `6F00` | Unexpected `CryptoException` |
 
-## Later phone mapping
+## Phone mapping
 
 ```
 getPublicKey    → SELECT + GET_PUB
@@ -50,4 +50,4 @@ signBytes       → SELECT + chunked SIGN
 importKeypair   → not in this CAP
 ```
 
-PIN, import, overwrite, NDEF, and locking ISD keys are not in this applet.
+`NfcJavaCardSigner` in `mobile/src/lib/nfc/signer.ts` implements those three.

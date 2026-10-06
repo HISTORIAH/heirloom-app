@@ -55,8 +55,9 @@ import {
   lamportsToSolText,
   parseAddress,
   parseOptionalAddress,
-  scanCardAddress,
   setFlash,
+  setupBlankCard,
+  setupProblemMessage,
   shortAddress,
   solToLamports,
 } from "@/lib";
@@ -217,32 +218,19 @@ export default function CreateScreen() {
     setTapError(undefined);
     setPhase("credTap");
     void (async () => {
-      const result = await scanCardAddress();
+      const result = await setupBlankCard((progress) => {
+        if (token === scanToken.current) setTapProgress(progress);
+      });
       if (token !== scanToken.current) return;
       if (result.kind === "cancelled") return;
       if (result.kind !== "address") {
         setTapProgress("failed");
-        setTapError(
-          result.kind === "off"
-            ? "NFC is off. Turn it on, then try again."
-            : result.kind === "unsupported"
-              ? "This phone can’t set up credentials."
-              : result.kind === "empty"
-                ? "We couldn’t read a key from it. Try again."
-                : result.message,
-        );
+        setTapError(setupProblemMessage(result));
         return;
       }
-      // TODO(nfc): on-chip key generation and the test signature. Today the tap reads the credential's address.
-      setTapProgress("found");
-      setTimeout(() => {
-        if (token !== scanToken.current) return;
-        setTapProgress("done");
-        setCredential(result.value);
-        setTimeout(() => {
-          if (token === scanToken.current) setPhase("credReady");
-        }, 500);
-      }, 600);
+      setCredential(result.value);
+      setTapProgress("done");
+      setPhase("credReady");
     })();
   }
 
