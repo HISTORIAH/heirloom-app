@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/Icon";
 import { ContactSheet } from "@/components/reminders/ContactSheet";
+import { HeirProfileCard } from "@/components/reminders/HeirProfileCard";
 import { ReminderTimeline } from "@/components/reminders/ReminderTimeline";
 import { VerifySheet } from "@/components/reminders/VerifySheet";
 import { ActionRow, Badge, Cap, CheckBox, IconButton, Lede, PrimaryButton } from "@/components/ui";
@@ -14,12 +15,28 @@ import {
   useEstates,
   useReminders,
   useResendVerification,
+  useSaveHeirProfile,
   useSession,
+  useVerifyEmail,
 } from "@/hooks";
 import { estateName, shortAddress } from "@/lib";
-import { contactState, reminderError } from "@/lib/reminders";
+import {
+  channelLabel,
+  contactState,
+  freeChannels,
+  reminderError,
+  sameEnum,
+  verifyError,
+} from "@/lib/reminders";
 import { colors, font, space } from "@/theme";
-import type { ContactState, PendingVerification, ReminderRole } from "@/types/reminders";
+import type {
+  ContactState,
+  NewContact,
+  PendingVerification,
+  RecipientResponse,
+  ReminderChannel,
+  ReminderRole,
+} from "@/types/reminders";
 
 function Small({ children, warn }: { children: string; warn?: boolean }) {
   return (
@@ -36,9 +53,18 @@ function Small({ children, warn }: { children: string; warn?: boolean }) {
   );
 }
 
-function statusLine(contact: ContactState): string {
+function channelOf(recipient: RecipientResponse): ReminderChannel {
+  return sameEnum(recipient.channel, "email") ? "email" : "telegram";
+}
+
+/** Heir emails get no code: the backend trusts them once the owner's own contact is verified. */
+function statusLine(contact: ContactState, role: ReminderRole): string {
   if (contact.kind === "none") return "Not set";
-  return contact.kind === "connected" ? "Connected" : "Waiting for Telegram";
+  if (contact.kind === "connected") return "Connected";
+  if (channelOf(contact.recipient) === "telegram") return "Waiting for Telegram";
+  return role === "heir"
+    ? "Starts once your contact is verified"
+    : "Not verified · check your inbox";
 }
 
 /** The disabled "copy to every estate" switch. Owner contacts only; heir contacts never copy. */
@@ -70,7 +96,10 @@ function AllEstatesToggle() {
   );
 }
 
-/** One estate's Telegram reminders: who gets them, connecting each contact, and when they go out. */
+/**
+ * One estate's reminders: who gets them, connecting each contact, how the heir alert reads, and
+ * when they go out.
+ */
 export default function RemindersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -82,14 +111,20 @@ export default function RemindersScreen() {
   const session = useSession();
   const add = useAddReminderContact(estate);
   const resend = useResendVerification(estate);
+  const verifyEmail = useVerifyEmail(estate);
+  const saveProfile = useSaveHeirProfile(estate);
 
   const row = rows.find((item) => String(item.address) === estate);
   const hasOthers = rows.some((item) => String(item.address) !== estate);
   const name = row !== undefined ? estateName(row) : shortAddress(estate);
-  const heirLabel = row !== undefined ? `Heir ${shortAddress(String(row.data.heir))}` : "Your heir";
+  const heirName = reminders.heir?.heirName?.trim();
+  const heirLabel = heirName
+    ? heirName
+    : row !== undefined
+      ? `Heir ${shortAddress(String(row.data.heir))}`
+      : "Your heir";
+  const hasSubscription = reminders.recipients.length > 0;
 
-  const self = contactState(reminders.recipients, "check_in_signer");
-  const heir = contactState(reminders.recipients, "heir");
   const verified =
     pending !== undefined &&
     reminders.recipients.some((r) => r.reminderRecipientId === pending.recipientId && r.verified);
@@ -99,16 +134,16 @@ export default function RemindersScreen() {
     else router.replace(`/estate/${estate}`);
   }
 
-  function onSave(username: string) {
-    if (adding === undefined) return;
+  function onSave(contact: NewContact) {
     add.mutate(
-      { role: adding, username, hasSubscription: reminders.recipients.length > 0 },
+      { ...contact, hasSubscription },
       {
         onSuccess: (next) => {
           setAdding(undefined);
           add.reset();
-          // No verification back (transient backend error): the contact exists, so the row
-          // shows "waiting" and Verify gets a fresh link.
+          // Heir emails aren't sent anything to verify. Otherwise, with no verification back
+          // (transient backend error), the sheet opens on resend.
+          if (contact.role === "heir" && contact.channel === "email") return;
           if (next !== undefined) setPending(next);
         },
       },
@@ -117,45 +152,72 @@ export default function RemindersScreen() {
 
   function verify(contact: ContactState, role: ReminderRole) {
     if (contact.kind !== "waiting") return;
-    resend.mutate(
-      {
-        recipientId: contact.recipient.reminderRecipientId,
-        role,
-        destination: contact.recipient.destination,
-      },
-      { onSuccess: (next) => next !== undefined && setPending(next) },
-    );
+    const target = {
+      recipientId: contact.recipient.reminderRecipientId,
+      role,
+      channel: channelOf(contact.recipient),
+      destination: contact.recipient.destination,
+    };
+    // The email code is already in the inbox; open the sheet to type it, resend from there.
+    if (target.channel === "email") {
+      setPending({ ...target, sent: true });
+      return;
+    }
+    resend.mutate(target, { onSuccess: (next) => next !== undefined && setPending(next) });
   }
 
   function action(contact: ContactState, role: ReminderRole) {
-    if (contact.kind === "none") {
-      return <PrimaryButton compact tone="paper" label="Add" onPress={() => setAdding(role)} />;
-    }
-    if (contact.kind === "waiting") {
-      return (
-        <PrimaryButton
-          compact
-          tone="paper"
-          icon={role === "heir" ? "send" : undefined}
-          label={resend.isPending ? "…" : role === "heir" ? "Invite" : "Verify"}
-          disabled={resend.isPending}
-          onPress={() => verify(contact, role)}
-        />
-      );
-    }
-    return <Badge label="Connected" fill={colors.lime} />;
+    if (contact.kind === "connected") return <Badge label="Connected" fill={colors.lime} />;
+    if (contact.kind === "none") return null;
+    const email = channelOf(contact.recipient) === "email";
+    if (email && role === "heir") return <Badge label="Pending" />;
+    return (
+      <PrimaryButton
+        compact
+        tone="paper"
+        icon={role === "heir" ? "send" : undefined}
+        label={resend.isPending ? "…" : role === "heir" ? "Invite" : "Verify"}
+        disabled={resend.isPending}
+        onPress={() => verify(contact, role)}
+      />
+    );
   }
 
-  function contactRow(contact: ContactState, role: ReminderRole) {
+  /** One row per contact the role has, then an Add row while a channel is still free. */
+  function contactRows(role: ReminderRole) {
+    const contacts = reminders.recipients
+      .filter((r) => sameEnum(r.role, role))
+      .map((r) => contactState([r], role));
+    const free = freeChannels(reminders.recipients, role);
     return (
       <View style={{ borderTopWidth: space.rule, borderTopColor: colors.line }}>
-        <ActionRow
-          first
-          icon="telegram"
-          title={contact.kind === "none" ? "Telegram" : `@${contact.recipient.destination}`}
-          sub={statusLine(contact)}
-          action={action(contact, role)}
-        />
+        {contacts.map((contact, i) =>
+          contact.kind === "none" ? null : (
+            <ActionRow
+              key={contact.recipient.reminderRecipientId}
+              first={i === 0}
+              icon={channelOf(contact.recipient) === "email" ? "mail" : "telegram"}
+              title={
+                channelOf(contact.recipient) === "email"
+                  ? contact.recipient.destination
+                  : `@${contact.recipient.destination}`
+              }
+              sub={statusLine(contact, role)}
+              action={action(contact, role)}
+            />
+          ),
+        )}
+        {free.length > 0 ? (
+          <ActionRow
+            first={contacts.length === 0}
+            icon={contacts.length === 0 ? "bell" : "plus"}
+            title={contacts.length === 0 ? "Not set" : `Add ${channelLabel(free[0] ?? "")}`}
+            sub={contacts.length === 0 ? "Telegram or email" : "As well"}
+            action={
+              <PrimaryButton compact tone="paper" label="Add" onPress={() => setAdding(role)} />
+            }
+          />
+        ) : null}
       </View>
     );
   }
@@ -190,14 +252,28 @@ export default function RemindersScreen() {
       <View style={{ gap: 32 }}>
         <View style={{ gap: 14 }}>
           <Cap>Remind you</Cap>
-          {contactRow(self, "check_in_signer")}
+          {contactRows("checkInSigner")}
         </View>
 
         <View style={{ gap: 14 }}>
           <Cap>Tell your heir</Cap>
-          {contactRow(heir, "heir")}
+          {contactRows("heir")}
           <Small>They hear nothing until the grace period ends.</Small>
         </View>
+
+        {hasSubscription ? (
+          <View style={{ gap: 14 }}>
+            <Cap>Heir alert</Cap>
+            <HeirProfileCard
+              key={JSON.stringify(reminders.heir)}
+              saved={reminders.heir}
+              saving={saveProfile.isPending}
+              justSaved={saveProfile.isSuccess}
+              error={saveProfile.isError ? reminderError(saveProfile.error) : undefined}
+              onSave={(profile) => saveProfile.mutate(profile)}
+            />
+          </View>
+        ) : null}
 
         {resend.isError ? <Small warn>{reminderError(resend.error)}</Small> : null}
 
@@ -268,6 +344,8 @@ export default function RemindersScreen() {
         <ContactSheet
           role={adding}
           heirLabel={heirLabel}
+          channels={freeChannels(reminders.recipients, adding)}
+          askProfile={!hasSubscription}
           saving={add.isPending}
           error={add.isError ? reminderError(add.error) : undefined}
           onCancel={() => {
@@ -284,20 +362,26 @@ export default function RemindersScreen() {
           estateName={name}
           heirLabel={heirLabel}
           resending={resend.isPending}
-          error={resend.isError ? reminderError(resend.error) : undefined}
-          onResend={() =>
-            resend.mutate(
-              {
-                recipientId: pending.recipientId,
-                role: pending.role,
-                destination: pending.destination,
-              },
-              { onSuccess: (next) => setPending(next ?? pending) },
-            )
+          verifying={verifyEmail.isPending}
+          error={
+            resend.isError
+              ? reminderError(resend.error)
+              : verifyEmail.isError
+                ? verifyError(verifyEmail.error)
+                : undefined
           }
+          onResend={() => {
+            verifyEmail.reset();
+            resend.mutate(pending, { onSuccess: (next) => setPending(next ?? pending) });
+          }}
+          onVerify={(code) => {
+            resend.reset();
+            verifyEmail.mutate(code);
+          }}
           onClose={() => {
             setPending(undefined);
             resend.reset();
+            verifyEmail.reset();
           }}
         />
       ) : null}

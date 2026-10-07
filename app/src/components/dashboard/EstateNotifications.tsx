@@ -8,9 +8,12 @@ import NotificationsSignInPanel from "@/components/dashboard/NotificationsSignIn
 import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
 import TelegramVerifyPanel from "@/components/dashboard/TelegramVerifyPanel";
 import {
+  sameEnum,
   summarizeReminders,
-  telegramHandle,
+  type AddHandler,
+  type HeirProfile,
   type NotificationsCardStatus,
+  type ReminderChannel,
   type ReminderRole,
   type VerificationStatus,
 } from "@/types/reminders";
@@ -19,18 +22,21 @@ import {
   useSaveReminder,
   useAddContact,
   useResendVerification,
+  useSaveHeirProfile,
+  useVerifyEmail,
 } from "@/hooks/useReminders";
 import { useAuthenticate } from "@/hooks/useAuth";
-import { ApiError } from "@/lib/api";
+import { ApiError, isUnauthorized } from "@/lib/api";
+import { verifyErrorKey } from "@/lib/reminders";
 import { useToast } from "@/hooks/use-toast";
 import { errMsg, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
-interface Props {
+type Props = {
   estate: EstateData;
   /** Only ever rendered once the wallet is connected, so this is never null in practice. */
   account: UiWalletAccount;
-}
+};
 
 const isConflict = (err: unknown) => err instanceof ApiError && err.code === "CONFLICT";
 
@@ -49,6 +55,8 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const [tgVerifyOpen, setTgVerifyOpen] = useState(false);
   const [saveVerifications, setSaveVerifications] = useState<VerificationStatus[]>([]);
   const [addingRole, setAddingRole] = useState<ReminderRole | undefined>();
+  const [addingChannel, setAddingChannel] = useState<ReminderChannel | undefined>();
+  const [savingHeir, setSavingHeir] = useState(false);
   const [resendingId, setResendingId] = useState<string | undefined>();
 
   // ─── Data ───────────────────────────────────────────────────────
@@ -57,6 +65,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   // If 401, the card shows "locked" and the user signs in. Polls while a link is open.
   const remindersQuery = useReminders(estate.estatePda, { poll: tgVerifyOpen });
   const recipients = useMemo(() => remindersQuery.data?.recipients ?? [], [remindersQuery.data]);
+  const heirProfile = useMemo(() => remindersQuery.data?.heir ?? null, [remindersQuery.data]);
   const hasSubscription = recipients.length > 0;
 
   const notifStatus: NotificationsCardStatus = (() => {
@@ -72,8 +81,8 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
     return recipients.some((r) => !r.verified) ? "pending" : "authorized";
   })();
 
-  // Name comes from the backend; fall back to the truncated heir address
-  const heirLabel = estate.label ?? truncateAddress(estate.heir, 4);
+  // The heir's name from their profile; fall back to the truncated heir address.
+  const heirLabel = heirProfile?.heirName?.trim() || truncateAddress(estate.heir, 4);
   const notifSummary = summarizeReminders(recipients, heirLabel, t);
 
   // Close the verify panel once every contact it shows is verified.
@@ -109,7 +118,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   };
 
   const sessionExpired = (err: unknown) => {
-    if (!(err instanceof ApiError && err.code === "unauthorized")) return false;
+    if (!isUnauthorized(err)) return false;
     setNotifEditOpen(false);
     setNotifSignInOpen(true);
     return true;
@@ -120,13 +129,15 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   const saveMutation = useSaveReminder(estate.estatePda);
   const addContactMutation = useAddContact(estate.estatePda);
   const resendMutation = useResendVerification(estate.estatePda);
+  const saveHeirMutation = useSaveHeirProfile(estate.estatePda);
+  const verifyMutation = useVerifyEmail(estate.estatePda);
 
   /** First contact creates the subscription; later ones are added to it. Rejects on failure. */
-  const handleAdd = async (role: ReminderRole, username: string) => {
-    const recipient = { channel: "telegram" as const, destination: telegramHandle(username), role };
-    const viaAdd = async () =>
-      (await addContactMutation.mutateAsync({ recipient })).verifications;
+  const handleAdd: AddHandler = async (role, channel, destination, heir) => {
+    const recipient = { channel, destination, role };
+    const viaAdd = async () => (await addContactMutation.mutateAsync({ recipient })).verifications;
     setAddingRole(role);
+    setAddingChannel(channel);
     try {
       let verifications: VerificationStatus[];
       if (hasSubscription) {
@@ -134,7 +145,11 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
       } else {
         try {
           verifications = (
-            await saveMutation.mutateAsync({ estateKind: "heirloom", recipients: [recipient] })
+            await saveMutation.mutateAsync({
+              estateKind: "heirloom",
+              recipients: [recipient],
+              heir,
+            })
           ).verifications;
         } catch (err) {
           // The estate already has a subscription we didn't see: add to it instead.
@@ -142,9 +157,22 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
           verifications = await viaAdd();
         }
       }
-      // Empty verifications: the contact exists but the link failed; its row offers resend.
-      if (verifications.length > 0) {
-        setSaveVerifications(verifications);
+      // The owner's email gets a code and a link; its row takes the code. Heir emails get
+      // nothing. Empty verifications means sending failed for now, and the row offers resend.
+      if (channel === "email" && role === "checkInSigner") {
+        toast(
+          verifications.length > 0
+            ? {
+                title: t("notifications.checkInbox"),
+                description: t("notifications.checkInboxDesc", { email: destination }),
+              }
+            : { title: t("notifications.emailSendFailed"), variant: "destructive" },
+        );
+      }
+      // Only Telegram needs the verify panel.
+      const tgVerifications = verifications.filter((v) => sameEnum(v.channel, "telegram"));
+      if (tgVerifications.length > 0) {
+        setSaveVerifications(tgVerifications);
         setNotifEditOpen(false);
         setTgVerifyOpen(true);
       }
@@ -159,6 +187,42 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
       throw err;
     } finally {
       setAddingRole(undefined);
+      setAddingChannel(undefined);
+    }
+  };
+
+  // ─── Save heir profile ──────────────────────────────────────────
+
+  const handleSaveHeir = async (profile: HeirProfile) => {
+    setSavingHeir(true);
+    try {
+      await saveHeirMutation.mutateAsync(profile);
+      toast({ title: t("notifications.heirProfileSaved") });
+    } catch (err) {
+      if (!sessionExpired(err)) {
+        toast({
+          title: t("notifications.heirProfileSaveFailed"),
+          description: errMsg(err, t("notifications.saveFailedDesc")),
+          variant: "destructive",
+        });
+      }
+      throw err;
+    } finally {
+      setSavingHeir(false);
+    }
+  };
+
+  // ─── Verify an email code ───────────────────────────────────────
+
+  /** Resolves with an error message for the code field, or undefined once it's accepted. */
+  const handleVerify = async (code: string): Promise<string | undefined> => {
+    try {
+      await verifyMutation.mutateAsync({ code });
+      toast({ title: t("notifications.emailVerified") });
+      return undefined;
+    } catch (err) {
+      if (sessionExpired(err)) return undefined;
+      return t(verifyErrorKey(err));
     }
   };
 
@@ -168,9 +232,14 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
     setResendingId(recipientId);
     try {
       const status = await resendMutation.mutateAsync({ recipientId });
-      setSaveVerifications([status]);
-      setNotifEditOpen(false);
-      setTgVerifyOpen(true);
+      // Only Telegram needs the verify panel; email just gets a fresh code.
+      if (sameEnum(status.channel, "telegram")) {
+        setSaveVerifications([status]);
+        setNotifEditOpen(false);
+        setTgVerifyOpen(true);
+      } else {
+        toast({ title: t("notifications.codeSent") });
+      }
     } catch (err) {
       if (isConflict(err)) {
         // Verified in the meantime; the list re-fetches and shows it.
@@ -205,7 +274,11 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
   return (
     <>
       <div className="lg:col-span-12">
-        <NotificationsCard status={notifStatus} summary={notifSummary} onAction={handleNotifAction} />
+        <NotificationsCard
+          status={notifStatus}
+          summary={notifSummary}
+          onAction={handleNotifAction}
+        />
       </div>
 
       <NotificationsSignInPanel
@@ -220,10 +293,16 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
         open={notifEditOpen}
         heirLabel={heirLabel}
         recipients={recipients}
+        heir={heirProfile}
         addingRole={addingRole}
+        addingChannel={addingChannel}
+        savingHeir={savingHeir}
         resendingId={resendingId}
+        verifying={verifyMutation.isPending}
         onAdd={handleAdd}
         onResend={(id) => void handleResend(id)}
+        onVerify={handleVerify}
+        onSaveHeir={handleSaveHeir}
         onClose={() => setNotifEditOpen(false)}
       />
 

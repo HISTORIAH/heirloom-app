@@ -1,7 +1,24 @@
 import type { EstateKind } from "@/types/estate";
 
 export type ReminderChannel = "email" | "sms" | "whatsapp" | "telegram";
-export type ReminderRole = "check_in_signer" | "heir";
+export type ReminderRole = "checkInSigner" | "heir";
+
+/** Heir profile — personalises the heir alert. All fields optional in the API. */
+export type HeirProfile = {
+  heirName: string | null;
+  ownerName: string | null;
+  note: string | null;
+};
+
+/** Trimmed, with blank as null: the PUT reads null or blank as "clear this field". */
+export function cleanProfile(profile: HeirProfile): HeirProfile {
+  const clean = (value: string | null) => value?.trim() || null;
+  return {
+    heirName: clean(profile.heirName),
+    ownerName: clean(profile.ownerName),
+    note: clean(profile.note),
+  };
+}
 
 export type AddRecipientRequest = {
   channel: ReminderChannel;
@@ -24,15 +41,14 @@ export type RecipientResponse = {
 export type CreateReminderRequest = {
   estateKind: EstateKind;
   recipients: AddRecipientRequest[]; // 1–2 items max
+  heir?: HeirProfile;
 };
 
 /**
  * `message`: the backend sent something to the contact (email/SMS) — show "check your inbox".
  * `instruction`: nothing was sent — the UI must show `value`. For Telegram it's the t.me deep link.
  */
-export type VerificationPrompt =
-  | { type: "message" }
-  | { type: "instruction"; value: string };
+export type VerificationPrompt = { type: "message" } | { type: "instruction"; value: string };
 
 export type VerificationStatus = {
   reminderRecipientId: string; // uuid
@@ -75,9 +91,20 @@ export type AddContactResponse = {
   verifications: VerificationStatus[];
 };
 
+// ─── Email verification ───────────────────────────────────────────
+
+export type VerifyEmailRequest = {
+  code: string;
+};
+
+export type VerifyEmailResponse = {
+  ok: true;
+};
+
 export type FetchReminderResponse = {
   estateAddress: string;
   recipients: RecipientResponse[];
+  heir: HeirProfile | null;
 };
 
 // ─── UI helpers ───────────────────────────────────────────────────
@@ -96,45 +123,57 @@ export function telegramHandle(text: string): string {
   return text.trim().replace(/^@/, "");
 }
 
-/** One role's Telegram contact. Contacts can't be edited or removed, so this is read-only state. */
+/** Adds one contact. `heir` is passed only when this contact turns reminders on. Rejects on failure. */
+export type AddHandler = (
+  role: ReminderRole,
+  channel: ReminderChannel,
+  destination: string,
+  heir?: HeirProfile,
+) => Promise<void>;
+
+/** One role's contact on one channel. Contacts can't be edited or removed, so this is read-only state. */
 export type ContactState =
   | { kind: "none" }
   | { kind: "waiting"; recipient: RecipientResponse }
   | { kind: "connected"; recipient: RecipientResponse };
 
-export function contactState(recipients: RecipientResponse[], role: ReminderRole): ContactState {
-  const recipient = recipients.find(
-    (r) => sameEnum(r.role, role) && sameEnum(r.channel, "telegram"),
-  );
+export function contactState(
+  recipients: RecipientResponse[],
+  role: ReminderRole,
+  channel: ReminderChannel,
+): ContactState {
+  const recipient = recipients.find((r) => sameEnum(r.role, role) && sameEnum(r.channel, channel));
   if (!recipient) return { kind: "none" };
   return recipient.verified ? { kind: "connected", recipient } : { kind: "waiting", recipient };
 }
 
 /** `pending`: a contact is saved but not verified yet, so nothing reaches it. */
 export type NotificationsCardStatus =
-  | "loading"
-  | "locked"
-  | "off"
-  | "authorized"
-  | "pending"
-  | "expired"
-  | "error";
+  "loading" | "locked" | "off" | "authorized" | "pending" | "expired" | "error";
 
 type Translate = (key: string, opts?: Record<string, string>) => string;
 
-/** Card line, e.g. "You: Telegram · Sarah: waiting for Telegram". Undefined when nothing is set. */
+/** Card line, e.g. "You: Telegram · Sarah: Email". Undefined when nothing is set. */
 export function summarizeReminders(
   recipients: RecipientResponse[],
   heirLabel: string,
   t: Translate,
 ): string | undefined {
-  const channel = t("notifications.channelTelegram");
-  const self = contactState(recipients, "check_in_signer");
-  const heir = contactState(recipients, "heir");
   const parts: string[] = [];
-  if (self.kind === "connected") parts.push(t("notifications.summaryYou", { channel }));
-  if (self.kind === "waiting") parts.push(t("notifications.summaryYouWaiting"));
-  if (heir.kind === "connected") parts.push(t("notifications.summaryHeir", { name: heirLabel, channel }));
-  if (heir.kind === "waiting") parts.push(t("notifications.summaryHeirWaiting", { name: heirLabel }));
+  for (const role of ["checkInSigner", "heir"] as const) {
+    for (const channel of ["telegram", "email"] as const) {
+      const cs = contactState(recipients, role, channel);
+      if (cs.kind === "none") continue;
+      const channelLabel = t(
+        channel === "telegram" ? "notifications.channelTelegram" : "notifications.channelEmail",
+      );
+      const prefix = role === "checkInSigner" ? t("notifications.summaryYouPrefix") : heirLabel;
+      if (cs.kind === "connected") {
+        parts.push(t("notifications.summaryConnected", { name: prefix, channel: channelLabel }));
+      } else {
+        parts.push(t("notifications.summaryWaiting", { name: prefix, channel: channelLabel }));
+      }
+    }
+  }
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }

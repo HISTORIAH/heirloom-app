@@ -6,7 +6,10 @@ import type {
   CreateReminderRequest,
   CreateReminderResponse,
   FetchReminderResponse,
+  HeirProfile,
   VerificationStatus,
+  VerifyEmailRequest,
+  VerifyEmailResponse,
 } from "@/types/reminders";
 import type { EstateKind } from "@/types/estate";
 
@@ -25,7 +28,8 @@ export async function fetchReminders(estateAddress: string): Promise<FetchRemind
     return await requestRaw<FetchReminderResponse>(remindersUrl(estateAddress));
   } catch (err) {
     // No subscription yet reads as no contacts, not as a failure.
-    if (err instanceof ApiError && err.code === "NOT_FOUND") return { estateAddress, recipients: [] };
+    if (err instanceof ApiError && err.code === "NOT_FOUND")
+      return { estateAddress, recipients: [], heir: null };
     throw err;
   }
 }
@@ -34,8 +38,9 @@ export async function saveReminder(
   estateAddress: string,
   estateKind: EstateKind,
   recipients: AddRecipientRequest[],
+  heir?: HeirProfile,
 ): Promise<CreateReminderResponse> {
-  const payload: CreateReminderRequest = { estateKind, recipients };
+  const payload: CreateReminderRequest = { estateKind, recipients, heir };
   return requestRaw<CreateReminderResponse>(remindersUrl(estateAddress), {
     method: "POST",
     body: JSON.stringify(payload),
@@ -53,7 +58,32 @@ export async function addContact(
   });
 }
 
+// ─── Heir profile ─────────────────────────────────────────────────
+
+/** Saves the heir profile. Replaces all three fields — send null/blank to clear. 404 until reminders exist. */
+export async function saveHeirProfile(
+  estateAddress: string,
+  heir: HeirProfile,
+): Promise<HeirProfile> {
+  return requestRaw<HeirProfile>(remindersUrl(estateAddress, "/heir"), {
+    method: "PUT",
+    body: JSON.stringify(heir),
+  });
+}
+
 // ─── Verification ─────────────────────────────────────────────────
+
+/** Verifies an email address with a code (from the link or typed). */
+export async function verifyEmailCode(
+  estateAddress: string,
+  code: string,
+): Promise<VerifyEmailResponse> {
+  const payload: VerifyEmailRequest = { code };
+  return requestRaw<VerifyEmailResponse>(remindersUrl(estateAddress, "/verify"), {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
 
 /** Resend verification for an existing recipient. Returns a fresh prompt with a new code. */
 export async function resendVerification(

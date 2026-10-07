@@ -3,14 +3,18 @@ import {
   addContact,
   fetchReminders,
   resendVerification,
+  saveHeirProfile,
   saveReminder,
+  verifyEmailCode,
 } from "@/services/api/reminders";
 import type {
   AddContactResponse,
   AddRecipientRequest,
   CreateReminderResponse,
   FetchReminderResponse,
+  HeirProfile,
   VerificationStatus,
+  VerifyEmailResponse,
 } from "@/types/reminders";
 import type { EstateKind } from "@/types/estate";
 import { REMINDER_POLL_MS } from "@/lib/constants";
@@ -39,9 +43,30 @@ export function useSaveReminder(estateAddress: string) {
   return useMutation<
     CreateReminderResponse,
     Error,
-    { estateKind: EstateKind; recipients: AddRecipientRequest[] }
+    { estateKind: EstateKind; recipients: AddRecipientRequest[]; heir?: HeirProfile }
   >({
-    mutationFn: ({ estateKind, recipients }) => saveReminder(estateAddress, estateKind, recipients),
+    mutationFn: ({ estateKind, recipients, heir }) =>
+      saveReminder(estateAddress, estateKind, recipients, heir),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
+    },
+  });
+}
+
+export function useSaveHeirProfile(estateAddress: string) {
+  const queryClient = useQueryClient();
+  return useMutation<HeirProfile, Error, HeirProfile>({
+    mutationFn: (heir) => saveHeirProfile(estateAddress, heir),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
+    },
+  });
+}
+
+export function useVerifyEmail(estateAddress: string) {
+  const queryClient = useQueryClient();
+  return useMutation<VerifyEmailResponse, Error, { code: string }>({
+    mutationFn: ({ code }) => verifyEmailCode(estateAddress, code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", estateAddress] });
     },

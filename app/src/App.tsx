@@ -24,6 +24,7 @@ import Dashboard from "@/pages/Dashboard";
 import Claim from "@/pages/Claim";
 import Defer from "@/pages/Defer";
 import Heartbeat from "@/pages/Heartbeat";
+import VerifyEmail from "@/pages/VerifyEmail";
 import NotFound from "@/pages/NotFound";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
@@ -38,7 +39,8 @@ if (typeof document !== "undefined" && !document.getElementById("wallet-ui-css")
 }
 
 const isMainnet = SOLANA_RPC_ENDPOINT.includes("mainnet");
-const isLocalnet = SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1");
+const isLocalnet =
+  SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1");
 
 const clusters = isMainnet
   ? [createSolanaMainnet(), createSolanaDevnet(), createSolanaLocalnet()]
@@ -101,17 +103,18 @@ const App = () => (
               <TourProvider>
                 <AppTour />
                 <Routes>
-                {/* The root of this origin used to be the landing page. It
+                  {/* The root of this origin used to be the landing page. It
                     lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
                     dashboard — which already handles the disconnected case
                     with a connect prompt of its own. */}
-                <Route path="/" element={<RootRedirect />} />
-                <Route path="/create-vault" element={<CreateVault />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/claim" element={<Claim />} />
-                <Route path="/defer" element={<Defer />} />
-                <Route path="/heartbeat" element={<Heartbeat />} />
-                <Route path="*" element={<NotFound />} />
+                  <Route path="/" element={<RootRedirect />} />
+                  <Route path="/create-vault" element={<CreateVault />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/claim" element={<Claim />} />
+                  <Route path="/defer" element={<Defer />} />
+                  <Route path="/heartbeat" element={<Heartbeat />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </TourProvider>
             </BrowserRouter>
