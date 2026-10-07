@@ -1,9 +1,9 @@
 import type { EstateKind } from "@/types/estate";
 
-/** Backend reminder DTOs. Only Telegram delivers today; email/SMS are accepted but not sent. */
+/** Backend reminder DTOs. Telegram and email deliver; SMS is accepted but not sent. */
 export type ReminderChannel = "telegram" | "email" | "sms";
-/** `check_in_signer`: the owner, gets "check in" reminders. `heir`: told once grace has ended. */
-export type ReminderRole = "check_in_signer" | "heir";
+/** `checkInSigner`: the owner, gets "check in" reminders. `heir`: told once grace has ended. */
+export type ReminderRole = "checkInSigner" | "heir";
 
 export type AddRecipientRequest = {
   channel: ReminderChannel;
@@ -25,9 +25,21 @@ export type RecipientResponse = {
   verified: boolean;
 };
 
+/**
+ * Personalises the heir alert. Every field is optional in the API; PUT replaces all three, and
+ * null or blank clears one.
+ */
+export type HeirProfile = {
+  heirName: string | null;
+  /** What the heir calls the owner. Puts a familiar name in the alert so it doesn't read as phishing. */
+  ownerName: string | null;
+  note: string | null;
+};
+
 export type CreateReminderRequest = {
   estateKind: EstateKind;
   recipients: AddRecipientRequest[];
+  heir?: HeirProfile;
 };
 
 /**
@@ -59,9 +71,19 @@ export type AddContactResponse = {
 export type FetchReminderResponse = {
   estateAddress: string;
   recipients: RecipientResponse[];
+  heir: HeirProfile | null;
 };
 
-/** One role's Telegram contact on one estate. */
+/** An email code, typed or from the link. Owner only: 403 means another wallet is signed in. */
+export type VerifyEmailRequest = {
+  code: string;
+};
+
+export type VerifyEmailResponse = {
+  ok: true;
+};
+
+/** One role's contact on one estate. */
 export type ContactState =
   | { kind: "none" }
   | { kind: "waiting"; recipient: RecipientResponse }
@@ -96,13 +118,24 @@ export type AttentionItem = {
   fill: string;
 };
 
-/** A verification link on screen, for the contact it belongs to. */
+/** A verification on screen, for the contact it belongs to. */
 export type PendingVerification = {
   recipientId: string;
   role: ReminderRole;
+  channel: ReminderChannel;
   destination: string;
-  /** Absent when the backend couldn't make one (empty `verifications`); offer resend. */
+  /** False when `verifications` came back empty: sending failed for now, so offer resend. */
+  sent: boolean;
+  /** Telegram only: the t.me link to open or share. */
   link?: string;
-  /** Epoch ms. */
+  /** Epoch ms. Absent when we didn't just send it (an email code already in the inbox). */
   expiresAt?: number;
+};
+
+/** What the contact sheet hands back. `heir` is set only when this contact turns reminders on. */
+export type NewContact = {
+  role: ReminderRole;
+  channel: ReminderChannel;
+  destination: string;
+  heir?: HeirProfile;
 };

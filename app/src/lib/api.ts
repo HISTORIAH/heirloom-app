@@ -2,14 +2,22 @@ import type { ApiErrorBody, ApiSuccess } from "@/types/api";
 
 export class ApiError extends Error {
   code: string;
+  /** HTTP status. 401 means the SIWS session is missing or expired. */
+  status?: number;
   details?: Record<string, unknown>;
 
-  constructor(body: ApiErrorBody) {
+  constructor(body: ApiErrorBody, status?: number) {
     super(body.message);
     this.name = "ApiError";
     this.code = body.code;
+    this.status = status;
     this.details = body.details;
   }
+}
+
+/** No session, or it expired: sign the challenge again. */
+export function isUnauthorized(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 401 || err.code === "unauthorized");
 }
 
 async function fetchJson(url: string, options: RequestInit = {}): Promise<unknown> {
@@ -29,6 +37,7 @@ async function fetchJson(url: string, options: RequestInit = {}): Promise<unknow
       body && typeof body === "object" && "code" in body
         ? (body as ApiErrorBody)
         : { code: res.status === 401 ? "unauthorized" : "unknown", message: res.statusText },
+      res.status,
     );
   }
 

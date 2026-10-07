@@ -11,6 +11,8 @@ export {
   useReminders,
   useRemindersFor,
   useResendVerification,
+  useSaveHeirProfile,
+  useVerifyEmail,
 } from "./reminders/useReminders";
 export { useHeirTx } from "./tx/useHeirTx";
 export { useOwnerTx } from "./tx/useOwnerTx";

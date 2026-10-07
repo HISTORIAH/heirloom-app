@@ -909,13 +909,14 @@ export function ActionRow({
 
 // ---------------------------------------------------------------- fields
 
-/** Labelled text field. `hint` sits after the label in mute. */
+/** Labelled text field. `hint` sits after the label in mute. `multiline` grows from three lines. */
 export function TextField({
   label,
   hint,
   error,
   ...input
 }: TextInputProps & { label?: string; hint?: string; error?: boolean }) {
+  const multiline = input.multiline === true;
   return (
     <View style={{ gap: 6 }}>
       {label !== undefined ? (
@@ -930,8 +931,11 @@ export function TextField({
         placeholderTextColor={colors.mute}
         accessibilityLabel={label}
         {...input}
+        textAlignVertical={multiline ? "top" : undefined}
         style={{
-          height: 52,
+          height: multiline ? undefined : 52,
+          minHeight: multiline ? 96 : undefined,
+          paddingVertical: multiline ? 12 : undefined,
           paddingHorizontal: 14,
           borderRadius: space.radiusBtn,
           borderWidth: space.rule,
