@@ -7,11 +7,10 @@ export { useRenameEstate } from "./estate/useRenameEstate";
 export { useRoles } from "./estate/useRoles";
 export { useEstateHoldings } from "./estate/useEstateHoldings";
 export {
-  useAddReminderContact,
   useReminders,
   useRemindersFor,
   useResendVerification,
-  useSaveHeirProfile,
+  useSaveReminders,
   useVerifyEmail,
 } from "./reminders/useReminders";
 export { useHeirTx } from "./tx/useHeirTx";

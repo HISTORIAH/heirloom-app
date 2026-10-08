@@ -1,6 +1,7 @@
 import { ApiError } from "@/services/api/request";
-import { REMINDER_CHANNELS } from "@/constants/alerts";
+import { EMAIL_PATTERN, REMINDER_CHANNELS, TELEGRAM_USERNAME_PATTERN } from "@/constants/alerts";
 import type {
+  ContactDraft,
   ContactState,
   HeirProfile,
   RecipientResponse,
@@ -60,6 +61,37 @@ export function freeChannels(
   return REMINDER_CHANNELS.map((item) => item.channel).filter(
     (channel) => contactState(recipients, role, channel).kind === "none",
   );
+}
+
+export function sameEmail(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/** Nothing typed: the form adds no contact for this role. */
+export function draftBlank(draft: ContactDraft): boolean {
+  return draft.value.trim().length === 0;
+}
+
+/**
+ * What's wrong with a typed contact and in which field, or undefined when it can be saved. Only
+ * the heir's email is typed twice: the owner's is checked by the code we send.
+ */
+export function draftProblem(
+  draft: ContactDraft,
+  role: ReminderRole,
+): { field: "value" | "again"; message: string } | undefined {
+  if (draft.channel === "telegram") {
+    return TELEGRAM_USERNAME_PATTERN.test(draft.value.trim())
+      ? undefined
+      : { field: "value", message: "5–32 letters, numbers or underscores." };
+  }
+  if (!EMAIL_PATTERN.test(draft.value.trim())) {
+    return { field: "value", message: "That doesn't look like an email." };
+  }
+  if (role === "heir" && !sameEmail(draft.value, draft.again)) {
+    return { field: "again", message: "The emails don't match." };
+  }
+  return undefined;
 }
 
 export function channelLabel(channel: string): string {

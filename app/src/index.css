@@ -283,10 +283,57 @@
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: none; }
   }
+
+  /* The "email verified" seal: it springs in, the check draws, rays burst and
+     a ring ripples away. Then the copy rises after it. */
+  .seal-pop {
+    animation: sealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .seal-check {
+    stroke-dasharray: 64;
+    animation: sealCheck 0.42s cubic-bezier(0.33, 1, 0.68, 1) 0.2s both;
+  }
+  .seal-ring {
+    animation: sealRing 0.9s cubic-bezier(0.33, 1, 0.68, 1) 0.32s both;
+  }
+  .seal-ray {
+    animation: sealRay 0.7s cubic-bezier(0.5, 1, 0.89, 1) 0.26s both;
+  }
+  .seal-rise {
+    animation: modalRise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes sealPop {
+    from { transform: scale(0) rotate(-25deg); }
+    to { transform: none; }
+  }
+  @keyframes sealCheck {
+    from { stroke-dashoffset: 64; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes sealRing {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(1.55); }
+  }
+  /* --angle is set per ray; it flies out along it, shrinking as it fades. */
+  @keyframes sealRay {
+    0% { opacity: 0; transform: rotate(var(--angle)) translateY(-58px) scaleY(1); }
+    10%, 60% { opacity: 1; }
+    100% { opacity: 0; transform: rotate(var(--angle)) translateY(-82px) scaleY(0.4); }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .modal-rise {
+  .modal-rise,
+  .seal-pop,
+  .seal-check,
+  .seal-rise {
     animation: none !important;
+  }
+  .seal-check {
+    stroke-dashoffset: 0;
+  }
+  .seal-ring,
+  .seal-ray {
+    display: none;
   }
 }

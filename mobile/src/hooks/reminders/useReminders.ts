@@ -9,6 +9,7 @@ import {
   cleanProfile,
   isUnauthorized,
   reminderError,
+  sameEnum,
   telegramHandle,
   telegramLink,
 } from "@/lib/reminders";
@@ -23,10 +24,9 @@ import {
 } from "@/services/api/reminders";
 import type {
   FetchReminderResponse,
-  HeirProfile,
-  NewContact,
   PendingVerification,
   RemindersStatus,
+  RemindersSubmit,
   ReminderChannel,
   ReminderRole,
   VerificationStatus,
@@ -67,7 +67,9 @@ function pendingFrom(
 
 /**
  * One estate's reminder contacts and heir profile. `poll` re-fetches while a verification is on
- * screen: the backend doesn't push when a contact verifies, so we look. Also re-fetches on app focus.
+ * screen: the backend doesn't push when a contact verifies, so we look, and once more on coming
+ * back to the app (from Telegram or the mail app). Without `poll`, returning to the app doesn't
+ * refetch: every wallet signature leaves and re-enters the app.
  */
 export function useReminders(estateAddress: string, { poll = false }: { poll?: boolean } = {}) {
   const query = useQuery<FetchReminderResponse>({
@@ -80,11 +82,12 @@ export function useReminders(estateAddress: string, { poll = false }: { poll?: b
   const { refetch } = query;
 
   useEffect(() => {
+    if (!poll) return;
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") void refetch();
     });
     return () => sub.remove();
-  }, [refetch]);
+  }, [poll, refetch]);
 
   return {
     recipients: query.data?.recipients ?? [],
@@ -113,43 +116,74 @@ export function useRemindersFor(estateAddresses: string[]) {
 }
 
 /**
- * Adds one contact: the first one turns reminders on (POST /reminders, with the heir profile),
- * later ones go through add/contact. Resolves with the verification to put on screen.
+ * Saves the whole reminders form at once. Without a subscription, one POST /reminders turns them on
+ * with every contact and the heir profile; with one, each contact goes through add/contact and the
+ * profile through PUT. Resolves with the verifications to put on screen, the owner's first.
  */
-export function useAddReminderContact(estateAddress: string) {
+export function useSaveReminders(estateAddress: string) {
   const queryClient = useQueryClient();
   const { withSession } = useSession();
   return useMutation({
     mutationFn: async ({
-      role,
-      channel,
-      destination: typed,
-      heir,
       hasSubscription,
-    }: NewContact & { hasSubscription: boolean }): Promise<PendingVerification | undefined> => {
-      const destination =
-        channel === "telegram" ? telegramHandle(typed) : typed.trim().toLowerCase();
-      const recipient = { channel, destination, role };
+      contacts,
+      heir,
+    }: RemindersSubmit): Promise<PendingVerification[]> => {
+      const recipients = contacts.map((c) => ({
+        ...c,
+        destination:
+          c.channel === "telegram"
+            ? telegramHandle(c.destination)
+            : c.destination.trim().toLowerCase(),
+      }));
+      const profile = heir === undefined ? undefined : cleanProfile(heir);
+
       const viaAdd = async () => {
-        const res = await withSession(() => addContact(estateAddress, recipient));
-        return pendingFrom(res.verifications[0], {
-          recipientId: res.recipientId,
-          role,
-          channel,
-          destination,
-        });
+        const out: PendingVerification[] = [];
+        for (const recipient of recipients) {
+          const res = await withSession(() => addContact(estateAddress, recipient));
+          const pending = pendingFrom(res.verifications[0], {
+            recipientId: res.recipientId,
+            ...recipient,
+          });
+          if (pending !== undefined) out.push(pending);
+        }
+        if (profile !== undefined) {
+          await withSession(() => saveHeirProfile(estateAddress, profile));
+        }
+        return out;
       };
-      if (hasSubscription) return viaAdd();
-      try {
-        const res = await withSession(() => createReminders(estateAddress, [recipient], heir));
-        return pendingFrom(res.verifications[0], { role, channel, destination });
-      } catch (cause) {
-        // Our list was empty but the estate already has a subscription (made elsewhere, or a list
-        // we couldn't read): add the contact to it instead. Its profile stays as it was; the
-        // profile card edits it.
-        if (cause instanceof ApiError && cause.code === "CONFLICT") return viaAdd();
-        throw cause;
+
+      let out: PendingVerification[];
+      if (hasSubscription) {
+        out = await viaAdd();
+      } else {
+        try {
+          const res = await withSession(() => createReminders(estateAddress, recipients, profile));
+          // Verifications carry the recipient id but not its role or contact: read them back.
+          const saved = await withSession(() => fetchReminders(estateAddress));
+          queryClient.setQueryData(remindersKey(estateAddress), saved);
+          out = res.verifications.flatMap((verification) => {
+            const r = saved.recipients.find(
+              (item) => item.reminderRecipientId === verification.reminderRecipientId,
+            );
+            if (r === undefined) return [];
+            const pending = pendingFrom(verification, {
+              recipientId: r.reminderRecipientId,
+              role: sameEnum(r.role, "heir") ? "heir" : "checkInSigner",
+              channel: sameEnum(r.channel, "email") ? "email" : "telegram",
+              destination: r.destination,
+            });
+            return pending === undefined ? [] : [pending];
+          });
+        } catch (cause) {
+          // Our list was empty but the estate already has a subscription (made elsewhere, or a
+          // list we couldn't read): add to it instead.
+          if (cause instanceof ApiError && cause.code === "CONFLICT") out = await viaAdd();
+          else throw cause;
+        }
       }
+      return out.sort((a, b) => Number(a.role === "heir") - Number(b.role === "heir"));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: remindersKey(estateAddress) }),
   });
@@ -174,17 +208,6 @@ export function useResendVerification(estateAddress: string) {
         throw cause;
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: remindersKey(estateAddress) }),
-  });
-}
-
-/** Saves all three heir profile fields; blank clears one. 404 until reminders are set up. */
-export function useSaveHeirProfile(estateAddress: string) {
-  const queryClient = useQueryClient();
-  const { withSession } = useSession();
-  return useMutation({
-    mutationFn: (heir: HeirProfile) =>
-      withSession(() => saveHeirProfile(estateAddress, cleanProfile(heir))),
     onSettled: () => queryClient.invalidateQueries({ queryKey: remindersKey(estateAddress) }),
   });
 }

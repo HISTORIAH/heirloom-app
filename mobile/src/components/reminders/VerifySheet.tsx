@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Linking, Share, Text } from "react-native";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Linking, Share, Text, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { ModalSheet } from "@/components/ModalSheet";
-import { Cap, Display, Lede, PrimaryButton, TextField, TextLink } from "@/components/ui";
+import { CodeInput } from "@/components/reminders/CodeInput";
+import { VerifiedSeal } from "@/components/reminders/VerifiedSeal";
+import { Cap, Display, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { VERIFY_CODE_LENGTH, VERIFY_CODE_PATTERN } from "@/constants/alerts";
 import { useTick } from "@/hooks/useTick";
-import { normalizeCode } from "@/lib/reminders";
 import { colors, font } from "@/theme";
 import type { PendingVerification } from "@/types/reminders";
 
@@ -16,14 +18,24 @@ function countdown(ms: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/** Rises in after the seal has popped. */
+function Rise({ delay, children }: { delay: number; children: ReactNode }) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).duration(380)} style={{ gap: 8 }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 /**
- * The owner's email: we sent a code and a link, and they type the code here. The link opens the
- * web app for now.
+ * The owner's email: we sent a code and a link, and they type the code here. A full, well-formed
+ * code checks itself; the button is there for a retry. The link opens the web app for now.
  * TODO(mobile): open /verify-email links in the app with Universal Links / App Links on
  * app.heirlm.xyz, so links already in inboxes keep working.
  */
 function EmailVerify({
   pending,
+  step,
   resending,
   verifying,
   error,
@@ -32,6 +44,7 @@ function EmailVerify({
   onClose,
 }: {
   pending: PendingVerification;
+  step?: string;
   resending?: boolean;
   verifying?: boolean;
   error?: string;
@@ -42,7 +55,16 @@ function EmailVerify({
   const now = useTick();
   const [code, setCode] = useState("");
   const valid = VERIFY_CODE_PATTERN.test(code);
+  const malformed = code.length === VERIFY_CODE_LENGTH && !valid;
   const left = pending.expiresAt === undefined ? undefined : pending.expiresAt - now;
+  // Each full code is sent once by itself; editing it lets the next one go.
+  const sentFor = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!valid || verifying || sentFor.current === code) return;
+    sentFor.current = code;
+    onVerify(code);
+  }, [code, valid, verifying, onVerify]);
 
   let status: string | undefined;
   if (!pending.sent) status = "Couldn't send the email. Send it again.";
@@ -52,26 +74,25 @@ function EmailVerify({
 
   return (
     <ModalSheet onClose={onClose}>
-      <Cap>Email</Cap>
-      <Display size={24}>{pending.sent ? "Check your inbox" : "The email didn't go out"}</Display>
+      <Cap>{step === undefined ? "Email" : `Email · ${step}`}</Cap>
+      <Display size={26}>{pending.sent ? "Check your inbox" : "The email didn't go out"}</Display>
       <Lede size={15}>
-        {`We sent a code to ${pending.destination}. Reminders start once you enter it.`}
+        {`We sent an 8-character code to ${pending.destination}. Reminders start once you enter it.`}
       </Lede>
-      <TextField
-        label="Code"
-        hint={`${VERIFY_CODE_LENGTH} characters`}
+      <CodeInput
         value={code}
-        onChangeText={(text) => setCode(normalizeCode(text).slice(0, VERIFY_CODE_LENGTH))}
-        placeholder="XXXXXXXX"
-        autoCapitalize="characters"
-        autoCorrect={false}
-        autoComplete="one-time-code"
-        maxLength={VERIFY_CODE_LENGTH}
-        error={code.length === VERIFY_CODE_LENGTH && !valid}
+        onChange={setCode}
+        error={malformed || error !== undefined}
+        disabled={verifying}
       />
-      {code.length === VERIFY_CODE_LENGTH && !valid ? (
+      {malformed ? (
         <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.claim }}>
           Codes have no O, 0, I or 1. Check the email again.
+        </Text>
+      ) : null}
+      {error !== undefined ? (
+        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.claim }}>
+          {error}
         </Text>
       ) : null}
       {status !== undefined ? (
@@ -86,25 +107,20 @@ function EmailVerify({
           {status}
         </Text>
       ) : null}
-      {error !== undefined ? (
-        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.claim }}>
-          {error}
-        </Text>
-      ) : null}
       <PrimaryButton
         icon="check"
         label={verifying ? "Checking…" : "Verify"}
         disabled={!valid || verifying}
         onPress={() => onVerify(code)}
       />
-      <PrimaryButton
-        tone="paper"
-        icon="mail"
-        label={resending ? "Sending…" : "Send a new code"}
-        disabled={resending}
-        onPress={onResend}
-      />
-      <TextLink label="I'll do this later" quiet flush onPress={onClose} />
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <TextLink
+          label={resending ? "Sending…" : "Send a new code"}
+          flush
+          onPress={resending ? undefined : onResend}
+        />
+        <TextLink label="I'll do this later" quiet flush onPress={onClose} />
+      </View>
     </ModalSheet>
   );
 }
@@ -113,11 +129,14 @@ function EmailVerify({
  * Connects a contact. Telegram: the owner opens the link themselves; for the heir, the owner
  * shares it, since the bot only accepts a tap from the Telegram account that was entered.
  * Email: the owner types the code we sent. The parent polls reminders while this is open and
- * passes `verified` when it flips.
+ * passes `verified` when it flips, which plays the seal. `step` ("1 of 2") is set when more
+ * contacts wait after this one.
  */
 export function VerifySheet({
   pending,
   verified,
+  step,
+  hasNext,
   estateName,
   heirLabel,
   resending,
@@ -129,6 +148,9 @@ export function VerifySheet({
 }: {
   pending: PendingVerification;
   verified: boolean;
+  step?: string;
+  /** Another contact waits after this one. */
+  hasNext?: boolean;
   estateName: string;
   heirLabel: string;
   resending?: boolean;
@@ -148,14 +170,45 @@ export function VerifySheet({
   if (verified) {
     return (
       <ModalSheet onClose={onClose}>
-        <Cap>{email ? "Email" : "Telegram"}</Cap>
-        <Display size={24}>{`${handle} is connected`}</Display>
-        <Lede size={15}>
-          {self
-            ? "You'll get check-in reminders there. Checking in resets them."
-            : `${heirLabel} will be told there if the grace period runs out.`}
-        </Lede>
-        <PrimaryButton label="Done" onPress={onClose} />
+        <VerifiedSeal />
+        <Rise delay={420}>
+          <View style={{ alignItems: "center", gap: 8 }}>
+            <Cap color={colors.ink}>{email ? "Email connected" : "Telegram connected"}</Cap>
+            <Text
+              accessibilityRole="header"
+              style={{
+                textAlign: "center",
+                fontFamily: font.semibold,
+                fontSize: 30,
+                lineHeight: 32,
+                letterSpacing: -1,
+                color: colors.ink,
+              }}
+            >
+              {self
+                ? "You're all set."
+                : `${heirLabel.charAt(0).toUpperCase()}${heirLabel.slice(1)} is covered.`}
+            </Text>
+            <Text
+              style={{
+                textAlign: "center",
+                fontFamily: font.regular,
+                fontSize: 15,
+                lineHeight: 22,
+                color: colors.mute,
+              }}
+            >
+              {self
+                ? `Reminders for “${estateName}” go to ${handle}. Checking in resets them.`
+                : `If the grace period runs out, ${heirLabel} hears about it at ${handle}.`}
+            </Text>
+          </View>
+        </Rise>
+        <Rise delay={560}>
+          <View style={{ marginTop: 8 }}>
+            <PrimaryButton label={hasNext ? "Next" : "Done"} onPress={onClose} />
+          </View>
+        </Rise>
       </ModalSheet>
     );
   }
@@ -164,6 +217,7 @@ export function VerifySheet({
     return (
       <EmailVerify
         pending={pending}
+        step={step}
         resending={resending}
         verifying={verifying}
         error={error}
@@ -183,8 +237,8 @@ export function VerifySheet({
 
   return (
     <ModalSheet onClose={onClose}>
-      <Cap>Telegram</Cap>
-      <Display size={24}>
+      <Cap>{step === undefined ? "Telegram" : `Telegram · ${step}`}</Cap>
+      <Display size={26}>
         {self ? "Open Telegram and tap Start" : `Send this link to ${heirLabel}`}
       </Display>
       <Lede size={15}>

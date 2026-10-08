@@ -80,33 +80,49 @@ async function fetchEstatesByMemcmp(
 
 const rentBySpace = new Map<string, bigint>();
 
-async function claimableLamportsForVault(rpc: EstateRpc, vaultPda: Address): Promise<bigint> {
-  const { value } = await rpc
-    .getAccountInfo(vaultPda, { encoding: "base64", commitment: "confirmed" })
-    .send();
-  if (!value) return 0n;
-  const spaceKey = String(value.space);
+/** getMultipleAccounts takes at most this many addresses per call. */
+const MULTIPLE_ACCOUNTS_MAX = 100;
+
+async function claimableLamports(
+  rpc: EstateRpc,
+  vault: { lamports: bigint; space: bigint } | null,
+): Promise<bigint> {
+  if (!vault) return 0n;
+  const spaceKey = String(vault.space);
   let rentMin = rentBySpace.get(spaceKey);
   if (rentMin === undefined) {
-    rentMin = BigInt(await rpc.getMinimumBalanceForRentExemption(value.space).send());
+    rentMin = BigInt(await rpc.getMinimumBalanceForRentExemption(vault.space).send());
     rentBySpace.set(spaceKey, rentMin);
   }
-  const balance = BigInt(value.lamports);
+  const balance = BigInt(vault.lamports);
   return balance > rentMin ? balance - rentMin : 0n;
 }
 
+/** Every row's vault balance in one getMultipleAccounts per 100 vaults, not one call per estate. */
 async function withClaimableLamports(rpc: EstateRpc, rows: DecodedEstate[]): Promise<EstateRow[]> {
-  return Promise.all(
+  const vaults = await Promise.all(
     rows.map(async (row) => {
-      const [vaultPda] = await findVaultPda({
-        authority: row.data.authority,
-        heir: row.data.heir,
-      });
-      return {
-        ...row,
-        claimableLamports: await claimableLamportsForVault(rpc, vaultPda),
-      };
+      const [vaultPda] = await findVaultPda({ authority: row.data.authority, heir: row.data.heir });
+      return vaultPda;
     }),
+  );
+  const infos: ({ lamports: bigint; space: bigint } | null)[] = [];
+  for (let i = 0; i < vaults.length; i += MULTIPLE_ACCOUNTS_MAX) {
+    const { value } = await rpc
+      .getMultipleAccounts(vaults.slice(i, i + MULTIPLE_ACCOUNTS_MAX), {
+        encoding: "base64",
+        commitment: "confirmed",
+        // Only lamports and size are read; skip the account data.
+        dataSlice: { offset: 0, length: 0 },
+      })
+      .send();
+    infos.push(...value);
+  }
+  return Promise.all(
+    rows.map(async (row, i) => ({
+      ...row,
+      claimableLamports: await claimableLamports(rpc, infos[i] ?? null),
+    })),
   );
 }
 
@@ -168,7 +184,9 @@ export async function fetchEstatesByCheckinSigner(
 }
 
 /** The fetcher for each role a wallet can hold on an estate. */
-export function fetchEstatesFor(role: EstateRole): (rpc: EstateRpc, wallet: Address) => Promise<EstateRow[]> {
+export function fetchEstatesFor(
+  role: EstateRole,
+): (rpc: EstateRpc, wallet: Address) => Promise<EstateRow[]> {
   if (role === "authority") return fetchEstatesByAuthority;
   if (role === "heir") return fetchEstatesByHeir;
   if (role === "delegate") return fetchEstatesByDelegate;

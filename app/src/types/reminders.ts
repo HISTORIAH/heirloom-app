@@ -123,13 +123,41 @@ export function telegramHandle(text: string): string {
   return text.trim().replace(/^@/, "");
 }
 
-/** Adds one contact. `heir` is passed only when this contact turns reminders on. Rejects on failure. */
-export type AddHandler = (
-  role: ReminderRole,
-  channel: ReminderChannel,
-  destination: string,
-  heir?: HeirProfile,
-) => Promise<void>;
+/** One role's contact as it's typed on the reminders form. Blank `value` means none is added. */
+export type ContactDraft = {
+  channel: ReminderChannel;
+  /** Telegram @username or email. */
+  value: string;
+  /** The heir's email typed a second time. */
+  again: string;
+};
+
+/**
+ * The reminders form in one submit: the new contacts, and the heir profile when it's set up or
+ * edited. Without a subscription this turns reminders on; with one, it adds to it.
+ */
+export type RemindersSubmit = {
+  hasSubscription: boolean;
+  contacts: AddRecipientRequest[];
+  heir?: HeirProfile;
+};
+
+/** A verification on screen, for the contact it belongs to. */
+export type PendingVerification = {
+  recipientId: string;
+  role: ReminderRole;
+  channel: ReminderChannel;
+  destination: string;
+  /** False when the backend returned no verification: sending failed for now, so offer resend. */
+  sent: boolean;
+  /** Telegram only: the t.me link to open or share. */
+  link?: string;
+  /** Epoch ms. Absent when we didn't just send it (an email code already in the inbox). */
+  expiresAt?: number;
+};
+
+/** Where the reminders dialog is: the form, the read-back of new contacts, or verifying them. */
+export type RemindersStage = "form" | "review" | "verify";
 
 /** One role's contact on one channel. Contacts can't be edited or removed, so this is read-only state. */
 export type ContactState =

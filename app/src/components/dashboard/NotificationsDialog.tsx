@@ -1,675 +1,161 @@
-import { useEffect, useState } from "react";
-import { AlertTriangle, Check, Mail, RefreshCw, Send } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Bell, Check, Mail, Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/surface/Modal";
-import { cn } from "@/lib/utils";
+import AlertPreview from "@/components/reminders/AlertPreview";
+import ContactFields from "@/components/reminders/ContactFields";
+import ReminderTimeline from "@/components/reminders/ReminderTimeline";
+import VerifyStage from "@/components/reminders/VerifyStage";
+import { useToast } from "@/hooks/use-toast";
 import {
-  EMAIL_PATTERN,
-  HEIR_NAME_MAX,
-  HEIR_NOTE_MAX,
-  TELEGRAM_USERNAME_PATTERN,
-  VERIFY_CODE_LENGTH,
-  VERIFY_CODE_PATTERN,
-} from "@/lib/constants";
+  useReminders,
+  useResendVerification,
+  useSaveReminders,
+  useVerifyEmail,
+} from "@/hooks/useReminders";
+import { ApiError, isUnauthorized } from "@/lib/api";
+import { HEIR_NAME_MAX, HEIR_NOTE_MAX } from "@/lib/constants";
+import {
+  channelOf,
+  draftBlank,
+  draftProblem,
+  normalizeDestination,
+  pendingFrom,
+  roleOf,
+  verifyErrorKey,
+} from "@/lib/reminders";
+import { cn, errMsg } from "@/lib/utils";
 import {
   cleanProfile,
   contactState,
-  telegramHandle,
-  type AddHandler,
+  type AddRecipientRequest,
+  type ContactDraft,
   type ContactState,
   type HeirProfile,
-  type RecipientResponse,
+  type PendingVerification,
   type ReminderChannel,
   type ReminderRole,
+  type RemindersStage,
 } from "@/types/reminders";
 import { useTranslation } from "@heirloom/i18n";
 
-// ─── Channel config ───────────────────────────────────────────────
+const ROLES: ReminderRole[] = ["checkInSigner", "heir"];
+/** Channels a contact can be added on, in tab order. SMS isn't delivered yet. */
+const OFFERED_CHANNELS: ReminderChannel[] = ["telegram", "email"];
+const EMPTY_PROFILE: HeirProfile = { heirName: null, ownerName: null, note: null };
 
-const CHANNEL_META: Record<
-  ReminderChannel,
-  { icon: typeof Mail; placeholderKey: string; invalidKey: string }
-> = {
-  email: {
-    icon: Mail,
-    placeholderKey: "notifications.placeholderEmail",
-    invalidKey: "notifications.invalidEmail",
-  },
-  telegram: {
-    icon: Send,
-    placeholderKey: "notifications.placeholderTelegram",
-    invalidKey: "notifications.invalidUsername",
-  },
-  sms: { icon: Send, placeholderKey: "", invalidKey: "" }, // not offered
-  whatsapp: { icon: Send, placeholderKey: "", invalidKey: "" }, // not offered
-};
+const blankDraft = (channel: ReminderChannel = "telegram"): ContactDraft => ({
+  channel,
+  value: "",
+  again: "",
+});
 
-function isValidDestination(channel: ReminderChannel, value: string): boolean {
-  const trimmed = value.trim();
-  if (channel === "email") return EMAIL_PATTERN.test(trimmed);
-  if (channel === "telegram") return TELEGRAM_USERNAME_PATTERN.test(trimmed);
-  return false;
+function sameProfile(a: HeirProfile, b: HeirProfile): boolean {
+  const x = cleanProfile(a);
+  const y = cleanProfile(b);
+  return x.heirName === y.heirName && x.ownerName === y.ownerName && x.note === y.note;
 }
-
-function normalizeDestination(channel: ReminderChannel, value: string): string {
-  if (channel === "telegram") return telegramHandle(value);
-  return value.trim().toLowerCase();
-}
-
-/** Channels offered for a new contact, in picker order. SMS isn't delivered yet. */
-const OFFERED_CHANNELS: ReminderChannel[] = ["email", "telegram"];
 
 const channelLabelKey = (channel: ReminderChannel) =>
   channel === "email" ? "notifications.channelEmail" : "notifications.channelTelegram";
 
-const EMPTY_PROFILE: HeirProfile = { heirName: null, ownerName: null, note: null };
+// ─── Pieces ───────────────────────────────────────────────────────
 
-/** "abcd 2345" → "ABCD2345", capped at the code length. */
-const normalizeCode = (value: string) =>
-  value
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, VERIFY_CODE_LENGTH);
-
-// ─── Email code entry ─────────────────────────────────────────────
-
-type CodeEntryProps = {
-  verifying: boolean;
-  onVerify: (code: string) => Promise<string | undefined>;
-};
-
-/** Typed code for the owner's own email. Same endpoint as the link. */
-function CodeEntry({ verifying, onVerify }: CodeEntryProps) {
-  const { t } = useTranslation("app");
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | undefined>();
-  const valid = VERIFY_CODE_PATTERN.test(code);
-  const malformed = code.length === VERIFY_CODE_LENGTH && !valid;
-
-  const submit = async () => {
-    setError(await onVerify(code));
-  };
-
-  return (
-    <form
-      className="mt-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (valid && !verifying) void submit();
-      }}
-    >
-      <div className="flex gap-2">
-        <input
-          type="text"
-          inputMode="text"
-          value={code}
-          onChange={(e) => {
-            setCode(normalizeCode(e.target.value));
-            setError(undefined);
-          }}
-          maxLength={VERIFY_CODE_LENGTH}
-          autoCapitalize="characters"
-          autoCorrect="off"
-          autoComplete="one-time-code"
-          spellCheck={false}
-          aria-label={t("notifications.codePlaceholder")}
-          placeholder={t("notifications.codePlaceholder")}
-          className="ed-input min-w-0 flex-1 font-mono tracking-[0.2em] placeholder:font-sans placeholder:tracking-normal"
-        />
-        <Button type="submit" variant="flat" size="sm" disabled={!valid || verifying}>
-          {verifying ? t("verifyEmail.verifying") : t("notifications.verifyCode")}
-        </Button>
-      </div>
-      {(malformed || error) && (
-        <p className="mt-1.5 text-xs font-medium text-destructive">
-          {error ?? t("verifyEmail.codeFormatHint")}
-        </p>
-      )}
-    </form>
-  );
-}
-
-// ─── Saved contact (read-only display) ────────────────────────────
-
-type SavedContactProps = {
-  contact: ContactState;
-  role: ReminderRole;
-  channel: ReminderChannel;
-  heirLabel: string;
-  resending: boolean;
-  verifying: boolean;
-  onResend: (recipientId: string) => void;
-  onVerify: (code: string) => Promise<string | undefined>;
-};
-
-function SavedContact({
-  contact,
-  role,
-  channel,
-  heirLabel,
-  resending,
-  verifying,
-  onResend,
-  onVerify,
-}: SavedContactProps) {
-  const { t } = useTranslation("app");
-  if (contact.kind === "none") return null;
-
-  const meta = CHANNEL_META[channel];
-  const Icon = meta.icon;
-  const { recipient } = contact;
-  // Heir emails get no code: the backend trusts them once the owner's own contact is verified.
-  const heirEmail = role === "heir" && channel === "email";
-
-  return (
-    <div>
-      <div className="flex items-center justify-between gap-3 rounded-lg border border-tile-line bg-tile-soft px-3.5 py-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-          <span className="truncate text-sm font-semibold">
-            {channel === "telegram" && "@"}
-            {recipient.destination}
-          </span>
-        </div>
-        {contact.kind === "connected" ? (
-          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-green-700">
-            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-            {t("notifications.connected")}
-          </span>
-        ) : heirEmail ? (
-          <span className="shrink-0 text-xs font-semibold text-muted-foreground">
-            {t("notifications.pendingBadge")}
-          </span>
-        ) : (
-          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-amber-700">
-            <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2} />
-            {t("notifications.waitingVerification")}
-          </span>
-        )}
-      </div>
-
-      {contact.kind === "waiting" && heirEmail && (
-        <p className="mt-1.5 text-xs font-medium text-muted-foreground">
-          {t("notifications.heirEmailPending", { name: heirLabel })}
-        </p>
-      )}
-
-      {contact.kind === "waiting" && !heirEmail && (
-        <div className="mt-1.5">
-          <p className="text-xs font-medium text-muted-foreground">
-            {channel === "telegram"
-              ? t("notifications.unverifiedTelegram")
-              : t("notifications.checkInboxDesc", { email: recipient.destination })}
-          </p>
-          {channel === "email" && <CodeEntry verifying={verifying} onVerify={onVerify} />}
-          <button
-            type="button"
-            onClick={() => onResend(recipient.reminderRecipientId)}
-            disabled={resending}
-            className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 disabled:opacity-50"
-          >
-            <RefreshCw className={cn("h-3 w-3", resending && "animate-spin")} strokeWidth={2} />
-            {t("notifications.resendVerification")}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Add contact form ─────────────────────────────────────────────
-
-type AddContactFormProps = {
-  role: ReminderRole;
-  channel: ReminderChannel;
-  heirLabel: string;
-  /** The first contact turns reminders on, so it also asks for the heir profile. */
-  askProfile: boolean;
-  adding: boolean;
-  onAdd: AddHandler;
-  onCancel: () => void;
-};
-
-function AddContactForm({
-  role,
-  channel,
-  heirLabel,
-  askProfile,
-  adding,
-  onAdd,
-  onCancel,
-}: AddContactFormProps) {
-  const { t } = useTranslation("app");
-  const [value, setValue] = useState("");
-  const [confirmValue, setConfirmValue] = useState("");
-  const [profile, setProfile] = useState<HeirProfile>(EMPTY_PROFILE);
-  const [confirming, setConfirming] = useState(false);
-
-  const meta = CHANNEL_META[channel];
-  const valid = isValidDestination(channel, value);
-
-  // Heir email gets typed twice: it's never verified, so a typo means the alert goes nowhere.
-  const needsDoubleEntry = channel === "email" && role === "heir";
-  const confirmValid = needsDoubleEntry
-    ? normalizeDestination(channel, value) === normalizeDestination(channel, confirmValue)
-    : true;
-  // The owner's name is required at setup, so the heir alert doesn't read as phishing.
-  const profileValid = !askProfile || !!profile.ownerName?.trim();
-  const canProceed = valid && confirmValid && profileValid;
-
-  const handleSave = () => {
-    const dest = normalizeDestination(channel, value);
-    void onAdd(role, channel, dest, askProfile ? cleanProfile(profile) : undefined).then(
-      onCancel,
-      () => undefined,
-    );
-  };
-
-  if (confirming) {
-    const display = normalizeDestination(channel, value);
-    const ownerName = profile.ownerName?.trim();
-    return (
-      <div>
-        <p className="text-sm font-medium">
-          {channel === "email"
-            ? t("notifications.confirmEmail", { email: display })
-            : t("notifications.confirmContact", { handle: display })}
-        </p>
-        {askProfile && ownerName && (
-          <p className="mt-1.5 text-xs font-medium text-muted-foreground">
-            {t("notifications.ownerNameLabel")} <span className="text-foreground">{ownerName}</span>
-          </p>
-        )}
-        {needsDoubleEntry && (
-          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-            {t("notifications.heirEmailWarning", { name: heirLabel })}
-          </p>
-        )}
-        <div className="mt-3 flex gap-2">
-          <Button
-            variant="flat-outline"
-            size="sm"
-            disabled={adding}
-            onClick={() => setConfirming(false)}
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button variant="flat" size="sm" disabled={adding} onClick={handleSave}>
-            {adding ? t("notifications.saving") : t("notifications.saveContact")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (canProceed) setConfirming(true);
-      }}
-    >
-      <input
-        type={channel === "email" ? "email" : "text"}
-        autoFocus
-        autoCapitalize="none"
-        autoCorrect="off"
-        spellCheck={false}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={t(meta.placeholderKey)}
-        aria-label={t(channelLabelKey(channel))}
-        className="ed-input"
-      />
-      {value.length > 0 && !valid && (
-        <p className="mt-1.5 text-xs font-medium text-destructive">{t(meta.invalidKey)}</p>
-      )}
-
-      {needsDoubleEntry && (
-        <>
-          <input
-            type="email"
-            autoCapitalize="none"
-            autoCorrect="off"
-            autoComplete="off"
-            spellCheck={false}
-            value={confirmValue}
-            onChange={(e) => setConfirmValue(e.target.value)}
-            // The point is typing it twice: no pasting the first field into the second.
-            onPaste={(e) => e.preventDefault()}
-            onDrop={(e) => e.preventDefault()}
-            placeholder={t("notifications.confirmEmailPlaceholder")}
-            aria-label={t("notifications.confirmEmailPlaceholder")}
-            className="ed-input mt-2"
-          />
-          {confirmValue.length > 0 && !confirmValid && (
-            <p className="mt-1.5 text-xs font-medium text-destructive">
-              {t("notifications.emailMismatch")}
-            </p>
-          )}
-          <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-            {t("notifications.heirEmailWarning", { name: heirLabel })}
-          </p>
-        </>
-      )}
-
-      {channel === "telegram" && role === "heir" && (
-        <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
-          <Send className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          {t("notifications.heirTelegramWarning", { name: heirLabel })}
-        </p>
-      )}
-
-      {askProfile && (
-        <div className="mt-4 rounded-lg border border-tile-line p-3.5">
-          <p className="text-sm font-semibold">{t("notifications.heirProfileSetupTitle")}</p>
-          <p className="mt-0.5 text-xs font-medium text-muted-foreground">
-            {t("notifications.heirProfileDesc")}
-          </p>
-          <div className="mt-3">
-            <ProfileFields idPrefix={`setup-${role}`} value={profile} onChange={setProfile} />
-          </div>
-        </div>
-      )}
-
-      <div className="mt-3 flex gap-2">
-        <Button type="button" variant="flat-outline" size="sm" disabled={adding} onClick={onCancel}>
-          {t("common.cancel")}
-        </Button>
-        <Button type="submit" variant="flat" size="sm" disabled={!canProceed}>
-          {t("common.confirm")}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-// ─── Channel picker (shown when adding a new contact) ─────────────
-
-function ChannelPicker({
-  channels,
-  onPick,
-  onCancel,
-}: {
-  channels: ReminderChannel[];
-  onPick: (channel: ReminderChannel) => void;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation("app");
-  return (
-    <div className="flex flex-wrap gap-2">
-      {channels.map((channel) => {
-        const Icon = CHANNEL_META[channel].icon;
-        return (
-          <Button key={channel} variant="flat-outline" size="sm" onClick={() => onPick(channel)}>
-            <Icon className="h-3.5 w-3.5" />
-            {t(channelLabelKey(channel))}
-          </Button>
-        );
-      })}
-      <Button variant="ghost" size="sm" onClick={onCancel}>
-        {t("common.cancel")}
-      </Button>
-    </div>
-  );
-}
-
-// ─── Role section ─────────────────────────────────────────────────
-
-type RoleSectionProps = {
-  role: ReminderRole;
-  title: string;
-  description: string;
-  recipients: RecipientResponse[];
-  heirLabel: string;
-  askProfile: boolean;
-  addingRole?: ReminderRole;
-  addingChannel?: ReminderChannel;
-  resendingId?: string;
-  verifying: boolean;
-  onAdd: AddHandler;
-  onResend: (recipientId: string) => void;
-  onVerify: (code: string) => Promise<string | undefined>;
-};
-
-function RoleSection({
-  role,
+/** One numbered card on the form. The badge turns lime with a check once the step is done. */
+function Section({
+  step,
   title,
   description,
-  recipients,
-  heirLabel,
-  askProfile,
-  addingRole,
-  addingChannel,
-  resendingId,
-  verifying,
-  onAdd,
-  onResend,
-  onVerify,
-}: RoleSectionProps) {
-  const { t } = useTranslation("app");
-  const [picking, setPicking] = useState(false);
-  const [formChannel, setFormChannel] = useState<ReminderChannel | null>(null);
-
-  const contacts = OFFERED_CHANNELS.map((channel) => ({
-    channel,
-    state: contactState(recipients, role, channel),
-  }));
-  const free = contacts.filter((c) => c.state.kind === "none").map((c) => c.channel);
-  const hasAnyContact = free.length < OFFERED_CHANNELS.length;
-  const adding = addingRole === role;
-
-  const reset = () => {
-    setPicking(false);
-    setFormChannel(null);
-  };
-
-  // One channel left: skip the picker and go straight to its form.
-  const startAdding = () => {
-    if (free.length === 1) setFormChannel(free[0]);
-    else setPicking(true);
-  };
-
+  done,
+  delay,
+  children,
+}: {
+  step: number;
+  title: string;
+  description: string;
+  done?: boolean;
+  delay: number;
+  children: ReactNode;
+}) {
   return (
-    <div className="py-4">
-      <p className="text-sm font-semibold">{title}</p>
-      <p className="mt-0.5 text-xs font-medium text-muted-foreground">{description}</p>
-
-      <div className="mt-3 space-y-2.5">
-        {contacts.map(({ channel, state }) => (
-          <SavedContact
-            key={channel}
-            contact={state}
-            role={role}
-            channel={channel}
-            heirLabel={heirLabel}
-            resending={
-              state.kind === "waiting" && resendingId === state.recipient.reminderRecipientId
-            }
-            verifying={verifying}
-            onResend={onResend}
-            onVerify={onVerify}
-          />
-        ))}
-
-        {free.length > 0 && !picking && !formChannel && (
-          <Button variant="flat-outline" size="sm" onClick={startAdding}>
-            {hasAnyContact && free.length === 1
-              ? t("notifications.addChannel", { channel: t(channelLabelKey(free[0])) })
-              : t("notifications.add")}
-          </Button>
-        )}
-
-        {picking && (
-          <ChannelPicker
-            channels={free}
-            onPick={(ch) => {
-              setFormChannel(ch);
-              setPicking(false);
-            }}
-            onCancel={reset}
-          />
-        )}
-
-        {formChannel && (
-          <AddContactForm
-            role={role}
-            channel={formChannel}
-            heirLabel={heirLabel}
-            askProfile={askProfile}
-            adding={adding && addingChannel === formChannel}
-            onAdd={onAdd}
-            onCancel={reset}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Heir profile section ─────────────────────────────────────────
-
-type HeirProfileSectionProps = {
-  heir: HeirProfile | null;
-  saving: boolean;
-  onSave: (profile: HeirProfile) => Promise<void>;
-};
-
-function HeirProfileSection({ heir, saving, onSave }: HeirProfileSectionProps) {
-  const { t } = useTranslation("app");
-  const [draft, setDraft] = useState<HeirProfile>(heir ?? EMPTY_PROFILE);
-  const [editing, setEditing] = useState(false);
-
-  // From what's saved, not the draft: that's what the heir would get today.
-  const showGenericWarning = !heir?.heirName?.trim() || !heir?.ownerName?.trim();
-  const hasSavedData = !!(heir?.heirName || heir?.ownerName || heir?.note);
-
-  const handleSave = async () => {
-    // PUT replaces all three fields, so always send every one; blank clears.
-    await onSave(cleanProfile(draft));
-    setEditing(false);
-  };
-
-  const cancel = () => {
-    setDraft(heir ?? EMPTY_PROFILE);
-    setEditing(false);
-  };
-
-  return (
-    <div className="py-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">{t("notifications.heirProfileTitle")}</p>
-          <p className="mt-0.5 text-xs font-medium text-muted-foreground">
-            {t("notifications.heirProfileDesc")}
-          </p>
-        </div>
-        {!editing && (
-          <Button
-            variant="flat-outline"
-            size="sm"
-            onClick={() => {
-              setDraft(heir ?? EMPTY_PROFILE);
-              setEditing(true);
-            }}
-          >
-            {hasSavedData ? t("notifications.edit") : t("notifications.add")}
-          </Button>
-        )}
-      </div>
-
-      {showGenericWarning && (
-        <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-amber-700">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          {t("notifications.genericMessageWarning")}
-        </p>
-      )}
-
-      {!editing && hasSavedData && (
-        <div className="mt-3 space-y-1.5 rounded-lg border border-tile-line bg-tile-soft px-3.5 py-2.5">
-          {heir?.heirName && (
-            <ProfileRow label={t("notifications.heirNameLabel")} value={heir.heirName} />
+    <section
+      className="seal-rise rounded-xl border border-tile-line bg-background p-5"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <header className="flex items-start gap-3">
+        <span
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-foreground text-xs font-bold transition-colors duration-300",
+            done ? "bg-accent-lime" : "bg-foreground text-background",
           )}
-          {heir?.ownerName && (
-            <ProfileRow label={t("notifications.ownerNameLabel")} value={heir.ownerName} />
-          )}
-          {heir?.note && <ProfileRow label={t("notifications.noteLabel")} value={heir.note} />}
-        </div>
-      )}
-
-      {editing && (
-        <form
-          className="mt-3 space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!saving) void handleSave().catch(() => undefined);
-          }}
         >
-          <ProfileFields idPrefix="settings" value={draft} onChange={setDraft} disabled={saving} />
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="flat-outline"
-              size="sm"
-              disabled={saving}
-              onClick={cancel}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button type="submit" variant="flat" size="sm" disabled={saving}>
-              {saving ? t("notifications.saving") : t("notifications.saveHeirProfile")}
-            </Button>
-          </div>
-        </form>
-      )}
-    </div>
+          {done ? <Check className="h-3.5 w-3.5" strokeWidth={3.2} /> : step}
+        </span>
+        <div className="min-w-0">
+          <h4 className="text-base font-bold leading-tight">{title}</h4>
+          <p className="mt-0.5 text-xs font-medium text-muted-foreground">{description}</p>
+        </div>
+      </header>
+      <div className="mt-4">{children}</div>
+    </section>
   );
 }
 
-/** The three heir profile fields. Shared by the setup form and the settings section. */
 function ProfileFields({
-  idPrefix,
   value,
   onChange,
+  requireOwnerName,
   disabled,
 }: {
-  idPrefix: string;
   value: HeirProfile;
   onChange: (next: HeirProfile) => void;
+  requireOwnerName: boolean;
   disabled?: boolean;
 }) {
   const { t } = useTranslation("app");
   const note = value.note ?? "";
   return (
     <div className="space-y-3">
-      <ProfileInput
-        id={`${idPrefix}-owner-name`}
-        label={t("notifications.ownerNameLabel")}
-        value={value.ownerName ?? ""}
-        onChange={(ownerName) => onChange({ ...value, ownerName })}
-        maxLength={HEIR_NAME_MAX}
-        placeholder={t("notifications.ownerNamePlaceholder")}
-        required
-        disabled={disabled}
-        hint={t("notifications.ownerNameHint")}
-      />
-      <ProfileInput
-        id={`${idPrefix}-heir-name`}
-        label={t("notifications.heirNameLabel")}
-        value={value.heirName ?? ""}
-        onChange={(heirName) => onChange({ ...value, heirName })}
-        maxLength={HEIR_NAME_MAX}
-        placeholder={t("notifications.heirNamePlaceholder")}
-        disabled={disabled}
-      />
       <div>
-        <label className="ed-field-label" htmlFor={`${idPrefix}-note`}>
+        <label className="ed-field-label" htmlFor="heir-alert-owner-name">
+          {t("notifications.ownerNameLabel")}
+          {requireOwnerName && <span className="text-destructive"> *</span>}
+        </label>
+        <input
+          id="heir-alert-owner-name"
+          type="text"
+          value={value.ownerName ?? ""}
+          onChange={(e) =>
+            onChange({ ...value, ownerName: e.target.value.slice(0, HEIR_NAME_MAX) })
+          }
+          maxLength={HEIR_NAME_MAX}
+          disabled={disabled}
+          className="ed-input mt-1"
+          placeholder={t("notifications.ownerNamePlaceholder")}
+        />
+        <p className="mt-1 text-xs text-muted-foreground">{t("notifications.ownerNameHint")}</p>
+      </div>
+      <div>
+        <label className="ed-field-label" htmlFor="heir-alert-heir-name">
+          {t("notifications.heirNameLabel")}
+        </label>
+        <input
+          id="heir-alert-heir-name"
+          type="text"
+          value={value.heirName ?? ""}
+          onChange={(e) => onChange({ ...value, heirName: e.target.value.slice(0, HEIR_NAME_MAX) })}
+          maxLength={HEIR_NAME_MAX}
+          disabled={disabled}
+          className="ed-input mt-1"
+          placeholder={t("notifications.heirNamePlaceholder")}
+        />
+      </div>
+      <div>
+        <label className="ed-field-label" htmlFor="heir-alert-note">
           {t("notifications.noteLabel")}
         </label>
         <textarea
-          id={`${idPrefix}-note`}
+          id="heir-alert-note"
           value={note}
           onChange={(e) => onChange({ ...value, note: e.target.value.slice(0, HEIR_NOTE_MAX) })}
           maxLength={HEIR_NOTE_MAX}
@@ -686,153 +172,552 @@ function ProfileFields({
   );
 }
 
-function ProfileRow({ label, value }: { label: string; value: string }) {
+/** The live preview and the schedule: the right column on desktop. */
+function Aside({ profile }: { profile: HeirProfile }) {
+  const { t } = useTranslation("app");
   return (
-    <p className="text-sm">
-      <span className="text-muted-foreground">{label}: </span>
-      <span className="whitespace-pre-line break-words font-semibold">{value}</span>
-    </p>
-  );
-}
-
-type ProfileInputProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  maxLength: number;
-  placeholder: string;
-  required?: boolean;
-  disabled?: boolean;
-  hint?: string;
-};
-
-function ProfileInput({
-  id,
-  label,
-  value,
-  onChange,
-  maxLength,
-  placeholder,
-  required,
-  disabled,
-  hint,
-}: ProfileInputProps) {
-  return (
-    <div>
-      <label className="ed-field-label" htmlFor={id}>
-        {label}
-        {required && <span className="text-destructive"> *</span>}
-      </label>
-      <input
-        id={id}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
-        maxLength={maxLength}
-        disabled={disabled}
-        className="ed-input mt-1"
-        placeholder={placeholder}
-      />
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    <div className="space-y-6 md:sticky md:top-0">
+      <div className="seal-rise space-y-3" style={{ animationDelay: "120ms" }}>
+        <p className="ed-label">{t("notifications.previewTitle")}</p>
+        <AlertPreview profile={profile} />
+      </div>
+      <div className="seal-rise space-y-3" style={{ animationDelay: "200ms" }}>
+        <p className="ed-label">{t("notifications.timelineTitle")}</p>
+        <ReminderTimeline />
+      </div>
     </div>
   );
 }
 
-// ─── Main dialog ──────────────────────────────────────────────────
+// ─── The dialog ───────────────────────────────────────────────────
 
 type Props = {
   open: boolean;
-  heirLabel: string;
-  recipients: RecipientResponse[];
-  heir: HeirProfile | null;
-  addingRole?: ReminderRole;
-  addingChannel?: ReminderChannel;
-  savingHeir: boolean;
-  resendingId?: string;
-  verifying: boolean;
-  onAdd: AddHandler;
-  onResend: (recipientId: string) => void;
-  /** Resolves with an error message, or undefined once the code is accepted. */
-  onVerify: (code: string) => Promise<string | undefined>;
-  onSaveHeir: (profile: HeirProfile) => Promise<void>;
+  estateAddress: string;
+  /** What to call the heir before they have a name: their truncated address. */
+  heirFallback: string;
+  /** A 401 mid-flow: the parent closes this and asks to sign in again. */
+  onSessionExpired: () => void;
   onClose: () => void;
 };
 
-/** Reminder contacts and heir profile for one estate. Each contact saves on its own. */
-const NotificationsDialog: React.FC<Props> = ({
-  open,
-  heirLabel,
-  recipients,
-  heir,
-  addingRole,
-  addingChannel,
-  savingHeir,
-  resendingId,
-  verifying,
-  onAdd,
-  onResend,
-  onVerify,
-  onSaveHeir,
-  onClose,
-}) => {
-  const { t } = useTranslation("app");
-  // Remount on open so half-typed values don't linger between visits.
-  const [session, setSession] = useState(0);
-  useEffect(() => {
-    if (open) setSession((n) => n + 1);
-  }, [open]);
+/**
+ * One estate's reminders on one form: where to remind the owner, where to tell the heir, and how
+ * the heir alert reads, with a live preview beside it. Everything saves with one button; new
+ * contacts get one read-back first, since they can't be edited yet, then each is verified in
+ * place and the seal plays. Mounted only while open, so half-typed values don't linger.
+ */
+const NotificationsDialog: React.FC<Props> = (props) =>
+  props.open ? <RemindersDialog {...props} /> : null;
 
-  // No contacts means no subscription yet: the first contact creates it, with the heir
-  // profile, and the profile can't be saved on its own until then (PUT 404s).
+function RemindersDialog({
+  estateAddress,
+  heirFallback,
+  onSessionExpired,
+  onClose,
+}: Omit<Props, "open">) {
+  const { t } = useTranslation("app");
+  const { toast } = useToast();
+  const [stage, setStage] = useState<RemindersStage>("form");
+  const [queue, setQueue] = useState<PendingVerification[]>([]);
+  const [queued, setQueued] = useState(0);
+  const pending = queue[0];
+
+  const reminders = useReminders(estateAddress, { poll: stage === "verify" });
+  const save = useSaveReminders(estateAddress);
+  const resend = useResendVerification(estateAddress);
+  const verifyEmail = useVerifyEmail(estateAddress);
+
+  const [drafts, setDrafts] = useState<Record<ReminderRole, ContactDraft>>({
+    checkInSigner: blankDraft(),
+    heir: blankDraft(),
+  });
+  // "Add email as well" on a role that already has a contact.
+  const [adding, setAdding] = useState<Record<ReminderRole, boolean>>({
+    checkInSigner: false,
+    heir: false,
+  });
+  const [profileDraft, setProfileDraft] = useState<HeirProfile | undefined>(undefined);
+
+  const recipients = reminders.data?.recipients ?? [];
+  const savedProfile = reminders.data?.heir ?? EMPTY_PROFILE;
+  const profile = profileDraft ?? savedProfile;
+  const heirName = profile.heirName?.trim();
+  const heirLabel = heirName || heirFallback;
   const hasSubscription = recipients.length > 0;
-  const shared = {
-    recipients,
-    heirLabel,
-    askProfile: !hasSubscription,
-    addingRole,
-    addingChannel,
-    resendingId,
-    verifying,
-    onAdd,
-    onResend,
-    onVerify,
+
+  const contactsOf = (role: ReminderRole) =>
+    OFFERED_CHANNELS.map((channel) => ({
+      channel,
+      state: contactState(recipients, role, channel),
+    })).filter((c) => c.state.kind !== "none");
+  const free = (role: ReminderRole) =>
+    OFFERED_CHANNELS.filter((channel) => contactState(recipients, role, channel).kind === "none");
+  /** A role's draft, if it's on screen. Its channel snaps to a free one once a contact is saved. */
+  const draftOf = (role: ReminderRole): ContactDraft | undefined => {
+    const channels = free(role);
+    if (channels.length === 0) return undefined;
+    if (contactsOf(role).length > 0 && !adding[role]) return undefined;
+    const draft = drafts[role];
+    return channels.includes(draft.channel) ? draft : blankDraft(channels[0]);
   };
 
-  return (
-    <Modal
-      open={open}
-      cap={t("notifications.title")}
-      title={t("notifications.dialogTitle")}
-      description={t("notifications.dialogLead")}
-      size="lg"
-      busy={addingRole !== undefined || savingHeir}
-      onClose={onClose}
-      footer={
-        <Button variant="flat" className="flex-1 sm:flex-none" onClick={onClose}>
-          {t("common.close")}
-        </Button>
-      }
-    >
-      <div key={session} className="divide-y divide-tile-line">
-        <RoleSection
-          role="checkInSigner"
-          title={t("notifications.remindCheckIn")}
-          description={t("notifications.remindCheckInDesc")}
-          {...shared}
-        />
-        <RoleSection
-          role="heir"
-          title={t("notifications.notifyName", { name: heirLabel })}
-          description={t("notifications.notifyWhenClaimable")}
-          {...shared}
-        />
-        {hasSubscription && (
-          <HeirProfileSection heir={heir} saving={savingHeir} onSave={onSaveHeir} />
+  const typed = ROLES.flatMap((role) => {
+    const draft = draftOf(role);
+    return draft === undefined || draftBlank(draft) ? [] : [{ role, draft }];
+  });
+  const newContacts: AddRecipientRequest[] = typed.map(({ role, draft }) => ({
+    role,
+    channel: draft.channel,
+    destination: draft.value,
+  }));
+  const invalid = typed.some(({ role, draft }) => draftProblem(draft, role) !== undefined);
+  const addingOwner = typed.some((c) => c.role === "checkInSigner");
+  const heirReachable = contactsOf("heir").length > 0 || typed.some((c) => c.role === "heir");
+  const ownerNameMissing = heirReachable && !profile.ownerName?.trim();
+  const profileDirty = profileDraft !== undefined && !sameProfile(profileDraft, savedProfile);
+
+  let blocker: string | undefined;
+  if (!hasSubscription && !addingOwner) blocker = t("notifications.blockerOwner");
+  else if (invalid) blocker = t("notifications.blockerInvalid");
+  else if (ownerNameMissing) blocker = t("notifications.blockerOwnerName");
+  const changed = newContacts.length > 0 || profileDirty;
+  const ready = changed && blocker === undefined;
+
+  const verified =
+    pending !== undefined &&
+    recipients.some((r) => r.reminderRecipientId === pending.recipientId && r.verified);
+
+  const failed = (err: unknown) => {
+    if (isUnauthorized(err)) onSessionExpired();
+  };
+
+  const commit = () => {
+    const heir = hasSubscription
+      ? profileDirty
+        ? profile
+        : undefined
+      : sameProfile(profile, EMPTY_PROFILE)
+        ? undefined
+        : profile;
+    save.mutate(
+      { hasSubscription, contacts: newContacts, heir },
+      {
+        onSuccess: (verifications) => {
+          setDrafts({ checkInSigner: blankDraft(), heir: blankDraft() });
+          setAdding({ checkInSigner: false, heir: false });
+          setProfileDraft(undefined);
+          save.reset();
+          if (verifications.length > 0) {
+            setQueue(verifications);
+            setQueued(verifications.length);
+            setStage("verify");
+          } else {
+            toast({
+              title: hasSubscription
+                ? t("notifications.savedToast")
+                : t("notifications.remindersOn"),
+            });
+            setStage("form");
+            onClose();
+          }
+        },
+        onError: failed,
+      },
+    );
+  };
+
+  const submit = () => {
+    if (!ready) return;
+    if (newContacts.length > 0) setStage("review");
+    else commit();
+  };
+
+  /** Opens verification for a saved contact that isn't connected yet. */
+  const verify = (contact: ContactState) => {
+    if (contact.kind !== "waiting") return;
+    const target = {
+      recipientId: contact.recipient.reminderRecipientId,
+      role: roleOf(contact.recipient.role),
+      channel: channelOf(contact.recipient.channel),
+      destination: contact.recipient.destination,
+    };
+    // The email code is already in the inbox; the stage takes it, and resends from there.
+    if (target.channel === "email") {
+      setQueue([{ ...target, sent: true }]);
+      setQueued(1);
+      setStage("verify");
+      return;
+    }
+    resend.mutate(
+      { recipientId: target.recipientId },
+      {
+        onSuccess: (status) => {
+          setQueue([pendingFrom(status, target)]);
+          setQueued(1);
+          setStage("verify");
+        },
+        onError: failed,
+      },
+    );
+  };
+
+  const next = () => {
+    resend.reset();
+    verifyEmail.reset();
+    if (queue.length > 1) {
+      setQueue((prev) => prev.slice(1));
+      return;
+    }
+    setQueue([]);
+    setStage("form");
+    if (verified) onClose();
+  };
+
+  const busy = save.isPending;
+
+  // ─── Frame: title and footer per stage ──────────────────────────
+
+  const setupTitle = !hasSubscription && reminders.isSuccess;
+  const saveError =
+    save.isError && !isUnauthorized(save.error)
+      ? errMsg(save.error, t("notifications.saveFailedDesc"))
+      : undefined;
+
+  let title = t(setupTitle ? "notifications.setupTitle" : "notifications.dialogTitle");
+  let description: string | undefined = t(
+    setupTitle ? "notifications.setupLead" : "notifications.dialogLead",
+  );
+  let footer: ReactNode = (
+    <div className="flex w-full flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center">
+      <p
+        aria-live="polite"
+        className={cn(
+          "text-xs font-medium sm:mr-auto",
+          saveError ? "font-semibold text-destructive" : "text-muted-foreground",
         )}
+      >
+        {saveError ?? (changed || !hasSubscription ? blocker : undefined)}
+      </p>
+      <Button variant="flat-outline" onClick={onClose} disabled={busy}>
+        {t("common.close")}
+      </Button>
+      {(changed || !hasSubscription) && (
+        <Button
+          variant="flat-yellow"
+          className="seal-rise"
+          disabled={!ready || busy}
+          onClick={submit}
+        >
+          <Bell className="h-4 w-4" />
+          {busy
+            ? t("notifications.saving")
+            : hasSubscription
+              ? t("notifications.save")
+              : t("notifications.turnOn")}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (stage === "review") {
+    title = t("notifications.reviewTitle");
+    description = t("notifications.reviewDesc");
+    footer = (
+      <div className="flex w-full flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center">
+        {saveError && (
+          <p className="text-xs font-semibold text-destructive sm:mr-auto">{saveError}</p>
+        )}
+        <Button
+          variant="flat-outline"
+          className={cn(!saveError && "sm:ml-auto")}
+          disabled={busy}
+          onClick={() => {
+            save.reset();
+            setStage("form");
+          }}
+        >
+          {t("notifications.reviewEdit")}
+        </Button>
+        <Button variant="flat" disabled={busy} onClick={commit}>
+          {busy ? t("notifications.saving") : t("notifications.reviewConfirm")}
+        </Button>
       </div>
+    );
+  } else if (stage === "verify") {
+    title = t("notifications.dialogTitle");
+    description = undefined;
+    footer = undefined;
+  }
+
+  // ─── Body per stage ─────────────────────────────────────────────
+
+  const frame = (content: ReactNode) => (
+    <Modal
+      open
+      cap={t("notifications.title")}
+      title={title}
+      description={description}
+      size="xl"
+      busy={busy}
+      onClose={onClose}
+      footer={footer}
+    >
+      {content}
     </Modal>
   );
-};
+
+  if (reminders.isPending) {
+    return frame(
+      <div className="space-y-3">
+        <div className="h-32 animate-pulse rounded-xl bg-secondary" />
+        <div className="h-32 animate-pulse rounded-xl bg-secondary" />
+      </div>,
+    );
+  }
+
+  if (stage === "verify" && pending !== undefined) {
+    return frame(
+      <VerifyStage
+        key={pending.recipientId}
+        pending={pending}
+        verified={verified}
+        step={queued > 1 ? `${queued - queue.length + 1} / ${queued}` : undefined}
+        hasNext={queue.length > 1}
+        heirLabel={heirLabel}
+        resending={resend.isPending}
+        verifying={verifyEmail.isPending}
+        error={
+          resend.isError
+            ? errMsg(resend.error, t("notifications.resendFailedDesc"))
+            : verifyEmail.isError
+              ? t(verifyErrorKey(verifyEmail.error))
+              : undefined
+        }
+        onResend={() => {
+          verifyEmail.reset();
+          resend.mutate(
+            { recipientId: pending.recipientId },
+            {
+              onSuccess: (status) =>
+                setQueue((prev) => [pendingFrom(status, pending), ...prev.slice(1)]),
+              onError: (err) => {
+                // 409: verified in the meantime; the poll shows it.
+                if (!(err instanceof ApiError && err.code === "CONFLICT")) failed(err);
+              },
+            },
+          );
+        }}
+        onVerify={(code) => {
+          resend.reset();
+          verifyEmail.mutate({ code }, { onError: failed });
+        }}
+        onDone={next}
+      />,
+    );
+  }
+
+  if (stage === "review") {
+    const ownerName = heirReachable ? profile.ownerName?.trim() : undefined;
+    return frame(
+      <div className="mx-auto max-w-lg space-y-4">
+        <ul className="divide-y divide-tile-line overflow-hidden rounded-xl border-2 border-foreground">
+          {newContacts.map((c, i) => {
+            const email = c.channel === "email";
+            const Icon = email ? Mail : Send;
+            return (
+              <li
+                key={`${c.role}-${c.channel}`}
+                className="seal-rise flex items-center gap-4 bg-background p-4"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <span
+                  className={cn(
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-foreground",
+                    c.role === "heir" ? "bg-accent-orange/30" : "bg-accent-yellow",
+                  )}
+                >
+                  <Icon className="h-5 w-5" strokeWidth={2} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {c.role === "heir"
+                      ? t("notifications.reviewTells", { name: heirLabel })
+                      : t("notifications.reviewRemindsYou")}
+                  </p>
+                  <p className="break-all text-lg font-bold leading-snug">
+                    {email ? "" : "@"}
+                    {normalizeDestination(c.channel, c.destination)}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        {ownerName && (
+          <p className="text-sm text-muted-foreground">
+            {t("notifications.reviewOwnerLine", { name: ownerName })}
+          </p>
+        )}
+      </div>,
+    );
+  }
+
+  const ownerDone = contactsOf("checkInSigner").some((c) => c.state.kind === "connected");
+  const heirDone = contactsOf("heir").some((c) => c.state.kind === "connected");
+
+  const statusLine = (state: ContactState, role: ReminderRole, channel: ReminderChannel) => {
+    if (state.kind === "connected") return t("notifications.connected");
+    if (channel === "telegram") return t("notifications.statusWaitingTelegram");
+    return role === "heir"
+      ? t("notifications.heirEmailPending", { name: heirLabel })
+      : t("notifications.statusCheckInbox");
+  };
+
+  const contactBlock = (role: ReminderRole) => {
+    const contacts = contactsOf(role);
+    const channels = free(role);
+    const draft = draftOf(role);
+    return (
+      <div className="space-y-3">
+        {contacts.map(({ channel, state }) => {
+          if (state.kind === "none") return null;
+          const Icon = channel === "email" ? Mail : Send;
+          const heirEmail = role === "heir" && channel === "email";
+          return (
+            <div
+              key={channel}
+              className="flex items-center gap-3 rounded-lg border border-tile-line bg-tile-soft px-3.5 py-3"
+            >
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {channel === "telegram" && "@"}
+                  {state.recipient.destination}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {statusLine(state, role, channel)}
+                </p>
+              </div>
+              {state.kind === "connected" ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-md border-2 border-foreground bg-accent-lime px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                  {t("notifications.connected")}
+                </span>
+              ) : heirEmail ? (
+                <span className="shrink-0 rounded-md border-2 border-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                  {t("notifications.pendingBadge")}
+                </span>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="flat"
+                  disabled={resend.isPending}
+                  onClick={() => verify(state)}
+                >
+                  {role === "heir" ? t("notifications.invite") : t("notifications.verifyCode")}
+                </Button>
+              )}
+            </div>
+          );
+        })}
+
+        {draft !== undefined ? (
+          <div className="space-y-2">
+            <ContactFields
+              role={role}
+              channels={channels}
+              draft={draft}
+              onChange={(nextDraft) => setDrafts((prev) => ({ ...prev, [role]: nextDraft }))}
+              disabled={busy}
+            />
+            {contacts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAdding((prev) => ({ ...prev, [role]: false }));
+                  setDrafts((prev) => ({ ...prev, [role]: blankDraft() }));
+                }}
+                className="text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                {t("notifications.neverMind")}
+              </button>
+            )}
+          </div>
+        ) : (
+          channels.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAdding((prev) => ({ ...prev, [role]: true }))}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border-2 border-dashed border-foreground/60 px-3.5 text-xs font-bold transition-colors hover:border-solid hover:border-foreground hover:bg-tile-soft"
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              {t("notifications.addAsWell", { channel: t(channelLabelKey(channels[0])) })}
+            </button>
+          )
+        )}
+      </div>
+    );
+  };
+
+  return frame(
+    <div className="grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="space-y-4">
+        <Section
+          step={1}
+          title={t("notifications.stepRemindTitle")}
+          description={t("notifications.stepRemindDesc")}
+          done={ownerDone}
+          delay={0}
+        >
+          {contactBlock("checkInSigner")}
+        </Section>
+        <Section
+          step={2}
+          title={
+            heirName
+              ? t("notifications.stepHeirTitle", { name: heirName })
+              : t("notifications.stepHeirTitleGeneric")
+          }
+          description={t("notifications.stepHeirDesc")}
+          done={heirDone}
+          delay={80}
+        >
+          {contactBlock("heir")}
+        </Section>
+        <Section
+          step={3}
+          title={t("notifications.stepAlertTitle")}
+          description={t("notifications.stepAlertDesc")}
+          done={
+            hasSubscription &&
+            !!savedProfile.ownerName?.trim() &&
+            !!savedProfile.heirName?.trim() &&
+            !profileDirty
+          }
+          delay={160}
+        >
+          {/* Small screens: the preview sits right above the fields it shows. */}
+          <div className="mb-4 md:hidden">
+            <AlertPreview profile={profile} />
+          </div>
+          <ProfileFields
+            value={profile}
+            onChange={setProfileDraft}
+            requireOwnerName={heirReachable}
+            disabled={busy}
+          />
+        </Section>
+      </div>
+      <div className="hidden md:block">
+        <Aside profile={profile} />
+      </div>
+      <div className="md:hidden">
+        <p className="ed-label mb-3">{t("notifications.timelineTitle")}</p>
+        <ReminderTimeline />
+      </div>
+    </div>,
+  );
+}
 
 export default NotificationsDialog;

@@ -11,7 +11,7 @@ export interface ModalProps {
   cap?: string;
   description?: ReactNode;
   tone?: TileTone;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   /** Blocks the overlay click, the escape key, and the close button. */
   busy?: boolean;
   /** Hide the close control and ignore overlay / Escape. For progress overlays. */
@@ -27,6 +27,8 @@ const WIDTHS = {
   sm: "max-w-sm",
   md: "max-w-md",
   lg: "max-w-xl",
+  /** Two panes side by side on desktop. */
+  xl: "max-w-4xl",
 } as const;
 
 export const Modal: React.FC<ModalProps> = ({

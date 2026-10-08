@@ -16,12 +16,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TamaguiProvider } from "tamagui";
 
 import { solanaCluster, walletIdentity } from "@/config";
+import { QUERY_STALE_MS } from "@/constants/api";
 import { colors } from "@/theme";
 import { tamaguiConfig } from "../../tamagui.config";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: QUERY_STALE_MS } },
+});
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -49,7 +52,9 @@ export default function RootLayout() {
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
             <StatusBar style="dark" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+            <Stack
+              screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
+            >
               <Stack.Screen
                 name="wallet"
                 options={{ presentation: "transparentModal", animation: "fade" }}

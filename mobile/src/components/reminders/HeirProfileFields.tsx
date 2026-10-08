@@ -6,8 +6,8 @@ import { colors, font } from "@/theme";
 import type { HeirProfile } from "@/types/reminders";
 
 /**
- * The three fields that personalise the heir alert. `requireOwnerName` marks it at setup, where
- * it's required: a name the heir knows is what keeps the alert from reading as phishing.
+ * The three fields that personalise the heir alert. `requireOwnerName` marks it while a heir
+ * contact is being added: a name the heir knows is what keeps the alert from reading as phishing.
  */
 export function HeirProfileFields({
   value,
