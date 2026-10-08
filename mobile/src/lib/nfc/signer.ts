@@ -16,8 +16,9 @@ import {
   TEST_SIGN_MESSAGE,
 } from "./apdu";
 import { verifyEd25519 } from "./ed25519";
+import { createCardTransactionSigner } from "./kitSigner";
 import type { TapProgress } from "@/types/create";
-import type { HardwareSigner, IsoDepTransceive } from "@/types/nfc";
+import type { CardSigningSession, HardwareSigner, IsoDepTransceive } from "@/types/nfc";
 
 const addressOf = getAddressDecoder();
 
@@ -91,6 +92,26 @@ function addressFromPubkey(pub: Uint8Array): Address {
 async function onCard<T>(run: (tx: IsoDepTransceive) => Promise<T>): Promise<T> {
   const { withIsoDep } = await import("./isoDep");
   return withIsoDep(run);
+}
+
+/** SELECT + GET_PUB once, then SIGN each compiled tx on the same field. */
+export async function withCardSigningSession<T>(
+  run: (session: CardSigningSession) => Promise<T>,
+): Promise<T> {
+  const { ISODEP_CLAIM_TIMEOUT_MS, withIsoDep } = await import("./isoDep");
+  return withIsoDep(
+    async (tx) => {
+      const pub = await readPubkey(tx);
+      const address = addressFromPubkey(pub);
+      const signer = createCardTransactionSigner(address, async (message) => {
+        await selectApplet(tx);
+        return signOnCard(tx, message);
+      });
+      return run({ address, signer });
+    },
+    ISODEP_CLAIM_TIMEOUT_MS,
+    "Hold the credential still until sending finishes.",
+  );
 }
 
 export function createNfcJavaCardSigner(): HardwareSigner {

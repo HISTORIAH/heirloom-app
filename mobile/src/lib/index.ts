@@ -57,6 +57,14 @@ export {
 // Estate span
 export { stateSlab, estateSpan } from "./estate/span";
 
+// Estate countdown
+export {
+  countdownFromSeconds,
+  countdownNoun,
+  ownerCountdownCaption,
+  signerCountdownCaption,
+} from "./estate/countdown";
+
 // Estate state
 export { computeEstateState, isVaultEmpty, nowSecs } from "./estate/state";
 
@@ -64,7 +72,15 @@ export { computeEstateState, isVaultEmpty, nowSecs } from "./estate/state";
 export { daysToNext, bySoonest, estateName, assetsLine, heirLine } from "./estate/summary";
 
 // Estate timing
-export { dateLong, dateShort, daysRangeError, daysToSecs, daysFromSeconds } from "./estate/timing";
+export {
+  dateLong,
+  dateShort,
+  daysRangeError,
+  daysToSecs,
+  daysFromSeconds,
+  displayTiming,
+  changedTimingField,
+} from "./estate/timing";
 
 // Estate tokens
 export {
@@ -90,6 +106,17 @@ export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
 // TX - Card float
 export { floatDestinations } from "./tx/cardFloat";
 
+// TX - Card claim (IsoDep fee payer, then sweep off the chip)
+export { packInstructionsForCard, sendCardIxs, sendCardBatches } from "./tx/cardSend";
+export {
+  spareLamports,
+  discoverCardTokens,
+  cardHasSweepable,
+  buildTokenSweepIxs,
+  buildSolSweepIx,
+} from "./tx/cardSweep";
+export { runCardClaimAndSweep } from "./tx/cardClaim";
+
 // NFC
 export { scanProblemMessage, setupProblemMessage, cardProblemMessage } from "./nfc/messages";
 export {
@@ -99,7 +126,16 @@ export {
   setupBlankCard,
   cancelScan,
 } from "./nfc/reader";
-export { createNfcJavaCardSigner } from "./nfc/signer";
+export {
+  ISODEP_CLAIM_TIMEOUT_MS,
+  ISODEP_TIMEOUT_MS,
+  NFC_APDU_TRIES,
+  NFC_COUPLE_TRIES,
+  NFC_PRESENCE_CHECK_SEC,
+  NFC_UI_SETTLE_MS,
+} from "./nfc/isoDep";
+export { createNfcJavaCardSigner, withCardSigningSession } from "./nfc/signer";
+export { createCardTransactionSigner } from "./nfc/kitSigner";
 export { addressInTag, summarizeTag } from "./nfc/tag";
 
 // Flash

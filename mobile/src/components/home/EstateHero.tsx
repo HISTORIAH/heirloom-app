@@ -1,13 +1,14 @@
 import { Pressable, Text, View } from "react-native";
 
 import { CheckInBars } from "@/components/CheckInBars";
+import { HeroCountdown } from "@/components/home/HeroCountdown";
 import { Icon } from "@/components/Icon";
 import { Badge, PrimaryButton } from "@/components/ui";
 import { useDashboardView } from "@/hooks/estate/useDashboardView";
 import { colors, font, space } from "@/theme";
-import { EstateUiState } from "@/types/estate";
+import type { EstateUiState } from "@/types/estate";
 import type { EstateRow } from "@/types/program";
-import { estateName } from "@/lib";
+import { estateName, ownerCountdownCaption } from "@/lib";
 
 const BADGE: Record<EstateUiState, string> = {
   active: "Active",
@@ -15,13 +16,6 @@ const BADGE: Record<EstateUiState, string> = {
   claimable: "Claimable",
   distributed: "Claimed",
 };
-
-function heroUnit(state: EstateUiState, days: number): string {
-  const word = days === 1 ? "day" : "days";
-  if (state === "grace") return `${word} until your\nheir can claim`;
-  if (state === "claimable") return `${word} your heir\ncould claim`;
-  return `${word} to check in`;
-}
 
 /**
  * The estate that needs you most: countdown, ruler, check-in. Fill follows state.
@@ -46,7 +40,6 @@ export function EstateHero({
   const view = useDashboardView(row.data, row.claimableLamports);
   const name = estateName(row);
   const live = view.state !== "distributed";
-  const count = compact ? 76 : 88;
   const topLine = compact ? `Every ${view.intervalDays} days · ${view.graceDays}-day wait` : name;
 
   return (
@@ -93,33 +86,11 @@ export function EstateHero({
       </Pressable>
 
       {live ? (
-        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 10 }}>
-          <Text
-            style={{
-              fontFamily: font.semibold,
-              fontSize: count,
-              lineHeight: count,
-              letterSpacing: count * -0.045,
-              fontVariant: ["tabular-nums"],
-              color: colors.ink,
-              marginBottom: -6,
-            }}
-          >
-            {view.days}
-          </Text>
-          <Text
-            style={{
-              flex: 1,
-              paddingBottom: 6,
-              fontFamily: font.bold,
-              fontSize: compact ? 17 : 18,
-              lineHeight: compact ? 21 : 22,
-              color: colors.ink,
-            }}
-          >
-            {heroUnit(view.state, view.days)}
-          </Text>
-        </View>
+        <HeroCountdown
+          value={view.countdown.value}
+          caption={ownerCountdownCaption(view.state, view.countdown)}
+          compact={compact}
+        />
       ) : (
         <Text
           style={{ fontFamily: font.semibold, fontSize: 24, lineHeight: 28, color: colors.ink }}

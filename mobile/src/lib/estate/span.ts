@@ -27,7 +27,7 @@ export function estateSpan(data: Estate, claimableLamports: bigint): EstateSpan 
   const lastCheckInTs = Number(data.lastCheckInTs);
   const createdAt = Number(data.createdAt);
   const delegatePauseExpiresAt = Number(data.delegatePauseExpiresAt);
-  const { state } = computeEstateState({
+  const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
     lastCheckInTs,
     checkInIntervalSecs: interval,
     gracePeriodSecs: grace,
@@ -57,6 +57,7 @@ export function estateSpan(data: Estate, claimableLamports: bigint): EstateSpan 
           : `Heir can claim ${shortDate(claimableAt * 1000)}`,
     daysUntilCheckIn: state === "active" ? wholeDays(graceDeadline - now) : 0,
     daysUntilClaim: live ? wholeDays(claimableAt - now) : 0,
+    remainingSecs: state === "active" ? secondsUntilGrace : state === "grace" ? secondsUntilClaimable : 0,
     daysOpen: state === "claimable" ? wholeDays(now - claimableAt) : 0,
   };
 }

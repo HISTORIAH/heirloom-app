@@ -2,10 +2,18 @@ import { Pressable, Text, View } from "react-native";
 
 import { Icon } from "@/components/Icon";
 import { EstateListRow } from "@/components/home/EstateList";
+import { HeroCountdown } from "@/components/home/HeroCountdown";
 import { Cap, PrimaryButton } from "@/components/ui";
+import { useEstateSpan } from "@/hooks/estate/useEstateSpan";
 import { colors, font, space } from "@/theme";
-import { EstateRow } from "@/types/program";
-import { bySoonest, estateSpan, presentGuardian, shortAddress } from "@/lib";
+import type { EstateRow } from "@/types/program";
+import {
+  bySoonest,
+  countdownFromSeconds,
+  presentGuardian,
+  shortAddress,
+  signerCountdownCaption,
+} from "@/lib";
 
 function SignerCard({
   row,
@@ -18,9 +26,9 @@ function SignerCard({
   disabled: boolean;
   onCheckIn: () => void;
 }) {
-  const span = estateSpan(row.data, row.claimableLamports);
+  const span = useEstateSpan(row.data, row.claimableLamports);
   const grace = span.state === "grace";
-  const days = grace ? span.daysUntilClaim : span.daysUntilCheckIn;
+  const countdown = countdownFromSeconds(span.remainingSecs);
   const live = span.state === "active" || span.state === "grace";
 
   return (
@@ -61,33 +69,10 @@ function SignerCard({
         </Text>
       </View>
       {live ? (
-        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 10 }}>
-          <Text
-            style={{
-              fontFamily: font.semibold,
-              fontSize: 80,
-              lineHeight: 80,
-              letterSpacing: -3.6,
-              fontVariant: ["tabular-nums"],
-              color: colors.ink,
-              marginBottom: -6,
-            }}
-          >
-            {days}
-          </Text>
-          <Text
-            style={{
-              flex: 1,
-              paddingBottom: 6,
-              fontFamily: font.bold,
-              fontSize: 18,
-              lineHeight: 22,
-              color: colors.ink,
-            }}
-          >
-            {grace ? "days until their\nheir can claim" : days === 1 ? "day left" : "days left"}
-          </Text>
-        </View>
+        <HeroCountdown
+          value={countdown.value}
+          caption={signerCountdownCaption(span.state, countdown)}
+        />
       ) : (
         <Text style={{ fontFamily: font.semibold, fontSize: 22, color: colors.ink }}>
           {span.state === "claimable"

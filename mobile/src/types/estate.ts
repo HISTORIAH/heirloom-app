@@ -34,6 +34,14 @@ export type EstateTimingFields = {
 /** Where an estate is in its life, from the owner's side. */
 export type EstateUiState = "active" | "grace" | "claimable" | "distributed";
 
+/** One unit on the live hero countdown. Days → hours → minutes → seconds. */
+export type CountdownUnit = "days" | "hours" | "minutes" | "seconds";
+
+export type Countdown = {
+  value: number;
+  unit: CountdownUnit;
+};
+
 /** Days and dates derived from an estate's timing, at this moment. */
 export type EstateSpan = {
   state: EstateUiState;
@@ -48,6 +56,8 @@ export type EstateSpan = {
   legendTo: string;
   daysUntilCheckIn: number;
   daysUntilClaim: number;
+  /** Seconds until grace (active) or until claimable (grace). */
+  remainingSecs: number;
   /** Days the claim window has been open (claimable only). */
   daysOpen: number;
 };
@@ -74,12 +84,12 @@ export type RenameEstateInput = {
   name: string;
 };
 
-/** What the dashboard hero card needs: span fields plus the single countdown number. */
+/** What the dashboard hero card needs: span fields plus the single countdown. */
 export type DashboardView = {
   state: EstateUiState;
   slab: string;
-  /** The big number: days to check-in (active), days to claim (grace), days open (claimable). */
-  days: number;
+  /** One number: days, then hours, then seconds as the next edge gets close. */
+  countdown: Countdown;
   intervalDays: number;
   graceDays: number;
   elapsedDays: number;

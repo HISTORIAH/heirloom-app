@@ -1,7 +1,7 @@
 import { Text, View } from "react-native";
 import Svg, { Defs, LinearGradient as SvgGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { colors } from "@/theme";
+import { colors, font, space } from "@/theme";
 
 /** Champagne / brass — not brand yellow. */
 const BRASS = "#C4A35A";
@@ -93,15 +93,74 @@ function VaultMarkMini({ size = 26 }: { size?: number }) {
   );
 }
 
-interface NfcDummyCardProps {
+type NfcDummyCardProps = {
   width?: number;
+  /** Last four of the pubkey, drawn on the face like the claim mock (`···7F2A`). */
+  code?: string;
+  /** Fill the parent width (claim screen). Numeric `width` still used on create/tap. */
+  stretch?: boolean;
+};
+
+function InkClaimCard({ width, code }: { width?: number; code: string }) {
+  const size =
+    width === undefined
+      ? { width: "100%" as const, aspectRatio: 1.586 }
+      : { width, height: width / 1.586 };
+
+  return (
+    <View
+      style={{
+        ...size,
+        borderRadius: space.radiusTile,
+        overflow: "hidden",
+        backgroundColor: colors.cardFace,
+      }}
+    >
+      <View style={{ flex: 1, paddingHorizontal: 22, paddingVertical: 18 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <View
+            style={{
+              width: 36,
+              height: 28,
+              borderRadius: 6,
+              backgroundColor: colors.brass,
+            }}
+          />
+          <ContactlessMark />
+        </View>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <Text
+              style={{
+                fontFamily: font.bold,
+                fontSize: 22,
+                color: colors.paper,
+                letterSpacing: -0.5,
+              }}
+            >
+              Heirloom
+            </Text>
+            <Text
+              style={{
+                fontFamily: font.medium,
+                fontSize: 14,
+                letterSpacing: 0.6,
+                color: colors.sage,
+              }}
+            >
+              ···{code}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
 }
 
-/**
- * Premium CR80 card for Scan — metal ink gradient, brass chip, Heirloom brand.
- * Bank-card silhouette; no Visa/Mastercard marks.
- */
-export function NfcDummyCard({ width = 300 }: NfcDummyCardProps) {
+export function NfcDummyCard({ width = 300, code, stretch }: NfcDummyCardProps) {
+  if (code !== undefined) {
+    return <InkClaimCard width={stretch ? undefined : width} code={code} />;
+  }
   const height = width / 1.586;
   const radius = 16;
 
