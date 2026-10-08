@@ -2,7 +2,11 @@ import { findVaultPda } from "@historiah/heirloom";
 import type { Address } from "@solana/kit";
 
 import { useSendIxs } from "@/hooks/tx/useSendIxs";
+import { estateSpan } from "@/lib/estate/span";
 import { assertAllTokensListed, discoverVaultClaimTokens, estateDelegate } from "@/lib/estate/tokens";
+import { readNfcCapability } from "@/lib/nfc/reader";
+import { withCardSigningSession } from "@/lib/nfc/signer";
+import { runCardClaimAndSweep } from "@/lib/tx/cardClaim";
 import { buildClaimIxs } from "@/lib/tx/heir";
 import { buildCheckInIx } from "@/lib/tx/updateField";
 import type { EstateRow } from "@/types/program";
@@ -32,5 +36,21 @@ export function useHeirTx() {
     return sendIxs(async (signer) => [await buildCheckInIx(signer, owner, heir)]);
   }
 
-  return { account, claimAll, sendHeartbeat };
+  async function claimWithCard(row: EstateRow, destination: Address): Promise<void> {
+    const cap = await readNfcCapability();
+    if (cap.status === "unsupported") throw new Error("This phone can’t read credentials.");
+    if (cap.status === "disabled") throw new Error("NFC is off. Turn it on, then try again.");
+    const skipClaim = estateSpan(row.data, row.claimableLamports).state === "distributed";
+    await withCardSigningSession(({ signer }) =>
+      runCardClaimAndSweep({
+        rpc: client.rpc,
+        signer,
+        row,
+        destination,
+        skipClaim,
+      }),
+    );
+  }
+
+  return { account, claimAll, sendHeartbeat, claimWithCard };
 }

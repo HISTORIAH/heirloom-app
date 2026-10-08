@@ -9,6 +9,15 @@ export const GRACE_MAX_DAYS = 90;
 /** Upper bound for any day field edited on an existing estate. */
 export const MAX_INTERVAL_DAYS = 365;
 
+/**
+ * TODO(test): set back to `"days"` after mobile major-dev testing.
+ * Update-timing on an existing estate takes this unit so the live countdown
+ * can be exercised without waiting a day. Create wizard stays days.
+ */
+export const TIMING_EDIT_UNIT: "days" | "minutes" = "minutes";
+/** Cap when TIMING_EDIT_UNIT is minutes. Same wall-clock as MAX_INTERVAL_DAYS. */
+export const MAX_TIMING_MINUTES = MAX_INTERVAL_DAYS * 24 * 60;
+
 export const DEFAULT_CHECK_IN_DAYS = 90;
 export const DEFAULT_GRACE_DAYS = 30;
 export const DEFAULT_PAUSE_DAYS = 7;

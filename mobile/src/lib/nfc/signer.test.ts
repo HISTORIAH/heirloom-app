@@ -1,5 +1,6 @@
 import { generateKeyPairSync, sign } from "crypto";
 import { describe, expect, test } from "bun:test";
+import { getAddressDecoder, type TransactionPartialSigner } from "@solana/kit";
 
 import {
   CardApduError,
@@ -19,6 +20,7 @@ import {
   TEST_SIGN_MESSAGE,
   toHex,
 } from "./apdu";
+import { createCardTransactionSigner } from "./kitSigner";
 import type { IsoDepTransceive } from "@/types/nfc";
 import { generatePubkey, readPubkey, selectApplet, signOnCard } from "./signer";
 
@@ -155,6 +157,31 @@ describe("signOnCard", () => {
     };
     expect(toHex(await signOnCard(tx, msg))).toBe(toHex(sig));
     expect(seen).toEqual(expected);
+  });
+});
+
+describe("createCardTransactionSigner + transceive", () => {
+  test("SIGNs compiled message bytes on the injected card", async () => {
+    const { pair, pub } = livePair();
+    const message = Uint8Array.from({ length: 64 }, () => 0x33);
+    const sig = Uint8Array.from(sign(undefined, message, pair.privateKey));
+    const seen: number[] = [];
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      seen.push(ins);
+      if (ins === INS_SIGN) {
+        const last = (apdu[2] ?? 0) === P1_LAST;
+        return last ? reply(sig, SW_OK) : swOnly(SW_OK);
+      }
+      return swOnly(0x6d00);
+    };
+    const cardAddr = getAddressDecoder().decode(pub);
+    const signer = createCardTransactionSigner(cardAddr, (bytes) => signOnCard(tx, bytes));
+    type CompiledTx = Parameters<TransactionPartialSigner["signTransactions"]>[0][number];
+    const compiled = { messageBytes: message, signatures: {} } as unknown as CompiledTx;
+    const dicts = await signer.signTransactions([compiled]);
+    expect(seen.every((ins) => ins === INS_SIGN)).toBe(true);
+    expect(toHex(dicts[0]?.[cardAddr] ?? new Uint8Array())).toBe(toHex(sig));
   });
 });
 

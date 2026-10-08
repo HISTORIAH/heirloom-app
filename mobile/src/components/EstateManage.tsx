@@ -5,10 +5,9 @@ import { Icon } from "@/components/Icon";
 import { Cap, PrimaryButton } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import type { Address } from "@solana/kit";
-import { SECONDS_PER_DAY } from "@/constants/time";
-import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS } from "@/constants/estate";
+import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS, MAX_TIMING_MINUTES, TIMING_EDIT_UNIT } from "@/constants/estate";
 import { EstateRow } from "@/types/program";
-import { isPausedNow, parseAddress } from "@/lib";
+import { changedTimingField, displayTiming, isPausedNow, parseAddress } from "@/lib";
 
 type EverydayAction = "heir" | "timing" | "rename";
 
@@ -113,34 +112,6 @@ function FormIssue({ text }: { text?: string }) {
   );
 }
 
-function daysFromSeconds(seconds: bigint | number): string {
-  return String(Math.round(Number(seconds) / SECONDS_PER_DAY));
-}
-
-function parseDayCount(text: string, label: string, allowZero: boolean): bigint {
-  const trimmed = text.trim();
-  if (trimmed.length === 0) throw new Error(`Enter ${label} in whole days`);
-  const n = Number(trimmed);
-  if (!Number.isInteger(n) || n < 0) throw new Error(`Enter ${label} in whole days`);
-  if (!allowZero && n < 1) throw new Error(`${label} must be at least 1 day`);
-  if (n > MAX_INTERVAL_DAYS) {
-    throw new Error(`${label} cannot exceed ${MAX_INTERVAL_DAYS} days`);
-  }
-  return BigInt(n) * BigInt(SECONDS_PER_DAY);
-}
-
-function changedDayField(
-  text: string,
-  onChain: bigint | number,
-  label: string,
-  allowZero: boolean,
-): bigint | undefined {
-  if (text === daysFromSeconds(onChain)) return undefined;
-  const next = parseDayCount(text, label, allowZero);
-  if (next === BigInt(onChain)) return undefined;
-  return next;
-}
-
 function collectTimingFields(
   row: EstateRow,
   heartbeat: string,
@@ -151,14 +122,14 @@ function collectTimingFields(
   gracePeriodSecs?: bigint;
   delegatePauseDurationSecs?: bigint;
 } {
-  const checkInIntervalSecs = changedDayField(
+  const checkInIntervalSecs = changedTimingField(
     heartbeat,
     row.data.checkInIntervalSecs,
     "check-in",
     false,
   );
-  const gracePeriodSecs = changedDayField(grace, row.data.gracePeriodSecs, "grace", false);
-  const delegatePauseDurationSecs = changedDayField(
+  const gracePeriodSecs = changedTimingField(grace, row.data.gracePeriodSecs, "grace", false);
+  const delegatePauseDurationSecs = changedTimingField(
     pause,
     row.data.delegatePauseDurationSecs,
     "pause",
@@ -369,16 +340,18 @@ function TimingForm({
   busy?: boolean;
   onSubmit: EstateManageProps["onTiming"];
 }) {
-  const [heartbeat, setHeartbeat] = useState(daysFromSeconds(row.data.checkInIntervalSecs));
-  const [grace, setGrace] = useState(daysFromSeconds(row.data.gracePeriodSecs));
-  const [pause, setPause] = useState(daysFromSeconds(row.data.delegatePauseDurationSecs));
+  const [heartbeat, setHeartbeat] = useState(displayTiming(row.data.checkInIntervalSecs));
+  const [grace, setGrace] = useState(displayTiming(row.data.gracePeriodSecs));
+  const [pause, setPause] = useState(displayTiming(row.data.delegatePauseDurationSecs));
   const [error, setError] = useState<string | undefined>(undefined);
+  const unit = TIMING_EDIT_UNIT;
+  const maxN = unit === "minutes" ? MAX_TIMING_MINUTES : MAX_INTERVAL_DAYS;
   return (
     <View
       style={{ paddingVertical: 14, gap: 12, borderBottomWidth: 2, borderBottomColor: colors.line }}
     >
       <Field
-        label="Check-in days"
+        label={`Check-in ${unit}`}
         value={heartbeat}
         onChangeText={(value) => {
           setError(undefined);
@@ -386,10 +359,10 @@ function TimingForm({
         }}
         keyboardType="decimal-pad"
         editable={!busy}
-        hint={`1–${MAX_INTERVAL_DAYS} days`}
+        hint={`1–${maxN} ${unit}`}
       />
       <Field
-        label="Grace days"
+        label={`Grace ${unit}`}
         value={grace}
         onChangeText={(value) => {
           setError(undefined);
@@ -397,10 +370,10 @@ function TimingForm({
         }}
         keyboardType="decimal-pad"
         editable={!busy}
-        hint={`1–${MAX_INTERVAL_DAYS} days`}
+        hint={`1–${maxN} ${unit}`}
       />
       <Field
-        label="Pause days"
+        label={`Pause ${unit}`}
         value={pause}
         onChangeText={(value) => {
           setError(undefined);
@@ -408,7 +381,7 @@ function TimingForm({
         }}
         keyboardType="decimal-pad"
         editable={!busy}
-        hint={`0–${MAX_INTERVAL_DAYS} days`}
+        hint={`0–${maxN} ${unit}`}
       />
       <FormIssue text={error} />
       <PrimaryButton
@@ -436,8 +409,8 @@ export function EstateManage({
   onRename,
 }: EstateManageProps) {
   const [open, setOpen] = useState<EverydayAction | undefined>(undefined);
-  const intervalDays = Math.round(Number(row.data.checkInIntervalSecs) / SECONDS_PER_DAY);
-  const graceDays = Math.round(Number(row.data.gracePeriodSecs) / SECONDS_PER_DAY);
+  const intervalShown = displayTiming(row.data.checkInIntervalSecs);
+  const graceShown = displayTiming(row.data.gracePeriodSecs);
   const paused = isPausedNow(row.data.delegatePauseExpiresAt);
 
   function toggle(action: EverydayAction) {
@@ -451,7 +424,7 @@ export function EstateManage({
       {open === "heir" ? <HeirForm busy={busy} paused={paused} onSubmit={onReassign} /> : null}
       <EverydayRow
         action="timing"
-        desc={`Every ${intervalDays} days · ${graceDays}-day grace`}
+        desc={`Every ${intervalShown} ${TIMING_EDIT_UNIT} · ${graceShown} ${TIMING_EDIT_UNIT} grace`}
         disabled={busy}
         onPress={() => toggle("timing")}
       />

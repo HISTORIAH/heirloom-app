@@ -1,4 +1,4 @@
-import type { Address } from "@solana/kit";
+import type { Address, TransactionSigner } from "@solana/kit";
 
 import type { TapProgress } from "@/types/create";
 
@@ -16,6 +16,12 @@ export type HardwareSigner = {
   getPublicKey(): Promise<Address>;
   generateKeypair(onProgress?: (progress: TapProgress) => void): Promise<Address>;
   signBytes(message: Uint8Array): Promise<Uint8Array>;
+};
+
+/** One IsoDep hold: the card address plus a Kit signer that SIGNs on that field. */
+export type CardSigningSession = {
+  address: Address;
+  signer: TransactionSigner;
 };
 
 export type TagSummary = {

@@ -11,6 +11,8 @@ export function errorMessage(cause: unknown, fallback: string): string {
 
 /** The wallet or the NFC sheet was dismissed, not a real failure. */
 export function isUserCancel(cause: unknown): boolean {
+  const ctor = cause instanceof Error ? cause.constructor.name : "";
+  if (ctor === "UserCancel") return true;
   const raw = cause instanceof Error ? cause.message : String(cause ?? "");
   return /user (reject|denied|cancel)|reject(ed)? the request|cancel+ed( the request)?|UserCancel|interrupted/i.test(raw);
 }
