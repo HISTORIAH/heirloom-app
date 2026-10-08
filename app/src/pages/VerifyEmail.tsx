@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CheckCircle, AlertTriangle, Loader2, Mail, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, Loader2, Mail, ShieldCheck, Wallet } from "lucide-react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import bs58 from "bs58";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/surface/Panel";
 import PageHeader from "@/components/PageHeader";
+import CodeInput from "@/components/reminders/CodeInput";
+import VerifiedSeal from "@/components/reminders/VerifiedSeal";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useWallet } from "@/contexts/WalletContext";
 import { useAuthenticate } from "@/hooks/useAuth";
@@ -162,15 +164,26 @@ function VerifyWithWallet({
 
     case "success":
       return (
-        <StateBlock
-          icon={<CheckCircle className="h-8 w-8 text-green-700" strokeWidth={2} />}
-          title={t("verifyEmail.successTitle")}
-          description={t("verifyEmail.successDesc")}
-        >
-          <Button variant="flat-yellow" className="mt-5" onClick={() => navigate("/dashboard")}>
-            {t("verifyEmail.goToDashboard")}
-          </Button>
-        </StateBlock>
+        <div className="-mt-2">
+          <VerifiedSeal />
+          <h2
+            className="seal-rise mt-2 text-[clamp(1.75rem,5vw,2.25rem)] font-semibold leading-none tracking-[-0.035em]"
+            style={{ animationDelay: "0.42s" }}
+          >
+            {t("verifyEmail.successTitle")}
+          </h2>
+          <p
+            className="seal-rise mx-auto mt-3 max-w-xs text-sm text-muted-foreground"
+            style={{ animationDelay: "0.5s" }}
+          >
+            {t("verifyEmail.successDesc")}
+          </p>
+          <div className="seal-rise mt-6" style={{ animationDelay: "0.58s" }}>
+            <Button variant="flat-yellow" className="w-full" onClick={() => navigate("/dashboard")}>
+              {t("verifyEmail.goToDashboard")}
+            </Button>
+          </div>
+        </div>
       );
 
     case "wrong_wallet":
@@ -214,40 +227,32 @@ function VerifyWithWallet({
           <h2 className="ed-h3 mt-4">{t("verifyEmail.enterCodeTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{t("verifyEmail.enterCodeDesc")}</p>
           <form
-            className="mt-5"
+            className="mt-6 text-left"
             onSubmit={(e) => {
               e.preventDefault();
               if (typedValid) void attempt(typedCode, false);
             }}
           >
-            <input
-              type="text"
+            <CodeInput
               value={typedCode}
-              onChange={(e) => {
-                setTypedCode(
-                  e.target.value
-                    .toUpperCase()
-                    .replace(/[^A-Z0-9]/g, "")
-                    .slice(0, VERIFY_CODE_LENGTH),
-                );
+              onChange={(code) => {
+                setTypedCode(code);
                 if (state.errorKey) setState({ kind: "form" });
+                // A full, well-formed code checks itself.
+                if (VERIFY_CODE_PATTERN.test(code)) void attempt(code, false);
               }}
-              maxLength={VERIFY_CODE_LENGTH}
+              label={t("verifyEmail.enterCodeTitle")}
+              error={malformed || !!state.errorKey}
               autoFocus
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck={false}
-              autoComplete="one-time-code"
-              aria-label={t("verifyEmail.enterCodeTitle")}
-              className="ed-input text-center font-mono text-lg tracking-[0.3em]"
-              placeholder="XXXXXXXX"
             />
-            {(malformed || state.errorKey) && (
-              <p className="mt-1.5 text-xs font-medium text-destructive">
-                {state.errorKey ? t(state.errorKey) : t("verifyEmail.codeFormatHint")}
-              </p>
-            )}
-            <Button type="submit" variant="flat" className="mt-4 w-full" disabled={!typedValid}>
+            <p aria-live="polite" className="mt-2 min-h-4 text-xs font-medium text-destructive">
+              {state.errorKey
+                ? t(state.errorKey)
+                : malformed
+                  ? t("verifyEmail.codeFormatHint")
+                  : ""}
+            </p>
+            <Button type="submit" variant="flat" className="mt-3 w-full" disabled={!typedValid}>
               {t("verifyEmail.verify")}
             </Button>
           </form>
@@ -312,7 +317,8 @@ const VerifyEmailPage = () => {
       <div className="min-h-screen overflow-x-clip bg-background">
         <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
         <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
-          <Panel className="mx-auto max-w-md text-center">
+          {/* The seal replaces the mail mark once verified. */}
+          <Panel className="mx-auto max-w-md text-center [&:has(.seal-pop)>svg:first-child]:hidden">
             <Mail className="mx-auto h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
             {body}
           </Panel>

@@ -132,10 +132,21 @@ export type PendingVerification = {
   expiresAt?: number;
 };
 
-/** What the contact sheet hands back. `heir` is set only when this contact turns reminders on. */
-export type NewContact = {
-  role: ReminderRole;
+/** One role's contact as it's typed on the reminders form. Blank `value` means none is added. */
+export type ContactDraft = {
   channel: ReminderChannel;
-  destination: string;
+  /** Telegram @username or email. */
+  value: string;
+  /** The heir's email typed a second time. */
+  again: string;
+};
+
+/**
+ * The reminders form in one submit: the new contacts, and the heir profile when it's set up or
+ * edited. Without a subscription this turns reminders on; with one, it adds to it.
+ */
+export type RemindersSubmit = {
+  hasSubscription: boolean;
+  contacts: AddRecipientRequest[];
   heir?: HeirProfile;
 };

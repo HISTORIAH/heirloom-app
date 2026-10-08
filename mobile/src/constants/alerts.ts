@@ -23,6 +23,9 @@ export const REMINDER_CHANNELS = [
   { channel: "email", label: "Email" },
 ] as const;
 
+/** Where the channel tabs' ink pill settles. Snappy, with a little give. */
+export const TAB_SPRING = { damping: 18, stiffness: 220, mass: 0.8 } as const;
+
 /** Channels the backend accepts but doesn't deliver yet. Shown disabled as "Soon". */
 export const SOON_REMINDER_CHANNELS = [{ channel: "sms", label: "SMS" }] as const;
 
