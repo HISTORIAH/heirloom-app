@@ -159,6 +159,12 @@
     cursor: grab;
   }
 
+  /* Tailwind v4 preflight leaves the browser default (arrow) cursor on
+     buttons; restore the hand so interactive controls read as clickable. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   button:focus-visible {
     outline: 4px solid hsl(var(--foreground));
     outline-offset: 2px;

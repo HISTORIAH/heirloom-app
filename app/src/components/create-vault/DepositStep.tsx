@@ -404,7 +404,7 @@ const DepositStep: React.FC<Props> = ({
                       aria-pressed={isSelected}
                       aria-label={`${isSelected ? t("createVault.wizard.remove") : t("createVault.wizard.add")} ${tok.symbol || tok.label}`}
                       className={cn(
-                        "grid h-10 w-[4.5rem] shrink-0 place-items-center rounded-full border-[1.5px] text-[13px] font-bold transition-colors",
+                        "grid h-10 w-[4.5rem] shrink-0 place-items-center rounded-xl border-[1.5px] text-[13px] font-bold transition-colors",
                         isSelected
                           ? "border-foreground bg-foreground text-background"
                           : "border-foreground bg-background hover:bg-tile-soft",
