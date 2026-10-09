@@ -47,7 +47,6 @@ const EstatePillButton = ({
       )}
     >
       <span className="flex w-full min-w-0 items-center gap-2 text-sm font-semibold">
-        {/* TODO(backend): Label comes from backend API, fallback to truncated heir address */}
         <span className="truncate">{estate.label ?? truncateAddress(estate.heir, 4)}</span>
       </span>
       <span

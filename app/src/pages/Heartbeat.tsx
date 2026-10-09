@@ -178,7 +178,6 @@ const HeartbeatPageInner: React.FC<{
         </div>
 
         {estate && (
-          // TODO(backend): Label comes from backend API, may be undefined
           <EstateGlance label={estate.label ?? truncateAddress(estate.heir, 4)} state={estate.vaultState}>
             <GlanceStats>
               <GlanceRow label={SOL_LABEL} value={formatSol(estate.solBalance)} />

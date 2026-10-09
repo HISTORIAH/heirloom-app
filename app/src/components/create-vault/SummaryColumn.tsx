@@ -1,4 +1,4 @@
-import { truncateAddress, formatUiAmount } from "@/lib/utils";
+import { cn, truncateAddress, formatUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import type { TokenSelection } from "@/pages/CreateVault";
 import { PanelCap } from "@/components/surface/Panel";
@@ -31,7 +31,8 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
   checkInSigner,
 }) => {
   const { t } = useTranslation("app");
-  const displayLabel = label.trim() || t("createVault.yourHeir");
+  // The estate's name, not the heir's: the two are separate (the heir's name lives in reminders).
+  const estateName = label.trim();
   const selectedEntries = Object.entries(tokenSelections).filter(([, v]) => v.amount > 0);
   const tips = [
     {
@@ -63,19 +64,24 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
         <PanelCap className="block text-muted-foreground">
           {t("createVault.wizard.heirPlain")}
         </PanelCap>
-        <div className="mt-3 flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-background text-sm font-semibold">
-            {displayLabel.charAt(0).toUpperCase()}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{displayLabel}</p>
-            <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-              {heirAddress
-                ? truncateAddress(heirAddress, 4)
-                : t("createVault.wizard.noAddressYetCap")}
-            </p>
-          </div>
-        </div>
+        <p className="mt-2 truncate font-mono text-sm">
+          {heirAddress ? (
+            truncateAddress(heirAddress, 4)
+          ) : (
+            <span className="font-sans text-muted-foreground">
+              {t("createVault.wizard.noAddressYetCap")}
+            </span>
+          )}
+        </p>
+      </section>
+
+      <section>
+        <PanelCap className="block text-muted-foreground">
+          {t("dashboard.estateNameLabel")}
+        </PanelCap>
+        <p className={cn("mt-2 truncate text-sm", !estateName && "text-muted-foreground")}>
+          {estateName || t("createVault.wizard.unnamedEstate")}
+        </p>
       </section>
 
       <section>

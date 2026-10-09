@@ -58,7 +58,7 @@ const CreateVaultPage = () => {
   const [pauseSeconds] = useState(0);
 
   const [heirAddress, setHeirAddress] = useState("");
-  const [label, setLabel] = useState("spouse");
+  const [label, setLabel] = useState("");
   const [delegate, setDelegate] = useState("");
   const [checkInSigner, setCheckinSigner] = useState("");
 

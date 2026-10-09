@@ -213,10 +213,10 @@
     @apply border-tile-line;
     outline: none;
   }
+  /* Focus darkens the field's own border rather than drawing a second ring outside it. */
   .ed-input:focus-visible {
-    @apply border-tile-line;
-    outline: 2px solid hsl(var(--foreground) / 0.28);
-    outline-offset: 2px;
+    @apply border-foreground;
+    outline: none;
   }
   .ed-input::placeholder {
     @apply font-medium text-muted-foreground/70;
