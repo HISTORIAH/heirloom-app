@@ -9,6 +9,7 @@ import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
+import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
 import javacard.security.CryptoException;
 import javacard.security.ECPublicKey;
@@ -18,6 +19,7 @@ import javacard.security.PublicKey;
 
 /**
  * One Ed25519 slot. GENERATE once, GET_PUB, chunked SIGN.
+ * Optional OwnerPIN: SET_PIN once after GENERATE, then VERIFY before SIGN.
  * Exports RFC 8032 little-endian (NXP getW / sig halves are reversed on-card).
  */
 public class HeirApplet extends Applet {
@@ -25,6 +27,9 @@ public class HeirApplet extends Applet {
     private static final byte INS_GENERATE = (byte) 0x01;
     private static final byte INS_GET_PUB = (byte) 0x02;
     private static final byte INS_SIGN = (byte) 0x03;
+    private static final byte INS_SET_PIN = (byte) 0x04;
+    private static final byte INS_VERIFY = (byte) 0x05;
+    private static final byte INS_GET_STATUS = (byte) 0x06;
     private static final byte P1_MORE = (byte) 0x00;
     private static final byte P1_LAST = (byte) 0x80;
 
@@ -32,11 +37,20 @@ public class HeirApplet extends Applet {
     private static final short SIG_LEN = 64;
     private static final short MSG_MAX = 1024;
     private static final short CHUNK_MAX = 200;
+    private static final short STATUS_LEN = 3;
+    private static final byte PIN_MIN = (byte) 4;
+    private static final byte PIN_MAX = (byte) 8;
+    private static final byte PIN_TRY_LIMIT = (byte) 3;
     private static final short SW_NO_KEY = (short) 0x6A88;
+    private static final short SW_PIN_REQUIRED = (short) 0x6982;
+    private static final short SW_PIN_BLOCKED = (short) 0x6983;
+    private static final short SW_PIN_TRIES = (short) 0x63C0;
 
     private PrivateKey priv;
     private PublicKey pub;
     private boolean hasKey;
+    private boolean hasPin;
+    private OwnerPIN pin;
 
     private byte[] msg;
     private short[] off;
@@ -47,6 +61,7 @@ public class HeirApplet extends Applet {
     }
 
     private HeirApplet() {
+        pin = new OwnerPIN(PIN_TRY_LIMIT, PIN_MAX);
         msg = JCSystem.makeTransientByteArray(MSG_MAX, JCSystem.CLEAR_ON_DESELECT);
         off = JCSystem.makeTransientShortArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
         io = JCSystem.makeTransientByteArray(SIG_LEN, JCSystem.CLEAR_ON_DESELECT);
@@ -76,6 +91,18 @@ public class HeirApplet extends Applet {
             insSign(apdu);
             return;
         }
+        if (ins == INS_SET_PIN) {
+            insSetPin(apdu);
+            return;
+        }
+        if (ins == INS_VERIFY) {
+            insVerify(apdu);
+            return;
+        }
+        if (ins == INS_GET_STATUS) {
+            insGetStatus(apdu);
+            return;
+        }
         ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
     }
 
@@ -85,12 +112,16 @@ public class HeirApplet extends Applet {
         }
     }
 
-    private void insGenerate(APDU apdu) {
-        byte[] buf = apdu.getBuffer();
-        requireP2Zero(buf);
+    private void requireP1Zero(byte[] buf) {
         if (buf[ISO7816.OFFSET_P1] != (byte) 0) {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
+    }
+
+    private void insGenerate(APDU apdu) {
+        byte[] buf = apdu.getBuffer();
+        requireP2Zero(buf);
+        requireP1Zero(buf);
         if (hasKey) {
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
@@ -114,9 +145,7 @@ public class HeirApplet extends Applet {
     private void insGetPub(APDU apdu) {
         byte[] buf = apdu.getBuffer();
         requireP2Zero(buf);
-        if (buf[ISO7816.OFFSET_P1] != (byte) 0) {
-            ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
-        }
+        requireP1Zero(buf);
         if (!hasKey) {
             ISOException.throwIt(SW_NO_KEY);
         }
@@ -136,6 +165,9 @@ public class HeirApplet extends Applet {
             if (!hasKey) {
                 ISOException.throwIt(SW_NO_KEY);
             }
+            if (hasPin && !pin.isValidated()) {
+                ISOException.throwIt(SW_PIN_REQUIRED);
+            }
             short lc = apdu.setIncomingAndReceive();
             if (p1 == P1_MORE) {
                 appendChunk(buf, lc);
@@ -151,6 +183,72 @@ public class HeirApplet extends Applet {
             resetSign();
             ISOException.throwIt(ISO7816.SW_UNKNOWN);
         }
+    }
+
+    private short pinPayload(APDU apdu, byte[] buf) {
+        requireP2Zero(buf);
+        requireP1Zero(buf);
+        short lc = apdu.setIncomingAndReceive();
+        if (lc < PIN_MIN || lc > PIN_MAX) {
+            ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
+        }
+        if (!isDigits(buf, ISO7816.OFFSET_CDATA, lc)) {
+            ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+        }
+        return lc;
+    }
+
+    private void insSetPin(APDU apdu) {
+        byte[] buf = apdu.getBuffer();
+        if (!hasKey) {
+            ISOException.throwIt(SW_NO_KEY);
+        }
+        if (hasPin) {
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
+        short lc = pinPayload(apdu, buf);
+        pin.update(buf, ISO7816.OFFSET_CDATA, (byte) lc);
+        hasPin = true;
+    }
+
+    private void insVerify(APDU apdu) {
+        byte[] buf = apdu.getBuffer();
+        if (!hasPin) {
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
+        short lc = pinPayload(apdu, buf);
+        if (pin.getTriesRemaining() == (byte) 0) {
+            ISOException.throwIt(SW_PIN_BLOCKED);
+        }
+        if (pin.check(buf, ISO7816.OFFSET_CDATA, (byte) lc)) {
+            return;
+        }
+        byte left = pin.getTriesRemaining();
+        if (left == (byte) 0) {
+            ISOException.throwIt(SW_PIN_BLOCKED);
+        }
+        ISOException.throwIt((short) (SW_PIN_TRIES | (left & 0x0F)));
+    }
+
+    private void insGetStatus(APDU apdu) {
+        byte[] buf = apdu.getBuffer();
+        requireP2Zero(buf);
+        requireP1Zero(buf);
+        buf[0] = hasKey ? (byte) 1 : (byte) 0;
+        buf[1] = hasPin ? (byte) 1 : (byte) 0;
+        buf[2] = hasPin ? pin.getTriesRemaining() : (byte) 0;
+        apdu.setOutgoingAndSend((short) 0, STATUS_LEN);
+    }
+
+    private static boolean isDigits(byte[] buf, short off, short len) {
+        short end = (short) (off + len);
+        for (short i = off; i < end; i++) {
+            byte b = buf[i];
+            if (b < (byte) 0x30 || b > (byte) 0x39) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void appendLast(byte[] buf, short lc) {

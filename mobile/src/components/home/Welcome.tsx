@@ -95,12 +95,17 @@ export function Welcome({ busy, onConnect }: { busy: boolean; onConnect: () => v
           disabled={busy}
           onPress={onConnect}
         />
-        <PrimaryButton
-          tone="outline"
-          icon="tap"
-          label="I have an Heirloom credential"
-          onPress={() => router.push("/tap")}
-        />
+        <View style={{ gap: 6 }}>
+          <PrimaryButton
+            tone="outline"
+            icon="tap"
+            label="I have an Heirloom credential"
+            onPress={() => router.push("/tap")}
+          />
+          <Text style={{ fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: colors.mute }}>
+            A PIN credential is the wallet. Claim only if an estate is still waiting.
+          </Text>
+        </View>
         <TextLink
           flush
           quiet

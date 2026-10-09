@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { CardApduError } from "./apdu";
 import { cardProblemMessage, isLostField } from "./messages";
 
 class TagConnectionLost extends Error {}
@@ -23,5 +24,12 @@ describe("cardProblemMessage", () => {
   test("tells them to slide around the back after a lost field", () => {
     const text = cardProblemMessage(new TagConnectionLost(), "fallback");
     expect(text).toContain("Slide it slowly around the top of the back");
+  });
+
+  test("names PIN failures", () => {
+    expect(cardProblemMessage(new CardApduError("pin_required", 0x6982), "x")).toContain("PIN");
+    expect(cardProblemMessage(new CardApduError("pin_wrong", 0x63c2), "x")).toContain("2 tries");
+    expect(cardProblemMessage(new CardApduError("pin_blocked", 0x6983), "x")).toContain("locked");
+    expect(cardProblemMessage(new CardApduError("pin_unsupported", 0x6d00), "x")).toContain("reload");
   });
 });

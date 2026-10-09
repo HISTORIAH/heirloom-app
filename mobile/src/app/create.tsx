@@ -10,10 +10,12 @@ import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
 import { AssetsStep } from "@/components/create/AssetsStep";
 import {
   CredentialModeStep,
+  CredentialPinStep,
   CredentialReadyStep,
   CredentialTapStep,
   HandoverStep,
 } from "@/components/create/CredentialSteps";
+import { pinReady } from "@/components/claim/PinPad";
 import { HeirStep, heirSummary } from "@/components/create/HeirStep";
 import { Consent, ReviewStep } from "@/components/create/ReviewStep";
 import { addressFromText } from "@/components/create/AddressField";
@@ -52,6 +54,7 @@ import {
   cancelScan,
   dateLong,
   daysRangeError,
+  digitsToPinBytes,
   lamportsToSolText,
   parseAddress,
   parseOptionalAddress,
@@ -103,6 +106,10 @@ export default function CreateScreen() {
   const [credential, setCredential] = useState<string | undefined>(undefined);
   const [credMode, setCredMode] = useState<CredentialMode>("claimOnce");
   const [credName, setCredName] = useState("");
+  const [pinDigits, setPinDigits] = useState("");
+  const [pinFirst, setPinFirst] = useState("");
+  const [pinError, setPinError] = useState<string | undefined>(undefined);
+  const pinBytes = useRef<Uint8Array | undefined>(undefined);
   const [tapProgress, setTapProgress] = useState<TapProgress>("searching");
   const [tapError, setTapError] = useState<string | undefined>(undefined);
   const [label, setLabel] = useState("");
@@ -187,6 +194,7 @@ export default function CreateScreen() {
   }
 
   function leave() {
+    clearPin();
     void cancelScan();
     if (router.canGoBack()) router.back();
     else router.replace("/");
@@ -212,7 +220,19 @@ export default function CreateScreen() {
 
   // ----- credential tap -------------------------------------------------------
 
+  function clearPin() {
+    pinBytes.current = undefined;
+    setPinDigits("");
+    setPinFirst("");
+    setPinError(undefined);
+  }
+
   function startTap() {
+    const pin = credMode === "keepAsWallet" ? pinBytes.current : undefined;
+    if (credMode === "keepAsWallet" && pin === undefined) {
+      setPhase("credPin");
+      return;
+    }
     const token = ++scanToken.current;
     setTapProgress("searching");
     setTapError(undefined);
@@ -220,7 +240,7 @@ export default function CreateScreen() {
     void (async () => {
       const result = await setupBlankCard((progress) => {
         if (token === scanToken.current) setTapProgress(progress);
-      });
+      }, pin);
       if (token !== scanToken.current) return;
       if (result.kind === "cancelled") return;
       if (result.kind !== "address") {
@@ -228,6 +248,7 @@ export default function CreateScreen() {
         setTapError(setupProblemMessage(result));
         return;
       }
+      clearPin();
       setCredential(result.value);
       setTapProgress("done");
       setPhase("credReady");
@@ -238,6 +259,32 @@ export default function CreateScreen() {
     scanToken.current += 1;
     void cancelScan();
     setPhase(next);
+  }
+
+  function onCredModeContinue() {
+    if (credMode === "keepAsWallet") {
+      clearPin();
+      setPhase("credPin");
+      return;
+    }
+    startTap();
+  }
+
+  function onPinContinue() {
+    if (!pinReady(pinDigits)) return;
+    if (pinFirst.length === 0) {
+      setPinFirst(pinDigits);
+      setPinDigits("");
+      setPinError(undefined);
+      return;
+    }
+    if (pinDigits !== pinFirst) {
+      setPinError("Those digits didn’t match. Try again.");
+      setPinDigits("");
+      return;
+    }
+    pinBytes.current = digitsToPinBytes(pinFirst);
+    startTap();
   }
 
   // ----- step gates -----------------------------------------------------------
@@ -368,11 +415,21 @@ export default function CreateScreen() {
       case "credMode":
         setPhase("heir");
         return;
+      case "credPin":
+        if (pinFirst.length > 0) {
+          setPinDigits("");
+          setPinFirst("");
+          setPinError(undefined);
+          return;
+        }
+        clearPin();
+        setPhase("credMode");
+        return;
       case "credTap":
-        stopTap("credMode");
+        stopTap(credMode === "keepAsWallet" ? "credPin" : "credMode");
         return;
       case "credReady":
-        setPhase("credMode");
+        setPhase("heir");
         return;
       case "assets":
         setPhase(isCredential ? "credReady" : "heir");
@@ -486,7 +543,28 @@ export default function CreateScreen() {
       break;
     case "credMode":
       body = <CredentialModeStep mode={credMode} onMode={setCredMode} />;
-      footer = <PrimaryButton label="Continue" onPress={startTap} />;
+      footer = <PrimaryButton label="Continue" onPress={onCredModeContinue} />;
+      break;
+    case "credPin":
+      body = (
+        <CredentialPinStep
+          digits={pinDigits}
+          confirm={pinFirst.length > 0}
+          error={pinError}
+          onDigit={(d) => {
+            setPinError(undefined);
+            setPinDigits((prev) => prev + d);
+          }}
+          onBackspace={() => setPinDigits((prev) => prev.slice(0, -1))}
+        />
+      );
+      footer = (
+        <PrimaryButton
+          label={pinFirst.length > 0 ? "Set PIN" : "Continue"}
+          disabled={!pinReady(pinDigits)}
+          onPress={onPinContinue}
+        />
+      );
       break;
     case "credTap":
       body = <CredentialTapStep progress={tapProgress} error={tapError} />;
@@ -494,20 +572,34 @@ export default function CreateScreen() {
         tapProgress === "failed" ? (
           <>
             <PrimaryButton label="Try again" onPress={startTap} />
-            <TextLink label="Cancel" onPress={() => stopTap("credMode")} />
+            <TextLink
+              label="Cancel"
+              onPress={() => stopTap(credMode === "keepAsWallet" ? "credPin" : "credMode")}
+            />
           </>
         ) : (
-          <PrimaryButton tone="outline" label="Cancel" onPress={() => stopTap("credMode")} />
+          <PrimaryButton
+            tone="outline"
+            label="Cancel"
+            onPress={() => stopTap(credMode === "keepAsWallet" ? "credPin" : "credMode")}
+          />
         );
       break;
     case "credReady":
       body = (
-        <CredentialReadyStep credential={credential ?? ""} name={credName} onName={setCredName} />
+        <CredentialReadyStep
+          credential={credential ?? ""}
+          name={credName}
+          onName={setCredName}
+          pinSet={credMode === "keepAsWallet"}
+        />
       );
       footer = (
         <>
           <PrimaryButton label="Continue" onPress={() => setPhase("assets")} />
-          <TextLink label="Tap again to double-check" onPress={startTap} />
+          {credMode === "keepAsWallet" ? null : (
+            <TextLink label="Tap again to double-check" onPress={startTap} />
+          )}
         </>
       );
       break;
@@ -601,6 +693,16 @@ export default function CreateScreen() {
           assets={assetText}
           lines={[
             { label: "Estate", value: label.trim(), onEdit: () => setPhase("heir") },
+            ...(isCredential
+              ? [
+                  {
+                    label: "Credential",
+                    value:
+                      credMode === "keepAsWallet" ? "Keep it as their wallet" : "Tap to claim, once",
+                    onEdit: () => setPhase("credMode"),
+                  },
+                ]
+              : []),
             {
               label: "Heir",
               value:
@@ -635,7 +737,7 @@ export default function CreateScreen() {
       footer = null;
       break;
     case "handover":
-      body = <HandoverStep firstDue={dateLong(everyDays)} />;
+      body = <HandoverStep firstDue={dateLong(everyDays)} keepAsWallet={credMode === "keepAsWallet"} />;
       footer = (
         <>
           <PrimaryButton
@@ -643,8 +745,9 @@ export default function CreateScreen() {
             label="Send them a note"
             onPress={() =>
               void Share.share({
-                message:
-                  "I’ve set up an Heirloom credential for you. If something happens to me, tap it on your phone.",
+                message: credMode === "keepAsWallet"
+                  ? "I’ve set up an Heirloom credential for you. I’ll give you the PIN separately. If something happens to me, tap it on your phone."
+                  : "I’ve set up an Heirloom credential for you. If something happens to me, tap it on your phone.",
               })
             }
           />

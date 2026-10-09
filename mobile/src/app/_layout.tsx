@@ -64,6 +64,7 @@ export default function RootLayout() {
                 options={{ presentation: "transparentModal", animation: "fade" }}
               />
               <Stack.Screen name="create" options={{ gestureEnabled: false }} />
+              <Stack.Screen name="card" />
             </Stack>
           </MobileWalletProvider>
         </TamaguiProvider>

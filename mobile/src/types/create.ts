@@ -8,6 +8,7 @@ export type CreatePhase =
   | "heir"
   | "scanAddress"
   | "credMode"
+  | "credPin"
   | "credTap"
   | "credReady"
   | "assets"

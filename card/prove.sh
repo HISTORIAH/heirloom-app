@@ -1,6 +1,6 @@
 #!/bin/sh
 # ACR122U prove: SELECT, GET_PUB empty, GENERATE, GET_PUB match, GENERATE 6985,
-# SIGN 32/64/200/512 with RFC 8032 host verify.
+# SIGN 32/64/200/512 with RFC 8032 host verify, then OwnerPIN SET/VERIFY/GET_STATUS.
 set -e
 ROOT="$(CDPATH= cd -- "$(dirname "$0")" && pwd)"
 GP="${GP:-/tmp/gp.jar}"
@@ -128,6 +128,36 @@ for n, msg in vectors:
     sig, sw = last_body_sw(out)
     expect(sw, sig, "9000", 64, f"SIGN {n}")
     verify(pub, sig, msg)
+
+pin = "31323334"
+msg32 = bytes([0x5A]) * 32
+print("== SET_PIN ==")
+out = gp(select, f"0004000004{pin}")
+_, sw = last_body_sw(out)
+expect(sw, "", "9000", label="SET_PIN")
+
+print("== GET_STATUS after SET_PIN ==")
+out = gp(select, "0006000003")
+body, sw = last_body_sw(out)
+expect(sw, body, "9000", 3, "GET_STATUS")
+if body != "010103":
+    raise SystemExit(f"GET_STATUS {body} want 010103")
+
+print("== SIGN without VERIFY (expect 6982) ==")
+out = gp(select, *sign_apdus(msg32))
+_, sw = last_body_sw(out)
+expect(sw, "", "6982", label="SIGN no VERIFY")
+
+print("== VERIFY + SIGN 32 ==")
+out = gp(select, f"0005000004{pin}", *sign_apdus(msg32))
+sig, sw = last_body_sw(out)
+expect(sw, sig, "9000", 64, "VERIFY+SIGN 32")
+verify(pub, sig, msg32)
+
+print("== VERIFY wrong PIN (expect 63C2) ==")
+out = gp(select, "000500000430303030")
+_, sw = last_body_sw(out)
+expect(sw, "", "63C2", label="VERIFY wrong")
 
 print("prove passed")
 print(f"pub={pub}")

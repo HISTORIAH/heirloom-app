@@ -8,21 +8,33 @@ import {
   getPubApdu,
   INS_GENERATE,
   INS_GET_PUB,
+  INS_GET_STATUS,
   INS_SELECT,
+  INS_SET_PIN,
   INS_SIGN,
+  INS_VERIFY,
   P1_LAST,
   selectApdu,
   SIG_LEN,
   signApdus,
   SW_NO_KEY,
   SW_OK,
+  SW_PIN_REQUIRED,
   SW_SLOT_FULL,
   TEST_SIGN_MESSAGE,
   toHex,
 } from "./apdu";
 import { createCardTransactionSigner } from "./kitSigner";
 import type { IsoDepTransceive } from "@/types/nfc";
-import { generatePubkey, readPubkey, selectApplet, signOnCard } from "./signer";
+import {
+  generatePubkey,
+  readCardIdentity,
+  readPubkey,
+  runCardSigningSession,
+  selectApplet,
+  signOnCard,
+  signOnCardWithPin,
+} from "./signer";
 
 function derPubToRaw(der: Buffer): Uint8Array {
   return Uint8Array.from(der.subarray(der.length - 32));
@@ -108,6 +120,52 @@ describe("generatePubkey", () => {
     const out = await generatePubkey(tx, (p) => progress.push(p));
     expect(toHex(out)).toBe(toHex(pub));
     expect(progress).toEqual(["found", "done"]);
+    expect(hasKey).toBe(true);
+  });
+
+  test("keepAsWallet: GENERATE, SET_PIN, VERIFY, then test SIGN", async () => {
+    const { pair, pub } = livePair();
+    const sig = Uint8Array.from(sign(undefined, TEST_SIGN_MESSAGE, pair.privateKey));
+    const pin = Uint8Array.of(0x31, 0x32, 0x33, 0x34);
+    const seen: number[] = [];
+    let hasKey = false;
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      seen.push(ins);
+      if (ins === INS_SELECT) return swOnly(SW_OK);
+      if (ins === INS_GET_PUB) return hasKey ? reply(pub, SW_OK) : swOnly(SW_NO_KEY);
+      if (ins === INS_GENERATE) {
+        hasKey = true;
+        return reply(pub, SW_OK);
+      }
+      if (ins === INS_SET_PIN || ins === INS_VERIFY) return swOnly(SW_OK);
+      if (ins === INS_SIGN) return reply(sig, SW_OK);
+      return swOnly(0x6d00);
+    };
+    await generatePubkey(tx, undefined, pin);
+    expect(seen.filter((ins) => ins === INS_SET_PIN)).toHaveLength(1);
+    expect(seen.filter((ins) => ins === INS_VERIFY)).toHaveLength(1);
+    expect(seen.indexOf(INS_SET_PIN)).toBeLessThan(seen.indexOf(INS_SIGN));
+  });
+
+  test("SET_PIN 6D00 is pin_unsupported", async () => {
+    const { pub } = livePair();
+    const pin = Uint8Array.of(0x31, 0x32, 0x33, 0x34);
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      if (ins === INS_SELECT) return swOnly(SW_OK);
+      if (ins === INS_GET_PUB) return swOnly(SW_NO_KEY);
+      if (ins === INS_GENERATE) return reply(pub, SW_OK);
+      if (ins === INS_SET_PIN) return swOnly(0x6d00);
+      return swOnly(0x6d00);
+    };
+    try {
+      await generatePubkey(tx, undefined, pin);
+      throw new Error("expected throw");
+    } catch (cause) {
+      expect(cause).toBeInstanceOf(CardApduError);
+      if (cause instanceof CardApduError) expect(cause.kind).toBe("pin_unsupported");
+    }
   });
 
   test("occupied card is slot_full, no GENERATE", async () => {
@@ -144,6 +202,78 @@ describe("generatePubkey", () => {
   });
 });
 
+describe("readCardIdentity", () => {
+  test("GET_STATUS 6D00 is a bearer card", async () => {
+    const pub = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      if (ins === INS_SELECT) return swOnly(SW_OK);
+      if (ins === INS_GET_PUB) return reply(pub, SW_OK);
+      return swOnly(0x6d00);
+    };
+    const id = await readCardIdentity(tx);
+    expect(id.pin).toEqual({ kind: "none" });
+    expect(toHex(id.pub)).toBe(toHex(pub));
+  });
+
+  test("GET_STATUS 6D00 after a drop is retried after SELECT", async () => {
+    const pub = Uint8Array.from({ length: 32 }, (_, i) => i);
+    let statusTries = 0;
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      if (ins === INS_SELECT) return swOnly(SW_OK);
+      if (ins === INS_GET_PUB) return reply(pub, SW_OK);
+      if (ins === INS_GET_STATUS) {
+        statusTries += 1;
+        if (statusTries === 1) return swOnly(0x6d00);
+        return reply(Uint8Array.of(1, 1, 3), SW_OK);
+      }
+      return swOnly(0x6d00);
+    };
+    const id = await readCardIdentity(tx);
+    expect(id.pin).toEqual({ kind: "set", triesLeft: 3 });
+  });
+
+  test("GET_STATUS 010103 is keepAsWallet", async () => {
+    const pub = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      if (ins === INS_SELECT) return swOnly(SW_OK);
+      if (ins === INS_GET_PUB) return reply(pub, SW_OK);
+      return reply(Uint8Array.of(1, 1, 3), SW_OK);
+    };
+    const id = await readCardIdentity(tx);
+    expect(id.pin).toEqual({ kind: "set", triesLeft: 3 });
+  });
+});
+
+describe("signOnCardWithPin", () => {
+  test("VERIFY again after SIGN 6982 (SELECT cleared OwnerPIN)", async () => {
+    const sig = Uint8Array.from({ length: SIG_LEN }, (_, i) => i);
+    const pin = Uint8Array.of(0x31, 0x32, 0x33, 0x34);
+    const seen: number[] = [];
+    let unlocked = false;
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      seen.push(ins);
+      if (ins === INS_SELECT) {
+        unlocked = false;
+        return swOnly(SW_OK);
+      }
+      if (ins === INS_GET_STATUS) return reply(Uint8Array.of(1, 1, 3), SW_OK);
+      if (ins === INS_VERIFY) {
+        unlocked = true;
+        return swOnly(SW_OK);
+      }
+      if (ins === INS_SIGN) return unlocked ? reply(sig, SW_OK) : swOnly(SW_PIN_REQUIRED);
+      return swOnly(0x6d00);
+    };
+    expect(toHex(await signOnCardWithPin(tx, TEST_SIGN_MESSAGE, pin))).toBe(toHex(sig));
+    expect(seen.filter((ins) => ins === INS_VERIFY)).toHaveLength(1);
+    expect(seen.indexOf(INS_SIGN)).toBeLessThan(seen.indexOf(INS_VERIFY));
+  });
+});
+
 describe("signOnCard", () => {
   test("512-byte message sends three chunks", async () => {
     const msg = Uint8Array.from({ length: 512 }, () => 0x22);
@@ -157,6 +287,35 @@ describe("signOnCard", () => {
     };
     expect(toHex(await signOnCard(tx, msg))).toBe(toHex(sig));
     expect(seen).toEqual(expected);
+  });
+});
+
+describe("runCardSigningSession", () => {
+  test("SELECTs once for two SIGNs", async () => {
+    const pub = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const sig = Uint8Array.from({ length: SIG_LEN }, (_, i) => i);
+    const seen: number[] = [];
+    const tx: IsoDepTransceive = async (apdu) => {
+      const ins = insOf(apdu);
+      seen.push(ins);
+      if (ins === INS_SELECT) return swOnly(SW_OK);
+      if (ins === INS_GET_PUB) return reply(pub, SW_OK);
+      if (ins === INS_GET_STATUS) return reply(Uint8Array.of(1, 0, 0), SW_OK);
+      if (ins === INS_SIGN) {
+        const last = (apdu[2] ?? 0) === P1_LAST;
+        return last ? reply(sig, SW_OK) : swOnly(SW_OK);
+      }
+      return swOnly(0x6d00);
+    };
+    type CompiledTx = Parameters<TransactionPartialSigner["signTransactions"]>[0][number];
+    const compiled = { messageBytes: Uint8Array.from({ length: 32 }, () => 0x11), signatures: {} } as unknown as CompiledTx;
+    await runCardSigningSession(tx, async ({ signer, unlock, pin }) => {
+      expect(pin.kind).toBe("none");
+      await unlock();
+      await signer.signTransactions([compiled, compiled]);
+    });
+    expect(seen.filter((ins) => ins === INS_SELECT)).toHaveLength(1);
+    expect(seen.filter((ins) => ins === INS_SIGN).length).toBeGreaterThan(1);
   });
 });
 

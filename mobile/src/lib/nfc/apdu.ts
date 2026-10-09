@@ -6,6 +6,9 @@ export const CLA = 0x00;
 export const INS_GENERATE = 0x01;
 export const INS_GET_PUB = 0x02;
 export const INS_SIGN = 0x03;
+export const INS_SET_PIN = 0x04;
+export const INS_VERIFY = 0x05;
+export const INS_GET_STATUS = 0x06;
 export const INS_SELECT = 0xa4;
 
 export const P1_MORE = 0x00;
@@ -17,9 +20,13 @@ export const CHUNK_MAX = 200;
 export const MSG_MAX = 1024;
 export const PUB_LEN = 32;
 export const SIG_LEN = 64;
+export const PIN_STATUS_LEN = 3;
 
 export const SW_OK = 0x9000;
 export const SW_BAD_LENGTH = 0x6700;
+export const SW_PIN_TRIES = 0x63c0;
+export const SW_PIN_REQUIRED = 0x6982;
+export const SW_PIN_BLOCKED = 0x6983;
 export const SW_SLOT_FULL = 0x6985;
 export const SW_TOO_LONG = 0x6a80;
 export const SW_BAD_P1P2 = 0x6a86;
@@ -47,6 +54,10 @@ export function isCardApduError(cause: unknown): cause is CardApduError {
   return cause instanceof CardApduError;
 }
 
+export function isPinEntryError(cause: unknown): cause is CardApduError {
+  return isCardApduError(cause) && (cause.kind === "pin_required" || cause.kind === "pin_wrong");
+}
+
 export type ApduReply = {
   sw: number;
   body: Uint8Array;
@@ -58,9 +69,20 @@ export function parseApdu(raw: Uint8Array): ApduReply {
   return { sw, body: raw.subarray(0, raw.length - 2) };
 }
 
+export function isPinTriesSw(sw: number): boolean {
+  return (sw & 0xfff0) === SW_PIN_TRIES;
+}
+
+export function pinTriesLeft(sw: number): number {
+  return sw & 0x0f;
+}
+
 export function errorFromSw(sw: number): CardApduError {
   if (sw === SW_NO_KEY) return new CardApduError("no_key", sw);
   if (sw === SW_SLOT_FULL) return new CardApduError("slot_full", sw);
+  if (sw === SW_PIN_REQUIRED) return new CardApduError("pin_required", sw);
+  if (sw === SW_PIN_BLOCKED) return new CardApduError("pin_blocked", sw);
+  if (isPinTriesSw(sw)) return new CardApduError("pin_wrong", sw);
   return new CardApduError("sw", sw);
 }
 
@@ -82,6 +104,29 @@ export function generateApdu(): Uint8Array {
 
 export function getPubApdu(): Uint8Array {
   return Uint8Array.of(CLA, INS_GET_PUB, 0x00, P2, PUB_LEN);
+}
+
+export function getStatusApdu(): Uint8Array {
+  return Uint8Array.of(CLA, INS_GET_STATUS, 0x00, P2, PIN_STATUS_LEN);
+}
+
+export function setPinApdu(pin: Uint8Array): Uint8Array {
+  return pinCommand(INS_SET_PIN, pin);
+}
+
+export function verifyPinApdu(pin: Uint8Array): Uint8Array {
+  return pinCommand(INS_VERIFY, pin);
+}
+
+function pinCommand(ins: number, pin: Uint8Array): Uint8Array {
+  const out = new Uint8Array(5 + pin.length);
+  out[0] = CLA;
+  out[1] = ins;
+  out[2] = 0x00;
+  out[3] = P2;
+  out[4] = pin.length;
+  out.set(pin, 5);
+  return out;
 }
 
 export function signApdus(message: Uint8Array): Uint8Array[] {
