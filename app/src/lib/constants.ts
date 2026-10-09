@@ -3,7 +3,7 @@ export const SOL_DECIMALS = 9;
 /** SOL's mint for price lookups. Deposits use native SOL; this is only an id. */
 export const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
 /** SOL that Max leaves in the wallet so the deposit can still pay its fee. */
-export const SOL_MAX_RESERVE = 0.01;
+export const SOL_MAX_RESERVE = 0.05;
 
 export const USDC_LABEL = "USDC";
 export const USDC_DECIMALS = 6;
