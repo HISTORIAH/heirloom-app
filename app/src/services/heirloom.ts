@@ -33,9 +33,7 @@ import {
   buildTransferSolIx,
   buildTransferTokenIx,
 } from "@/lib/heirloom/instructions";
-import { sendTx, sendTxSequence, type HeirloomClient } from "@/lib/heirloom/client";
-import { TOKEN_IXS_IN_CREATE_TX, TOKEN_IXS_PER_TX } from "@/lib/constants";
-import { chunk } from "@/lib/utils";
+import { sendPlan, sendTx, type HeirloomClient } from "@/lib/heirloom/client";
 import {
   getEstateAddress,
   getVaultAddress,
@@ -368,30 +366,8 @@ export async function discoverVaultTokenAccounts(vaultPda: Address): Promise<Vau
 }
 
 // ---------------------------------------------------------------------------
-// Transaction orchestration — combines builders + PDAs + sendTx
-
-/**
- * Per-token instructions in batches of TOKEN_IXS_PER_TX, with `finalIx` (the SOL leg, or
- * the one that closes the estate) at the very end. It joins the last batch when there's room.
- */
-function batchTokenInstructions(tokenIxs: Instruction[], finalIx?: Instruction): Instruction[][] {
-  const batches = chunk(tokenIxs, TOKEN_IXS_PER_TX);
-  if (!finalIx) return batches;
-  const lastBatch = batches[batches.length - 1];
-  if (lastBatch && lastBatch.length < TOKEN_IXS_PER_TX) lastBatch.push(finalIx);
-  else batches.push([finalIx]);
-  return batches;
-}
-
-/** Sends the batches in order and returns the last signature, the one that completes the action. */
-async function sendBatches(
-  client: HeirloomClient,
-  feePayer: TransactionSigner,
-  batches: Instruction[][],
-): Promise<string> {
-  const signatures = await sendTxSequence(client, feePayer, batches);
-  return signatures[signatures.length - 1];
-}
+// Transaction orchestration — combines builders + PDAs + sendTx. Each action sends all its
+// instructions as one plan; kit splits them into transactions only when they don't fit.
 // ---------------------------------------------------------------------------
 
 export interface TokenAsset {
@@ -588,7 +564,8 @@ export async function revokeAll(
     ? ((await buildRevokeIx(authority, heir, estate, vault)) as Instruction)
     : undefined;
 
-  return sendBatches(client, authority, batchTokenInstructions(tokenIxs, solIx));
+  // SOL goes last, after every token.
+  return sendTx(client, authority, solIx ? [...tokenIxs, solIx] : tokenIxs);
 }
 
 export async function claimAll(
@@ -620,7 +597,8 @@ export async function claimAll(
     ? ((await buildClaimIx(heir, authority, estate, vault, { delegate })) as Instruction)
     : undefined;
 
-  return sendBatches(client, heir, batchTokenInstructions(tokenIxs, solIx));
+  // SOL goes last, after every token.
+  return sendTx(client, heir, solIx ? [...tokenIxs, solIx] : tokenIxs);
 }
 
 export async function updateHeirAll(
@@ -685,10 +663,9 @@ export async function updateHeirAll(
     estate,
     vault,
   );
-  // Tokens migrate batch by batch; the final instruction closes the old estate, so it goes
-  // last. An interrupted run resumes: the next one only finds tokens still in the old vault.
-  const batches = batchTokenInstructions(tokenIxs, finalIx as Instruction);
-  const txId = await sendBatches(client, authority, batches);
+  // The final instruction closes the old estate, so it goes last. If kit splits the plan and a
+  // run is interrupted, the next one resumes: it only finds tokens still in the old vault.
+  const txId = await sendTx(client, authority, [...tokenIxs, finalIx as Instruction]);
   onTx?.(txId);
   return txId;
 }
@@ -735,17 +712,14 @@ export async function initializeWithTokens(
   );
 
   // Backend only reads the first memo, so there must be at most one. It reads it from the
-  // create tx's signature, so the memo rides in the first transaction with the initialize.
+  // create tx's signature, so the memo must land in the same transaction as the initialize:
+  // the non-divisible plan keeps them together even if kit splits the tokens off.
   const memoIxs = name ? [getAddMemoInstruction({ memo: name })] : [];
-  const firstTokens = registerIxs.slice(0, TOKEN_IXS_IN_CREATE_TX);
-  const laterTokens = registerIxs.slice(TOKEN_IXS_IN_CREATE_TX);
-  // The initialize and the memo stay in one transaction even if kit has to split the batch.
   const createWithMemo = nonDivisibleSequentialInstructionPlan([initIx, ...memoIxs]);
-  const firstBatch = sequentialInstructionPlan([createWithMemo, ...firstTokens]);
-  const batches = [firstBatch, ...chunk(laterTokens, TOKEN_IXS_PER_TX)];
+  const plan = sequentialInstructionPlan([createWithMemo, ...registerIxs]);
 
   // The first signature is the create tx: it's what registration and pending state track.
-  const [createSignature] = await sendTxSequence(client, authority, batches);
+  const [createSignature] = await sendPlan(client, authority, plan);
   return createSignature;
 }
 

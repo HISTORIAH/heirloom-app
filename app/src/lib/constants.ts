@@ -38,13 +38,15 @@ export const PRICE_BATCH_SIZE = 50;
 export const PRICE_STALE_MS = 60_000;
 
 /**
- * Per-token instructions sent per transaction. A transaction may run at most 64 instructions
- * including every CPI, and each token instruction makes several (vault account, transfer,
- * record), so a batch stays well under that. The create transaction also carries the
- * initialize instruction and the name memo, so it takes fewer tokens.
+ * Top-level instructions kit's planner puts in one transaction. The runtime caps the
+ * instruction trace — every instruction a transaction runs, top-level plus every CPI — at 64
+ * (MAX_INSTRUCTION_TRACE_LENGTH in solana-transaction-context), and the transaction format
+ * doesn't raise that. Each per-token instruction runs about 7 (associated token account,
+ * transfer, asset record), so 8 per transaction stays under 64. Taken from the
+ * MaxInstructionTraceLengthExceeded failure on instruction 8 when changing heir: the first 8
+ * fit. Measure with simulateTransaction({ innerInstructions: true }) if the program changes.
  */
-export const TOKEN_IXS_PER_TX = 6;
-export const TOKEN_IXS_IN_CREATE_TX = 4;
+export const MAX_INSTRUCTIONS_PER_TX = 8;
 
 /** Confirmation polling for the transaction progress view. */
 export const TX_CONFIRM_POLL_MS = 1500;
