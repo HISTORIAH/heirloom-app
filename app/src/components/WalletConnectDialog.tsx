@@ -58,8 +58,7 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
 const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) => {
   const { isConnected } = useWallet();
   const { t } = useTranslation("app");
-  const walletUi = useWalletUi() as unknown as { wallets?: UiWallet[] };
-  const wallets = walletUi?.wallets ?? [];
+  const { wallets } = useWalletUi();
 
   useEffect(() => {
     if (isConnected && open) onOpenChange(false);

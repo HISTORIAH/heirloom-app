@@ -51,5 +51,8 @@
     "typescript": "~6.0.3",
     "wrangler": "^4.131.2"
   },
-  "packageManager": "bun@1.4.0"
+  "packageManager": "bun@1.4.0",
+  "overrides": {
+    "@wallet-standard/ui-registry": "1.1.1"
+  }
 }

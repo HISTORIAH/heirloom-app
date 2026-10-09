@@ -11,7 +11,6 @@ import {
   createSolanaLocalnet,
   createSolanaMainnet,
 } from "@wallet-ui/react";
-import walletUiCss from "@wallet-ui/react/index.css?raw";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { VaultProvider } from "@/contexts/VaultContext";
 import { TourProvider } from "@/contexts/TourContext";
@@ -27,26 +26,22 @@ import Heartbeat from "@/pages/Heartbeat";
 import VerifyEmail from "@/pages/VerifyEmail";
 import NotFound from "@/pages/NotFound";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
+import { MAINNET_PUBLIC_RPC_URL } from "@/lib/constants";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const queryClient = new QueryClient();
-
-if (typeof document !== "undefined" && !document.getElementById("wallet-ui-css")) {
-  const style = document.createElement("style");
-  style.id = "wallet-ui-css";
-  style.textContent = walletUiCss;
-  document.head.appendChild(style);
-}
 
 const isMainnet = SOLANA_RPC_ENDPOINT.includes("mainnet");
 const isLocalnet =
   SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1");
 
+// wallet-ui has no default mainnet URL; on mainnet use ours, elsewhere the public one.
+const mainnet = createSolanaMainnet(isMainnet ? SOLANA_RPC_ENDPOINT : MAINNET_PUBLIC_RPC_URL);
 const clusters = isMainnet
-  ? [createSolanaMainnet(), createSolanaDevnet(), createSolanaLocalnet()]
+  ? [mainnet, createSolanaDevnet(), createSolanaLocalnet()]
   : isLocalnet
-    ? [createSolanaLocalnet(), createSolanaDevnet(), createSolanaMainnet()]
-    : [createSolanaDevnet(), createSolanaLocalnet(), createSolanaMainnet()];
+    ? [createSolanaLocalnet(), createSolanaDevnet(), mainnet]
+    : [createSolanaDevnet(), createSolanaLocalnet(), mainnet];
 
 const walletUiConfig = createWalletUiConfig({ clusters });
 

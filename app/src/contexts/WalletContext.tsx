@@ -3,6 +3,8 @@ import { useWalletUi } from "@wallet-ui/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import { createSolanaRpc, createSolanaRpcSubscriptions, type Address, } from "@solana/kit";
 import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
+import { transactionVersionFor } from "@/lib/wallet";
+import type { TxMessageVersion } from "@/types/tx";
 
 const rpcSingleton = createSolanaRpc(SOLANA_RPC_ENDPOINT);
 const rpcSubscriptionsSingleton = createSolanaRpcSubscriptions(SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT);
@@ -18,6 +20,8 @@ interface WalletState {
   account: UiWalletAccount | null;
   rpc: AppRpc;
   rpcSubscriptions: AppRpcSubscriptions;
+  /** v1 when the connected wallet can sign it, otherwise v0. */
+  transactionVersion: TxMessageVersion;
   disconnectWallet: () => Promise<void>;
 }
 
@@ -37,6 +41,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       account,
       rpc: rpcSingleton,
       rpcSubscriptions: rpcSubscriptionsSingleton,
+      transactionVersion: transactionVersionFor(account),
       disconnectWallet: async () => {
         await walletUi.disconnect();
       },
