@@ -10,3 +10,6 @@ export type InitializeInput = Omit<
   heir: Address;
   mint?: Address;
 };
+
+/** Instruction-trace entries one Heirloom instruction uses, by which asset it moves. */
+export type InstructionTraceCost = { token: number; sol: number };

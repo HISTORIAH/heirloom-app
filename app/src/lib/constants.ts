@@ -1,3 +1,6 @@
+import { HeirloomInstruction } from "@historiah/heirloom";
+import type { InstructionTraceCost } from "@/types/program";
+
 export const SOL_LABEL = "SOL";
 export const SOL_DECIMALS = 9;
 /** SOL's mint for price lookups. Deposits use native SOL; this is only an id. */
@@ -38,15 +41,29 @@ export const PRICE_BATCH_SIZE = 50;
 export const PRICE_STALE_MS = 60_000;
 
 /**
- * Top-level instructions kit's planner puts in one transaction. The runtime caps the
- * instruction trace — every instruction a transaction runs, top-level plus every CPI — at 64
- * (MAX_INSTRUCTION_TRACE_LENGTH in solana-transaction-context), and the transaction format
- * doesn't raise that. Each per-token instruction runs about 7 (associated token account,
- * transfer, asset record), so 8 per transaction stays under 64. Taken from the
- * MaxInstructionTraceLengthExceeded failure on instruction 8 when changing heir: the first 8
- * fit. Measure with simulateTransaction({ innerInstructions: true }) if the program changes.
+ * The runtime caps a transaction's instruction trace — every instruction it runs, top-level
+ * plus every CPI at any depth — at 64 (MAX_INSTRUCTION_TRACE_LENGTH in
+ * solana-transaction-context). Separate from CPI depth, and v1 transactions don't raise it.
  */
-export const MAX_INSTRUCTIONS_PER_TX = 8;
+export const MAX_INSTRUCTION_TRACE_LENGTH = 64;
+
+/**
+ * Trace entries each Heirloom instruction uses: itself plus its CPIs, for the token leg (a
+ * mint is passed) and the SOL leg. Measured on litesvm from each transaction's inner
+ * instructions; re-measure if the program changes. Where it varies, this is the higher one:
+ * updateHeir's first token leg also creates the new estate and vault (11, later ones 9), and
+ * a SOL-only updateHeir creates them too (3). Instructions not listed here (compute budget,
+ * memo, plain transfers, updateField, delegateDefer) count as 1.
+ */
+export const HEIRLOOM_INSTRUCTION_TRACE_COSTS: Partial<
+  Record<HeirloomInstruction, InstructionTraceCost>
+> = {
+  [HeirloomInstruction.Initialize]: { token: 10, sol: 4 },
+  [HeirloomInstruction.RegisterAsset]: { token: 8, sol: 2 },
+  [HeirloomInstruction.UpdateHeir]: { token: 11, sol: 3 },
+  [HeirloomInstruction.Revoke]: { token: 9, sol: 1 },
+  [HeirloomInstruction.Claim]: { token: 10, sol: 1 },
+};
 
 /** Confirmation polling for the transaction progress view. */
 export const TX_CONFIRM_POLL_MS = 1500;

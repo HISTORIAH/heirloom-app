@@ -20,7 +20,7 @@ import {
 } from "@solana/kit-plugin-rpc";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
 import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
-import { MAX_INSTRUCTIONS_PER_TX } from "@/lib/constants";
+import { assertTraceFits } from "@/lib/heirloom/trace";
 import type { TxMessageVersion } from "@/types/tx";
 
 export type HeirloomClient = {
@@ -32,8 +32,9 @@ export type HeirloomClient = {
 
 /**
  * Plans messages the way kit-plugin-rpc's own planner does (fee payer, provisory resource
- * limits the executor later replaces with simulated ones), plus a cap on instructions per
- * transaction, which that plugin doesn't expose. See MAX_INSTRUCTIONS_PER_TX for why.
+ * limits the executor later replaces with simulated ones), plus a cap on each transaction's
+ * estimated instruction trace, which that plugin doesn't expose. See
+ * HEIRLOOM_INSTRUCTION_TRACE_COSTS for why.
  */
 function createPlanner(feePayer: TransactionSigner, version: TxMessageVersion) {
   return createTransactionPlanner({
@@ -43,7 +44,7 @@ function createPlanner(feePayer: TransactionSigner, version: TxMessageVersion) {
         (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
         (tx) => fillTransactionMessageProvisoryResourceLimits(tx),
       ),
-    maxInstructionsPerTransaction: MAX_INSTRUCTIONS_PER_TX,
+    onTransactionMessageUpdated: assertTraceFits,
   });
 }
 
@@ -94,7 +95,7 @@ function withReadableMessage(error: unknown): unknown {
 
 /**
  * Sign, send and confirm `plan` — every instruction one action needs, in order. Kit's planner
- * packs them into as few transactions as fit (byte size and MAX_INSTRUCTIONS_PER_TX), and the
+ * packs them into as few transactions as fit (byte size and the instruction trace), and the
  * executor sends those one after another, so later ones can use accounts earlier ones create.
  * Wrap instructions in `nonDivisibleSequentialInstructionPlan` to keep them together.
  * Returns every signature, in the order sent. One wallet approval per transaction.
