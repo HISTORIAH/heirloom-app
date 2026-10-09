@@ -1,43 +1,47 @@
 import { LABEL_MAX_LEN } from "@/lib/constants";
-import { StepHeader } from "@/components/create-vault/StepHeader";
+import { cn, isValidSolanaAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
+import { Check, Info } from "lucide-react";
 
 interface Props {
   heirAddress: string;
   setHeirAddress: (s: string) => void;
   label: string;
   setLabel: (s: string) => void;
-  delegate: string;
-  setDelegate: (s: string) => void;
-  checkInSigner: string;
-  setCheckinSigner: (s: string) => void;
+  ownerAddress: string | null;
 }
+
+const NAME_SUGGESTIONS = ["Kids", "Partner", "Family", "Charity"] as const;
 
 const HeirStep: React.FC<Props> = ({
   heirAddress,
   setHeirAddress,
   label,
   setLabel,
-  delegate,
-  setDelegate,
-  checkInSigner,
-  setCheckinSigner,
+  ownerAddress,
 }) => {
   const { t } = useTranslation("app");
+  const trimmed = heirAddress.trim();
+  const isValid = isValidSolanaAddress(trimmed);
+  const isOwner = isValid && ownerAddress != null && trimmed === ownerAddress;
+  const showValid = isValid && !isOwner;
+  const showInvalid = trimmed.length > 0 && !isValid;
 
   return (
     <div>
-      <StepHeader
-        cap={t("createVault.wizard.step01")}
-        title={t("createVault.wizard.whoInheritsTitle")}
-      />
+      <div className="mb-6">
+        <h2 className="ed-h3">{t("createVault.wizard.whoInheritsTitle")}</h2>
+        <p className="ed-lede mt-2 text-muted-foreground">
+          {t("createVault.wizard.whoInheritsLede")}
+        </p>
+      </div>
 
-      <div className="space-y-5 border-t border-tile-line pt-6">
-        <Field
-          id="heir-address"
-          label={t("createVault.wizard.heirWalletLabel")}
-          hint={t("createVault.wizard.heirWalletHint")}
-        >
+      <div className="space-y-6">
+        {/* Heir address */}
+        <div>
+          <label className="ed-field-label" htmlFor="heir-address">
+            {t("createVault.wizard.heirWalletLabel")}
+          </label>
           <input
             id="heir-address"
             type="text"
@@ -46,16 +50,35 @@ const HeirStep: React.FC<Props> = ({
             maxLength={128}
             spellCheck={false}
             autoComplete="off"
-            className="ed-input mt-2 font-mono"
-            placeholder={t("createVault.wizard.pasteAddress")}
+            className={cn("ed-input mt-2 font-mono", showInvalid && "border-accent-red")}
+            placeholder={t("createVault.wizard.heirWalletHint")}
           />
-        </Field>
+          {showValid && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-tile-soft px-4 py-3.5">
+              <Check className="h-[18px] w-[18px] shrink-0 text-accent-lime" strokeWidth={3} />
+              <span className="text-sm">{t("createVault.wizard.heirValid")}</span>
+              <span className="font-mono text-lg font-bold tracking-wider">
+                {trimmed.slice(0, 4)} ··· {trimmed.slice(-4)}
+              </span>
+            </div>
+          )}
+          {showInvalid && (
+            <p role="alert" className="mt-2 text-sm text-accent-red">
+              {t("createVault.wizard.heirInvalid")}
+            </p>
+          )}
+          {isOwner && (
+            <p role="alert" className="mt-2 text-sm text-accent-red">
+              {t("createVault.wizard.heirIsOwner")}
+            </p>
+          )}
+        </div>
 
-        <Field
-          id="estate-label"
-          label={t("createVault.wizard.labelWhatToCall")}
-          hint={t("createVault.wizard.labelHint")}
-        >
+        {/* Estate name */}
+        <div>
+          <label className="ed-field-label" htmlFor="estate-label">
+            {t("createVault.wizard.labelWhatToCall")}
+          </label>
           <input
             id="estate-label"
             type="text"
@@ -66,69 +89,31 @@ const HeirStep: React.FC<Props> = ({
             className="ed-input mt-2"
             placeholder={t("createVault.wizard.labelPlaceholder")}
           />
-        </Field>
-      </div>
-
-      <div className="mt-8 flex items-center gap-3">
-        <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
-        <span className="ed-label">{t("createVault.wizard.optionalLabel")}</span>
-        <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
-      </div>
-
-      <div className="mt-6 space-y-5">
-        <Field
-          id="guardian-address"
-          label={t("createVault.wizard.guardianPlain")}
-          hint={t("createVault.wizard.guardianHint")}
-        >
-          <input
-            id="guardian-address"
-            type="text"
-            value={delegate}
-            onChange={(e) => setDelegate(e.target.value)}
-            maxLength={128}
-            spellCheck={false}
-            autoComplete="off"
-            className="ed-input mt-2 font-mono"
-            placeholder={t("createVault.wizard.leaveBlank")}
-          />
-        </Field>
-
-        <Field
-          id="signer-address"
-          label={t("createVault.wizard.signerLabelPlain")}
-          hint={t("createVault.wizard.signerHint")}
-        >
-          <input
-            id="signer-address"
-            type="text"
-            value={checkInSigner}
-            onChange={(e) => setCheckinSigner(e.target.value)}
-            maxLength={128}
-            spellCheck={false}
-            autoComplete="off"
-            className="ed-input mt-2 font-mono"
-            placeholder={t("createVault.wizard.leaveBlank")}
-          />
-        </Field>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {NAME_SUGGESTIONS.map((sug) => (
+              <button
+                key={sug}
+                type="button"
+                onClick={() => setLabel(sug)}
+                className={cn(
+                  "min-h-[36px] rounded-full border px-3.5 text-sm transition-colors",
+                  label === sug
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-tile-line bg-background hover:bg-tile-soft",
+                )}
+              >
+                {sug}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2.5 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            <span>{t("createVault.wizard.labelHint")}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-
-const Field: React.FC<{
-  id: string;
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}> = ({ id, label, hint, children }) => (
-  <div>
-    <label className="ed-field-label" htmlFor={id}>
-      {label}
-    </label>
-    {children}
-    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{hint}</p>
-  </div>
-);
 
 export default HeirStep;

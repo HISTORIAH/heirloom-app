@@ -7,7 +7,7 @@ import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
-import { cn, errMsg, toRawTokenAmount, truncateAddress } from "@/lib/utils";
+import { errMsg, isValidSolanaAddress, toRawTokenAmount } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -15,7 +15,7 @@ import HeartbeatStep from "@/components/create-vault/HeartbeatStep";
 import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
 import ReviewStep from "@/components/create-vault/ReviewStep";
-import { ArrowLeft, ArrowRight, Bell, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import Stepper from "@/components/create-vault/Stepper";
 import SummaryColumn from "@/components/create-vault/SummaryColumn";
@@ -46,6 +46,7 @@ const CreateVaultPage = () => {
   const { t, i18n } = useTranslation("app");
 
   const [step, setStep] = useState<StepIndex>(0);
+  const [reachedStep, setReachedStep] = useState<StepIndex>(0);
 
   // When the onboarding tour highlights a specific wizard step, follow along.
   useEffect(() => {
@@ -56,13 +57,14 @@ const CreateVaultPage = () => {
 
   const now = useNow(60_000);
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * SECONDS_PER_DAY);
-  const [graceSeconds, setGraceSeconds] = useState(30 * SECONDS_PER_DAY);
+  const [graceSeconds, setGraceSeconds] = useState(7 * SECONDS_PER_DAY);
   const [pauseSeconds] = useState(0);
 
   const [heirAddress, setHeirAddress] = useState("");
   const [label, setLabel] = useState("");
   const [delegate, setDelegate] = useState("");
   const [checkInSigner, setCheckinSigner] = useState("");
+  const [rolesOpen, setRolesOpen] = useState(false);
 
   const { data: tokens, isLoading: tokensLoading } = useWalletSplTokens(
     isConnected ? publicKey : null,
@@ -84,18 +86,27 @@ const CreateVaultPage = () => {
   );
   const hasAnyDeposit = solAmount > 0 || selectedTokenEntries.length > 0;
 
+  const trimmedHeir = heirAddress.trim();
+  const heirValid = isValidSolanaAddress(trimmedHeir);
+  const heirIsOwner = heirValid && publicKey != null && trimmedHeir === publicKey;
+
   const isHeirValid =
-    heirAddress.trim().length >= 32 && label.trim().length > 0 && label.length <= LABEL_MAX_LEN;
+    heirValid && !heirIsOwner && label.trim().length > 0 && label.length <= LABEL_MAX_LEN;
+
+  const signerTrimmed = checkInSigner.trim();
+  const guardianTrimmed = delegate.trim();
+  const sameKey =
+    signerTrimmed.length > 0 && guardianTrimmed.length > 0 && signerTrimmed === guardianTrimmed;
 
   const canProceed = () => {
     if (step === 0) return isHeirValid;
     if (step === 1) return true; // empty estate allowed
-    if (step === 2) return heartbeatSeconds > 0 && graceSeconds > 0;
-    return acknowledged && hasAnyDeposit;
+    if (step === 2) return !sameKey;
+    return acknowledged;
   };
 
   const handleSubmit = async () => {
-    if (!hasAnyDeposit || !acknowledged) return;
+    if (!acknowledged) return;
     if (!isConnected) {
       setWalletDialogOpen(true);
       return;
@@ -127,8 +138,7 @@ const CreateVaultPage = () => {
       );
 
       const createTxId = await createEstateOnChain({
-        heir: heirAddress.trim(),
-        // Estate name: written as a memo in the create tx, then registered with the backend
+        heir: trimmedHeir,
         label: label.trim().slice(0, LABEL_MAX_LEN) || undefined,
         checkInIntervalSecs: heartbeatSeconds,
         gracePeriodSecs: graceSeconds,
@@ -167,86 +177,102 @@ const CreateVaultPage = () => {
     t("createVault.stepHeartbeat"),
     t("createVault.stepReview"),
   ];
-  const totalDays =
-    Math.round(heartbeatSeconds / SECONDS_PER_DAY) + Math.round(graceSeconds / SECONDS_PER_DAY);
   const intervalDays = Math.round(heartbeatSeconds / SECONDS_PER_DAY);
   const graceDays = Math.round(graceSeconds / SECONDS_PER_DAY);
 
-  const resetForm = () => {
-    setStep(0);
-    setHeirAddress("");
-    setLabel("spouse");
-    setDelegate("");
-    setCheckinSigner("");
-    setSolAmount(0);
-    setTokenSelections({});
-    setHeartbeatSeconds(90 * SECONDS_PER_DAY);
-    setGraceSeconds(30 * SECONDS_PER_DAY);
-    setAcknowledged(false);
-    setSubmitState("idle");
-    setTxId(null);
+  const goToStep = (idx: StepIndex) => {
+    if (idx <= reachedStep) setStep(idx);
+  };
+
+  const goNext = () => {
+    const next = (step + 1) as StepIndex;
+    setStep(next);
+    setReachedStep((r) => Math.max(r, next) as StepIndex);
+  };
+
+  const goBack = () => {
+    if (step > 0) setStep((step - 1) as StepIndex);
   };
 
   const rail = (
     <div className="flex h-[3.75rem] items-center gap-[clamp(0.75rem,1.4vw,1.5rem)] border-b border-tile-line px-[var(--page-pad)]">
-      <span className="truncate text-[11px] font-bold uppercase leading-none tracking-[0.18em]">
-        {submitState === "complete" ? "complete" : steps[step]}
-      </span>
-      <span className="shrink-0 font-display text-[13px] font-bold leading-none tabular-nums text-muted-foreground">
-        {submitState === "complete" ? "04" : String(step + 1).padStart(2, "0")} / 04
-      </span>
+      <div className="flex shrink-0 items-baseline gap-3 whitespace-nowrap">
+        <span className="font-mono text-xs font-bold uppercase tracking-[0.1em]">
+          {t("createVault.wizard.newEstate")}
+        </span>
+        <span className="text-sm text-muted-foreground">
+          {submitState === "complete" ? t("createVault.wizard.done") : `0${step + 1} / 04`}
+        </span>
+      </div>
       <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
       <Stepper
         steps={steps}
         currentStep={submitState === "complete" ? 4 : step}
-        completedSteps={submitState === "complete" ? 4 : step}
-        onStepClick={(idx) => {
-          if (submitState !== "complete" && idx < step) setStep(idx as StepIndex);
-        }}
+        completedSteps={submitState === "complete" ? 4 : reachedStep + 1}
+        onStepClick={(idx) => goToStep(idx as StepIndex)}
       />
     </div>
   );
 
   if (submitState === "complete") {
+    const missedDate = new Date(now + intervalDays * 864e5).toLocaleDateString(i18n.language, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
     return (
       <>
         <div className="min-h-screen overflow-x-clip bg-background">
           <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
           {rail}
           <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
-            <Panel className="mx-auto max-w-xl text-center">
-              <span className="ed-label">{t("createVault.wizard.confirmed")}</span>
-              <h2 className="ed-h2 mt-3">
-                {label && t("createVault.successTitle", { label: t(label) })}
-              </h2>
-              <p className="ed-lede mx-auto mt-4 max-w-[42ch] text-muted-foreground">
-                {truncateAddress(heirAddress)}) {t("createVault.successBody1")}{" "}
-                <strong>
-                  {totalDays} {t("createVault.successBody2")}
-                </strong>
-                . {t("createVault.successBody3")}{" "}
-                <strong>
-                  {new Date(now + intervalDays * 864e5).toLocaleDateString(i18n.language, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </strong>
-                .
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Button variant="flat-yellow" size="lg" onClick={() => navigate("/dashboard")}>
-                  {t("createVault.goToDashboard")}
-                </Button>
-                <Button variant="flat-outline" size="lg" onClick={resetForm}>
-                  {t("createVault.createAnother")}
-                </Button>
+            <div className="mx-auto flex max-w-xl flex-col items-start gap-6">
+              {/* Yellow check circle */}
+              <div className="grid h-14 w-14 place-items-center rounded-full bg-accent-yellow">
+                <Check className="h-7 w-7 text-foreground" strokeWidth={3} />
               </div>
-              <p className="mt-6 flex items-center justify-center gap-2 border-t border-tile-line pt-5 text-sm font-medium text-muted-foreground">
-                <Bell className="h-4 w-4" strokeWidth={2} />
-                {t("createVault.remindersNote")}
+
+              <h2 className="ed-h2">{t("createVault.successTitle", { label })}</h2>
+
+              <p className="ed-lede text-muted-foreground">
+                {t("createVault.wizard.nextCheckInDue", { date: missedDate })}
               </p>
-            </Panel>
+
+              {/* Next step cards */}
+              <div className="flex w-full flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate("/dashboard")}
+                  className="flex w-full items-center justify-between gap-4 rounded-xl border border-tile-line p-5 text-left transition-colors hover:bg-tile-soft"
+                >
+                  <span>
+                    <b className="block text-sm">{t("createVault.wizard.setUpReminders")}</b>
+                    <span className="block text-sm text-muted-foreground">
+                      {t("createVault.wizard.setUpRemindersDesc")}
+                    </span>
+                  </span>
+                  <ArrowRight className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/dashboard")}
+                  className="flex w-full items-center justify-between gap-4 rounded-xl border border-tile-line p-5 text-left transition-colors hover:bg-tile-soft"
+                >
+                  <span>
+                    <b className="block text-sm">{t("createVault.wizard.tellYourHeir")}</b>
+                    <span className="block text-sm text-muted-foreground">
+                      {t("createVault.wizard.tellYourHeirDesc")}
+                    </span>
+                  </span>
+                  <ArrowRight className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+                </button>
+              </div>
+
+              <Button variant="flat" size="lg" onClick={() => navigate("/dashboard")}>
+                {t("createVault.goToDashboard")}
+              </Button>
+            </div>
           </main>
         </div>
         <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
@@ -274,10 +300,7 @@ const CreateVaultPage = () => {
                     setHeirAddress={setHeirAddress}
                     label={label}
                     setLabel={setLabel}
-                    delegate={delegate}
-                    setDelegate={setDelegate}
-                    checkInSigner={checkInSigner}
-                    setCheckinSigner={setCheckinSigner}
+                    ownerAddress={publicKey}
                   />
                 </div>
               )}
@@ -305,6 +328,12 @@ const CreateVaultPage = () => {
                     setHeartbeatSeconds={setHeartbeatSeconds}
                     graceSeconds={graceSeconds}
                     setGraceSeconds={setGraceSeconds}
+                    checkInSigner={checkInSigner}
+                    setCheckinSigner={setCheckinSigner}
+                    delegate={delegate}
+                    setDelegate={setDelegate}
+                    rolesOpen={rolesOpen}
+                    setRolesOpen={setRolesOpen}
                   />
                 </div>
               )}
@@ -324,44 +353,56 @@ const CreateVaultPage = () => {
                     acknowledged={acknowledged}
                     setAcknowledged={setAcknowledged}
                     onEdit={(targetStep) => setStep(targetStep as StepIndex)}
+                    onEditExtraSafety={() => {
+                      setStep(2);
+                      setRolesOpen(true);
+                    }}
                   />
                 </div>
               )}
 
               <div className="mt-8 flex items-center justify-between gap-3 border-t border-tile-line pt-5">
-                <Button
-                  variant="flat-outline"
-                  size="default"
-                  onClick={() => setStep((s) => (s > 0 ? ((s - 1) as StepIndex) : s))}
-                  disabled={step === 0 || isSubmitting}
-                >
-                  <ArrowLeft className="h-4 w-4" /> {t("createVault.back")}
-                </Button>
-
-                {step < 3 ? (
+                {step > 0 ? (
                   <Button
-                    variant="flat"
+                    variant="flat-outline"
                     size="default"
-                    onClick={() => setStep((s) => (s + 1) as StepIndex)}
-                    disabled={!canProceed() || isSubmitting}
+                    onClick={goBack}
+                    disabled={isSubmitting}
                   >
-                    {step === 1 && !hasAnyDeposit ? (
-                      t("createVault.skipForNow")
-                    ) : (
-                      <>
-                        {t("createVault.next")}
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
+                    <ArrowLeft className="h-4 w-4" /> {t("createVault.back")}
                   </Button>
                 ) : (
-                  <span className="group inline-flex">
+                  <span />
+                )}
+
+                <div className="flex items-center gap-4">
+                  {step === 3 && (
+                    <span className="text-xs text-muted-foreground">
+                      {t("createVault.wizard.estFeeTilde")}
+                    </span>
+                  )}
+                  {step < 3 ? (
+                    <Button
+                      variant="flat"
+                      size="default"
+                      onClick={goNext}
+                      disabled={!canProceed() || isSubmitting}
+                    >
+                      {step === 1 && !hasAnyDeposit ? (
+                        t("createVault.skipForNow")
+                      ) : (
+                        <>
+                          {t("createVault.next")}
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  ) : (
                     <Button
                       variant="flat"
                       size="default"
                       onClick={handleSubmit}
                       disabled={!canProceed() || isSubmitting}
-                      aria-label={!hasAnyDeposit ? t("createVault.selectAssetFirst") : undefined}
                     >
                       {isSubmitting ? (
                         <>
@@ -369,25 +410,11 @@ const CreateVaultPage = () => {
                           {t("createVault.creating")}
                         </>
                       ) : (
-                        <span className="grid justify-items-center">
-                          <span
-                            className={cn(
-                              "col-start-1 row-start-1",
-                              !hasAnyDeposit && "group-hover:invisible",
-                            )}
-                          >
-                            {t("createVault.createEstate")}
-                          </span>
-                          {!hasAnyDeposit && (
-                            <span className="col-start-1 row-start-1 invisible group-hover:visible">
-                              {t("createVault.selectAssetFirst")}
-                            </span>
-                          )}
-                        </span>
+                        t("createVault.createEstate")
                       )}
                     </Button>
-                  </span>
-                )}
+                  )}
+                </div>
               </div>
             </Panel>
 

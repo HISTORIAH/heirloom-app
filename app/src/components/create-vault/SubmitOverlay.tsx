@@ -9,11 +9,7 @@ interface SubmitOverlayProps {
   txId: string | null;
 }
 
-const SubmitOverlay: React.FC<SubmitOverlayProps> = ({
-  submitState,
-  submitProgress,
-  txId,
-}) => {
+const SubmitOverlay: React.FC<SubmitOverlayProps> = ({ submitState, submitProgress, txId }) => {
   const { t } = useTranslation("app");
   const isCreating = submitState === "creating";
   const isComplete = submitState === "complete";
@@ -27,13 +23,11 @@ const SubmitOverlay: React.FC<SubmitOverlayProps> = ({
       cap={t("common.estate")}
       labelledBy="submit-overlay-title"
       title={
-        isComplete
-          ? t("createVault.wizard.estateCreated")
-          : t("createVault.wizard.creatingEstate")
+        isComplete ? t("createVault.wizard.estateCreated") : t("createVault.wizard.creatingEstate")
       }
       description={
         isComplete ? (
-          t("createVault.wizard.heartbeatLive")
+          t("createVault.wizard.checkInLive")
         ) : (
           <span className="inline-flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />

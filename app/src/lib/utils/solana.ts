@@ -25,3 +25,12 @@ export function getClusterFromEndpoint(): SolanaChain {
 
 /** The chain this build signs against. */
 export const SOLANA_CHAIN = getClusterFromEndpoint();
+
+/**
+ * Validates a Solana base58 address by format: 32 to 44 chars from the
+ * base58 alphabet (no 0, O, I or l). Catches URLs and other non-address
+ * input before they reach the program.
+ */
+export function isValidSolanaAddress(address: string): boolean {
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address.trim());
+}
