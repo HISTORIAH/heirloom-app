@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -10,8 +9,12 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
   resolve: {
+    // One React for the whole bundle. @heirloom/i18n is loaded as source from packages/, and
+    // its react-i18next would otherwise resolve that package's own React copy: two Reacts,
+    // and every hook in the i18n provider fails ("Invalid hook call").
+    dedupe: ["react", "react-dom"],
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": `${import.meta.dirname}/src`,
     },
   },
   // @heirloom/i18n is consumed as source from packages/, outside this app's

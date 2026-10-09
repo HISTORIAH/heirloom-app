@@ -40,7 +40,7 @@ export const FieldLabel: React.FC<{ children: ReactNode; hint?: ReactNode; htmlF
 );
 
 export const formInput =
-  "w-full rounded-xl border border-tile-line bg-background px-4 py-3.5 text-base outline-none transition-colors focus:border-foreground";
+  "w-full rounded-xl border border-tile-line bg-background px-4 py-3.5 text-base outline-hidden transition-colors focus:border-foreground";
 
 export const Chip: React.FC<{
   on: boolean;

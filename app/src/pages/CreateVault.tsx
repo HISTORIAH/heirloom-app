@@ -23,6 +23,7 @@ import { Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@heirloom/i18n";
 import type { SplTokenAsset } from "@/types";
+import { useNow } from "@/hooks/useNow";
 
 const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
 
@@ -53,6 +54,7 @@ const CreateVaultPage = () => {
     }
   }, [vaultStep]);
 
+  const now = useNow(60_000);
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * SECONDS_PER_DAY);
   const [graceSeconds, setGraceSeconds] = useState(30 * SECONDS_PER_DAY);
   const [pauseSeconds] = useState(0);
@@ -224,7 +226,7 @@ const CreateVaultPage = () => {
                 </strong>
                 . {t("createVault.successBody3")}{" "}
                 <strong>
-                  {new Date(Date.now() + intervalDays * 864e5).toLocaleDateString(i18n.language, {
+                  {new Date(now + intervalDays * 864e5).toLocaleDateString(i18n.language, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",

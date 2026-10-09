@@ -295,7 +295,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                         const next = e.target.value.replace(/[^0-9.]/g, "");
                         if ((next.match(/\./g) ?? []).length <= 1) setAmount(next);
                       }}
-                      className="w-full min-w-0 bg-transparent font-display text-[28px] font-bold tracking-[-0.02em] outline-none sm:text-4xl"
+                      className="w-full min-w-0 bg-transparent font-display text-[28px] font-bold tracking-[-0.02em] outline-hidden sm:text-4xl"
                     />
                     <span className="text-[15px] font-semibold text-muted-foreground">{selected.symbol}</span>
                   </div>

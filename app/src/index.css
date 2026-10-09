@@ -1,8 +1,8 @@
 /* Space Grotesk is loaded via <link> in index.html — an @import here would
    delay discovery until this file downloads and parses. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* The theme still lives in the JS config; v4 reads it through @config. */
+@config "../tailwind.config.ts";
 
 @layer base {
 

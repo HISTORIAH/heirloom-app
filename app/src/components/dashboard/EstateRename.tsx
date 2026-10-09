@@ -63,7 +63,7 @@ export const EstateRename: React.FC<{ estate: EstateData; account: UiWalletAccou
             if (e.key === "Escape") setEditing(false);
           }}
           aria-label={t("dashboard.estateNameLabel")}
-          className="w-48 min-w-0 rounded-lg border border-foreground px-2.5 py-1.5 text-sm outline-none"
+          className="w-48 min-w-0 rounded-lg border border-foreground px-2.5 py-1.5 text-sm outline-hidden"
         />
         <button
           onClick={save}

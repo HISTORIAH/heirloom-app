@@ -13,7 +13,7 @@ export async function requestChallenge(address: string): Promise<string> {
   return message;
 }
 
-/** signature must be bs58-encoded (64-byte ed25519) — the server no longer accepts base64. */
+/** signature must be base58-encoded (64-byte ed25519) — the server no longer accepts base64. */
 export async function verifyChallenge(address: string, signature: string): Promise<string> {
   const { address: verifiedAddress } = await request<VerifyResponse>(`${API_BASE}/verify`, {
     method: "POST",

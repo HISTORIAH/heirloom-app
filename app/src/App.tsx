@@ -4,13 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import {
-  WalletUi,
-  createWalletUiConfig,
-  createSolanaDevnet,
-  createSolanaLocalnet,
-  createSolanaMainnet,
-} from "@wallet-ui/react";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { VaultProvider } from "@/contexts/VaultContext";
 import { TourProvider } from "@/contexts/TourContext";
@@ -25,25 +18,9 @@ import Defer from "@/pages/Defer";
 import Heartbeat from "@/pages/Heartbeat";
 import VerifyEmail from "@/pages/VerifyEmail";
 import NotFound from "@/pages/NotFound";
-import { SOLANA_RPC_ENDPOINT } from "@/config";
-import { MAINNET_PUBLIC_RPC_URL } from "@/lib/constants";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 
 const queryClient = new QueryClient();
-
-const isMainnet = SOLANA_RPC_ENDPOINT.includes("mainnet");
-const isLocalnet =
-  SOLANA_RPC_ENDPOINT.includes("localhost") || SOLANA_RPC_ENDPOINT.includes("127.0.0.1");
-
-// wallet-ui has no default mainnet URL; on mainnet use ours, elsewhere the public one.
-const mainnet = createSolanaMainnet(isMainnet ? SOLANA_RPC_ENDPOINT : MAINNET_PUBLIC_RPC_URL);
-const clusters = isMainnet
-  ? [mainnet, createSolanaDevnet(), createSolanaLocalnet()]
-  : isLocalnet
-    ? [createSolanaLocalnet(), createSolanaDevnet(), mainnet]
-    : [createSolanaDevnet(), createSolanaLocalnet(), mainnet];
-
-const walletUiConfig = createWalletUiConfig({ clusters });
 
 /**
  * `/` is not a page here any more — the landing owns it, on the other origin.
@@ -87,35 +64,33 @@ const RouteSeo = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <WalletUi config={walletUiConfig}>
-        <WalletProvider>
-          <VaultProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <RouteAnalytics />
-              <RouteSeo />
-              <TourProvider>
-                <AppTour />
-                <Routes>
-                  {/* The root of this origin used to be the landing page. It
-                    lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
-                    dashboard — which already handles the disconnected case
-                    with a connect prompt of its own. */}
-                  <Route path="/" element={<RootRedirect />} />
-                  <Route path="/create-vault" element={<CreateVault />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/claim" element={<Claim />} />
-                  <Route path="/defer" element={<Defer />} />
-                  <Route path="/heartbeat" element={<Heartbeat />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </TourProvider>
-            </BrowserRouter>
-          </VaultProvider>
-        </WalletProvider>
-      </WalletUi>
+      <WalletProvider>
+        <VaultProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <RouteAnalytics />
+            <RouteSeo />
+            <TourProvider>
+              <AppTour />
+              <Routes>
+                {/* The root of this origin used to be the landing page. It
+                  lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
+                  dashboard — which already handles the disconnected case
+                  with a connect prompt of its own. */}
+                <Route path="/" element={<RootRedirect />} />
+                <Route path="/create-vault" element={<CreateVault />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/claim" element={<Claim />} />
+                <Route path="/defer" element={<Defer />} />
+                <Route path="/heartbeat" element={<Heartbeat />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TourProvider>
+          </BrowserRouter>
+        </VaultProvider>
+      </WalletProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

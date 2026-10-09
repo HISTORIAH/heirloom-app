@@ -1,7 +1,9 @@
 import React from "react";
 import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
-import { useWalletUi, type UiWalletAccount } from "@wallet-ui/react";
-import { useTransactionSigner } from "@/hooks/useTransactionSigner";
+import { useWalletAccountTransactionSigner } from "@solana/react";
+import type { UiWalletAccount } from "@wallet-standard/react";
+import { useWallet } from "@/contexts/WalletContext";
+import { SOLANA_CHAIN } from "@/lib/utils";
 
 export interface WalletCtx {
   signer: TransactionSigner;
@@ -19,7 +21,7 @@ export interface WalletCtx {
 export const WithWallet: React.FC<{
   children: (ctx: WalletCtx | null) => React.ReactNode;
 }> = ({ children }) => {
-  const { account } = useWalletUi();
+  const { account } = useWallet();
 
   if (!account) {
     return <>{children(null)}</>;
@@ -32,7 +34,7 @@ const Connected: React.FC<{
   account: UiWalletAccount;
   children: (ctx: WalletCtx) => React.ReactNode;
 }> = ({ account, children }) => {
-  const signer = useTransactionSigner(account);
+  const signer = useWalletAccountTransactionSigner(account, SOLANA_CHAIN);
   const address = toAddress(account.address);
   return <>{children({ signer, address, addressStr: account.address })}</>;
 };

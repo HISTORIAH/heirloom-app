@@ -79,8 +79,8 @@ const NotificationsCard: React.FC<Props> = ({ status, summary, onAction }) => {
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className="h-10 w-10 rounded-[10px] bg-secondary animate-pulse shrink-0" />
             <div className="flex-1 min-w-0 space-y-2">
-              <div className="h-3 w-24 rounded bg-secondary animate-pulse" />
-              <div className="h-3 w-44 rounded bg-secondary animate-pulse" />
+              <div className="h-3 w-24 rounded-sm bg-secondary animate-pulse" />
+              <div className="h-3 w-44 rounded-sm bg-secondary animate-pulse" />
             </div>
           </div>
           <div className="h-10 w-24 rounded-lg bg-secondary animate-pulse shrink-0" />

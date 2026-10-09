@@ -74,7 +74,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
             <p className="truncate text-base font-semibold leading-tight">{primary}</p>
             {isYieldActive && (
               <span
-                className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+                className="shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
                 style={{ backgroundColor: accentColor }}
               >
                 {t("dashboard.apyBadge", { apy: luloStrategy.apy.toFixed(1) })}
