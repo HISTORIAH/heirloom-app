@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { EstateCard } from "@/components/dashboard/EstateCard";
+import { EstateRename } from "@/components/dashboard/EstateRename";
 import { getEstateStripMeta } from "@/components/dashboard/estateState";
 import VaultMark from "@/components/VaultMark";
 import { useWallet } from "@/contexts/WalletContext";
@@ -63,7 +64,7 @@ const EstatePillButton = ({
 };
 
 const DashboardPage = () => {
-  const { isConnected, disconnectWallet } = useWallet();
+  const { isConnected, disconnectWallet, account } = useWallet();
   const { estates, loading, pendingCreate, pendingTxId, clearVault } = useVault();
   const navigate = useNavigate();
   const { t } = useTranslation("app");
@@ -127,8 +128,20 @@ const DashboardPage = () => {
         <span className="font-display text-[13px] font-bold leading-none tabular-nums">
           {String(estates.length).padStart(2, "0")}
         </span>
+        {selectedEstate && account && (
+          <>
+            <span aria-hidden="true" className="h-4 w-px bg-tile-line" />
+            <EstateRename key={selectedEstate.estatePda} estate={selectedEstate} account={account} />
+          </>
+        )}
         <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
-        <Button variant="flat-yellow" size="sm" onClick={() => navigate("/create-vault")}>
+        {/* Outline, so Check In stays the page's only yellow call to action. */}
+        <Button
+          variant="flat-outline"
+          size="sm"
+          onClick={() => navigate("/create-vault")}
+          className="shrink-0 border tracking-[0.12em]"
+        >
           <Plus className="h-4 w-4" /> {t("dashboard.newEstate")}
         </Button>
       </div>
@@ -170,7 +183,7 @@ const DashboardPage = () => {
           </div>
         </div>
       ) : (
-        <div className="app-shell space-y-[clamp(1.25rem,2.4vh,2rem)] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
+        <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 pb-20 pt-6 sm:px-[var(--page-pad)] min-[860px]:pt-14">
           {pendingCreate && (
             <div className="rounded-xl border border-accent-yellow bg-accent-yellow px-5 py-4">
               <div className="flex items-center gap-3">

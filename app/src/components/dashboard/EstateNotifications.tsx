@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import bs58 from "bs58";
@@ -18,6 +18,11 @@ type Props = {
   estate: EstateData;
   /** Only ever rendered once the wallet is connected, so this is never null in practice. */
   account: UiWalletAccount;
+  /**
+   * Bumped by other surfaces (the heir tile's name link) to run this card's action: sign in
+   * when locked, otherwise open the reminders dialog where the heir's name lives.
+   */
+  openRequest?: number;
 };
 
 /**
@@ -25,7 +30,7 @@ type Props = {
  * Split out from EstateCard because useSignMessage() requires a concrete
  * wallet-standard account and must not be called when one isn't mounted.
  */
-export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
+export const EstateNotifications: React.FC<Props> = ({ estate, account, openRequest = 0 }) => {
   const { t } = useTranslation("app");
   const { toast } = useToast();
   const signMessage = useSignMessage(account);
@@ -90,6 +95,15 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
     setNotifSignInOpen(true);
   };
 
+  const lastRequest = useRef(openRequest);
+  useEffect(() => {
+    if (openRequest === lastRequest.current) return;
+    lastRequest.current = openRequest;
+    handleNotifAction();
+    // Only a new request should fire this, not a status change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest]);
+
   const notifSignMessage = t("notifications.signMessageBody", {
     estate: estate.estatePda,
     wallet: account.address,
@@ -97,7 +111,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account }) => {
 
   return (
     <>
-      <div className="lg:col-span-12">
+      <div className="col-span-full">
         <NotificationsCard
           status={notifStatus}
           summary={notifSummary}

@@ -6,6 +6,8 @@ export interface TokenAvatarProps {
   label: string;
   size?: "sm" | "md";
   accent?: string;
+  /** Round for fungible tokens, square (the default) for collectibles. */
+  shape?: "round" | "square";
 }
 
 const TokenAvatar: React.FC<TokenAvatarProps> = ({
@@ -13,8 +15,10 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
   label,
   size = "sm",
   accent = "bg-secondary",
+  shape = "square",
 }) => {
   const [broken, setBroken] = useState(false);
+  const radius = shape === "round" ? "rounded-full" : "rounded-lg";
   const dim = size === "md" ? "h-11 w-11" : "h-8 w-8";
   const innerIcon = size === "md" ? "h-6 w-6" : "h-4 w-4";
   const fontSize = size === "md" ? "text-sm" : "text-xs";
@@ -25,14 +29,14 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
         alt={label}
         loading="lazy"
         onError={() => setBroken(true)}
-        className={`${dim} shrink-0 rounded-lg border border-tile-line bg-background object-cover`}
+        className={`${dim} shrink-0 ${radius} border border-tile-line bg-background object-cover`}
       />
     );
   }
   const initial = label.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase();
   return (
     <div
-      className={`${dim} ${accent} flex shrink-0 items-center justify-center rounded-lg border border-tile-line`}
+      className={`${dim} ${accent} flex shrink-0 items-center justify-center ${radius} border border-tile-line`}
       aria-hidden="true"
     >
       {initial ? (

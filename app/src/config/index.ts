@@ -47,3 +47,7 @@ export const FEATURE_YIELD_STAKING_UI =
   import.meta.env.VITE_FEATURE_YIELD_STAKING_UI?.trim().toLowerCase() !== "false";
 
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+// Jupiter Price API key (developers.jup.ag/portal). Without one, prices are skipped and the
+// UI shows "No price".
+export const JUPITER_API_KEY = import.meta.env.VITE_JUPITER_API_KEY?.trim() || "";

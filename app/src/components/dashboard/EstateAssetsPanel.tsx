@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import { Panel, PanelCap } from "@/components/surface/Panel";
 import TokenRow from "@/components/dashboard/TokenRow";
 import TokenAvatar from "@/components/TokenAvatar";
 import { SolStakingIndicator } from "@/components/dashboard/SolStakingIndicator";
-import { TopUpDialog } from "@/components/dashboard/TopUpDialog";
-import { SOL_DECIMALS, SOL_LABEL } from "@/lib/constants";
-import { cn, formatSol } from "@/lib/utils";
+import { DASHBOARD_CARD } from "@/components/dashboard/estateState";
+import { SOL_DECIMALS, SOL_LABEL, WRAPPED_SOL_MINT } from "@/lib/constants";
+import { cn, formatSol, formatUsd } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 import type { EstateData } from "@/contexts/VaultContext";
 import type { VaultTokenHolding } from "@/types";
 import type { LuloStrategy, Strategy, StrategyProgressStep } from "@/types/strategy-ui";
+import type { UsdPriceMap } from "@/types/prices";
 
 interface TokenMeta {
   symbol?: string;
@@ -18,16 +18,11 @@ interface TokenMeta {
   image?: string;
 }
 
-interface WalletSplToken {
-  mint: string;
-  uiAmount: number;
-}
-
 interface EstateAssetsPanelProps {
   estate: EstateData;
   tokenMeta: Map<string, TokenMeta>;
-  walletSplTokens: WalletSplToken[] | undefined;
-  walletSolBalance: number;
+  /** USD prices by mint (SOL under the wrapped mint). Undefined while loading or unavailable. */
+  prices: UsdPriceMap | undefined;
   showYieldStaking: boolean;
   stakingStrategy: Strategy | null;
   luloStrategy: LuloStrategy | null;
@@ -39,19 +34,13 @@ interface EstateAssetsPanelProps {
   progressVisible: boolean;
   recallTarget: "lulo" | "staking" | null;
   luloTargetMint: string | null;
-  topUpOpen: "sol" | string | null;
-  onTopUpOpen: (target: "sol" | string) => void;
-  onTopUpCancel: () => void;
-  onTopUpConfirm: (amount: number) => void;
-  topUpLoading: boolean;
   className?: string;
 }
 
 export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   estate,
   tokenMeta,
-  walletSplTokens,
-  walletSolBalance,
+  prices,
   showYieldStaking,
   stakingStrategy,
   luloStrategy,
@@ -63,18 +52,32 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   progressVisible,
   recallTarget,
   luloTargetMint,
-  topUpOpen,
-  onTopUpOpen,
-  onTopUpCancel,
-  onTopUpConfirm,
-  topUpLoading,
   className,
 }) => {
   const { t } = useTranslation("app");
-  const [tab, setTab] = useState<"sol" | "tokens">("sol");
+  // An estate holding only tokens opens on them rather than on an empty SOL balance.
+  const [tab, setTab] = useState<"sol" | "tokens">(() =>
+    estate.solBalance === 0 && estate.vaultTokens.length > 0 ? "tokens" : "sol",
+  );
 
   const assetCount = 1 + estate.vaultTokens.length;
   const solVaultBalance = Number(estate.solBalance) / 10 ** SOL_DECIMALS;
+
+  // Display-only valuation. Unpriced tokens count toward neither the totals nor the shares.
+  const usdOf = (mint: string, amount: number) => {
+    const price = prices?.get(mint);
+    return price !== undefined ? price * amount : undefined;
+  };
+  const solUsd = usdOf(WRAPPED_SOL_MINT, solVaultBalance);
+  const tokenUsd = new Map(
+    estate.vaultTokens.map((vt) => [
+      vt.mint,
+      usdOf(vt.mint, Number(vt.rawAmount) / 10 ** vt.decimals),
+    ]),
+  );
+  const pricedTokens = [...tokenUsd.values()].filter((v): v is number => v !== undefined);
+  const tokensTotal = pricedTokens.length ? pricedTokens.reduce((a, b) => a + b, 0) : undefined;
+  const estateTotal = (solUsd ?? 0) + (tokensTotal ?? 0);
 
   const tabClass = (active: boolean) =>
     cn(
@@ -83,7 +86,7 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
     );
 
   return (
-    <Panel className={cn("h-full gap-6", className)}>
+    <Panel bare className={cn("h-full gap-[26px]", DASHBOARD_CARD, className)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <PanelCap className="text-muted-foreground">{t("dashboard.assets")}</PanelCap>
@@ -107,90 +110,95 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <TokenAvatar label={SOL_LABEL} size="sm" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {SOL_LABEL}
               </span>
             </div>
-            <p className="tile-h mt-3 tabular-nums">{formatSol(estate.solBalance)}</p>
-            <p className="mt-2 font-mono text-xs text-muted-foreground">
-              {`${estate.solBalance.toLocaleString()} ${t("dashboard.lamports")}`}
+            <p className="mt-3.5 font-display text-[clamp(2.5rem,4.5vw,4rem)] font-bold leading-none tracking-[-0.03em] tabular-nums">
+              {formatSol(estate.solBalance)}
             </p>
-          </div>
-
-          <div className="flex flex-col items-end gap-2">
-            <button
-              onClick={() => onTopUpOpen("sol")}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-tile-line px-4 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
-            >
-              <Plus className="h-3.5 w-3.5" /> {t("dashboard.addMore")}
-            </button>
-
-            {showYieldStaking && (
-              <div className="w-full">
-                <SolStakingIndicator
-                  solBalance={solVaultBalance}
-                  strategy={stakingStrategy}
-                  onEnable={onEnableStaking}
-                  onRecall={onRecallStaking}
-                  loading={progressVisible && recallTarget === "staking" && strategyProgress !== "idle"}
-                  progressStep={
-                    progressVisible && recallTarget === "staking" ? strategyProgress : "idle"
-                  }
-                />
-              </div>
+            {estate.solBalance === 0 ? (
+              <p className="mt-3.5 text-sm text-muted-foreground">{t("dashboard.noSol")}</p>
+            ) : (
+              solUsd !== undefined && (
+                <p className="mt-3 text-base text-muted-foreground tabular-nums">
+                  ≈ {formatUsd(solUsd)}
+                </p>
+              )
             )}
           </div>
 
-          <TopUpDialog
-            open={topUpOpen === "sol"}
-            symbol={SOL_LABEL}
-            decimals={SOL_DECIMALS}
-            vaultBalance={solVaultBalance}
-            walletBalance={walletSolBalance}
-            onConfirm={onTopUpConfirm}
-            onCancel={onTopUpCancel}
-            loading={topUpLoading}
-          />
+          {showYieldStaking && (
+            <div className="w-full">
+              <SolStakingIndicator
+                solBalance={solVaultBalance}
+                strategy={stakingStrategy}
+                onEnable={onEnableStaking}
+                onRecall={onRecallStaking}
+                loading={
+                  progressVisible && recallTarget === "staking" && strategyProgress !== "idle"
+                }
+                progressStep={
+                  progressVisible && recallTarget === "staking" ? strategyProgress : "idle"
+                }
+              />
+            </div>
+          )}
         </div>
       ) : estate.vaultTokens.length === 0 ? (
         <p className="py-10 text-center text-sm font-medium text-muted-foreground">
           {t("dashboard.noTokens")}
         </p>
       ) : (
-        <div
-          className={cn(
-            "divide-y divide-tile-line border-y border-tile-line",
-            estate.vaultTokens.length > 6 && "max-h-[420px] overflow-y-auto",
-          )}
-        >
-          {estate.vaultTokens.map((vt) => (
-            <TokenRow
-              key={vt.ata}
-              vt={vt}
-              meta={tokenMeta.get(vt.mint)}
-              walletBalance={walletSplTokens?.find((w) => w.mint === vt.mint)?.uiAmount ?? 0}
-              showYieldStaking={showYieldStaking}
-              luloStrategy={luloStrategy}
-              onEnableYield={() => onEnableLulo(vt)}
-              onRecallYield={onRecallLulo}
-              yieldLoading={
-                progressVisible &&
-                recallTarget === "lulo" &&
-                luloTargetMint === vt.mint &&
-                strategyProgress !== "idle"
-              }
-              yieldProgressStep={
-                progressVisible && recallTarget === "lulo" && luloTargetMint === vt.mint
-                  ? strategyProgress
-                  : "idle"
-              }
-              topUpOpen={topUpOpen === vt.mint}
-              onTopUpOpen={() => onTopUpOpen(vt.mint)}
-              onTopUpCancel={onTopUpCancel}
-              onTopUpConfirm={onTopUpConfirm}
-              topUpLoading={topUpLoading}
-            />
-          ))}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
+            <div>
+              <span className="text-sm text-muted-foreground">{t("dashboard.tokenValue")}</span>
+              <p className="mt-1 font-display text-3xl font-bold leading-none tracking-[-0.02em] tabular-nums">
+                {tokensTotal !== undefined ? formatUsd(tokensTotal) : "—"}
+              </p>
+            </div>
+            {estateTotal > 0 && (
+              <span className="text-sm text-muted-foreground tabular-nums">
+                {t("dashboard.estateTotal", { value: formatUsd(estateTotal) })}
+              </span>
+            )}
+          </div>
+          <div
+            className={cn(
+              "flex flex-col gap-2",
+              estate.vaultTokens.length > 5 && "max-h-[460px] overflow-y-auto pr-1",
+            )}
+          >
+            {estate.vaultTokens.map((vt) => (
+              <TokenRow
+                key={vt.ata}
+                vt={vt}
+                meta={tokenMeta.get(vt.mint)}
+                usdValue={tokenUsd.get(vt.mint)}
+                share={
+                  estateTotal > 0 && tokenUsd.get(vt.mint) !== undefined
+                    ? (tokenUsd.get(vt.mint) as number) / estateTotal
+                    : undefined
+                }
+                showYieldStaking={showYieldStaking}
+                luloStrategy={luloStrategy}
+                onEnableYield={() => onEnableLulo(vt)}
+                onRecallYield={onRecallLulo}
+                yieldLoading={
+                  progressVisible &&
+                  recallTarget === "lulo" &&
+                  luloTargetMint === vt.mint &&
+                  strategyProgress !== "idle"
+                }
+                yieldProgressStep={
+                  progressVisible && recallTarget === "lulo" && luloTargetMint === vt.mint
+                    ? strategyProgress
+                    : "idle"
+                }
+              />
+            ))}
+          </div>
         </div>
       )}
     </Panel>

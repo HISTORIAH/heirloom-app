@@ -4,16 +4,15 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
-import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
-import { useTokenBalances } from "@/hooks/useTokenBalances";
-import { SOL_DECIMALS } from "@/lib/constants";
-import { errMsg, getClusterFromEndpoint, toRawTokenAmount } from "@/lib/utils";
+import { useReminders, useSaveHeirName } from "@/hooks/useReminders";
+import { useTokenPrices } from "@/hooks/useTokenPrices";
+import { SOL_DECIMALS, WRAPPED_SOL_MINT } from "@/lib/constants";
+import { errMsg, getClusterFromEndpoint } from "@/lib/utils";
 import { FEATURE_YIELD_STAKING_UI } from "@/config";
 import { EstateStatusTile } from "@/components/dashboard/EstateStatusTile";
 import { EstateAssetsPanel } from "@/components/dashboard/EstateAssetsPanel";
 import { EstateHeirTile } from "@/components/dashboard/EstateHeirTile";
 import { EstateManagePanel } from "@/components/dashboard/EstateManagePanel";
-import { EstateFactsBand } from "@/components/dashboard/EstateFactsBand";
 import { LuloEnableDialog } from "@/components/dashboard/LuloEnableDialog";
 import { RecallConfirmDialog } from "@/components/dashboard/RecallConfirmDialog";
 import { StakingEnableDialog } from "@/components/dashboard/StakingEnableDialog";
@@ -31,11 +30,11 @@ import {
 import { useTranslation } from "@heirloom/i18n";
 
 /**
- * One estate as a 2×2: status over assets, heir over manage, facts under all four.
+ * One estate as a 2×2: status beside heir, assets beside manage, notifications under all four.
  */
 export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
-  const { sendHeartbeatOnChain, depositSolOnChain, depositTokenOnChain, fetchEstates } = useVault();
-  const { publicKey, isConnected, account } = useWallet();
+  const { sendHeartbeatOnChain } = useVault();
+  const { account } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
@@ -61,64 +60,47 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
   // TODO:Placeholder strategies — per-estate local state (replace with real data later)
   const [luloStrategy, setLuloStrategy] = useState<Strategy | null>(null);
   const [stakingStrategy, setStakingStrategy] = useState<Strategy | null>(null);
-  const [topUpOpen, setTopUpOpen] = useState<"sol" | string | null>(null);
-  const [topUpLoading, setTopUpLoading] = useState(false);
 
-  const { data: walletSplTokens } = useWalletSplTokens(
-    topUpOpen !== null && isConnected ? publicKey : null,
-  );
-  const { sol: walletSolBalance } = useTokenBalances(
-    topUpOpen !== null && isConnected ? publicKey : null,
-  );
+  // The heir's name lives in the reminders profile. This shares the notifications card's
+  // query, so it resolves once the owner has a session; until then the heir shows as an address.
+  const reminders = useReminders(account ? estate.estatePda : "");
+  const heirProfile = reminders.data?.heir ?? null;
+  const heirName = heirProfile?.heirName?.trim() || null;
+  const hasReminders = (reminders.data?.recipients.length ?? 0) > 0;
+  const saveHeirName = useSaveHeirName(estate.estatePda);
+  const [remindersRequest, setRemindersRequest] = useState(0);
 
-  const handleTopUp = async (amount: number) => {
-    if (amount <= 0 || !topUpOpen) return;
-    setTopUpLoading(true);
+  const handleSaveHeirName = async (name: string) => {
     try {
-      let tx: string;
-      if (topUpOpen === "sol") {
-        tx = await depositSolOnChain(estate.vaultPda, toRawTokenAmount(amount, SOL_DECIMALS));
-      } else {
-        const holding = estate.vaultTokens.find((vt) => vt.mint === topUpOpen);
-        if (!holding) throw new Error("Token not found in vault");
-        tx = await depositTokenOnChain(holding, toRawTokenAmount(amount, holding.decimals));
-      }
-      setLastTxId(tx);
-      setTopUpOpen(null);
-      track("vault_top_up_succeeded", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
-      toast({ title: t("dashboard.toastTopUpTitle"), description: t("dashboard.toastTopUpDesc") });
-      await fetchEstates();
-    } catch (err: unknown) {
-      track("vault_top_up_failed", { asset_type: topUpOpen === "sol" ? "sol" : "token" });
+      await saveHeirName.mutateAsync({ heirName: name, current: heirProfile });
+    } catch (err) {
       toast({
-        title: t("dashboard.toastTopUpFailTitle"),
+        title: t("dashboard.heirNameSaveFailed"),
         description: errMsg(err),
         variant: "destructive",
       });
-    } finally {
-      setTopUpLoading(false);
+      throw err;
     }
   };
 
   const vaultEmpty = isVaultEmpty(estate);
   const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
   const { metadata: tokenMeta } = useTokenMetadata(vaultMints);
-  const initial = computeTick(estate, vaultEmpty, t);
+  const { data: prices } = useTokenPrices([WRAPPED_SOL_MINT, ...vaultMints]);
+  const initial = computeTick(estate, vaultEmpty);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);
-  const [countdownLabel, setCountdownLabel] = useState(initial.label);
 
   useEffect(() => {
     const tick = () => {
-      const r = computeTick(estate, vaultEmpty, t);
+      const r = computeTick(estate, vaultEmpty);
       setCountdown(r.countdown);
       setComputedState(r.state);
-      setCountdownLabel(r.label);
     };
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [estate, vaultEmpty, t]);
+  }, [estate, vaultEmpty]);
 
   const handleHeartbeat = async () => {
     setSendingHeartbeat(true);
@@ -262,21 +244,25 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12 lg:gap-5">
+      <div className="grid grid-cols-1 items-stretch gap-5 min-[860px]:grid-cols-[1.45fr_1fr]">
         <EstateStatusTile
+          estate={estate}
           state={computedState}
           countdown={countdown}
-          countdownLabel={countdownLabel}
+          lastTxId={lastTxId}
           sending={sendingHeartbeat}
           onCheckIn={handleHeartbeat}
-          className="lg:col-span-7"
         />
-        <EstateHeirTile estate={estate} className="lg:col-span-5" />
+        <EstateHeirTile
+          estate={estate}
+          heirName={heirName}
+          onSaveName={reminders.isSuccess && hasReminders ? handleSaveHeirName : undefined}
+          onSetUpName={account ? () => setRemindersRequest((n) => n + 1) : undefined}
+        />
         <EstateAssetsPanel
           estate={estate}
           tokenMeta={tokenMeta}
-          walletSplTokens={walletSplTokens}
-          walletSolBalance={walletSolBalance}
+          prices={prices}
           showYieldStaking={showYieldStaking}
           stakingStrategy={stakingStrategy}
           luloStrategy={luloStrategy?.type === "lulo" ? luloStrategy : null}
@@ -288,18 +274,14 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
           progressVisible={showProgressOverlay}
           recallTarget={recallTarget}
           luloTargetMint={luloTargetMint}
-          topUpOpen={topUpOpen}
-          onTopUpOpen={setTopUpOpen}
-          onTopUpCancel={() => setTopUpOpen(null)}
-          onTopUpConfirm={handleTopUp}
-          topUpLoading={topUpLoading}
-          className={computedState === "distributed" ? "lg:col-span-12" : "lg:col-span-7"}
+          className={computedState === "distributed" ? "col-span-full" : undefined}
         />
         {computedState !== "distributed" && (
-          <EstateManagePanel estate={estate} onTx={setLastTxId} className="lg:col-span-5" />
+          <EstateManagePanel estate={estate} heirName={heirName} onTx={setLastTxId} />
         )}
-        <EstateFactsBand estate={estate} lastTxId={lastTxId} className="lg:col-span-12" />
-        {account && <EstateNotifications estate={estate} account={account} />}
+        {account && (
+          <EstateNotifications estate={estate} account={account} openRequest={remindersRequest} />
+        )}
       </div>
 
       {showYieldStaking && activeLuloHolding && (

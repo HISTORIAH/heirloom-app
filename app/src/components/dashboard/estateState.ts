@@ -15,13 +15,10 @@ export type TFn = (key: string, opts?: Record<string, unknown>) => string;
 export interface CountdownParts {
   days: number;
   hours: number;
-  minutes: number;
-  seconds: number;
 }
 
 export interface TickResult {
   state: UiState;
-  label: string;
   countdown: CountdownParts;
 }
 
@@ -47,6 +44,9 @@ export const STATE_LINE: Record<UiState, string> = {
   distributed: "border-foreground/10",
 };
 
+/** Card frame shared by the dashboard panels: wider padding and radius than the default Panel. */
+export const DASHBOARD_CARD = "rounded-2xl p-5 sm:p-7";
+
 export const statusMeta = (t: TFn): Record<UiState, { label: string; description: string }> => ({
   active: { label: t("dashboard.statusActive"), description: t("dashboard.statusActiveDesc") },
   grace: { label: t("dashboard.statusGrace"), description: t("dashboard.statusGraceDesc") },
@@ -60,18 +60,11 @@ export const statusMeta = (t: TFn): Record<UiState, { label: string; description
   },
 });
 
-const countdownLabels = (t: TFn): Record<UiState, string> => ({
-  distributed: t("dashboard.labelDistributed"),
-  claimable: t("dashboard.labelClaimable"),
-  grace: t("dashboard.labelGrace"),
-  active: t("dashboard.labelActive"),
-});
-
 export function isVaultEmpty(estate: EstateData): boolean {
   return estate.claimableAssets === 0 && estate.solBalance === 0 && estate.vaultTokens.length === 0;
 }
 
-export function computeTick(estate: EstateData, vaultEmpty: boolean, t: TFn): TickResult {
+export function computeTick(estate: EstateData, vaultEmpty: boolean): TickResult {
   const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
     lastCheckInTs: estate.lastCheckInTs,
     checkInIntervalSecs: estate.checkInIntervalSecs,
@@ -86,18 +79,30 @@ export function computeTick(estate: EstateData, vaultEmpty: boolean, t: TFn): Ti
 
   return {
     state,
-    label: countdownLabels(t)[state],
     countdown: {
       days: Math.floor(remaining / 86400),
       hours: Math.floor((remaining % 86400) / 3600),
-      minutes: Math.floor((remaining % 3600) / 60),
-      seconds: remaining % 60,
     },
   };
 }
 
+/**
+ * The moment the countdown runs out, in unix seconds: the check-in deadline
+ * while active, the claim date during grace. Mirrors computeEstateState so the
+ * date and the countdown never disagree. Null once there is nothing to wait for.
+ */
+export function countdownDeadline(estate: EstateData, state: UiState): number | null {
+  const anchor = estate.lastCheckInTs > 0 ? estate.lastCheckInTs : estate.createdAt;
+  const graceDeadline = anchor + estate.checkInIntervalSecs;
+  if (state === "active") return graceDeadline;
+  if (state === "grace") {
+    return Math.max(graceDeadline + estate.gracePeriodSecs, estate.delegatePauseExpiresAt);
+  }
+  return null;
+}
+
 export function getEstateStripMeta(estate: EstateData, t: TFn) {
-  const { state, countdown } = computeTick(estate, isVaultEmpty(estate), t);
+  const { state, countdown } = computeTick(estate, isVaultEmpty(estate));
   const timeLabel =
     state === "active"
       ? t("dashboard.timeLeft", { days: countdown.days })

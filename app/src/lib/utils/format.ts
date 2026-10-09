@@ -52,3 +52,12 @@ export function truncateAddress(address: string, chars: number = 4): string {
 
   return `${address.slice(0, chars)}…${address.slice(-chars)}`;
 }
+
+/** "$1,234.56" in the reader's locale. Display-only values from the price feed. */
+export function formatUsd(value: number): string {
+  return value.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
+}
