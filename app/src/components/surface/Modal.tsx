@@ -21,6 +21,13 @@ export interface ModalProps {
   children?: ReactNode;
   role?: "dialog" | "alertdialog";
   labelledBy?: string;
+  /**
+   * "form": the roomier layout used by the dashboard's estate modals (Add asset, Check-in
+   * schedule, Change heir) — 540px, a 32px title, a tinted footer with a cost line.
+   */
+  layout?: "default" | "form";
+  /** Form layout only: the transaction's cost, shown at the left of the footer. */
+  cost?: ReactNode;
 }
 
 const WIDTHS = {
@@ -45,6 +52,8 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   role = "dialog",
   labelledBy,
+  layout = "default",
+  cost,
 }) => {
   const { t } = useTranslation("app");
   const generatedTitleId = useId();
@@ -59,6 +68,77 @@ export const Modal: React.FC<ModalProps> = ({
   }, [open, busy, closable, onClose]);
 
   if (!open) return null;
+
+  if (layout === "form") {
+    // Wider than the handoff's 540px: on large displays that read as cramped. "lg" is for
+    // modals with a list in them (the token picker).
+    const formWidth = size === "lg" || size === "xl" ? "max-w-[680px]" : "max-w-[600px]";
+    return createPortal(
+      <div
+        role={role}
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed inset-0 z-[70] overflow-y-auto bg-foreground/35 backdrop-blur-[8px]"
+        onClick={() => {
+          if (!busy && closable) onClose();
+        }}
+      >
+        <div className="flex min-h-full items-center justify-center px-4 py-12">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "modal-rise w-full overflow-hidden rounded-[20px] shadow-[0_30px_80px_hsl(var(--foreground)/0.18)]",
+              formWidth,
+              toneStyles[tone],
+            )}
+          >
+            <div className="relative px-5 pb-6 pt-8 sm:px-8">
+              {cap && (
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  {cap}
+                </span>
+              )}
+              <h3
+                id={titleId}
+                className="mt-2.5 pr-12 font-display text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em]"
+              >
+                {title}
+              </h3>
+              {description && (
+                <p className="mt-2 max-w-[460px] text-[15px] leading-normal text-muted-foreground">
+                  {description}
+                </p>
+              )}
+              {closable && (
+                <button
+                  onClick={onClose}
+                  disabled={busy}
+                  aria-label={t("common.close")}
+                  className="absolute right-6 top-6 grid h-9 w-9 place-items-center rounded-[10px] border border-tile-line transition-colors hover:bg-tile-soft disabled:opacity-40"
+                >
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </button>
+              )}
+            </div>
+
+            {children && (
+              <div className="flex flex-col gap-[22px] px-5 pb-7 pt-1 sm:px-8">{children}</div>
+            )}
+
+            {(footer || cost) && (
+              <div className="flex flex-wrap items-center gap-3 border-t border-tile-line bg-tile-soft/40 px-5 py-5 sm:flex-nowrap sm:px-8">
+                <span className="w-full text-sm text-muted-foreground sm:mr-auto sm:w-auto">
+                  {cost}
+                </span>
+                <div className="ml-auto flex gap-3">{footer}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
 
   return createPortal(
     <div

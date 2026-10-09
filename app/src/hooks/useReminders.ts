@@ -12,6 +12,7 @@ import { channelOf, normalizeDestination, pendingFrom, roleOf } from "@/lib/remi
 import {
   cleanProfile,
   type FetchReminderResponse,
+  type HeirProfile,
   type PendingVerification,
   type RemindersSubmit,
   type VerificationStatus,
@@ -121,5 +122,25 @@ export function useResendVerification(estateAddress: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: remindersKey(estateAddress) });
     },
+  });
+}
+
+/**
+ * Renames the heir — the name on the dashboard and in the heir alert. Keeps the rest of the
+ * profile as it is. Needs an existing subscription (the endpoint 404s without one).
+ */
+export function useSaveHeirName(estateAddress: string) {
+  const queryClient = useQueryClient();
+  return useMutation<HeirProfile, Error, { heirName: string; current: HeirProfile | null }>({
+    mutationFn: ({ heirName, current }) =>
+      saveHeirProfile(
+        estateAddress,
+        cleanProfile({
+          heirName,
+          ownerName: current?.ownerName ?? null,
+          note: current?.note ?? null,
+        }),
+      ),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: remindersKey(estateAddress) }),
   });
 }

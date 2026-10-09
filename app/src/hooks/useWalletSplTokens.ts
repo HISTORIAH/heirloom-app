@@ -27,6 +27,8 @@ function dasAssetToToken(asset: DasFungibleAsset): SplTokenAsset | null {
     uiAmount: toUiAmount(balance, decimals),
     // Pull from DAS or fallback to Legacy Token Program
     tokenProgram: tokenInfo?.token_program ?? TOKEN_PROGRAM_ADDRESS,
+    assetInterface: asset.interface,
+    frozen: asset.ownership?.frozen ?? false,
   };
 }
 

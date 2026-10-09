@@ -15,6 +15,8 @@ export type DasAsset = {
 
 export type DasFungibleAsset = {
   id: string;
+  interface?: string;
+  ownership?: { frozen?: boolean };
   token_info?: {
     balance?: string | number;
     decimals?: number;

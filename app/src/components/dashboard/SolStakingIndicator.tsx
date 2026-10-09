@@ -23,9 +23,18 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
       <button
         onClick={onEnable}
         disabled={isWorking || solBalance <= 0}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-tile-line py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft disabled:opacity-40"
+        className="group flex w-full items-center justify-between gap-3 rounded-xl border border-dashed border-tile-line px-4 py-3.5 text-left text-sm transition-colors enabled:hover:border-foreground enabled:hover:bg-tile-soft"
       >
-        <Sprout className="h-3.5 w-3.5" /> {t("yield.stakeForApy", { apy: "6.2" })}
+        <span className="flex items-center gap-2">
+          <Sprout className="h-4 w-4 shrink-0" /> {t("yield.stakeForApy", { apy: "6.2" })}
+        </span>
+        {solBalance > 0 ? (
+          <span className="rounded-full bg-foreground px-[9px] py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-background">
+            {t("dashboard.stake")}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">{t("dashboard.addSolToStake")}</span>
+        )}
       </button>
     );
   }

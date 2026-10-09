@@ -16,6 +16,10 @@ export type SplTokenAsset = {
   uiAmount: number;
   amount: bigint;
   tokenProgram: string;
+  /** DAS interface, e.g. "FungibleToken", "V1_NFT", "ProgrammableNFT". */
+  assetInterface?: string;
+  /** Frozen token account. pNFTs sit frozen, and the vault can't move them. */
+  frozen?: boolean;
 };
 
 export type AnalyticsEvent =

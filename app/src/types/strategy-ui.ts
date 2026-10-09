@@ -134,17 +134,3 @@ export type PreflightRecallDialogProps = {
   loading?: boolean;
 };
 
-// ---------------------------------------------------------------------------
-// TopUpDialog
-// ---------------------------------------------------------------------------
-
-export type TopUpDialogProps = {
-  open: boolean;
-  symbol: string;
-  decimals: number;
-  vaultBalance: number; // ui units
-  walletBalance: number; // ui units
-  onConfirm: (amount: number) => void;
-  onCancel: () => void;
-  loading?: boolean;
-};

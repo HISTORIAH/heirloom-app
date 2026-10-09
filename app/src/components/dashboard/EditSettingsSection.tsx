@@ -1,281 +1,292 @@
-import { useEffect, useState } from "react";
-import { useSignMessage } from "@solana/react";
-import type { UiWalletAccount } from "@wallet-standard/ui";
-import bs58 from "bs58";
-import { Button } from "@/components/ui/button";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import { useState } from "react";
 import { Modal } from "@/components/surface/Modal";
+import {
+  Callout,
+  Chip,
+  FieldLabel,
+  FormButton,
+  TxProgress,
+  formInput,
+} from "@/components/dashboard/modals/parts";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
-import { useToast } from "@/hooks/use-toast";
-import { useAuthenticate } from "@/hooks/useAuth";
-import { ApiError } from "@/lib/api";
-import { updateEstate } from "@/services/api/estateMetadata";
-import { LABEL_MAX_LEN } from "@/lib/constants";
-import { errMsg, formatDuration } from "@/lib/utils";
-import { Pencil } from "lucide-react";
+import { useTxFlow } from "@/hooks/useTxFlow";
+import {
+  GRACE_PRESET_DAYS,
+  INTERVAL_PRESET_DAYS,
+  MAX_INTERVAL_SECS,
+  NETWORK_FEE_LAMPORTS,
+  PAUSE_PRESET_DAYS,
+  SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
+} from "@/lib/constants";
+import { cn, formatSol } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
 interface Props {
   estate: EstateData;
-  /** Needed to sign in (SIWS) — renaming goes through the backend, not the chain. */
-  account: UiWalletAccount;
   onTx: (id: string) => void;
 }
 
-const Delta: React.FC<{ label: string; from: string; to: string }> = ({ label, from, to }) => (
-  <div className="flex items-baseline justify-between gap-3 rounded-lg border border-tile-line bg-tile-soft px-4 py-3">
-    <span className="ed-label">{label}</span>
-    <span className="text-right text-xs">
-      <span className="text-muted-foreground line-through">{from}</span>{" "}
-      <span className="font-semibold">{to}</span>
-    </span>
-  </div>
-);
+const UNITS = {
+  hours: SECONDS_PER_HOUR,
+  days: SECONDS_PER_DAY,
+  weeks: SECONDS_PER_DAY * 7,
+} as const;
+type Unit = keyof typeof UNITS;
 
-const EditSettingsSection: React.FC<Props> = ({ estate, account, onTx }) => {
+/** A duration as the user edits it: one of the preset chips, or a custom number and unit. */
+type Duration = { custom: boolean; presetDays: number; n: number; unit: Unit };
+
+const toSecs = (d: Duration) => (d.custom ? d.n * UNITS[d.unit] : d.presetDays * SECONDS_PER_DAY);
+
+/** Opens on the chip that matches the current value, or on Custom in the largest whole unit. */
+function fromSecs(secs: number, presets: number[]): Duration {
+  const days = secs / SECONDS_PER_DAY;
+  if (presets.includes(days)) return { custom: false, presetDays: days, n: days, unit: "days" };
+  const unit: Unit = secs % UNITS.weeks === 0 ? "weeks" : secs % UNITS.days === 0 ? "days" : "hours";
+  return {
+    custom: true,
+    presetDays: presets[1],
+    n: Math.max(1, Math.round(secs / UNITS[unit])),
+    unit,
+  };
+}
+
+const DurationField: React.FC<{
+  id: string;
+  presets: number[];
+  value: Duration;
+  onChange: (d: Duration) => void;
+}> = ({ id, presets, value, onChange }) => {
   const { t } = useTranslation("app");
-  const { updateEstateFieldsOnChain, fetchEstates } = useVault();
-  const { toast } = useToast();
-  const authMutation = useAuthenticate(useSignMessage(account));
+  return (
+    <>
+      <div className="flex flex-wrap gap-2">
+        {presets.map((d) => (
+          <Chip
+            key={d}
+            on={!value.custom && value.presetDays === d}
+            onClick={() => onChange({ ...value, custom: false, presetDays: d })}
+          >
+            {t("schedule.days", { count: d })}
+          </Chip>
+        ))}
+        <Chip on={value.custom} onClick={() => onChange({ ...value, custom: true })}>
+          {t("schedule.custom")}
+        </Chip>
+      </div>
+      {value.custom && (
+        <div className="mt-2.5 flex gap-2">
+          <input
+            id={id}
+            type="number"
+            min={1}
+            value={value.n || ""}
+            onChange={(e) => onChange({ ...value, n: Number(e.target.value) })}
+            className={cn(formInput, "w-[110px] tabular-nums")}
+          />
+          <select
+            value={value.unit}
+            onChange={(e) => onChange({ ...value, unit: e.target.value as Unit })}
+            aria-label={t("schedule.unit")}
+            className="rounded-xl border border-tile-line bg-background px-3 outline-none focus:border-foreground"
+          >
+            {(Object.keys(UNITS) as Unit[]).map((u) => (
+              <option key={u} value={u}>
+                {t(`schedule.unit_${u}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+    </>
+  );
+};
+
+/** The check-in schedule: interval, grace period and guardian pause, in one transaction. */
+const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
+  const { t, i18n } = useTranslation("app");
+  const { updateEstateFieldsOnChain } = useVault();
+  const tx = useTxFlow();
 
   const [open, setOpen] = useState(false);
-  const [editIntervalSec, setEditIntervalSec] = useState(estate.checkInIntervalSecs);
-  const [editGraceSec, setEditGraceSec] = useState(estate.gracePeriodSecs);
-  const [editPauseSec, setEditPauseSec] = useState(estate.delegatePauseDurationSecs);
-  const [editLabel, setEditLabel] = useState(estate.label ?? "");
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [settingsConfirmOpen, setSettingsConfirmOpen] = useState(false);
+  const [interval, setIntervalValue] = useState(() =>
+    fromSecs(estate.checkInIntervalSecs, INTERVAL_PRESET_DAYS),
+  );
+  const [grace, setGrace] = useState(() => fromSecs(estate.gracePeriodSecs, GRACE_PRESET_DAYS));
+  const [pauseSecs, setPauseSecs] = useState(estate.delegatePauseDurationSecs);
 
-  useEffect(() => {
-    if (!open) {
-      setEditIntervalSec(estate.checkInIntervalSecs);
-      setEditGraceSec(estate.gracePeriodSecs);
-      setEditPauseSec(estate.delegatePauseDurationSecs);
-      setEditLabel(estate.label ?? "");
-    }
-  }, [
-    open,
-    estate.checkInIntervalSecs,
-    estate.gracePeriodSecs,
-    estate.delegatePauseDurationSecs,
-    estate.label,
-  ]);
-
-  const timingDirty =
-    editIntervalSec !== estate.checkInIntervalSecs ||
-    editGraceSec !== estate.gracePeriodSecs ||
-    editPauseSec !== estate.delegatePauseDurationSecs;
-  const labelDirty = editLabel.trim() !== (estate.label ?? "");
-  const settingsDirty = timingDirty || labelDirty;
-
-  const labelValid = editLabel.trim().length > 0 && editLabel.length <= LABEL_MAX_LEN;
-  const settingsValid = editIntervalSec > 0 && editGraceSec > 0 && editPauseSec >= 0 && labelValid;
-
-  const requestSaveSettings = () => {
-    if (!settingsDirty || !settingsValid) return;
-    setSettingsConfirmOpen(true);
+  const openModal = () => {
+    setIntervalValue(fromSecs(estate.checkInIntervalSecs, INTERVAL_PRESET_DAYS));
+    setGrace(fromSecs(estate.gracePeriodSecs, GRACE_PRESET_DAYS));
+    setPauseSecs(estate.delegatePauseDurationSecs);
+    tx.reset();
+    setOpen(true);
   };
 
-  // PATCH needs the session cookie; on 401 sign in once and retry.
-  const saveName = async (name: string) => {
-    try {
-      await updateEstate(estate.estatePda, { name });
-    } catch (err) {
-      const unauthorized =
-        err instanceof ApiError && (err.code === "UNAUTHORIZED" || err.code === "unauthorized");
-      if (!unauthorized) throw err;
-      await authMutation.mutateAsync({ address: account.address, encode: bs58.encode });
-      await updateEstate(estate.estatePda, { name });
-    }
+  const close = () => {
+    if (!tx.busy) setOpen(false);
   };
 
-  const performSaveSettings = async () => {
-    setSavingSettings(true);
-    try {
-      // Name first: it may prompt a sign-in, and shouldn't be lost if the tx is rejected.
-      if (labelDirty) await saveName(editLabel.trim());
-      if (timingDirty) {
-        const tx = await updateEstateFieldsOnChain(estate.heir, {
-          checkInIntervalSecs:
-            editIntervalSec !== estate.checkInIntervalSecs ? BigInt(editIntervalSec) : undefined,
-          gracePeriodSecs:
-            editGraceSec !== estate.gracePeriodSecs ? BigInt(editGraceSec) : undefined,
-          delegatePauseDurationSecs:
-            editPauseSec !== estate.delegatePauseDurationSecs ? BigInt(editPauseSec) : undefined,
-        });
-        onTx(tx);
-      }
-      setSettingsConfirmOpen(false);
-      setOpen(false);
-      toast({
-        title: t("dashboard.manage.settingsUpdatedTitle"),
-        description: t("dashboard.manage.nowUsesTimings"),
+  const intervalSecs = toSecs(interval);
+  const graceSecs = toSecs(grace);
+  const changed =
+    intervalSecs !== estate.checkInIntervalSecs ||
+    graceSecs !== estate.gracePeriodSecs ||
+    pauseSecs !== estate.delegatePauseDurationSecs;
+  const tooShort = intervalSecs <= 0 || graceSecs <= 0;
+  const tooLong = intervalSecs > MAX_INTERVAL_SECS || graceSecs > MAX_INTERVAL_SECS;
+
+  // Saving counts as a check-in on-chain (update_field sets last_check_in_ts), so the new
+  // deadline runs from now.
+  const now = Date.now();
+  const due = new Date(now + intervalSecs * 1000);
+  const claim = new Date(now + (intervalSecs + graceSecs) * 1000);
+  const fmtDate = (d: Date) =>
+    d.toLocaleDateString(i18n.language, { month: "short", day: "numeric", year: "numeric" });
+
+  const pauseOptions = PAUSE_PRESET_DAYS.map((d) => d * SECONDS_PER_DAY);
+  if (!pauseOptions.includes(estate.delegatePauseDurationSecs)) {
+    pauseOptions.push(estate.delegatePauseDurationSecs);
+  }
+
+  const submit = () =>
+    tx.run(async () => {
+      const id = await updateEstateFieldsOnChain(estate.heir, {
+        checkInIntervalSecs:
+          intervalSecs !== estate.checkInIntervalSecs ? BigInt(intervalSecs) : undefined,
+        gracePeriodSecs: graceSecs !== estate.gracePeriodSecs ? BigInt(graceSecs) : undefined,
+        delegatePauseDurationSecs:
+          pauseSecs !== estate.delegatePauseDurationSecs ? BigInt(pauseSecs) : undefined,
       });
-      await fetchEstates();
-    } catch (err: unknown) {
-      toast({
-        title: t("dashboard.manage.updateFailedTitle"),
-        description: errMsg(err),
-        variant: "destructive",
-      });
-    } finally {
-      setSavingSettings(false);
-    }
-  };
+      onTx(id);
+      return id;
+    });
 
-  const durations = [
-    {
-      key: "interval",
-      label: t("dashboard.manage.intervalSec"),
-      value: editIntervalSec,
-      min: 1,
-      set: (n: number) => setEditIntervalSec(Math.max(1, n)),
-    },
-    {
-      key: "grace",
-      label: t("dashboard.manage.graceSec"),
-      value: editGraceSec,
-      min: 1,
-      set: (n: number) => setEditGraceSec(Math.max(1, n)),
-    },
-    {
-      key: "pause",
-      label: t("dashboard.manage.pauseSec"),
-      value: editPauseSec,
-      min: 0,
-      set: (n: number) => setEditPauseSec(Math.max(0, n)),
-    },
-  ];
+  const primaryLabel = tooShort
+    ? t("schedule.tooShort")
+    : tooLong
+      ? t("schedule.tooLong")
+      : changed
+        ? t("schedule.save")
+        : t("schedule.noChanges");
+  const inTx = tx.step !== "idle";
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={openModal}
         className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
       >
-        {t("dashboard.manage.updateEstateShort")}
+        {t("dashboard.manage.editSchedule")}
       </button>
 
       <Modal
         open={open}
-        cap={t("dashboard.manage.timingCap")}
-        title={t("dashboard.manage.updateEstateShort")}
-        description={t("dashboard.manage.updateEstateEditorialDesc")}
-        size="lg"
-        busy={savingSettings}
-        onClose={() => setOpen(false)}
+        layout="form"
+        cap={inTx ? t("tx.cap") : t("schedule.cap")}
+        title={inTx ? t("schedule.txTitle") : t("schedule.title")}
+        description={
+          inTx ? (tx.step === "done" ? undefined : t("tx.keepOpen")) : t("schedule.subtitle")
+        }
+        busy={tx.busy}
+        onClose={close}
+        cost={
+          inTx
+            ? tx.busy
+              ? t("tx.backgroundNote")
+              : null
+            : t("addAsset.costTopUp", { amount: formatSol(NETWORK_FEE_LAMPORTS, 6) })
+        }
         footer={
-          <>
-            <Button
-              variant="flat-outline"
-              size="default"
-              onClick={() => setOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button
-              variant="flat"
-              size="default"
-              onClick={requestSaveSettings}
-              disabled={!settingsDirty || !settingsValid}
-              className="w-full sm:w-auto"
-            >
-              <Pencil className="h-4 w-4" /> {t("dashboard.manage.saveChanges")}
-            </Button>
-          </>
+          inTx ? (
+            tx.step === "done" ? (
+              <FormButton onClick={close}>{t("tx.doneButton")}</FormButton>
+            ) : tx.step === "error" ? (
+              <>
+                <FormButton tone="secondary" onClick={close}>
+                  {t("common.close")}
+                </FormButton>
+                <FormButton onClick={tx.reset}>{t("tx.tryAgain")}</FormButton>
+              </>
+            ) : null
+          ) : (
+            <>
+              <FormButton tone="secondary" onClick={close}>
+                {t("common.cancel")}
+              </FormButton>
+              <FormButton onClick={submit} disabled={!changed || tooShort || tooLong}>
+                {primaryLabel}
+              </FormButton>
+            </>
+          )
         }
       >
-        <div className="space-y-5">
-          <div>
-            <label className="ed-field-label" htmlFor="estate-label">
-              {t("dashboard.manage.labelMaxN", { max: LABEL_MAX_LEN })}
-            </label>
-            <input
-              id="estate-label"
-              type="text"
-              value={editLabel}
-              onChange={(e) => setEditLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
-              maxLength={LABEL_MAX_LEN}
-              className="ed-input mt-2"
-              placeholder={t("dashboard.manage.spousePlaceholder")}
-            />
-          </div>
+        {inTx ? (
+          <TxProgress
+            step={tx.step}
+            txId={tx.txId}
+            error={tx.error}
+            doneTitle={t("schedule.doneTitle")}
+            doneSummary={t("schedule.doneSummary", { date: fmtDate(due) })}
+          />
+        ) : (
+          <>
+            <div>
+              <FieldLabel htmlFor="schedule-interval">{t("schedule.intervalLabel")}</FieldLabel>
+              <DurationField
+                id="schedule-interval"
+                presets={INTERVAL_PRESET_DAYS}
+                value={interval}
+                onChange={setIntervalValue}
+              />
+            </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {durations.map((d) => (
-              <div key={d.key}>
-                <label className="ed-field-label" htmlFor={`estate-${d.key}`}>
-                  {d.label}
-                </label>
-                <input
-                  id={`estate-${d.key}`}
-                  type="number"
-                  min={d.min}
-                  value={d.value}
-                  onChange={(e) => d.set(Number(e.target.value))}
-                  className="ed-input mt-2 tabular-nums"
-                />
-                <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
-                  {formatDuration(d.value)}
-                </p>
+            <div>
+              <FieldLabel htmlFor="schedule-grace" hint={t("schedule.graceHint")}>
+                {t("schedule.graceLabel")}
+              </FieldLabel>
+              <DurationField
+                id="schedule-grace"
+                presets={GRACE_PRESET_DAYS}
+                value={grace}
+                onChange={setGrace}
+              />
+            </div>
+
+            <div>
+              <FieldLabel>{t("schedule.pauseLabel")}</FieldLabel>
+              {estate.delegate ? (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    {pauseOptions.map((secs) => (
+                      <Chip key={secs} on={pauseSecs === secs} onClick={() => setPauseSecs(secs)}>
+                        {secs === 0
+                          ? t("schedule.off")
+                          : t("schedule.days", { count: Math.round(secs / SECONDS_PER_DAY) })}
+                      </Chip>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[13px] text-muted-foreground">{t("schedule.pauseHint")}</p>
+                </>
+              ) : (
+                <div className="rounded-xl border border-dashed border-tile-line px-4 py-3.5 text-sm text-muted-foreground">
+                  {t("schedule.needsGuardian")}
+                </div>
+              )}
+            </div>
+
+            <Callout tone="info">
+              {t("schedule.outcomeBefore")} <strong>{fmtDate(due)}</strong>
+              {t("schedule.outcomeMiddle")} <strong>{fmtDate(claim)}</strong>
+              {t("schedule.outcomeAfter")}
+              <div className="mt-1 text-[13px] text-muted-foreground">
+                {t("schedule.restartsTimer")}
               </div>
-            ))}
-          </div>
-
-          {!labelValid && (
-            <p className="text-xs font-semibold text-accent-red">
-              {t("dashboard.manage.labelRequiredMax", { max: LABEL_MAX_LEN })}
-            </p>
-          )}
-        </div>
+            </Callout>
+          </>
+        )}
       </Modal>
-
-      <ConfirmDialog
-        open={settingsConfirmOpen}
-        cap={t("dashboard.manage.timingCap")}
-        title={t("dashboard.manage.saveChangesQuestion")}
-        description={t("dashboard.manage.saveCountsCheckIn")}
-        confirmLabel={t("dashboard.manage.save")}
-        cancelLabel={t("common.cancel")}
-        variant="default"
-        loading={savingSettings}
-        onConfirm={performSaveSettings}
-        onCancel={() => {
-          if (!savingSettings) setSettingsConfirmOpen(false);
-        }}
-      >
-        <div className="space-y-2">
-          {labelDirty && (
-            <Delta
-              label={t("dashboard.manage.label")}
-              from={estate.label ?? ""}
-              to={editLabel.trim()}
-            />
-          )}
-          {editIntervalSec !== estate.checkInIntervalSecs && (
-            <Delta
-              label={t("dashboard.manage.interval")}
-              from={formatDuration(estate.checkInIntervalSecs)}
-              to={formatDuration(editIntervalSec)}
-            />
-          )}
-          {editGraceSec !== estate.gracePeriodSecs && (
-            <Delta
-              label={t("dashboard.manage.grace")}
-              from={formatDuration(estate.gracePeriodSecs)}
-              to={formatDuration(editGraceSec)}
-            />
-          )}
-          {editPauseSec !== estate.delegatePauseDurationSecs && (
-            <Delta
-              label={t("dashboard.manage.pause")}
-              from={formatDuration(estate.delegatePauseDurationSecs)}
-              to={formatDuration(editPauseSec)}
-            />
-          )}
-        </div>
-      </ConfirmDialog>
     </>
   );
 };
