@@ -57,15 +57,15 @@ const ClaimPageInner: React.FC<{
   signer: TransactionSigner | null;
   heirAddress: Address | null;
 }> = ({ signer, heirAddress }) => {
-  const { publicKey, isConnected, rpc, rpcSubscriptions } = useWallet();
+  const { publicKey, isConnected, rpc, rpcSubscriptions, transactionVersion } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
   const [searchParams] = useSearchParams();
 
   const client: HeirloomClient = useMemo(
-    () => ({ rpc, rpcSubscriptions }),
-    [rpc, rpcSubscriptions],
+    () => ({ rpc, rpcSubscriptions, transactionVersion }),
+    [rpc, rpcSubscriptions, transactionVersion],
   );
 
   const [searching, setSearching] = useState(false);

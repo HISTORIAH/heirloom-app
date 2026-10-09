@@ -31,7 +31,9 @@ import {
   buildTransferSolIx,
   buildTransferTokenIx,
 } from "@/lib/heirloom/instructions";
-import { sendTx, type HeirloomClient } from "@/lib/heirloom/client";
+import { sendTx, sendTxSequence, type HeirloomClient } from "@/lib/heirloom/client";
+import { TOKEN_IXS_IN_CREATE_TX, TOKEN_IXS_PER_TX } from "@/lib/constants";
+import { chunk } from "@/lib/utils";
 import {
   getEstateAddress,
   getVaultAddress,
@@ -365,6 +367,29 @@ export async function discoverVaultTokenAccounts(vaultPda: Address): Promise<Vau
 
 // ---------------------------------------------------------------------------
 // Transaction orchestration — combines builders + PDAs + sendTx
+
+/**
+ * Per-token instructions in batches of TOKEN_IXS_PER_TX, with `finalIx` (the SOL leg, or
+ * the one that closes the estate) at the very end. It joins the last batch when there's room.
+ */
+function batchTokenInstructions(tokenIxs: Instruction[], finalIx?: Instruction): Instruction[][] {
+  const batches = chunk(tokenIxs, TOKEN_IXS_PER_TX);
+  if (!finalIx) return batches;
+  const lastBatch = batches[batches.length - 1];
+  if (lastBatch && lastBatch.length < TOKEN_IXS_PER_TX) lastBatch.push(finalIx);
+  else batches.push([finalIx]);
+  return batches;
+}
+
+/** Sends the batches in order and returns the last signature, the one that completes the action. */
+async function sendBatches(
+  client: HeirloomClient,
+  feePayer: TransactionSigner,
+  batches: Instruction[][],
+): Promise<string> {
+  const signatures = await sendTxSequence(client, feePayer, batches);
+  return signatures[signatures.length - 1];
+}
 // ---------------------------------------------------------------------------
 
 export interface TokenAsset {
@@ -542,7 +567,7 @@ export async function revokeAll(
   revokeSol: boolean,
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority.address, heir);
-  const ixs: Instruction[] = [];
+  const tokenIxs: Instruction[] = [];
 
   for (const t of tokens) {
     const assetRecord = await getAssetRecordAddress(estate, t.mint);
@@ -554,15 +579,14 @@ export async function revokeAll(
       treasuryTokenAccount: t.treasuryTokenAccount,
       assetRecord,
     });
-    ixs.push(ix as Instruction);
+    tokenIxs.push(ix as Instruction);
   }
 
-  if (revokeSol) {
-    const ix = await buildRevokeIx(authority, heir, estate, vault);
-    ixs.push(ix as Instruction);
-  }
+  const solIx = revokeSol
+    ? ((await buildRevokeIx(authority, heir, estate, vault)) as Instruction)
+    : undefined;
 
-  return sendTx(client, authority, ixs);
+  return sendBatches(client, authority, batchTokenInstructions(tokenIxs, solIx));
 }
 
 export async function claimAll(
@@ -574,7 +598,7 @@ export async function claimAll(
   delegate?: Address,
 ): Promise<string> {
   const { estate, vault } = await getEstateVaultPair(authority, heir.address);
-  const ixs: Instruction[] = [];
+  const tokenIxs: Instruction[] = [];
 
   for (const t of tokens) {
     const assetRecord = await getAssetRecordAddress(estate, t.mint);
@@ -587,15 +611,14 @@ export async function claimAll(
       delegate,
       assetRecord,
     });
-    ixs.push(ix as Instruction);
+    tokenIxs.push(ix as Instruction);
   }
 
-  if (claimSol) {
-    const ix = await buildClaimIx(heir, authority, estate, vault, { delegate });
-    ixs.push(ix as Instruction);
-  }
+  const solIx = claimSol
+    ? ((await buildClaimIx(heir, authority, estate, vault, { delegate })) as Instruction)
+    : undefined;
 
-  return sendTx(client, heir, ixs);
+  return sendBatches(client, heir, batchTokenInstructions(tokenIxs, solIx));
 }
 
 export async function updateHeirAll(
@@ -615,7 +638,7 @@ export async function updateHeirAll(
     getVaultAddress(authority.address, heir),
   ]);
 
-  const ixs: Instruction[] = [];
+  const tokenIxs: Instruction[] = [];
 
   for (const token of vaultTokens) {
     let newVaultTokenAccount: Address | undefined;
@@ -648,7 +671,7 @@ export async function updateHeirAll(
         newAssetRecord,
       },
     );
-    ixs.push(ix as Instruction);
+    tokenIxs.push(ix as Instruction);
   }
 
   const finalIx = await buildUpdateHeirIx(
@@ -660,9 +683,10 @@ export async function updateHeirAll(
     estate,
     vault,
   );
-  ixs.push(finalIx as Instruction);
-
-  const txId = await sendTx(client, authority, ixs);
+  // Tokens migrate batch by batch; the final instruction closes the old estate, so it goes
+  // last. An interrupted run resumes: the next one only finds tokens still in the old vault.
+  const batches = batchTokenInstructions(tokenIxs, finalIx as Instruction);
+  const txId = await sendBatches(client, authority, batches);
   onTx?.(txId);
   return txId;
 }
@@ -708,10 +732,16 @@ export async function initializeWithTokens(
     }),
   );
 
-  // Backend only reads the first memo, so there must be at most one.
+  // Backend only reads the first memo, so there must be at most one. It reads it from the
+  // create tx's signature, so the memo rides in the first transaction with the initialize.
   const memoIxs = name ? [getAddMemoInstruction({ memo: name })] : [];
+  const firstTokens = registerIxs.slice(0, TOKEN_IXS_IN_CREATE_TX);
+  const laterTokens = registerIxs.slice(TOKEN_IXS_IN_CREATE_TX);
+  const batches = [[initIx, ...firstTokens, ...memoIxs], ...chunk(laterTokens, TOKEN_IXS_PER_TX)];
 
-  return sendTx(client, authority, [initIx, ...registerIxs, ...memoIxs]);
+  // The first signature is the create tx: it's what registration and pending state track.
+  const [createSignature] = await sendTxSequence(client, authority, batches);
+  return createSignature;
 }
 
 export async function depositSol(

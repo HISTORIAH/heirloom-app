@@ -8,7 +8,8 @@ import React, {
   useState,
 } from "react";
 import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
-import { useWalletUi, useWalletUiSigner } from "@wallet-ui/react";
+import { useWalletUi, type UiWalletAccount } from "@wallet-ui/react";
+import { useTransactionSigner } from "@/hooks/useTransactionSigner";
 import { useWallet } from "./WalletContext";
 import {
   getAtaAddress,
@@ -144,14 +145,12 @@ interface VaultState {
 
 const VaultContext = createContext<VaultState | null>(null);
 
-type VaultUiShim = { account?: { address: string } | null };
-
 const VaultProviderInner: React.FC<{
   signer: TransactionSigner | null;
   authority: Address | null;
   children: React.ReactNode;
 }> = ({ signer, authority, children }) => {
-  const { rpc, rpcSubscriptions } = useWallet();
+  const { rpc, rpcSubscriptions, transactionVersion } = useWallet();
   const [estates, setEstates] = useState<EstateData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,8 +159,8 @@ const VaultProviderInner: React.FC<{
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const client: HeirloomClient = useMemo(
-    () => ({ rpc, rpcSubscriptions }),
-    [rpc, rpcSubscriptions],
+    () => ({ rpc, rpcSubscriptions, transactionVersion }),
+    [rpc, rpcSubscriptions, transactionVersion],
   );
 
   const requireAuth = useCallback((): { signer: TransactionSigner; authority: Address } => {
@@ -578,8 +577,7 @@ const VaultProviderInner: React.FC<{
 // ---------------------------------------------------------------------------
 
 export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const walletUi = useWalletUi() as unknown as VaultUiShim;
-  const account = walletUi?.account ?? null;
+  const { account } = useWalletUi();
   const [signerState, setSignerState] = useState<{
     signer: TransactionSigner | null;
     authority: Address | null;
@@ -604,10 +602,10 @@ const signerAddress = (s: TransactionSigner | null): string | undefined =>
   (s as { address?: string } | null)?.address;
 
 const SignerCapture: React.FC<{
-  account: { address: string };
+  account: UiWalletAccount;
   onCapture: (state: { signer: TransactionSigner | null; authority: Address | null }) => void;
 }> = ({ account, onCapture }) => {
-  const rawSigner = useWalletUiSigner() as unknown as TransactionSigner;
+  const rawSigner = useTransactionSigner(account);
   const authority = useMemo(() => toAddress(account.address), [account.address]);
 
   // Stabilise signer reference across renders — only swap when address changes

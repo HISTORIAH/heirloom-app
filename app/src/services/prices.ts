@@ -1,15 +1,7 @@
 import { JUPITER_API_KEY } from "@/config";
 import { JUPITER_PRICE_API_URL, PRICE_BATCH_SIZE } from "@/lib/constants";
+import { chunk } from "@/lib/utils";
 import type { JupiterPriceResponse, UsdPriceMap } from "@/types/prices";
-
-/** Splits `items` into groups of at most `size`. */
-function chunk<T>(items: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let start = 0; start < items.length; start += size) {
-    chunks.push(items.slice(start, start + size));
-  }
-  return chunks;
-}
 
 /** One request to Jupiter for up to PRICE_BATCH_SIZE mints. */
 async function fetchPriceBatch(mints: string[], signal?: AbortSignal): Promise<UsdPriceMap> {

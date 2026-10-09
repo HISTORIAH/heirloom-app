@@ -10,6 +10,9 @@ export const USDC_DECIMALS = 6;
 
 export const LABEL_MAX_LEN = 32;
 
+/** Public mainnet RPC. wallet-ui needs a URL per cluster; the app's own calls use config's RPC. */
+export const MAINNET_PUBLIC_RPC_URL = "https://api.mainnet-beta.solana.com";
+
 /** Base fee for one signature, in lamports. Priority fees aren't added by the app. */
 export const NETWORK_FEE_LAMPORTS = 5000;
 /** Bytes a new token registration rents: the vault's token account and the asset record PDA. */
@@ -33,6 +36,24 @@ export const JUPITER_PRICE_API_URL = "https://api.jup.ag/price/v3";
 /** Jupiter's price endpoint takes up to this many mints per call. */
 export const PRICE_BATCH_SIZE = 50;
 export const PRICE_STALE_MS = 60_000;
+
+/**
+ * v1 transactions carry their own resource limits, and both default to zero, so every v1
+ * message sets them. The compute limit is measured by simulation and padded by the margin;
+ * the loaded-accounts limit is the runtime maximum (64 MiB).
+ */
+export const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
+export const MAX_LOADED_ACCOUNTS_DATA_SIZE = 64 * 1024 * 1024;
+export const COMPUTE_UNIT_MARGIN = 1.1;
+
+/**
+ * Per-token instructions sent per transaction. A transaction may run at most 64 instructions
+ * including every CPI, and each token instruction makes several (vault account, transfer,
+ * record), so a batch stays well under that. The create transaction also carries the
+ * initialize instruction and the name memo, so it takes fewer tokens.
+ */
+export const TOKEN_IXS_PER_TX = 6;
+export const TOKEN_IXS_IN_CREATE_TX = 4;
 
 /** Confirmation polling for the transaction progress view. */
 export const TX_CONFIRM_POLL_MS = 1500;

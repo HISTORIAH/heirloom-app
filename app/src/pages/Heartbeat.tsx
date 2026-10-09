@@ -33,12 +33,12 @@ const HeartbeatPageInner: React.FC<{
   signer: TransactionSigner | null;
   walletAddress: Address | null;
 }> = ({ signer, walletAddress }) => {
-  const { isConnected, rpc, rpcSubscriptions } = useWallet();
+  const { isConnected, rpc, rpcSubscriptions, transactionVersion } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t, i18n } = useTranslation("app");
 
-  const client: HeirloomClient = { rpc, rpcSubscriptions };
+  const client: HeirloomClient = { rpc, rpcSubscriptions, transactionVersion };
 
   const [authorityInput, setAuthorityInput] = useState("");
   const [heirInput, setHeirInput] = useState("");
