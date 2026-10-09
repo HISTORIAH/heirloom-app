@@ -1,7 +1,7 @@
 import { address, type TransactionSigner } from "@solana/kit";
 import { describe, expect, test } from "bun:test";
 
-import { runCardClaimAndSweep } from "./cardClaim";
+import { resolveCardClaimPlan, runCardClaim } from "./cardClaim";
 import type { EstateRow, EstateRpc } from "@/types/program";
 
 const HEIR = address("11111111111111111111111111111111");
@@ -21,14 +21,14 @@ function rowFor(heir: ReturnType<typeof address>): EstateRow {
 
 const rpc = {} as EstateRpc;
 
-describe("runCardClaimAndSweep", () => {
-  test("rejects a destination that is the credential itself", async () => {
+describe("runCardClaim", () => {
+  test("rejects a sweep destination that is the credential itself", async () => {
     await expect(
-      runCardClaimAndSweep({
+      runCardClaim({
         rpc,
         signer: signerAt(HEIR),
         row: rowFor(HEIR),
-        destination: HEIR,
+        plan: { kind: "sweep", destination: HEIR },
         skipClaim: true,
       }),
     ).rejects.toThrow("isn’t this credential");
@@ -36,13 +36,55 @@ describe("runCardClaimAndSweep", () => {
 
   test("rejects a card that is not the estate heir", async () => {
     await expect(
-      runCardClaimAndSweep({
+      runCardClaim({
         rpc,
         signer: signerAt(OTHER),
         row: rowFor(HEIR),
-        destination: OTHER,
+        plan: { kind: "keep" },
         skipClaim: true,
       }),
     ).rejects.toThrow("not the heir");
+  });
+
+  test("keep with skipClaim returns without sweeping", async () => {
+    await expect(
+      runCardClaim({
+        rpc,
+        signer: signerAt(HEIR),
+        row: rowFor(HEIR),
+        plan: { kind: "keep" },
+        skipClaim: true,
+      }),
+    ).resolves.toEqual({ claimed: false });
+  });
+});
+
+describe("resolveCardClaimPlan", () => {
+  const sweep = { kind: "sweep" as const, destination: OTHER };
+  const pinSet = { kind: "set" as const, triesLeft: 3 };
+  const none = { kind: "none" as const };
+
+  test("primary CTA on a PIN card keeps funds on the chip", () => {
+    expect(
+      resolveCardClaimPlan({ pin: pinSet, plan: sweep, skipClaim: false, cashOut: false }),
+    ).toEqual({ kind: "keep" });
+  });
+
+  test("leftover on a PIN card is the wallet, not a sweep", () => {
+    expect(
+      resolveCardClaimPlan({ pin: pinSet, plan: sweep, skipClaim: true, cashOut: false }),
+    ).toEqual({ kind: "home" });
+  });
+
+  test("paper cash-out on a PIN card still sweeps", () => {
+    expect(
+      resolveCardClaimPlan({ pin: pinSet, plan: sweep, skipClaim: false, cashOut: true }),
+    ).toEqual(sweep);
+  });
+
+  test("bearer leftover still sweeps", () => {
+    expect(
+      resolveCardClaimPlan({ pin: none, plan: sweep, skipClaim: true, cashOut: false }),
+    ).toEqual(sweep);
   });
 });

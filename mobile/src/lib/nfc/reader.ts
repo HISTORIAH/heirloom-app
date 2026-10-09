@@ -3,9 +3,10 @@ import NfcManager from "react-native-nfc-manager";
 import { isCardApduError } from "./apdu";
 import { cancelScan, ensureNfcStarted } from "./isoDep";
 import { cardProblemMessage } from "./messages";
-import { createNfcJavaCardSigner } from "./signer";
+import { PIN_TRY_LIMIT } from "./pin";
+import { createNfcJavaCardSigner, scanCardIdentity } from "./signer";
 import { isUserCancel } from "@/lib/text";
-import type { CardScan, NfcCapability } from "@/types/nfc";
+import type { CardScan, NfcCapability, PinStatus } from "@/types/nfc";
 import type { TapProgress } from "@/types/create";
 
 export { cancelScan };
@@ -31,7 +32,7 @@ function scanCatch(cause: unknown, treatNoKeyAsEmpty: boolean): CardScan {
 
 async function withCapability(
   onListening: (() => void) | undefined,
-  run: () => Promise<string>,
+  run: () => Promise<{ value: string; pin: PinStatus }>,
   treatNoKeyAsEmpty: boolean,
 ): Promise<CardScan> {
   let cap: NfcCapability;
@@ -44,20 +45,34 @@ async function withCapability(
   if (cap.status === "disabled") return { kind: "off" };
   onListening?.();
   try {
-    return { kind: "address", value: await run() };
+    const found = await run();
+    return { kind: "address", value: found.value, pin: found.pin };
   } catch (cause) {
     return scanCatch(cause, treatNoKeyAsEmpty);
   }
 }
 
 export async function scanCardAddress(onListening?: () => void): Promise<CardScan> {
-  const signer = createNfcJavaCardSigner();
-  return withCapability(onListening, () => signer.getPublicKey(), true);
+  return withCapability(
+    onListening,
+    async () => {
+      const id = await scanCardIdentity();
+      return { value: id.address, pin: id.pin };
+    },
+    true,
+  );
 }
 
 export async function setupBlankCard(
   onProgress?: (progress: TapProgress) => void,
+  pin?: Uint8Array,
 ): Promise<CardScan> {
   const signer = createNfcJavaCardSigner();
-  return withCapability(undefined, () => signer.generateKeypair(onProgress), false);
+  const pinState: PinStatus =
+    pin === undefined ? { kind: "none" } : { kind: "set", triesLeft: PIN_TRY_LIMIT };
+  return withCapability(
+    undefined,
+    async () => ({ value: await signer.generateKeypair(onProgress, pin), pin: pinState }),
+    false,
+  );
 }

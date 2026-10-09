@@ -7,16 +7,23 @@ import {
   errorFromSw,
   generateApdu,
   getPubApdu,
+  getStatusApdu,
+  isPinTriesSw,
   MSG_MAX,
   parseApdu,
+  pinTriesLeft,
   selectApdu,
+  setPinApdu,
   signApdus,
   SW_NO_KEY,
   SW_OK,
+  SW_PIN_BLOCKED,
+  SW_PIN_REQUIRED,
   SW_SLOT_FULL,
   SW_TOO_LONG,
   TEST_SIGN_MESSAGE,
   toHex,
+  verifyPinApdu,
 } from "./apdu";
 
 describe("selectApdu", () => {
@@ -30,6 +37,18 @@ describe("case-2 commands", () => {
   test("GET_PUB and GENERATE ask for 32 bytes", () => {
     expect(toHex(getPubApdu())).toBe("0002000020");
     expect(toHex(generateApdu())).toBe("0001000020");
+  });
+
+  test("GET_STATUS asks for 3 bytes", () => {
+    expect(toHex(getStatusApdu())).toBe("0006000003");
+  });
+});
+
+describe("PIN commands", () => {
+  test("SET_PIN and VERIFY carry ASCII digits and no Le", () => {
+    const pin = Uint8Array.of(0x31, 0x32, 0x33, 0x34);
+    expect(toHex(setPinApdu(pin))).toBe("000400000431323334");
+    expect(toHex(verifyPinApdu(pin))).toBe("000500000431323334");
   });
 });
 
@@ -93,6 +112,11 @@ describe("errorFromSw", () => {
   test("maps known status words", () => {
     expect(errorFromSw(SW_NO_KEY).kind).toBe("no_key");
     expect(errorFromSw(SW_SLOT_FULL).kind).toBe("slot_full");
+    expect(errorFromSw(SW_PIN_REQUIRED).kind).toBe("pin_required");
+    expect(errorFromSw(SW_PIN_BLOCKED).kind).toBe("pin_blocked");
+    expect(errorFromSw(0x63c2).kind).toBe("pin_wrong");
+    expect(isPinTriesSw(0x63c2)).toBe(true);
+    expect(pinTriesLeft(0x63c2)).toBe(2);
     expect(errorFromSw(0x6a82).kind).toBe("sw");
     expect(errorFromSw(0x6a82).sw).toBe(0x6a82);
   });

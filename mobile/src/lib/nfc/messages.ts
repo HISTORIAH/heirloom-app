@@ -22,11 +22,23 @@ export function isLostField(cause: unknown): boolean {
   return /tag (was )?lost|connection lost|not connected|transceive fail|timeout/i.test(raw);
 }
 
+function pinWrongMessage(sw: number): string {
+  const left = sw & 0x0f;
+  if (left === 1) return "That PIN didn’t match. 1 try left.";
+  return `That PIN didn’t match. ${left} tries left.`;
+}
+
 export function cardProblemMessage(cause: unknown, fallback: string): string {
   if (isCardApduError(cause)) {
     if (cause.kind === "slot_full") return "This credential already has a key.";
     if (cause.kind === "not_heirloom") return "This isn’t an Heirloom credential.";
     if (cause.kind === "no_key") return "We couldn’t read a key from it. Try again.";
+    if (cause.kind === "pin_required") return "Enter the PIN for this credential.";
+    if (cause.kind === "pin_wrong") return pinWrongMessage(cause.sw);
+    if (cause.kind === "pin_blocked") return "This credential is locked. It can’t sign.";
+    if (cause.kind === "pin_unsupported") {
+      return "This credential needs a reload before it can take a PIN.";
+    }
   }
   if (isLostField(cause)) {
     return "Couldn’t keep the card in range. Slide it slowly around the top of the back, then hold still.";

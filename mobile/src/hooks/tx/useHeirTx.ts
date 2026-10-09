@@ -6,9 +6,11 @@ import { estateSpan } from "@/lib/estate/span";
 import { assertAllTokensListed, discoverVaultClaimTokens, estateDelegate } from "@/lib/estate/tokens";
 import { readNfcCapability } from "@/lib/nfc/reader";
 import { withCardSigningSession } from "@/lib/nfc/signer";
-import { runCardClaimAndSweep } from "@/lib/tx/cardClaim";
+import { resolveCardClaimPlan, runCardClaim } from "@/lib/tx/cardClaim";
+import { sendFromCard } from "@/lib/tx/cardSweep";
 import { buildClaimIxs } from "@/lib/tx/heir";
 import { buildCheckInIx } from "@/lib/tx/updateField";
+import type { CardClaimPlan, SweepToken } from "@/types/claim";
 import type { EstateRow } from "@/types/program";
 
 /** Writes signed by someone other than the owner: the heir's claim, the check-in signer's check-in. */
@@ -36,21 +38,46 @@ export function useHeirTx() {
     return sendIxs(async (signer) => [await buildCheckInIx(signer, owner, heir)]);
   }
 
-  async function claimWithCard(row: EstateRow, destination: Address): Promise<void> {
+  async function assertNfcReady(): Promise<void> {
     const cap = await readNfcCapability();
     if (cap.status === "unsupported") throw new Error("This phone can’t read credentials.");
     if (cap.status === "disabled") throw new Error("NFC is off. Turn it on, then try again.");
-    const skipClaim = estateSpan(row.data, row.claimableLamports).state === "distributed";
-    await withCardSigningSession(({ signer }) =>
-      runCardClaimAndSweep({
-        rpc: client.rpc,
-        signer,
-        row,
-        destination,
-        skipClaim,
-      }),
-    );
   }
 
-  return { account, claimAll, sendHeartbeat, claimWithCard };
+  async function claimWithCard(
+    row: EstateRow,
+    plan: CardClaimPlan,
+    pin?: Uint8Array,
+    cashOut = false,
+  ): Promise<"keep" | "sweep" | "home"> {
+    await assertNfcReady();
+    const skipClaim = estateSpan(row.data, row.claimableLamports).state === "distributed";
+    return withCardSigningSession(async (session) => {
+      const next = resolveCardClaimPlan({ pin: session.pin, plan, skipClaim, cashOut });
+      if (next.kind === "home") return "home";
+      await session.unlock();
+      await runCardClaim({
+        rpc: client.rpc,
+        signer: session.signer,
+        row,
+        plan: next,
+        skipClaim,
+      });
+      return next.kind;
+    }, pin);
+  }
+
+  async function sendFromCardWallet(
+    destination: Address,
+    asset: { kind: "sol"; lamports: bigint } | { kind: "token"; token: SweepToken; amount: bigint },
+    pin?: Uint8Array,
+  ): Promise<void> {
+    await assertNfcReady();
+    await withCardSigningSession(async (session) => {
+      await session.unlock();
+      await sendFromCard({ rpc: client.rpc, signer: session.signer, destination, asset });
+    }, pin);
+  }
+
+  return { account, claimAll, sendHeartbeat, claimWithCard, sendFromCardWallet };
 }

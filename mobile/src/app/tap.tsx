@@ -16,7 +16,14 @@ import { TapIllustration } from "@/components/TapIllustration";
 import { PrimaryButton, TextField, TextLink } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import { CardScan } from "@/types/nfc";
-import { cancelScan, openNfcSettings, parseAddress, scanCardAddress } from "@/lib";
+import {
+  cancelScan,
+  estateSpan,
+  fetchEstatesByHeir,
+  openNfcSettings,
+  parseAddress,
+  scanCardAddress,
+} from "@/lib";
 
 type TapState =
   | { kind: "searching" }
@@ -64,10 +71,10 @@ function Pulse({ active }: { active: boolean }) {
   );
 }
 
-/** Tap a credential: an heir's to see what it can claim, or a blank one to set up. */
+/** Tap a credential: claim if an estate is waiting or open a PIN card as a wallet. */
 export default function TapSheet() {
   const router = useRouter();
-  const { account } = useMobileWallet();
+  const { account, client } = useMobileWallet();
   const [state, setState] = useState<TapState>({ kind: "searching" });
   const [codeOpen, setCodeOpen] = useState(false);
   const [code, setCode] = useState("");
@@ -79,11 +86,25 @@ export default function TapSheet() {
     const result = await scanCardAddress();
     if (!alive.current || result.kind === "cancelled") return;
     if (result.kind === "address") {
-      router.replace(`/claim?heir=${result.value}`);
+      if (result.pin.kind === "none") {
+        router.replace(`/claim?heir=${result.value}`);
+        return;
+      }
+      try {
+        const heir = parseAddress(result.value, "credential");
+        const rows = await fetchEstatesByHeir(client.rpc, heir);
+        const claimable = rows.some(
+          (row) => estateSpan(row.data, row.claimableLamports).state === "claimable",
+        );
+        if (claimable) router.replace(`/claim?heir=${result.value}&keep=1`);
+        else router.replace(`/card?heir=${result.value}`);
+      } catch {
+        router.replace(`/card?heir=${result.value}`);
+      }
       return;
     }
     setState(stateFrom(result));
-  }, [router]);
+  }, [client, router]);
 
   useEffect(() => {
     alive.current = true;
@@ -127,7 +148,7 @@ export default function TapSheet() {
         <Text
           style={{ fontFamily: font.regular, fontSize: 16, lineHeight: 23, color: colors.mute }}
         >
-          Card, ring or band — hold it near the top of the back of your phone. Keep it still for a
+          Card, ring or band - hold it near the top of the back of your phone. Keep it still for a
           second.
         </Text>
 
@@ -167,8 +188,8 @@ export default function TapSheet() {
 
         <View style={{ gap: 8 }}>
           <Text style={{ fontFamily: font.regular, fontSize: 14, color: colors.mute }}>
-            <Text style={{ fontFamily: font.bold, color: colors.ink }}>Heir credential</Text> — see
-            what it can claim
+            <Text style={{ fontFamily: font.bold, color: colors.ink }}>Heir credential</Text> — a PIN
+            card is the wallet. Claim only if an estate is still waiting.
           </Text>
           <Text style={{ fontFamily: font.regular, fontSize: 14, color: colors.mute }}>
             <Text style={{ fontFamily: font.bold, color: colors.ink }}>New credential</Text> — set

@@ -7,6 +7,7 @@ import { NfcDummyCard } from "@/components/NfcDummyCard";
 import { TapIllustration } from "@/components/TapIllustration";
 import { Badge, Card, Display, Fine, Note, Steps, TextField, TickList } from "@/components/ui";
 import { colors, font, space } from "@/theme";
+import { PinPad } from "@/components/claim/PinPad";
 import type { CredentialMode, TapProgress } from "@/types/create";
 
 export function CredentialModeStep({
@@ -34,9 +35,41 @@ export function CredentialModeStep({
         onPress={() => onMode("keepAsWallet")}
       />
       <Note icon="shield">
-        Before your check-in lapses, tapping it shows nothing about this estate — no amounts, no
+        Before your check-in lapses, tapping it shows nothing about this estate. No amounts, no
         owner.
       </Note>
+    </View>
+  );
+}
+
+export function CredentialPinStep({
+  digits,
+  confirm,
+  error,
+  onDigit,
+  onBackspace,
+}: {
+  digits: string;
+  confirm: boolean;
+  error?: string;
+  onDigit: (d: string) => void;
+  onBackspace: () => void;
+}) {
+  return (
+    <View style={{ gap: 14 }}>
+      <PinPad
+        cap="Credential · PIN"
+        title={confirm ? "Type it once more" : "Set a PIN"}
+        lede={
+          confirm
+            ? "Same digits. You’ll give this to them separately, it never sits in the app."
+            : "4 to 8 digits. They need it every time the card signs."
+        }
+        digits={digits}
+        error={error}
+        onDigit={onDigit}
+        onBackspace={onBackspace}
+      />
     </View>
   );
 }
@@ -96,7 +129,7 @@ export function CredentialTapStep({ progress, error }: { progress: TapProgress; 
       </Card>
       <ErrorLine>{error}</ErrorLine>
       <Fine>
-        Keep holding it. The key is made inside the chip and never leaves it — not even we can copy
+        Keep holding it. The key is made inside the chip and never leaves it. Not even we can copy
         it.
       </Fine>
     </View>
@@ -107,10 +140,12 @@ export function CredentialReadyStep({
   credential,
   name,
   onName,
+  pinSet,
 }: {
   credential: string;
   name: string;
   onName: (next: string) => void;
+  pinSet: boolean;
 }) {
   return (
     <View style={{ gap: 14 }}>
@@ -135,8 +170,11 @@ export function CredentialReadyStep({
       <TickList
         items={[
           "Key created on the chip",
+          ...(pinSet ? ["PIN set on the chip"] : []),
           "Test signature passed",
-          "Tapping it on any phone opens the claim page",
+          pinSet
+            ? "Tapping it on any phone opens their card"
+            : "Tapping it on any phone opens the claim page",
         ]}
       />
       <TextField
@@ -153,7 +191,7 @@ export function CredentialReadyStep({
   );
 }
 
-export function HandoverStep({ firstDue }: { firstDue: string }) {
+export function HandoverStep({ firstDue, keepAsWallet }: { firstDue: string; keepAsWallet: boolean }) {
   return (
     <View style={{ gap: 14 }}>
       <Display size={34}>Now hand it over.</Display>
@@ -165,7 +203,9 @@ export function HandoverStep({ firstDue }: { firstDue: string }) {
           },
           {
             title: "Tell them one thing",
-            body: "“If something happens to me, tap this on your phone.”",
+            body: keepAsWallet
+              ? "Give them the PIN separately. Not on the card, not in this app."
+              : "“If something happens to me, tap this on your phone.”",
           },
           {
             title: "That’s it",

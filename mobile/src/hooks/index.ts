@@ -6,6 +6,7 @@ export { useEstateSpan } from "./estate/useEstateSpan";
 export { useRenameEstate } from "./estate/useRenameEstate";
 export { useRoles } from "./estate/useRoles";
 export { useEstateHoldings } from "./estate/useEstateHoldings";
+export { useCardHoldings } from "./estate/useCardHoldings";
 export {
   useReminders,
   useRemindersFor,

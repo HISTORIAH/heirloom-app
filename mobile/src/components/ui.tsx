@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import {
   Pressable,
   Text,
@@ -7,6 +8,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 
 import { Icon, type IconName } from "@/components/Icon";
 import { colors, font, space } from "@/theme";
@@ -448,6 +450,26 @@ export function FactRow({
         {aside}
       </View>
     </View>
+  );
+}
+
+/** Copy control for a FactRow `aside` — sits to the right of a truncated address. */
+export function CopyHit({ text, label = "Copy address" }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Pressable
+      onPress={() => {
+        void Clipboard.setStringAsync(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={copied ? "Copied" : label}
+      hitSlop={8}
+      style={({ pressed }) => ({ opacity: pressed ? 0.55 : 1, flexShrink: 0 })}
+    >
+      <Icon name="copy" size={16} color={colors.ink} />
+    </Pressable>
   );
 }
 

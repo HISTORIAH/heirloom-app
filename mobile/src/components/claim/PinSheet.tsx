@@ -2,14 +2,36 @@ import { useEffect } from "react";
 import { BackHandler, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Cap, H2, Lede, PrimaryButton } from "@/components/ui";
+import { PinPad, pinReady } from "@/components/claim/PinPad";
+import { PrimaryButton } from "@/components/ui";
 import { colors, space } from "@/theme";
 
-/**
- * In-window hunt chrome. A RN Modal is a Dialog and can drop IsoDep after the detect chime
- * (transceive fail). This overlay stays on the same Activity as reader mode.
- */
-export function HoldCardSheet({ cap = "Claim", onCancel }: { cap?: string; onCancel: () => void }) {
+/** In-window PIN overlay. Collect digits, then unmount before IsoDep starts. */
+export function PinSheet({
+  cap,
+  title,
+  lede,
+  digits,
+  error,
+  busy,
+  submitLabel,
+  onDigit,
+  onBackspace,
+  onSubmit,
+  onCancel,
+}: {
+  cap: string;
+  title: string;
+  lede: string;
+  digits: string;
+  error?: string;
+  busy?: boolean;
+  submitLabel: string;
+  onDigit: (d: string) => void;
+  onBackspace: () => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+}) {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -29,8 +51,8 @@ export function HoldCardSheet({ cap = "Claim", onCancel }: { cap?: string; onCan
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 20,
-        elevation: 20,
+        zIndex: 22,
+        elevation: 22,
         justifyContent: "flex-end",
       }}
     >
@@ -68,13 +90,21 @@ export function HoldCardSheet({ cap = "Claim", onCancel }: { cap?: string; onCan
             backgroundColor: colors.quiet,
           }}
         />
-        <Cap>{cap}</Cap>
-        <H2 size={22}>Hold the card to the phone</H2>
-        <Lede>
-          Slide it slowly around the top of the back. A case makes the sweet spot small. Once the
-          phone chimes, keep it still. Lifting then loses the card.
-        </Lede>
-        <PrimaryButton label="Not now" tone="paper" onPress={onCancel} />
+        <PinPad
+          cap={cap}
+          title={title}
+          lede={lede}
+          digits={digits}
+          error={error}
+          onDigit={onDigit}
+          onBackspace={onBackspace}
+        />
+        <PrimaryButton
+          label={busy ? "Hold still…" : submitLabel}
+          disabled={busy || !pinReady(digits)}
+          onPress={onSubmit}
+        />
+        <PrimaryButton label="Not now" tone="paper" disabled={busy} onPress={onCancel} />
       </View>
     </View>
   );

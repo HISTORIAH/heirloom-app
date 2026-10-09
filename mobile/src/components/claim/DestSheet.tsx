@@ -12,12 +12,16 @@ import { colors, font, space } from "@/theme";
 import { errorMessage, parseAddress } from "@/lib";
 
 export function DestSheet({
+  cap = "Claim",
+  title = "Send to a wallet I own",
   error,
   busy,
   onClose,
   onSend,
   onEdit,
 }: {
+  cap?: string;
+  title?: string;
   error?: string;
   busy?: boolean;
   onClose: () => void;
@@ -51,8 +55,8 @@ export function DestSheet({
 
   return (
     <ModalSheet onClose={onClose}>
-      <Cap>Claim</Cap>
-      <H2 size={22}>Send to a wallet I own</H2>
+      <Cap>{cap}</Cap>
+      <H2 size={22}>{title}</H2>
       <View>
         <View style={{ justifyContent: "center" }}>
           <TextInput

@@ -70,6 +70,7 @@ export { computeEstateState, isVaultEmpty, nowSecs } from "./estate/state";
 
 // Estate summary
 export { daysToNext, bySoonest, estateName, assetsLine, heirLine } from "./estate/summary";
+export { fetchCardHoldings } from "./estate/cardHoldings";
 
 // Estate timing
 export {
@@ -106,16 +107,18 @@ export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
 // TX - Card float
 export { floatDestinations } from "./tx/cardFloat";
 
-// TX - Card claim (IsoDep fee payer, then sweep off the chip)
+// TX - Card claim (IsoDep fee payer; keep leaves funds on the chip)
 export { packInstructionsForCard, sendCardIxs, sendCardBatches } from "./tx/cardSend";
 export {
   spareLamports,
   discoverCardTokens,
   cardHasSweepable,
+  buildTokenTransferIxs,
   buildTokenSweepIxs,
   buildSolSweepIx,
+  sendFromCard,
 } from "./tx/cardSweep";
-export { runCardClaimAndSweep } from "./tx/cardClaim";
+export { resolveCardClaimPlan, runCardClaim } from "./tx/cardClaim";
 
 // NFC
 export { scanProblemMessage, setupProblemMessage, cardProblemMessage } from "./nfc/messages";
@@ -135,6 +138,7 @@ export {
   NFC_UI_SETTLE_MS,
 } from "./nfc/isoDep";
 export { createNfcJavaCardSigner, withCardSigningSession } from "./nfc/signer";
+export { digitsToPinBytes, PIN_MAX_LEN, PIN_MIN_LEN, PIN_TRY_LIMIT } from "./nfc/pin";
 export { createCardTransactionSigner } from "./nfc/kitSigner";
 export { addressInTag, summarizeTag } from "./nfc/tag";
 

@@ -1,5 +1,5 @@
 import { findVaultPda } from "@historiah/heirloom";
-import type { Address, TransactionSigner } from "@solana/kit";
+import type { TransactionSigner } from "@solana/kit";
 
 import { fetchEstateByAddress } from "@/lib/estate/fetch";
 import { estateSpan } from "@/lib/estate/span";
@@ -12,7 +12,22 @@ import {
   spareLamports,
 } from "@/lib/tx/cardSweep";
 import { buildClaimIxs } from "@/lib/tx/heir";
+import type { CardClaimPlan } from "@/types/claim";
+import type { PinStatus } from "@/types/nfc";
 import type { EstateRow, EstateRpc } from "@/types/program";
+
+/** GET_STATUS is source of truth. Primary CTA on a PIN card is keep, not leftover sweep. */
+export function resolveCardClaimPlan(input: {
+  pin: PinStatus;
+  plan: CardClaimPlan;
+  skipClaim: boolean;
+  cashOut: boolean;
+}): CardClaimPlan | { kind: "home" } {
+  const pinSet = input.pin.kind !== "none";
+  if (pinSet && input.skipClaim && !input.cashOut) return { kind: "home" };
+  if (pinSet && !input.cashOut && input.plan.kind === "sweep") return { kind: "keep" };
+  return input.plan;
+}
 
 async function sendClaimIfNeeded(input: {
   rpc: EstateRpc;
@@ -48,25 +63,26 @@ async function sendClaimIfNeeded(input: {
   }
 }
 
-export async function runCardClaimAndSweep(input: {
+export async function runCardClaim(input: {
   rpc: EstateRpc;
   signer: TransactionSigner;
   row: EstateRow;
-  destination: Address;
+  plan: CardClaimPlan;
   skipClaim: boolean;
 }): Promise<{ claimed: boolean }> {
   const heir = input.signer.address;
   if (heir !== input.row.data.heir) {
     throw new Error("This credential is not the heir on that estate.");
   }
-  if (input.destination === heir) {
+  if (input.plan.kind === "sweep" && input.plan.destination === heir) {
     throw new Error("Pick a wallet that isn’t this credential.");
   }
 
   const claimed = await sendClaimIfNeeded(input);
+  if (input.plan.kind === "keep") return { claimed };
 
   const tokens = await discoverCardTokens(input.rpc, heir);
-  const tokenIxs = await buildTokenSweepIxs(input.signer, input.destination, tokens);
+  const tokenIxs = await buildTokenSweepIxs(input.signer, input.plan.destination, tokens);
   await sendCardBatches(input.rpc, input.signer, tokenIxs);
 
   const [bal, rent] = await Promise.all([
@@ -75,7 +91,7 @@ export async function runCardClaimAndSweep(input: {
   ]);
   const solIx = buildSolSweepIx(
     input.signer,
-    input.destination,
+    input.plan.destination,
     spareLamports(BigInt(bal.value), BigInt(rent)),
   );
   if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx]);
