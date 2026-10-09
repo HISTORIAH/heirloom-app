@@ -86,11 +86,7 @@ const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) =
             </a>
           ) : (
             wallets.map((w) => (
-              <WalletRow
-                key={w.name}
-                wallet={w}
-                onConnected={() => onOpenChange(false)}
-              />
+              <WalletRow key={w.name} wallet={w} onConnected={() => onOpenChange(false)} />
             ))
           )}
         </div>
