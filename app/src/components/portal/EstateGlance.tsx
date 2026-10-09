@@ -6,7 +6,6 @@ import { cn, getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 
 export const EstateGlance: React.FC<{
-  // TODO(backend): Label comes from backend API, may be undefined
   label?: string;
   state: string;
   children: ReactNode;

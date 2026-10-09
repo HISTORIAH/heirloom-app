@@ -288,7 +288,6 @@ const ClaimPageInner: React.FC<{
           const canClaim = inh.vaultState === "claimable" && !nothingToClaim;
 
           return (
-            // TODO(backend): Label comes from backend API, may be undefined
             <EstateGlance
               key={inh.authority}
               label={inh.label ?? truncateAddress(inh.authority, 4)}

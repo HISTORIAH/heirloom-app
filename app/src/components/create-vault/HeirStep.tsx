@@ -34,22 +34,6 @@ const HeirStep: React.FC<Props> = ({
 
       <div className="space-y-5 border-t border-tile-line pt-6">
         <Field
-          id="estate-label"
-          label={t("createVault.wizard.labelWhatToCall")}
-          hint={t("createVault.wizard.labelOnlyYou")}
-        >
-          <input
-            id="estate-label"
-            type="text"
-            value={label}
-            onChange={(e) => setLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
-            maxLength={LABEL_MAX_LEN}
-            className="ed-input mt-2"
-            placeholder={t("createVault.wizard.labelPlaceholderMum")}
-          />
-        </Field>
-
-        <Field
           id="heir-address"
           label={t("createVault.wizard.heirWalletLabel")}
           hint={t("createVault.wizard.heirWalletHint")}
@@ -64,6 +48,23 @@ const HeirStep: React.FC<Props> = ({
             autoComplete="off"
             className="ed-input mt-2 font-mono"
             placeholder={t("createVault.wizard.pasteAddress")}
+          />
+        </Field>
+
+        <Field
+          id="estate-label"
+          label={t("createVault.wizard.labelWhatToCall")}
+          hint={t("createVault.wizard.labelHint")}
+        >
+          <input
+            id="estate-label"
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value.slice(0, LABEL_MAX_LEN))}
+            maxLength={LABEL_MAX_LEN}
+            autoComplete="off"
+            className="ed-input mt-2"
+            placeholder={t("createVault.wizard.labelPlaceholder")}
           />
         </Field>
       </div>

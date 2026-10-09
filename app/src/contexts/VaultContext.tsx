@@ -183,7 +183,12 @@ const VaultProviderInner: React.FC<{
     }
     try {
       const onChainEstates = await fetchEstatesByAuthority(client, authority);
-      // Names live off-chain; a backend outage shouldn't hide the estates themselves.
+      // The estate's name isn't in the program's account data. It's written as an SPL Memo in
+      // the create tx, and the backend reads it from there on register — so the backend is the
+      // only place to look it up. It's merged here, once, so every screen gets a single
+      // EstateData instead of each one fetching chain and backend separately. The name is
+      // public (anyone can read the memo); it only tells the owner's estates apart.
+      // A backend outage shouldn't hide the estates themselves, so a failed lookup means no names.
       const metadata = await fetchEstatesMetadata(onChainEstates.map((e) => e.address)).catch(
         () => ({}) as Awaited<ReturnType<typeof fetchEstatesMetadata>>,
       );

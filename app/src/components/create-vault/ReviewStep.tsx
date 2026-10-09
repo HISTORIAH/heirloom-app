@@ -75,16 +75,22 @@ const ReviewStep: React.FC<Props> = ({
         editLabel={t("createVault.wizard.edit")}
         onEdit={() => onEdit(0)}
       >
-        <p className="text-sm font-semibold">
-          {label || t("createVault.yourHeir")} ·{" "}
-          <span className="font-mono">{truncateAddress(heirAddress, 4)}</span>
-        </p>
+        <p className="font-mono text-sm font-semibold">{truncateAddress(heirAddress, 4)}</p>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("createVault.wizard.inheritsWhole")}
           {delegate && t("createVault.wizard.guardianDot", { addr: truncateAddress(delegate, 4) })}
           {checkInSigner &&
             t("createVault.wizard.signerDot", { addr: truncateAddress(checkInSigner, 4) })}
         </p>
+      </Section>
+
+      <Section
+        cap={t("dashboard.estateNameLabel")}
+        editAria={t("createVault.wizard.editEstateName")}
+        editLabel={t("createVault.wizard.edit")}
+        onEdit={() => onEdit(0)}
+      >
+        <p className="text-sm font-semibold">{label}</p>
       </Section>
 
       <Section

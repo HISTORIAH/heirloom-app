@@ -117,7 +117,10 @@ export type EstateMirroredFields = Pick<
 export interface EstateSnapshot {
   authority: string;
   heir: string;
-  // TODO: Fetch label/description from backend API (not stored on-chain)
+  // The estate's name from the backend. Snapshots are built from chain data only, so this is
+  // empty unless the caller merges it in: the dashboard does (VaultContext); Heartbeat, Defer
+  // and Claim don't yet, so they fall back to a truncated address.
+  // TODO: merge the backend name into snapshots on Heartbeat, Defer and Claim.
   label?: string;
   description?: string;
   // Derived from delegatePauseExpiresAt, not a stored field — see delegate_defer's
@@ -199,7 +202,7 @@ export async function buildSnapshotFromEstate(
   return {
     authority: authorityStr,
     heir: heirStr,
-    // TODO: Fetch label/description from backend API
+    // Filled in by callers that merge backend metadata (see EstateSnapshot.label).
     label: undefined,
     description: undefined,
     isDeferred: delegatePauseExpiresAt > 0,

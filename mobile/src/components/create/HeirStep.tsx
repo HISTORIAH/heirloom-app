@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
 import { AddressField } from "@/components/create/AddressField";
 import { OptionCard } from "@/components/create/OptionCard";
@@ -7,6 +7,7 @@ import { TextField } from "@/components/ui";
 import type { HeirKind } from "@/types/create";
 import { LABEL_MAX_LEN } from "@/constants/estate";
 import { shortAddress } from "@/lib";
+import { colors, font } from "@/theme";
 
 export function HeirStep({
   kind,
@@ -78,9 +79,14 @@ export function HeirStep({
           value={label}
           onChangeText={onLabel}
           maxLength={LABEL_MAX_LEN}
-          placeholder="e.g. Family estate"
+          placeholder="e.g. Kids"
           error={labelError !== undefined}
         />
+        {/* The name goes on-chain in the create tx's memo, so anyone can read it. */}
+        <Text style={{ fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: colors.mute }}>
+          This name is public. Keep it general, like “Kids”, “Partner” or “Charity”, so it says what
+          it’s for, not who.
+        </Text>
         <ErrorLine>{labelError}</ErrorLine>
       </View>
     </View>
