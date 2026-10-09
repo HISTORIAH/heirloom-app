@@ -163,7 +163,7 @@ export const TokenPicker: React.FC<{
               placeholder={t("addAsset.searchPlaceholder")}
               aria-label={t("addAsset.searchPlaceholder")}
               spellCheck={false}
-              className="min-w-0 flex-1 bg-transparent py-1 text-[15px] outline-none"
+              className="min-w-0 flex-1 bg-transparent py-1 text-[15px] outline-hidden"
             />
           </div>
 

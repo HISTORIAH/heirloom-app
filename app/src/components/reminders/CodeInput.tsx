@@ -63,7 +63,7 @@ export default function CodeInput({
         autoComplete="one-time-code"
         spellCheck={false}
         aria-label={label}
-        className="absolute inset-0 h-full w-full cursor-text bg-transparent text-transparent caret-transparent outline-none selection:bg-transparent"
+        className="absolute inset-0 h-full w-full cursor-text bg-transparent text-transparent caret-transparent outline-hidden selection:bg-transparent"
       />
     </div>
   );

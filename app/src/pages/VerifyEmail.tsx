@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { AlertTriangle, Loader2, Mail, ShieldCheck, Wallet } from "lucide-react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
-import bs58 from "bs58";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/surface/Panel";
 import PageHeader from "@/components/PageHeader";
@@ -112,7 +111,7 @@ function VerifyWithWallet({
 
   const signIn = async (code?: string) => {
     try {
-      await authMutation.mutateAsync({ address: account.address, encode: bs58.encode });
+      await authMutation.mutateAsync({ address: account.address });
       signedIn.current = true;
       if (code) await attempt(code, code === linkCode);
       else setState({ kind: "form" });

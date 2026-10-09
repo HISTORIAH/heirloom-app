@@ -15,6 +15,8 @@ import {
   type MaybeAccount,
   type TransactionSigner,
   address as toAddress,
+  nonDivisibleSequentialInstructionPlan,
+  sequentialInstructionPlan,
 } from "@solana/kit";
 import type { VaultTokenHolding } from "@/types";
 import type { InitializeInput } from "@/types/program";
@@ -737,7 +739,10 @@ export async function initializeWithTokens(
   const memoIxs = name ? [getAddMemoInstruction({ memo: name })] : [];
   const firstTokens = registerIxs.slice(0, TOKEN_IXS_IN_CREATE_TX);
   const laterTokens = registerIxs.slice(TOKEN_IXS_IN_CREATE_TX);
-  const batches = [[initIx, ...firstTokens, ...memoIxs], ...chunk(laterTokens, TOKEN_IXS_PER_TX)];
+  // The initialize and the memo stay in one transaction even if kit has to split the batch.
+  const createWithMemo = nonDivisibleSequentialInstructionPlan([initIx, ...memoIxs]);
+  const firstBatch = sequentialInstructionPlan([createWithMemo, ...firstTokens]);
+  const batches = [firstBatch, ...chunk(laterTokens, TOKEN_IXS_PER_TX)];
 
   // The first signature is the create tx: it's what registration and pending state track.
   const [createSignature] = await sendTxSequence(client, authority, batches);

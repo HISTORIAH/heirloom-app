@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
-import bs58 from "bs58";
 import type { EstateData } from "@/contexts/VaultContext";
 import NotificationsCard from "@/components/dashboard/NotificationsCard";
 import NotificationsSignInPanel from "@/components/dashboard/NotificationsSignInPanel";
@@ -71,7 +70,7 @@ export const EstateNotifications: React.FC<Props> = ({ estate, account, openRequ
 
   const handleNotifSign = async () => {
     try {
-      await authMutation.mutateAsync({ address: account.address, encode: bs58.encode });
+      await authMutation.mutateAsync({ address: account.address });
       await remindersQuery.refetch();
       setNotifSignInOpen(false);
       setNotifEditOpen(true);

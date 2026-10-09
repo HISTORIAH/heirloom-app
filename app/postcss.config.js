@@ -1,9 +1,7 @@
-export default (ctx) => {
-  const isAppCss = !ctx.file || !ctx.file.includes("node_modules");
-  return {
-    plugins: {
-      ...(isAppCss ? { tailwindcss: {} } : {}),
-      autoprefixer: {},
-    },
-  };
+// Tailwind v4 runs as its own PostCSS plugin and handles vendor prefixes itself, so
+// there's no autoprefixer. Same setup as the landing, blog and docs.
+export default {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
 };

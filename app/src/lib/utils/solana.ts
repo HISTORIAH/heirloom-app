@@ -7,18 +7,21 @@ export function getSolanaExplorerTxUrl(signature: string): string {
   return `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;
 }
 
-/** Returns chain identifier for wallet transaction requests. */
-export function getClusterFromEndpoint(): string {
-  switch (true) {
-    case SOLANA_RPC_ENDPOINT.includes("mainnet"):
-      return "solana:mainnet";
-    case SOLANA_RPC_ENDPOINT.includes("devnet"):
-      return "solana:devnet";
-    case SOLANA_RPC_ENDPOINT.includes("testnet"):
-      return "solana:testnet";
-    case SOLANA_RPC_ENDPOINT.includes("localhost"):
-      return "solana:localhost";
-    default:
-      return "solana:mainnet";
-  }
+/** A wallet-standard Solana chain id, e.g. "solana:devnet". */
+export type SolanaChain = `solana:${string}`;
+
+/**
+ * The wallet-standard chain for the RPC endpoint the app talks to. Wallets sign and send
+ * against this chain, so it must match the cluster the RPC points at.
+ */
+export function getClusterFromEndpoint(): SolanaChain {
+  const endpoint = SOLANA_RPC_ENDPOINT;
+  if (endpoint.includes("mainnet")) return "solana:mainnet";
+  if (endpoint.includes("devnet")) return "solana:devnet";
+  if (endpoint.includes("testnet")) return "solana:testnet";
+  if (endpoint.includes("localhost") || endpoint.includes("127.0.0.1")) return "solana:localnet";
+  return "solana:mainnet";
 }
+
+/** The chain this build signs against. */
+export const SOLANA_CHAIN = getClusterFromEndpoint();

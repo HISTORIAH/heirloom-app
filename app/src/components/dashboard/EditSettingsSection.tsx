@@ -10,6 +10,7 @@ import {
 } from "@/components/dashboard/modals/parts";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useTxFlow } from "@/hooks/useTxFlow";
+import { useNow } from "@/hooks/useNow";
 import {
   GRACE_PRESET_DAYS,
   INTERVAL_PRESET_DAYS,
@@ -89,7 +90,7 @@ const DurationField: React.FC<{
             value={value.unit}
             onChange={(e) => onChange({ ...value, unit: e.target.value as Unit })}
             aria-label={t("schedule.unit")}
-            className="rounded-xl border border-tile-line bg-background px-3 outline-none focus:border-foreground"
+            className="rounded-xl border border-tile-line bg-background px-3 outline-hidden focus:border-foreground"
           >
             {(Object.keys(UNITS) as Unit[]).map((u) => (
               <option key={u} value={u}>
@@ -108,6 +109,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
   const { t, i18n } = useTranslation("app");
   const { updateEstateFieldsOnChain } = useVault();
   const tx = useTxFlow();
+  const now = useNow(60_000);
 
   const [open, setOpen] = useState(false);
   const [interval, setIntervalValue] = useState(() =>
@@ -139,7 +141,6 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
 
   // Saving counts as a check-in on-chain (update_field sets last_check_in_ts), so the new
   // deadline runs from now.
-  const now = Date.now();
   const due = new Date(now + intervalSecs * 1000);
   const claim = new Date(now + (intervalSecs + graceSecs) * 1000);
   const fmtDate = (d: Date) =>

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getBase58Decoder } from "@solana/kit";
 import { requestChallenge, verifyChallenge } from "@/services/api/auth";
 
 /**
@@ -12,16 +13,20 @@ import { requestChallenge, verifyChallenge } from "@/services/api/auth";
  */
 type SignMessageFn = (args: { message: Uint8Array }) => Promise<{ signature: Uint8Array }>;
 
+// Kit names codecs from the string's side: the base58 *decoder* turns bytes into base58 text.
+const base58 = getBase58Decoder();
+
 export function useAuthenticate(signMessage: SignMessageFn) {
   const queryClient = useQueryClient();
 
-  return useMutation<string, Error, { address: string; encode: (sig: Uint8Array) => string }>({
-    mutationFn: async ({ address, encode }) => {
+  return useMutation<string, Error, { address: string }>({
+    mutationFn: async ({ address }) => {
       const challengeMessage = await requestChallenge(address);
       const { signature } = await signMessage({
         message: new TextEncoder().encode(challengeMessage),
       });
-      return verifyChallenge(address, encode(signature));
+      // The backend expects the signature in base58.
+      return verifyChallenge(address, base58.decode(signature));
     },
     onSuccess: () => {
       // Session cookie refreshed — invalidate so next access refetches with the new cookie

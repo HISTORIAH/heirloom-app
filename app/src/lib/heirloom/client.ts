@@ -1,25 +1,15 @@
 import {
-  appendTransactionMessageInstructions,
-  compileTransaction,
-  createTransactionMessage,
-  getBase58Decoder,
-  getBase64EncodedWireTransaction,
-  pipe,
-  setTransactionMessageComputeUnitLimit,
-  setTransactionMessageFeePayerSigner,
-  setTransactionMessageLifetimeUsingBlockhash,
-  setTransactionMessageLoadedAccountsDataSizeLimit,
-  signAndSendTransactionMessageWithSigners,
+  createClient,
+  flattenTransactionPlanResult,
   type Instruction,
+  type InstructionPlanInput,
   type Signature,
   type TransactionSigner,
 } from "@solana/kit";
+import { payer } from "@solana/kit-plugin-signer";
+import { solanaRpc } from "@solana/kit-plugin-rpc";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
-import {
-  COMPUTE_UNIT_MARGIN,
-  MAX_COMPUTE_UNIT_LIMIT,
-  MAX_LOADED_ACCOUNTS_DATA_SIZE,
-} from "@/lib/constants";
+import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
 import type { TxMessageVersion } from "@/types/tx";
 
 export type HeirloomClient = {
@@ -29,141 +19,119 @@ export type HeirloomClient = {
   transactionVersion: TxMessageVersion;
 };
 
-const base58 = getBase58Decoder();
+/**
+ * A kit client that pays and signs with `feePayer` and sends through our RPC. Kit's planner
+ * builds the message in the requested version, and its executor simulates it to set the
+ * compute (and, for v1, loaded-accounts) limits, sends it and waits for confirmation.
+ */
+function createSendingClient(feePayer: TransactionSigner, version: TxMessageVersion) {
+  return createClient()
+    .use(payer(feePayer))
+    .use(
+      solanaRpc({
+        rpcUrl: SOLANA_RPC_ENDPOINT,
+        rpcSubscriptionsUrl: SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT,
+        transactionConfig: version === 1 ? { version: 1 } : { version: 0 },
+      }),
+    );
+}
+
+/** Errors carry the simulation logs somewhere along their `cause` chain, when there are any. */
+function findLogs(error: unknown): readonly string[] | undefined {
+  let current: unknown = error;
+  while (current && typeof current === "object") {
+    const context = (current as { context?: { logs?: readonly string[] } }).context;
+    if (context?.logs?.length) return context.logs;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
+}
 
 /**
- * A readable reason for a failed simulation. The program's own error log line says the most
- * ("custom program error: 0x…", an Anchor error); otherwise the raw error. RPC errors carry
- * BigInts, which JSON.stringify can't serialize, so they're turned into strings first.
+ * Kit's production build shortens error messages to codes. The program's own error line from
+ * the simulation ("custom program error: 0x…", an Anchor error) says much more, so a failure
+ * is re-thrown with that line when there is one.
  */
-function describeSimulationError(simulation: {
-  err: unknown;
-  logs?: readonly string[] | null;
-}): string {
-  // The last matching line is the one closest to the failure.
-  const programError = [...(simulation.logs ?? [])]
+function withReadableMessage(error: unknown): unknown {
+  const programError = [...(findLogs(error) ?? [])]
     .reverse()
     .find((line) => /error|failed/i.test(line));
-  if (programError) return programError;
-  return JSON.stringify(simulation.err, (_key, value) =>
-    typeof value === "bigint" ? value.toString() : value,
-  );
+  if (!programError) return error;
+  return Object.assign(new Error(`Transaction failed: ${programError}`), { cause: error });
 }
 
 /**
- * Simulates the message and returns the compute units it used, padded by
- * COMPUTE_UNIT_MARGIN. The message must already carry the maximum limit, or the
- * simulation runs out of compute before it can measure anything.
+ * Sign, send and confirm `plan`, in order. Kit's planner packs it into as few transactions as
+ * fit — it can take more than one if the instructions don't fit together (v0 is 1232 bytes,
+ * and kit adds a compute-limit instruction to each v0 message). Wrap instructions in
+ * `nonDivisibleSequentialInstructionPlan` to keep them in the same transaction.
+ * Returns every signature, in the order sent. One wallet approval per transaction.
  */
-async function measureComputeUnits(
+async function sendPlan(
   client: HeirloomClient,
-  message: Parameters<typeof compileTransaction>[0],
-): Promise<number> {
-  const wireTransaction = getBase64EncodedWireTransaction(compileTransaction(message));
-  const { value: simulation } = await client.rpc
-    .simulateTransaction(wireTransaction, {
-      encoding: "base64",
-      sigVerify: false,
-      replaceRecentBlockhash: true,
-    })
-    .send();
-
-  if (simulation.err) {
-    throw new Error(`Transaction simulation failed: ${describeSimulationError(simulation)}`);
+  feePayer: TransactionSigner,
+  plan: InstructionPlanInput,
+): Promise<string[]> {
+  try {
+    const result = await createSendingClient(feePayer, client.transactionVersion).sendTransactions(
+      plan,
+    );
+    return flattenTransactionPlanResult(result).map((single) => {
+      if (single.status !== "successful") throw new Error("Transaction was not sent");
+      return single.context.signature;
+    });
+  } catch (error) {
+    throw withReadableMessage(error);
   }
-  if (simulation.unitsConsumed == null) return MAX_COMPUTE_UNIT_LIMIT;
-
-  const padded = Math.ceil(Number(simulation.unitsConsumed) * COMPUTE_UNIT_MARGIN);
-  return Math.min(padded, MAX_COMPUTE_UNIT_LIMIT);
 }
 
 /**
- * Build, sign, and send a transaction with the given instructions.
- * Returns a base58-encoded transaction signature.
- *
- * v1 messages set their own resource limits (both default to zero): the loaded-accounts
- * limit goes to the maximum, and the compute limit is measured by a simulation first.
- * v0 messages are sent as before, with the runtime's default limits.
+ * Sign, send and confirm the given instructions. Returns the signature of the last
+ * transaction, the one that completes the action.
  */
 export async function sendTx(
   client: HeirloomClient,
   feePayer: TransactionSigner,
   ix: Instruction | Instruction[],
 ): Promise<string> {
-  const instructions = Array.isArray(ix) ? ix : [ix];
-  const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
-
-  const baseMessage = pipe(
-    createTransactionMessage({ version: client.transactionVersion }),
-    (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
-    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-    (tx) => appendTransactionMessageInstructions(instructions, tx),
-  );
-
-  let message = baseMessage;
-  if (client.transactionVersion === 1) {
-    const withMaxLimits = pipe(
-      baseMessage,
-      (tx) => setTransactionMessageLoadedAccountsDataSizeLimit(MAX_LOADED_ACCOUNTS_DATA_SIZE, tx),
-      (tx) => setTransactionMessageComputeUnitLimit(MAX_COMPUTE_UNIT_LIMIT, tx),
-    );
-    const computeUnits = await measureComputeUnits(client, withMaxLimits);
-    message = setTransactionMessageComputeUnitLimit(computeUnits, withMaxLimits);
-  }
-
-  const signatureBytes = await signAndSendTransactionMessageWithSigners(message);
-  return base58.decode(signatureBytes);
+  const signatures = await sendPlan(client, feePayer, ix);
+  return signatures[signatures.length - 1];
 }
 
 /**
- * Poll until `signature` reaches `commitment`. Throws if the tx failed on-chain or doesn't
- * get there within `timeoutMs`.
+ * Sends each group as its own step, in order; each is confirmed before the next starts, so
+ * later groups can use accounts the earlier ones create. Groups bound how much goes into one
+ * transaction (the 64-instruction trace limit); kit may still split a group to fit the size.
+ * Returns every signature, in the order sent.
  */
-async function waitForCommitment(
+export async function sendTxSequence(
+  client: HeirloomClient,
+  feePayer: TransactionSigner,
+  groups: InstructionPlanInput[],
+): Promise<string[]> {
+  const signatures: string[] = [];
+  for (const group of groups) {
+    signatures.push(...(await sendPlan(client, feePayer, group)));
+  }
+  return signatures;
+}
+
+/**
+ * Poll until `signature` reaches `finalized` commitment (~13s after landing). Registration
+ * waits for this, since the backend reads the create tx at that commitment.
+ */
+export async function waitForFinalized(
   client: HeirloomClient,
   signature: string,
-  commitment: "confirmed" | "finalized",
   timeoutMs = 90_000,
 ): Promise<void> {
-  const reached = (status: string | null | undefined) =>
-    status === "finalized" || (commitment === "confirmed" && status === "confirmed");
-
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const { value } = await client.rpc.getSignatureStatuses([signature as Signature]).send();
     const status = value[0];
     if (status?.err) throw new Error("Transaction failed on-chain");
-    if (reached(status?.confirmationStatus)) return;
+    if (status?.confirmationStatus === "finalized") return;
     await new Promise((r) => setTimeout(r, 2000));
   }
-  throw new Error(`Timed out waiting for the transaction to be ${commitment}`);
-}
-
-/** Poll until `signature` reaches `finalized` commitment (~13s after landing). */
-export function waitForFinalized(
-  client: HeirloomClient,
-  signature: string,
-  timeoutMs = 90_000,
-): Promise<void> {
-  return waitForCommitment(client, signature, "finalized", timeoutMs);
-}
-
-/**
- * Sends each group of instructions as its own transaction, in order. Each one is confirmed
- * before the next is built, since later groups use accounts the earlier ones create.
- * Returns the signatures in the same order. One wallet approval per group.
- */
-export async function sendTxSequence(
-  client: HeirloomClient,
-  feePayer: TransactionSigner,
-  groups: Instruction[][],
-): Promise<string[]> {
-  const signatures: string[] = [];
-  for (const [index, group] of groups.entries()) {
-    const signature = await sendTx(client, feePayer, group);
-    signatures.push(signature);
-    const isLast = index === groups.length - 1;
-    if (!isLast) await waitForCommitment(client, signature, "confirmed");
-  }
-  return signatures;
+  throw new Error("Timed out waiting for transaction finalization");
 }

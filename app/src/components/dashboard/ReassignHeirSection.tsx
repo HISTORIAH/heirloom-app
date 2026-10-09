@@ -14,6 +14,7 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTxFlow } from "@/hooks/useTxFlow";
+import { useNow } from "@/hooks/useNow";
 import { NETWORK_FEE_LAMPORTS } from "@/lib/constants";
 import { cn, formatSol, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
@@ -55,7 +56,8 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, heirName, onTx }) => {
 
   const currentName = heirName ?? t("changeHeir.currentFallback");
   const pauseEnds = estate.delegatePauseExpiresAt * 1000;
-  const paused = pauseEnds > Date.now();
+  const now = useNow(60_000);
+  const paused = pauseEnds > now;
 
   const valid = isAddress(address);
   const ownWallet = valid && address === publicKey;

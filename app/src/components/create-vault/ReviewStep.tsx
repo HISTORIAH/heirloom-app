@@ -134,7 +134,7 @@ const ReviewStep: React.FC<Props> = ({
       >
         <span
           className={cn(
-            "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border",
+            "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-sm border",
             acknowledged ? "border-foreground bg-foreground text-background" : "border-tile-line",
           )}
         >

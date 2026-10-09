@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useWalletUi, useWalletUiWallet, type UiWallet } from "@wallet-ui/react";
+import { useConnect, type UiWallet } from "@wallet-standard/react";
 import { useWallet } from "@/contexts/WalletContext";
 import {
   Dialog,
@@ -22,7 +22,8 @@ interface WalletRowProps {
 }
 
 const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
-  const { connect, isConnecting } = useWalletUiWallet({ wallet });
+  const [isConnecting, connect] = useConnect(wallet);
+  const { selectAccount } = useWallet();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
   return (
@@ -34,6 +35,7 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
         try {
           const accounts = await connect();
           if (accounts.length > 0) {
+            selectAccount(accounts[0]);
             track("wallet_connected", { wallet_provider: wallet.name });
             onConnected();
           }
@@ -56,9 +58,8 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
 };
 
 const WalletConnectDialog = ({ open, onOpenChange }: WalletConnectDialogProps) => {
-  const { isConnected } = useWallet();
+  const { isConnected, wallets } = useWallet();
   const { t } = useTranslation("app");
-  const { wallets } = useWalletUi();
 
   useEffect(() => {
     if (isConnected && open) onOpenChange(false);

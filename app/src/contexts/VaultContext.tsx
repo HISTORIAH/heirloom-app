@@ -8,8 +8,9 @@ import React, {
   useState,
 } from "react";
 import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
-import { useWalletUi, type UiWalletAccount } from "@wallet-ui/react";
-import { useTransactionSigner } from "@/hooks/useTransactionSigner";
+import { useWalletAccountTransactionSigner } from "@solana/react";
+import type { UiWalletAccount } from "@wallet-standard/react";
+import { SOLANA_CHAIN } from "@/lib/utils";
 import { useWallet } from "./WalletContext";
 import {
   getAtaAddress,
@@ -577,7 +578,7 @@ const VaultProviderInner: React.FC<{
 // ---------------------------------------------------------------------------
 
 export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { account } = useWalletUi();
+  const { account } = useWallet();
   const [signerState, setSignerState] = useState<{
     signer: TransactionSigner | null;
     authority: Address | null;
@@ -605,7 +606,7 @@ const SignerCapture: React.FC<{
   account: UiWalletAccount;
   onCapture: (state: { signer: TransactionSigner | null; authority: Address | null }) => void;
 }> = ({ account, onCapture }) => {
-  const rawSigner = useTransactionSigner(account);
+  const rawSigner = useWalletAccountTransactionSigner(account, SOLANA_CHAIN);
   const authority = useMemo(() => toAddress(account.address), [account.address]);
 
   // Stabilise signer reference across renders — only swap when address changes

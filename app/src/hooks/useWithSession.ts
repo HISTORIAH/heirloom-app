@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
-import bs58 from "bs58";
 import { useAuthenticate } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 
@@ -14,14 +13,14 @@ export function useWithSession(account: UiWalletAccount) {
   const { mutateAsync } = auth;
 
   const withSession = useCallback(
-    async <T,>(call: () => Promise<T>): Promise<T> => {
+    async <T>(call: () => Promise<T>): Promise<T> => {
       try {
         return await call();
       } catch (err) {
         const unauthorized =
           err instanceof ApiError && (err.code === "UNAUTHORIZED" || err.code === "unauthorized");
         if (!unauthorized) throw err;
-        await mutateAsync({ address: account.address, encode: bs58.encode });
+        await mutateAsync({ address: account.address });
         return call();
       }
     },
