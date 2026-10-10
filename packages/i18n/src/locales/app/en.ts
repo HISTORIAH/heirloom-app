@@ -1,5 +1,7 @@
 const app = {
   nav: {
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
     estates: "Estates",
     inherit: "Inherit",
     walletMenu: "Wallet {{address}}, open menu",

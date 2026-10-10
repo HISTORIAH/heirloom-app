@@ -2,6 +2,8 @@ import type { AppMessages } from "../../messages";
 
 const app: AppMessages = {
   nav: {
+    openMenu: "메뉴 열기",
+    closeMenu: "메뉴 닫기",
     estates: "에스테이트",
     inherit: "상속",
     walletMenu: "지갑 {{address}}, 메뉴 열기",
