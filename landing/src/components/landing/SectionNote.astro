@@ -29,6 +29,6 @@ const { icon, label, class: className } = Astro.props;
 >
   <Icon name={icon} class="mt-0.5 h-6 w-6 shrink-0 md:h-7 md:w-7" strokeWidth={2} />
   <p class="ed-body text-foreground/75">
-    <span class="font-bold uppercase tracking-[0.1em] text-foreground">{label}</span> — <slot />
+    <span class="font-bold uppercase tracking-[0.1em] text-foreground">{label}:</span> <slot />
   </p>
 </div>
