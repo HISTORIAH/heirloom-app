@@ -55,7 +55,10 @@ const HeirStep: React.FC<Props> = ({
           />
           {showValid && (
             <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-tile-soft px-4 py-3.5">
-              <Check className="h-[18px] w-[18px] shrink-0 text-accent-lime" strokeWidth={3} />
+              <Check
+                className="h-[1.125rem] w-[1.125rem] shrink-0 text-accent-lime"
+                strokeWidth={3}
+              />
               <span className="text-sm">{t("createVault.wizard.heirValid")}</span>
               <span className="font-mono text-lg font-bold tracking-wider">
                 {trimmed.slice(0, 4)} ··· {trimmed.slice(-4)}
@@ -96,7 +99,7 @@ const HeirStep: React.FC<Props> = ({
                 type="button"
                 onClick={() => setLabel(sug)}
                 className={cn(
-                  "min-h-[36px] rounded-full border px-3.5 text-sm transition-colors",
+                  "min-h-[2.25rem] rounded-full border px-3.5 text-sm transition-colors",
                   label === sug
                     ? "border-foreground bg-foreground text-background"
                     : "border-tile-line bg-background hover:bg-tile-soft",

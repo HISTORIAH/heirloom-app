@@ -3,7 +3,11 @@ import {
   createTransactionMessage,
   createTransactionPlanner,
   fillTransactionMessageProvisoryResourceLimits,
+  flattenTransactionPlan,
   flattenTransactionPlanResult,
+  isTransactionModifyingSigner,
+  isTransactionPartialSigner,
+  isTransactionSendingSigner,
   pipe,
   setTransactionMessageFeePayerSigner,
   type InstructionPlanInput,
@@ -21,7 +25,7 @@ import {
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
 import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
 import { assertTraceFits } from "@/lib/heirloom/trace";
-import type { TxMessageVersion } from "@/types/tx";
+import type { PlannedMessage, TxMessageVersion } from "@/types/tx";
 
 export type HeirloomClient = {
   rpc: AppRpc;
@@ -70,7 +74,7 @@ function createSendingClient(feePayer: TransactionSigner, version: TxMessageVers
 }
 
 /** Errors carry the simulation logs somewhere along their `cause` chain, when there are any. */
-function findLogs(error: unknown): readonly string[] | undefined {
+export function findLogs(error: unknown): readonly string[] | undefined {
   let current: unknown = error;
   while (current && typeof current === "object") {
     const context = (current as { context?: { logs?: readonly string[] } }).context;
@@ -116,6 +120,77 @@ export async function sendPlan(
   } catch (error) {
     throw withReadableMessage(error);
   }
+}
+
+/**
+ * The transactions `plan` would be sent as, in order, without signing or sending anything.
+ * Kit splits the plan the same way `sendPlan` would, so the count is what the wallet will
+ * be asked to approve.
+ */
+export async function planTransactions(
+  client: HeirloomClient,
+  feePayer: TransactionSigner,
+  plan: InstructionPlanInput,
+): Promise<PlannedMessage[]> {
+  const transactionPlan = await createSendingClient(
+    feePayer,
+    client.transactionVersion,
+  ).planTransactions(plan);
+  return flattenTransactionPlan(transactionPlan).map((single) => single.message);
+}
+
+/**
+ * Sign, send and confirm one transaction from `planTransactions`. Resolves with its
+ * signature once it's confirmed.
+ */
+export async function sendPlannedTransaction(
+  client: HeirloomClient,
+  feePayer: TransactionSigner,
+  message: PlannedMessage,
+): Promise<string> {
+  try {
+    const result = await createSendingClient(feePayer, client.transactionVersion).sendTransaction(
+      message,
+    );
+    return result.context.signature;
+  } catch (error) {
+    throw withReadableMessage(error);
+  }
+}
+
+/**
+ * The same signer, calling `onSigned` each time the wallet hands back a signature. Lets a
+ * progress view tell "waiting on the wallet" apart from "waiting on the cluster". Build the
+ * instructions with this signer too: kit rejects two different signer objects for one address.
+ */
+export function notifyOnSign(signer: TransactionSigner, onSigned: () => void): TransactionSigner {
+  const notifying: Record<string, unknown> = { address: signer.address };
+  if (isTransactionModifyingSigner(signer)) {
+    notifying.modifyAndSignTransactions = async (
+      ...args: Parameters<typeof signer.modifyAndSignTransactions>
+    ) => {
+      const signed = await signer.modifyAndSignTransactions(...args);
+      onSigned();
+      return signed;
+    };
+  }
+  if (isTransactionPartialSigner(signer)) {
+    notifying.signTransactions = async (...args: Parameters<typeof signer.signTransactions>) => {
+      const signatures = await signer.signTransactions(...args);
+      onSigned();
+      return signatures;
+    };
+  }
+  if (isTransactionSendingSigner(signer)) {
+    notifying.signAndSendTransactions = async (
+      ...args: Parameters<typeof signer.signAndSendTransactions>
+    ) => {
+      const signatures = await signer.signAndSendTransactions(...args);
+      onSigned();
+      return signatures;
+    };
+  }
+  return notifying as TransactionSigner;
 }
 
 /**

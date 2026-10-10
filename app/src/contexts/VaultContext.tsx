@@ -19,7 +19,8 @@ import {
   type HeirloomClient,
 } from "@/lib/heirloom";
 import {
-  initializeWithTokens,
+  buildCreateEstatePlan,
+  planCreateEstate,
   registerAsset,
   registerSolDeposit,
   revokeAll,
@@ -36,7 +37,8 @@ import {
   type EstateUiState,
   type VaultTokenHolding,
 } from "@/services/heirloom";
-import { waitForFinalized } from "@/lib/heirloom/client";
+import { notifyOnSign, sendPlannedTransaction, waitForFinalized } from "@/lib/heirloom/client";
+import type { CreateEstateDraft, CreateEstateProgressEvents } from "@/types/create";
 import { ApiError } from "@/lib/api";
 import { errMsg } from "@/lib/utils";
 import {
@@ -128,7 +130,14 @@ interface VaultState {
   pendingTxId: string | null;
   pendingCreate: boolean;
   fetchEstates: () => Promise<void>;
-  createEstateOnChain: (input: CreateEstateInput) => Promise<string>;
+  /** Builds and plans the create transactions, without signing. Shows how many it takes. */
+  prepareCreateEstate: (input: CreateEstateInput) => Promise<CreateEstateDraft>;
+  createEstateOnChain: (
+    input: CreateEstateInput,
+    draft: CreateEstateDraft,
+    events: CreateEstateProgressEvents,
+    startAt?: number,
+  ) => Promise<void>;
   registerAssetOnChain: (heir: string, token: TokenDeposit) => Promise<string>;
   registerSolOnChain: (heir: string, lamports: bigint) => Promise<string>;
   depositSolOnChain: (vaultPda: string, lamports: bigint) => Promise<string>;
@@ -307,12 +316,11 @@ const VaultProviderInner: React.FC<{
   // On-chain operations
   // -------------------------------------------------------------------------
 
-  const createEstateOnChain = useCallback(
-    async (input: CreateEstateInput): Promise<string> => {
-      const { signer, authority } = requireAuth();
-      const heirAddress = toAddress(input.heir);
-      const estatePda = await getEstateAddress(authority, heirAddress);
-      const vaultPda = await getVaultAddress(authority, heirAddress);
+  /** Refuses to create over an estate that's still live, or one whose accounts are still closing. */
+  const assertEstateSlotFree = useCallback(
+    async (authority: Address, heir: Address) => {
+      const estatePda = await getEstateAddress(authority, heir);
+      const vaultPda = await getVaultAddress(authority, heir);
 
       const rawAccountExists = async (pda: Address): Promise<boolean> => {
         try {
@@ -325,7 +333,7 @@ const VaultProviderInner: React.FC<{
         }
       };
 
-      const existing = await fetchEstateByPair(client, authority, heirAddress);
+      const existing = await fetchEstateByPair(client, authority, heir);
       if (existing.exists && existing.lamports > 0n) {
         throw new Error(
           "An active estate already exists for this heir. Revoke or claim all assets first, then try again.",
@@ -347,11 +355,25 @@ const VaultProviderInner: React.FC<{
           "Prior estate/vault PDAs not yet cleared on-chain. Wait a few seconds and retry.",
         );
       }
+    },
+    [client, rpc],
+  );
 
+  // The create flow's progress view needs to know when the wallet has signed. The draft's
+  // instructions are built with a signer that reports here, and each send points it at the
+  // transaction it's working on.
+  const onCreateTxSigned = useRef<(() => void) | null>(null);
+
+  const prepareCreateEstate = useCallback(
+    async (input: CreateEstateInput): Promise<CreateEstateDraft> => {
+      const { signer: walletSigner, authority } = requireAuth();
+      const signer = notifyOnSign(walletSigner, () => onCreateTxSigned.current?.());
+      const heirAddress = toAddress(input.heir);
+      const vaultPda = await getVaultAddress(authority, heirAddress);
       const validTokens = (input.tokens ?? []).filter((tok) => tok.amount > 0n);
 
-      let initArgs: Parameters<typeof initializeWithTokens>[2];
-      let extraTokens: Parameters<typeof initializeWithTokens>[3];
+      let initArgs: Parameters<typeof buildCreateEstatePlan>[1];
+      let extraTokens: Parameters<typeof buildCreateEstatePlan>[2];
 
       if (input.amountLamports > 0n) {
         initArgs = {
@@ -405,21 +427,52 @@ const VaultProviderInner: React.FC<{
       }
 
       const name = input.label?.trim() || undefined;
-      const txId = await initializeWithTokens(client, signer, initArgs, extraTokens, name);
-      setPendingTxId(txId);
-      setPendingCreate(true);
-
-      // Registration needs a finalized tx (~13s) — run it in the background so the
-      // wizard can complete immediately. The estate still works if this fails; it can
-      // be named later via PATCH.
-      if (name) {
-        registerCreatedEstate(estatePda, txId, input.description)
-          .then(fetchEstates)
-          .catch((e) => console.error("[vault] estate registration failed", e));
-      }
-      return txId;
+      const plan = await buildCreateEstatePlan(signer, initArgs, extraTokens, name);
+      return planCreateEstate(client, signer, plan);
     },
-    [client, rpc, requireAuth, registerCreatedEstate, fetchEstates],
+    [client, requireAuth],
+  );
+
+  const createEstateOnChain = useCallback(
+    async (
+      input: CreateEstateInput,
+      draft: CreateEstateDraft,
+      events: CreateEstateProgressEvents,
+      /** Resume here after a later transaction failed. The ones before it already landed. */
+      startAt = 0,
+    ): Promise<void> => {
+      const { authority } = requireAuth();
+      const heirAddress = toAddress(input.heir);
+      if (startAt === 0) await assertEstateSlotFree(authority, heirAddress);
+
+      for (let index = startAt; index < draft.transactions.length; index++) {
+        const { message } = draft.transactions[index];
+        events.onAwaitingSignature(index);
+        onCreateTxSigned.current = () => events.onSigned(index);
+        let signature: string;
+        try {
+          signature = await sendPlannedTransaction(client, draft.signer, message);
+        } finally {
+          onCreateTxSigned.current = null;
+        }
+        events.onConfirmed(index, signature);
+
+        if (index === 0) {
+          setPendingTxId(signature);
+          setPendingCreate(true);
+          // Registration needs a finalized tx (~13s) — run it in the background so the
+          // wizard can complete immediately. The estate still works if this fails; it can
+          // be named later via PATCH.
+          if (input.label?.trim()) {
+            const estatePda = await getEstateAddress(authority, heirAddress);
+            registerCreatedEstate(estatePda, signature, input.description)
+              .then(fetchEstates)
+              .catch((e) => console.error("[vault] estate registration failed", e));
+          }
+        }
+      }
+    },
+    [client, requireAuth, assertEstateSlotFree, registerCreatedEstate, fetchEstates],
   );
 
   const registerAssetOnChain = useCallback(
@@ -558,6 +611,7 @@ const VaultProviderInner: React.FC<{
     pendingTxId,
     pendingCreate,
     fetchEstates,
+    prepareCreateEstate,
     createEstateOnChain,
     registerAssetOnChain,
     registerSolOnChain,

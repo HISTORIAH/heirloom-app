@@ -7,10 +7,17 @@ export function useRentCost(spaces: number[]): number | null {
   const { data } = useQuery({
     queryKey: ["rent-exemption", spaces],
     queryFn: async () => {
-      const each = await Promise.all(
-        spaces.map((space) => rpc.getMinimumBalanceForRentExemption(BigInt(space)).send()),
+      // One lookup per distinct size: an estate with many tokens repeats the same two sizes.
+      const distinct = [...new Set(spaces)];
+      const rentBySpace = new Map(
+        await Promise.all(
+          distinct.map(
+            async (space) =>
+              [space, await rpc.getMinimumBalanceForRentExemption(BigInt(space)).send()] as const,
+          ),
+        ),
       );
-      return each.reduce((sum, lamports) => sum + Number(lamports), 0);
+      return spaces.reduce((sum, space) => sum + Number(rentBySpace.get(space)), 0);
     },
     staleTime: Infinity,
     enabled: spaces.length > 0,

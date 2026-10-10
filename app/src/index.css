@@ -68,7 +68,7 @@
     --rule-pad: 1.25rem;
     --rule-gap: 1.25rem;
     --page-pad: calc(var(--rule-pad) + var(--rule-gap));
-    --app-max: 1300px;
+    --app-max: 81.25rem;
     --nav-h: 5rem;
 
     /* The one offset shadow the app still draws: the range thumb, which needs
@@ -90,8 +90,11 @@
     @apply border-border;
   }
 
+  /* The root size grows past ~1450px wide, so rem-sized pages fill large monitors instead of
+     sitting small in the middle: 16px up to there, ~18.6px at 1920, 19px from ~2000. */
   html {
     scroll-behavior: smooth;
+    font-size: clamp(16px, 0.55vw + 8px, 19px);
   }
 
   body {

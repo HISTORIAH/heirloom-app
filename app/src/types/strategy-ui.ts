@@ -25,13 +25,7 @@ export type Strategy = LuloStrategy | StakingStrategy;
 // ---------------------------------------------------------------------------
 
 export type StrategyProgressStep =
-  | "idle"
-  | "withdrawing"
-  | "depositing"
-  | "recalling"
-  | "returning"
-  | "complete"
-  | "error";
+  "idle" | "withdrawing" | "depositing" | "recalling" | "returning" | "complete" | "error";
 
 // ---------------------------------------------------------------------------
 // InlineTokenYield
@@ -133,4 +127,3 @@ export type PreflightRecallDialogProps = {
   onCancel: () => void;
   loading?: boolean;
 };
-
