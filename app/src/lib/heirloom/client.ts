@@ -1,15 +1,26 @@
 import {
   createClient,
+  createTransactionMessage,
+  createTransactionPlanner,
+  fillTransactionMessageProvisoryResourceLimits,
   flattenTransactionPlanResult,
-  type Instruction,
+  pipe,
+  setTransactionMessageFeePayerSigner,
   type InstructionPlanInput,
   type Signature,
   type TransactionSigner,
 } from "@solana/kit";
 import { payer } from "@solana/kit-plugin-signer";
-import { solanaRpc } from "@solana/kit-plugin-rpc";
+import { transactionPlanner } from "@solana/kit-plugin-instruction-plan";
+import {
+  rpcGetMinimumBalance,
+  rpcTransactionPlanSendingExecutor,
+  rpcTransactionPlanSigningExecutor,
+  solanaRpcConnection,
+} from "@solana/kit-plugin-rpc";
 import type { AppRpc, AppRpcSubscriptions } from "@/contexts/WalletContext";
 import { SOLANA_RPC_ENDPOINT, SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT } from "@/config";
+import { assertTraceFits } from "@/lib/heirloom/trace";
 import type { TxMessageVersion } from "@/types/tx";
 
 export type HeirloomClient = {
@@ -20,20 +31,42 @@ export type HeirloomClient = {
 };
 
 /**
- * A kit client that pays and signs with `feePayer` and sends through our RPC. Kit's planner
- * builds the message in the requested version, and its executor simulates it to set the
- * compute (and, for v1, loaded-accounts) limits, sends it and waits for confirmation.
+ * Plans messages the way kit-plugin-rpc's own planner does (fee payer, provisory resource
+ * limits the executor later replaces with simulated ones), plus a cap on each transaction's
+ * estimated instruction trace, which that plugin doesn't expose. See
+ * HEIRLOOM_INSTRUCTION_TRACE_COSTS for why.
+ */
+function createPlanner(feePayer: TransactionSigner, version: TxMessageVersion) {
+  return createTransactionPlanner({
+    createTransactionMessage: () =>
+      pipe(
+        createTransactionMessage({ version }),
+        (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
+        (tx) => fillTransactionMessageProvisoryResourceLimits(tx),
+      ),
+    onTransactionMessageUpdated: assertTraceFits,
+  });
+}
+
+/**
+ * A kit client that pays and signs with `feePayer` and sends through our RPC. It's
+ * kit-plugin-rpc's `solanaRpc` bundle with our planner in place of its default one: the
+ * executors simulate each message to set its compute (and, for v1, loaded-accounts) limits,
+ * then send it and wait for confirmation.
  */
 function createSendingClient(feePayer: TransactionSigner, version: TxMessageVersion) {
   return createClient()
     .use(payer(feePayer))
     .use(
-      solanaRpc({
+      solanaRpcConnection({
         rpcUrl: SOLANA_RPC_ENDPOINT,
         rpcSubscriptionsUrl: SOLANA_SUBSCRIPTIONS_RPC_ENDPOINT,
-        transactionConfig: version === 1 ? { version: 1 } : { version: 0 },
       }),
-    );
+    )
+    .use(rpcGetMinimumBalance())
+    .use(transactionPlanner(createPlanner(feePayer, version)))
+    .use(rpcTransactionPlanSigningExecutor())
+    .use(rpcTransactionPlanSendingExecutor());
 }
 
 /** Errors carry the simulation logs somewhere along their `cause` chain, when there are any. */
@@ -61,13 +94,13 @@ function withReadableMessage(error: unknown): unknown {
 }
 
 /**
- * Sign, send and confirm `plan`, in order. Kit's planner packs it into as few transactions as
- * fit — it can take more than one if the instructions don't fit together (v0 is 1232 bytes,
- * and kit adds a compute-limit instruction to each v0 message). Wrap instructions in
- * `nonDivisibleSequentialInstructionPlan` to keep them in the same transaction.
+ * Sign, send and confirm `plan` — every instruction one action needs, in order. Kit's planner
+ * packs them into as few transactions as fit (byte size and the instruction trace), and the
+ * executor sends those one after another, so later ones can use accounts earlier ones create.
+ * Wrap instructions in `nonDivisibleSequentialInstructionPlan` to keep them together.
  * Returns every signature, in the order sent. One wallet approval per transaction.
  */
-async function sendPlan(
+export async function sendPlan(
   client: HeirloomClient,
   feePayer: TransactionSigner,
   plan: InstructionPlanInput,
@@ -92,28 +125,10 @@ async function sendPlan(
 export async function sendTx(
   client: HeirloomClient,
   feePayer: TransactionSigner,
-  ix: Instruction | Instruction[],
+  plan: InstructionPlanInput,
 ): Promise<string> {
-  const signatures = await sendPlan(client, feePayer, ix);
+  const signatures = await sendPlan(client, feePayer, plan);
   return signatures[signatures.length - 1];
-}
-
-/**
- * Sends each group as its own step, in order; each is confirmed before the next starts, so
- * later groups can use accounts the earlier ones create. Groups bound how much goes into one
- * transaction (the 64-instruction trace limit); kit may still split a group to fit the size.
- * Returns every signature, in the order sent.
- */
-export async function sendTxSequence(
-  client: HeirloomClient,
-  feePayer: TransactionSigner,
-  groups: InstructionPlanInput[],
-): Promise<string[]> {
-  const signatures: string[] = [];
-  for (const group of groups) {
-    signatures.push(...(await sendPlan(client, feePayer, group)));
-  }
-  return signatures;
 }
 
 /**

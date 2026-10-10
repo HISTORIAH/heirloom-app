@@ -1,3 +1,6 @@
+import { HeirloomInstruction } from "@historiah/heirloom";
+import type { InstructionTraceCost } from "@/types/program";
+
 export const SOL_LABEL = "SOL";
 export const SOL_DECIMALS = 9;
 /** SOL's mint for price lookups. Deposits use native SOL; this is only an id. */
@@ -38,13 +41,29 @@ export const PRICE_BATCH_SIZE = 50;
 export const PRICE_STALE_MS = 60_000;
 
 /**
- * Per-token instructions sent per transaction. A transaction may run at most 64 instructions
- * including every CPI, and each token instruction makes several (vault account, transfer,
- * record), so a batch stays well under that. The create transaction also carries the
- * initialize instruction and the name memo, so it takes fewer tokens.
+ * The runtime caps a transaction's instruction trace — every instruction it runs, top-level
+ * plus every CPI at any depth — at 64 (MAX_INSTRUCTION_TRACE_LENGTH in
+ * solana-transaction-context). Separate from CPI depth, and v1 transactions don't raise it.
  */
-export const TOKEN_IXS_PER_TX = 6;
-export const TOKEN_IXS_IN_CREATE_TX = 4;
+export const MAX_INSTRUCTION_TRACE_LENGTH = 64;
+
+/**
+ * Trace entries each Heirloom instruction uses: itself plus its CPIs, for the token leg (a
+ * mint is passed) and the SOL leg. Measured on litesvm from each transaction's inner
+ * instructions; re-measure if the program changes. Where it varies, this is the higher one:
+ * updateHeir's first token leg also creates the new estate and vault (11, later ones 9), and
+ * a SOL-only updateHeir creates them too (3). Instructions not listed here (compute budget,
+ * memo, plain transfers, updateField, delegateDefer) count as 1.
+ */
+export const HEIRLOOM_INSTRUCTION_TRACE_COSTS: Partial<
+  Record<HeirloomInstruction, InstructionTraceCost>
+> = {
+  [HeirloomInstruction.Initialize]: { token: 10, sol: 4 },
+  [HeirloomInstruction.RegisterAsset]: { token: 8, sol: 2 },
+  [HeirloomInstruction.UpdateHeir]: { token: 11, sol: 3 },
+  [HeirloomInstruction.Revoke]: { token: 9, sol: 1 },
+  [HeirloomInstruction.Claim]: { token: 10, sol: 1 },
+};
 
 /** Confirmation polling for the transaction progress view. */
 export const TX_CONFIRM_POLL_MS = 1500;
