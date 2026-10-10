@@ -170,13 +170,16 @@ const DashboardPage = () => {
       )}
       <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
       {/* Outline, so Check In stays the page's only yellow call to action. */}
+      {/* A square "+" on phones: the full label does not fit beside the count and the name. */}
       <Button
         variant="flat-outline"
         size="sm"
         onClick={() => navigate("/create-vault")}
-        className="shrink-0 border tracking-[0.12em]"
+        aria-label={t("dashboard.newEstate")}
+        className="w-10 shrink-0 border px-0 tracking-[0.12em] sm:w-auto sm:px-4"
       >
-        <Plus className="h-4 w-4" /> {t("dashboard.newEstate")}
+        <Plus aria-hidden="true" className="h-4 w-4" />
+        <span className="hidden sm:inline">{t("dashboard.newEstate")}</span>
       </Button>
     </div>
   );

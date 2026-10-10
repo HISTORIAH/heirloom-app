@@ -79,14 +79,17 @@ export const EstateRename: React.FC<{ estate: EstateData; account: UiWalletAccou
   return (
     <div className="flex min-w-0 items-center gap-1">
       <span className="truncate text-sm font-semibold">{name}</span>
+      {/* Icon only on phones, where the label crowds the estate name out of the bar. */}
       <button
         onClick={() => {
           setDraft(estate.label ?? "");
           setEditing(true);
         }}
+        aria-label={t("dashboard.rename")}
         className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-foreground/80 transition-colors hover:bg-tile-soft"
       >
-        <Pencil className="h-3.5 w-3.5" /> {t("dashboard.rename")}
+        <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{t("dashboard.rename")}</span>
       </button>
     </div>
   );
