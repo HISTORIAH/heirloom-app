@@ -56,7 +56,7 @@ const RouteSeo = () => {
     "/estates": t("seo.dashboardTitle"),
     "/inherit": t("seo.claimTitle"),
     "/defer": t("seo.deferTitle"),
-    "/heartbeat": t("seo.heartbeatTitle"),
+    "/check-in": t("seo.heartbeatTitle"),
   };
   return <Seo title={titles[pathname] ?? t("seo.notFoundTitle")} path={pathname} />;
 };
@@ -88,8 +88,9 @@ const App = () => (
                   {/* The old names, still in emails, bookmarks and older landing builds. */}
                   <Route path="/dashboard" element={<RedirectTo pathname="/estates" />} />
                   <Route path="/claim" element={<RedirectTo pathname="/inherit" />} />
+                  <Route path="/heartbeat" element={<RedirectTo pathname="/check-in" />} />
                   <Route path="/defer" element={<Defer />} />
-                  <Route path="/heartbeat" element={<Heartbeat />} />
+                  <Route path="/check-in" element={<Heartbeat />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

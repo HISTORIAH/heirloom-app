@@ -96,13 +96,13 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
     data: { route: "/inherit" },
   });
 
-  // 5. Heartbeat — spotlight the lookup panel.
+  // 5. Check-in — spotlight the lookup panel.
   steps.push({
     target: '[data-tour="heartbeat-lookup"]',
     placement: "auto",
     title: t("dashboard.tour.step10Title"),
     content: t("dashboard.tour.step10Content"),
-    data: { route: "/heartbeat" },
+    data: { route: "/check-in" },
   });
 
   // 6. Finish — clicking Finish prompts the user to connect their wallet.
