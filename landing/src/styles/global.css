@@ -69,7 +69,16 @@
     --head-h: 2.75rem;
     --row-unit: 5.5rem;
     --mosaic-gap: 0.875rem;
-    --nav-h: 5rem;
+
+    /* The nav grows with the window like the type below it, so it does not
+       shrink against a full-bleed page on a large monitor. Each floor is the
+       app header's fixed size and holds below roughly 1200px; the growth is
+       deliberately gentle, a step up rather than a second headline. */
+    --nav-h: clamp(5rem, 4rem + 1vw, 5.75rem);
+    --nav-logo-h: clamp(2.5rem, 1.9rem + 0.75vw, 3rem);
+    --nav-link-h: clamp(2.75rem, 2.1rem + 0.8vw, 3.25rem);
+    --nav-link-px: clamp(1.25rem, 0.9rem + 0.4vw, 1.5rem);
+    --nav-text: clamp(0.75rem, 0.6rem + 0.2vw, 0.875rem);
 
     --shadow-sm: 4px 4px 0px 0px hsl(0 0% 0%);
     --shadow-md: 8px 8px 0px 0px hsl(0 0% 0%);

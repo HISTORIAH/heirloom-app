@@ -48,18 +48,19 @@ const launchHref = appUrl(locale);
 <nav class="sticky top-0 z-50 border-b border-tile-line bg-background" data-nav>
   <div class="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
     <a href={home} class="flex items-center">
-      <Logo class="h-8 md:h-10" />
+      <Logo class="h-8 md:h-[var(--nav-logo-h)]" />
     </a>
 
-    <div class="hidden items-center gap-1 md:flex">
+    {/* The app header's sizes (app/src/components/app/AppNavLinks.tsx) are the
+        floor; above it the --nav-* tokens in global.css scale with the window. */}
+    <div class="hidden items-center gap-1.5 md:flex">
       {
         destinations.map((d) => (
           <a
             href={d.href}
             data-track={d.track}
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft"
+            class="flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground/75 transition-colors hover:bg-tile-soft hover:text-foreground"
           >
-            <Icon name={d.icon} class="h-4 w-4" strokeWidth={2} />
             {d.label}
           </a>
         ))
@@ -68,7 +69,7 @@ const launchHref = appUrl(locale);
         href={launchHref}
         variant="flat-yellow"
         size="sm"
-        class="ml-3"
+        class="ml-2 h-[var(--nav-link-h)] px-[calc(var(--nav-link-px)*1.2)] text-[length:var(--nav-text)] tracking-[0.12em]"
         data-track="launch_app_nav"
       >
         {t("nav.launchApp")}
