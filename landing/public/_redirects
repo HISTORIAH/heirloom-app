@@ -6,7 +6,7 @@
 /create-vault   https://app.heirlm.xyz/create-vault   301
 /claim          https://app.heirlm.xyz/claim          301
 /defer          https://app.heirlm.xyz/defer          301
-/heartbeat      https://app.heirlm.xyz/heartbeat      301
+/heartbeat      https://app.heirlm.xyz/check-in       301
 
 # /sitemap.xml is a real file (public/sitemap.xml), not a redirect: it is the
 # path Search Console has on record, and it indexes all three builds.
