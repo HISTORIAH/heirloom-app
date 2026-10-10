@@ -11,7 +11,7 @@ import { DestSheet } from "@/components/claim/DestSheet";
 import { HoldCardSheet } from "@/components/claim/HoldCardSheet";
 import { PinSheet } from "@/components/claim/PinSheet";
 import { ChainLoading } from "@/components/ChainLoading";
-import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { NfcDummyCard } from "@/components/NfcDummyCard";
 import { Wordmark } from "@/components/Wordmark";
 import {
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import type { CardHolding } from "@/types/claim";
-import { useCardHoldings, useHeirTx } from "@/hooks";
+import { useCardHoldings, useConfirmSheet, useHeirTx } from "@/hooks";
 import {
   bySoonest,
   cancelScan,

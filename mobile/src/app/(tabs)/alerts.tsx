@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { TAB_BAR_CLEARANCE } from "@/components/FloatingTabBar";
 import { Icon } from "@/components/Icon";
 import { InkToast } from "@/components/InkToast";
@@ -10,7 +10,7 @@ import { ReminderTimeline } from "@/components/reminders/ReminderTimeline";
 import { TopBar } from "@/components/TopBar";
 import { Badge, Cap, Lede, PrimaryButton } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
-import { useEstates, useOwnerTx, useRemindersFor, useSession } from "@/hooks";
+import { useConfirmSheet, useEstates, useOwnerTx, useRemindersFor, useSession } from "@/hooks";
 import { estateName, estateSpan } from "@/lib";
 import { needsAttention } from "@/lib/attention";
 import { channelLine, remindersOn } from "@/lib/reminders";

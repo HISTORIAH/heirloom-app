@@ -1,20 +1,9 @@
-import { useRef, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Cap, H2, Lede, PrimaryButton, TextLink } from "@/components/ui";
 import { colors } from "@/theme";
-
-export type ConfirmAsk = {
-  cap: string;
-  title: string;
-  body?: string;
-  cancelLabel?: string;
-  confirmLabel: string;
-  confirmTone?: "yellow" | "ink" | "sage";
-  extraLabel?: string;
-  kind?: "confirm" | "notice" | "fail";
-};
+import type { ConfirmAsk } from "@/types/ui";
 
 function soloKind(kind?: ConfirmAsk["kind"]): boolean {
   return kind === "notice" || kind === "fail";
@@ -127,75 +116,4 @@ export function ConfirmSheet({
       </Pressable>
     </Modal>
   );
-}
-
-export function useConfirmSheet() {
-  const pending = useRef<(() => void) | undefined>(undefined);
-  const extraRun = useRef<(() => void) | undefined>(undefined);
-  const [ask, setAsk] = useState<ConfirmAsk | undefined>(undefined);
-
-  function close() {
-    pending.current = undefined;
-    extraRun.current = undefined;
-    setAsk(undefined);
-  }
-
-  function prompt(next: ConfirmAsk, run: () => void) {
-    pending.current = run;
-    extraRun.current = undefined;
-    setAsk({ ...next, kind: "confirm" });
-  }
-
-  function notice(
-    next: {
-      cap: string;
-      title: string;
-      body?: string;
-      doneLabel?: string;
-      extraLabel?: string;
-    },
-    extra?: () => void,
-  ) {
-    pending.current = undefined;
-    extraRun.current = extra;
-    setAsk({
-      cap: next.cap,
-      title: next.title,
-      body: next.body,
-      confirmLabel: next.doneLabel ?? "OK",
-      confirmTone: "yellow",
-      extraLabel: next.extraLabel,
-      kind: "notice",
-    });
-  }
-
-  function fail(cap: string, cause: unknown) {
-    pending.current = undefined;
-    extraRun.current = undefined;
-    setAsk({
-      cap,
-      title: cause instanceof Error ? cause.message : "Something went wrong",
-      confirmLabel: "OK",
-      confirmTone: "yellow",
-      kind: "fail",
-    });
-  }
-
-  function cancel() {
-    close();
-  }
-
-  function confirm() {
-    const run = pending.current;
-    close();
-    run?.();
-  }
-
-  function extra() {
-    const run = extraRun.current;
-    close();
-    run?.();
-  }
-
-  return { ask, prompt, notice, fail, cancel, confirm, extra };
 }

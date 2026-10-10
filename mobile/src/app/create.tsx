@@ -6,7 +6,7 @@ import { BackHandler, KeyboardAvoidingView, Platform, ScrollView, Share, View } 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ChainLoading } from "@/components/ChainLoading";
-import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { AssetsStep } from "@/components/create/AssetsStep";
 import {
   CredentialModeStep,
@@ -24,7 +24,6 @@ import { TimingStep } from "@/components/create/TimingStep";
 import { ErrorLine, WizardFooter, WizardTop } from "@/components/create/WizardChrome";
 import { Cap, PrimaryButton, TextLink } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
-import { useOwnerTx } from "@/hooks/useOwnerTx";
 import { registerEstate } from "@/services/api/estateMetadata";
 import { colors, space } from "@/theme";
 import type {
@@ -36,7 +35,7 @@ import type {
   HeirKind,
   TapProgress,
 } from "@/types/create";
-import { useSolBalance, useWalletTokens } from "@/hooks";
+import { useConfirmSheet, useOwnerTx, useSolBalance, useWalletTokens } from "@/hooks";
 import { SOL_ASSET_ID } from "@/constants/create";
 import {
   CHECK_IN_MAX_DAYS,
@@ -63,6 +62,7 @@ import {
   setupProblemMessage,
   shortAddress,
   solToLamports,
+  txFailureMessage,
 } from "@/lib";
 import { SECONDS_PER_DAY } from "@/constants/time";
 
@@ -78,14 +78,6 @@ function phaseForStep(step: number): CreatePhase {
   if (step === 3) return "timing";
   if (step === 4) return "review";
   return "heir";
-}
-
-function failCopy(cause: unknown): string {
-  const raw = cause instanceof Error ? cause.message : "";
-  if (/user (reject|denied|cancel)|rejected the request|cancel+ed the request/i.test(raw)) {
-    return "Signing cancelled.";
-  }
-  return raw.length > 0 ? raw : "Could not create the estate.";
 }
 
 export default function CreateScreen() {
@@ -397,7 +389,7 @@ export default function CreateScreen() {
       setFlash("Estate created.");
       router.replace("/");
     } catch (cause) {
-      setSubmitError(failCopy(cause));
+      setSubmitError(txFailureMessage(cause, "Could not create the estate."));
       setPhase("review");
     }
   }
