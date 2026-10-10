@@ -7,7 +7,10 @@
     "dev": "expo start",
     "start": "expo start",
     "android": "expo run:android",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "apk": "cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a",
+    "apk:devnet": "bun --env-file=.env.devnet apk",
+    "apk:mainnet": "bun --env-file=.env.mainnet apk"
   },
   "dependencies": {
     "@expo-google-fonts/space-grotesk": "^0.4.1",
