@@ -23,7 +23,13 @@ const strategies: { icon: string; title: string; desc: string; tone: TileTone }[
 ];
 ---
 
-<Section id="yield" index={4} total={10} label={t("yieldSection.eyebrow")}>
+{/* Strategies route on mainnet only, so the running head says so. */}
+<Section
+  id="yield"
+  index={4}
+  total={10}
+  label={`${t("yieldSection.eyebrow")} · ${t("yieldSection.availability")}`}
+>
   <SectionLead>
     <Fragment slot="headline">
       {t("yieldSection.title1")}{" "}

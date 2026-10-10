@@ -22,7 +22,10 @@ export const appPath = (path: string, locale: string) => appHref(APP_URL, path, 
 /** The app's home. Its router opens the dashboard. */
 export const appUrl = (locale: string) => appPath("/estates", locale);
 
-export const appCreateVaultUrl = (locale: string) => appPath("/create-vault", locale);
+/** Heirloom Stocks is its own app. It has no locale handoff, so this is a bare URL. */
+export const STOCKS_URL = "https://stocks.heirlm.xyz";
+
+export const appCreateVaultUrl =(locale: string) => appPath("/create-vault", locale);
 
 /**
  * The app reads `?tour=1` and starts the product tour on arrival. It points at
