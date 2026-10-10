@@ -165,6 +165,11 @@ export const EstateHeirTile: React.FC<EstateHeirTileProps> = ({
           empty={t("common.notSet")}
         />
       </div>
+      {!estate.checkInSigner && (
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+          {t("dashboard.checkInSignerHelp")}
+        </p>
+      )}
     </Panel>
   );
 };

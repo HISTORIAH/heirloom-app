@@ -33,14 +33,15 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
       />
     );
   }
-  const initial = label.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase();
+  // No image, or it failed to load: the first two letters stand in for it.
+  const initials = label.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase();
   return (
     <div
       className={`${dim} ${accent} flex shrink-0 items-center justify-center ${radius} border border-tile-line`}
       aria-hidden="true"
     >
-      {initial ? (
-        <span className={`font-bold ${fontSize}`}>{initial}</span>
+      {initials ? (
+        <span className={`font-bold ${fontSize}`}>{initials}</span>
       ) : (
         <Coins className={innerIcon} strokeWidth={2.5} />
       )}

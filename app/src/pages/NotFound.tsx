@@ -13,17 +13,16 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-[var(--page-pad)]">
+    <div className="flex flex-1 items-center justify-center bg-background px-[var(--page-pad)] py-16">
       <div className="max-w-md text-center">
         <p className="ed-label">404</p>
         <h1 className="hero-display mt-3">
           {t("notFound.headline1")} {t("notFound.headline2")}
         </h1>
         <p className="ed-lede mt-4 text-muted-foreground">{t("notFound.description")}</p>
-        {/* The dashboard, not "/" — that is a redirect to here anyway, and the
-            header's Home control means the marketing site on the other origin. */}
+        {/* The dashboard, not "/": that is only a redirect to it anyway. */}
         <Button variant="flat-yellow" size="lg" className="mt-8" asChild>
-          <Link to="/dashboard">
+          <Link to="/estates">
             <ArrowLeft className="h-4 w-4" /> {t("notFound.returnHome")}
           </Link>
         </Button>

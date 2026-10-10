@@ -26,7 +26,7 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
     placement: "center",
     title: t("dashboard.tour.step1Title"),
     content: t("dashboard.tour.step1Content"),
-    data: { route: "/dashboard" },
+    data: { route: "/estates" },
   });
 
   // 2. Create Vault wizard — four sub-steps, each spotlighted in order.
@@ -66,7 +66,7 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
       placement: "top",
       title: t("dashboard.tour.step6Title"),
       content: t("dashboard.tour.step6Content"),
-      data: { route: "/dashboard" },
+      data: { route: "/estates" },
     });
   } else {
     steps.push({
@@ -74,7 +74,7 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
       placement: "auto",
       title: t("dashboard.tour.step7Title"),
       content: t("dashboard.tour.step7Content"),
-      data: { route: "/dashboard" },
+      data: { route: "/estates" },
     });
   }
 
@@ -84,7 +84,7 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
     placement: "auto",
     title: t("dashboard.tour.step8Title"),
     content: t("dashboard.tour.step8Content"),
-    data: { route: "/claim" },
+    data: { route: "/inherit" },
   });
 
   // 4b. Claim — manual lookup fallback.
@@ -93,7 +93,7 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
     placement: "top",
     title: t("dashboard.tour.step9Title"),
     content: t("dashboard.tour.step9Content"),
-    data: { route: "/claim" },
+    data: { route: "/inherit" },
   });
 
   // 5. Heartbeat — spotlight the lookup panel.

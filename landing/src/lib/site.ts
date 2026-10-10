@@ -20,13 +20,13 @@ export const APP_URL = "https://app.heirlm.xyz";
 export const appPath = (path: string, locale: string) => appHref(APP_URL, path, locale);
 
 /** The app's home. Its router opens the dashboard. */
-export const appUrl = (locale: string) => appPath("/dashboard", locale);
+export const appUrl = (locale: string) => appPath("/estates", locale);
 
 export const appCreateVaultUrl = (locale: string) => appPath("/create-vault", locale);
 
 /**
  * The app reads `?tour=1` and starts the product tour on arrival. It points at
- * `/dashboard` rather than the app root so the hand-off costs one request
+ * `/estates` rather than the app root so the hand-off costs one request
  * instead of a redirect the tour's first step would only undo.
  */
 export const appTourUrl = (locale: string) => {

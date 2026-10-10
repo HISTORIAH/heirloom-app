@@ -237,7 +237,7 @@ const CreateVaultPage = () => {
   return (
     <>
       <div
-        className="min-h-screen overflow-x-clip bg-background"
+        className="flex-1 overflow-x-clip bg-background"
         aria-hidden={isSubmitting}
         style={isSubmitting ? { pointerEvents: "none" } : undefined}
       >
@@ -408,7 +408,7 @@ const CreateVaultPage = () => {
           requiredSol={requiredSol}
           onRetry={handleRetry}
           onBackToReview={creation.close}
-          onDone={() => navigate("/dashboard")}
+          onDone={() => navigate("/estates")}
         />
       )}
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />

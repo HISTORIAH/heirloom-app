@@ -1,4 +1,4 @@
-import { ExternalLink, Heart, Loader2 } from "lucide-react";
+import { Check, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelCap } from "@/components/surface/Panel";
 import { toneMuted } from "@/components/surface/tones";
@@ -6,6 +6,7 @@ import { cn, formatDuration, getSolanaExplorerTxUrl } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 import type { EstateData } from "@/contexts/VaultContext";
 import {
+  STATE_DOT,
   STATE_LINE,
   STATE_TONE,
   DASHBOARD_CARD,
@@ -55,7 +56,7 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
   const deadline = countdownDeadline(estate, state);
   const units = [
     { label: t("dashboard.days"), value: countdown.days },
-    { label: t("dashboard.hours"), value: countdown.hours },
+    { label: t("dashboard.hours"), value: String(countdown.hours).padStart(2, "0") },
   ];
 
   const facts = [
@@ -80,7 +81,10 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
           <span className="inline-flex rounded-full border border-tile-line px-2.5 py-1">
             <PanelCap className={muted}>{t("dashboard.vaultStatus")}</PanelCap>
           </span>
-          <h2 className="ed-h2 mt-[18px] font-bold tracking-[-0.03em]">{meta.label}</h2>
+          <div className="mt-[18px] flex items-center gap-3.5">
+            <span aria-hidden="true" className={cn("h-3.5 w-3.5 shrink-0 rounded-full", STATE_DOT[state])} />
+            <h2 className="ed-h2 font-bold tracking-[-0.03em]">{meta.label}</h2>
+          </div>
           <p className={cn("mt-3.5 max-w-[46ch] text-lg font-medium", muted)}>
             {meta.description}
           </p>
@@ -97,9 +101,9 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
               {sending ? (
                 <><Loader2 className="h-5 w-5 animate-spin" /> {t("dashboard.signing")}</>
               ) : state === "claimable" ? (
-                <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.imAlive")}</>
+                <><Check className="h-5 w-5" strokeWidth={2.5} /> {t("dashboard.imAlive")}</>
               ) : (
-                <><Heart className="h-5 w-5" fill="currentColor" /> {t("dashboard.checkIn")}</>
+                <><Check className="h-5 w-5" strokeWidth={2.5} /> {t("dashboard.checkIn")}</>
               )}
             </Button>
             {!sending && (

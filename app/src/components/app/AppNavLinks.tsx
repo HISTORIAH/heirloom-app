@@ -1,68 +1,40 @@
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { BookOpen, Gift, Heart, LayoutDashboard } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "@heirloom/i18n";
-import { DOCS_URL } from "@/config";
-import { trackAnalyticsEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
-export const APP_DESTINATIONS = [
-  { path: "/dashboard", labelKey: "nav.dashboard", Icon: LayoutDashboard },
-  { path: "/claim", labelKey: "nav.claimInheritance", Icon: Gift },
-  { path: "/heartbeat", labelKey: "nav.heartbeat", Icon: Heart },
+/**
+ * The app's two destinations. Check-in and guardian pause live on the estate itself, so
+ * they are not here. `alsoActiveOn` keeps a tab lit on the routes that belong to it.
+ */
+const APP_DESTINATIONS = [
+  { path: "/estates", labelKey: "nav.estates", alsoActiveOn: ["/create-vault"] },
+  { path: "/inherit", labelKey: "nav.inherit", alsoActiveOn: [] },
 ] as const;
 
-export const AppNavLinks: React.FC<{
-  onNavigate?: () => void;
-  variant?: "bar" | "drawer";
-}> = ({ onNavigate, variant = "bar" }) => {
+export const AppNavLinks: React.FC = () => {
   const { t } = useTranslation("app");
-  const navigate = useNavigate();
   const { pathname } = useLocation();
 
   return (
     <>
-      {APP_DESTINATIONS.map(({ path, labelKey, Icon }) => {
-        const active = pathname === path || pathname.startsWith(`${path}/`);
+      {APP_DESTINATIONS.map(({ path, labelKey, alsoActiveOn }) => {
+        const active = [path, ...alsoActiveOn].some(
+          (route) => pathname === route || pathname.startsWith(`${route}/`),
+        );
         return (
-          <button
+          <Link
             key={path}
-            type="button"
+            to={path}
             aria-current={active ? "page" : undefined}
-            onClick={() => {
-              onNavigate?.();
-              navigate(path);
-            }}
             className={cn(
-              variant === "drawer"
-                ? "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
-                : "flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft",
-              active && "bg-tile-soft",
+              "flex min-h-11 items-center rounded-lg px-5 text-xs font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft",
+              active ? "bg-tile-soft text-foreground" : "text-foreground/75",
             )}
           >
-            <Icon className="h-4 w-4" strokeWidth={2} />
             {t(labelKey)}
-          </button>
+          </Link>
         );
       })}
-
-      {/* The docs are on the landing's origin, so this is an anchor rather
-          than a router push — the router has no route to give it. */}
-      <a
-        href={DOCS_URL}
-        onClick={() => {
-          trackAnalyticsEvent("docs_link_clicked");
-          onNavigate?.();
-        }}
-        className={cn(
-          variant === "drawer"
-            ? "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
-            : "flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-tile-soft",
-        )}
-      >
-        <BookOpen className="h-4 w-4" strokeWidth={2} />
-        {t("nav.docs")}
-      </a>
     </>
   );
 };

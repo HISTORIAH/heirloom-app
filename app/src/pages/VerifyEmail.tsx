@@ -178,7 +178,7 @@ function VerifyWithWallet({
             {t("verifyEmail.successDesc")}
           </p>
           <div className="seal-rise mt-6" style={{ animationDelay: "0.58s" }}>
-            <Button variant="flat-yellow" className="w-full" onClick={() => navigate("/dashboard")}>
+            <Button variant="flat-yellow" className="w-full" onClick={() => navigate("/estates")}>
               {t("verifyEmail.goToDashboard")}
             </Button>
           </div>
@@ -213,7 +213,7 @@ function VerifyWithWallet({
             <Button variant="flat" onClick={() => setState({ kind: "form" })}>
               {t("verifyEmail.enterCodeInstead")}
             </Button>
-            <Button variant="flat-outline" onClick={() => navigate("/dashboard")}>
+            <Button variant="flat-outline" onClick={() => navigate("/estates")}>
               {t("verifyEmail.goToDashboard")}
             </Button>
           </div>
@@ -282,7 +282,7 @@ const VerifyEmailPage = () => {
         title={t("verifyEmail.invalidCodeTitle")}
         description={t("verifyEmail.invalidCodeDesc")}
       >
-        <Button variant="flat-outline" className="mt-5" onClick={() => navigate("/dashboard")}>
+        <Button variant="flat-outline" className="mt-5" onClick={() => navigate("/estates")}>
           {t("verifyEmail.goToDashboard")}
         </Button>
       </StateBlock>
@@ -313,7 +313,7 @@ const VerifyEmailPage = () => {
 
   return (
     <>
-      <div className="min-h-screen overflow-x-clip bg-background">
+      <div className="flex-1 overflow-x-clip bg-background">
         <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
         <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
           {/* The seal replaces the mail mark once verified. */}

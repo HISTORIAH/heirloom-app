@@ -23,6 +23,8 @@ interface EstateAssetsPanelProps {
   tokenMeta: Map<string, TokenMeta>;
   /** USD prices by mint (SOL under the wrapped mint). Undefined while loading or unavailable. */
   prices: UsdPriceMap | undefined;
+  /** Prices arrive after the estate; the value shimmers until they do. */
+  pricesLoading: boolean;
   showYieldStaking: boolean;
   stakingStrategy: Strategy | null;
   luloStrategy: LuloStrategy | null;
@@ -41,6 +43,7 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   estate,
   tokenMeta,
   prices,
+  pricesLoading,
   showYieldStaking,
   stakingStrategy,
   luloStrategy,
@@ -154,9 +157,13 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
             <div>
               <span className="text-sm text-muted-foreground">{t("dashboard.tokenValue")}</span>
-              <p className="mt-1 font-display text-3xl font-bold leading-none tracking-[-0.02em] tabular-nums">
-                {tokensTotal !== undefined ? formatUsd(tokensTotal) : "—"}
-              </p>
+              {pricesLoading ? (
+                <div aria-hidden="true" className="skeleton mt-1 h-[30px] w-40" />
+              ) : (
+                <p className="mt-1 font-display text-3xl font-bold leading-none tracking-[-0.02em] tabular-nums">
+                  {tokensTotal !== undefined ? formatUsd(tokensTotal) : t("dashboard.noPriceData")}
+                </p>
+              )}
             </div>
             {estateTotal > 0 && (
               <span className="text-sm text-muted-foreground tabular-nums">

@@ -8,6 +8,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { VaultProvider } from "@/contexts/VaultContext";
 import { TourProvider } from "@/contexts/TourContext";
 import AppTour from "@/components/tour/AppTour";
+import { AppFooter } from "@/components/app/AppFooter";
 import Seo from "@/components/Seo";
 import { useTranslation } from "@heirloom/i18n";
 
@@ -23,14 +24,13 @@ import { useAnalytics } from "@/contexts/AnalyticsContext";
 const queryClient = new QueryClient();
 
 /**
- * `/` is not a page here any more — the landing owns it, on the other origin.
- * The redirect carries the query string over because the hand-off travels in
- * it: a bookmark or an old link that still points at the app root with
- * `?tour=1` would otherwise lose the tour on the way to the dashboard.
+ * Sends an old path to its current one. The query string comes along because
+ * hand-offs travel in it: a bookmark or an old link with `?tour=1` would
+ * otherwise lose the tour on the way.
  */
-const RootRedirect = () => {
+const RedirectTo = ({ pathname }: { pathname: string }) => {
   const { search, hash } = useLocation();
-  return <Navigate to={{ pathname: "/dashboard", search, hash }} replace />;
+  return <Navigate to={{ pathname, search, hash }} replace />;
 };
 
 const RouteAnalytics = () => {
@@ -53,8 +53,8 @@ const RouteSeo = () => {
   const { t } = useTranslation("app");
   const titles: Record<string, string> = {
     "/create-vault": t("seo.createVaultTitle"),
-    "/dashboard": t("seo.dashboardTitle"),
-    "/claim": t("seo.claimTitle"),
+    "/estates": t("seo.dashboardTitle"),
+    "/inherit": t("seo.claimTitle"),
     "/defer": t("seo.deferTitle"),
     "/heartbeat": t("seo.heartbeatTitle"),
   };
@@ -73,20 +73,28 @@ const App = () => (
             <RouteSeo />
             <TourProvider>
               <AppTour />
-              <Routes>
-                {/* The root of this origin used to be the landing page. It
-                  lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
-                  dashboard — which already handles the disconnected case
-                  with a connect prompt of its own. */}
-                <Route path="/" element={<RootRedirect />} />
-                <Route path="/create-vault" element={<CreateVault />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/claim" element={<Claim />} />
-                <Route path="/defer" element={<Defer />} />
-                <Route path="/heartbeat" element={<Heartbeat />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              {/* Every page fills the space above the footer, so short pages
+                  still put it at the bottom of the window. */}
+              <div className="flex min-h-screen flex-col">
+                <Routes>
+                  {/* The root of this origin used to be the landing page. It
+                    lives on heirlm.xyz now, so app.heirlm.xyz/ opens the
+                    dashboard — which already handles the disconnected case
+                    with a connect prompt of its own. */}
+                  <Route path="/" element={<RedirectTo pathname="/estates" />} />
+                  <Route path="/create-vault" element={<CreateVault />} />
+                  <Route path="/estates" element={<Dashboard />} />
+                  <Route path="/inherit" element={<Claim />} />
+                  {/* The old names, still in emails, bookmarks and older landing builds. */}
+                  <Route path="/dashboard" element={<RedirectTo pathname="/estates" />} />
+                  <Route path="/claim" element={<RedirectTo pathname="/inherit" />} />
+                  <Route path="/defer" element={<Defer />} />
+                  <Route path="/heartbeat" element={<Heartbeat />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <AppFooter />
+              </div>
             </TourProvider>
           </BrowserRouter>
         </VaultProvider>
