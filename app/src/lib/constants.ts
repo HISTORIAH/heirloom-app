@@ -68,6 +68,12 @@ export const HEIRLOOM_INSTRUCTION_TRACE_COSTS: Partial<
   [HeirloomInstruction.Claim]: { token: 10, sol: 1 },
 };
 
+/** Heirloom's X account, linked from the app footer. */
+export const X_URL = "https://x.com/heirloom_app";
+
+/** How long the dashboard waits on the first estate fetch before offering Retry. */
+export const ESTATE_FETCH_TIMEOUT_MS = 10_000;
+
 /** How long a copy button says "Copied" before it resets. */
 export const COPIED_RESET_MS = 2000;
 

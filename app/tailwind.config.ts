@@ -15,8 +15,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-        body: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        display: ['"Space Grotesk"', "system-ui", "sans-serif"],
+        body: ['"Space Grotesk"', "system-ui", "sans-serif"],
+        mono: ['"Space Mono"', "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -57,6 +58,7 @@ export default {
           line: "hsl(var(--tile-line))",
           soft: "hsl(var(--tile-soft))",
         },
+        "brand-teal": "hsl(var(--brand-teal))",
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -87,7 +89,5 @@ export default {
       },
     },
   },
-  plugins: [
-    tailwindcssAnimate,
-  ],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

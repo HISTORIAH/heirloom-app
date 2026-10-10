@@ -86,7 +86,10 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
   const vaultEmpty = isVaultEmpty(estate);
   const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
   const { metadata: tokenMeta } = useTokenMetadata(vaultMints);
-  const { data: prices } = useTokenPrices([WRAPPED_SOL_MINT, ...vaultMints]);
+  const { data: prices, isLoading: pricesLoading } = useTokenPrices([
+    WRAPPED_SOL_MINT,
+    ...vaultMints,
+  ]);
   const initial = computeTick(estate, vaultEmpty);
   const [countdown, setCountdown] = useState<CountdownParts>(initial.countdown);
   const [computedState, setComputedState] = useState<UiState>(initial.state);
@@ -263,6 +266,7 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
           estate={estate}
           tokenMeta={tokenMeta}
           prices={prices}
+          pricesLoading={pricesLoading}
           showYieldStaking={showYieldStaking}
           stakingStrategy={stakingStrategy}
           luloStrategy={luloStrategy?.type === "lulo" ? luloStrategy : null}

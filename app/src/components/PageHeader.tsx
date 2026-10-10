@@ -1,39 +1,25 @@
 import { useState, useRef, useEffect } from "react";
-import { useWallet } from "@/contexts/WalletContext";
 import { Link } from "react-router-dom";
-import { ArrowLeft, LogOut, Wallet, ChevronDown, Copy, Check, Menu, X } from "lucide-react";
-import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
+import { LogOut, ChevronDown, Copy, Check } from "lucide-react";
+import { useTranslation } from "@heirloom/i18n";
+import { useWallet } from "@/contexts/WalletContext";
 import { AppNavLinks } from "@/components/app/AppNavLinks";
-import { landingUrl } from "@/config";
+import { Button } from "@/components/ui/button";
+import VaultMark from "@/components/VaultMark";
+import { truncateAddress } from "@/lib/utils";
 
 interface PageHeaderProps {
-  /** Where the back control goes. An absolute URL leaves the app entirely.
-      Defaults to the landing, in the language this app is showing. */
-  backTo?: string;
-  backLabel?: string;
   onDisconnect?: () => void;
   onConnectWallet?: () => void;
-  /** Hide the disconnected connect control (empty dashboard already has a CTA). */
-  hideConnect?: boolean;
 }
 
-const PageHeader: React.FC<PageHeaderProps> = ({
-  backTo,
-  backLabel,
-  onDisconnect,
-  onConnectWallet,
-  hideConnect = false,
-}) => {
-  const { t, i18n } = useTranslation("app");
+/** The app bar: the mark home, the two destinations, and the wallet. */
+const PageHeader: React.FC<PageHeaderProps> = ({ onDisconnect, onConnectWallet }) => {
+  const { t } = useTranslation("app");
   const { isConnected, disconnectWallet, publicKey } = useWallet();
-  // Home is the marketing site, which is no longer part of this bundle — and
-  // the visitor most likely arrived from it, in this language.
-  const home = backTo ?? landingUrl(i18n.resolvedLanguage ?? i18n.language);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
-  const homeLabel = backLabel ?? t("common.home");
 
   useEffect(() => {
     if (!walletDropdownOpen) return;
@@ -42,18 +28,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         setWalletDropdownOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [walletDropdownOpen]);
-
-  useEffect(() => {
-    if (!navOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setNavOpen(false);
+      if (e.key === "Escape") setWalletDropdownOpen(false);
     };
+    document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [navOpen]);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [walletDropdownOpen]);
 
   const handleDisconnect = () => {
     setWalletDropdownOpen(false);
@@ -64,53 +48,52 @@ const PageHeader: React.FC<PageHeaderProps> = ({
     }
   };
 
-  const chromeBtn =
-    "grid h-10 w-10 shrink-0 place-items-center rounded-lg transition-colors hover:bg-tile-soft";
+  const handleCopy = async () => {
+    if (!publicKey) return;
+    try {
+      await navigator.clipboard.writeText(publicKey);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+        setWalletDropdownOpen(false);
+      }, 1200);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  const shortAddress = publicKey ? truncateAddress(publicKey, 4) : "";
 
   const walletControl = isConnected ? (
-    <div className="relative md:ml-3" ref={walletDropdownRef}>
+    <div className="relative ml-2" ref={walletDropdownRef}>
       <button
         type="button"
-        onClick={() => {
-          setNavOpen(false);
-          setWalletDropdownOpen((v) => !v);
-        }}
-        aria-label={publicKey ?? t("common.connectWallet")}
-        className={`${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:rounded-lg md:border md:border-tile-line md:bg-tile-soft md:px-3 md:py-2 md:hover:bg-secondary`}
+        onClick={() => setWalletDropdownOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={walletDropdownOpen}
+        aria-label={t("nav.walletMenu", { address: shortAddress })}
+        className="flex min-h-11 items-center gap-2.5 rounded-lg border border-tile-line bg-background px-5 font-mono text-[13px] font-bold transition-colors hover:bg-tile-soft"
       >
-        <Wallet className="h-4 w-4 md:hidden" strokeWidth={2.25} />
-        <span className="hidden font-mono text-xs font-semibold md:inline">
-          {publicKey?.slice(0, 6)}...{publicKey?.slice(-4)}
-        </span>
+        <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent-lime" />
+        {shortAddress}
         <ChevronDown
-          className={`hidden h-3.5 w-3.5 transition-transform duration-200 md:block ${
+          aria-hidden="true"
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${
             walletDropdownOpen ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {walletDropdownOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 space-y-1 rounded-xl border border-tile-line bg-background p-2 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]">
-          {publicKey && (
-            <p className="truncate px-3 py-1.5 font-mono text-[11px] text-muted-foreground md:hidden">
-              {publicKey}
-            </p>
-          )}
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-2 w-64 space-y-1 rounded-xl border border-tile-line bg-background p-2 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]"
+        >
           <button
-            onClick={async () => {
-              if (!publicKey) return;
-              try {
-                await navigator.clipboard.writeText(publicKey);
-                setCopied(true);
-                setTimeout(() => {
-                  setCopied(false);
-                  setWalletDropdownOpen(false);
-                }, 1200);
-              } catch {
-                setCopied(false);
-              }
-            }}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
+            type="button"
+            role="menuitem"
+            onClick={handleCopy}
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold transition-colors hover:bg-tile-soft"
           >
             {copied ? (
               <>
@@ -124,105 +107,41 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </button>
           <div className="border-t border-tile-line" />
           <button
+            type="button"
+            role="menuitem"
             onClick={handleDisconnect}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-accent-red transition-colors hover:bg-accent-red/10"
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold text-accent-red transition-colors hover:bg-accent-red/10"
           >
             <LogOut className="h-4 w-4" /> {t("common.disconnectWallet")}
           </button>
         </div>
       )}
     </div>
-  ) : hideConnect ? null : (
-    <button
-      type="button"
+  ) : (
+    <Button
+      variant="flat"
+      size="sm"
       onClick={onConnectWallet}
-      aria-label={t("common.connectWallet")}
-      className={`${chromeBtn} md:ml-3 md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`}
+      className="ml-2 h-11 px-6 tracking-[0.12em]"
     >
-      <Wallet className="h-4 w-4" strokeWidth={2.25} />
-      <span className="hidden text-[11px] font-bold uppercase tracking-[0.18em] md:inline md:text-xs md:hover:underline">
-        {t("common.connectWallet")}
-      </span>
-    </button>
+      {t("common.connectWallet")}
+    </Button>
   );
 
   return (
-    <div className="sticky top-0 z-50 border-b border-tile-line bg-background">
-      <div className="flex h-[var(--nav-h)] items-center justify-between px-[var(--page-pad)]">
-        <BackControl to={home} label={homeLabel} className={`group ${chromeBtn} md:flex md:h-auto md:w-auto md:items-center md:gap-2 md:px-0 md:hover:bg-transparent`} />
+    <header className="sticky top-0 z-50 border-b border-t-4 border-b-tile-line border-t-brand-teal bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-[var(--page-pad)] py-2.5">
+        <Link to="/estates" className="flex min-h-11 items-center gap-3">
+          <VaultMark className="h-9 w-9" />
+          <span className="text-[28px] font-bold leading-none tracking-[-0.025em]">Heirloom</span>
+        </Link>
 
-        <div className="flex items-center">
-          <nav className="hidden items-center gap-1 md:flex">
-            <AppNavLinks />
-          </nav>
-          {/* The app is translated into the same nine languages as the landing
-              and, since the split, is where a visitor handed over from `/ja/`
-              spends the whole session — so the switcher has to be reachable
-              here too. Styled after the wallet dropdown beside it, not after
-              the landing's, because they share this bar. */}
-          <LanguageSwitcher
-            className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
-            menuClassName="absolute right-0 top-full z-50 mt-2 w-44 space-y-1 rounded-xl border border-tile-line bg-background p-2 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)]"
-            itemClassName="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
-            activeItemClassName="!text-foreground bg-tile-soft"
-            globeClassName="h-4 w-4"
-            chevronClassName="h-3.5 w-3.5 opacity-60"
-          />
+        <nav aria-label={t("nav.appNav")} className="flex flex-wrap items-center gap-1.5">
+          <AppNavLinks />
           {walletControl}
-          <button
-            type="button"
-            className={`${chromeBtn} md:hidden`}
-            aria-expanded={navOpen}
-            aria-label={navOpen ? t("nav.closeMenu") : t("nav.openMenu")}
-            onClick={() => {
-              setWalletDropdownOpen(false);
-              setNavOpen((v) => !v);
-            }}
-          >
-            {navOpen ? <X className="h-5 w-5" strokeWidth={2} /> : <Menu className="h-5 w-5" strokeWidth={2} />}
-          </button>
-        </div>
+        </nav>
       </div>
-
-      {navOpen && (
-        <div className="border-t border-tile-line bg-background md:hidden">
-          <div className="space-y-1 px-[var(--page-pad)] py-3">
-            <AppNavLinks variant="drawer" onNavigate={() => setNavOpen(false)} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/**
- * The back control. It is a plain anchor when it points off-origin — which is
- * the default now that home is heirlm.xyz — and a router link when a caller
- * hands it an in-app path.
- */
-const BackControl: React.FC<{ to: string; label: string; className: string }> = ({
-  to,
-  label,
-  className,
-}) => {
-  const inner = (
-    <>
-      <ArrowLeft
-        className="h-4 w-4 transition-transform group-hover:-translate-x-1"
-        strokeWidth={2.25}
-      />
-      <span className="hidden text-sm font-semibold md:inline md:hover:underline">{label}</span>
-    </>
-  );
-
-  return /^https?:\/\//.test(to) ? (
-    <a href={to} aria-label={label} className={className}>
-      {inner}
-    </a>
-  ) : (
-    <Link to={to} aria-label={label} className={className}>
-      {inner}
-    </Link>
+    </header>
   );
 };
 

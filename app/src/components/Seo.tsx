@@ -12,7 +12,7 @@ export interface SeoProps {
   /** Full <title>. Falls back to the app default. */
   title?: string;
   description?: string;
-  /** Path of the current route, e.g. "/dashboard". Used for canonical + og:url. */
+  /** Path of the current route, e.g. "/estates". Used for canonical + og:url. */
   path?: string;
 }
 

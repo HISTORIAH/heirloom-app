@@ -126,6 +126,8 @@ export interface UpdateEstateFields {
 interface VaultState {
   estates: EstateData[];
   loading: boolean;
+  /** True once the first fetch for the connected wallet has finished, whether it worked or not. */
+  hasLoaded: boolean;
   error: string | null;
   pendingTxId: string | null;
   pendingCreate: boolean;
@@ -163,6 +165,7 @@ const VaultProviderInner: React.FC<{
   const { rpc, rpcSubscriptions, transactionVersion } = useWallet();
   const [estates, setEstates] = useState<EstateData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingTxId, setPendingTxId] = useState<string | null>(null);
   const [pendingCreate, setPendingCreate] = useState(false);
@@ -184,7 +187,6 @@ const VaultProviderInner: React.FC<{
 
   const fetchEstates = useCallback(async () => {
     setLoading(true);
-    setError(null);
     if (!authority) {
       setLoading(false);
 
@@ -202,67 +204,74 @@ const VaultProviderInner: React.FC<{
         () => ({}) as Awaited<ReturnType<typeof fetchEstatesMetadata>>,
       );
 
-      const results: EstateData[] = [];
-      for (const estate of onChainEstates) {
-        try {
-          const heir = toAddress(estate.data.heir);
-          const vaultPda = await getVaultAddress(authority, heir);
-          const [lamports, vaultTokens] = await Promise.all([
-            fetchVaultClaimableLamports(client, vaultPda),
-            discoverVaultTokenAccounts(vaultPda),
-          ]);
+      // Estates load side by side, so one slow vault doesn't hold up the rest.
+      const loaded = await Promise.all(
+        onChainEstates.map(async (estate): Promise<EstateData | null> => {
+          try {
+            const heir = toAddress(estate.data.heir);
+            const vaultPda = await getVaultAddress(authority, heir);
+            const [lamports, vaultTokens] = await Promise.all([
+              fetchVaultClaimableLamports(client, vaultPda),
+              discoverVaultTokenAccounts(vaultPda),
+            ]);
 
-          const lastCheckInTs = Number(estate.data.lastCheckInTs);
-          const checkInIntervalSecs = Number(estate.data.checkInIntervalSecs);
-          const gracePeriodSecs = Number(estate.data.gracePeriodSecs);
-          const delegatePauseExpiresAt = Number(estate.data.delegatePauseExpiresAt);
-          const createdAt = Number(estate.data.createdAt);
-          const hasTokenBalance = vaultTokens.length > 0;
-          const vaultEmpty =
-            estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
+            const lastCheckInTs = Number(estate.data.lastCheckInTs);
+            const checkInIntervalSecs = Number(estate.data.checkInIntervalSecs);
+            const gracePeriodSecs = Number(estate.data.gracePeriodSecs);
+            const delegatePauseExpiresAt = Number(estate.data.delegatePauseExpiresAt);
+            const createdAt = Number(estate.data.createdAt);
+            const hasTokenBalance = vaultTokens.length > 0;
+            const vaultEmpty =
+              estate.data.claimableAssets === 0 && Number(lamports) === 0 && !hasTokenBalance;
 
-          const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
-            lastCheckInTs,
-            checkInIntervalSecs,
-            gracePeriodSecs,
-            delegatePauseExpiresAt,
-            createdAt,
-            vaultEmpty,
-          });
+            const { state, secondsUntilGrace, secondsUntilClaimable } = computeEstateState({
+              lastCheckInTs,
+              checkInIntervalSecs,
+              gracePeriodSecs,
+              delegatePauseExpiresAt,
+              createdAt,
+              vaultEmpty,
+            });
 
-          results.push({
-            authority: estate.data.authority,
-            heir: estate.data.heir,
-            label: metadata[estate.address]?.name ?? undefined,
-            description: metadata[estate.address]?.description ?? undefined,
-            checkInIntervalSecs,
-            gracePeriodSecs,
-            lastCheckInTs,
-            delegatePauseDurationSecs: Number(estate.data.delegatePauseDurationSecs),
-            delegatePauseExpiresAt,
-            createdAt,
-            isMigrating: estate.data.isMigrating,
-            isDeferred: delegatePauseExpiresAt > 0,
-            delegate: unwrapOption(estate.data.delegate),
-            checkInSigner: unwrapOption(estate.data.checkInSigner),
-            claimableAssets: estate.data.claimableAssets,
-            estatePda: estate.address,
-            vaultPda,
-            solBalance: Number(lamports),
-            vaultTokens,
-            state,
-            secondsUntilGrace,
-            secondsUntilClaimable,
-          });
-        } catch {
-          // skip failed estates
-        }
-      }
-      setEstates(results);
+            return {
+              authority: estate.data.authority,
+              heir: estate.data.heir,
+              label: metadata[estate.address]?.name ?? undefined,
+              description: metadata[estate.address]?.description ?? undefined,
+              checkInIntervalSecs,
+              gracePeriodSecs,
+              lastCheckInTs,
+              delegatePauseDurationSecs: Number(estate.data.delegatePauseDurationSecs),
+              delegatePauseExpiresAt,
+              createdAt,
+              isMigrating: estate.data.isMigrating,
+              isDeferred: delegatePauseExpiresAt > 0,
+              delegate: unwrapOption(estate.data.delegate),
+              checkInSigner: unwrapOption(estate.data.checkInSigner),
+              claimableAssets: estate.data.claimableAssets,
+              estatePda: estate.address,
+              vaultPda,
+              solBalance: Number(lamports),
+              vaultTokens,
+              state,
+              secondsUntilGrace,
+              secondsUntilClaimable,
+            };
+          } catch {
+            // skip failed estates
+            return null;
+          }
+        }),
+      );
+      setEstates(loaded.filter((e): e is EstateData => e !== null));
+      // Cleared only on success, so a failed first load keeps its error card through the
+      // background polls instead of flashing the empty state between them.
+      setError(null);
     } catch (e: unknown) {
       setError(errMsg(e, "Failed to fetch estates"));
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   }, [authority, client]);
 
@@ -277,6 +286,7 @@ const VaultProviderInner: React.FC<{
       setPendingCreate(false);
       setError(null);
     }
+    setHasLoaded(false);
   }, [authority]);
 
   useEffect(() => {
@@ -607,6 +617,7 @@ const VaultProviderInner: React.FC<{
   const value: VaultState = {
     estates,
     loading,
+    hasLoaded,
     error,
     pendingTxId,
     pendingCreate,

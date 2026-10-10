@@ -41,6 +41,9 @@
     --tile-line: 60 9% 87%;
     --tile-soft: 60 10% 94%;
 
+    /* The app bar's top edge. */
+    --brand-teal: 192 76% 23%;
+
     /* Yellow is the primary accent. Lime is reserved for live/alive state,
        success, and editorial highlights. */
     --accent: 50 100% 50%;
@@ -209,6 +212,23 @@
     max-width: var(--app-max);
     margin-inline: auto;
   }
+
+  /* Loading placeholder: the warm fill with a lighter band sweeping across. */
+  .skeleton {
+    border-radius: 0.5rem;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--tile-soft)) 40%,
+      hsl(var(--tile-soft) / 0.35) 50%,
+      hsl(var(--tile-soft)) 60%
+    );
+    background-size: 200% 100%;
+    animation: skeletonSweep 1.4s linear infinite;
+  }
+  @keyframes skeletonSweep {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+  }
   /* ------------------------------------------------------ editorial fields
      A hairline box, not an ink one. Hover and focus stay on tile-line so the
      field does not jump to a solid black outline. Keyboard focus uses a
@@ -335,7 +355,8 @@
   .modal-rise,
   .seal-pop,
   .seal-check,
-  .seal-rise {
+  .seal-rise,
+  .skeleton {
     animation: none !important;
   }
   .seal-check {

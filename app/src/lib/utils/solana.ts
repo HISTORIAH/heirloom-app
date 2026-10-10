@@ -7,6 +7,14 @@ export function getSolanaExplorerTxUrl(signature: string): string {
   return `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;
 }
 
+/** Solana Explorer URL for an account or program address. */
+export function getSolanaExplorerAddressUrl(address: string): string {
+  if (SOLANA_RPC_ENDPOINT.includes("mainnet"))
+    return `https://explorer.solana.com/address/${address}`;
+  const cluster = SOLANA_RPC_ENDPOINT.includes("devnet") ? "devnet" : "localnet";
+  return `https://explorer.solana.com/address/${address}?cluster=${cluster}`;
+}
+
 /** A wallet-standard Solana chain id, e.g. "solana:devnet". */
 export type SolanaChain = `solana:${string}`;
 
