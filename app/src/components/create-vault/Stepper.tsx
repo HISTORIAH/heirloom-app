@@ -29,7 +29,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, o
             aria-label={label}
             aria-current={isActive ? "step" : undefined}
             className={cn(
-              "flex min-h-[44px] items-center gap-2 rounded-full px-2.5 text-[13px] font-medium transition-colors",
+              "flex min-h-[2.75rem] items-center gap-2 rounded-full px-2.5 text-[0.8125rem] font-medium transition-colors",
               isActive && "font-bold text-foreground",
               !isActive && isDone && "text-foreground",
               !isActive && !isDone && "text-muted-foreground",
@@ -38,7 +38,7 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep, completedSteps, o
           >
             <span
               className={cn(
-                "grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] font-bold tabular-nums",
+                "grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[0.6875rem] font-bold tabular-nums",
                 isActive && "border-foreground bg-foreground text-background",
                 !isActive && isDone && "border-foreground bg-background text-foreground",
                 !isActive && !isDone && "border-tile-line bg-background text-muted-foreground",

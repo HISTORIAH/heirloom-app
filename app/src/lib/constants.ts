@@ -1,4 +1,4 @@
-import { HeirloomInstruction } from "@historiah/heirloom";
+import { getAssetRecordSize, getVaultSize, HeirloomInstruction } from "@historiah/heirloom";
 import type { InstructionTraceCost } from "@/types/program";
 
 export const SOL_LABEL = "SOL";
@@ -20,7 +20,10 @@ export const SELECTED_WALLET_STORAGE_KEY = "heirloom:selected-wallet-account";
 export const NETWORK_FEE_LAMPORTS = 5000;
 /** Bytes a new token registration rents: the vault's token account and the asset record PDA. */
 export const TOKEN_ACCOUNT_SPACE = 165;
-export const ASSET_RECORD_SPACE = 21;
+export const ASSET_RECORD_SPACE = getAssetRecordSize();
+/** Bytes creating an estate rents: the estate account (Estate::LEN) and its vault. */
+export const ESTATE_SPACE = 189;
+export const VAULT_SPACE = getVaultSize();
 
 /** The program's ceiling for the check-in interval and grace period (365 days). */
 export const MAX_INTERVAL_SECS = 31_536_000;
@@ -64,6 +67,9 @@ export const HEIRLOOM_INSTRUCTION_TRACE_COSTS: Partial<
   [HeirloomInstruction.Revoke]: { token: 9, sol: 1 },
   [HeirloomInstruction.Claim]: { token: 10, sol: 1 },
 };
+
+/** How long a copy button says "Copied" before it resets. */
+export const COPIED_RESET_MS = 2000;
 
 /** Confirmation polling for the transaction progress view. */
 export const TX_CONFIRM_POLL_MS = 1500;

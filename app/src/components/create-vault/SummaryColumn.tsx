@@ -17,7 +17,11 @@ interface SummaryColumnProps {
   checkInSigner: string;
 }
 
+/** Step index of the review step, which already lists everything the facts card repeats. */
+const REVIEW_STEP = 3;
+
 const SummaryColumn: React.FC<SummaryColumnProps> = ({
+  step,
   heirAddress,
   solAmount,
   tokenSelections,
@@ -46,7 +50,7 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
     intervalDays === 365
       ? t("createVault.wizard.oneYearLong")
       : t("createVault.wizard.nDays", { count: intervalDays });
-  const graceText = t("createVault.wizard.nDays", { count: graceDays });
+  const gracePeriod = t("createVault.review.gracePeriod", { count: graceDays });
   const totalDays = intervalDays + graceDays;
 
   const timelineItems = [
@@ -59,7 +63,7 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
     {
       dotClass: "bg-accent-yellow",
       title: t("createVault.wizard.missOne", { date: date.short(intervalDays) }),
-      body: t("createVault.wizard.missOneDesc", { grace: graceText }),
+      body: t("createVault.review.missOneDesc", { gracePeriod }),
       showLine: true,
     },
     {
@@ -95,20 +99,22 @@ const SummaryColumn: React.FC<SummaryColumnProps> = ({
       </div>
 
       {/* Facts card */}
-      <div className="flex flex-col gap-1.5 rounded-xl bg-background p-4 text-sm">
-        <div className="flex justify-between gap-3">
-          <span className="text-muted-foreground">{t("createVault.wizard.heirPlain")}</span>
-          <span className="font-mono font-semibold">{heirDisplay}</span>
+      {step !== REVIEW_STEP && (
+        <div className="flex flex-col gap-1.5 rounded-xl bg-background p-4 text-sm">
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">{t("createVault.wizard.heirPlain")}</span>
+            <span className="font-mono font-semibold">{heirDisplay}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">{t("createVault.wizard.assetsPlain")}</span>
+            <span>{countText}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-muted-foreground">{t("createVault.wizard.checkInPlain")}</span>
+            <span>{t("createVault.wizard.everyNDays", { count: intervalDays })}</span>
+          </div>
         </div>
-        <div className="flex justify-between gap-3">
-          <span className="text-muted-foreground">{t("createVault.wizard.assetsPlain")}</span>
-          <span>{countText}</span>
-        </div>
-        <div className="flex justify-between gap-3">
-          <span className="text-muted-foreground">{t("createVault.wizard.checkInPlain")}</span>
-          <span>{t("createVault.wizard.everyNDays", { count: intervalDays })}</span>
-        </div>
-      </div>
+      )}
 
       <p className="text-xs leading-relaxed text-muted-foreground">
         {t("createVault.wizard.selfCustodial")}

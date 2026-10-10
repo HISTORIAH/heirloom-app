@@ -66,7 +66,7 @@ const HeartbeatStep: React.FC<Props> = ({
       {/* Static timeline card */}
       <div className="mb-6 rounded-2xl border border-tile-line p-5">
         <div>
-          <span className="block text-[13px] text-muted-foreground">
+          <span className="block text-[0.8125rem] text-muted-foreground">
             {t("createVault.wizard.ifNeverCheckIn")}
           </span>
           <span className="mt-1 block font-display text-3xl font-bold tracking-tight">
@@ -75,13 +75,13 @@ const HeartbeatStep: React.FC<Props> = ({
         </div>
 
         {/* Bar */}
-        <div className="mt-4 flex h-3.5 gap-[3px] overflow-hidden rounded-lg">
+        <div className="mt-4 flex h-3.5 gap-[0.1875rem] overflow-hidden rounded-lg">
           <span className="rounded-l-lg bg-foreground" style={{ width: `${intervalPct}%` }} />
           <span className="rounded-r-lg bg-accent-yellow" style={{ width: `${gracePct}%` }} />
         </div>
 
         {/* Markers */}
-        <div className="mt-3 grid grid-cols-3 gap-3 text-[13px]">
+        <div className="mt-3 grid grid-cols-3 gap-3 text-[0.8125rem]">
           <div>
             <span className="block text-muted-foreground">{t("createVault.wizard.today")}</span>
             <b>{date.short(0)}</b>
@@ -121,7 +121,7 @@ const HeartbeatStep: React.FC<Props> = ({
               onClick={() => setHeartbeatSeconds(d * SECONDS_PER_DAY)}
               aria-pressed={heartbeatDays === d}
               className={cn(
-                "min-h-[48px] rounded-xl border-[1.5px] text-center text-sm font-semibold transition-colors",
+                "min-h-[3rem] rounded-xl border-[1.5px] text-center text-sm font-semibold transition-colors",
                 heartbeatDays === d
                   ? "border-foreground bg-foreground text-background"
                   : "border-tile-line bg-background hover:bg-tile-soft",
@@ -149,7 +149,7 @@ const HeartbeatStep: React.FC<Props> = ({
               onClick={() => setGraceSeconds(d * SECONDS_PER_DAY)}
               aria-pressed={graceDays === d}
               className={cn(
-                "min-h-[48px] rounded-xl border-[1.5px] text-center text-sm font-semibold transition-colors",
+                "min-h-[3rem] rounded-xl border-[1.5px] text-center text-sm font-semibold transition-colors",
                 graceDays === d
                   ? "border-foreground bg-foreground text-background"
                   : "border-tile-line bg-background hover:bg-tile-soft",
@@ -166,7 +166,7 @@ const HeartbeatStep: React.FC<Props> = ({
       <div className="rounded-2xl border border-tile-line">
         <button
           type="button"
-          className="flex min-h-[64px] w-full items-center justify-between gap-4 px-5 text-left"
+          className="flex min-h-[4rem] w-full items-center justify-between gap-4 px-5 text-left"
           aria-expanded={rolesOpen}
           onClick={() => setRolesOpen(!rolesOpen)}
         >
@@ -200,7 +200,7 @@ const HeartbeatStep: React.FC<Props> = ({
                 spellCheck={false}
                 autoComplete="off"
                 className={cn(
-                  "ed-input mt-1.5 font-mono text-[13px]",
+                  "ed-input mt-1.5 font-mono text-[0.8125rem]",
                   signerTrimmed.length > 0 && !signerValid && "border-accent-red",
                 )}
                 placeholder={t("createVault.wizard.checkInWalletPlaceholder")}
@@ -224,7 +224,7 @@ const HeartbeatStep: React.FC<Props> = ({
                 spellCheck={false}
                 autoComplete="off"
                 className={cn(
-                  "ed-input mt-1.5 font-mono text-[13px]",
+                  "ed-input mt-1.5 font-mono text-[0.8125rem]",
                   guardianTrimmed.length > 0 && !guardianValid && "border-accent-red",
                 )}
                 placeholder={t("createVault.wizard.guardianPlaceholder")}

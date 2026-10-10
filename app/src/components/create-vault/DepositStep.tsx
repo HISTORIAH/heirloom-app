@@ -227,7 +227,7 @@ const DepositStep: React.FC<Props> = ({
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-colors",
+              "flex min-h-[2.75rem] items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-colors",
               activeTab === tab.id
                 ? "bg-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
@@ -259,7 +259,7 @@ const DepositStep: React.FC<Props> = ({
               }}
               placeholder="0"
               aria-label={t("createVault.wizard.solAmountAria")}
-              className="min-h-[72px] min-w-0 flex-1 border-0 bg-transparent font-mono text-2xl font-semibold tabular-nums outline-none"
+              className="min-h-[4.5rem] min-w-0 flex-1 border-0 bg-transparent font-mono text-2xl font-semibold tabular-nums outline-none"
             />
             <span className="ml-2 text-lg font-bold">SOL</span>
           </div>
@@ -270,7 +270,7 @@ const DepositStep: React.FC<Props> = ({
                 type="button"
                 onClick={() => setSolByPercent(pct)}
                 className={cn(
-                  "min-h-[44px] rounded-xl border text-sm font-semibold transition-colors",
+                  "min-h-[2.75rem] rounded-xl border text-sm font-semibold transition-colors",
                   "border-tile-line bg-background hover:bg-tile-soft",
                 )}
               >
@@ -354,7 +354,7 @@ const DepositStep: React.FC<Props> = ({
           <div
             className={cn(
               "overflow-y-auto rounded-xl border border-tile-line",
-              showAllTokens ? "max-h-[420px]" : "max-h-[420px]",
+              showAllTokens ? "max-h-[26.25rem]" : "max-h-[26.25rem]",
             )}
           >
             {displayTokens.length === 0 && (
@@ -404,7 +404,7 @@ const DepositStep: React.FC<Props> = ({
                       aria-pressed={isSelected}
                       aria-label={`${isSelected ? t("createVault.wizard.remove") : t("createVault.wizard.add")} ${tok.symbol || tok.label}`}
                       className={cn(
-                        "grid h-10 w-[4.5rem] shrink-0 place-items-center rounded-xl border-[1.5px] text-[13px] font-bold transition-colors",
+                        "grid h-10 w-[4.5rem] shrink-0 place-items-center rounded-xl border-[1.5px] text-[0.8125rem] font-bold transition-colors",
                         isSelected
                           ? "border-foreground bg-foreground text-background"
                           : "border-foreground bg-background hover:bg-tile-soft",
@@ -420,8 +420,8 @@ const DepositStep: React.FC<Props> = ({
 
                   {isSelected && sel && (
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <div className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 rounded-xl border-[1.5px] border-foreground px-3.5">
-                        <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                      <div className="flex min-h-[2.75rem] min-w-0 flex-1 items-center gap-2 rounded-xl border-[1.5px] border-foreground px-3.5">
+                        <span className="shrink-0 font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-muted-foreground">
                           {t("createVault.wizard.amount")}
                         </span>
                         <input
@@ -442,7 +442,7 @@ const DepositStep: React.FC<Props> = ({
                           {unit}
                         </span>
                       </div>
-                      <div className="flex min-h-[44px] flex-1 overflow-hidden rounded-xl border border-tile-line">
+                      <div className="flex min-h-[2.75rem] flex-1 overflow-hidden rounded-xl border border-tile-line">
                         {([25, 50, 75, 100] as const).map((pct, i) => (
                           <button
                             key={pct}
@@ -450,7 +450,7 @@ const DepositStep: React.FC<Props> = ({
                             onClick={() => setTokenByPercent(tok.mint, pct)}
                             aria-pressed={sel.pct === pct}
                             className={cn(
-                              "flex-1 border-0 text-[13px] font-bold transition-colors",
+                              "flex-1 border-0 text-[0.8125rem] font-bold transition-colors",
                               i > 0 && "border-l border-tile-line",
                               sel.pct === pct
                                 ? "bg-foreground text-background"
@@ -472,7 +472,7 @@ const DepositStep: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setShowAllTokens((v) => !v)}
-                  className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
+                  className="text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground"
                 >
                   {showAllTokens
                     ? t("createVault.wizard.showLess")

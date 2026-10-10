@@ -224,8 +224,8 @@ const FloatLabel: React.FC<{
         side === "start" ? "-translate-x-1/4" : "translate-x-1/4",
       )}
     >
-      <span className="block text-[10px] font-bold uppercase tracking-[0.14em]">{cap}</span>
-      <span className="mt-0.5 block text-[11px] font-semibold tabular-nums">{date}</span>
+      <span className="block text-[0.625rem] font-bold uppercase tracking-[0.14em]">{cap}</span>
+      <span className="mt-0.5 block text-[0.6875rem] font-semibold tabular-nums">{date}</span>
     </span>
   </div>
 );
@@ -258,7 +258,9 @@ export const EstateTimelineMini: React.FC<{
         )}
       </div>
       {pending ? (
-        <p className="mt-2.5 text-sm text-muted-foreground">{t("createVault.wizard.timelinePending")}</p>
+        <p className="mt-2.5 text-sm text-muted-foreground">
+          {t("createVault.wizard.timelinePending")}
+        </p>
       ) : (
         <div className="mt-2.5 space-y-0.5">
           <p className="text-sm text-muted-foreground">

@@ -1,13 +1,12 @@
 import PageHeader from "@/components/PageHeader";
-import { useState, useMemo, useEffect } from "react";
-import SubmitOverlay from "@/components/create-vault/SubmitOverlay";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import SigningModal from "@/components/create-vault/SigningModal";
 import { useWallet } from "@/contexts/WalletContext";
-import { useVault } from "@/contexts/VaultContext";
+import type { CreateEstateInput } from "@/contexts/VaultContext";
 import { useTour } from "@/contexts/TourContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY } from "@/lib/constants";
-import { errMsg, isValidSolanaAddress, toRawTokenAmount } from "@/lib/utils";
+import { SOL_DECIMALS, LABEL_MAX_LEN, SECONDS_PER_DAY, SOL_LABEL } from "@/lib/constants";
+import { formatSol, isValidSolanaAddress, toRawTokenAmount, truncateAddress } from "@/lib/utils";
 import { useWalletSplTokens } from "@/hooks/useWalletSplTokens";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -15,20 +14,25 @@ import HeartbeatStep from "@/components/create-vault/HeartbeatStep";
 import HeirStep from "@/components/create-vault/HeirStep";
 import DepositStep from "@/components/create-vault/DepositStep";
 import ReviewStep from "@/components/create-vault/ReviewStep";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import Stepper from "@/components/create-vault/Stepper";
 import SummaryColumn from "@/components/create-vault/SummaryColumn";
 import { Panel } from "@/components/surface/Panel";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@heirloom/i18n";
+import { Trans, useTranslation } from "@heirloom/i18n";
 import type { SplTokenAsset } from "@/types";
-import { useNow } from "@/hooks/useNow";
+import type { CreateAssetId } from "@/types/create";
+import {
+  useCreateEstate,
+  useCreateEstateCost,
+  useCreateEstatePreview,
+} from "@/hooks/useCreateEstate";
+import { useEstateDates } from "@/components/create-vault/estateTiming";
 
 const STEPS = ["HEIRS", "ASSETS", "HEARTBEAT", "REVIEW"] as const;
 
 type StepIndex = 0 | 1 | 2 | 3;
-type SubmitState = "idle" | "creating" | "complete" | "error";
 
 export interface TokenSelection {
   mint: string;
@@ -38,12 +42,11 @@ export interface TokenSelection {
 
 const CreateVaultPage = () => {
   const { publicKey, isConnected } = useWallet();
-  const { createEstateOnChain } = useVault();
   const { vaultStep } = useTour();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { track } = useAnalytics();
-  const { t, i18n } = useTranslation("app");
+  const { t } = useTranslation("app");
+  const date = useEstateDates();
 
   const [step, setStep] = useState<StepIndex>(0);
   const [reachedStep, setReachedStep] = useState<StepIndex>(0);
@@ -55,7 +58,6 @@ const CreateVaultPage = () => {
     }
   }, [vaultStep]);
 
-  const now = useNow(60_000);
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(90 * SECONDS_PER_DAY);
   const [graceSeconds, setGraceSeconds] = useState(7 * SECONDS_PER_DAY);
   const [pauseSeconds] = useState(0);
@@ -74,9 +76,7 @@ const CreateVaultPage = () => {
   const [solAmount, setSolAmount] = useState<number>(0);
   const [tokenSelections, setTokenSelections] = useState<Record<string, TokenSelection>>({});
 
-  const [submitState, setSubmitState] = useState<SubmitState>("idle");
-  const [txId, setTxId] = useState<string | null>(null);
-  const [submitProgress, setSubmitProgress] = useState<string>("");
+  const creation = useCreateEstate();
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
 
@@ -105,22 +105,21 @@ const CreateVaultPage = () => {
     return acknowledged;
   };
 
-  const handleSubmit = async () => {
-    if (!acknowledged) return;
-    if (!isConnected) {
-      setWalletDialogOpen(true);
-      return;
-    }
-    try {
-      track("vault_creation_started", {
-        has_delegate: Boolean(delegate.trim()),
-        has_heartbeat_signer: Boolean(checkInSigner.trim()),
-        token_count: selectedTokenEntries.length,
-      });
-      setSubmitState("creating");
-      const lamports = toRawTokenAmount(String(solAmount), SOL_DECIMALS);
-
-      const tokenDeposits = selectedTokenEntries.map(([mint, sel]) => {
+  /** Everything the create transactions need, or null until there's an estate to create. */
+  const createInput = useMemo((): CreateEstateInput | null => {
+    const heir = heirAddress.trim();
+    const hasAssets = solAmount > 0 || selectedTokenEntries.length > 0;
+    if (!isValidSolanaAddress(heir) || !hasAssets) return null;
+    return {
+      heir,
+      label: label.trim().slice(0, LABEL_MAX_LEN) || undefined,
+      checkInIntervalSecs: heartbeatSeconds,
+      gracePeriodSecs: graceSeconds,
+      delegatePauseDurationSecs: pauseSeconds,
+      amountLamports: toRawTokenAmount(String(solAmount), SOL_DECIMALS),
+      delegate: delegate.trim() || undefined,
+      checkInSigner: checkInSigner.trim() || undefined,
+      tokens: selectedTokenEntries.map(([mint, sel]) => {
         const tok = (tokens ?? []).find((item: SplTokenAsset) => item.mint === mint);
         const decimals = tok?.decimals ?? 9;
         return {
@@ -129,48 +128,69 @@ const CreateVaultPage = () => {
           decimals,
           tokenProgram: tok?.tokenProgram,
         };
-      });
+      }),
+    };
+  }, [
+    heirAddress,
+    label,
+    heartbeatSeconds,
+    graceSeconds,
+    pauseSeconds,
+    solAmount,
+    delegate,
+    checkInSigner,
+    selectedTokenEntries,
+    tokens,
+  ]);
 
-      setSubmitProgress(
-        tokenDeposits.length > 0
-          ? t("createVault.progressTokens", { count: tokenDeposits.length })
-          : t("createVault.progressEstate"),
-      );
+  // Planned on the review step, so the footer can say how many signatures it takes.
+  const preview = useCreateEstatePreview(step === 3 && isConnected ? createInput : null);
+  const signatureCount = preview?.transactions.length ?? 1;
+  const costLamports = useCreateEstateCost(selectedTokenEntries.length, signatureCount);
+  const requiredSol =
+    costLamports === null ? null : formatSol(costLamports + solAmount * 10 ** SOL_DECIMALS);
 
-      const createTxId = await createEstateOnChain({
-        heir: trimmedHeir,
-        label: label.trim().slice(0, LABEL_MAX_LEN) || undefined,
-        checkInIntervalSecs: heartbeatSeconds,
-        gracePeriodSecs: graceSeconds,
-        delegatePauseDurationSecs: pauseSeconds,
-        amountLamports: lamports,
-        delegate: delegate.trim() || undefined,
-        checkInSigner: checkInSigner.trim() || undefined,
-        tokens: tokenDeposits,
-      });
-      setTxId(createTxId);
-      setSubmitState("complete");
+  const assetLabel = useCallback(
+    (asset: CreateAssetId) => {
+      if (asset === "sol") return SOL_LABEL;
+      const tok = (tokens ?? []).find((item) => item.mint === asset);
+      return tok?.symbol || tok?.name || truncateAddress(asset, 4);
+    },
+    [tokens],
+  );
+
+  const handleSubmit = async () => {
+    if (!acknowledged || !createInput) return;
+    if (!isConnected) {
+      setWalletDialogOpen(true);
+      return;
+    }
+    const analytics = {
+      has_delegate: Boolean(delegate.trim()),
+      has_heartbeat_signer: Boolean(checkInSigner.trim()),
+      token_count: selectedTokenEntries.length,
+    };
+    track("vault_creation_started", analytics);
+    const created = await creation.start(createInput, preview);
+    track(
+      created ? "vault_created" : "vault_creation_failed",
+      created ? analytics : { stage: "transaction" },
+    );
+  };
+
+  const handleRetry = async () => {
+    const created = await creation.retry();
+    if (created) {
       track("vault_created", {
         has_delegate: Boolean(delegate.trim()),
         has_heartbeat_signer: Boolean(checkInSigner.trim()),
-        token_count: tokenDeposits.length,
-      });
-      toast({
-        title: t("createVault.toastCreatedTitle"),
-        description: t("createVault.toastCreatedDesc"),
-      });
-    } catch (err: unknown) {
-      setSubmitState("error");
-      track("vault_creation_failed", { stage: "transaction" });
-      toast({
-        title: t("createVault.toastFailedTitle"),
-        description: errMsg(err, t("createVault.toastFailedDesc")),
-        variant: "destructive",
+        token_count: selectedTokenEntries.length,
       });
     }
   };
 
-  const isSubmitting = submitState === "creating" || submitState === "complete";
+  const isSubmitting = creation.progress != null;
+  const isComplete = creation.progress?.status === "done";
   const steps = [
     t("createVault.stepHeirs"),
     t("createVault.stepAssets"),
@@ -201,84 +221,18 @@ const CreateVaultPage = () => {
           {t("createVault.wizard.newEstate")}
         </span>
         <span className="text-sm text-muted-foreground">
-          {submitState === "complete" ? t("createVault.wizard.done") : `0${step + 1} / 04`}
+          {isComplete ? t("createVault.wizard.done") : `0${step + 1} / 04`}
         </span>
       </div>
       <span aria-hidden="true" className="h-px flex-1 bg-tile-line" />
       <Stepper
         steps={steps}
-        currentStep={submitState === "complete" ? 4 : step}
-        completedSteps={submitState === "complete" ? 4 : reachedStep + 1}
+        currentStep={isComplete ? 4 : step}
+        completedSteps={isComplete ? 4 : reachedStep + 1}
         onStepClick={(idx) => goToStep(idx as StepIndex)}
       />
     </div>
   );
-
-  if (submitState === "complete") {
-    const missedDate = new Date(now + intervalDays * 864e5).toLocaleDateString(i18n.language, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    return (
-      <>
-        <div className="min-h-screen overflow-x-clip bg-background">
-          <PageHeader onConnectWallet={() => setWalletDialogOpen(true)} />
-          {rail}
-          <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
-            <div className="mx-auto flex max-w-xl flex-col items-start gap-6">
-              {/* Yellow check circle */}
-              <div className="grid h-14 w-14 place-items-center rounded-full bg-accent-yellow">
-                <Check className="h-7 w-7 text-foreground" strokeWidth={3} />
-              </div>
-
-              <h2 className="ed-h2">{t("createVault.successTitle", { label })}</h2>
-
-              <p className="ed-lede text-muted-foreground">
-                {t("createVault.wizard.nextCheckInDue", { date: missedDate })}
-              </p>
-
-              {/* Next step cards */}
-              <div className="flex w-full flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate("/dashboard")}
-                  className="flex w-full items-center justify-between gap-4 rounded-xl border border-tile-line p-5 text-left transition-colors hover:bg-tile-soft"
-                >
-                  <span>
-                    <b className="block text-sm">{t("createVault.wizard.setUpReminders")}</b>
-                    <span className="block text-sm text-muted-foreground">
-                      {t("createVault.wizard.setUpRemindersDesc")}
-                    </span>
-                  </span>
-                  <ArrowRight className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/dashboard")}
-                  className="flex w-full items-center justify-between gap-4 rounded-xl border border-tile-line p-5 text-left transition-colors hover:bg-tile-soft"
-                >
-                  <span>
-                    <b className="block text-sm">{t("createVault.wizard.tellYourHeir")}</b>
-                    <span className="block text-sm text-muted-foreground">
-                      {t("createVault.wizard.tellYourHeirDesc")}
-                    </span>
-                  </span>
-                  <ArrowRight className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-                </button>
-              </div>
-
-              <Button variant="flat" size="lg" onClick={() => navigate("/dashboard")}>
-                {t("createVault.goToDashboard")}
-              </Button>
-            </div>
-          </main>
-        </div>
-        <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
-      </>
-    );
-  }
 
   return (
     <>
@@ -291,8 +245,8 @@ const CreateVaultPage = () => {
         {rail}
 
         <main className="app-shell px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
-          <div className="grid items-start gap-6 lg:grid-cols-12">
-            <Panel className="gap-0 lg:col-span-7">
+          <div className="grid items-start gap-[1.6rem] min-[860px]:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            <Panel className="gap-0">
               {step === 0 && (
                 <div data-tour="create-vault-heirs">
                   <HeirStep
@@ -375,10 +329,23 @@ const CreateVaultPage = () => {
                   <span />
                 )}
 
-                <div className="flex items-center gap-4">
-                  {step === 3 && (
-                    <span className="text-xs text-muted-foreground">
-                      {t("createVault.wizard.estFeeTilde")}
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-4">
+                  {step === 3 && costLamports !== null && (
+                    <span className="text-right text-[0.78rem] tabular-nums text-muted-foreground">
+                      <Trans
+                        t={t}
+                        i18nKey="createVault.review.totalCost"
+                        values={{ amount: formatSol(costLamports) }}
+                        components={{
+                          b: <b className="font-mono font-semibold text-foreground" />,
+                        }}
+                      />
+                      {preview && (
+                        <>
+                          <br />
+                          {t("createVault.review.costNote", { count: signatureCount })}
+                        </>
+                      )}
                     </span>
                   )}
                   {step < 3 ? (
@@ -404,21 +371,14 @@ const CreateVaultPage = () => {
                       onClick={handleSubmit}
                       disabled={!canProceed() || isSubmitting}
                     >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {t("createVault.creating")}
-                        </>
-                      ) : (
-                        t("createVault.createEstate")
-                      )}
+                      {t("createVault.review.signAndCreate")}
                     </Button>
                   )}
                 </div>
               </div>
             </Panel>
 
-            <div className="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:col-span-5">
+            <div className="min-[860px]:sticky min-[860px]:top-[calc(var(--nav-h)+1.5rem)]">
               <Panel tone="soft">
                 <SummaryColumn
                   step={step}
@@ -438,8 +398,18 @@ const CreateVaultPage = () => {
         </main>
       </div>
 
-      {submitState !== "idle" && submitState !== "error" && (
-        <SubmitOverlay submitState={submitState} submitProgress={submitProgress} txId={txId} />
+      {creation.progress && (
+        <SigningModal
+          progress={creation.progress}
+          draft={creation.draft}
+          assetCount={selectedTokenEntries.length + (solAmount > 0 ? 1 : 0)}
+          assetLabel={assetLabel}
+          nextCheckInDate={date.short(intervalDays)}
+          requiredSol={requiredSol}
+          onRetry={handleRetry}
+          onBackToReview={creation.close}
+          onDone={() => navigate("/dashboard")}
+        />
       )}
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
     </>

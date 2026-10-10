@@ -5,6 +5,8 @@ import {
   fetchMaybeEstate,
   findEstatePda,
   HEIRLOOM_PROGRAM_ADDRESS,
+  HeirloomInstruction,
+  parseHeirloomInstruction,
   type Estate,
 } from "@historiah/heirloom";
 import {
@@ -12,6 +14,7 @@ import {
   type Base58EncodedBytes,
   type Base64EncodedBytes,
   type Instruction,
+  type InstructionPlan,
   type MaybeAccount,
   type TransactionSigner,
   address as toAddress,
@@ -20,6 +23,7 @@ import {
 } from "@solana/kit";
 import type { VaultTokenHolding } from "@/types";
 import type { InitializeInput } from "@/types/program";
+import type { CreateAssetId, CreateEstateDraft } from "@/types/create";
 import { fetchAssetsByOwner } from "@/services/das";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import {
@@ -33,7 +37,7 @@ import {
   buildTransferSolIx,
   buildTransferTokenIx,
 } from "@/lib/heirloom/instructions";
-import { sendPlan, sendTx, type HeirloomClient } from "@/lib/heirloom/client";
+import { planTransactions, sendTx, type HeirloomClient } from "@/lib/heirloom/client";
 import {
   getEstateAddress,
   getVaultAddress,
@@ -670,14 +674,18 @@ export async function updateHeirAll(
   return txId;
 }
 
-export async function initializeWithTokens(
-  client: HeirloomClient,
+/**
+ * Every instruction creating an estate takes: initialize (with its first asset), the name memo,
+ * then one registerAsset per further token. Kit splits it into as many transactions as it
+ * needs; `planCreateEstate` shows how.
+ */
+export async function buildCreateEstatePlan(
   authority: TransactionSigner,
   initInput: InitializeInput,
   extraTokens: TokenRegistration[],
   /** Estate name — written as an SPL Memo in the same tx; the backend reads it on register. */
   name?: string,
-): Promise<string> {
+): Promise<InstructionPlan> {
   const { estate, vault } = await getEstateVaultPair(authority.address, initInput.heir);
 
   const initAssetRecord = initInput.mint
@@ -716,11 +724,42 @@ export async function initializeWithTokens(
   // the non-divisible plan keeps them together even if kit splits the tokens off.
   const memoIxs = name ? [getAddMemoInstruction({ memo: name })] : [];
   const createWithMemo = nonDivisibleSequentialInstructionPlan([initIx, ...memoIxs]);
-  const plan = sequentialInstructionPlan([createWithMemo, ...registerIxs]);
+  return sequentialInstructionPlan([createWithMemo, ...registerIxs]);
+}
 
-  // The first signature is the create tx: it's what registration and pending state track.
-  const [createSignature] = await sendPlan(client, authority, plan);
-  return createSignature;
+/** The asset a Heirloom instruction puts in the estate, if it's initialize or registerAsset. */
+function assetMovedBy(instruction: Instruction): CreateAssetId | null {
+  if (instruction.programAddress !== HEIRLOOM_PROGRAM_ADDRESS || !instruction.data) return null;
+  const parsed = parseHeirloomInstruction({ ...instruction, data: instruction.data });
+  if (
+    parsed.instructionType !== HeirloomInstruction.Initialize &&
+    parsed.instructionType !== HeirloomInstruction.RegisterAsset
+  ) {
+    return null;
+  }
+  return parsed.accounts.mint?.address ?? "sol";
+}
+
+/**
+ * Splits the create plan into the transactions the wallet will sign, and notes what each one
+ * does: the first creates the estate, every one registers some of the assets.
+ */
+export async function planCreateEstate(
+  client: HeirloomClient,
+  authority: TransactionSigner,
+  plan: InstructionPlan,
+): Promise<CreateEstateDraft> {
+  const messages = await planTransactions(client, authority, plan);
+  return {
+    signer: authority,
+    transactions: messages.map((message, index) => ({
+      createsEstate: index === 0,
+      assets: message.instructions
+        .map(assetMovedBy)
+        .filter((asset): asset is CreateAssetId => asset !== null),
+      message,
+    })),
+  };
 }
 
 export async function depositSol(
