@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { ChainLoading } from "@/components/ChainLoading";
-import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { TAB_BAR_CLEARANCE } from "@/components/FloatingTabBar";
 import { InkToast } from "@/components/InkToast";
 import { TopBar } from "@/components/TopBar";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui";
 import { takeFlash } from "@/lib/flash";
 import { colors, font, space } from "@/theme";
-import { useEstates, useHeirTx, useOwnerTx, useRoles } from "@/hooks";
+import { useConfirmSheet, useEstates, useHeirTx, useOwnerTx, useRoles } from "@/hooks";
 import { bySoonest, estateSpan, presentGuardian } from "@/lib";
 import { EstateRow } from "@/types/program";
 

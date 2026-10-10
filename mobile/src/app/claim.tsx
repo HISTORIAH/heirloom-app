@@ -6,7 +6,7 @@ import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ChainLoading } from "@/components/ChainLoading";
-import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { DestSheet } from "@/components/claim/DestSheet";
 import { HoldCardSheet } from "@/components/claim/HoldCardSheet";
 import { PinSheet } from "@/components/claim/PinSheet";
@@ -27,7 +27,7 @@ import { colors, font, space } from "@/theme";
 import type { CardClaimPlan } from "@/types/claim";
 import type { EstateHolding } from "@/types/estate";
 import type { EstateRow, EstateRpc } from "@/types/program";
-import { useEstateHoldings, useHeirTx } from "@/hooks";
+import { useConfirmSheet, useEstateHoldings, useHeirTx } from "@/hooks";
 import {
   bySoonest,
   cancelScan,

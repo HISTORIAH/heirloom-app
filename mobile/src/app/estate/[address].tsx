@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ChainLoading } from "@/components/ChainLoading";
-import { ConfirmSheet, useConfirmSheet } from "@/components/ConfirmSheet";
+import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { EstateAssets } from "@/components/EstateAssets";
 import { EstateManage } from "@/components/EstateManage";
 import { EstatePeople } from "@/components/EstatePeople";
@@ -19,6 +19,7 @@ import { colors, space } from "@/theme";
 import type { EstateTimingFields, TopUpPick } from "@/types/estate";
 import type { Address } from "@solana/kit";
 import {
+  useConfirmSheet,
   useEstateHoldings,
   useEstates,
   useOwnerTx,

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import { errorMessage } from "@/lib/text";
+import { txFailureMessage } from "@/lib/solana/txErrors";
 import type { ConfirmAsk, NoticeAsk } from "@/types/ui";
 
 /** State for `<ConfirmSheet>`: confirmations, notices and failures. */
@@ -46,7 +46,7 @@ export function useConfirmSheet() {
     extraRun.current = undefined;
     setAsk({
       cap,
-      title: errorMessage(cause, "Something went wrong"),
+      title: txFailureMessage(cause, "Something went wrong"),
       confirmLabel: "OK",
       confirmTone: "yellow",
       kind: "fail",

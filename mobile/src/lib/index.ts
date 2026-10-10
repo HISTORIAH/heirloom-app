@@ -22,6 +22,9 @@ export {
 // Confirmation utilities
 export { waitForConfirmed, waitUntilAccountGone } from "./solana/confirm";
 
+// Transaction failures
+export { classifyTxError, txFailureMessage } from "./solana/txErrors";
+
 // Explorer utilities
 export { explorerTxUrl, openExplorerAddress, openExplorerTx } from "./solana/explorer";
 
