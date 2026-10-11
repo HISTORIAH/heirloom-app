@@ -49,7 +49,7 @@ export function ChannelTabs({
   const x = useSharedValue(0);
 
   useEffect(() => {
-    x.value = withSpring(index * segment, TAB_SPRING);
+    x.set(withSpring(index * segment, TAB_SPRING));
   }, [index, segment, x]);
 
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));

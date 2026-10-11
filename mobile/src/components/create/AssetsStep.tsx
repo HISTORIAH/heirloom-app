@@ -110,7 +110,6 @@ const TokenRow = memo(function TokenRow({
         <TokenAvatar
           image={asset.image}
           symbol={asset.symbol}
-          kind={asset.kind}
           checked={checked}
         />
         <View style={{ flex: 1, gap: 2, minWidth: 0 }}>

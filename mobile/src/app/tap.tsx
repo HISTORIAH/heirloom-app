@@ -61,17 +61,17 @@ function Pulse({ active }: { active: boolean }) {
   const pulse = useSharedValue(1);
   useEffect(() => {
     if (!active) {
-      pulse.value = withTiming(1, { duration: 180 });
+      pulse.set(withTiming(1, { duration: 180 }));
       return;
     }
-    pulse.value = withRepeat(
+    pulse.set(withRepeat(
       withSequence(
         withTiming(1.03, { duration: 700, easing: Easing.inOut(Easing.ease) }),
         withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
       false,
-    );
+    ));
   }, [active, pulse]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   return (
