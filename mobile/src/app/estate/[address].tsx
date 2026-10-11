@@ -20,6 +20,7 @@ import type { EstateTimingFields, TopUpPick } from "@/types/estate";
 import type { Address } from "@solana/kit";
 import {
   useConfirmSheet,
+  useDeleteEstateData,
   useEstateHoldings,
   useEstates,
   useOwnerTx,
@@ -45,6 +46,7 @@ export default function EstateScreen() {
   const { rows, loading, reload, drop } = useEstates("authority");
   const { checkIn, topUpSol, topUpToken, reassignHeir, closeEstate, updateSettings, addToken } = useOwnerTx();
   const renameMutation = useRenameEstate();
+  const deleteEstateData = useDeleteEstateData();
   const [busy, setBusy] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [toast, setToast] = useState<string | undefined>(undefined);
@@ -214,7 +216,16 @@ export default function EstateScreen() {
         confirmLabel: "Close estate",
       },
       () =>
-        void runOwner("Close estate", () => closeEstate(current), "Estate closed", current.address),
+        void runOwner(
+          "Close estate",
+          async () => {
+            const signature = await closeEstate(current);
+            await deleteEstateData(current.address);
+            return signature;
+          },
+          "Estate closed",
+          current.address,
+        ),
     );
   }
 

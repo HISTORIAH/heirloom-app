@@ -3,6 +3,7 @@ export { useEstates } from "./estate/useEstates";
 export { useEstateMetadata } from "./estate/useEstateMetadata";
 export { useDashboardView } from "./estate/useDashboardView";
 export { useEstateSpan } from "./estate/useEstateSpan";
+export { useDeleteEstateData } from "./estate/useDeleteEstateData";
 export { useRenameEstate } from "./estate/useRenameEstate";
 export { useRoles } from "./estate/useRoles";
 export { useEstateHoldings } from "./estate/useEstateHoldings";

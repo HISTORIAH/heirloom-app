@@ -280,8 +280,13 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
           luloTargetMint={luloTargetMint}
           className={computedState === "distributed" ? "col-span-full" : undefined}
         />
-        {computedState !== "distributed" && (
-          <EstateManagePanel estate={estate} heirName={heirName} onTx={setLastTxId} />
+        {computedState !== "distributed" && account && (
+          <EstateManagePanel
+            estate={estate}
+            account={account}
+            heirName={heirName}
+            onTx={setLastTxId}
+          />
         )}
         {account && (
           <EstateNotifications estate={estate} account={account} openRequest={remindersRequest} />

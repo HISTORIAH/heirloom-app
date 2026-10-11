@@ -53,3 +53,17 @@ export async function updateEstate(
     body: JSON.stringify(payload),
   });
 }
+
+/**
+ * Deletes everything the backend keeps for a closed estate: metadata, reminders, scheduled
+ * events, deliveries, telegram links and sealed secrets. Requires the SIWS session cookie
+ * and the estate's authority. An estate the backend never tracked (404) counts as deleted.
+ */
+export async function deleteEstate(estateAddress: string): Promise<void> {
+  try {
+    await requestRaw<null>(`${API_BASE}/${estateAddress}`, { method: "DELETE" });
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "NOT_FOUND") return;
+    throw err;
+  }
+}
