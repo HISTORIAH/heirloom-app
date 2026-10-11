@@ -160,7 +160,7 @@ export default function AlertsScreen() {
       await reload();
       setToast("Checked in.");
     } catch (cause) {
-      fail("Check-in", cause);
+      fail("Check-in", cause, () => void onCheckIn(item));
     } finally {
       setWorking(undefined);
     }

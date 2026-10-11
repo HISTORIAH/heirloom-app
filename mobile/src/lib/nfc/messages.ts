@@ -1,7 +1,9 @@
 import { isCardApduError } from "./apdu";
-import { isTangemError, tangemProblemMessage } from "./tangem/errors";
+import { isTangemError, knownTangemProblem, tangemProblemMessage } from "./tangem/errors";
 import { errorMessage } from "../text";
 import type { CardScan } from "@/types/nfc";
+
+const UNRECOGNIZED = "We read it, but don’t know it.";
 
 type ScanProblem = Exclude<CardScan, { kind: "address" | "cancelled" | "tangem" }>;
 
@@ -12,6 +14,7 @@ export function scanProblemMessage(
   if (result.kind === "off") return "NFC is off. Turn it on, then try again.";
   if (result.kind === "unsupported") return "This phone can’t read credentials.";
   if (result.kind === "empty") return blank;
+  if (result.kind === "unrecognized") return UNRECOGNIZED;
   return result.message;
 }
 
@@ -29,8 +32,9 @@ function pinWrongMessage(sw: number): string {
   return `That PIN didn’t match. ${left} tries left.`;
 }
 
-export function cardProblemMessage(cause: unknown, fallback: string): string {
-  if (isTangemError(cause)) return tangemProblemMessage(cause, fallback);
+/** Our wording for a card failure we recognise. Undefined for anything else, raw text included. */
+export function knownCardProblem(cause: unknown): string | undefined {
+  if (isTangemError(cause)) return knownTangemProblem(cause);
   if (isCardApduError(cause)) {
     if (cause.kind === "slot_full") return "This credential already has a key.";
     if (cause.kind === "not_heirloom") return "This isn’t an Heirloom credential.";
@@ -45,12 +49,23 @@ export function cardProblemMessage(cause: unknown, fallback: string): string {
   if (isLostField(cause)) {
     return "Couldn’t keep the card in range. Slide it slowly around the top of the back, then hold still.";
   }
-  return errorMessage(cause, fallback);
+  return undefined;
+}
+
+export function cardProblemMessage(cause: unknown, fallback: string): string {
+  if (isTangemError(cause)) return tangemProblemMessage(cause, fallback);
+  return knownCardProblem(cause) ?? errorMessage(cause, fallback);
+}
+
+/** A card or Tangem failure, as opposed to a wallet, network or chain one. */
+export function isCardProblem(cause: unknown): boolean {
+  return isTangemError(cause) || isCardApduError(cause) || isLostField(cause);
 }
 
 export function setupProblemMessage(result: ScanProblem): string {
   if (result.kind === "off") return "NFC is off. Turn it on, then try again.";
   if (result.kind === "unsupported") return "This phone can’t set up credentials.";
   if (result.kind === "empty") return "We couldn’t read a key from it. Try again.";
+  if (result.kind === "unrecognized") return "That isn’t a blank Heirloom card.";
   return result.message;
 }

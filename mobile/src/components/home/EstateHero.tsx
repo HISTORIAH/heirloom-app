@@ -8,7 +8,7 @@ import { useDashboardView } from "@/hooks/estate/useDashboardView";
 import { colors, font, space } from "@/theme";
 import type { EstateUiState } from "@/types/estate";
 import type { EstateRow } from "@/types/program";
-import { estateName, ownerCountdownCaption } from "@/lib";
+import { cadenceLine, estateName, ownerCountdownCaption } from "@/lib";
 
 const BADGE: Record<EstateUiState, string> = {
   active: "Active",
@@ -40,7 +40,7 @@ export function EstateHero({
   const view = useDashboardView(row.data, row.claimableLamports);
   const name = estateName(row);
   const live = view.state !== "distributed";
-  const topLine = compact ? `Every ${view.intervalDays} days · ${view.graceDays}-day wait` : name;
+  const topLine = compact ? cadenceLine(row.data.checkInIntervalSecs, row.data.gracePeriodSecs) : name;
 
   return (
     <View

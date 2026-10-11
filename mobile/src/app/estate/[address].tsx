@@ -90,7 +90,7 @@ export default function EstateScreen() {
         openExplorerTx(sig),
       );
     } catch (cause) {
-      fail(title, cause);
+      fail(title, cause, () => void runOwner(title, work, okTitle, gone));
     } finally {
       setBusy(false);
     }
@@ -128,7 +128,7 @@ export default function EstateScreen() {
         await reload();
         setToast("Checked in.");
       } catch (cause) {
-        fail("Check-in", cause);
+        fail("Check-in", cause, onCheckIn);
       } finally {
         setBusy(false);
         setCheckingIn(false);

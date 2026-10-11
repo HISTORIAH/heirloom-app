@@ -32,6 +32,11 @@ import {
   tangemProblemMessage,
 } from "@/lib/nfc/tangem";
 import { rememberCredential } from "@/lib/nfc/credentials";
+import { NotRecognized } from "@/components/tap/NotRecognized";
+import { CONNECT_ACTION } from "@/constants/ui";
+import { failureLine } from "@/lib/failure";
+import { isUserCancel } from "@/lib/text";
+import type { UnrecognizedAnswer } from "@/types/nfc";
 
 type TapState =
   | { kind: "searching" }
@@ -39,12 +44,14 @@ type TapState =
   | { kind: "unsupported" }
   | { kind: "blank" }
   | { kind: "tangem" }
+  | { kind: "unrecognized"; answer?: UnrecognizedAnswer }
   | { kind: "failed"; message: string };
 
 function stateFrom(result: Exclude<CardScan, { kind: "address" | "cancelled" | "tangem" }>): TapState {
   if (result.kind === "off") return { kind: "off" };
   if (result.kind === "unsupported") return { kind: "unsupported" };
   if (result.kind === "empty") return { kind: "blank" };
+  if (result.kind === "unrecognized") return { kind: "unrecognized" };
   return { kind: "failed", message: result.message };
 }
 
@@ -54,6 +61,7 @@ function statusLine(state: TapState): string {
   if (state.kind === "unsupported") return "This phone can’t read credentials.";
   if (state.kind === "blank") return "This credential is blank. Set it up for someone.";
   if (state.kind === "tangem") return "Tangem card. Follow Tangem’s prompt to read it…";
+  if (state.kind === "unrecognized") return "We read it, but don’t know it.";
   return state.message;
 }
 
@@ -84,7 +92,7 @@ function Pulse({ active }: { active: boolean }) {
 /** Tap a credential: claim if an estate is waiting or open a PIN card as a wallet. */
 export default function TapSheet() {
   const router = useRouter();
-  const { account, client } = useMobileWallet();
+  const { account, client, connect } = useMobileWallet();
   const [state, setState] = useState<TapState>({ kind: "searching" });
   const [codeOpen, setCodeOpen] = useState(false);
   const [code, setCode] = useState("");
@@ -162,6 +170,17 @@ export default function TapSheet() {
     };
   }, [scan]);
 
+  /** The card holds a wallet we can't read: connect it through its own wallet app instead. */
+  async function onConnectWallet() {
+    try {
+      await connect();
+      router.replace("/");
+    } catch (cause) {
+      if (isUserCancel(cause)) return;
+      setState({ kind: "failed", message: failureLine(cause, CONNECT_ACTION) });
+    }
+  }
+
   async function onTangem() {
     await cancelScan();
     await readTangem();
@@ -184,71 +203,72 @@ export default function TapSheet() {
   return (
     <RouteSheet onClose={() => void cancelScan()}>
       <View style={{ gap: 16 }}>
-        <Text
-          accessibilityRole="header"
-          style={{
-            fontFamily: font.semibold,
-            fontSize: 28,
-            letterSpacing: -0.98,
-            color: colors.ink,
-          }}
-        >
-          Hold it to your phone
-        </Text>
-
-        <Pulse active={reading} />
-
-        <Text
-          style={{ fontFamily: font.regular, fontSize: 16, lineHeight: 23, color: colors.mute }}
-        >
-          Card, ring or band - hold it near the top of the back of your phone. Keep it still for a
-          second.
-        </Text>
-
-        <View
-          accessibilityRole="text"
-          accessibilityLiveRegion="polite"
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            paddingVertical: 12,
-            paddingHorizontal: 14,
-            borderRadius: space.radiusBtn,
-            borderWidth: space.rule,
-            borderColor: colors.ink,
-            backgroundColor: colors.paper,
-          }}
-        >
-          <View
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: 6,
-              borderWidth: space.rule,
-              borderColor: colors.ink,
-              backgroundColor: reading
-                ? colors.yellow
-                : state.kind === "failed"
-                  ? colors.claim
-                  : colors.paper,
-            }}
+        {state.kind === "unrecognized" ? (
+          <NotRecognized
+            answer={state.answer}
+            tangemSupported={isTangemSupported}
+            onAnswer={(answer) => setState({ kind: "unrecognized", answer })}
+            onScanTangem={() => void onTangem()}
+            onConnectWallet={() => void onConnectWallet()}
           />
-          <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 15, color: colors.ink }}>
-            {statusLine(state)}
-          </Text>
-        </View>
+        ) : (
+          <>
+            <Text
+              accessibilityRole="header"
+              style={{
+                fontFamily: font.semibold,
+                fontSize: 28,
+                letterSpacing: -0.98,
+                color: colors.ink,
+              }}
+            >
+              Hold it to your phone
+            </Text>
 
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontFamily: font.regular, fontSize: 14, color: colors.mute }}>
-            <Text style={{ fontFamily: font.bold, color: colors.ink }}>Heir credential</Text> — a PIN
-            card is the wallet. Claim only if an estate is still waiting.
-          </Text>
-          <Text style={{ fontFamily: font.regular, fontSize: 14, color: colors.mute }}>
-            <Text style={{ fontFamily: font.bold, color: colors.ink }}>New credential</Text> — set
-            it up for someone
-          </Text>
-        </View>
+            <Pulse active={reading} />
+
+            <Text
+              style={{ fontFamily: font.regular, fontSize: 16, lineHeight: 23, color: colors.mute }}
+            >
+              Card, ring or band - hold it near the top of the back of your phone. Keep it still for a
+              second.
+            </Text>
+
+            <View
+              accessibilityRole="text"
+              accessibilityLiveRegion="polite"
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 12,
+                paddingHorizontal: 14,
+                borderRadius: space.radiusBtn,
+                borderWidth: space.rule,
+                borderColor: colors.ink,
+                backgroundColor: colors.paper,
+              }}
+            >
+              <View
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  borderWidth: space.rule,
+                  borderColor: colors.ink,
+                  backgroundColor: reading
+                    ? colors.yellow
+                    : state.kind === "failed"
+                      ? colors.claim
+                      : colors.paper,
+                }}
+              />
+              <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 15, color: colors.ink }}>
+                {statusLine(state)}
+              </Text>
+            </View>
+          </>
+        )}
 
         {codeOpen ? (
           <View style={{ gap: 8 }}>
@@ -294,6 +314,9 @@ export default function TapSheet() {
           {searching ? (
             <PrimaryButton tone="paper" label="Cancel" onPress={() => router.back()} />
           ) : null}
+          {state.kind === "unrecognized" ? (
+            <TextLink flush label="Scan again" onPress={() => void scan()} />
+          ) : null}
         </View>
         {codeOpen ? null : (
           <TextLink
@@ -302,9 +325,6 @@ export default function TapSheet() {
             onPress={() => setCodeOpen(true)}
           />
         )}
-        {isTangemSupported && state.kind !== "tangem" ? (
-          <TextLink flush label="Using a Tangem card? Read it here" onPress={() => void onTangem()} />
-        ) : null}
       </View>
     </RouteSheet>
   );

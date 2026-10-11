@@ -11,6 +11,7 @@ import {
   type TransactionSigner,
 } from "@solana/kit";
 
+import { SubmittedTxError } from "@/lib/failure";
 import { waitForConfirmed } from "@/lib/solana/confirm";
 
 const base58 = getBase58Decoder();
@@ -38,7 +39,11 @@ export function useSendIxs() {
     );
     const signatureBytes = await signAndSendTransactionMessageWithSigners(message);
     const signature = base58.decode(signatureBytes);
-    await waitForConfirmed(client.rpc, signature);
+    try {
+      await waitForConfirmed(client.rpc, signature);
+    } catch (cause) {
+      throw new SubmittedTxError(cause);
+    }
     return signature;
   }
 

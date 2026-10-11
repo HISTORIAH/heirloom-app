@@ -21,5 +21,6 @@ export { useTxRunner } from "./tx/useTxRunner";
 export { useSolBalance } from "./wallet/useSolBalance";
 export { useWalletTokens } from "./wallet/useWalletTokens";
 export { useConfirmSheet } from "./useConfirmSheet";
+export { useSlowLoad } from "./useSlowLoad";
 export { useTick } from "./useTick";
 export { useToast } from "./useToast";

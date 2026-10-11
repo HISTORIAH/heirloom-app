@@ -57,6 +57,7 @@ export function estateSpan(data: Estate, claimableLamports: bigint): EstateSpan 
           : `Heir can claim ${shortDate(claimableAt * 1000)}`,
     daysUntilCheckIn: state === "active" ? wholeDays(graceDeadline - now) : 0,
     daysUntilClaim: live ? wholeDays(claimableAt - now) : 0,
+    claimableAtSecs: claimableAt,
     remainingSecs: state === "active" ? secondsUntilGrace : state === "grace" ? secondsUntilClaimable : 0,
     daysOpen: state === "claimable" ? wholeDays(now - claimableAt) : 0,
   };

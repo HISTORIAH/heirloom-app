@@ -11,6 +11,7 @@ import { ContactFields } from "@/components/reminders/ContactFields";
 import { HeirProfileFields } from "@/components/reminders/HeirProfileFields";
 import { ReminderTimeline } from "@/components/reminders/ReminderTimeline";
 import { ReviewSheet } from "@/components/reminders/ReviewSheet";
+import { SkeletonBlock } from "@/components/Skeleton";
 import { VerifySheet } from "@/components/reminders/VerifySheet";
 import {
   ActionRow,
@@ -88,6 +89,16 @@ function statusLine(contact: ContactState, role: ReminderRole): string {
 }
 
 /** One numbered card on the form. The badge turns lime with a check once the step is done. */
+/** A contact block while reminders load: the channel switch, then one field. */
+function ContactSkeleton() {
+  return (
+    <View style={{ gap: 12 }}>
+      <SkeletonBlock height={40} radius={space.radiusBtn} />
+      <SkeletonBlock height={52} radius={space.radiusBtn} />
+    </View>
+  );
+}
+
 function Section({
   step,
   title,
@@ -496,20 +507,20 @@ export default function RemindersScreen() {
   } else if (reminders.status === "error") {
     body = (
       <View style={{ gap: 12 }}>
-        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.claim }}>
-          {reminders.error ?? "Couldn't load reminders."}
+        <Text style={{ fontFamily: font.semibold, fontSize: 16, color: colors.ink }}>
+          Couldn’t load reminders.
         </Text>
         <PrimaryButton tone="paper" label="Try again" onPress={() => void reminders.refetch()} />
       </View>
     );
-  } else if (reminders.status === "loading") {
-    body = <Lede size={14}>Loading…</Lede>;
   } else {
+    // While loading, the same sections render with placeholder rows, so nothing jumps.
+    const loadingSettings = reminders.status === "loading";
     const ownerDone = contactsOf("checkInSigner").some((c) => c.kind === "connected");
     const heirDone = contactsOf("heir").some((c) => c.kind === "connected");
     body = (
       <View style={{ gap: 16 }}>
-        {!hasSubscription ? (
+        {!hasSubscription && !loadingSettings ? (
           <Animated.View entering={FadeInDown.duration(420)} style={{ gap: 10, marginBottom: 8 }}>
             <Display size={34}>Never miss a check-in.</Display>
             <Lede size={15}>
@@ -525,7 +536,7 @@ export default function RemindersScreen() {
           done={ownerDone}
           delay={80}
         >
-          {contactBlock("checkInSigner")}
+          {loadingSettings ? <ContactSkeleton /> : contactBlock("checkInSigner")}
         </Section>
 
         <Section
@@ -535,7 +546,7 @@ export default function RemindersScreen() {
           done={heirDone}
           delay={160}
         >
-          {contactBlock("heir")}
+          {loadingSettings ? <ContactSkeleton /> : contactBlock("heir")}
         </Section>
 
         <Section
@@ -545,13 +556,22 @@ export default function RemindersScreen() {
           done={hasSubscription && !genericAlert(reminders.heir) && !profileDirty}
           delay={240}
         >
-          <AlertPreview profile={profile} />
-          <HeirProfileFields
-            value={profile}
-            onChange={setProfileDraft}
-            requireOwnerName={heirReachable}
-            disabled={save.isPending}
-          />
+          {loadingSettings ? (
+            <>
+              <SkeletonBlock height={72} radius={space.radiusTile} />
+              <SkeletonBlock height={48} radius={space.radiusBtn} />
+            </>
+          ) : (
+            <>
+              <AlertPreview profile={profile} />
+              <HeirProfileFields
+                value={profile}
+                onChange={setProfileDraft}
+                requireOwnerName={heirReachable}
+                disabled={save.isPending}
+              />
+            </>
+          )}
         </Section>
 
         <Animated.View
@@ -562,7 +582,7 @@ export default function RemindersScreen() {
           <ReminderTimeline />
         </Animated.View>
 
-        {hasOthers ? <AllEstatesToggle /> : null}
+        {hasOthers && !loadingSettings ? <AllEstatesToggle /> : null}
       </View>
     );
   }

@@ -31,6 +31,10 @@ export const colors = {
   cardFace: "#1A1A1A",
   /** Dim behind bottom sheets. */
   scrim: "rgba(10,10,10,0.55)",
+  /** The estate card while it loads: yellow, held back. */
+  yellowMuted: "#FBEFAE",
+  /** Loading placeholders on a coloured card. */
+  skeletonOnCard: "rgba(10,10,10,0.14)",
 } as const;
 
 export const space = {
@@ -52,6 +56,8 @@ export const font = {
   medium: "SpaceGrotesk_500Medium",
   semibold: "SpaceGrotesk_600SemiBold",
   bold: "SpaceGrotesk_700Bold",
+  /** Raw error text under "Technical details". The system monospace; no extra font to load. */
+  mono: "monospace",
 } as const;
 
 /** Floating chrome (tab bar, Tap button) sits on a soft drop, never an offset one. */

@@ -3,13 +3,13 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 
-import { ChainLoading } from "@/components/ChainLoading";
 import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { TAB_BAR_CLEARANCE } from "@/components/FloatingTabBar";
 import { InkToast } from "@/components/InkToast";
 import { TopBar } from "@/components/TopBar";
 import { EstateFacts } from "@/components/home/EstateFacts";
 import { EstateHero } from "@/components/home/EstateHero";
+import { EstatesSkeleton } from "@/components/home/EstatesSkeleton";
 import { EstateListRow } from "@/components/home/EstateList";
 import { RoleSections } from "@/components/home/RoleSections";
 import { Welcome } from "@/components/home/Welcome";
@@ -22,13 +22,14 @@ import {
   PillButton,
   PrimaryButton,
   Steps,
-  TextLink,
 } from "@/components/ui";
 import { takeFlash } from "@/lib/flash";
 import { colors, font, space } from "@/theme";
-import { useConfirmSheet, useEstates, useHeirTx, useOwnerTx, useRoles } from "@/hooks";
+import { useConfirmSheet, useEstates, useHeirTx, useOwnerTx, useRoles, useSlowLoad } from "@/hooks";
 import { bySoonest, estateSpan, presentGuardian } from "@/lib";
 import { EstateRow } from "@/types/program";
+import { CONNECT_ACTION } from "@/constants/ui";
+import { clusterLabel } from "@/config";
 
 function NothingYet({ onCreate }: { onCreate: () => void }) {
   return (
@@ -98,6 +99,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const { account, connect } = useMobileWallet();
   const { rows, loading, error, reload } = useEstates("authority");
+  const [retryingLoad, setRetryingLoad] = useState(false);
+  const waiting = (loading || retryingLoad) && rows.length === 0;
+  const slowLoad = useSlowLoad(waiting);
+  const showSkeleton = waiting && !slowLoad;
+  const loadFailed = rows.length === 0 && (slowLoad || (error !== null && !retryingLoad));
   const roles = useRoles();
   const { checkIn, checkInAll } = useOwnerTx();
   const { sendCheckIn } = useHeirTx();
@@ -126,7 +132,7 @@ export default function HomeScreen() {
     try {
       await connect();
     } catch (cause) {
-      fail("Wallet", cause);
+      fail(CONNECT_ACTION, cause, () => void onConnect());
     } finally {
       setBusy(false);
     }
@@ -141,7 +147,7 @@ export default function HomeScreen() {
       await Promise.all([reload(), roles.reload()]);
       setToast(done);
     } catch (cause) {
-      fail(title, cause);
+      fail(title, cause, () => void run(key, title, work, done));
     } finally {
       setBusy(false);
       setWorking(undefined);
@@ -160,6 +166,12 @@ export default function HomeScreen() {
   const onCreate = () => router.push("/create");
   const openEstate = (row: EstateRow) => router.push(`/estate/${row.address}`);
   const openClaim = (row: EstateRow) => router.push(`/claim?estate=${row.address}`);
+
+  async function onRetryLoad() {
+    setRetryingLoad(true);
+    await reload().catch(() => undefined);
+    setRetryingLoad(false);
+  }
 
   async function onRefresh() {
     setRefreshing(true);
@@ -204,15 +216,15 @@ export default function HomeScreen() {
   ) : null;
 
   let body;
-  if (loading && rows.length === 0) {
-    body = <ChainLoading compact body="Looking for your estates…" />;
-  } else if (error !== null && rows.length === 0) {
+  if (showSkeleton) {
+    body = <EstatesSkeleton network={clusterLabel().toLowerCase()} />;
+  } else if (loadFailed) {
     body = (
-      <View style={{ gap: 8 }}>
-        <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.claim }}>
-          {error}
+      <View style={{ gap: 12, paddingTop: 8 }}>
+        <Text style={{ fontFamily: font.semibold, fontSize: 16, color: colors.ink }}>
+          Couldn’t load your estates.
         </Text>
-        <TextLink align="left" label="Try again" onPress={() => void reload()} />
+        <PrimaryButton tone="paper" label="Try again" onPress={() => void onRetryLoad()} />
       </View>
     );
   } else if (hero === undefined) {

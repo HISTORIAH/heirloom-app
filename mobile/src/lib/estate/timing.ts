@@ -1,6 +1,6 @@
 import { DEMO_TIMING } from "@/config";
 import { DEMO_CHOICE_SECS, MAX_INTERVAL_DAYS, MAX_TIMING_MINUTES, TIMING_EDIT_UNIT } from "@/constants/estate";
-import { MS_PER_DAY, SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@/constants/time";
+import { MS_PER_DAY, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from "@/constants/time";
 import type { TimingChoice } from "@/types/estate";
 
 function inDays(days: number): Date {
@@ -24,26 +24,44 @@ export function timingChoices(days: readonly number[]): TimingChoice[] {
   return [...choices, { secs: DEMO_CHOICE_SECS, label: `${DEMO_CHOICE_SECS / SECONDS_PER_MINUTE}m` }];
 }
 
-function isWholeDays(secs: number): boolean {
-  return secs % SECONDS_PER_DAY === 0;
+const DURATION_UNITS = [
+  { secs: SECONDS_PER_DAY, noun: "day" },
+  { secs: SECONDS_PER_HOUR, noun: "hour" },
+  { secs: SECONDS_PER_MINUTE, noun: "minute" },
+] as const;
+
+/** `secs` split into whole days, hours and minutes, dropping the zeros. Rounds to the minute. */
+function durationParts(secs: number): { count: number; noun: string }[] {
+  let left = Math.max(0, Math.round(secs / SECONDS_PER_MINUTE)) * SECONDS_PER_MINUTE;
+  const parts: { count: number; noun: string }[] = [];
+  for (const unit of DURATION_UNITS) {
+    const count = Math.floor(left / unit.secs);
+    left -= count * unit.secs;
+    if (count > 0) parts.push({ count, noun: unit.noun });
+  }
+  return parts.length > 0 ? parts : [{ count: 0, noun: "minute" }];
 }
 
-/** "90 days", "1 minute". Whole days read as days, anything shorter as minutes. */
+/** "30 days", "12 hours", "45 minutes"; mixed only when it has to be: "1 day 6 hours". */
 export function durationText(secs: number): string {
-  const [count, noun] = isWholeDays(secs)
-    ? [secs / SECONDS_PER_DAY, "day"]
-    : [Math.round(secs / SECONDS_PER_MINUTE), "minute"];
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+  return durationParts(secs)
+    .map(({ count, noun }) => `${count} ${noun}${count === 1 ? "" : "s"}`)
+    .join(" ");
 }
 
-/** "30-day", "1-minute", as in "a 30-day wait". */
+/** "30-day", "12-hour", as in "a 30-day wait". Mixed durations fall back to `durationText`. */
 export function durationAdjective(secs: number): string {
-  return durationText(secs).replace(/s$/, "").replace(" ", "-");
+  const parts = durationParts(secs);
+  if (parts.length > 1) return durationText(secs);
+  return `${parts[0].count}-${parts[0].noun}`;
 }
 
-/** "90d", "1m": a fact row's short form. */
-export function durationShort(secs: number): string {
-  return isWholeDays(secs) ? `${secs / SECONDS_PER_DAY}d` : `${Math.round(secs / SECONDS_PER_MINUTE)}m`;
+/** "Every 30 days · 7-day grace": the cadence line on estate rows and cards. */
+export function cadenceLine(intervalSecs: bigint | number, graceSecs: bigint | number): string {
+  const grace = Number(graceSecs);
+  const graceLabel =
+    durationParts(grace).length > 1 ? `${durationText(grace)} of grace` : `${durationAdjective(grace)} grace`;
+  return `Every ${durationText(Number(intervalSecs))} · ${graceLabel}`;
 }
 
 /** "31 Dec 2026", or "14:32" when `secs` from now is under a day. */

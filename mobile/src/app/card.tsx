@@ -177,7 +177,7 @@ export default function CardScreen() {
         setPinOpen(true);
         return;
       }
-      fail("Send", new Error(cardProblemMessage(cause, "Could not send from this credential.")));
+      fail("Send", cause, () => void runSend(pick, pin));
     } finally {
       setHoldHint(false);
       setBusy(false);

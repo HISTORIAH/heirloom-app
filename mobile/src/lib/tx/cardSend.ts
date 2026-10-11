@@ -15,6 +15,7 @@ import {
   type TransactionSigner,
 } from "@solana/kit";
 
+import { SubmittedTxError } from "@/lib/failure";
 import { waitForConfirmed } from "@/lib/solana/confirm";
 import type { EstateRpc } from "@/types/program";
 
@@ -88,7 +89,11 @@ async function signAll(
 async function sendSigned(rpc: EstateRpc, signed: Transaction): Promise<string> {
   await rpc.sendTransaction(getBase64EncodedWireTransaction(signed), { encoding: "base64" }).send();
   const signature = getSignatureFromTransaction(signed);
-  await waitForConfirmed(rpc, signature);
+  try {
+    await waitForConfirmed(rpc, signature);
+  } catch (cause) {
+    throw new SubmittedTxError(cause);
+  }
   return signature;
 }
 
