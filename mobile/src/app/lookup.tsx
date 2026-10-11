@@ -9,6 +9,7 @@ import { Display, Fine, IconButton, PrimaryButton, TextField } from "@/component
 import { colors, font, space } from "@/theme";
 import { EstateRow } from "@/types/program";
 import { bySoonest, fetchEstatesByAuthority, parseAddress } from "@/lib";
+import { failureLine } from "@/lib/failure";
 
 /** Public read: every estate an owner address has opened. */
 export default function LookupScreen() {
@@ -29,7 +30,7 @@ export default function LookupScreen() {
       setRows(bySoonest(found));
     } catch (cause) {
       setRows(undefined);
-      setError(cause instanceof Error ? cause.message : "Could not look that up");
+      setError(failureLine(cause, "Lookup"));
     } finally {
       setBusy(false);
     }

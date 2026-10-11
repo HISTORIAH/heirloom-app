@@ -7,7 +7,7 @@ import { colors, font, space } from "@/theme";
 import type { Address } from "@solana/kit";
 import { LABEL_MAX_LEN, MAX_INTERVAL_DAYS, MAX_TIMING_MINUTES, TIMING_EDIT_UNIT } from "@/constants/estate";
 import { EstateRow } from "@/types/program";
-import { changedTimingField, displayTiming, isPausedNow, parseAddress } from "@/lib";
+import { cadenceLine, changedTimingField, displayTiming, isPausedNow, parseAddress } from "@/lib";
 
 type EverydayAction = "heir" | "timing" | "rename";
 
@@ -409,8 +409,6 @@ export function EstateManage({
   onRename,
 }: EstateManageProps) {
   const [open, setOpen] = useState<EverydayAction | undefined>(undefined);
-  const intervalShown = displayTiming(row.data.checkInIntervalSecs);
-  const graceShown = displayTiming(row.data.gracePeriodSecs);
   const paused = isPausedNow(row.data.delegatePauseExpiresAt);
 
   function toggle(action: EverydayAction) {
@@ -424,7 +422,7 @@ export function EstateManage({
       {open === "heir" ? <HeirForm busy={busy} paused={paused} onSubmit={onReassign} /> : null}
       <EverydayRow
         action="timing"
-        desc={`Every ${intervalShown} ${TIMING_EDIT_UNIT} · ${graceShown} ${TIMING_EDIT_UNIT} grace`}
+        desc={cadenceLine(row.data.checkInIntervalSecs, row.data.gracePeriodSecs)}
         disabled={busy}
         onPress={() => toggle("timing")}
       />

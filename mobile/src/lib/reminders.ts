@@ -9,6 +9,7 @@ import type {
   ReminderRole,
   VerificationStatus,
 } from "@/types/reminders";
+import { failureLine } from "@/lib/failure";
 
 /** "@Alice " → "alice". The bot matches without case or the leading @. */
 export function telegramHandle(text: string): string {
@@ -153,9 +154,7 @@ export function verifyError(cause: unknown): string {
 
 /** Plain-language message for a reminders API failure. */
 export function reminderError(cause: unknown): string {
-  if (!(cause instanceof ApiError)) {
-    return cause instanceof Error ? cause.message : "Something went wrong.";
-  }
+  if (!(cause instanceof ApiError)) return failureLine(cause, "Reminders");
   switch (cause.code) {
     case "FORBIDDEN":
       return "Only the wallet that owns this estate can change its reminders.";

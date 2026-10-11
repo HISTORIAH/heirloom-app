@@ -102,6 +102,30 @@ const glyphs = {
     </>
   ),
   flash: <Path d="M9 2h6l-1 7h4l-8 13 2-9H7z" />,
+  walletOff: (
+    <>
+      <Rect x="3" y="6" width="18" height="13" rx="2" />
+      <Path d="M3 9.5h18" />
+      <Path d="M16 13.5h2" />
+      <Path d="M4 3l16 18" />
+    </>
+  ),
+  signalOff: (
+    <>
+      <Path d="M2.5 8.5a14 14 0 0 1 19 0" />
+      <Path d="M6 12a9 9 0 0 1 12 0" />
+      <Path d="M9.5 15.5a4 4 0 0 1 5 0" />
+      <Path d="M12 19h.01" />
+      <Path d="M3 3l18 18" />
+    </>
+  ),
+  alert: (
+    <>
+      <Circle cx="12" cy="12" r="9" />
+      <Path d="M12 7.5v5.5" />
+      <Path d="M12 16.5h.01" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof glyphs;

@@ -7,6 +7,7 @@ import { fetchVaultHoldings } from "@/lib/estate/holdings";
 import { compareAssets } from "@/lib/estate/topUp";
 import type { EstateHolding } from "@/types/estate";
 import type { EstateRow } from "@/types/program";
+import { failureLine } from "@/lib/failure";
 
 /**
  * What an estate holds: SOL from the row, tokens and prices fetched. `totalUsd` sums priced rows.
@@ -48,7 +49,7 @@ export function useEstateHoldings(row: EstateRow | undefined) {
     holdings,
     totalUsd,
     loading: query.isLoading,
-    error: query.error instanceof Error ? query.error.message : undefined,
+    error: query.isError ? failureLine(query.error, "Loading assets") : undefined,
     refetch: query.refetch,
   };
 }

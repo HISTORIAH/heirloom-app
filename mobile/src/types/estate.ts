@@ -70,6 +70,8 @@ export type EstateSpan = {
   remainingSecs: number;
   /** Days the claim window has been open (claimable only). */
   daysOpen: number;
+  /** When the heir can claim at the earliest, unix seconds. Moves with every check-in. */
+  claimableAtSecs: number;
 };
 
 /** Where a guardian's one pause stands. */

@@ -7,7 +7,7 @@ import {
   displayTiming,
   durationAdjective,
   durationRangeError,
-  durationShort,
+  cadenceLine,
   durationText,
   parseDayCount,
   parseMinuteCount,
@@ -63,17 +63,32 @@ describe("displayTiming / changedTimingField", () => {
 });
 
 describe("duration helpers", () => {
-  test("whole days read as days, anything shorter as minutes", () => {
-    expect(durationText(90 * SECONDS_PER_DAY)).toBe("90 days");
+  test("largest whole unit", () => {
+    expect(durationText(30 * SECONDS_PER_DAY)).toBe("30 days");
     expect(durationText(SECONDS_PER_DAY)).toBe("1 day");
+    expect(durationText(12 * 3_600)).toBe("12 hours");
+    expect(durationText(45 * SECONDS_PER_MINUTE)).toBe("45 minutes");
     expect(durationText(SECONDS_PER_MINUTE)).toBe("1 minute");
-    expect(durationShort(30 * SECONDS_PER_DAY)).toBe("30d");
-    expect(durationShort(SECONDS_PER_MINUTE)).toBe("1m");
+  });
+
+  test("mixes units only when it has to", () => {
+    expect(durationText(SECONDS_PER_DAY + 6 * 3_600)).toBe("1 day 6 hours");
+    expect(durationText(43_200 * SECONDS_PER_MINUTE)).toBe("30 days");
   });
 
   test("adjective form", () => {
     expect(durationAdjective(30 * SECONDS_PER_DAY)).toBe("30-day");
     expect(durationAdjective(SECONDS_PER_MINUTE)).toBe("1-minute");
+  });
+
+  test("cadence line", () => {
+    expect(cadenceLine(30 * SECONDS_PER_DAY, 7 * SECONDS_PER_DAY)).toBe("Every 30 days · 7-day grace");
+    expect(cadenceLine(43_200 * SECONDS_PER_MINUTE, 10_080 * SECONDS_PER_MINUTE)).toBe(
+      "Every 30 days · 7-day grace",
+    );
+    expect(cadenceLine(SECONDS_PER_MINUTE, SECONDS_PER_DAY + 3_600)).toBe(
+      "Every 1 minute · 1 day 1 hour of grace",
+    );
   });
 
   test("range checks in days", () => {

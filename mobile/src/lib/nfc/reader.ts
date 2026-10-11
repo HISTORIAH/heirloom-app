@@ -4,7 +4,7 @@ import NfcManager from "react-native-nfc-manager";
 import { TANGEM_LIFT_POLL_MS, TANGEM_LIFT_TIMEOUT_MS, TANGEM_WALLET_AID } from "@/constants/tangem";
 import { isCardApduError, parseApdu, selectApdu, SW_OK } from "./apdu";
 import { cancelScan, ensureNfcStarted, withIsoDep } from "./isoDep";
-import { cardProblemMessage } from "./messages";
+import { knownCardProblem } from "./messages";
 import { PIN_TRY_LIMIT } from "./pin";
 import { generatePubkey, readCardIdentity } from "./signer";
 import { isUserCancel } from "@/lib/text";
@@ -31,7 +31,8 @@ function scanCatch(cause: unknown, treatNoKeyAsEmpty: boolean): CardScan {
   if (treatNoKeyAsEmpty && isCardApduError(cause) && cause.kind === "no_key") {
     return { kind: "empty" };
   }
-  return { kind: "failed", message: cardProblemMessage(cause, "Could not read the credential") };
+  if (isCardApduError(cause) && cause.kind === "not_heirloom") return { kind: "unrecognized" };
+  return { kind: "failed", message: knownCardProblem(cause) ?? "Couldn’t read it. Hold it still and try again." };
 }
 
 function wait(ms: number): Promise<void> {

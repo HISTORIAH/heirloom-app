@@ -46,6 +46,9 @@ import {
   shortAddress,
 } from "@/lib";
 import { isPinEntryError } from "@/lib/nfc/apdu";
+import { HeirTimeline } from "@/components/claim/HeirTimeline";
+import { claimDate, heirBadge, heirSteps } from "@/lib/estate/heir";
+import { nowSecs } from "@/lib/estate/state";
 import { adapterFor } from "@/lib/nfc/credentials";
 import { resolveCardClaimPlan } from "@/lib/tx/cardClaim";
 
@@ -158,11 +161,6 @@ function ClaimAssetCard({ from, holdings }: { from: string; holdings: EstateHold
   );
 }
 
-function claimPill(finishing: boolean, claimable: boolean, daysUntilClaim: number): string {
-  if (finishing) return "Claimed — finish sending";
-  if (claimable) return "Claimable now";
-  return `Opens in ${daysUntilClaim} days`;
-}
 
 function waitUi(): Promise<void> {
   return new Promise((resolve) => {
@@ -250,7 +248,7 @@ export default function ClaimScreen() {
         setFlash("Claimed. The assets are in this wallet.");
         close();
       } catch (cause) {
-        fail("Claim", cause);
+        fail("Claim", cause, () => onWalletClaim(row));
       } finally {
         setBusy(false);
       }
@@ -286,7 +284,7 @@ export default function ClaimScreen() {
         recoverPinEntry(row, plan, cashOut, cause);
         return;
       }
-      fail("Claim", new Error(cardProblemMessage(cause, "Could not send from this credential.")));
+      fail("Claim", cause, () => void runPlan(row, plan, pin, cashOut));
       void fetchRow();
     } finally {
       setHoldHint(false);
@@ -380,8 +378,8 @@ export default function ClaimScreen() {
   } else if (load.kind === "error") {
     body = (
       <View style={{ gap: 8 }}>
-        <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.claim }}>
-          {load.message}
+        <Text style={{ fontFamily: font.semibold, fontSize: 16, color: colors.ink }}>
+          Couldn’t load this estate.
         </Text>
         <TextLink align="left" label="Try again" onPress={() => void fetchRow()} />
       </View>
@@ -441,12 +439,15 @@ export default function ClaimScreen() {
         <PrimaryButton label="Open this card" onPress={() => openCard(row.data.heir)} />
       );
     } else {
+      const waitingToOpen = !claimable && !finishing;
       body = (
         <View style={{ gap: 14 }}>
           <View style={{ alignSelf: "flex-start" }}>
             <Pill
               dot
-              label={claimPill(finishing, claimable, span.daysUntilClaim)}
+              label={
+                finishing ? "Claimed — finish sending" : heirBadge(claimable, span.claimableAtSecs, nowSecs())
+              }
               fill={claimable || finishing ? colors.yellow : colors.paper}
             />
           </View>
@@ -454,9 +455,32 @@ export default function ClaimScreen() {
           {finishing ? null : (
             <ClaimAssetCard from={String(row.data.authority)} holdings={holdings} />
           )}
-          <Fine>{claimFine(finishing, viaCredential, pinKnown)}</Fine>
+          {finishing ? null : (
+            <HeirTimeline
+              steps={heirSteps({
+                intervalSecs: Number(row.data.checkInIntervalSecs),
+                graceSecs: Number(row.data.gracePeriodSecs),
+                claimableAtSecs: span.claimableAtSecs,
+                claimable,
+                viaCredential,
+              })}
+            />
+          )}
+          {waitingToOpen ? null : <Fine>{claimFine(finishing, viaCredential, pinKnown)}</Fine>}
         </View>
       );
+      if (waitingToOpen) {
+        footer = (
+          <>
+            <Fine center>{claimFine(false, viaCredential, false)}</Fine>
+            <PrimaryButton
+              disabled
+              label={`Claim opens ${claimDate(span.claimableAtSecs)} at the earliest`}
+              onPress={() => undefined}
+            />
+          </>
+        );
+      }
     }
 
     if (showKeep) {

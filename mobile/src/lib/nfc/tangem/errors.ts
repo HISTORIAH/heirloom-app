@@ -25,6 +25,11 @@ export function isTangemError(cause: unknown): boolean {
   return typeof code === "string" && code.startsWith("ERR_TANGEM");
 }
 
+/** Our wording for a Tangem failure we recognise. Undefined for anything else. */
+export function knownTangemProblem(cause: unknown): string | undefined {
+  return TANGEM_COPY[codeOf(cause) as TangemErrorCode];
+}
+
 /** One line for the user about a failed Tangem call. */
 export function tangemProblemMessage(cause: unknown, fallback: string): string {
   const code = codeOf(cause) as TangemErrorCode;

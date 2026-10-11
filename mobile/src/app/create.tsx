@@ -23,7 +23,7 @@ import { Consent, ReviewStep } from "@/components/create/ReviewStep";
 import { addressFromText } from "@/components/create/AddressField";
 import { ScanAddress } from "@/components/create/ScanAddress";
 import { TimingStep } from "@/components/create/TimingStep";
-import { ErrorLine, WizardFooter, WizardTop } from "@/components/create/WizardChrome";
+import { WizardFooter, WizardTop } from "@/components/create/WizardChrome";
 import { Cap, PrimaryButton, TextLink } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
 import { registerEstate } from "@/services/api/estateMetadata";
@@ -66,7 +66,6 @@ import {
   dueLong,
   durationRangeError,
   durationText,
-  txFailureMessage,
 } from "@/lib";
 import { SECONDS_PER_DAY } from "@/constants/time";
 import { CREDENTIAL_ADAPTERS, rememberCredential } from "@/lib/nfc/credentials";
@@ -100,7 +99,7 @@ export default function CreateScreen() {
   const { createEstate } = useOwnerTx();
   const { lamports: balance } = useSolBalance();
   const { tokens: walletTokens } = useWalletTokens(account?.address);
-  const { ask, prompt, cancel, confirm, extra } = useConfirmSheet();
+  const { ask, prompt, cancel, confirm, extra, fail } = useConfirmSheet();
 
   const [phase, setPhase] = useState<CreatePhase>("heir");
   const [heirKind, setHeirKind] = useState<HeirKind>(
@@ -131,7 +130,6 @@ export default function CreateScreen() {
   const [acked, setAcked] = useState(false);
   const [scanFor, setScanFor] = useState<"heir" | "signer" | "guardian">("heir");
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
-  const [submitError, setSubmitError] = useState<string | undefined>(undefined);
   const scanToken = useRef(0);
 
   const isCredential = heirKind === "credential";
@@ -417,7 +415,6 @@ export default function CreateScreen() {
       setPhase(gate);
       return;
     }
-    setSubmitError(undefined);
     setPhase("creating");
     try {
       const hasGuardian = guardian.trim().length > 0;
@@ -447,8 +444,8 @@ export default function CreateScreen() {
       setFlash("Estate created.");
       router.replace("/");
     } catch (cause) {
-      setSubmitError(txFailureMessage(cause, "Could not create the estate."));
       setPhase("review");
+      fail("Estate creation", cause, () => void onCreate());
     }
   }
 
@@ -787,7 +784,6 @@ export default function CreateScreen() {
       );
       footer = (
         <>
-          <ErrorLine>{submitError}</ErrorLine>
           <Consent on={acked} onToggle={() => setAcked((on) => !on)} />
           <PrimaryButton label="Create estate" disabled={!acked} onPress={() => void onCreate()} />
         </>

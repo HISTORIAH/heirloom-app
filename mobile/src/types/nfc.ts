@@ -85,8 +85,13 @@ export type CardScan =
   | { kind: "address"; value: string; pin: PinStatus }
   /** Not ours, but a Tangem card: read it through Tangem's SDK instead. */
   | { kind: "tangem" }
+  /** Read, but neither ours nor Tangem's: ask the user what it is. */
+  | { kind: "unrecognized" }
   | { kind: "cancelled" }
   | { kind: "empty" }
   | { kind: "off" }
   | { kind: "unsupported" }
   | { kind: "failed"; message: string };
+
+/** What the user says an unrecognized card is, on the tap sheet. */
+export type UnrecognizedAnswer = "tangem" | "other";

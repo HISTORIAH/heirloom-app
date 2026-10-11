@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { txFailureMessage } from "@/lib/solana/txErrors";
+import { FAILURE_TOAST_MS } from "@/constants/ui";
+import { describeFailure } from "@/lib/failure";
 import type { ConfirmAsk, NoticeAsk } from "@/types/ui";
 
 /** State for `<ConfirmSheet>`: confirmations, notices and failures. */
@@ -41,17 +42,40 @@ export function useConfirmSheet() {
     notice({ cap: "Coming next", title, body });
   }
 
-  function fail(cap: string, cause: unknown) {
-    pending.current = undefined;
+  /**
+   * `action` ("Check-in", "Claim") failed. A cancel becomes a toast; anything else a sheet with
+   * human copy and the raw error behind "Technical details". `retry` backs Try again / Retry.
+   */
+  function fail(action: string, cause: unknown, retry?: () => void) {
+    const view = describeFailure(cause, action);
+    pending.current = retry;
     extraRun.current = undefined;
+    if (view.presentation === "toast") {
+      setAsk({ cap: action, title: view.title, confirmLabel: retry !== undefined ? "Retry" : "", kind: "toast" });
+      return;
+    }
     setAsk({
-      cap,
-      title: txFailureMessage(cause, "Something went wrong"),
-      confirmLabel: "OK",
+      cap: action,
+      title: view.title,
+      body: view.body,
+      details: view.details,
+      failureKind: view.kind,
+      confirmLabel: retry !== undefined ? "Try again" : "OK",
+      cancelLabel: retry !== undefined ? "Not now" : undefined,
       confirmTone: "yellow",
       kind: "fail",
     });
   }
+
+  // A cancel toast clears itself.
+  useEffect(() => {
+    if (ask?.kind !== "toast") return;
+    const id = setTimeout(() => {
+      pending.current = undefined;
+      setAsk(undefined);
+    }, FAILURE_TOAST_MS);
+    return () => clearTimeout(id);
+  }, [ask]);
 
   function confirm() {
     const run = pending.current;

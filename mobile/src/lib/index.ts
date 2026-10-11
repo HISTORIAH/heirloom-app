@@ -87,7 +87,7 @@ export {
   dueShort,
   durationAdjective,
   durationRangeError,
-  durationShort,
+  cadenceLine,
   durationText,
   timingChoices,
 } from "./estate/timing";

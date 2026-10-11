@@ -19,3 +19,8 @@ export type SweepToken = {
 export type CardHolding = EstateHolding & {
   token?: SweepToken;
 };
+
+export type HeirStepState = "done" | "current" | "next";
+
+/** One step in the heir's "What happens next". */
+export type HeirStep = { title: string; body: string; state: HeirStepState };
