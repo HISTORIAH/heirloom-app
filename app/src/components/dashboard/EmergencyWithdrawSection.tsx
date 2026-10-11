@@ -1,19 +1,24 @@
 import { useState } from "react";
+import type { UiWalletAccount } from "@wallet-standard/ui";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useToast } from "@/hooks/use-toast";
+import { useWithSession } from "@/hooks/useWithSession";
+import { deleteEstate } from "@/services/api/estateMetadata";
 import { errMsg } from "@/lib/utils";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTranslation } from "@heirloom/i18n";
 
-interface Props {
+type Props = {
   estate: EstateData;
+  account: UiWalletAccount;
   onTx: (id: string) => void;
-}
+};
 
-const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
+const EmergencyWithdrawSection: React.FC<Props> = ({ estate, account, onTx }) => {
   const { revokeEstateOnChain } = useVault();
+  const { withSession } = useWithSession(account);
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
@@ -24,6 +29,11 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, onTx }) => {
     setWithdrawing(true);
     try {
       const tx = await revokeEstateOnChain(estate.heir);
+      // The estate is closed on-chain, so drop what the backend kept for it. A failure here
+      // mustn't read as a failed close: the funds are already back.
+      await withSession(() => deleteEstate(estate.estatePda)).catch((err) =>
+        console.warn("estate data cleanup failed", err),
+      );
       onTx(tx);
       setWithdrawConfirmOpen(false);
       track("emergency_withdraw_succeeded");

@@ -1,3 +1,4 @@
+import type { UiWalletAccount } from "@wallet-standard/ui";
 import { Panel, PanelCap } from "@/components/surface/Panel";
 import { DASHBOARD_CARD } from "@/components/dashboard/estateState";
 import ReassignHeirSection from "@/components/dashboard/ReassignHeirSection";
@@ -10,6 +11,8 @@ import type { EstateData } from "@/contexts/VaultContext";
 
 interface EstateManagePanelProps {
   estate: EstateData;
+  /** Signs in to the backend when closing the estate deletes its data. */
+  account: UiWalletAccount;
   /** Shown as the current heir in the Change heir modal. */
   heirName: string | null;
   onTx: (id: string) => void;
@@ -22,6 +25,7 @@ const GroupLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 export const EstateManagePanel: React.FC<EstateManagePanelProps> = ({
   estate,
+  account,
   heirName,
   onTx,
   className,
@@ -51,7 +55,7 @@ export const EstateManagePanel: React.FC<EstateManagePanelProps> = ({
         <section>
           <GroupLabel>{t("dashboard.dangerZone")}</GroupLabel>
           <div className="mt-2.5">
-            <EmergencyWithdrawSection estate={estate} onTx={onTx} />
+            <EmergencyWithdrawSection estate={estate} account={account} onTx={onTx} />
           </div>
         </section>
       </div>
