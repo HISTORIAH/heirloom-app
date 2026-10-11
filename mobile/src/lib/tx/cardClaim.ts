@@ -13,19 +13,20 @@ import {
 } from "@/lib/tx/cardSweep";
 import { buildClaimIxs } from "@/lib/tx/heir";
 import type { CardClaimPlan } from "@/types/claim";
-import type { PinStatus } from "@/types/nfc";
 import type { EstateRow, EstateRpc } from "@/types/program";
 
-/** GET_STATUS is source of truth. Primary CTA on a PIN card is keep, not leftover sweep. */
+/**
+ * A locked card (a PIN on an Heirloom card, or a card with its own access code) is a wallet:
+ * its primary CTA is keep, not leftover sweep. GET_STATUS is the source of truth for the PIN.
+ */
 export function resolveCardClaimPlan(input: {
-  pin: PinStatus;
+  locked: boolean;
   plan: CardClaimPlan;
   skipClaim: boolean;
   cashOut: boolean;
 }): CardClaimPlan | { kind: "home" } {
-  const pinSet = input.pin.kind !== "none";
-  if (pinSet && input.skipClaim && !input.cashOut) return { kind: "home" };
-  if (pinSet && !input.cashOut && input.plan.kind === "sweep") return { kind: "keep" };
+  if (input.locked && input.skipClaim && !input.cashOut) return { kind: "home" };
+  if (input.locked && !input.cashOut && input.plan.kind === "sweep") return { kind: "keep" };
   return input.plan;
 }
 
@@ -34,6 +35,7 @@ async function sendClaimIfNeeded(input: {
   signer: TransactionSigner;
   row: EstateRow;
   skipClaim: boolean;
+  maxMessageBytes: number;
 }): Promise<boolean> {
   if (input.skipClaim) return false;
   const span = estateSpan(input.row.data, input.row.claimableLamports);
@@ -52,7 +54,7 @@ async function sendClaimIfNeeded(input: {
     delegate: estateDelegate(input.row.data),
   });
   try {
-    await sendCardBatches(input.rpc, input.signer, claimIxs);
+    await sendCardBatches(input.rpc, input.signer, claimIxs, input.maxMessageBytes);
     return true;
   } catch (cause) {
     const fresh = await fetchEstateByAddress(input.rpc, input.row.address);
@@ -69,6 +71,7 @@ export async function runCardClaim(input: {
   row: EstateRow;
   plan: CardClaimPlan;
   skipClaim: boolean;
+  maxMessageBytes: number;
 }): Promise<{ claimed: boolean }> {
   const heir = input.signer.address;
   if (heir !== input.row.data.heir) {
@@ -83,7 +86,7 @@ export async function runCardClaim(input: {
 
   const tokens = await discoverCardTokens(input.rpc, heir);
   const tokenIxs = await buildTokenSweepIxs(input.signer, input.plan.destination, tokens);
-  await sendCardBatches(input.rpc, input.signer, tokenIxs);
+  await sendCardBatches(input.rpc, input.signer, tokenIxs, input.maxMessageBytes);
 
   const [bal, rent] = await Promise.all([
     input.rpc.getBalance(heir).send(),
@@ -94,6 +97,6 @@ export async function runCardClaim(input: {
     input.plan.destination,
     spareLamports(BigInt(bal.value), BigInt(rent)),
   );
-  if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx]);
+  if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
   return { claimed };
 }

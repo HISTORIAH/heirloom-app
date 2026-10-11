@@ -8,6 +8,7 @@ import {
   getStatusApdu,
   INS_SIGN,
   isCardApduError,
+  MSG_MAX,
   parseApdu,
   PUB_LEN,
   selectApdu,
@@ -211,6 +212,7 @@ export async function runCardSigningSession<T>(
     signer,
     pin: status,
     unlock: () => unlockIfNeeded(send, status, pin),
+    maxMessageBytes: MSG_MAX,
   });
 }
 
@@ -224,11 +226,6 @@ export async function withCardSigningSession<T>(
     ISODEP_CLAIM_TIMEOUT_MS,
     "Hold the credential still until sending finishes.",
   );
-}
-
-export async function scanCardIdentity(): Promise<{ address: Address; pin: PinStatus }> {
-  const { pub, pin } = await onCard(readCardIdentity);
-  return { address: addressFromPubkey(pub), pin };
 }
 
 export function createNfcJavaCardSigner(): HardwareSigner {

@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { StepHead } from "@/components/create/WizardChrome";
 import { CheckBox } from "@/components/ui";
+import { durationAdjective, durationText } from "@/lib";
 import { colors, font, space } from "@/theme";
 import type { FeeLine, ReviewLine } from "@/types/create";
 
@@ -11,13 +12,13 @@ function U({ children }: { children: string }) {
 
 /** "If you don't check in for 90 days, plus a 30-day wait, credential ····7F2A can claim 1 SOL." */
 function ReviewSentence({
-  everyDays,
-  waitDays,
+  everySecs,
+  waitSecs,
   heir,
   assets,
 }: {
-  everyDays: number;
-  waitDays: number;
+  everySecs: number;
+  waitSecs: number;
   heir: string;
   assets: string;
 }) {
@@ -40,7 +41,7 @@ function ReviewSentence({
           color: colors.ink,
         }}
       >
-        If you don’t check in for <U>{`${everyDays} days`}</U>, plus a <U>{`${waitDays}-day`}</U>{" "}
+        If you don’t check in for <U>{durationText(everySecs)}</U>, plus a <U>{durationAdjective(waitSecs)}</U>{" "}
         wait, {heir} can claim <U>{assets}</U>.
       </Text>
     </View>
@@ -48,15 +49,15 @@ function ReviewSentence({
 }
 
 export function ReviewStep({
-  everyDays,
-  waitDays,
+  everySecs,
+  waitSecs,
   heir,
   assets,
   lines,
   fees,
 }: {
-  everyDays: number;
-  waitDays: number;
+  everySecs: number;
+  waitSecs: number;
   heir: string;
   assets: string;
   lines: ReviewLine[];
@@ -65,7 +66,7 @@ export function ReviewStep({
   return (
     <View style={{ gap: 12 }}>
       <StepHead eyebrow="Step 4 · Review" />
-      <ReviewSentence everyDays={everyDays} waitDays={waitDays} heir={heir} assets={assets} />
+      <ReviewSentence everySecs={everySecs} waitSecs={waitSecs} heir={heir} assets={assets} />
       <View>
         {lines.map((line) => (
           <View

@@ -49,6 +49,17 @@ Covers `app/`, `app-ika/` and `mobile/`. `<pkg>` below is the package's `src/`.
 - Exception: purely visual measurements used by one component (a frame size, a
   bar count) may stay in that component.
 
+### Tests
+
+- Tests never sit next to the code they test. Each package keeps them in a
+  top-level `tests/` folder beside `src/` (e.g. `mobile/tests/`).
+- In these apps, `tests/` mirrors `src/`: `src/lib/nfc/apdu.ts` is tested in
+  `tests/lib/nfc/apdu.test.ts`.
+- Import the code under test through the `@/` alias, not relative paths.
+- The generated clients are different: `clients/*/js/tests/` stays flat, one file
+  per program instruction or flow (`claim.test.ts`, `revoke.test.ts`), since
+  their `src/` is generated.
+
 ### Colours
 
 - Mobile: every colour comes from `mobile/src/theme.ts`. No hex values in

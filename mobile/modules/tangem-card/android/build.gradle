@@ -1,0 +1,22 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'xyz.heirlm'
+version = '0.1.0'
+
+android {
+  namespace "xyz.heirlm.tangemcard"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // Included by plugins/with-tangem-sdk, which points them at the pinned vendor source.
+  implementation project(':tangem-sdk-core')
+  implementation project(':tangem-sdk-android')
+  implementation "androidx.activity:activity-ktx:1.8.2"
+}

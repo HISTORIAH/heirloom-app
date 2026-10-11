@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { isUserCancel } from "./text";
+import { isUserCancel } from "@/lib/text";
 
 class UserCancel extends Error {}
 

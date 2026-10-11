@@ -100,7 +100,7 @@ export default function HomeScreen() {
   const { rows, loading, error, reload } = useEstates("authority");
   const roles = useRoles();
   const { checkIn, checkInAll } = useOwnerTx();
-  const { sendHeartbeat } = useHeirTx();
+  const { sendCheckIn } = useHeirTx();
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
@@ -194,7 +194,7 @@ export default function HomeScreen() {
         void run(
           row.address,
           "Check-in",
-          () => sendHeartbeat(row.data.authority, row.data.heir),
+          () => sendCheckIn(row.data.authority, row.data.heir),
           "Checked in for them.",
         )
       }

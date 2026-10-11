@@ -31,6 +31,16 @@ export type EstateTimingFields = {
   delegatePauseDurationSecs?: bigint;
 };
 
+/** The unit Update timing edits in. Minutes only in demo timing. */
+export type TimingUnit = "days" | "minutes";
+
+/** One chip in the create wizard's check-in or wait row. */
+export type TimingChoice = {
+  secs: number;
+  /** "90d", "1m". */
+  label: string;
+};
+
 /** Where an estate is in its life, from the owner's side. */
 export type EstateUiState = "active" | "grace" | "claimable" | "distributed";
 

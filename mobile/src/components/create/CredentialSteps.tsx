@@ -8,7 +8,36 @@ import { TapIllustration } from "@/components/TapIllustration";
 import { Badge, Card, Display, Fine, Note, Steps, TextField, TickList } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import { PinPad } from "@/components/claim/PinPad";
-import type { CredentialMode, TapProgress } from "@/types/create";
+import type { CredentialMode, HandoverSecret, TapProgress } from "@/types/create";
+import type { CredentialKind } from "@/types/nfc";
+
+export function CredentialKindStep({
+  kind,
+  onKind,
+}: {
+  kind: CredentialKind;
+  onKind: (kind: CredentialKind) => void;
+}) {
+  return (
+    <View style={{ gap: 14 }}>
+      <StepHead eyebrow="Credential · Card" title="Which card are you giving them?" />
+      <OptionCard
+        on={kind === "heirloom"}
+        title="Heirloom card"
+        body="A blank card, ring or band. We create its key on the chip."
+        tag="Blank · set up here"
+        onPress={() => onKind("heirloom")}
+      />
+      <OptionCard
+        on={kind === "tangem"}
+        title="Tangem card"
+        body="A Tangem wallet card that's already activated. We read its Solana address."
+        tag="Its access code protects it"
+        onPress={() => onKind("tangem")}
+      />
+    </View>
+  );
+}
 
 export function CredentialModeStep({
   mode,
@@ -107,6 +136,21 @@ function ProgressRow({ label, state }: { label: string; state: "done" | "working
   );
 }
 
+/** Reading a Tangem card: Tangem's own sheet does the tap and the access code. */
+export function TangemReadStep({ error }: { error?: string }) {
+  return (
+    <View style={{ gap: 16 }}>
+      <StepHead eyebrow="Credential · 2 of 3" title="Tap the Tangem card you’ll give them" />
+      <TapIllustration />
+      <ErrorLine>{error}</ErrorLine>
+      <Fine>
+        Tangem’s sheet asks you to hold the card and enter its access code. We only read its Solana
+        address. Its key stays on the card.
+      </Fine>
+    </View>
+  );
+}
+
 export function CredentialTapStep({ progress, error }: { progress: TapProgress; error?: string }) {
   const found = progress === "found" || progress === "done";
   const done = progress === "done";
@@ -141,12 +185,29 @@ export function CredentialReadyStep({
   name,
   onName,
   pinSet,
+  kind,
 }: {
   credential: string;
   name: string;
   onName: (next: string) => void;
   pinSet: boolean;
+  kind: CredentialKind;
 }) {
+  const ticks =
+    kind === "tangem"
+      ? [
+          "Solana address read from the card",
+          "Its access code guards every signature",
+          "Tapping it on any phone opens their card",
+        ]
+      : [
+          "Key created on the chip",
+          ...(pinSet ? ["PIN set on the chip"] : []),
+          "Test signature passed",
+          pinSet
+            ? "Tapping it on any phone opens their card"
+            : "Tapping it on any phone opens the claim page",
+        ];
   return (
     <View style={{ gap: 14 }}>
       <StepHead eyebrow="Credential · 3 of 3" />
@@ -167,16 +228,7 @@ export function CredentialReadyStep({
         </View>
       </View>
       <Display size={30}>Ready to hand over.</Display>
-      <TickList
-        items={[
-          "Key created on the chip",
-          ...(pinSet ? ["PIN set on the chip"] : []),
-          "Test signature passed",
-          pinSet
-            ? "Tapping it on any phone opens their card"
-            : "Tapping it on any phone opens the claim page",
-        ]}
-      />
+      <TickList items={ticks} />
       <TextField
         label="Who’s it for?"
         hint="stays on this phone"
@@ -191,7 +243,13 @@ export function CredentialReadyStep({
   );
 }
 
-export function HandoverStep({ firstDue, keepAsWallet }: { firstDue: string; keepAsWallet: boolean }) {
+const TELL_THEM: Record<HandoverSecret, string> = {
+  none: "“If something happens to me, tap this on your phone.”",
+  pin: "Give them the PIN separately. Not on the card, not in this app.",
+  accessCode: "Give them the card’s access code separately. Not on the card, not in this app.",
+};
+
+export function HandoverStep({ firstDue, secret }: { firstDue: string; secret: HandoverSecret }) {
   return (
     <View style={{ gap: 14 }}>
       <Display size={34}>Now hand it over.</Display>
@@ -203,9 +261,7 @@ export function HandoverStep({ firstDue, keepAsWallet }: { firstDue: string; kee
           },
           {
             title: "Tell them one thing",
-            body: keepAsWallet
-              ? "Give them the PIN separately. Not on the card, not in this app."
-              : "“If something happens to me, tap this on your phone.”",
+            body: TELL_THEM[secret],
           },
           {
             title: "That’s it",

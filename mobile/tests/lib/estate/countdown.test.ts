@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { countdownFromSeconds, countdownNoun } from "./countdown";
+import { countdownFromSeconds, countdownNoun } from "@/lib/estate/countdown";
 
 describe("countdownFromSeconds", () => {
   test("uses days while a full day remains", () => {

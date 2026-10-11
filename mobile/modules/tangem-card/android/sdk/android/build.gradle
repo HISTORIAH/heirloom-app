@@ -1,0 +1,72 @@
+// Tangem's tangem-sdk-android (NFC reader, session UI), compiled from the pinned submodule.
+// Keeps the com.tangem.sdk namespace: its code imports com.tangem.sdk.R.
+plugins {
+  id 'com.android.library'
+  id 'org.jetbrains.kotlin.android'
+}
+
+apply from: "../vendor.gradle"
+
+def sdkMain = "${tangemVendor.root}/tangem-sdk-android/src/main"
+
+android {
+  namespace "com.tangem.sdk"
+  compileSdk tangemVendor.compileSdk
+
+  defaultConfig {
+    minSdk tangemVendor.minSdk
+    consumerProguardFiles "${tangemVendor.root}/tangem-sdk-android/consumer-rules.pro"
+  }
+
+  // Vendor code: no release lint (slow, memory-heavy, and its findings aren't ours to fix).
+  lint {
+    checkReleaseBuilds false
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  sourceSets {
+    main {
+      manifest.srcFile "${sdkMain}/AndroidManifest.xml"
+      java.srcDirs = ["${sdkMain}/java", "src/overrides/java"]
+      res.srcDirs = ["${sdkMain}/res"]
+    }
+  }
+}
+
+// Vendor files replaced by a copy in src/overrides (each file says why).
+def overridesDir = file("src/overrides/java")
+def overriddenSources = ["com/tangem/sdk/ui/common/NoAutofillTextInputEditText.kt"]
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  exclude { source ->
+    !source.file.toPath().startsWith(overridesDir.toPath()) &&
+      overriddenSources.any { source.file.path.endsWith(it) }
+  }
+}
+
+kotlin {
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    // Tangem's warnings would bury ours; they're for upstream to fix.
+    suppressWarnings.set(true)
+  }
+}
+
+dependencies {
+  implementation project(":tangem-sdk-core")
+  implementation "androidx.activity:activity-ktx:1.8.2"
+  implementation "androidx.appcompat:appcompat:1.6.1"
+  implementation "androidx.biometric:biometric:1.1.0"
+  implementation "androidx.constraintlayout:constraintlayout:2.0.4"
+  implementation "androidx.core:core-ktx:1.13.1"
+  implementation "androidx.fragment:fragment-ktx:1.6.2"
+  implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
+  implementation "com.google.android.material:material:1.9.0"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
+  implementation "org.jetbrains.kotlin:kotlin-reflect"
+  implementation "at.favre.lib:armadillo:1.0.0"
+  implementation "com.skyfishjy.ripplebackground:library:1.0.1"
+}

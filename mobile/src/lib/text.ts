@@ -1,3 +1,5 @@
+import { TANGEM_CANCEL_CODE } from "@/constants/tangem";
+
 /** "1 day", "3 days". Pass `bare` for the word alone. */
 export function plural(n: number, word: string, bare = false): string {
   const w = n === 1 ? word : `${word}s`;
@@ -11,6 +13,7 @@ export function errorMessage(cause: unknown, fallback: string): string {
 
 /** The wallet or the NFC sheet was dismissed, not a real failure. */
 export function isUserCancel(cause: unknown): boolean {
+  if ((cause as { code?: unknown } | null)?.code === TANGEM_CANCEL_CODE) return true;
   const ctor = cause instanceof Error ? cause.constructor.name : "";
   if (ctor === "UserCancel") return true;
   const raw = cause instanceof Error ? cause.message : String(cause ?? "");

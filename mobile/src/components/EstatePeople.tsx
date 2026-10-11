@@ -7,10 +7,10 @@ import { shortAddress } from "@/lib";
 
 type EstatePeopleProps = {
   heir: string;
-  heartbeat?: string;
+  checkInSigner?: string;
   guardian?: string;
   /** Inline "Add" on an unset check-in signer or guardian. */
-  onAddHeartbeat?: () => void;
+  onAddCheckInSigner?: () => void;
   onAddGuardian?: () => void;
   /** Last row: "On", "Off" or "Sign in", opening the estate's reminders. */
   reminders?: { label: string; onPress: () => void };
@@ -81,16 +81,16 @@ function RemindersRow({ label, onPress }: { label: string; onPress: () => void }
 
 export function EstatePeople({
   heir,
-  heartbeat,
+  checkInSigner,
   guardian,
-  onAddHeartbeat,
+  onAddCheckInSigner,
   onAddGuardian,
   reminders,
 }: EstatePeopleProps) {
   return (
     <View style={{ borderTopWidth: space.rule, borderTopColor: colors.line }}>
       <PersonRow title="Heir" address={heir} />
-      <PersonRow title="Check-in signer" address={heartbeat} onAdd={onAddHeartbeat} />
+      <PersonRow title="Check-in signer" address={checkInSigner} onAdd={onAddCheckInSigner} />
       <PersonRow title="Guardian" address={guardian} onAdd={onAddGuardian} />
       {reminders !== undefined ? <RemindersRow {...reminders} /> : null}
     </View>

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { address, type TransactionSigner } from "@solana/kit";
 
-import { buildTokenTransferIxs, spareLamports } from "./cardSweep";
+import { buildTokenTransferIxs, spareLamports } from "@/lib/tx/cardSweep";
 import type { SweepToken } from "@/types/claim";
 
 describe("spareLamports", () => {

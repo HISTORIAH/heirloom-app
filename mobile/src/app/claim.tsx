@@ -46,6 +46,7 @@ import {
   shortAddress,
 } from "@/lib";
 import { isPinEntryError } from "@/lib/nfc/apdu";
+import { adapterFor } from "@/lib/nfc/credentials";
 import { resolveCardClaimPlan } from "@/lib/tx/cardClaim";
 
 type Load =
@@ -194,6 +195,8 @@ export default function ClaimScreen() {
   const viaCredential = params.heir !== undefined;
   const keepHint = params.keep === "1";
   const [pinKnown, setPinKnown] = useState(keepHint);
+  /** The card asks for its own code (Tangem), so our PIN pad and hold sheet stay away. */
+  const ownCode = params.heir !== undefined && adapterFor(params.heir).asksForOwnCode;
 
   const fetchRow = useCallback(async () => {
     setLoad({ kind: "loading" });
@@ -259,7 +262,7 @@ export default function ClaimScreen() {
     pending.current = { row, plan, cashOut };
     setBusy(true);
     setPinOpen(false);
-    setHoldHint(true);
+    setHoldHint(!ownCode);
     try {
       await waitUi();
       const result = await claimWithCard(row, plan, pin, cashOut);
@@ -300,7 +303,7 @@ export default function ClaimScreen() {
     setPinKnown(true);
     const skipClaim = estateSpan(row.data, row.claimableLamports).state === "distributed";
     const next = resolveCardClaimPlan({
-      pin: { kind: "set", triesLeft: 3 },
+      locked: true,
       plan,
       skipClaim,
       cashOut,
@@ -325,7 +328,7 @@ export default function ClaimScreen() {
   function startCardTx(row: EstateRow, plan: CardClaimPlan, cashOut = false) {
     if (busy) return;
     pending.current = { row, plan, cashOut };
-    if (pinKnown || plan.kind === "keep") {
+    if (!ownCode && (pinKnown || plan.kind === "keep")) {
       askPinThen(row, plan, cashOut);
       return;
     }

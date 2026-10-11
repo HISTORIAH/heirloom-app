@@ -24,7 +24,7 @@ import {
   TEST_SIGN_MESSAGE,
   toHex,
   verifyPinApdu,
-} from "./apdu";
+} from "@/lib/nfc/apdu";
 
 describe("selectApdu", () => {
   test("SELECT by AID with Le 00, matching card/prove.sh", () => {

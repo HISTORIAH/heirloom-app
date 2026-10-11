@@ -1,8 +1,8 @@
 import { address, type TransactionPartialSigner } from "@solana/kit";
 import { describe, expect, test } from "bun:test";
 
-import { MSG_MAX } from "./apdu";
-import { createCardTransactionSigner } from "./kitSigner";
+import { MSG_MAX } from "@/lib/nfc/apdu";
+import { createCardTransactionSigner } from "@/lib/nfc/kitSigner";
 
 const ADDR = address("11111111111111111111111111111111");
 

@@ -5,7 +5,7 @@ import { useSendIxs } from "@/hooks/tx/useSendIxs";
 import { estateSpan } from "@/lib/estate/span";
 import { assertAllTokensListed, discoverVaultClaimTokens, estateDelegate } from "@/lib/estate/tokens";
 import { readNfcCapability } from "@/lib/nfc/reader";
-import { withCardSigningSession } from "@/lib/nfc/signer";
+import { adapterFor, withCredentialSession } from "@/lib/nfc/credentials";
 import { resolveCardClaimPlan, runCardClaim } from "@/lib/tx/cardClaim";
 import { sendFromCard } from "@/lib/tx/cardSweep";
 import { buildClaimIxs } from "@/lib/tx/heir";
@@ -34,7 +34,7 @@ export function useHeirTx() {
     });
   }
 
-  async function sendHeartbeat(owner: Address, heir: Address): Promise<string> {
+  async function sendCheckIn(owner: Address, heir: Address): Promise<string> {
     return sendIxs(async (signer) => [await buildCheckInIx(signer, owner, heir)]);
   }
 
@@ -52,8 +52,14 @@ export function useHeirTx() {
   ): Promise<"keep" | "sweep" | "home"> {
     await assertNfcReady();
     const skipClaim = estateSpan(row.data, row.claimableLamports).state === "distributed";
-    return withCardSigningSession(async (session) => {
-      const next = resolveCardClaimPlan({ pin: session.pin, plan, skipClaim, cashOut });
+    const locked = adapterFor(row.data.heir).asksForOwnCode;
+    return withCredentialSession(row.data.heir, async (session) => {
+      const next = resolveCardClaimPlan({
+        locked: locked || session.pin.kind !== "none",
+        plan,
+        skipClaim,
+        cashOut,
+      });
       if (next.kind === "home") return "home";
       await session.unlock();
       await runCardClaim({
@@ -62,22 +68,34 @@ export function useHeirTx() {
         row,
         plan: next,
         skipClaim,
+        maxMessageBytes: session.maxMessageBytes,
       });
       return next.kind;
     }, pin);
   }
 
   async function sendFromCardWallet(
+    from: Address,
     destination: Address,
     asset: { kind: "sol"; lamports: bigint } | { kind: "token"; token: SweepToken; amount: bigint },
     pin?: Uint8Array,
   ): Promise<void> {
     await assertNfcReady();
-    await withCardSigningSession(async (session) => {
-      await session.unlock();
-      await sendFromCard({ rpc: client.rpc, signer: session.signer, destination, asset });
-    }, pin);
+    await withCredentialSession(
+      from,
+      async (session) => {
+        await session.unlock();
+        await sendFromCard({
+          rpc: client.rpc,
+          signer: session.signer,
+          destination,
+          asset,
+          maxMessageBytes: session.maxMessageBytes,
+        });
+      },
+      pin,
+    );
   }
 
-  return { account, claimAll, sendHeartbeat, claimWithCard, sendFromCardWallet };
+  return { account, claimAll, sendCheckIn, claimWithCard, sendFromCardWallet };
 }

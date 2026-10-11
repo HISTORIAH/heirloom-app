@@ -23,8 +23,8 @@ import {
   SW_SLOT_FULL,
   TEST_SIGN_MESSAGE,
   toHex,
-} from "./apdu";
-import { createCardTransactionSigner } from "./kitSigner";
+} from "@/lib/nfc/apdu";
+import { createCardTransactionSigner } from "@/lib/nfc/kitSigner";
 import type { IsoDepTransceive } from "@/types/nfc";
 import {
   generatePubkey,
@@ -34,7 +34,7 @@ import {
   selectApplet,
   signOnCard,
   signOnCardWithPin,
-} from "./signer";
+} from "@/lib/nfc/signer";
 
 function derPubToRaw(der: Buffer): Uint8Array {
   return Uint8Array.from(der.subarray(der.length - 32));
@@ -312,7 +312,7 @@ describe("runCardSigningSession", () => {
     await runCardSigningSession(tx, async ({ signer, unlock, pin }) => {
       expect(pin.kind).toBe("none");
       await unlock();
-      await signer.signTransactions([compiled, compiled]);
+      await (signer as TransactionPartialSigner).signTransactions([compiled, compiled]);
     });
     expect(seen.filter((ins) => ins === INS_SELECT)).toHaveLength(1);
     expect(seen.filter((ins) => ins === INS_SIGN).length).toBeGreaterThan(1);

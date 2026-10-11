@@ -52,6 +52,13 @@ export function clusterLabel(): string {
   return "Devnet";
 }
 
+/**
+ * Demo timing: check-in and wait are picked in minutes, so a claim can be shown end to end in a
+ * few minutes. Set EXPO_PUBLIC_DEMO_TIMING=true for local and devnet builds. Never on mainnet.
+ */
+export const DEMO_TIMING =
+  process.env.EXPO_PUBLIC_DEMO_TIMING === "true" && clusterLabel() !== "Mainnet";
+
 export const walletIdentity: AppIdentity = {
   name: "Heirloom",
   uri: "https://heirlm.xyz",

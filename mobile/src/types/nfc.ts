@@ -32,12 +32,44 @@ export type HardwareSigner = {
   signBytes(message: Uint8Array): Promise<Uint8Array>;
 };
 
-/** One IsoDep hold: the card address plus a Kit signer that SIGNs on that field. */
+/** A Tangem card's Solana key, and what the card needs to sign with it again. */
+export type TangemCredential = {
+  cardId: string;
+  address: Address;
+  /** The wallet's own key, hex. The card finds the wallet by it. */
+  walletPublicKey: string;
+  /** Null on cards without HD wallets, where the wallet key is the Solana key. */
+  derivationPath: string | null;
+};
+
+/** The kinds of NFC card that can hold an heir's key. Each one has an adapter in lib/nfc/credentials. */
+export type CredentialKind = "heirloom" | "tangem";
+
+/** What a card kind can do, so shared code never has to ask which card it is. */
+export type CredentialAdapter = {
+  kind: CredentialKind;
+  label: string;
+  /** Largest compiled Solana message the card signs. Claims and sends are packed to fit. */
+  maxMessageBytes: number;
+  /** The card's own sheet asks for its code (Tangem's access code), so we don't show our PIN pad. */
+  asksForOwnCode: boolean;
+};
+
+/** What this phone remembers about a credential, so signing later talks to the right card. */
+export type CredentialRecord =
+  | { kind: "heirloom"; address: Address }
+  | ({ kind: "tangem" } & TangemCredential);
+
+/**
+ * One signing session with a card: its address plus a Kit signer. Every transaction handed to the
+ * signer in one call is signed in one hold (Heirloom) or one tap (Tangem).
+ */
 export type CardSigningSession = {
   address: Address;
   signer: TransactionSigner;
   pin: PinStatus;
   unlock: () => Promise<void>;
+  maxMessageBytes: number;
 };
 
 export type TagSummary = {
@@ -51,6 +83,8 @@ export type TagSummary = {
 
 export type CardScan =
   | { kind: "address"; value: string; pin: PinStatus }
+  /** Not ours, but a Tangem card: read it through Tangem's SDK instead. */
+  | { kind: "tangem" }
   | { kind: "cancelled" }
   | { kind: "empty" }
   | { kind: "off" }

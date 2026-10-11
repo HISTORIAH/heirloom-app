@@ -1,8 +1,9 @@
 import { isCardApduError } from "./apdu";
+import { isTangemError, tangemProblemMessage } from "./tangem/errors";
 import { errorMessage } from "../text";
 import type { CardScan } from "@/types/nfc";
 
-type ScanProblem = Exclude<CardScan, { kind: "address" | "cancelled" }>;
+type ScanProblem = Exclude<CardScan, { kind: "address" | "cancelled" | "tangem" }>;
 
 export function scanProblemMessage(
   result: ScanProblem,
@@ -29,6 +30,7 @@ function pinWrongMessage(sw: number): string {
 }
 
 export function cardProblemMessage(cause: unknown, fallback: string): string {
+  if (isTangemError(cause)) return tangemProblemMessage(cause, fallback);
   if (isCardApduError(cause)) {
     if (cause.kind === "slot_full") return "This credential already has a key.";
     if (cause.kind === "not_heirloom") return "This isn’t an Heirloom credential.";

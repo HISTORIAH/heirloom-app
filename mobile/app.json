@@ -52,7 +52,9 @@
           }
         }
       ],
-      "./plugins/with-splash-icon-background"
+      "./plugins/with-splash-icon-background",
+      "./plugins/with-tangem-sdk",
+      "./plugins/with-gradle-memory"
     ],
     "experiments": {
       "typedRoutes": true

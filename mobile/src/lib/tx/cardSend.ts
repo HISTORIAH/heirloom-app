@@ -1,47 +1,62 @@
 import {
   appendTransactionMessageInstructions,
+  assertIsTransactionWithinSizeLimit,
   compileTransaction,
   createTransactionMessage,
   getBase64EncodedWireTransaction,
   getSignatureFromTransaction,
+  isTransactionPartialSigner,
   pipe,
   setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
-  signTransactionMessageWithSigners,
   type Instruction,
+  type Transaction,
+  type TransactionPartialSigner,
   type TransactionSigner,
 } from "@solana/kit";
 
-import { MSG_MAX } from "@/lib/nfc/apdu";
 import { waitForConfirmed } from "@/lib/solana/confirm";
 import type { EstateRpc } from "@/types/program";
 
+/** What a partial signer takes: a compiled transaction with its lifetime and size checked. */
+type SignableTransaction = Parameters<TransactionPartialSigner["signTransactions"]>[0][number];
+
 type Lifetime = Awaited<ReturnType<ReturnType<EstateRpc["getLatestBlockhash"]>["send"]>>["value"];
 
-function messageLen(signer: TransactionSigner, ixs: Instruction[], lifetime: Lifetime): number {
-  const message = pipe(
+function buildMessage(signer: TransactionSigner, ixs: Instruction[], lifetime: Lifetime) {
+  return pipe(
     createTransactionMessage({ version: 0 }),
     (tx) => appendTransactionMessageInstructions(ixs, tx),
     (tx) => setTransactionMessageFeePayerSigner(signer, tx),
     (tx) => setTransactionMessageLifetimeUsingBlockhash(lifetime, tx),
   );
-  return compileTransaction(message).messageBytes.length;
 }
 
-/** Pack instructions so each compiled message fits the applet SIGN buffer. */
+function compileForCard(signer: TransactionSigner, ixs: Instruction[], lifetime: Lifetime): SignableTransaction {
+  const transaction = compileTransaction(buildMessage(signer, ixs, lifetime));
+  assertIsTransactionWithinSizeLimit(transaction);
+  return transaction;
+}
+
+function messageLen(signer: TransactionSigner, ixs: Instruction[], lifetime: Lifetime): number {
+  return compileTransaction(buildMessage(signer, ixs, lifetime)).messageBytes.length;
+}
+
+/** Pack instructions so each compiled message fits what the card signs (`maxBytes`). */
 export function packInstructionsForCard(
   measure: (ixs: Instruction[]) => number,
   ixs: Instruction[],
+  maxBytes: number,
 ): Instruction[][] {
   const batches: Instruction[][] = [];
   let current: Instruction[] = [];
   for (const ix of ixs) {
     const trial = [...current, ix];
-    if (measure(trial) > MSG_MAX) {
+    if (measure(trial) > maxBytes) {
       if (current.length === 0) throw new Error("This transaction is too large for the credential.");
       batches.push(current);
       current = [ix];
-      if (measure(current) > MSG_MAX) {
+      if (measure(current) > maxBytes) {
         throw new Error("This transaction is too large for the credential.");
       }
     } else {
@@ -52,41 +67,49 @@ export function packInstructionsForCard(
   return batches;
 }
 
-export async function sendCardIxs(
-  rpc: EstateRpc,
+/**
+ * Signs every transaction in one call to the card's signer: one hold on an Heirloom card, one tap
+ * on a Tangem card. Other signers sign one transaction at a time.
+ */
+async function signAll(
   signer: TransactionSigner,
-  ixs: Instruction[],
-): Promise<string> {
-  if (ixs.length === 0) throw new Error("Nothing to send");
-  const { value: lifetime } = await rpc.getLatestBlockhash().send();
-  const message = pipe(
-    createTransactionMessage({ version: 0 }),
-    (tx) => appendTransactionMessageInstructions(ixs, tx),
-    (tx) => setTransactionMessageFeePayerSigner(signer, tx),
-    (tx) => setTransactionMessageLifetimeUsingBlockhash(lifetime, tx),
-  );
-  if (compileTransaction(message).messageBytes.length > MSG_MAX) {
-    throw new Error("This transaction is too large for the credential.");
+  transactions: SignableTransaction[],
+): Promise<Transaction[]> {
+  if (!isTransactionPartialSigner(signer)) {
+    throw new Error("A credential signer must sign without sending.");
   }
-  const signed = await signTransactionMessageWithSigners(message);
-  const wire = getBase64EncodedWireTransaction(signed);
-  await rpc.sendTransaction(wire, { encoding: "base64" }).send();
+  const signatures = await signer.signTransactions(transactions);
+  return transactions.map((tx, index) => ({
+    ...tx,
+    signatures: { ...tx.signatures, ...signatures[index] },
+  }));
+}
+
+async function sendSigned(rpc: EstateRpc, signed: Transaction): Promise<string> {
+  await rpc.sendTransaction(getBase64EncodedWireTransaction(signed), { encoding: "base64" }).send();
   const signature = getSignatureFromTransaction(signed);
   await waitForConfirmed(rpc, signature);
   return signature;
 }
 
+/**
+ * Sends `ixs` from the card, split into transactions that fit `maxBytes`. All of them are signed
+ * up front in one go, then sent in order, each confirmed before the next.
+ */
 export async function sendCardBatches(
   rpc: EstateRpc,
   signer: TransactionSigner,
   ixs: Instruction[],
+  maxBytes: number,
 ): Promise<string[]> {
   if (ixs.length === 0) return [];
   const { value: lifetime } = await rpc.getLatestBlockhash().send();
-  const batches = packInstructionsForCard((batch) => messageLen(signer, batch, lifetime), ixs);
+  const batches = packInstructionsForCard((batch) => messageLen(signer, batch, lifetime), ixs, maxBytes);
+  const compiled = batches.map((batch) => compileForCard(signer, batch, lifetime));
+  const signed = await signAll(signer, compiled);
   const sigs: string[] = [];
-  for (const batch of batches) {
-    sigs.push(await sendCardIxs(rpc, signer, batch));
+  for (const tx of signed) {
+    sigs.push(await sendSigned(rpc, tx));
   }
   return sigs;
 }

@@ -114,7 +114,7 @@ function FormIssue({ text }: { text?: string }) {
 
 function collectTimingFields(
   row: EstateRow,
-  heartbeat: string,
+  checkIn: string,
   grace: string,
   pause: string,
 ): {
@@ -123,7 +123,7 @@ function collectTimingFields(
   delegatePauseDurationSecs?: bigint;
 } {
   const checkInIntervalSecs = changedTimingField(
-    heartbeat,
+    checkIn,
     row.data.checkInIntervalSecs,
     "check-in",
     false,
@@ -340,7 +340,7 @@ function TimingForm({
   busy?: boolean;
   onSubmit: EstateManageProps["onTiming"];
 }) {
-  const [heartbeat, setHeartbeat] = useState(displayTiming(row.data.checkInIntervalSecs));
+  const [checkIn, setCheckIn] = useState(displayTiming(row.data.checkInIntervalSecs));
   const [grace, setGrace] = useState(displayTiming(row.data.gracePeriodSecs));
   const [pause, setPause] = useState(displayTiming(row.data.delegatePauseDurationSecs));
   const [error, setError] = useState<string | undefined>(undefined);
@@ -352,10 +352,10 @@ function TimingForm({
     >
       <Field
         label={`Check-in ${unit}`}
-        value={heartbeat}
+        value={checkIn}
         onChangeText={(value) => {
           setError(undefined);
-          setHeartbeat(value);
+          setCheckIn(value);
         }}
         keyboardType="decimal-pad"
         editable={!busy}
@@ -390,7 +390,7 @@ function TimingForm({
         disabled={busy}
         onPress={() => {
           try {
-            onSubmit(collectTimingFields(row, heartbeat, grace, pause));
+            onSubmit(collectTimingFields(row, checkIn, grace, pause));
           } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Check the form");
           }

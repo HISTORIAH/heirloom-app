@@ -8,7 +8,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "lint": "expo lint",
-    "apk": "cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a",
+    "test": "bun test tests",
+    "apk": "cd android && ./gradlew assembleRelease -x lintVitalRelease -PreactNativeArchitectures=arm64-v8a",
     "apk:devnet": "bun --env-file=.env.devnet apk",
     "apk:mainnet": "bun --env-file=.env.mainnet apk"
   },
@@ -29,6 +30,7 @@
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.21",
     "expo-dev-client": "~57.0.19",
+    "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
     "expo-linking": "~57.0.12",
     "expo-router": "~57.0.25",
@@ -51,6 +53,7 @@
     "tamagui": "3.0.1"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.14",
     "@types/react": "~19.2.2",
     "babel-preset-expo": "~57.0.14",
     "typescript": "~6.0.3"

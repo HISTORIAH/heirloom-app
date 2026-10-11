@@ -1,0 +1,9 @@
+// Shared by the two vendored Tangem SDK subprojects: where the pinned source lives and the
+// SDK levels to build it with (the app's, when the root project sets them).
+def rootExt = rootProject.ext
+
+ext.tangemVendor = [
+  root      : file("${projectDir}/../../../vendor/tangem-sdk-android"),
+  compileSdk: rootExt.has("compileSdkVersion") ? rootExt.compileSdkVersion : 36,
+  minSdk    : rootExt.has("minSdkVersion") ? rootExt.minSdkVersion : 24,
+]
