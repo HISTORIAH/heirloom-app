@@ -1,9 +1,9 @@
 import { withSettingsGradle, type ConfigPlugin } from "expo/config-plugins";
 
 /**
- * Adds Tangem's SDK, built from the pinned submodule in modules/tangem-card/vendor, as two
- * Gradle subprojects. The tangem-card module depends on them; autolinking only includes the
- * module itself.
+ * Adds Tangem's SDK, built from the pinned source in modules/tangem-card/vendor (downloaded by
+ * android/sdk/vendor.gradle), as two Gradle subprojects. The tangem-card module depends on them;
+ * autolinking only includes the module itself.
  */
 const SDK_DIR = "../modules/tangem-card/android/sdk";
 const SUBPROJECTS = ["tangem-sdk-core", "tangem-sdk-android"] as const;

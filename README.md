@@ -30,11 +30,6 @@ SPA at `app.heirlm.xyz`.
 ## Quick start
 
 ```bash
-# Clone with submodules (the mobile app builds Tangem's SDK from one)
-git clone --recurse-submodules <repo-url>
-# Already cloned without them? Fetch them now
-git submodule update --init
-
 # Install dependencies
 bun install
 

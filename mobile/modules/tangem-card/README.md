@@ -6,8 +6,10 @@ messages. Android only. JS lives in `src/lib/nfc/tangem/`; the card-kind adapter
 
 ## The vendored SDK
 
-`vendor/tangem-sdk-android` is Tangem's SDK as a pinned git submodule, built from source by the two
-Gradle subprojects in `android/sdk/` (wired in by `plugins/with-tangem-sdk`).
+`vendor/tangem-sdk-android` is Tangem's SDK at a pinned commit, built from source by the two Gradle
+subprojects in `android/sdk/` (wired in by `plugins/with-tangem-sdk`). It isn't in git: the first
+Android build downloads it from GitHub and checks its SHA-256 (`android/sdk/vendor.gradle`). It used
+to be a submodule, but Cloudflare's web deploys couldn't fetch submodules.
 
 `android/sdk/android/src/overrides/` holds our copies of vendor files that don't work in this app
 as they are. `android/sdk/android/build.gradle` swaps them in (`overriddenSources`); each file says
@@ -19,7 +21,10 @@ why. Today that's one:
 
 ## Updating the SDK
 
-1. Move the submodule to the new upstream commit.
+1. In `android/sdk/vendor.gradle`, set `TANGEM_SDK_COMMIT` to the new upstream commit and
+   `TANGEM_SDK_SHA256` to the hash of its archive:
+   `curl -sSL https://codeload.github.com/tangem/tangem-sdk-android/tar.gz/<commit> | sha256sum`.
+   The next build downloads it.
 2. For each file in `android/sdk/android/src/overrides/`, diff it against the new upstream file.
    Carry over upstream changes, or delete the override (and its `overriddenSources` entry) if
    upstream fixed the problem itself.
