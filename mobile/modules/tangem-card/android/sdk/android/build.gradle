@@ -1,4 +1,4 @@
-// Tangem's tangem-sdk-android (NFC reader, session UI), compiled from the pinned submodule.
+// Tangem's tangem-sdk-android (NFC reader, session UI), compiled from the pinned source vendor.gradle downloads.
 // Keeps the com.tangem.sdk namespace: its code imports com.tangem.sdk.R.
 plugins {
   id 'com.android.library'

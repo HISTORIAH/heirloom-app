@@ -1,4 +1,4 @@
-// Tangem's tangem-sdk-core, compiled from the pinned submodule in ../../../vendor.
+// Tangem's tangem-sdk-core, compiled from the pinned source vendor.gradle downloads.
 // Their own build files use a version catalog and publishing scripts we don't have, so this
 // mirrors their dependency list (vendor/.../gradle/libs.versions.toml) instead.
 buildscript {

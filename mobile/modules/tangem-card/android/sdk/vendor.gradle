@@ -1,9 +1,55 @@
 // Shared by the two vendored Tangem SDK subprojects: where the pinned source lives and the
 // SDK levels to build it with (the app's, when the root project sets them).
+//
+// The source is Tangem's tangem-sdk-android at TANGEM_SDK_COMMIT, downloaded from GitHub on the
+// first Android build and checked against TANGEM_SDK_SHA256. It isn't a git submodule: Cloudflare's
+// web deploys fail to fetch submodules, and nothing outside the Android build needs it.
+import java.security.MessageDigest
+
+def TANGEM_SDK_COMMIT = "3eb79da284435d1269e2cdcdfed9e43bd8dd5832"
+def TANGEM_SDK_SHA256 = "9d0f0a5754f19ee0ed00b7576386a8a85250db833f9356ca66644f0485a27886"
+def TANGEM_SDK_URL = "https://codeload.github.com/tangem/tangem-sdk-android/tar.gz/${TANGEM_SDK_COMMIT}"
+
+def vendorRoot = file("${projectDir}/../../../vendor/tangem-sdk-android")
+// Written last, so a half-finished download is fetched again.
+def commitMarker = new File(vendorRoot, ".heirloom-commit")
+
+def sha256Hex = { File archive ->
+  def digest = MessageDigest.getInstance("SHA-256")
+  archive.eachByte(64 * 1024) { buffer, length -> digest.update(buffer, 0, length) }
+  digest.digest().encodeHex().toString()
+}
+
+def fetchTangemSdk = {
+  if (commitMarker.exists() && commitMarker.text.trim() == TANGEM_SDK_COMMIT) return
+  logger.lifecycle("Downloading Tangem SDK ${TANGEM_SDK_COMMIT.take(8)}")
+  def archive = layout.buildDirectory.file("tmp/tangem-sdk-${TANGEM_SDK_COMMIT}.tar.gz").get().asFile
+  archive.parentFile.mkdirs()
+  new URL(TANGEM_SDK_URL).withInputStream { input -> archive.withOutputStream { it << input } }
+  def actual = sha256Hex(archive)
+  if (actual != TANGEM_SDK_SHA256) {
+    throw new GradleException("Tangem SDK download doesn't match its checksum (got ${actual})")
+  }
+  delete vendorRoot
+  copy {
+    from tarTree(resources.gzip(archive))
+    // The archive wraps everything in tangem-sdk-android-<commit>/; drop that folder.
+    eachFile { details -> details.relativePath = new RelativePath(true, details.relativePath.segments.drop(1) as String[]) }
+    includeEmptyDirs = false
+    into vendorRoot
+  }
+  commitMarker.text = TANGEM_SDK_COMMIT
+}
+
+// Both subprojects apply this file; whichever configures first downloads, the other sees the marker.
+synchronized (rootProject) {
+  fetchTangemSdk()
+}
+
 def rootExt = rootProject.ext
 
 ext.tangemVendor = [
-  root      : file("${projectDir}/../../../vendor/tangem-sdk-android"),
+  root      : vendorRoot,
   compileSdk: rootExt.has("compileSdkVersion") ? rootExt.compileSdkVersion : 36,
   minSdk    : rootExt.has("minSdkVersion") ? rootExt.minSdkVersion : 24,
 ]

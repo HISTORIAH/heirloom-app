@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Tangem SDK source, downloaded by android/sdk/vendor.gradle
+/modules/tangem-card/vendor/
