@@ -16,7 +16,7 @@ export function RouteSheet({ children, onClose }: { children: ReactNode; onClose
   const rise = useSharedValue(0);
 
   useEffect(() => {
-    rise.value = withTiming(1, { duration: 260 });
+    rise.set(withTiming(1, { duration: 260 }));
   }, [rise]);
 
   const panel = useAnimatedStyle(() => ({

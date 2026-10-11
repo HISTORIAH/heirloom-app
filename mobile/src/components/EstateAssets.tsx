@@ -44,7 +44,6 @@ function HoldingRow({ holding, onPress }: { holding: EstateHolding; onPress?: ()
       <TokenAvatar
         image={holding.image}
         symbol={holding.symbol}
-        kind="token"
         size={36}
         round
         fill={isSol ? colors.sky : colors.line}

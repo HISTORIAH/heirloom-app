@@ -119,7 +119,6 @@ export function AmountStep({
         <TokenAvatar
           image={asset.image}
           symbol={asset.symbol}
-          kind="token"
           size={30}
           round
           fill={isSol ? colors.sky : colors.line}

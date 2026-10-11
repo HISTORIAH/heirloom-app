@@ -42,7 +42,6 @@ function AssetRow({ asset, onPress }: { asset: TopUpAsset; onPress: () => void }
       <TokenAvatar
         image={asset.image}
         symbol={asset.symbol}
-        kind="token"
         size={40}
         round
         fill={asset.id === SOL_ASSET_ID ? colors.sky : colors.line}

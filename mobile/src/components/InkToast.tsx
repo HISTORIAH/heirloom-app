@@ -13,10 +13,10 @@ export function InkToast({ text }: { text?: string }) {
     if (text !== undefined) {
       setMessage(text);
       setMounted(true);
-      progress.value = withTiming(1, { duration: 300 });
+      progress.set(withTiming(1, { duration: 300 }));
       return;
     }
-    progress.value = withTiming(0, { duration: 300 });
+    progress.set(withTiming(0, { duration: 300 }));
     const id = setTimeout(() => setMounted(false), 300);
     return () => clearTimeout(id);
   }, [text, progress]);

@@ -82,7 +82,8 @@ export default function CardScreen() {
   const [rent, setRent] = useState(0n);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [amountOpen, setAmountOpen] = useState(false);
+  /** The holding the amount sheet is open for. */
+  const [amountFor, setAmountFor] = useState<CardHolding | undefined>(undefined);
   const [destOpen, setDestOpen] = useState(false);
   const [destError, setDestError] = useState<string | undefined>(undefined);
   const [amountError, setAmountError] = useState<string | undefined>(undefined);
@@ -190,7 +191,7 @@ export default function CardScreen() {
       const amount = parseSendAmount(pick.holding, text);
       pending.current = { ...pick, amount };
       setAmountError(undefined);
-      setAmountOpen(false);
+      setAmountFor(undefined);
       setDestOpen(true);
     } catch (cause) {
       setAmountError(cause instanceof Error ? cause.message : "Enter an amount.");
@@ -243,12 +244,11 @@ export default function CardScreen() {
   function startSend(h: CardHolding) {
     pending.current = { holding: h, amount: 0n };
     setAmountError(undefined);
-    setAmountOpen(true);
+    setAmountFor(h);
   }
 
   const visible = holdings.filter((h) => h.symbol === "SOL" || h.amount > 0n);
   const sendable = visible.filter(canSend);
-  const sending = pending.current;
 
   function onSendPress() {
     const pick = sendable.find((h) => h.symbol === "SOL") ?? sendable[0];
@@ -355,14 +355,14 @@ export default function CardScreen() {
           onPress={() => void onCopy()}
         />
       </View>
-      {amountOpen && sending !== undefined ? (
+      {amountFor !== undefined ? (
         <AmountSheet
-          symbol={sending.holding.symbol}
-          maxLabel={maxText(sending.holding)}
+          symbol={amountFor.symbol}
+          maxLabel={maxText(amountFor)}
           error={amountError}
           busy={busy}
-          onClose={() => setAmountOpen(false)}
-          onMax={() => maxText(sending.holding)}
+          onClose={() => setAmountFor(undefined)}
+          onMax={() => maxText(amountFor)}
           onContinue={onAmountContinue}
         />
       ) : null}

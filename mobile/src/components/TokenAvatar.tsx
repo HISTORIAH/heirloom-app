@@ -8,7 +8,6 @@ import { colors, font, space } from "@/theme";
 export function TokenAvatar({
   image,
   symbol,
-  kind,
   checked = false,
   size = 44,
   round,
@@ -16,7 +15,6 @@ export function TokenAvatar({
 }: {
   image?: string;
   symbol: string;
-  kind: string;
   checked?: boolean;
   size?: number;
   /** Circle instead of the rounded square: estate holdings and the top-up sheet. */
@@ -38,7 +36,7 @@ export function TokenAvatar({
         overflow: "hidden",
       }}
     >
-      <AvatarImage image={image} symbol={symbol} kind={kind} size={size} round={round} />
+      <AvatarImage image={image} symbol={symbol} size={size} round={round} />
       {checked ? (
         <View
           style={{
@@ -64,13 +62,11 @@ export function TokenAvatar({
 function AvatarImage({
   image,
   symbol,
-  kind,
   size,
   round,
 }: {
   image?: string;
   symbol: string;
-  kind: string;
   size: number;
   round?: boolean;
 }) {

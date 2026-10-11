@@ -76,13 +76,13 @@ export function VerifiedSeal() {
   const ripple = useSharedValue(0);
 
   useEffect(() => {
-    pop.value = withSpring(1, { damping: 9, stiffness: 160, mass: 0.7 });
-    draw.value = withDelay(200, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
-    burst.value = withDelay(260, withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) }));
-    ripple.value = withDelay(
+    pop.set(withSpring(1, { damping: 9, stiffness: 160, mass: 0.7 }));
+    draw.set(withDelay(200, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) })));
+    burst.set(withDelay(260, withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) })));
+    ripple.set(withDelay(
       320,
       withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) }),
-    );
+    ));
   }, [pop, draw, burst, ripple]);
 
   const seal = useAnimatedStyle(() => ({

@@ -12,7 +12,7 @@ bun run android      # expo run:android. Needs ANDROID_HOME. JDK 17 or 21, not 2
 
 RPC is `EXPO_PUBLIC_SOLANA_RPC_ENDPOINT` (see `.env.example`). Defaults to public Solana devnet. Never `VITE_*`. A laptop validator from the emulator is `http://10.0.2.2:8899`, not `127.0.0.1`.
 
-`bun run test` runs the unit tests in `tests/`, which mirrors `src/`.
+`bun run test` runs the unit tests in `tests/`, which mirrors `src/`. `bun run lint` runs oxlint (`.oxlintrc.json`, same rules as `app/`).
 
 `EXPO_PUBLIC_DEMO_TIMING=true` adds a 1-minute check-in and wait to the create wizard, for demos and testing claims. Ignored on mainnet.
 
