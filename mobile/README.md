@@ -11,3 +11,9 @@ bun run android      # expo run:android. Needs ANDROID_HOME. JDK 17 or 21, not 2
 `android/` is generated and gitignored. `bun android` installs the Heirloom APK. Expo Go is a different app and will not show our splash. JDK 17 or 21. On JDK 25, CMake dies until you `export JAVA_TOOL_OPTIONS=--enable-native-access=ALL-UNNAMED`.
 
 RPC is `EXPO_PUBLIC_SOLANA_RPC_ENDPOINT` (see `.env.example`). Defaults to public Solana devnet. Never `VITE_*`. A laptop validator from the emulator is `http://10.0.2.2:8899`, not `127.0.0.1`.
+
+`bun run test` runs the unit tests in `tests/`, which mirrors `src/`.
+
+`EXPO_PUBLIC_DEMO_TIMING=true` adds a 1-minute check-in and wait to the create wizard, for demos and testing claims. Ignored on mainnet.
+
+Tangem cards: see `modules/tangem-card/README.md`, including what to re-check when updating the SDK.

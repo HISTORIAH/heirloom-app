@@ -5,7 +5,7 @@ import {
   SolanaError,
 } from "@solana/kit";
 
-import { classifyTxError, txFailureMessage } from "./txErrors";
+import { classifyTxError, txFailureMessage } from "@/lib/solana/txErrors";
 
 function withLogs(logs: string[]): Error {
   return Object.assign(new Error("Simulation failed"), { context: { logs } });

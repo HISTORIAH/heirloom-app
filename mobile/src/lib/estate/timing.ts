@@ -1,5 +1,7 @@
-import { MAX_INTERVAL_DAYS, MAX_TIMING_MINUTES, TIMING_EDIT_UNIT } from "@/constants/estate";
+import { DEMO_TIMING } from "@/config";
+import { DEMO_CHOICE_SECS, MAX_INTERVAL_DAYS, MAX_TIMING_MINUTES, TIMING_EDIT_UNIT } from "@/constants/estate";
 import { MS_PER_DAY, SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@/constants/time";
+import type { TimingChoice } from "@/types/estate";
 
 function inDays(days: number): Date {
   return new Date(Date.now() + days * MS_PER_DAY);
@@ -15,8 +17,53 @@ export function dateShort(days: number): string {
   return inDays(days).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export function daysRangeError(days: number, min: number, max: number, noun: string): string | undefined {
-  if (!Number.isInteger(days) || days < min || days > max) return `${noun} must be ${min} to ${max} days.`;
+/** The create wizard's chips for `days`, plus the 1-minute demo choice in demo timing. */
+export function timingChoices(days: readonly number[]): TimingChoice[] {
+  const choices = days.map((count) => ({ secs: count * SECONDS_PER_DAY, label: `${count}d` }));
+  if (!DEMO_TIMING) return choices;
+  return [...choices, { secs: DEMO_CHOICE_SECS, label: `${DEMO_CHOICE_SECS / SECONDS_PER_MINUTE}m` }];
+}
+
+function isWholeDays(secs: number): boolean {
+  return secs % SECONDS_PER_DAY === 0;
+}
+
+/** "90 days", "1 minute". Whole days read as days, anything shorter as minutes. */
+export function durationText(secs: number): string {
+  const [count, noun] = isWholeDays(secs)
+    ? [secs / SECONDS_PER_DAY, "day"]
+    : [Math.round(secs / SECONDS_PER_MINUTE), "minute"];
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+/** "30-day", "1-minute", as in "a 30-day wait". */
+export function durationAdjective(secs: number): string {
+  return durationText(secs).replace(/s$/, "").replace(" ", "-");
+}
+
+/** "90d", "1m": a fact row's short form. */
+export function durationShort(secs: number): string {
+  return isWholeDays(secs) ? `${secs / SECONDS_PER_DAY}d` : `${Math.round(secs / SECONDS_PER_MINUTE)}m`;
+}
+
+/** "31 Dec 2026", or "14:32" when `secs` from now is under a day. */
+export function dueShort(secs: number): string {
+  if (secs >= SECONDS_PER_DAY) return dateShort(secs / SECONDS_PER_DAY);
+  return new Date(Date.now() + secs * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** "31 December 2026", or "14:32" when `secs` from now is under a day. */
+export function dueLong(secs: number): string {
+  return secs >= SECONDS_PER_DAY ? dateLong(secs / SECONDS_PER_DAY) : dueShort(secs);
+}
+
+/** A chip value outside the day bounds is only fine when it's the demo choice in demo timing. */
+export function durationRangeError(secs: number, minDays: number, maxDays: number, noun: string): string | undefined {
+  if (DEMO_TIMING && secs === DEMO_CHOICE_SECS) return undefined;
+  const days = secs / SECONDS_PER_DAY;
+  if (!Number.isInteger(days) || days < minDays || days > maxDays) {
+    return `${noun} must be ${minDays} to ${maxDays} days.`;
+  }
   return undefined;
 }
 

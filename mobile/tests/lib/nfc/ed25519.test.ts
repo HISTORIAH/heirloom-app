@@ -1,8 +1,8 @@
 import { generateKeyPairSync, sign } from "crypto";
 import { describe, expect, test } from "bun:test";
 
-import { TEST_SIGN_MESSAGE } from "./apdu";
-import { verifyEd25519 } from "./ed25519";
+import { TEST_SIGN_MESSAGE } from "@/lib/nfc/apdu";
+import { verifyEd25519 } from "@/lib/nfc/ed25519";
 
 function derPubToRaw(der: Buffer): Uint8Array {
   return Uint8Array.from(der.subarray(der.length - 32));

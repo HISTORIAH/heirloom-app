@@ -79,11 +79,17 @@ export { fetchCardHoldings } from "./estate/cardHoldings";
 export {
   dateLong,
   dateShort,
-  daysRangeError,
   daysToSecs,
   daysFromSeconds,
   displayTiming,
   changedTimingField,
+  dueLong,
+  dueShort,
+  durationAdjective,
+  durationRangeError,
+  durationShort,
+  durationText,
+  timingChoices,
 } from "./estate/timing";
 
 // Estate tokens
@@ -111,7 +117,7 @@ export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
 export { floatDestinations } from "./tx/cardFloat";
 
 // TX - Card claim (IsoDep fee payer; keep leaves funds on the chip)
-export { packInstructionsForCard, sendCardIxs, sendCardBatches } from "./tx/cardSend";
+export { packInstructionsForCard, sendCardBatches } from "./tx/cardSend";
 export {
   spareLamports,
   discoverCardTokens,

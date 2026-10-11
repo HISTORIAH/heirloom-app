@@ -54,7 +54,9 @@ export function isCardApduError(cause: unknown): cause is CardApduError {
   return cause instanceof CardApduError;
 }
 
-export function isPinEntryError(cause: unknown): cause is CardApduError {
+export function isPinEntryError(
+  cause: unknown,
+): cause is CardApduError & { kind: "pin_required" | "pin_wrong" } {
   return isCardApduError(cause) && (cause.kind === "pin_required" || cause.kind === "pin_wrong");
 }
 
@@ -86,15 +88,16 @@ export function errorFromSw(sw: number): CardApduError {
   return new CardApduError("sw", sw);
 }
 
-export function selectApdu(): Uint8Array {
-  const out = new Uint8Array(6 + APPLET_AID.length);
+/** SELECT by AID: our applet unless another is given (Tangem's, to recognise its cards). */
+export function selectApdu(aid: Uint8Array = APPLET_AID): Uint8Array {
+  const out = new Uint8Array(6 + aid.length);
   out[0] = CLA;
   out[1] = INS_SELECT;
   out[2] = SELECT_P1;
   out[3] = P2;
-  out[4] = APPLET_AID.length;
-  out.set(APPLET_AID, 5);
-  out[5 + APPLET_AID.length] = 0x00;
+  out[4] = aid.length;
+  out.set(aid, 5);
+  out[5 + aid.length] = 0x00;
   return out;
 }
 

@@ -6,7 +6,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { Cap, Chip, PrimaryButton } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import { CHECK_IN_CHOICES, WAIT_CHOICES } from "@/constants/estate";
-import { dateShort, shortAddress } from "@/lib";
+import { dueShort, shortAddress, timingChoices } from "@/lib";
 
 /** Enough 3px stripes to cover the widest segment; the rest is clipped. */
 const STRIPES = 64;
@@ -95,8 +95,8 @@ function Extra({
 }
 
 export function TimingStep({
-  everyDays,
-  waitDays,
+  everySecs,
+  waitSecs,
   signer,
   guardian,
   signerOpen,
@@ -112,8 +112,8 @@ export function TimingStep({
   onGuardianOpen,
   onScan,
 }: {
-  everyDays: number;
-  waitDays: number;
+  everySecs: number;
+  waitSecs: number;
   signer: string;
   guardian: string;
   signerOpen: boolean;
@@ -121,8 +121,8 @@ export function TimingStep({
   signerError?: string;
   guardianError?: string;
   timingError?: string;
-  onEvery: (days: number) => void;
-  onWait: (days: number) => void;
+  onEvery: (secs: number) => void;
+  onWait: (secs: number) => void;
   onSigner: (next: string) => void;
   onGuardian: (next: string) => void;
   onSignerOpen: (open: boolean) => void;
@@ -133,12 +133,12 @@ export function TimingStep({
     <View style={{ gap: 12 }}>
       <StepHead eyebrow="Step 3 · Check-in" title="How often will you check in?" />
       <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 8 }}>
-        {CHECK_IN_CHOICES.map((days) => (
+        {timingChoices(CHECK_IN_CHOICES).map((choice) => (
           <Chip
-            key={days}
-            label={`${days}d`}
-            on={everyDays === days}
-            onPress={() => onEvery(days)}
+            key={choice.secs}
+            label={choice.label}
+            on={everySecs === choice.secs}
+            onPress={() => onEvery(choice.secs)}
           />
         ))}
       </View>
@@ -147,8 +147,13 @@ export function TimingStep({
         Then your heir waits
       </Text>
       <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 8 }}>
-        {WAIT_CHOICES.map((days) => (
-          <Chip key={days} label={`${days}d`} on={waitDays === days} onPress={() => onWait(days)} />
+        {timingChoices(WAIT_CHOICES).map((choice) => (
+          <Chip
+            key={choice.secs}
+            label={choice.label}
+            on={waitSecs === choice.secs}
+            onPress={() => onWait(choice.secs)}
+          />
         ))}
       </View>
       <ErrorLine>{timingError}</ErrorLine>
@@ -165,13 +170,13 @@ export function TimingStep({
         }}
       >
         <View accessible={false} style={{ flexDirection: "row", height: 28, gap: 3 }}>
-          <Stripes flex={everyDays} color={colors.ink} />
-          <Stripes flex={Math.max(waitDays, 1)} color={colors.yellow} ruled />
+          <Stripes flex={everySecs} color={colors.ink} />
+          <Stripes flex={waitSecs} color={colors.yellow} ruled />
         </View>
         <Text style={{ fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: colors.ink }}>
-          Check in by <Text style={{ fontFamily: font.bold }}>{dateShort(everyDays)}</Text>. Miss
+          Check in by <Text style={{ fontFamily: font.bold }}>{dueShort(everySecs)}</Text>. Miss
           it, and your heir can claim from{" "}
-          <Text style={{ fontFamily: font.bold }}>{dateShort(everyDays + waitDays)}</Text>.
+          <Text style={{ fontFamily: font.bold }}>{dueShort(everySecs + waitSecs)}</Text>.
         </Text>
       </View>
 

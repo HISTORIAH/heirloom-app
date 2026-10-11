@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { CardApduError } from "./apdu";
-import { cardProblemMessage, isLostField } from "./messages";
+import { CardApduError } from "@/lib/nfc/apdu";
+import { cardProblemMessage, isLostField } from "@/lib/nfc/messages";
 
 class TagConnectionLost extends Error {}
 class Timeout extends Error {}

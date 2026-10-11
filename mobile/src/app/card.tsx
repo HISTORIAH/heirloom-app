@@ -46,6 +46,7 @@ import {
   uiAmountToRaw,
 } from "@/lib";
 import { isPinEntryError } from "@/lib/nfc/apdu";
+import { adapterFor } from "@/lib/nfc/credentials";
 
 type SendPick = {
   holding: CardHolding;
@@ -91,6 +92,8 @@ export default function CardScreen() {
   const [holdHint, setHoldHint] = useState(false);
   const pending = useRef<SendPick | undefined>(undefined);
   const { holdings, loading, refetch } = useCardHoldings(heir);
+  /** The card asks for its own code (Tangem), so our PIN pad and hold sheet stay away. */
+  const ownCode = heir !== undefined && adapterFor(heir).asksForOwnCode;
 
   useEffect(() => {
     try {
@@ -147,17 +150,17 @@ export default function CardScreen() {
   }
 
   async function runSend(pick: SendPick, pin?: Uint8Array) {
-    if (busy || pick.destination === undefined) return;
+    if (busy || pick.destination === undefined || heir === undefined) return;
     setBusy(true);
     setPinOpen(false);
-    setHoldHint(true);
+    setHoldHint(!ownCode);
     try {
       await waitUi();
       const asset =
         pick.holding.token !== undefined
           ? { kind: "token" as const, token: pick.holding.token, amount: pick.amount }
           : { kind: "sol" as const, lamports: pick.amount };
-      await sendFromCardWallet(pick.destination, asset, pin);
+      await sendFromCardWallet(heir, pick.destination, asset, pin);
       setFlash("Sent.");
       pending.current = undefined;
       setPinDigits("");
@@ -203,7 +206,12 @@ export default function CardScreen() {
     }
     setDestOpen(false);
     setDestError(undefined);
-    pending.current = { ...pick, destination: dest };
+    const next = { ...pick, destination: dest };
+    pending.current = next;
+    if (ownCode) {
+      void runSend(next);
+      return;
+    }
     setPinDigits("");
     setPinError(undefined);
     setPinOpen(true);

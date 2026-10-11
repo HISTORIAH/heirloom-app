@@ -1,0 +1,4 @@
+[submodule "mobile/modules/tangem-card/vendor/tangem-sdk-android"]
+	path = mobile/modules/tangem-card/vendor/tangem-sdk-android
+	url = https://github.com/tangem/tangem-sdk-android
+	ignore = untracked

@@ -1,0 +1,72 @@
+// Tangem's tangem-sdk-core, compiled from the pinned submodule in ../../../vendor.
+// Their own build files use a version catalog and publishing scripts we don't have, so this
+// mirrors their dependency list (vendor/.../gradle/libs.versions.toml) instead.
+buildscript {
+  repositories {
+    gradlePluginPortal()
+  }
+  dependencies {
+    // KSP at the version Expo pins to our Kotlin (ExpoRootProjectPlugin sets kspVersion).
+    classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:${rootProject.ext.kspVersion}"
+  }
+}
+
+plugins {
+  id 'com.android.library'
+  id 'org.jetbrains.kotlin.android'
+}
+
+apply plugin: 'com.google.devtools.ksp'
+
+apply from: "../vendor.gradle"
+
+android {
+  namespace "com.tangem.core"
+  compileSdk tangemVendor.compileSdk
+
+  defaultConfig {
+    minSdk tangemVendor.minSdk
+  }
+
+  // Vendor code: no release lint (slow, memory-heavy, and its findings aren't ours to fix).
+  lint {
+    checkReleaseBuilds false
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs = ["${tangemVendor.root}/tangem-sdk-core/src/main/java"]
+    }
+  }
+}
+
+kotlin {
+  compilerOptions {
+    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    // Tangem's warnings would bury ours; they're for upstream to fix.
+    suppressWarnings.set(true)
+  }
+}
+
+dependencies {
+  implementation "com.ionspin.kotlin:bignum:0.3.8"
+  implementation "net.i2p.crypto:eddsa:0.3.0"
+  implementation "org.chiachat:kbls:1.0.3"
+  implementation "com.madgag.spongycastle:core:1.58.0.0"
+  implementation "com.madgag.spongycastle:prov:1.58.0.0"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
+  implementation "org.jetbrains.kotlin:kotlin-reflect"
+  // Moshi 1.15.2 through KSP, not the vendor's 1.15.1 through kapt: kapt can't read Kotlin 2.2
+  // metadata, and Moshi has deprecated kapt.
+  implementation "com.squareup.moshi:moshi:1.15.2"
+  implementation "com.squareup.moshi:moshi-kotlin:1.15.2"
+  ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.2"
+  implementation "com.squareup.okhttp3:logging-interceptor:4.2.2"
+  implementation "com.squareup.retrofit2:retrofit:2.8.1"
+  implementation "com.squareup.retrofit2:converter-moshi:2.6.0"
+}

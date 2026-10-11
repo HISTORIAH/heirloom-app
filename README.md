@@ -12,6 +12,7 @@ A Solana-native inheritance protocol. Lock assets into a programmatic estate tha
 | [`app/`](./app/README.md) | Vite + React SPA, wallet-gated | `app.heirlm.xyz` |
 | [`app-ika/`](./app-ika/README.md) | The cross-chain IKA variant | — |
 | [`stocks/`](./stocks/README.md) | Vite + React SPA: backup and inheritance for tokenized stocks | `stocks.heirlm.xyz` |
+| [`mobile/`](./mobile/README.md) | Expo Android app, with NFC credentials | — |
 | `programs/`, `clients/` | Anchor programs and their generated clients | — |
 
 The content-heavy sites (landing, docs, blog) are prerendered static HTML and
@@ -29,6 +30,11 @@ SPA at `app.heirlm.xyz`.
 ## Quick start
 
 ```bash
+# Clone with submodules (the mobile app builds Tangem's SDK from one)
+git clone --recurse-submodules <repo-url>
+# Already cloned without them? Fetch them now
+git submodule update --init
+
 # Install dependencies
 bun install
 

@@ -4,9 +4,13 @@ export type HeirKind = "credential" | "wallet" | "mine";
 /** How the heir uses their credential. */
 export type CredentialMode = "claimOnce" | "keepAsWallet";
 
+/** What the owner tells the heir separately at handover: our PIN, the card's access code, or nothing. */
+export type HandoverSecret = "none" | "pin" | "accessCode";
+
 export type CreatePhase =
   | "heir"
   | "scanAddress"
+  | "credKind"
   | "credMode"
   | "credPin"
   | "credTap"

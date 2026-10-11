@@ -9,11 +9,13 @@ import { ChainLoading } from "@/components/ChainLoading";
 import { ConfirmSheet } from "@/components/ConfirmSheet";
 import { AssetsStep } from "@/components/create/AssetsStep";
 import {
+  CredentialKindStep,
   CredentialModeStep,
   CredentialPinStep,
   CredentialReadyStep,
   CredentialTapStep,
   HandoverStep,
+  TangemReadStep,
 } from "@/components/create/CredentialSteps";
 import { pinReady } from "@/components/claim/PinPad";
 import { HeirStep, heirSummary } from "@/components/create/HeirStep";
@@ -32,11 +34,12 @@ import type {
   AssetTab,
   CreatePhase,
   CredentialMode,
+  HandoverSecret,
   HeirKind,
   TapProgress,
 } from "@/types/create";
 import { useConfirmSheet, useOwnerTx, useSolBalance, useWalletTokens } from "@/hooks";
-import { SOL_ASSET_ID } from "@/constants/create";
+import { HANDOVER_NOTE, SOL_ASSET_ID } from "@/constants/create";
 import {
   CHECK_IN_MAX_DAYS,
   CHECK_IN_MIN_DAYS,
@@ -51,8 +54,6 @@ import { CARD_FEE_FLOAT_LAMPORTS, CREATE_FEE_RESERVE_LAMPORTS } from "@/constant
 import { SOL_LOGO_URL } from "@/constants/solana";
 import {
   cancelScan,
-  dateLong,
-  daysRangeError,
   digitsToPinBytes,
   lamportsToSolText,
   parseAddress,
@@ -62,9 +63,20 @@ import {
   setupProblemMessage,
   shortAddress,
   solToLamports,
+  dueLong,
+  durationRangeError,
+  durationText,
   txFailureMessage,
 } from "@/lib";
 import { SECONDS_PER_DAY } from "@/constants/time";
+import { CREDENTIAL_ADAPTERS, rememberCredential } from "@/lib/nfc/credentials";
+import {
+  isTangemCancel,
+  isTangemSupported,
+  readTangemCredential,
+  tangemProblemMessage,
+} from "@/lib/nfc/tangem";
+import type { CredentialKind } from "@/types/nfc";
 
 function stepOf(phase: CreatePhase): number {
   if (phase === "assets") return 2;
@@ -96,6 +108,7 @@ export default function CreateScreen() {
   );
   const [heirAddr, setHeirAddr] = useState("");
   const [credential, setCredential] = useState<string | undefined>(undefined);
+  const [credKind, setCredKind] = useState<CredentialKind>("heirloom");
   const [credMode, setCredMode] = useState<CredentialMode>("claimOnce");
   const [credName, setCredName] = useState("");
   const [pinDigits, setPinDigits] = useState("");
@@ -109,8 +122,8 @@ export default function CreateScreen() {
   const [tab, setTab] = useState<AssetTab>("all");
   const [sort, setSort] = useState<AssetSort>("value");
   const [hideDust, setHideDust] = useState(true);
-  const [everyDays, setEveryDays] = useState(DEFAULT_CHECK_IN_DAYS);
-  const [waitDays, setWaitDays] = useState(DEFAULT_GRACE_DAYS);
+  const [everySecs, setEverySecs] = useState(DEFAULT_CHECK_IN_DAYS * SECONDS_PER_DAY);
+  const [waitSecs, setWaitSecs] = useState(DEFAULT_GRACE_DAYS * SECONDS_PER_DAY);
   const [signer, setSigner] = useState("");
   const [guardian, setGuardian] = useState("");
   const [signerOpen, setSignerOpen] = useState(false);
@@ -122,6 +135,8 @@ export default function CreateScreen() {
   const scanToken = useRef(0);
 
   const isCredential = heirKind === "credential";
+  const handoverSecret: HandoverSecret =
+    credKind === "tangem" ? "accessCode" : credMode === "keepAsWallet" ? "pin" : "none";
   const heirValue = isCredential ? (credential ?? "") : heirAddr.trim();
 
   const floats =
@@ -235,16 +250,59 @@ export default function CreateScreen() {
       }, pin);
       if (token !== scanToken.current) return;
       if (result.kind === "cancelled") return;
+      if (result.kind === "tangem") {
+        setTapProgress("failed");
+        setTapError("That’s a Tangem card. Go back and choose Tangem card.");
+        return;
+      }
       if (result.kind !== "address") {
         setTapProgress("failed");
         setTapError(setupProblemMessage(result));
         return;
       }
       clearPin();
+      rememberCredential({ kind: "heirloom", address: parseAddress(result.value, "credential") });
       setCredential(result.value);
       setTapProgress("done");
       setPhase("credReady");
     })();
+  }
+
+  /** Tangem cards already hold a key: read its address through Tangem's sheet. */
+  function startTangemRead() {
+    const token = ++scanToken.current;
+    setTapError(undefined);
+    setPhase("credTap");
+    void (async () => {
+      try {
+        const read = await readTangemCredential();
+        if (token !== scanToken.current) return;
+        rememberCredential({ kind: "tangem", ...read });
+        setCredential(read.address);
+        setPhase("credReady");
+      } catch (cause) {
+        if (token !== scanToken.current) return;
+        if (isTangemCancel(cause)) {
+          setPhase("credKind");
+          return;
+        }
+        setTapError(tangemProblemMessage(cause, "Couldn’t read the card."));
+      }
+    })();
+  }
+
+  function onCredKindContinue() {
+    if (credKind === "tangem") {
+      startTangemRead();
+      return;
+    }
+    setPhase("credMode");
+  }
+
+  /** Where Back and Cancel go from the tap step. */
+  function beforeTap(): CreatePhase {
+    if (credKind === "tangem") return "credKind";
+    return credMode === "keepAsWallet" ? "credPin" : "credMode";
   }
 
   function stopTap(next: CreatePhase) {
@@ -305,7 +363,7 @@ export default function CreateScreen() {
   function onHeirContinue() {
     if (!heirGate()) return;
     if (isCredential && credential === undefined) {
-      setPhase("credMode");
+      setPhase(isTangemSupported ? "credKind" : "credMode");
       return;
     }
     setPhase("assets");
@@ -324,8 +382,8 @@ export default function CreateScreen() {
   }
 
   const timingError =
-    daysRangeError(everyDays, CHECK_IN_MIN_DAYS, CHECK_IN_MAX_DAYS, "Check-in") ??
-    daysRangeError(waitDays, GRACE_MIN_DAYS, GRACE_MAX_DAYS, "Wait");
+    durationRangeError(everySecs, CHECK_IN_MIN_DAYS, CHECK_IN_MAX_DAYS, "Check-in") ??
+    durationRangeError(waitSecs, GRACE_MIN_DAYS, GRACE_MAX_DAYS, "Wait");
 
   function timingGate(): boolean {
     let ok = timingError === undefined;
@@ -366,8 +424,8 @@ export default function CreateScreen() {
       const { signature, estatePda } = await createEstate({
         heir: parseAddress(heirValue, "heir"),
         label: label.trim().slice(0, LABEL_MAX_LEN),
-        checkInIntervalSecs: BigInt(everyDays * SECONDS_PER_DAY),
-        gracePeriodSecs: BigInt(waitDays * SECONDS_PER_DAY),
+        checkInIntervalSecs: BigInt(everySecs),
+        gracePeriodSecs: BigInt(waitSecs),
         delegatePauseDurationSecs: hasGuardian ? BigInt(DEFAULT_PAUSE_DAYS * SECONDS_PER_DAY) : 0n,
         amountLamports: solAmount,
         delegate: parseOptionalAddress(guardian, "guardian"),
@@ -404,8 +462,11 @@ export default function CreateScreen() {
       case "scanAddress":
         setPhase(scanFor === "heir" ? "heir" : "timing");
         return;
-      case "credMode":
+      case "credKind":
         setPhase("heir");
+        return;
+      case "credMode":
+        setPhase(isTangemSupported ? "credKind" : "heir");
         return;
       case "credPin":
         if (pinFirst.length > 0) {
@@ -418,7 +479,7 @@ export default function CreateScreen() {
         setPhase("credMode");
         return;
       case "credTap":
-        stopTap(credMode === "keepAsWallet" ? "credPin" : "credMode");
+        stopTap(beforeTap());
         return;
       case "credReady":
         setPhase("heir");
@@ -533,6 +594,10 @@ export default function CreateScreen() {
         />
       );
       break;
+    case "credKind":
+      body = <CredentialKindStep kind={credKind} onKind={setCredKind} />;
+      footer = <PrimaryButton label="Continue" onPress={onCredKindContinue} />;
+      break;
     case "credMode":
       body = <CredentialModeStep mode={credMode} onMode={setCredMode} />;
       footer = <PrimaryButton label="Continue" onPress={onCredModeContinue} />;
@@ -558,25 +623,24 @@ export default function CreateScreen() {
         />
       );
       break;
-    case "credTap":
-      body = <CredentialTapStep progress={tapProgress} error={tapError} />;
-      footer =
-        tapProgress === "failed" ? (
-          <>
-            <PrimaryButton label="Try again" onPress={startTap} />
-            <TextLink
-              label="Cancel"
-              onPress={() => stopTap(credMode === "keepAsWallet" ? "credPin" : "credMode")}
-            />
-          </>
-        ) : (
-          <PrimaryButton
-            tone="outline"
-            label="Cancel"
-            onPress={() => stopTap(credMode === "keepAsWallet" ? "credPin" : "credMode")}
-          />
-        );
+    case "credTap": {
+      const tangem = credKind === "tangem";
+      const failed = tangem ? tapError !== undefined : tapProgress === "failed";
+      body = tangem ? (
+        <TangemReadStep error={tapError} />
+      ) : (
+        <CredentialTapStep progress={tapProgress} error={tapError} />
+      );
+      footer = failed ? (
+        <>
+          <PrimaryButton label="Try again" onPress={tangem ? startTangemRead : startTap} />
+          <TextLink label="Cancel" onPress={() => stopTap(beforeTap())} />
+        </>
+      ) : (
+        <PrimaryButton tone="outline" label="Cancel" onPress={() => stopTap(beforeTap())} />
+      );
       break;
+    }
     case "credReady":
       body = (
         <CredentialReadyStep
@@ -584,12 +648,13 @@ export default function CreateScreen() {
           name={credName}
           onName={setCredName}
           pinSet={credMode === "keepAsWallet"}
+          kind={credKind}
         />
       );
       footer = (
         <>
           <PrimaryButton label="Continue" onPress={() => setPhase("assets")} />
-          {credMode === "keepAsWallet" ? null : (
+          {credKind === "tangem" || credMode === "keepAsWallet" ? null : (
             <TextLink label="Tap again to double-check" onPress={startTap} />
           )}
         </>
@@ -640,8 +705,8 @@ export default function CreateScreen() {
     case "timing":
       body = (
         <TimingStep
-          everyDays={everyDays}
-          waitDays={waitDays}
+          everySecs={everySecs}
+          waitSecs={waitSecs}
           signer={signer}
           guardian={guardian}
           signerOpen={signerOpen}
@@ -649,8 +714,8 @@ export default function CreateScreen() {
           signerError={errors.signer}
           guardianError={errors.guardian}
           timingError={timingError}
-          onEvery={setEveryDays}
-          onWait={setWaitDays}
+          onEvery={setEverySecs}
+          onWait={setWaitSecs}
           onSigner={(next) => {
             setSigner(next);
             setError("signer", undefined);
@@ -679,8 +744,8 @@ export default function CreateScreen() {
     case "review":
       body = (
         <ReviewStep
-          everyDays={everyDays}
-          waitDays={waitDays}
+          everySecs={everySecs}
+          waitSecs={waitSecs}
           heir={heirText}
           assets={assetText}
           lines={[
@@ -690,8 +755,12 @@ export default function CreateScreen() {
                   {
                     label: "Credential",
                     value:
-                      credMode === "keepAsWallet" ? "Keep it as their wallet" : "Tap to claim, once",
-                    onEdit: () => setPhase("credMode"),
+                      credKind === "tangem"
+                        ? CREDENTIAL_ADAPTERS.tangem.label
+                        : credMode === "keepAsWallet"
+                          ? "Keep it as their wallet"
+                          : "Tap to claim, once",
+                    onEdit: () => setPhase(isTangemSupported ? "credKind" : "credMode"),
                   },
                 ]
               : []),
@@ -704,7 +773,7 @@ export default function CreateScreen() {
             { label: "Assets", value: assetText, onEdit: () => setPhase("assets") },
             {
               label: "Check-in",
-              value: `Every ${everyDays} days · ${signer.trim() ? `signer ${shortAddress(signer.trim())}` : "you sign"}`,
+              value: `Every ${durationText(everySecs)} · ${signer.trim() ? `signer ${shortAddress(signer.trim())}` : "you sign"}`,
               onEdit: () => setPhase("timing"),
             },
             {
@@ -729,7 +798,7 @@ export default function CreateScreen() {
       footer = null;
       break;
     case "handover":
-      body = <HandoverStep firstDue={dateLong(everyDays)} keepAsWallet={credMode === "keepAsWallet"} />;
+      body = <HandoverStep firstDue={dueLong(everySecs)} secret={handoverSecret} />;
       footer = (
         <>
           <PrimaryButton
@@ -737,9 +806,7 @@ export default function CreateScreen() {
             label="Send them a note"
             onPress={() =>
               void Share.share({
-                message: credMode === "keepAsWallet"
-                  ? "I’ve set up an Heirloom credential for you. I’ll give you the PIN separately. If something happens to me, tap it on your phone."
-                  : "I’ve set up an Heirloom credential for you. If something happens to me, tap it on your phone.",
+                message: HANDOVER_NOTE[handoverSecret],
               })
             }
           />

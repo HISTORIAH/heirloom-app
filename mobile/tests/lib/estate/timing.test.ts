@@ -5,9 +5,13 @@ import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@/constants/time";
 import {
   changedTimingField,
   displayTiming,
+  durationAdjective,
+  durationRangeError,
+  durationShort,
+  durationText,
   parseDayCount,
   parseMinuteCount,
-} from "./timing";
+} from "@/lib/estate/timing";
 
 describe("parseDayCount", () => {
   test("turns whole days into seconds", () => {
@@ -55,5 +59,27 @@ describe("displayTiming / changedTimingField", () => {
         BigInt(3 * SECONDS_PER_DAY),
       );
     }
+  });
+});
+
+describe("duration helpers", () => {
+  test("whole days read as days, anything shorter as minutes", () => {
+    expect(durationText(90 * SECONDS_PER_DAY)).toBe("90 days");
+    expect(durationText(SECONDS_PER_DAY)).toBe("1 day");
+    expect(durationText(SECONDS_PER_MINUTE)).toBe("1 minute");
+    expect(durationShort(30 * SECONDS_PER_DAY)).toBe("30d");
+    expect(durationShort(SECONDS_PER_MINUTE)).toBe("1m");
+  });
+
+  test("adjective form", () => {
+    expect(durationAdjective(30 * SECONDS_PER_DAY)).toBe("30-day");
+    expect(durationAdjective(SECONDS_PER_MINUTE)).toBe("1-minute");
+  });
+
+  test("range checks in days", () => {
+    expect(durationRangeError(90 * SECONDS_PER_DAY, 30, 365, "Check-in")).toBeUndefined();
+    expect(durationRangeError(7 * SECONDS_PER_DAY, 30, 365, "Check-in")).toBe(
+      "Check-in must be 30 to 365 days.",
+    );
   });
 });

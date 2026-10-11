@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { digitsToPinBytes, parsePinStatus, PIN_MAX_LEN, PIN_MIN_LEN } from "./pin";
+import { digitsToPinBytes, parsePinStatus, PIN_MAX_LEN, PIN_MIN_LEN } from "@/lib/nfc/pin";
 
 describe("digitsToPinBytes", () => {
   test("encodes ASCII digits", () => {

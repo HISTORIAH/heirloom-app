@@ -1,3 +1,4 @@
+import type { Address } from "@solana/kit";
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,15 +25,23 @@ import {
   parseAddress,
   scanCardAddress,
 } from "@/lib";
+import {
+  isTangemCancel,
+  isTangemSupported,
+  readTangemCredential,
+  tangemProblemMessage,
+} from "@/lib/nfc/tangem";
+import { rememberCredential } from "@/lib/nfc/credentials";
 
 type TapState =
   | { kind: "searching" }
   | { kind: "off" }
   | { kind: "unsupported" }
   | { kind: "blank" }
+  | { kind: "tangem" }
   | { kind: "failed"; message: string };
 
-function stateFrom(result: Exclude<CardScan, { kind: "address" | "cancelled" }>): TapState {
+function stateFrom(result: Exclude<CardScan, { kind: "address" | "cancelled" | "tangem" }>): TapState {
   if (result.kind === "off") return { kind: "off" };
   if (result.kind === "unsupported") return { kind: "unsupported" };
   if (result.kind === "empty") return { kind: "blank" };
@@ -44,6 +53,7 @@ function statusLine(state: TapState): string {
   if (state.kind === "off") return "NFC is off. Turn it on, then try again.";
   if (state.kind === "unsupported") return "This phone can’t read credentials.";
   if (state.kind === "blank") return "This credential is blank. Set it up for someone.";
+  if (state.kind === "tangem") return "Tangem card. Follow Tangem’s prompt to read it…";
   return state.message;
 }
 
@@ -81,30 +91,67 @@ export default function TapSheet() {
   const [codeError, setCodeError] = useState<string | undefined>(undefined);
   const alive = useRef(true);
 
+  /**
+   * Unlocked cards go straight to claim. Locked ones (a PIN, or Tangem's access code) are wallets:
+   * claim if an estate is waiting, the card otherwise.
+   */
+  const openCredential = useCallback(
+    async (credential: Address, locked: boolean) => {
+      if (!locked) {
+        router.replace(`/claim?heir=${credential}`);
+        return;
+      }
+      try {
+        const rows = await fetchEstatesByHeir(client.rpc, credential);
+        const claimable = rows.some(
+          (row) => estateSpan(row.data, row.claimableLamports).state === "claimable",
+        );
+        if (claimable) router.replace(`/claim?heir=${credential}&keep=1`);
+        else router.replace(`/card?heir=${credential}`);
+      } catch {
+        router.replace(`/card?heir=${credential}`);
+      }
+    },
+    [client, router],
+  );
+
+  /** Tangem cards run their own reader and sheet, so our scan is stopped while it's open. */
+  const readTangem = useCallback(async () => {
+    if (!isTangemSupported) {
+      setState({ kind: "failed", message: "That’s a Tangem card. This build can’t read them." });
+      return;
+    }
+    setState({ kind: "tangem" });
+    try {
+      const credential = await readTangemCredential();
+      if (!alive.current) return;
+      rememberCredential({ kind: "tangem", ...credential });
+      await openCredential(credential.address, true);
+    } catch (cause) {
+      if (!alive.current) return;
+      const message = isTangemCancel(cause)
+        ? "Tangem read closed. Try again when the card is ready."
+        : tangemProblemMessage(cause, "Couldn’t read the card.");
+      setState({ kind: "failed", message });
+    }
+  }, [openCredential]);
+
   const scan = useCallback(async () => {
     setState({ kind: "searching" });
     const result = await scanCardAddress();
     if (!alive.current || result.kind === "cancelled") return;
+    if (result.kind === "tangem") {
+      await readTangem();
+      return;
+    }
     if (result.kind === "address") {
-      if (result.pin.kind === "none") {
-        router.replace(`/claim?heir=${result.value}`);
-        return;
-      }
-      try {
-        const heir = parseAddress(result.value, "credential");
-        const rows = await fetchEstatesByHeir(client.rpc, heir);
-        const claimable = rows.some(
-          (row) => estateSpan(row.data, row.claimableLamports).state === "claimable",
-        );
-        if (claimable) router.replace(`/claim?heir=${result.value}&keep=1`);
-        else router.replace(`/card?heir=${result.value}`);
-      } catch {
-        router.replace(`/card?heir=${result.value}`);
-      }
+      const credential = parseAddress(result.value, "credential");
+      rememberCredential({ kind: "heirloom", address: credential });
+      await openCredential(credential, result.pin.kind !== "none");
       return;
     }
     setState(stateFrom(result));
-  }, [client, router]);
+  }, [openCredential, readTangem]);
 
   useEffect(() => {
     alive.current = true;
@@ -114,6 +161,11 @@ export default function TapSheet() {
       void cancelScan();
     };
   }, [scan]);
+
+  async function onTangem() {
+    await cancelScan();
+    await readTangem();
+  }
 
   function onCode() {
     try {
@@ -127,6 +179,7 @@ export default function TapSheet() {
   }
 
   const searching = state.kind === "searching";
+  const reading = searching || state.kind === "tangem";
 
   return (
     <RouteSheet onClose={() => void cancelScan()}>
@@ -143,7 +196,7 @@ export default function TapSheet() {
           Hold it to your phone
         </Text>
 
-        <Pulse active={searching} />
+        <Pulse active={reading} />
 
         <Text
           style={{ fontFamily: font.regular, fontSize: 16, lineHeight: 23, color: colors.mute }}
@@ -174,7 +227,7 @@ export default function TapSheet() {
               borderRadius: 6,
               borderWidth: space.rule,
               borderColor: colors.ink,
-              backgroundColor: searching
+              backgroundColor: reading
                 ? colors.yellow
                 : state.kind === "failed"
                   ? colors.claim
@@ -249,6 +302,9 @@ export default function TapSheet() {
             onPress={() => setCodeOpen(true)}
           />
         )}
+        {isTangemSupported && state.kind !== "tangem" ? (
+          <TextLink flush label="Using a Tangem card? Read it here" onPress={() => void onTangem()} />
+        ) : null}
       </View>
     </RouteSheet>
   );

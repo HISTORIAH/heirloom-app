@@ -268,9 +268,9 @@ export default function EstateScreen() {
           <Cap>People</Cap>
           <EstatePeople
             heir={String(current.data.heir)}
-            heartbeat={signer ?? undefined}
+            checkInSigner={signer ?? undefined}
             guardian={guardian ?? undefined}
-            onAddHeartbeat={live ? () => onAddRole("Check-in signer") : undefined}
+            onAddCheckInSigner={live ? () => onAddRole("Check-in signer") : undefined}
             onAddGuardian={live ? () => onAddRole("Guardian") : undefined}
             reminders={
               live && BACKEND_URL !== undefined

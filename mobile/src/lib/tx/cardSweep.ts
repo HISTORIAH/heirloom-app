@@ -118,6 +118,7 @@ export async function sendFromCard(input: {
   signer: TransactionSigner;
   destination: Address;
   asset: { kind: "sol"; lamports: bigint } | { kind: "token"; token: SweepToken; amount: bigint };
+  maxMessageBytes: number;
 }): Promise<void> {
   if (input.destination === input.signer.address) {
     throw new Error("Pick a wallet that isn’t this credential.");
@@ -129,11 +130,11 @@ export async function sendFromCard(input: {
       input.asset.token,
       input.asset.amount,
     );
-    await sendCardBatches(input.rpc, input.signer, ixs);
+    await sendCardBatches(input.rpc, input.signer, ixs, input.maxMessageBytes);
     return;
   }
   const solIx = buildSolSweepIx(input.signer, input.destination, input.asset.lamports);
-  if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx]);
+  if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
 }
 
 export function buildSolSweepIx(
