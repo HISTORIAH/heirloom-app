@@ -24,6 +24,8 @@ const app: AppMessages = {
     localnet: "Localnet",
     program: "Programa {{id}}",
     rights: "© {{year}} Heirloom",
+    terms: "Termos",
+    privacy: "Privacidade",
     xLabel: "Heirloom no X",
   },
   common: {

@@ -24,6 +24,8 @@ const app: AppMessages = {
     localnet: "Localnet",
     program: "程式 {{id}}",
     rights: "© {{year}} Heirloom",
+    terms: "條款",
+    privacy: "隱私",
     xLabel: "Heirloom 的 X 帳號",
   },
   common: {

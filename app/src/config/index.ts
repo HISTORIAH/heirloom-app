@@ -25,6 +25,10 @@ export const landingUrl = (locale: string) => `${LANDING_URL}${localeHref(locale
  */
 export const DOCS_URL = `${LANDING_URL}/docs/`;
 
+// The legal pages live on the landing's origin too, beside the docs.
+export const TERMS_URL = `${LANDING_URL}/terms/`;
+export const PRIVACY_URL = `${LANDING_URL}/privacy/`;
+
 export const SOLANA_RPC_ENDPOINT =
   import.meta.env.VITE_SOLANA_RPC_ENDPOINT || "http://127.0.0.1:8899";
 

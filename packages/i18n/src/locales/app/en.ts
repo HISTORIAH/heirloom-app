@@ -22,6 +22,8 @@ const app = {
     localnet: "Localnet",
     program: "Program {{id}}",
     rights: "© {{year}} Heirloom",
+    terms: "Terms",
+    privacy: "Privacy",
     xLabel: "Heirloom on X",
   },
   common: {

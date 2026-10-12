@@ -1,6 +1,6 @@
 import { HEIRLOOM_PROGRAM_ADDRESS } from "@historiah/heirloom";
 import { LanguageSwitcher, useTranslation } from "@heirloom/i18n";
-import { DOCS_URL } from "@/config";
+import { DOCS_URL, PRIVACY_URL, TERMS_URL } from "@/config";
 import { X_URL } from "@/lib/constants";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { cn, getSolanaExplorerAddressUrl, SOLANA_CHAIN, truncateAddress } from "@/lib/utils";
@@ -90,7 +90,12 @@ export const AppFooter: React.FC = () => {
           >
             <XLogo />
           </a>
-          {/* No Terms or Privacy links until those pages exist on the landing; both 404 today. */}
+          <a href={TERMS_URL} className={footerLink}>
+            {t("footer.terms")}
+          </a>
+          <a href={PRIVACY_URL} className={footerLink}>
+            {t("footer.privacy")}
+          </a>
           {/* Opens upward: the footer is the last thing on the page. */}
           <LanguageSwitcher
             className="flex min-h-11 items-center gap-1.5 rounded-lg border border-tile-line px-2.5 text-xs font-bold uppercase text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
