@@ -22,6 +22,9 @@ build
 # astro generated types
 .astro
 
+# wrangler / miniflare local state
+.wrangler
+
 # rust / cargo
 target
 Cargo.lock.bak
