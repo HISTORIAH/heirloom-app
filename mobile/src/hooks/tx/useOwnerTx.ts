@@ -36,7 +36,7 @@ export function useOwnerTx() {
     const [estatePda] = await findEstatePda({ authority, heir: input.heir });
     const signature = await sendIxs(async (signer) => {
       await assertEstateFree(client.rpc, signer.address, input.heir);
-      return buildCreateEstateIxs(signer, input);
+      return buildCreateEstateIxs(client.rpc, signer, input);
     });
     return { signature, estatePda };
   }

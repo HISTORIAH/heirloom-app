@@ -109,6 +109,7 @@ export { buildRevokeAllIxs, buildReassignIxs, buildRegisterTokenIx } from "./tx/
 
 // TX - Owner
 export { buildCreateEstateIxs, buildTopUpSolIx, buildTopUpTokenIx } from "./tx/owner";
+export { parseCreateDeposits, formatCreateAssetsLine } from "./tx/createDeposits";
 
 // TX - Update field
 export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
