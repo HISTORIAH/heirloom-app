@@ -100,20 +100,44 @@ async function transceiveApdu(apdu: Uint8Array, timeoutMs: number): Promise<Uint
   throw last;
 }
 
-function requestIsoDep(): Promise<string | undefined> {
+function isRequestTechArity(cause: unknown): boolean {
+  const text = errorMessage(cause, "");
+  return text.includes("requestTechnology") && text.includes("expected argument count");
+}
+
+function nfcRequestTechnology(): (...args: unknown[]) => unknown {
   const native = TurboModuleRegistry.getEnforcing("NfcManager");
-  const requestTechnology = native.requestTechnology;
-  if (typeof requestTechnology !== "function") {
+  const fn = Reflect.get(native, "requestTechnology");
+  if (typeof fn !== "function") {
     throw new Error("NFC native requestTechnology missing");
   }
+  return fn.bind(native);
+}
+
+function requestIsoDep(): Promise<string | undefined> {
+  const requestTechnology = nfcRequestTechnology();
+  const techs = [NfcTech.IsoDep];
   return new Promise((resolve, reject) => {
-    requestTechnology.call(native, [NfcTech.IsoDep], (error?: string, tech?: string) => {
+    const finish = (error?: string, tech?: string) => {
       if (typeof error === "string" && error.length > 0) {
         reject(new Error(error));
         return;
       }
       resolve(tech);
-    });
+    };
+    try {
+      requestTechnology(techs, finish);
+    } catch (cause) {
+      if (!isRequestTechArity(cause)) {
+        reject(cause instanceof Error ? cause : new Error(errorMessage(cause, "NFC request failed")));
+        return;
+      }
+      try {
+        requestTechnology(techs, {}, finish);
+      } catch (retry) {
+        reject(retry instanceof Error ? retry : new Error(errorMessage(retry, "NFC request failed")));
+      }
+    }
   });
 }
 
