@@ -160,15 +160,17 @@ export default function TapSheet() {
     }
     setState(stateFrom(result));
   }, [openCredential, readTangem]);
+  const scanRef = useRef(scan);
+  scanRef.current = scan;
 
   useEffect(() => {
     alive.current = true;
-    void scan();
+    void scanRef.current();
     return () => {
       alive.current = false;
       void cancelScan();
     };
-  }, [scan]);
+  }, []);
 
   /** The card holds a wallet we can't read: connect it through its own wallet app instead. */
   async function onConnectWallet() {

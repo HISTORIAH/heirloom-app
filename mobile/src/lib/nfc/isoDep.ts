@@ -1,3 +1,4 @@
+import { TurboModuleRegistry } from "react-native";
 import NfcManager, { NfcAdapter, NfcTech } from "react-native-nfc-manager";
 
 import { isLostField } from "./messages";
@@ -7,11 +8,7 @@ import type { IsoDepTransceive } from "@/types/nfc";
 export const ISODEP_TIMEOUT_MS = 10_000;
 /** Claim then sweep signs more than one tx while the field is up. */
 export const ISODEP_CLAIM_TIMEOUT_MS = 45_000;
-/**
- * nfc-manager treats `readerModeDelay` as seconds and multiplies by 1000.
- * Android's presence extra is milliseconds, so 2 here is a 2s check.
- */
-export const NFC_PRESENCE_CHECK_SEC = 2;
+export const NFC_PRESENCE_CHECK_MS = 2000;
 /** Pause after a failed APDU before retrying on a weak couple. */
 export const NFC_SETTLE_MS = 150;
 /** Let a dest Dialog unmount before reader mode, or IsoDep dies after the chime. */
@@ -29,7 +26,7 @@ const ISODEP_READER = {
     NfcAdapter.FLAG_READER_NFC_A |
     NfcAdapter.FLAG_READER_NFC_B |
     NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
-  readerModeDelay: NFC_PRESENCE_CHECK_SEC,
+  readerModeDelay: NFC_PRESENCE_CHECK_MS,
 };
 
 let started = false;
@@ -64,6 +61,7 @@ export async function ensureNfcStarted(): Promise<void> {
 
 export async function cancelScan(): Promise<void> {
   await NfcManager.cancelTechnologyRequest({ delayMsAndroid: 0 }).catch(() => undefined);
+  await NfcManager.unregisterTagEvent().catch(() => undefined);
 }
 
 async function reconnectIsoDep(timeoutMs: number): Promise<void> {
@@ -102,16 +100,31 @@ async function transceiveApdu(apdu: Uint8Array, timeoutMs: number): Promise<Uint
   throw last;
 }
 
+function requestIsoDep(): Promise<string | undefined> {
+  const native = TurboModuleRegistry.getEnforcing("NfcManager");
+  const requestTechnology = native.requestTechnology;
+  if (typeof requestTechnology !== "function") {
+    throw new Error("NFC native requestTechnology missing");
+  }
+  return new Promise((resolve, reject) => {
+    requestTechnology.call(native, [NfcTech.IsoDep], (error?: string, tech?: string) => {
+      if (typeof error === "string" && error.length > 0) {
+        reject(new Error(error));
+        return;
+      }
+      resolve(tech);
+    });
+  });
+}
+
 async function runIsoDepSession<T>(
   run: (tx: IsoDepTransceive) => Promise<T>,
   timeoutMs: number,
   alertMessage: string,
 ): Promise<T> {
   try {
-    const connected: unknown = await NfcManager.requestTechnology(NfcTech.IsoDep, {
-      alertMessage,
-      ...ISODEP_READER,
-    });
+    await NfcManager.registerTagEvent({ alertMessage, ...ISODEP_READER });
+    const connected = await requestIsoDep();
     if (connected !== NfcTech.IsoDep) {
       nfcWarn("requestTechnology", connected);
       throw new Error("not connected");
@@ -136,6 +149,7 @@ export async function withIsoDep<T>(
     } catch (cause) {
       last = cause;
       if (isUserCancel(cause) || !isLostField(cause) || attempt === NFC_COUPLE_TRIES - 1) {
+        if (!isUserCancel(cause)) nfcWarn("session", cause);
         throw cause;
       }
       nfcWarn(`couple retry ${attempt + 1}/${NFC_COUPLE_TRIES}`, cause);

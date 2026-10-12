@@ -144,7 +144,7 @@ export {
   ISODEP_TIMEOUT_MS,
   NFC_APDU_TRIES,
   NFC_COUPLE_TRIES,
-  NFC_PRESENCE_CHECK_SEC,
+  NFC_PRESENCE_CHECK_MS,
   NFC_UI_SETTLE_MS,
 } from "./nfc/isoDep";
 export { createNfcJavaCardSigner, withCardSigningSession } from "./nfc/signer";
