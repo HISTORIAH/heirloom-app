@@ -35,7 +35,7 @@ export const FieldLabel: React.FC<{ children: ReactNode; hint?: ReactNode; htmlF
 }) => (
   <label htmlFor={htmlFor} className="mb-2.5 flex items-baseline justify-between gap-3 text-sm font-semibold">
     {children}
-    {hint && <span className="text-[13px] font-normal text-muted-foreground">{hint}</span>}
+    {hint && <span className="text-[0.8125rem] font-normal text-muted-foreground">{hint}</span>}
   </label>
 );
 
@@ -104,14 +104,14 @@ export const TxProgress: React.FC<{
         <div className="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-full bg-green-50 text-green-700">
           <Check className="h-6 w-6" strokeWidth={2.5} />
         </div>
-        <h4 className="font-display text-[22px] font-semibold">{doneTitle}</h4>
+        <h4 className="font-display text-[1.375rem] font-semibold">{doneTitle}</h4>
         <p className="mt-1.5 text-muted-foreground">{doneSummary}</p>
         {txId && (
           <a
             href={getSolanaExplorerTxUrl(txId)}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3.5 inline-flex items-center gap-1 text-[13px] font-semibold hover:underline"
+            className="mt-3.5 inline-flex items-center gap-1 text-[0.8125rem] font-semibold hover:underline"
           >
             {t("common.viewOnExplorer")} <ExternalLink className="h-3 w-3" />
           </a>
@@ -130,7 +130,7 @@ export const TxProgress: React.FC<{
           <div
             key={s.key}
             className={cn(
-              "flex items-center gap-3.5 py-3.5 text-[15px]",
+              "flex items-center gap-3.5 py-3.5 text-[0.9375rem]",
               done || active ? "text-foreground" : "text-muted-foreground",
             )}
           >

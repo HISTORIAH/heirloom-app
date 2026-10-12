@@ -68,7 +68,7 @@ export const EstateRename: React.FC<{ estate: EstateData; account: UiWalletAccou
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-lg border border-foreground bg-foreground px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-background disabled:opacity-60"
+          className="rounded-lg border border-foreground bg-foreground px-3 py-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-background disabled:opacity-60"
         >
           {t("common.save")}
         </button>

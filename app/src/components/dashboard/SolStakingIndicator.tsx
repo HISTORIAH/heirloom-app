@@ -29,7 +29,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
           <Sprout className="h-4 w-4 shrink-0" /> {t("yield.stakeForApy", { apy: "6.2" })}
         </span>
         {solBalance > 0 ? (
-          <span className="rounded-full bg-foreground px-[9px] py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-background">
+          <span className="rounded-full bg-foreground px-[9px] py-1 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-background">
             {t("dashboard.stake")}
           </span>
         ) : (
@@ -54,7 +54,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
           onClick={onRecall}
           disabled={isWorking}
           className={cn(
-            "flex shrink-0 items-center gap-1.5 rounded-lg border border-tile-line bg-background px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft",
+            "flex shrink-0 items-center gap-1.5 rounded-lg border border-tile-line bg-background px-3 py-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft",
             isWorking && "opacity-50",
           )}
         >
@@ -67,7 +67,7 @@ export const SolStakingIndicator: React.FC<SolStakingIndicatorProps> = ({
         </button>
       </div>
 
-      <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+      <p className="mt-2 flex items-center gap-1.5 text-[0.6875rem] font-medium text-muted-foreground">
         {isWorking ? (
           <>
             <Loader2 className="h-3 w-3 animate-spin" />

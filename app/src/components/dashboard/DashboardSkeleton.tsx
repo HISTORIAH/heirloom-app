@@ -28,7 +28,7 @@ export const RunningHeadSkeleton = () => {
   const { t } = useTranslation("app");
   return (
     <div className="flex h-[3.75rem] items-center gap-[clamp(0.75rem,1.4vw,1.5rem)] border-b border-tile-line px-[var(--page-pad)]">
-      <span className="text-[11px] font-bold uppercase leading-none tracking-[0.18em]">
+      <span className="text-[0.6875rem] font-bold uppercase leading-none tracking-[0.18em]">
         {t("dashboard.yourEstates")}
       </span>
       <Bone className="h-3.5 w-5" />

@@ -29,7 +29,7 @@ type Props = {
 /** "Email · 1 of 2" over a stage's title. */
 function StageCap({ label, step }: { label: string; step?: string }) {
   return (
-    <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+    <span className="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
       {step ? `${label} · ${step}` : label}
     </span>
   );

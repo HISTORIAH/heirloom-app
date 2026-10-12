@@ -133,7 +133,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ onDisconnect, onConnectWallet }
         aria-haspopup="menu"
         aria-expanded={walletDropdownOpen}
         aria-label={t("nav.walletMenu", { address: shortAddress })}
-        className="flex min-h-11 items-center gap-2.5 rounded-lg border border-tile-line bg-background px-5 font-mono text-[13px] font-bold transition-colors hover:bg-tile-soft"
+        className="flex min-h-11 items-center gap-2.5 rounded-lg border border-tile-line bg-background px-5 font-mono text-[0.8125rem] font-bold transition-colors hover:bg-tile-soft"
       >
         <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent-lime" />
         {shortAddress}
@@ -170,7 +170,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ onDisconnect, onConnectWallet }
       <div className="flex items-center justify-between gap-x-4 px-[var(--page-pad)] py-2.5">
         <Link to="/estates" onClick={closeMenus} className="flex min-h-11 items-center gap-3">
           <VaultMark className="h-9 w-9" />
-          <span className="text-[28px] font-bold leading-none tracking-[-0.025em]">Heirloom</span>
+          <span className="text-[1.75rem] font-bold leading-none tracking-[-0.025em]">Heirloom</span>
         </Link>
 
         <nav aria-label={t("nav.appNav")} className="hidden items-center gap-1.5 md:flex">
@@ -206,7 +206,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ onDisconnect, onConnectWallet }
           <div className="border-t border-tile-line px-[var(--page-pad)] py-4">
             {isConnected ? (
               <div role="menu" className="space-y-1">
-                <div className="flex min-h-11 items-center gap-2.5 px-3 font-mono text-[13px] font-bold">
+                <div className="flex min-h-11 items-center gap-2.5 px-3 font-mono text-[0.8125rem] font-bold">
                   <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent-lime" />
                   {shortAddress}
                 </div>

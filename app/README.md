@@ -109,8 +109,8 @@ app/
     │   ├── create-vault/       Heir → Deposit → Heartbeat → Review, plus
     │   │                       stepper, timeline, and summary column
     │   ├── dashboard/          Estate cards, asset panels, yield + settings
-    │   ├── portal/             PortalLayout + EstateGlance, for the three
-    │   │                       single-purpose flows (claim/defer/heartbeat)
+    │   ├── portal/             PortalLayout, scan states, estate cards and
+    │   │                       lookup, for the role pages (inherit/guardian/check-in)
     │   ├── surface/            Panel, Modal, OptionCard, PercentRow, tones
     │   ├── tour/               AppTour (joyride) + tourSteps
     │   └── ui/                 Radix-based primitives
@@ -165,9 +165,10 @@ All routes are declared in `src/App.tsx`:
 | `/`             | `RootRedirect`    | Sends to `/dashboard`, query string intact. The landing lives on `heirlm.xyz`. |
 | `/create-vault` | `CreateVault`     | Form to initialize a new estate and fund it with SOL and/or tokens.    |
 | `/dashboard`    | `Dashboard`       | Authority view: list of estates, state badges, heartbeat, revoke.      |
-| `/claim`        | `Claim`           | Heir view: auto-discover claimable estates and pull the assets.        |
-| `/defer`        | `Defer`           | Delegate view: pause an owner's heartbeat clock.                       |
-| `/heartbeat`    | `Heartbeat`       | Hot signer view: registered `hb_signer` refreshes the heartbeat.       |
+| `/inherit`      | `Claim`           | Heir view: scans for estates naming the wallet as heir and claims them. |
+| `/guardian`     | `Guardian`        | Guardian view: scans for estates it guards; pauses a missed countdown once. |
+| `/check-in`     | `CheckIn`         | Check-in signer view: scans for its estates and checks in, one or all.  |
+| `/claim`, `/defer`, `/heartbeat` | redirects | Old names, still in emails: to `/inherit`, `/guardian`, `/check-in`. |
 | `*`             | `NotFound`        | 404.                                                                   |
 
 `RouteSeo` sets the title per path and stamps `noindex, nofollow` on every one of them.
@@ -295,9 +296,9 @@ The base README introduces Alice, who wants her daughter Mia to inherit her SOL.
 3. Navigates to `/create-vault`. The wizard runs four steps — **Heir** (address, label, optional delegate), **Deposit** (SOL amount and any token deposits), **Heartbeat** (interval, grace period, pause duration, optional `hb_signer`), **Review**. On submit it calls `vault.createEstateOnChain(input)`, which routes through `initializeWithTokens` to bundle `initialize` and every `register_asset` deposit into a single transaction.
 4. On `/dashboard`, `EstateCard` renders her estate: `state: active`, `secondsUntilGrace`, the vault SOL balance, and any SPL holdings discovered via `discoverVaultTokenAccounts`, with symbols and icons resolved in one `useTokenMetadata` batch. Destructive actions route through `ConfirmDialog`.
 5. She clicks **Send Heartbeat**, which calls `sendHeartbeatOnChain(heir)` → `updateFields` with every field `null`. The program reads null-everything as "just reset `last_heartbeat`".
-6. From her phone wallet she opens `/heartbeat`, enters her authority and Mia's address; the page looks up the estate, checks that her connected wallet matches the registered `hb_signer`, and lets her sign the same transaction without her cold key.
-7. For her retreat, Bob opens `/defer`, enters the same pair, and triggers `delegateDefer`. The estate's `paused_until` advances by the configured pause duration.
-8. If the worst happens, Mia visits `/claim`. The page calls `fetchEstatesByHeir(heirAddress)` and lists every estate naming her. She picks one, signs once, and `claimAll` bundles the token claims followed by the SOL claim in a single transaction — tokens first, because the SOL claim closes the vault. The assets land in her accounts minus the 0.75% protocol fee per asset.
+6. From her phone wallet she opens `/check-in`. The page scans for estates naming that wallet as check-in signer (`fetchEstatesByCheckInSigner`) and lets her check in without her cold key. Typing the owner and heir addresses is the fallback.
+7. If she misses a check-in, Bob, her guardian, opens `/guardian`, which scans the same way (`fetchEstatesByGuardian`), and pauses the countdown with `delegateDefer`. The estate's `delegate_pause_expires_at` moves out by the configured pause duration.
+8. If the worst happens, Mia visits `/inherit`. The page calls `fetchEstatesByHeir(heirAddress)` and lists every estate naming her. She picks one, signs once, and `claimAll` bundles the token claims followed by the SOL claim in a single transaction — tokens first, because the SOL claim closes the vault. The assets land in her accounts minus the 0.75% protocol fee per asset.
 
 Every step is one signed transaction. Every failure surfaces as a `sonner` toast with an Explorer link.
 

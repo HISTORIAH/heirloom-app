@@ -57,7 +57,7 @@ const EstatePillButton = ({
       </span>
       <span
         className={cn(
-          "w-full truncate text-[10px] font-semibold uppercase tracking-[0.12em]",
+          "w-full truncate text-[0.625rem] font-semibold uppercase tracking-[0.12em]",
           selected ? "text-background/70" : "text-muted-foreground",
         )}
       >
@@ -156,10 +156,10 @@ const DashboardPage = () => {
   // The running head: the estate count, the open estate's name, and a rule out to New estate.
   const runningHead = (
     <div className="flex h-[3.75rem] items-center gap-[clamp(0.75rem,1.4vw,1.5rem)] border-b border-tile-line px-[var(--page-pad)]">
-      <span className="text-[11px] font-bold uppercase leading-none tracking-[0.18em]">
+      <span className="text-[0.6875rem] font-bold uppercase leading-none tracking-[0.18em]">
         {t("dashboard.yourEstates")}
       </span>
-      <span className="font-display text-[13px] font-bold leading-none tabular-nums">
+      <span className="font-display text-[0.8125rem] font-bold leading-none tabular-nums">
         {String(estates.length).padStart(2, "0")}
       </span>
       {selectedEstate && account && (
@@ -208,7 +208,7 @@ const DashboardPage = () => {
           <span className="text-sm font-bold">
             +{estates.length - ESTATE_STRIP_CAP} {t("dashboard.more")}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <span className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             {t("dashboard.viewAllEstates")}
           </span>
         </button>

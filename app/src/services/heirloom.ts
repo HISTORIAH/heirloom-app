@@ -24,8 +24,18 @@ import {
 import type { VaultTokenHolding } from "@/types";
 import type { InitializeInput } from "@/types/program";
 import type { CreateAssetId, CreateEstateDraft } from "@/types/create";
+import type { EstateResponse, EstateRole } from "@/types/estate";
 import { fetchAssetsByOwner } from "@/services/das";
+import { fetchEstates } from "@/services/api/estateMetadata";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
+import {
+  ESTATE_AUTHORITY_OFFSET,
+  ESTATE_CHECK_IN_SIGNER_OFFSETS,
+  ESTATE_GUARDIAN_OFFSET,
+  ESTATE_GUARDIAN_TAG_OFFSET,
+  ESTATE_HEIR_OFFSET,
+  OPTION_SOME_TAG,
+} from "@/lib/constants";
 import {
   buildInitializeIx,
   buildUpdateFieldsIx,
@@ -124,9 +134,8 @@ export interface EstateSnapshot {
   authority: string;
   heir: string;
   // The estate's name from the backend. Snapshots are built from chain data only, so this is
-  // empty unless the caller merges it in: the dashboard does (VaultContext); Heartbeat, Defer
-  // and Claim don't yet, so they fall back to a truncated address.
-  // TODO: merge the backend name into snapshots on Heartbeat, Defer and Claim.
+  // empty unless the caller merges it in: the dashboard does (VaultContext), and the role
+  // pages go through snapshotsWithNames. Pages fall back to the owner's short address.
   label?: string;
   description?: string;
   // Derived from delegatePauseExpiresAt, not a stored field — see delegate_defer's
@@ -273,24 +282,124 @@ export async function fetchVaultClaimableLamports(
   return balance > rentMin ? balance - rentMin : 0n;
 }
 
+type EstateMemcmp =
+  | { offset: bigint; addr: Address }
+  | { offset: bigint; tag: number };
+
+type DecodedEstateAccount = { address: Address; data: Estate };
+
 export async function fetchEstatesByAuthority(
   client: HeirloomClient,
   authority: Address,
-): Promise<Array<{ address: Address; data: Estate }>> {
-  return fetchEstatesByMemcmp(client, { offset: 8n, addr: authority });
+): Promise<DecodedEstateAccount[]> {
+  return fetchEstatesByMemcmp(client, [{ offset: ESTATE_AUTHORITY_OFFSET, addr: authority }]);
 }
 
 export async function fetchEstatesByHeir(
   client: HeirloomClient,
   heir: Address,
-): Promise<Array<{ address: Address; data: Estate }>> {
-  return fetchEstatesByMemcmp(client, { offset: 40n, addr: heir });
+): Promise<DecodedEstateAccount[]> {
+  return fetchEstatesByMemcmp(client, [{ offset: ESTATE_HEIR_OFFSET, addr: heir }]);
+}
+
+export async function fetchEstatesByGuardian(
+  client: HeirloomClient,
+  guardian: Address,
+): Promise<DecodedEstateAccount[]> {
+  return fetchEstatesByMemcmp(client, [
+    { offset: ESTATE_GUARDIAN_TAG_OFFSET, tag: OPTION_SOME_TAG },
+    { offset: ESTATE_GUARDIAN_OFFSET, addr: guardian },
+  ]);
+}
+
+/**
+ * The check-in signer moves with the guardian before it, so this is one scan per layout. The
+ * guardian's tag byte is pinned in each, so the two never return the same estate.
+ */
+export async function fetchEstatesByCheckInSigner(
+  client: HeirloomClient,
+  signer: Address,
+): Promise<DecodedEstateAccount[]> {
+  const { withGuardian, withoutGuardian } = ESTATE_CHECK_IN_SIGNER_OFFSETS;
+  const [guarded, unguarded] = await Promise.all([
+    fetchEstatesByMemcmp(client, [
+      { offset: ESTATE_GUARDIAN_TAG_OFFSET, tag: OPTION_SOME_TAG },
+      { offset: withGuardian.tag, tag: OPTION_SOME_TAG },
+      { offset: withGuardian.pubkey, addr: signer },
+    ]),
+    fetchEstatesByMemcmp(client, [
+      { offset: ESTATE_GUARDIAN_TAG_OFFSET, tag: 0 },
+      { offset: withoutGuardian.tag, tag: OPTION_SOME_TAG },
+      { offset: withoutGuardian.pubkey, addr: signer },
+    ]),
+  ]);
+  return [...guarded, ...unguarded];
+}
+
+const ESTATE_SCANS: Record<
+  EstateRole,
+  (client: HeirloomClient, wallet: Address) => Promise<DecodedEstateAccount[]>
+> = {
+  guardian: fetchEstatesByGuardian,
+  checkInSigner: fetchEstatesByCheckInSigner,
+  heir: fetchEstatesByHeir,
+};
+
+/**
+ * Snapshots of every estate that names `wallet` in `role`, with the backend name merged in
+ * where there is one. An estate whose vault can't be read is left out rather than failing the
+ * whole scan; a backend that can't be reached only costs the names.
+ */
+export async function scanEstateSnapshots(
+  client: HeirloomClient,
+  role: EstateRole,
+  wallet: Address,
+): Promise<EstateSnapshot[]> {
+  const estates = await ESTATE_SCANS[role](client, wallet);
+  return snapshotsWithNames(client, estates);
+}
+
+export async function snapshotsWithNames(
+  client: HeirloomClient,
+  estates: DecodedEstateAccount[],
+): Promise<EstateSnapshot[]> {
+  const [snapshots, names] = await Promise.all([
+    Promise.all(
+      estates.map((e) =>
+        buildSnapshotFromEstate(client, e.data.authority, e.data.heir, e.data).catch(() => null),
+      ),
+    ),
+    fetchEstates(estates.map((e) => e.address)).catch(() => ({}) as Record<string, EstateResponse>),
+  ]);
+  return snapshots.flatMap((s, i) =>
+    s ? [{ ...s, label: names[estates[i].address]?.name ?? undefined }] : [],
+  );
+}
+
+/** One estate by its owner and heir, named like the scans. Null when it doesn't exist. */
+export async function lookupNamedEstateSnapshot(
+  client: HeirloomClient,
+  authorityStr: string,
+  heirStr: string,
+): Promise<EstateSnapshot | null> {
+  try {
+    const authority = toAddress(authorityStr);
+    const heir = toAddress(heirStr);
+    const maybe = await fetchEstateByPair(client, authority, heir);
+    if (!maybe.exists) return null;
+    const [snapshot] = await snapshotsWithNames(client, [
+      { address: maybe.address, data: maybe.data },
+    ]);
+    return snapshot ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchEstatesByMemcmp(
   client: HeirloomClient,
-  match: { offset: bigint; addr: Address },
-): Promise<Array<{ address: Address; data: Estate }>> {
+  matches: EstateMemcmp[],
+): Promise<DecodedEstateAccount[]> {
   const accounts = await client.rpc
     .getProgramAccounts(HEIRLOOM_PROGRAM_ADDRESS, {
       encoding: "base64",
@@ -302,13 +411,21 @@ async function fetchEstatesByMemcmp(
             encoding: "base64",
           },
         },
-        {
-          memcmp: {
-            offset: match.offset,
-            bytes: match.addr as unknown as Base58EncodedBytes,
-            encoding: "base58",
-          },
-        },
+        ...matches.map((m) => ({
+          memcmp:
+            "addr" in m
+              ? {
+                  offset: m.offset,
+                  bytes: m.addr as unknown as Base58EncodedBytes,
+                  encoding: "base58" as const,
+                }
+              : {
+                  offset: m.offset,
+                  // A single byte, base64 so it needs no encoder: btoa of the raw char.
+                  bytes: btoa(String.fromCharCode(m.tag)) as unknown as Base64EncodedBytes,
+                  encoding: "base64" as const,
+                },
+        })),
       ],
     })
     .send();
@@ -426,6 +543,24 @@ export async function updateFields(
     delegatePauseDurationSecs: input.delegatePauseDurationSecs,
   });
   return sendTx(client, authority, ix);
+}
+
+/**
+ * A check-in signer checking in on several estates at once. One plan; kit splits it into more
+ * transactions only if the instructions don't fit in one.
+ */
+export async function checkInAll(
+  client: HeirloomClient,
+  signer: TransactionSigner,
+  estates: Array<{ authority: Address; heir: Address }>,
+): Promise<string> {
+  const ixs = await Promise.all(
+    estates.map(async ({ authority, heir }) => {
+      const estate = await getEstateAddress(authority, heir);
+      return buildUpdateFieldsIx(signer, heir, estate, {});
+    }),
+  );
+  return sendTx(client, signer, ixs);
 }
 
 export async function revoke(

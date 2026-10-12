@@ -70,7 +70,7 @@ export default function ChannelTabs({
             <Icon className="h-4 w-4" strokeWidth={2.2} />
             {t(tab.labelKey)}
             {tab.soon && (
-              <span className="text-[9px] font-bold uppercase tracking-[0.12em]">
+              <span className="text-[0.5625rem] font-bold uppercase tracking-[0.12em]">
                 {t("notifications.soon")}
               </span>
             )}

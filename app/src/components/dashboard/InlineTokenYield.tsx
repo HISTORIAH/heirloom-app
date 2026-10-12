@@ -21,12 +21,12 @@ export const InlineTokenYield: React.FC<InlineTokenYieldProps> = ({
   const isWorking = loading || (progressStep !== "idle" && progressStep !== "complete");
 
   const pill =
-    "flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors disabled:opacity-40";
+    "flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.12em] transition-colors disabled:opacity-40";
 
   return (
     <div className="flex shrink-0 items-center gap-2">
       {isWorking && (
-        <span className="hidden text-[11px] font-medium text-muted-foreground sm:inline">
+        <span className="hidden text-[0.6875rem] font-medium text-muted-foreground sm:inline">
           {progressStep === "recalling"
             ? t("yield.withdrawingShort")
             : progressStep === "returning"

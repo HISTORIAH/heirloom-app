@@ -13,6 +13,27 @@ export function formatDuration(seconds: number, opts?: { long?: boolean }): stri
   return `${d}d`;
 }
 
+/** A live countdown with its two largest units: "2d 14h", "5h 12m", "3m 08s". */
+export function formatCountdown(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const d = Math.floor(s / SECONDS_PER_DAY);
+  const h = Math.floor((s % SECONDS_PER_DAY) / SECONDS_PER_HOUR);
+  const m = Math.floor((s % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m ${String(s % SECONDS_PER_MINUTE).padStart(2, "0")}s`;
+}
+
+/** How long ago a unix-seconds moment was, in the reader's language: "3 days ago", "yesterday". */
+export function formatTimeAgo(unixSecs: number, locale: string, nowMs = Date.now()): string {
+  const ago = Math.max(0, Math.floor(nowMs / 1000) - unixSecs);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (ago < SECONDS_PER_MINUTE) return rtf.format(0, "second");
+  if (ago < SECONDS_PER_HOUR) return rtf.format(-Math.floor(ago / SECONDS_PER_MINUTE), "minute");
+  if (ago < SECONDS_PER_DAY) return rtf.format(-Math.floor(ago / SECONDS_PER_HOUR), "hour");
+  return rtf.format(-Math.floor(ago / SECONDS_PER_DAY), "day");
+}
+
 export function errMsg(e: unknown, fallback = "Transaction rejected"): string {
   return e instanceof Error ? e.message : fallback;
 }

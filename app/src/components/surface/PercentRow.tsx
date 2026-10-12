@@ -21,7 +21,7 @@ export const PercentRow: React.FC<{
         disabled={disabled}
         aria-pressed={selected === pct}
         className={cn(
-          "text-[11px] font-bold uppercase tracking-[0.12em] transition-colors disabled:opacity-40",
+          "text-[0.6875rem] font-bold uppercase tracking-[0.12em] transition-colors disabled:opacity-40",
           size === "sm" ? "px-2.5 py-1.5" : "flex-1 py-2.5",
           i > 0 && "border-l border-tile-line",
           selected === pct

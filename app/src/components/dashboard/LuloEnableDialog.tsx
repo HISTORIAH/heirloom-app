@@ -87,7 +87,7 @@ export const LuloEnableDialog: React.FC<LuloEnableDialogProps> = ({
         </OptionCard>
       </div>
 
-      <p className="mt-4 text-[11px] font-medium text-muted-foreground">
+      <p className="mt-4 text-[0.6875rem] font-medium text-muted-foreground">
         {t("yield.yieldFeeNote")}
       </p>
     </Modal>

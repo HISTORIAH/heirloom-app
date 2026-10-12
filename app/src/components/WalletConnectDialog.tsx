@@ -49,7 +49,7 @@ const WalletRow = ({ wallet, onConnected }: WalletRowProps) => {
       {wallet.icon && <img src={wallet.icon} alt={wallet.name} className="h-8 w-8 rounded-md" />}
       <span className="flex-1 text-left">{wallet.name}</span>
       {isConnecting && (
-        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           {t("common.connecting")}
         </span>
       )}

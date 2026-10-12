@@ -26,7 +26,7 @@ const Step: React.FC<{ label: string; state: "done" | "active" | "waiting" }> = 
         <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
       )}
     </div>
-    <span className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+    <span className="text-center text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
       {label}
     </span>
   </div>

@@ -68,6 +68,25 @@ export const HEIRLOOM_INSTRUCTION_TRACE_COSTS: Partial<
   [HeirloomInstruction.Claim]: { token: 10, sol: 1 },
 };
 
+/**
+ * Byte offsets in an Estate account, for getProgramAccounts memcmp scans. Authority and heir
+ * are fixed. `delegate` (the guardian) and `checkInSigner` are Borsh Options: a 1-byte tag,
+ * then the pubkey only when it is Some. The guardian comes first, so it never moves; the
+ * check-in signer sits right after it, so its position depends on whether a guardian is set.
+ * The two are independent: an estate can have a check-in signer and no guardian.
+ */
+export const ESTATE_AUTHORITY_OFFSET = 8n;
+export const ESTATE_HEIR_OFFSET = 40n;
+/** Tag byte of the Option value: 1 when Some. */
+export const OPTION_SOME_TAG = 1;
+export const ESTATE_GUARDIAN_TAG_OFFSET = 122n;
+export const ESTATE_GUARDIAN_OFFSET = 123n;
+/** Check-in signer tag and pubkey, keyed by whether the estate has a guardian. */
+export const ESTATE_CHECK_IN_SIGNER_OFFSETS = {
+  withGuardian: { tag: 155n, pubkey: 156n },
+  withoutGuardian: { tag: 123n, pubkey: 124n },
+} as const;
+
 /** Heirloom's X account, linked from the app footer. */
 export const X_URL = "https://x.com/heirloom_app";
 

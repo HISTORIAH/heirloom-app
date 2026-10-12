@@ -177,7 +177,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={openModal}
-        className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
+        className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
       >
         {t("dashboard.manage.editSchedule")}
       </button>
@@ -268,7 +268,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
                       </Chip>
                     ))}
                   </div>
-                  <p className="mt-2 text-[13px] text-muted-foreground">{t("schedule.pauseHint")}</p>
+                  <p className="mt-2 text-[0.8125rem] text-muted-foreground">{t("schedule.pauseHint")}</p>
                 </>
               ) : (
                 <div className="rounded-xl border border-dashed border-tile-line px-4 py-3.5 text-sm text-muted-foreground">
@@ -281,7 +281,7 @@ const EditSettingsSection: React.FC<Props> = ({ estate, onTx }) => {
               {t("schedule.outcomeBefore")} <strong>{fmtDate(due)}</strong>
               {t("schedule.outcomeMiddle")} <strong>{fmtDate(claim)}</strong>
               {t("schedule.outcomeAfter")}
-              <div className="mt-1 text-[13px] text-muted-foreground">
+              <div className="mt-1 text-[0.8125rem] text-muted-foreground">
                 {t("schedule.restartsTimer")}
               </div>
             </Callout>

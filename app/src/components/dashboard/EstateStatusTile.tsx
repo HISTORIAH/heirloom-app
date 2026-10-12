@@ -133,7 +133,7 @@ export const EstateStatusTile: React.FC<EstateStatusTileProps> = ({
           <div className="w-full sm:ml-auto sm:w-auto sm:text-right">
             <span className="flex items-center gap-2 sm:justify-end">
               {state === "grace" && (
-                <span className="rounded-full bg-accent-yellow px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-foreground">
+                <span className="rounded-full bg-accent-yellow px-2.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-foreground">
                   {t("dashboard.urgent")}
                 </span>
               )}
