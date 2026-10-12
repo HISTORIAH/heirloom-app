@@ -560,6 +560,26 @@
   }
   /* The lift travels one glyph at a time: each is in motion for 0–5.5% of the
      cycle (~500ms) and still for the remaining 94%. */
+  /* The 404's zero, copied from the app's index.css: the mark's beat traces
+     in once, then the tile keeps a slow double pulse, so the vault reads as
+     alive while the page is gone. */
+  .lost-beat {
+    animation: lostBeat 2.6s ease-in-out 1.2s infinite;
+  }
+  .lost-beat path {
+    stroke-dasharray: 100;
+    animation: lostTrace 0.9s cubic-bezier(0.33, 1, 0.68, 1) 0.3s both;
+  }
+  @keyframes lostBeat {
+    0%, 36%, 100% { transform: scale(1); }
+    8% { transform: scale(1.07); }
+    16% { transform: scale(0.98); }
+    24% { transform: scale(1.04); }
+  }
+  @keyframes lostTrace {
+    from { stroke-dashoffset: 100; }
+    to { stroke-dashoffset: 0; }
+  }
   @keyframes glyphLift {
     0% { transform: translateY(0); }
     2.2% { transform: translateY(-0.055em); }
@@ -573,7 +593,12 @@
   .tile-rise,
   .orbit-ring,
   .orbit-face,
-  .modal-rise {
+  .modal-rise,
+  .lost-beat,
+  .lost-beat path {
     animation: none !important;
+  }
+  .lost-beat path {
+    stroke-dashoffset: 0;
   }
 }

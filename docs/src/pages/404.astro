@@ -7,19 +7,67 @@ import { withBase } from "@/lib/site";
 const entries = await getCollection("docs");
 const groups = buildNav(entries);
 const keywords = Object.fromEntries(entries.map((e) => [e.id, e.data.keywords]));
+// One way into each section: its first page, which is the one written to be read first.
+const starts = groups.flatMap((g) => (g.items[0] ? [{ label: g.label, item: g.items[0] }] : []));
 ---
 
+{/* entryId "404" matches no document, so nothing in the rail is lit as current. */}
 <DocsLayout
   title="Page not found"
-  description="That document does not exist. The handbook is in the rail on the left."
+  description="That document does not exist, or it has moved. The handbook is in the rail on the left."
+  eyebrow="Error 404"
   section="getting-started"
-  entryId="index"
+  entryId="404"
   headings={[]}
   groups={groups}
   keywords={keywords}
+  noindex
 >
-  <p>
-    Nothing lives at this path. Start from the <a href={withBase("/")}>overview</a>, or use the
-    filter above the contents to find what you were after.
+  <p
+    data-missing-path
+    hidden
+    class="not-prose w-fit max-w-full truncate rounded-lg border border-tile-line bg-tile-soft px-3 py-1.5 font-mono text-[13px] text-muted-foreground"
+  >
+    <span class="sr-only">You asked for </span>
+    <span class="line-through decoration-accent-red/70"></span>
   </p>
+
+  <p>
+    Nothing lives at this path. Start from the <a href={withBase("/")}>overview</a>, use the filter
+    above the contents, or pick up one of the sections below.
+  </p>
+
+  <nav aria-label="Sections" class="not-prose grid gap-3 sm:grid-cols-2">
+    {
+      starts.map(({ label, item }) => (
+        <a
+          href={item.href}
+          class="group flex h-full flex-col rounded-xl border border-tile-line p-4 transition-colors hover:border-foreground hover:bg-tile-soft"
+        >
+          <span class="ed-label">{label}</span>
+          <span class="mt-2 font-display text-[17px] font-bold tracking-[-0.01em]">
+            {item.title}
+          </span>
+          <span class="mt-1 text-[14px] leading-relaxed text-muted-foreground">
+            {item.description}
+          </span>
+        </a>
+      ))
+    }
+  </nav>
 </DocsLayout>
+
+<script>
+  // The page is static and answers for every missing /docs path, so the one it
+  // was served for is filled in on arrival.
+  const chip = document.querySelector<HTMLElement>("[data-missing-path]");
+  const slot = chip?.lastElementChild;
+  if (chip && slot) {
+    let path = location.pathname;
+    try {
+      path = decodeURI(path);
+    } catch {}
+    slot.textContent = path;
+    chip.hidden = false;
+  }
+</script>
