@@ -1,6 +1,6 @@
 # mobile
 
-Android client. Expo 57, Tamagui, Expo Router.
+Android client. Expo 57, Expo Router. Chrome is `src/components/ui.tsx` and `src/theme.ts`.
 
 ```bash
 bun install          # from repo root
