@@ -56,7 +56,9 @@ import {
   cancelScan,
   digitsToPinBytes,
   lamportsToSolText,
+  formatCreateAssetsLine,
   parseAddress,
+  parseCreateDeposits,
   parseOptionalAddress,
   setFlash,
   setupBlankCard,
@@ -180,9 +182,6 @@ export default function CreateScreen() {
         })()
       : 0n;
   const hasSol = solAmount > 0n;
-  const hasToken = Object.entries(amounts).some(
-    ([id, text]) => id !== SOL_ASSET_ID && text.trim().length > 0,
-  );
   const selectedCount = Object.values(amounts).filter((t) => t.trim().length > 0).length;
 
   function setError(key: string, message: string | undefined) {
@@ -194,7 +193,7 @@ export default function CreateScreen() {
       label.trim().length > 0 ||
       heirAddr.trim().length > 0 ||
       credential !== undefined ||
-      (solText ?? "").trim().length > 0
+      Object.values(amounts).some((text) => text.trim().length > 0)
     );
   }
 
@@ -368,8 +367,14 @@ export default function CreateScreen() {
   }
 
   function assetsGate(): boolean {
-    if (!hasSol && !hasToken) {
-      setError(SOL_ASSET_ID, "Enter an amount for at least one asset.");
+    try {
+      const deposits = parseCreateDeposits(amounts, walletTokens);
+      if (deposits.amountLamports === 0n && deposits.tokens.length === 0) {
+        setError(SOL_ASSET_ID, "Enter an amount for at least one asset.");
+        return false;
+      }
+    } catch (cause) {
+      setError(SOL_ASSET_ID, cause instanceof Error ? cause.message : "Enter an amount.");
       return false;
     }
     if (hasSol && balance !== undefined && solAmount + floats > balance) {
@@ -418,13 +423,15 @@ export default function CreateScreen() {
     setPhase("creating");
     try {
       const hasGuardian = guardian.trim().length > 0;
+      const deposits = parseCreateDeposits(amounts, walletTokens);
       const { signature, estatePda } = await createEstate({
         heir: parseAddress(heirValue, "heir"),
         label: label.trim().slice(0, LABEL_MAX_LEN),
         checkInIntervalSecs: BigInt(everySecs),
         gracePeriodSecs: BigInt(waitSecs),
         delegatePauseDurationSecs: hasGuardian ? BigInt(DEFAULT_PAUSE_DAYS * SECONDS_PER_DAY) : 0n,
-        amountLamports: solAmount,
+        amountLamports: deposits.amountLamports,
+        tokens: deposits.tokens,
         delegate: parseOptionalAddress(guardian, "guardian"),
         checkInSigner: parseOptionalAddress(signer, "check-in signer"),
         fundHeir: isCredential,
@@ -544,7 +551,7 @@ export default function CreateScreen() {
     : heirAddr.trim().length > 0
       ? shortAddress(heirAddr.trim())
       : "your heir";
-  const assetText = (solText ?? "").trim().length > 0 ? `${solText?.trim()} SOL` : "nothing yet";
+  const assetText = formatCreateAssetsLine(amounts, assets);
 
   const fees = [
     ...(isCredential ? [{ label: "Credential claim fees (prepaid)", value: "0.02 SOL" }] : []),

@@ -17,6 +17,11 @@ export type EstateRow = {
 /** How a wallet relates to an estate; each maps to an account field we filter on. */
 export type EstateRole = "authority" | "heir" | "checkInSigner" | "delegate";
 
+export type CreateTokenDeposit = {
+  mint: Address;
+  amount: bigint;
+};
+
 export type CreateEstateInput = {
   heir: Address;
   /** Off-chain display name. Sent to the backend via SPL Memo in the create tx. */
@@ -24,6 +29,7 @@ export type CreateEstateInput = {
   checkInIntervalSecs: bigint;
   gracePeriodSecs: bigint;
   amountLamports: bigint;
+  tokens?: CreateTokenDeposit[];
   delegate?: Address;
   checkInSigner?: Address;
   fundHeir?: boolean;
