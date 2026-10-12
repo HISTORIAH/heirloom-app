@@ -74,7 +74,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
             <p className="truncate text-base font-semibold leading-tight">{primary}</p>
             {isYieldActive && (
               <span
-                className="shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+                className="shrink-0 rounded-sm px-1.5 py-0.5 text-[0.625rem] font-bold tabular-nums"
                 style={{ backgroundColor: accentColor }}
               >
                 {t("dashboard.apyBadge", { apy: luloStrategy.apy.toFixed(1) })}
@@ -83,7 +83,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
           </div>
           <p
             className={cn(
-              "mt-0.5 truncate text-[13px] text-muted-foreground",
+              "mt-0.5 truncate text-[0.8125rem] text-muted-foreground",
               secondary === shortMint && "font-mono",
             )}
           >
@@ -94,7 +94,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
           <p className="font-display text-xl font-bold leading-tight tabular-nums">
             {formatTokenAmount(vt.rawAmount, vt.decimals)}
           </p>
-          <p className="mt-0.5 text-[13px] text-muted-foreground tabular-nums">
+          <p className="mt-0.5 text-[0.8125rem] text-muted-foreground tabular-nums">
             {usdValue !== undefined ? formatUsd(usdValue) : t("addAsset.noPrice")}
           </p>
         </div>

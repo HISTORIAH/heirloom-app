@@ -11,7 +11,7 @@ const formatBalance = (n: number) => n.toLocaleString(undefined, { maximumFracti
 const Tag: React.FC<{ dark?: boolean; children: React.ReactNode }> = ({ dark, children }) => (
   <span
     className={cn(
-      "ml-1.5 rounded-full px-2 py-[3px] align-middle text-[10px] font-bold uppercase tracking-[0.12em]",
+      "ml-1.5 rounded-full px-2 py-[3px] align-middle text-[0.625rem] font-bold uppercase tracking-[0.12em]",
       dark ? "bg-foreground text-background" : "bg-tile-soft text-foreground/80",
     )}
   >
@@ -29,7 +29,7 @@ const TokenLine: React.FC<{ token: PickerToken }> = ({ token }) => {
         shape={token.isNft ? "square" : "round"}
       />
       <div className="min-w-0">
-        <div className="truncate text-[15px] font-semibold">
+        <div className="truncate text-[0.9375rem] font-semibold">
           {token.unverified ? (
             <span className="font-mono text-sm">{truncateAddress(token.mint, 4)}</span>
           ) : (
@@ -38,17 +38,17 @@ const TokenLine: React.FC<{ token: PickerToken }> = ({ token }) => {
           {token.isNft && <Tag>{t("addAsset.nftTag")}</Tag>}
           {token.inEstate && <Tag dark>{t("addAsset.inEstateTag")}</Tag>}
         </div>
-        <div className="truncate text-[13px] text-muted-foreground">
+        <div className="truncate text-[0.8125rem] text-muted-foreground">
           {token.unverified ? t("addAsset.unknownToken") : token.symbol}
         </div>
       </div>
       <div className="ml-auto shrink-0 text-right">
         {token.isNft ? (
-          <div className="text-[13px] text-muted-foreground">{t("addAsset.oneItem")}</div>
+          <div className="text-[0.8125rem] text-muted-foreground">{t("addAsset.oneItem")}</div>
         ) : (
           <>
             <div className="text-sm font-semibold tabular-nums">{formatBalance(token.balance)}</div>
-            <div className="text-[13px] text-muted-foreground tabular-nums">
+            <div className="text-[0.8125rem] text-muted-foreground tabular-nums">
               {token.usdValue !== undefined ? formatUsd(token.usdValue) : t("addAsset.noPrice")}
             </div>
           </>
@@ -108,7 +108,7 @@ export const TokenPicker: React.FC<{
   const section = (title: string, list: PickerToken[]) =>
     list.length > 0 && (
       <>
-        <div className="px-3.5 pb-1.5 pt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="px-3.5 pb-1.5 pt-3 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           {title}
         </div>
         {list.map((tok) => (
@@ -144,7 +144,7 @@ export const TokenPicker: React.FC<{
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-tile-soft text-muted-foreground">
               <Plus className="h-4 w-4" />
             </span>
-            <span className="text-[15px] font-semibold text-muted-foreground">
+            <span className="text-[0.9375rem] font-semibold text-muted-foreground">
               {t("addAsset.chooseToken")}
             </span>
           </>
@@ -163,7 +163,7 @@ export const TokenPicker: React.FC<{
               placeholder={t("addAsset.searchPlaceholder")}
               aria-label={t("addAsset.searchPlaceholder")}
               spellCheck={false}
-              className="min-w-0 flex-1 bg-transparent py-1 text-[15px] outline-hidden"
+              className="min-w-0 flex-1 bg-transparent py-1 text-[0.9375rem] outline-hidden"
             />
           </div>
 
@@ -182,8 +182,8 @@ export const TokenPicker: React.FC<{
                   ?
                 </span>
                 <div className="min-w-0">
-                  <div className="text-[15px] font-semibold">{t("addAsset.addByMint")}</div>
-                  <div className="font-mono text-[13px] text-muted-foreground">
+                  <div className="text-[0.9375rem] font-semibold">{t("addAsset.addByMint")}</div>
+                  <div className="font-mono text-[0.8125rem] text-muted-foreground">
                     {pastedMatch ? truncateAddress(pastedMint, 4) : t("addAsset.mintNotInWallet")}
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export const TokenPicker: React.FC<{
             {section(t("addAsset.groupYourTokens"), groups.fungible)}
             {section(t("addAsset.groupCollectibles"), groups.nfts)}
             {empty && !loading && (
-              <div className="px-3.5 pb-3.5 pt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="px-3.5 pb-3.5 pt-3 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {t("addAsset.noMatches")}
               </div>
             )}
@@ -204,7 +204,7 @@ export const TokenPicker: React.FC<{
               <button
                 type="button"
                 onClick={() => setShowOther((s) => !s)}
-                className="w-full border-t border-tile-line px-3.5 py-3 text-left text-[13px] font-semibold text-foreground/80"
+                className="w-full border-t border-tile-line px-3.5 py-3 text-left text-[0.8125rem] font-semibold text-foreground/80"
               >
                 {t(showOther ? "addAsset.hideOther" : "addAsset.showOther", {
                   count: groups.other.length,

@@ -48,11 +48,11 @@ export const AppFooter: React.FC = () => {
 
   return (
     <footer className="border-t border-tile-line bg-background">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-[var(--page-pad)] py-2 text-[13px] text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-[var(--page-pad)] py-2 text-[0.8125rem] text-muted-foreground">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
           <span
             className={cn(
-              "flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground",
+              "flex items-center gap-2 rounded-full px-2.5 py-1 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-foreground",
               badge.fill,
             )}
           >

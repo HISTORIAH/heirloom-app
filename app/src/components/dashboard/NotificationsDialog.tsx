@@ -600,12 +600,12 @@ function RemindersDialog({
                 </p>
               </div>
               {state.kind === "connected" ? (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-md border-2 border-foreground bg-accent-lime px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-md border-2 border-foreground bg-accent-lime px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.12em]">
                   <Check className="h-3 w-3" strokeWidth={3} />
                   {t("notifications.connected")}
                 </span>
               ) : heirEmail ? (
-                <span className="shrink-0 rounded-md border-2 border-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                <span className="shrink-0 rounded-md border-2 border-foreground px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.12em]">
                   {t("notifications.pendingBadge")}
                 </span>
               ) : (

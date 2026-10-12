@@ -51,7 +51,7 @@ export default function AlertPreview({ profile }: { profile: HeirProfile }) {
         {note ? (
           <blockquote
             key="note"
-            className="seal-rise flex gap-3 whitespace-pre-line break-words text-[15px] font-medium leading-relaxed"
+            className="seal-rise flex gap-3 whitespace-pre-line break-words text-[0.9375rem] font-medium leading-relaxed"
           >
             <span aria-hidden className="w-[3px] shrink-0 rounded-full bg-accent-yellow" />
             <span className="min-w-0">{note}</span>

@@ -199,7 +199,7 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, heirName, onTx }) => {
     <>
       <button
         onClick={openModal}
-        className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
+        className="w-full rounded-lg border border-tile-line px-4 py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
       >
         {t("dashboard.manage.changeHeirShort")}
       </button>
@@ -234,8 +234,8 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, heirName, onTx }) => {
             <div>
               <FieldLabel>{t("changeHeir.currentLabel")}</FieldLabel>
               <div className="rounded-xl bg-tile-soft px-4 py-3.5">
-                <div className="text-[15px] font-semibold">{currentName}</div>
-                <div className="font-mono text-[13px] text-muted-foreground">
+                <div className="text-[0.9375rem] font-semibold">{currentName}</div>
+                <div className="font-mono text-[0.8125rem] text-muted-foreground">
                   {truncateAddress(estate.heir, 4)}
                 </div>
               </div>
@@ -263,15 +263,15 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, heirName, onTx }) => {
                 </button>
               </div>
               {check.kind === "bad" && (
-                <p className="mt-2 flex items-center gap-1.5 text-[13px] text-accent-red">
+                <p className="mt-2 flex items-center gap-1.5 text-[0.8125rem] text-accent-red">
                   <X className="h-3.5 w-3.5" /> {t(check.key)}
                 </p>
               )}
               {check.kind === "warn" && (
-                <p className="mt-2 text-[13px] text-amber-700">{t("changeHeir.noHistory")}</p>
+                <p className="mt-2 text-[0.8125rem] text-amber-700">{t("changeHeir.noHistory")}</p>
               )}
               {check.kind === "ok" && (
-                <p className="mt-2 flex items-center gap-1.5 text-[13px] text-green-700">
+                <p className="mt-2 flex items-center gap-1.5 text-[0.8125rem] text-green-700">
                   <Check className="h-3.5 w-3.5" strokeWidth={3} /> {t("changeHeir.validAddress")}
                 </p>
               )}
@@ -283,16 +283,16 @@ const ReassignHeirSection: React.FC<Props> = ({ estate, heirName, onTx }) => {
           <>
             <div className="flex flex-col gap-2.5">
               <div className="rounded-[14px] border border-tile-line p-4">
-                <div className="text-[13px] text-muted-foreground">{t("changeHeir.removing")}</div>
+                <div className="text-[0.8125rem] text-muted-foreground">{t("changeHeir.removing")}</div>
                 <div className="mt-1 text-lg font-semibold">{currentName}</div>
-                <div className="mt-1.5 break-all font-mono text-[15px] leading-normal text-muted-foreground line-through">
+                <div className="mt-1.5 break-all font-mono text-[0.9375rem] leading-normal text-muted-foreground line-through">
                   {estate.heir}
                 </div>
               </div>
               <ArrowDown className="mx-auto h-4 w-4 text-muted-foreground" />
               <div className="rounded-[14px] border border-foreground p-4">
-                <div className="text-[13px] text-muted-foreground">{t("changeHeir.newHeir")}</div>
-                <div className="mt-1.5 break-all font-mono text-[15px] leading-normal">
+                <div className="text-[0.8125rem] text-muted-foreground">{t("changeHeir.newHeir")}</div>
+                <div className="mt-1.5 break-all font-mono text-[0.9375rem] leading-normal">
                   <EmphasisedAddress value={address} />
                 </div>
               </div>

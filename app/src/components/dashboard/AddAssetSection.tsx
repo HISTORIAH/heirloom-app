@@ -188,7 +188,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-tile-line px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-tile-line px-4 py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.12em] transition-colors hover:bg-tile-soft"
       >
         <Plus className="h-3.5 w-3.5" /> {t("dashboard.manage.addAssetShort")}
       </button>
@@ -265,8 +265,8 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                     <div className="h-[84px] w-[84px] shrink-0 rounded-[10px] bg-tile-soft" />
                   )}
                   <div className="min-w-0">
-                    <div className="truncate text-[15px] font-semibold">{selected.name}</div>
-                    <div className="mt-1 text-[13px] text-muted-foreground">{t("addAsset.nftNote")}</div>
+                    <div className="truncate text-[0.9375rem] font-semibold">{selected.name}</div>
+                    <div className="mt-1 text-[0.8125rem] text-muted-foreground">{t("addAsset.nftNote")}</div>
                   </div>
                 </div>
               </div>
@@ -295,12 +295,12 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                         const next = e.target.value.replace(/[^0-9.]/g, "");
                         if ((next.match(/\./g) ?? []).length <= 1) setAmount(next);
                       }}
-                      className="w-full min-w-0 bg-transparent font-display text-[28px] font-bold tracking-[-0.02em] outline-hidden sm:text-4xl"
+                      className="w-full min-w-0 bg-transparent font-display text-[1.75rem] font-bold tracking-[-0.02em] outline-hidden sm:text-4xl"
                     />
-                    <span className="text-[15px] font-semibold text-muted-foreground">{selected.symbol}</span>
+                    <span className="text-[0.9375rem] font-semibold text-muted-foreground">{selected.symbol}</span>
                   </div>
                   <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2.5">
-                    <span className="text-[13px] text-muted-foreground tabular-nums">
+                    <span className="text-[0.8125rem] text-muted-foreground tabular-nums">
                       {selected.usdPrice !== undefined && value > 0
                         ? `≈ ${(value * selected.usdPrice).toLocaleString(undefined, {
                             style: "currency",
@@ -338,7 +338,7 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                     </div>
                   </div>
                 </div>
-                {over && <p className="mt-2 text-[13px] text-accent-red">{t("addAsset.overBalance")}</p>}
+                {over && <p className="mt-2 text-[0.8125rem] text-accent-red">{t("addAsset.overBalance")}</p>}
               </div>
             )}
           </>

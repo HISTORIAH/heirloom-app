@@ -50,7 +50,7 @@ const NotificationsSignInPanel: React.FC<Props> = ({
     }
   >
     <p className="ed-label">{t("notifications.youWillSign")}</p>
-    <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-tile-line bg-tile-soft p-4 font-mono text-[11px] leading-relaxed">
+    <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-tile-line bg-tile-soft p-4 font-mono text-[0.6875rem] leading-relaxed">
       {message}
     </pre>
     <p className="mt-4 flex items-start gap-2 text-xs font-medium text-muted-foreground">

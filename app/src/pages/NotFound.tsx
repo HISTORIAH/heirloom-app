@@ -45,7 +45,7 @@ const NotFound = () => {
               {t("notFound.description")}
             </p>
 
-            <p className="mt-5 max-w-full truncate rounded-lg border border-tile-line bg-tile-soft px-3 py-1.5 font-mono text-[13px] text-muted-foreground">
+            <p className="mt-5 max-w-full truncate rounded-lg border border-tile-line bg-tile-soft px-3 py-1.5 font-mono text-[0.8125rem] text-muted-foreground">
               <span className="sr-only">{t("notFound.requested")} </span>
               <span className="line-through decoration-accent-red/70">{location.pathname}</span>
             </p>
@@ -72,7 +72,7 @@ const NotFound = () => {
 
             <nav
               aria-label={t("notFound.helpLabel")}
-              className="mt-12 flex w-full max-w-md flex-col items-center gap-3 border-t border-tile-line pt-6 text-[15px] sm:flex-row sm:justify-center sm:gap-6"
+              className="mt-12 flex w-full max-w-md flex-col items-center gap-3 border-t border-tile-line pt-6 text-[0.9375rem] sm:flex-row sm:justify-center sm:gap-6"
             >
               <span className="ed-label">{t("notFound.orTry")}</span>
               <Link to="/inherit" className={helpLink}>

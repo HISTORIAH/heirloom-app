@@ -96,9 +96,9 @@ export function buildTourSteps({ isConnected, hasEstates, t }: BuildTourArgs): T
     data: { route: "/inherit" },
   });
 
-  // 5. Check-in — spotlight the lookup panel.
+  // 5. Check-in — spotlight the estates the signer checks in for.
   steps.push({
-    target: '[data-tour="heartbeat-lookup"]',
+    target: '[data-tour="check-in-scan"]',
     placement: "auto",
     title: t("dashboard.tour.step10Title"),
     content: t("dashboard.tour.step10Content"),

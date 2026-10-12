@@ -84,7 +84,7 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
 
   const tabClass = (active: boolean) =>
     cn(
-      "px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors md:text-xs",
+      "px-3.5 py-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.14em] transition-colors md:text-xs",
       active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-tile-soft",
     );
 
@@ -93,7 +93,7 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <PanelCap className="text-muted-foreground">{t("dashboard.assets")}</PanelCap>
-          <span className="rounded-full border border-tile-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <span className="rounded-full border border-tile-line px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
             {assetCount} {assetCount !== 1 ? t("dashboard.assetsPlural") : t("dashboard.asset")}
           </span>
         </div>

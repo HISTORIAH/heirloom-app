@@ -22,3 +22,6 @@ export type UpdateEstateRequest = {
   name?: string;
   description?: string;
 };
+
+/** The roles a connected wallet can be scanned for on the role pages. */
+export type EstateRole = "guardian" | "checkInSigner" | "heir";

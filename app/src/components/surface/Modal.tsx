@@ -94,7 +94,7 @@ export const Modal: React.FC<ModalProps> = ({
           >
             <div className="relative px-5 pb-6 pt-8 sm:px-8">
               {cap && (
-                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   {cap}
                 </span>
               )}
@@ -105,7 +105,7 @@ export const Modal: React.FC<ModalProps> = ({
                 {title}
               </h3>
               {description && (
-                <p className="mt-2 max-w-[460px] text-[15px] leading-normal text-muted-foreground">
+                <p className="mt-2 max-w-[460px] text-[0.9375rem] leading-normal text-muted-foreground">
                   {description}
                 </p>
               )}
@@ -162,7 +162,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex items-start justify-between gap-4 border-b border-tile-line px-6 py-5">
           <div className="min-w-0">
             {cap && (
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                 {cap}
               </span>
             )}

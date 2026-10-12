@@ -15,8 +15,8 @@ import { useTranslation } from "@heirloom/i18n";
 import CreateVault from "@/pages/CreateVault";
 import Dashboard from "@/pages/Dashboard";
 import Claim from "@/pages/Claim";
-import Defer from "@/pages/Defer";
-import Heartbeat from "@/pages/Heartbeat";
+import Guardian from "@/pages/Guardian";
+import CheckIn from "@/pages/CheckIn";
 import VerifyEmail from "@/pages/VerifyEmail";
 import NotFound from "@/pages/NotFound";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
@@ -55,8 +55,8 @@ const RouteSeo = () => {
     "/create-vault": t("seo.createVaultTitle"),
     "/estates": t("seo.dashboardTitle"),
     "/inherit": t("seo.claimTitle"),
-    "/defer": t("seo.deferTitle"),
-    "/check-in": t("seo.heartbeatTitle"),
+    "/guardian": t("seo.guardianTitle"),
+    "/check-in": t("seo.checkInTitle"),
   };
   return <Seo title={titles[pathname] ?? t("seo.notFoundTitle")} path={pathname} />;
 };
@@ -85,12 +85,13 @@ const App = () => (
                   <Route path="/create-vault" element={<CreateVault />} />
                   <Route path="/estates" element={<Dashboard />} />
                   <Route path="/inherit" element={<Claim />} />
+                  <Route path="/guardian" element={<Guardian />} />
+                  <Route path="/check-in" element={<CheckIn />} />
                   {/* The old names, still in emails, bookmarks and older landing builds. */}
                   <Route path="/dashboard" element={<RedirectTo pathname="/estates" />} />
                   <Route path="/claim" element={<RedirectTo pathname="/inherit" />} />
                   <Route path="/heartbeat" element={<RedirectTo pathname="/check-in" />} />
-                  <Route path="/defer" element={<Defer />} />
-                  <Route path="/check-in" element={<Heartbeat />} />
+                  <Route path="/defer" element={<RedirectTo pathname="/guardian" />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

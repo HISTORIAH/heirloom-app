@@ -1,20 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useWallet } from "@/contexts/WalletContext";
 import { SOL_LABEL } from "@/lib/constants";
-import {
-  fetchEstatesByHeir,
-  claimAll,
-  buildSnapshotFromEstate,
-  lookupEstateSnapshot,
-  type EstateSnapshot,
-} from "@/services/heirloom";
-import { getAtaAddress, type HeirloomClient } from "@/lib/heirloom";
+import { claimAll, lookupNamedEstateSnapshot, type EstateSnapshot } from "@/services/heirloom";
+import { getAtaAddress } from "@/lib/heirloom";
 import { formatSol, formatTokenAmount, errMsg, truncateAddress } from "@/lib/utils";
 import { address as toAddress, type Address, type TransactionSigner } from "@solana/kit";
 import { TREASURY_ADDRESS } from "@historiah/heirloom";
-import { Search, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle, Info } from "lucide-react";
 import TokenAvatar from "@/components/TokenAvatar";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
@@ -22,8 +15,15 @@ import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useTranslation } from "@heirloom/i18n";
 import { useToast } from "@/hooks/use-toast";
-import { Panel } from "@/components/surface/Panel";
 import { PortalLayout } from "@/components/portal/PortalLayout";
+import { EstateLookupDetails, EstateLookupForm } from "@/components/portal/EstateLookup";
+import {
+  ConnectPanel,
+  EmptyScanPanel,
+  ScanFailedPanel,
+  ScanningPanel,
+} from "@/components/portal/ScanStates";
+import { useEstateScan } from "@/hooks/useEstateScan";
 import {
   EstateGlance,
   ExplorerLink,
@@ -31,121 +31,50 @@ import {
   GlanceStats,
 } from "@/components/portal/EstateGlance";
 
-async function autoFetchInheritances(
-  client: HeirloomClient,
-  heirAddress: Address,
-): Promise<EstateSnapshot[]> {
-  const estates = await fetchEstatesByHeir(client, heirAddress);
-  const results = await Promise.all(
-    estates.map(async (e) => {
-      try {
-        return await buildSnapshotFromEstate(
-          client,
-          e.data.authority,
-          heirAddress.toString(),
-          e.data,
-        );
-      } catch {
-        return null;
-      }
-    }),
-  );
-  return results.filter((r): r is EstateSnapshot => r !== null);
-}
-
 const ClaimPageInner: React.FC<{
   signer: TransactionSigner | null;
   heirAddress: Address | null;
 }> = ({ signer, heirAddress }) => {
-  const { publicKey, isConnected, rpc, rpcSubscriptions, transactionVersion } = useWallet();
   const { toast } = useToast();
   const { track } = useAnalytics();
   const { t } = useTranslation("app");
   const [searchParams] = useSearchParams();
+  const scan = useEstateScan("heir", heirAddress);
+  const { client, add } = scan;
+  const inheritances = scan.estates;
 
-  const client: HeirloomClient = useMemo(
-    () => ({ rpc, rpcSubscriptions, transactionVersion }),
-    [rpc, rpcSubscriptions, transactionVersion],
-  );
-
-  const [searching, setSearching] = useState(false);
-  const [searchDone, setSearchDone] = useState(false);
-  const [autoFetchFailed, setAutoFetchFailed] = useState(false);
-  const [inheritances, setInheritances] = useState<EstateSnapshot[]>([]);
   const [claimingOwner, setClaimingOwner] = useState<string | null>(null);
   const [claimTxIds, setClaimTxIds] = useState<Record<string, string>>({});
-  const [showManual, setShowManual] = useState(false);
-  const [manualAddress, setManualAddress] = useState("");
-  const [manualLoading, setManualLoading] = useState(false);
-  const [manualError, setManualError] = useState<string | null>(null);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const allVaultMints = inheritances.flatMap((inh) => inh.vaultTokens.map((vt) => vt.mint));
   const { metadata: tokenMeta } = useTokenMetadata(allVaultMints);
 
-  const runLookup = useCallback(
-    async (ownerStr: string) => {
-      if (!heirAddress) return null;
-      return lookupEstateSnapshot(client, ownerStr, heirAddress.toString());
-    },
-    [client, heirAddress],
-  );
-
+  // A link from a reminder email carries the owner, so that estate shows even if the scan
+  // can't run.
+  const ownerParam = searchParams.get("owner");
   useEffect(() => {
-    if (!publicKey || !heirAddress) return;
+    if (!ownerParam || !heirAddress) return;
     let cancelled = false;
-    const ownerParam = searchParams.get("owner");
-    setSearching(true);
-    setAutoFetchFailed(false);
-
-    (async () => {
-      const merged = new Map<string, EstateSnapshot>();
-      try {
-        const auto = await autoFetchInheritances(client, heirAddress);
-        for (const inh of auto) merged.set(inh.authority, inh);
-      } catch (err) {
-        console.error("Auto-fetch inheritances failed:", err);
-        if (!cancelled) setAutoFetchFailed(true);
-      }
-
-      if (ownerParam && !merged.has(ownerParam)) {
-        const single = await runLookup(ownerParam);
-        if (single) merged.set(single.authority, single);
-      }
-
-      if (cancelled) return;
-      setInheritances(Array.from(merged.values()));
-      setSearching(false);
-      setSearchDone(true);
-    })();
-
+    lookupNamedEstateSnapshot(client, ownerParam, heirAddress).then((found) => {
+      if (found && !cancelled) add(found);
+    });
     return () => {
       cancelled = true;
     };
-  }, [publicKey, searchParams, runLookup, client, heirAddress]);
+  }, [ownerParam, heirAddress, client, add]);
 
-  const handleManualLookup = async () => {
-    if (!manualAddress.trim()) return;
+  const empty = scan.done && inheritances.length === 0;
+
+  const handleLookup = async (owner: string) => {
     if (!heirAddress) {
       setWalletDialogOpen(true);
-      return;
+      return t("claim.connectTitle");
     }
-    setManualLoading(true);
-    setManualError(null);
-    const result = await runLookup(manualAddress.trim());
-    if (result) {
-      setInheritances((prev) => {
-        const exists = prev.some((i) => i.authority === result.authority);
-        return exists
-          ? prev.map((i) => (i.authority === result.authority ? result : i))
-          : [...prev, result];
-      });
-      setShowManual(false);
-      setManualAddress("");
-    } else {
-      setManualError(t("claim.notFoundError"));
-    }
-    setManualLoading(false);
+    const found = await lookupNamedEstateSnapshot(client, owner, heirAddress);
+    if (!found) return t("claim.notFoundError");
+    add(found);
+    return null;
   };
 
   const handleClaim = async (inh: EstateSnapshot) => {
@@ -185,24 +114,17 @@ const ClaimPageInner: React.FC<{
 
       setClaimTxIds((p) => ({ ...p, [inh.authority]: lastTx }));
 
-      const updated = await lookupEstateSnapshot(client, inh.authority, heirAddress.toString());
-      if (updated) {
-        setInheritances((prev) => prev.map((i) => (i.authority === inh.authority ? updated : i)));
-      } else {
-        setInheritances((prev) =>
-          prev.map((i) =>
-            i.authority === inh.authority
-              ? {
-                  ...i,
-                  vaultState: "distributed",
-                  solBalance: 0,
-                  claimableAssets: 0,
-                  vaultTokens: [],
-                }
-              : i,
-          ),
-        );
-      }
+      // A full claim closes the estate, so a failed re-read means it's all been claimed.
+      const updated = await lookupNamedEstateSnapshot(client, inh.authority, heirAddress);
+      add(
+        updated ?? {
+          ...inh,
+          vaultState: "distributed",
+          solBalance: 0,
+          claimableAssets: 0,
+          vaultTokens: [],
+        },
+      );
 
       toast({ title: t("claim.toastClaimTitle"), description: t("claim.toastClaimDesc") });
       track("claim_succeeded", {
@@ -224,60 +146,57 @@ const ClaimPageInner: React.FC<{
   return (
     <>
       <PortalLayout
-        cap={t("claim.heirPortal")}
-        headline={
-          <>
-            {t("claim.headline1")} {t("claim.headline2")}
-          </>
-        }
+        cap={t("claim.cap")}
+        headline={t("claim.headline")}
         description={t("claim.description")}
         onConnectWallet={() => setWalletDialogOpen(true)}
       >
-        {!isConnected && (
+        {!heirAddress && (
           <div data-tour="claim-connect">
-            <Panel className="text-center">
-              <h2 className="ed-h3">{t("claim.connectTitle")}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{t("claim.connectDesc")}</p>
-              <Button
-                variant="flat-yellow"
-                className="mt-5"
-                onClick={() => setWalletDialogOpen(true)}
-              >
-                {t("common.connectWallet")}
-              </Button>
-            </Panel>
+            <ConnectPanel
+              title={t("claim.connectTitle")}
+              description={t("claim.connectDesc")}
+              onConnect={() => setWalletDialogOpen(true)}
+            />
           </div>
         )}
 
-        {searching && (
-          <Panel className="items-center text-center">
-            <Loader2 className="h-6 w-6 animate-spin" strokeWidth={2} />
-            <h2 className="ed-h3 mt-3">{t("claim.scanning")}</h2>
-          </Panel>
+        {scan.scanning && <ScanningPanel label={t("claim.scanning")} />}
+
+        {scan.failed && (
+          <ScanFailedPanel
+            title={t("claim.autoFetchUnavailable")}
+            description={t("claim.autoFetchDesc")}
+            onRetry={() => scan.refetch()}
+          />
         )}
 
-        {searchDone && !searching && autoFetchFailed && (
-          <Panel tone="yellow">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
-              <div>
-                <p className="font-semibold">{t("claim.autoFetchUnavailable")}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{t("claim.autoFetchDesc")}</p>
+        {heirAddress && empty && (
+          <>
+            <EmptyScanPanel
+              checkedWallet={t("claim.checkedWallet", { address: truncateAddress(heirAddress, 4) })}
+              title={t("claim.noEstates")}
+              description={t("claim.noEstatesDesc")}
+            >
+              <div className="mt-6" data-tour="claim-manual">
+                <EstateLookupForm
+                  idPrefix="claim"
+                  withHeir={false}
+                  primary
+                  onLookup={(owner) => handleLookup(owner)}
+                  extraAction={
+                    <Button variant="flat-outline" onClick={() => setWalletDialogOpen(true)}>
+                      {t("claim.switchWallet")}
+                    </Button>
+                  }
+                />
               </div>
-            </div>
-          </Panel>
-        )}
-
-        {searchDone && !searching && inheritances.length === 0 && (
-          <Panel className="text-center">
-            <h2 className="ed-h3">{t("claim.noEstates")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {autoFetchFailed ? t("claim.noEstatesDesc1") : t("claim.noEstatesDesc2")}
+            </EmptyScanPanel>
+            <p className="flex items-start gap-2.5 px-1 text-sm text-muted-foreground">
+              <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+              {t("claim.cardNote")}
             </p>
-            <Button variant="flat-outline" className="mt-5" onClick={() => setShowManual(true)}>
-              {t("claim.manualLookup")}
-            </Button>
-          </Panel>
+          </>
         )}
 
         {inheritances.map((inh) => {
@@ -361,7 +280,7 @@ const ClaimPageInner: React.FC<{
                     ) : nothingToClaim ? (
                       t("claim.nothingToClaim")
                     ) : inh.vaultState !== "claimable" ? (
-                      `${t("claim.notYetClaimable")} (${inh.vaultState})`
+                      t("claim.notYetClaimable")
                     ) : (
                       t("claim.claimInheritance")
                     )}
@@ -372,53 +291,19 @@ const ClaimPageInner: React.FC<{
           );
         })}
 
-        <div data-tour="claim-manual">
-          <Panel>
-            <button
-              type="button"
-              onClick={() => setShowManual(!showManual)}
-              className="flex w-full items-center justify-between text-left"
-            >
-              <span className="ed-label">{t("claim.lookUpAnother")}</span>
-              <span className="text-sm text-muted-foreground">{showManual ? "−" : "+"}</span>
-            </button>
-            {showManual && (
-              <div className="mt-4 space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={manualAddress}
-                    onChange={(e) => setManualAddress(e.target.value)}
-                    maxLength={128}
-                    spellCheck={false}
-                    autoComplete="off"
-                    className="ed-input flex-1 font-mono"
-                    placeholder={t("claim.ownerPlaceholder")}
-                  />
-                  <Button
-                    variant="flat"
-                    onClick={handleManualLookup}
-                    disabled={manualLoading || !manualAddress.trim()}
-                  >
-                    {manualLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Search className="h-4 w-4" /> {t("claim.lookup")}
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {manualError && (
-                  <p className="flex items-center gap-2 text-sm font-semibold text-accent-red">
-                    <AlertTriangle className="h-4 w-4" />
-                    {manualError}
-                  </p>
-                )}
-              </div>
-            )}
-          </Panel>
-        </div>
+        {/* Disconnected, this is still here so the tour has something to point at; a lookup
+            asks for the wallet first, since the heir is the connected wallet. */}
+        {(!heirAddress || inheritances.length > 0) && (
+          <div data-tour="claim-manual">
+            <EstateLookupDetails summary={t("claim.lookUpAnother")}>
+              <EstateLookupForm
+                idPrefix="claim-more"
+                withHeir={false}
+                onLookup={(owner) => handleLookup(owner)}
+              />
+            </EstateLookupDetails>
+          </div>
+        )}
       </PortalLayout>
 
       <WalletConnectDialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen} />
@@ -428,7 +313,13 @@ const ClaimPageInner: React.FC<{
 
 const ClaimPage = () => (
   <WithWallet>
-    {(ctx) => <ClaimPageInner signer={ctx?.signer ?? null} heirAddress={ctx?.address ?? null} />}
+    {(ctx) => (
+      <ClaimPageInner
+        key={ctx?.addressStr ?? "disconnected"}
+        signer={ctx?.signer ?? null}
+        heirAddress={ctx?.address ?? null}
+      />
+    )}
   </WithWallet>
 );
 

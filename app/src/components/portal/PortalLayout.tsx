@@ -18,7 +18,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 }) => (
   <div className="flex-1 overflow-x-clip bg-background">
     <PageHeader onConnectWallet={onConnectWallet} />
-    <main className="mx-auto max-w-2xl px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
+    {/* The column is 42rem of content with the page inset outside it, so it widens with the
+        root size on large screens instead of the inset eating into it. */}
+    <main className="mx-auto max-w-[calc(42rem+2*var(--page-pad))] px-[var(--page-pad)] py-[clamp(1.5rem,6vh,7rem)]">
       <header className="mb-8">
         <span className="ed-label">{cap}</span>
         <h1 className="ed-h2 mt-2">{headline}</h1>

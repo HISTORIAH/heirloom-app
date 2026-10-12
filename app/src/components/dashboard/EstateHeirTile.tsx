@@ -117,13 +117,13 @@ export const EstateHeirTile: React.FC<EstateHeirTileProps> = ({
               <button
                 onClick={save}
                 disabled={saving}
-                className="rounded-lg border border-foreground bg-foreground px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-background disabled:opacity-60"
+                className="rounded-lg border border-foreground bg-foreground px-3 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-background disabled:opacity-60"
               >
                 {t("common.save")}
               </button>
               <button
                 onClick={() => setEditing(false)}
-                className="rounded-lg border border-tile-line px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em]"
+                className="rounded-lg border border-tile-line px-3 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.1em]"
               >
                 {t("common.cancel")}
               </button>
@@ -166,7 +166,7 @@ export const EstateHeirTile: React.FC<EstateHeirTileProps> = ({
         />
       </div>
       {!estate.checkInSigner && (
-        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted-foreground">
           {t("dashboard.checkInSignerHelp")}
         </p>
       )}

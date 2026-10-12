@@ -41,7 +41,7 @@ export const PanelCap: React.FC<{ className?: string; children: ReactNode }> = (
   children,
 }) => (
   <span
-    className={cn("text-[11px] font-bold uppercase tracking-[0.18em] md:text-xs", className)}
+    className={cn("text-[0.6875rem] font-bold uppercase tracking-[0.18em] md:text-xs", className)}
   >
     {children}
   </span>

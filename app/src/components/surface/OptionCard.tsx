@@ -51,7 +51,7 @@ export const OptionCard: React.FC<{
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-semibold">{title}</span>
           {badge && (
-            <span className="rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ring-1 ring-inset ring-foreground/20">
+            <span className="rounded-sm px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] ring-1 ring-inset ring-foreground/20">
               {badge}
             </span>
           )}
@@ -60,7 +60,7 @@ export const OptionCard: React.FC<{
           <span className="mt-1 block text-xs font-medium text-muted-foreground">{children}</span>
         )}
         {note && (
-          <span className="mt-1.5 block text-[11px] font-bold tabular-nums text-muted-foreground">
+          <span className="mt-1.5 block text-[0.6875rem] font-bold tabular-nums text-muted-foreground">
             {note}
           </span>
         )}
