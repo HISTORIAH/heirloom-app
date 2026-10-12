@@ -7,7 +7,7 @@ const projectModules = path.resolve(projectRoot, "node_modules");
 
 const config = getDefaultConfig(projectRoot);
 
-// Bun keeps nested deps (Tamagui, Expo) inside node_modules/.bun. Hierarchical
+// Bun keeps nested deps (Expo, Kit) inside node_modules/.bun. Hierarchical
 // lookup is required to see those. Pin React so Metro does not walk into app/.
 config.watchFolders = [
   projectRoot,

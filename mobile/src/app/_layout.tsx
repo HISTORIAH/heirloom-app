@@ -13,12 +13,10 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { StatusBar as NativeStatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { TamaguiProvider } from "tamagui";
 
 import { solanaCluster, walletIdentity } from "@/config";
 import { QUERY_STALE_MS } from "@/constants/api";
 import { colors } from "@/theme";
-import { tamaguiConfig } from "../../tamagui.config";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -49,25 +47,23 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-          <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
-            <StatusBar style="dark" />
-            <Stack
-              screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
-            >
-              <Stack.Screen
-                name="wallet"
-                options={{ presentation: "transparentModal", animation: "fade" }}
-              />
-              <Stack.Screen
-                name="tap"
-                options={{ presentation: "transparentModal", animation: "fade" }}
-              />
-              <Stack.Screen name="create" options={{ gestureEnabled: false }} />
-              <Stack.Screen name="card" />
-            </Stack>
-          </MobileWalletProvider>
-        </TamaguiProvider>
+        <MobileWalletProvider cluster={solanaCluster} identity={walletIdentity}>
+          <StatusBar style="dark" />
+          <Stack
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
+          >
+            <Stack.Screen
+              name="wallet"
+              options={{ presentation: "transparentModal", animation: "fade" }}
+            />
+            <Stack.Screen
+              name="tap"
+              options={{ presentation: "transparentModal", animation: "fade" }}
+            />
+            <Stack.Screen name="create" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="card" />
+          </Stack>
+        </MobileWalletProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
