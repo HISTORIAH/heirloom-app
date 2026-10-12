@@ -1,7 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
 import { Icon } from "@/components/Icon";
-import { PrimaryButton } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import { shortAddress } from "@/lib";
 
@@ -9,9 +8,6 @@ type EstatePeopleProps = {
   heir: string;
   checkInSigner?: string;
   guardian?: string;
-  /** Inline "Add" on an unset check-in signer or guardian. */
-  onAddCheckInSigner?: () => void;
-  onAddGuardian?: () => void;
   /** Last row: "On", "Off" or "Sign in", opening the estate's reminders. */
   reminders?: { label: string; onPress: () => void };
 };
@@ -26,15 +22,7 @@ const rowStyle = {
   borderBottomColor: colors.line,
 } as const;
 
-function PersonRow({
-  title,
-  address,
-  onAdd,
-}: {
-  title: string;
-  address?: string;
-  onAdd?: () => void;
-}) {
+function PersonRow({ title, address }: { title: string; address?: string }) {
   const named = address !== undefined;
   return (
     <View style={rowStyle}>
@@ -51,9 +39,6 @@ function PersonRow({
       >
         {named ? shortAddress(address) : "Not set"}
       </Text>
-      {!named && onAdd !== undefined ? (
-        <PrimaryButton compact tone="paper" label="Add" onPress={onAdd} />
-      ) : null}
     </View>
   );
 }
@@ -79,19 +64,12 @@ function RemindersRow({ label, onPress }: { label: string; onPress: () => void }
   );
 }
 
-export function EstatePeople({
-  heir,
-  checkInSigner,
-  guardian,
-  onAddCheckInSigner,
-  onAddGuardian,
-  reminders,
-}: EstatePeopleProps) {
+export function EstatePeople({ heir, checkInSigner, guardian, reminders }: EstatePeopleProps) {
   return (
     <View style={{ borderTopWidth: space.rule, borderTopColor: colors.line }}>
       <PersonRow title="Heir" address={heir} />
-      <PersonRow title="Check-in signer" address={checkInSigner} onAdd={onAddCheckInSigner} />
-      <PersonRow title="Guardian" address={guardian} onAdd={onAddGuardian} />
+      <PersonRow title="Check-in signer" address={checkInSigner} />
+      <PersonRow title="Guardian" address={guardian} />
       {reminders !== undefined ? <RemindersRow {...reminders} /> : null}
     </View>
   );

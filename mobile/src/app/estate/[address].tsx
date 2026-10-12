@@ -160,17 +160,6 @@ export default function EstateScreen() {
     return remindersOn(reminders.recipients) ? "On" : "Off";
   }
 
-  function onAddRole(role: "Check-in signer" | "Guardian") {
-    notice({
-      cap: role,
-      title: "Adding one after creation comes next",
-      body:
-        role === "Guardian"
-          ? "A guardian can pause the countdown once if something is wrong."
-          : "A check-in signer can check in for you from their own wallet.",
-    });
-  }
-
   function onReassign(newHeir: Address) {
     prompt(
       { cap: "Change heir", title: "Move this estate to a new heir?", confirmLabel: "Change heir" },
@@ -281,8 +270,6 @@ export default function EstateScreen() {
             heir={String(current.data.heir)}
             checkInSigner={signer ?? undefined}
             guardian={guardian ?? undefined}
-            onAddCheckInSigner={live ? () => onAddRole("Check-in signer") : undefined}
-            onAddGuardian={live ? () => onAddRole("Guardian") : undefined}
             reminders={
               live && BACKEND_URL !== undefined
                 ? {
