@@ -6,12 +6,20 @@ import { OG_LOCALES, structuredData } from "@/lib/seo";
 
 interface Props {
   locale: string;
+  /** Overrides the home page's title. */
+  title?: string;
+  /**
+   * For pages that are not a place of their own (the 404): keeps them out of
+   * the index and drops the canonical and hreflang set, which would otherwise
+   * claim this document is the home page.
+   */
+  noindex?: boolean;
 }
-const { locale } = Astro.props;
+const { locale, title: titleOverride, noindex = false } = Astro.props;
 
 const t = createLandingT(locale);
 const canonical = `${SITE_URL}${localeHref(locale)}`;
-const title = t("seo.homeTitle");
+const title = titleOverride ?? t("seo.homeTitle");
 const description = t("seo.homeDescription");
 const jsonLd = JSON.stringify(structuredData(t, canonical));
 ---
@@ -31,19 +39,27 @@ const jsonLd = JSON.stringify(structuredData(t, canonical));
     {/* Nine documents, one per locale, each pointing at the other eight. This
         is the whole reason the landing left the SPA: a crawler can now be told
         which language it is looking at and where the rest of them live. */}
-    <link rel="canonical" href={canonical} />
     {
-      LANGUAGES.map((lang) => (
-        <link rel="alternate" hreflang={lang.code} href={`${SITE_URL}${localeHref(lang.code)}`} />
-      ))
+      !noindex && (
+        <>
+          <link rel="canonical" href={canonical} />
+          {LANGUAGES.map((lang) => (
+            <link rel="alternate" hreflang={lang.code} href={`${SITE_URL}${localeHref(lang.code)}`} />
+          ))}
+          <link rel="alternate" hreflang="x-default" href={`${SITE_URL}/`} />
+        </>
+      )
     }
-    <link rel="alternate" hreflang="x-default" href={`${SITE_URL}/`} />
 
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta
       name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      content={
+        noindex
+          ? "noindex, follow"
+          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      }
     />
     <meta name="author" content="Heirloom" />
 
@@ -74,7 +90,7 @@ const jsonLd = JSON.stringify(structuredData(t, canonical));
     <meta name="twitter:image" content={OG_IMAGE} />
     <meta name="twitter:image:alt" content={t("seo.twitterImageAlt")} />
 
-    <script type="application/ld+json" set:html={jsonLd} is:inline={false} />
+    {!noindex && <script type="application/ld+json" set:html={jsonLd} is:inline={false} />}
   </head>
   <body>
     <slot />

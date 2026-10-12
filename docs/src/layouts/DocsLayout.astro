@@ -37,10 +37,29 @@ interface Props {
   keywords: Record<string, string[]>;
   prev?: NavItem;
   next?: NavItem;
+  /** Replaces the section label above the title. */
+  eyebrow?: string;
+  /**
+   * For pages that are not a document (the 404): keeps them out of the index,
+   * drops the canonical and structured data, and hides "Edit this page",
+   * which would otherwise point at whatever entryId was borrowed.
+   */
+  noindex?: boolean;
 }
 
-const { title, description, section, entryId, headings, groups, keywords, prev, next } =
-  Astro.props;
+const {
+  title,
+  description,
+  section,
+  entryId,
+  headings,
+  groups,
+  keywords,
+  prev,
+  next,
+  eyebrow,
+  noindex = false,
+} = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, SITE_URL).href;
 const docsHome = new URL(withBase("/"), SITE_URL).href;
@@ -90,10 +109,14 @@ const jsonLd = JSON.stringify([
 
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {!noindex && <link rel="canonical" href={canonical} />}
     <meta
       name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      content={
+        noindex
+          ? "noindex, follow"
+          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      }
     />
     <meta name="author" content="Heirloom" />
 
@@ -121,7 +144,7 @@ const jsonLd = JSON.stringify([
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={OG_IMAGE} />
 
-    <script type="application/ld+json" set:html={jsonLd} is:inline={false} />
+    {!noindex && <script type="application/ld+json" set:html={jsonLd} is:inline={false} />}
   </head>
 
   <body>
@@ -141,7 +164,7 @@ const jsonLd = JSON.stringify([
         <main id="docs-content" class="docs-main min-w-0 py-10 lg:py-14">
           <article>
             <header class="border-b border-tile-line pb-8">
-              <p class="ed-label">{sectionLabel(section)}</p>
+              <p class="ed-label">{eyebrow ?? sectionLabel(section)}</p>
               <h1
                 class="mt-3 font-display text-[clamp(2rem,4.5vw,2.9rem)] font-bold leading-[1.05] tracking-[-0.03em]"
               >
@@ -163,15 +186,19 @@ const jsonLd = JSON.stringify([
             class="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-tile-line pt-6"
           >
             <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-              <a
-                href={editUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Icon name="pencil" class="h-3.5 w-3.5" strokeWidth={2} />
-                Edit this page
-              </a>
+              {
+                !noindex && (
+                  <a
+                    href={editUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Icon name="pencil" class="h-3.5 w-3.5" strokeWidth={2} />
+                    Edit this page
+                  </a>
+                )
+              }
               <a
                 href={GITHUB_URL}
                 target="_blank"

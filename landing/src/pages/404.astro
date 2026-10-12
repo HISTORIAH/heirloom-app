@@ -1,29 +1,114 @@
 ---
 /**
  * One 404 for the whole site. It is served for any path Cloudflare cannot
- * match, including the locale prefixes, so it stays in the default language
- * rather than pretending to know which one the visitor wanted.
+ * match, including the locale prefixes and the blog (which has no 404 of its
+ * own), so it stays in the default language rather than pretending to know
+ * which one the visitor wanted. Every link is root-relative: this same file
+ * answers at any depth.
  */
-import { createLandingT, DEFAULT_LANGUAGE } from "@heirloom/i18n/landing";
+import { createLandingT, DEFAULT_LANGUAGE, localeHref } from "@heirloom/i18n/landing";
 import Layout from "@/layouts/Layout.astro";
+import NavBar from "@/components/nav/NavBar.astro";
+import VaultMark from "@/components/landing/VaultMark.astro";
 import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
+import { appPath, appUrl, BLOG_PATH, DOCS_PATH } from "@/lib/site";
 
 const t = createLandingT(DEFAULT_LANGUAGE);
+const helpLink =
+  "border-b border-tile-line pb-0.5 font-semibold transition-colors hover:border-foreground";
 ---
 
-<Layout locale={DEFAULT_LANGUAGE}>
-  <div class="flex min-h-screen items-center justify-center bg-background px-[var(--page-pad)]">
-    <div class="max-w-md text-center">
-      <p class="ed-label">404</p>
-      <h1 class="hero-display mt-3">
-        {t("notFound.headline1")}{" "}{t("notFound.headline2")}
-      </h1>
-      <p class="ed-lede mt-4 text-muted-foreground">{t("notFound.description")}</p>
-      <Button href="/" variant="flat-yellow" size="lg" class="mt-8">
-        <Icon name="arrow-left" class="h-4 w-4" />
-        {t("notFound.returnHome")}
-      </Button>
-    </div>
+<Layout locale={DEFAULT_LANGUAGE} title={t("seo.notFoundTitle")} noindex>
+  <div class="flex min-h-screen flex-col overflow-x-clip bg-background">
+    <NavBar t={t} locale={DEFAULT_LANGUAGE} home={localeHref(DEFAULT_LANGUAGE)} />
+    <main
+      class="flex flex-1 items-center justify-center px-[var(--page-pad)] py-[clamp(3rem,10vh,8rem)]"
+    >
+      <div class="modal-rise flex w-full max-w-2xl flex-col items-center text-center">
+        {/* The mark stands in for the zero: the vault is still here, only the page is not. */}
+        <p
+          aria-hidden="true"
+          class="flex items-center gap-[0.06em] font-display text-[clamp(7rem,17vw,12rem)] font-semibold leading-none tracking-[-0.06em]"
+        >
+          <span>4</span>
+          <span
+            class="lost-beat flex h-[0.74em] w-[0.74em] items-center justify-center rounded-[0.16em] bg-accent-yellow"
+          >
+            <VaultMark class="h-[60%] w-[60%]" />
+          </span>
+          <span>4</span>
+        </p>
+
+        <p class="ed-label mt-8">{t("notFound.cap")}</p>
+        <h1 class="ed-h2 mt-3">{t("notFound.headline")}</h1>
+        <p class="ed-lede mt-4 max-w-md text-muted-foreground">{t("notFound.description")}</p>
+
+        {/* The page is static, so the path it was served for is filled in on arrival. */}
+        <p
+          data-missing-path
+          hidden
+          class="mt-5 max-w-full truncate rounded-lg border border-tile-line bg-tile-soft px-3 py-1.5 font-mono text-[13px] text-muted-foreground"
+        >
+          <span class="sr-only">{t("notFound.requested")} </span>
+          <span class="line-through decoration-accent-red/70"></span>
+        </p>
+
+        {/* Lime is the "alive and well" colour; the one thing a lost visitor should not worry about. */}
+        <p
+          class="mt-6 inline-flex items-center gap-2.5 rounded-2xl bg-accent-lime/25 px-4 py-2 text-left text-sm font-semibold sm:rounded-full"
+        >
+          <Icon name="shield-check" aria-hidden="true" class="h-4 w-4 shrink-0" />
+          {t("notFound.safe")}
+        </p>
+
+        <div class="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
+          <Button href="/" variant="flat-yellow" size="lg" class="px-8">
+            <Icon name="arrow-left" aria-hidden="true" />
+            {t("notFound.home")}
+          </Button>
+          <Button
+            href={appUrl(DEFAULT_LANGUAGE)}
+            variant="flat-outline"
+            size="lg"
+            class="px-8"
+            data-track="launch_app_404"
+          >
+            {t("notFound.openApp")}
+            <Icon name="arrow-up-right" aria-hidden="true" />
+          </Button>
+        </div>
+
+        <nav
+          aria-label={t("notFound.helpLabel")}
+          class="mt-12 flex w-full max-w-lg flex-col items-center gap-3 border-t border-tile-line pt-6 text-[15px] sm:flex-row sm:justify-center sm:gap-6"
+        >
+          <span class="ed-label">{t("notFound.orTry")}</span>
+          <a href={DOCS_PATH} data-track="docs_404" class={helpLink}>{t("notFound.docs")}</a>
+          <a href={BLOG_PATH} class={helpLink}>{t("notFound.blog")}</a>
+          <a
+            href={appPath("/inherit", DEFAULT_LANGUAGE)}
+            data-track="launch_app_404_claim"
+            class={helpLink}
+          >
+            {t("notFound.inherit")}
+          </a>
+        </nav>
+      </div>
+    </main>
   </div>
 </Layout>
+
+<script>
+  const chip = document.querySelector<HTMLElement>("[data-missing-path]");
+  const slot = chip?.lastElementChild;
+  if (chip && slot) {
+    // A malformed escape in the URL is exactly the kind of thing that lands here.
+    let path = location.pathname;
+    try {
+      path = decodeURI(path);
+    } catch {}
+    slot.textContent = path;
+    chip.hidden = false;
+  }
+</script>
