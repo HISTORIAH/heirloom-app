@@ -349,6 +349,26 @@
     10%, 60% { opacity: 1; }
     100% { opacity: 0; transform: rotate(var(--angle)) translateY(-82px) scaleY(0.4); }
   }
+
+  /* The 404's zero: the mark's beat traces in once, then the tile keeps a
+     slow double pulse, so the vault reads as alive while the page is gone. */
+  .lost-beat {
+    animation: lostBeat 2.6s ease-in-out 1.2s infinite;
+  }
+  .lost-beat path {
+    stroke-dasharray: 100;
+    animation: lostTrace 0.9s cubic-bezier(0.33, 1, 0.68, 1) 0.3s both;
+  }
+  @keyframes lostBeat {
+    0%, 36%, 100% { transform: scale(1); }
+    8% { transform: scale(1.07); }
+    16% { transform: scale(0.98); }
+    24% { transform: scale(1.04); }
+  }
+  @keyframes lostTrace {
+    from { stroke-dashoffset: 100; }
+    to { stroke-dashoffset: 0; }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -356,8 +376,13 @@
   .seal-pop,
   .seal-check,
   .seal-rise,
-  .skeleton {
+  .skeleton,
+  .lost-beat,
+  .lost-beat path {
     animation: none !important;
+  }
+  .lost-beat path {
+    stroke-dashoffset: 0;
   }
   .seal-check {
     stroke-dashoffset: 0;
