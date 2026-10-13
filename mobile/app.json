@@ -2,7 +2,7 @@
   "expo": {
     "name": "Heirloom",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "heirloom",
@@ -54,7 +54,8 @@
       ],
       "./plugins/with-splash-icon-background",
       "./plugins/with-tangem-sdk",
-      "./plugins/with-gradle-memory"
+      "./plugins/with-gradle-memory",
+      "./plugins/with-release-signing"
     ],
     "experiments": {
       "typedRoutes": true
