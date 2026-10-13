@@ -36,6 +36,7 @@ import {
   cancelScan,
   cardProblemMessage,
   digitsToPinBytes,
+  cardNeedsClaimGas,
   estateSpan,
   isUserCancel,
   lamportsToSolText,
@@ -72,6 +73,19 @@ function holdingAmount(h: CardHolding): string {
   return rawToUiText(h.amount, h.decimals);
 }
 
+function sendAllowed(holdFees: boolean, h: CardHolding, rent: bigint): boolean {
+  if (holdFees) return false;
+  if (h.symbol === "SOL") return spareLamports(h.amount, rent) > 0n;
+  return h.amount > 0n;
+}
+
+function cardWalletLede(holdFees: boolean): string {
+  if (holdFees) {
+    return "A little SOL stays on this card so a later claim can pay its fee. Copy the address to receive.";
+  }
+  return "Hold the credential to open this. Copy the address to receive. Send asks for the PIN, then a hold.";
+}
+
 /** Credential wallet: balances on the chip, copy to receive, PIN-gated send. */
 export default function CardScreen() {
   const router = useRouter();
@@ -96,6 +110,11 @@ export default function CardScreen() {
   const claimable =
     estate.row !== null &&
     estateSpan(estate.row.data, estate.row.claimableLamports).state === "claimable";
+  const holdFees =
+    estate.loading ||
+    estate.error !== undefined ||
+    (estate.row !== null &&
+      cardNeedsClaimGas([estateSpan(estate.row.data, estate.row.claimableLamports).state]));
   const rent = useRentExemptMin();
   const { holdings, loading, refetch } = useCardHoldings(heir);
   /** The card asks for its own code (Tangem), so our PIN pad and hold sheet stay away. */
@@ -124,7 +143,7 @@ export default function CardScreen() {
   }
 
   async function runSend(pick: SendPick, pin?: Uint8Array) {
-    if (busy || pick.destination === undefined || heir === undefined) return;
+    if (holdFees || busy || pick.destination === undefined || heir === undefined) return;
     setBusy(true);
     setPinOpen(false);
     setHoldHint(!ownCode);
@@ -209,19 +228,15 @@ export default function CardScreen() {
     setTimeout(() => setCopied(false), 1800);
   }
 
-  function canSend(h: CardHolding): boolean {
-    if (h.symbol === "SOL") return spareLamports(h.amount, rent) > 0n;
-    return h.amount > 0n;
-  }
-
   function startSend(h: CardHolding) {
+    if (!sendAllowed(holdFees, h, rent)) return;
     pending.current = { holding: h, amount: 0n };
     setAmountError(undefined);
     setAmountFor(h);
   }
 
   const visible = holdings.filter((h) => h.symbol === "SOL" || h.amount > 0n);
-  const sendable = visible.filter(canSend);
+  const sendable = visible.filter((h) => sendAllowed(holdFees, h, rent));
 
   function onSendPress() {
     const pick = sendable.find((h) => h.symbol === "SOL") ?? sendable[0];
@@ -269,10 +284,7 @@ export default function CardScreen() {
           </View>
         )}
         <Display size={36}>This card is the wallet.</Display>
-        <Fine>
-          Hold the credential to open this. Copy the address to receive. Send asks for the PIN, then
-          a hold.
-        </Fine>
+        <Fine>{cardWalletLede(holdFees)}</Fine>
         {loading ? <ChainLoading compact body="Reading balances…" /> : null}
         {heir !== undefined ? (
           <Card
@@ -288,7 +300,7 @@ export default function CardScreen() {
             />
             {visible.map((h) => {
               const row = <FactRow strong label={holdingLabel(h)} value={holdingAmount(h)} />;
-              if (!canSend(h)) return <View key={h.id}>{row}</View>;
+              if (!sendAllowed(holdFees, h, rent)) return <View key={h.id}>{row}</View>;
               return (
                 <Pressable
                   key={h.id}
