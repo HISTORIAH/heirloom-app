@@ -21,6 +21,10 @@ export function stateSlab(state: EstateUiState): string {
   return colors.yellow;
 }
 
+export function cardNeedsClaimGas(states: EstateUiState[]): boolean {
+  return states.some((state) => state !== "distributed");
+}
+
 export function estateSpan(data: Estate, claimableLamports: bigint): EstateSpan {
   const interval = Number(data.checkInIntervalSecs);
   const grace = Number(data.gracePeriodSecs);

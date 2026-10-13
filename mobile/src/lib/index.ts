@@ -60,7 +60,7 @@ export {
 export { parseCreateDeposits, formatCreateAssetsLine } from "./estate/createDeposits";
 
 // Estate span
-export { stateSlab, estateSpan } from "./estate/span";
+export { stateSlab, estateSpan, cardNeedsClaimGas } from "./estate/span";
 
 // Estate countdown
 export {
