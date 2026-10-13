@@ -32,6 +32,8 @@
     "build:waitlist": "turbo run build --filter=waitlist",
     "dev:mobile": "turbo run start --filter=mobile",
     "android": "turbo run android --filter=mobile",
+    "release:mobile:devnet": "turbo run release:devnet --filter=mobile",
+    "release:mobile:mainnet": "turbo run release:mainnet --filter=mobile",
     "build:web": "turbo run build --filter=landing --filter=docs --filter=blog && rm -rf landing/dist/docs landing/dist/blog && cp -r docs/dist landing/dist/docs && cp -r blog/dist landing/dist/blog",
     "deploy:web": "bun run build:web && bunx wrangler deploy --config landing/wrangler.jsonc",
     "deploy:stocks": "bun run build:stocks && bunx wrangler deploy --config stocks/wrangler.jsonc",
