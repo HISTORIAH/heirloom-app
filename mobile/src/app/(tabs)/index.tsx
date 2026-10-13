@@ -1,6 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { ConfirmSheet } from "@/components/ConfirmSheet";
@@ -23,9 +23,16 @@ import {
   PrimaryButton,
   Steps,
 } from "@/components/ui";
-import { takeFlash } from "@/lib/flash";
 import { colors, font, space } from "@/theme";
-import { useConfirmSheet, useEstates, useHeirTx, useOwnerTx, useRoles, useSlowLoad } from "@/hooks";
+import {
+  useConfirmSheet,
+  useEstates,
+  useHeirTx,
+  useOwnerTx,
+  useRoles,
+  useSlowLoad,
+  useToast,
+} from "@/hooks";
 import { bySoonest, estateSpan, presentGuardian } from "@/lib";
 import { EstateRow } from "@/types/program";
 import { CONNECT_ACTION } from "@/constants/ui";
@@ -110,21 +117,9 @@ export default function HomeScreen() {
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
-  const [toast, setToast] = useState<string | undefined>(undefined);
+  const { toast, showToast: setToast } = useToast({ flash: true });
   const { ask, notice, fail, cancel, confirm, extra } = useConfirmSheet();
 
-  useEffect(() => {
-    if (toast === undefined) return;
-    const id = setTimeout(() => setToast(undefined), 2600);
-    return () => clearTimeout(id);
-  }, [toast]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const text = takeFlash();
-      if (text !== undefined) setToast(text);
-    }, []),
-  );
 
   async function onConnect() {
     if (busy) return;

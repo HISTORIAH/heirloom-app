@@ -7,7 +7,7 @@ import {
 } from "@solana/kit";
 import { describe, expect, test } from "bun:test";
 
-import { packInstructionsForCard, sendCardBatches } from "@/lib/tx/cardSend";
+import { packInstructionsForCard, sendCardBatches } from "@/lib/card/send";
 import type { EstateRpc } from "@/types/program";
 
 const ix = { programAddress: "11111111111111111111111111111111" } as Instruction;

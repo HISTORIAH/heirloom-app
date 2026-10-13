@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
+import type { Address } from "@solana/kit";
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 
 import { SOL_ASSET_ID } from "@/constants/create";
@@ -6,8 +7,26 @@ import { SOL_DECIMALS, SOL_LOGO_URL } from "@/constants/solana";
 import { fetchVaultHoldings } from "@/lib/estate/holdings";
 import { compareAssets } from "@/lib/estate/topUp";
 import type { EstateHolding } from "@/types/estate";
-import type { EstateRow } from "@/types/program";
+import type { EstateRow, VaultToken } from "@/types/program";
 import { failureLine } from "@/lib/failure";
+
+type VaultHoldings = Awaited<ReturnType<typeof fetchVaultHoldings>>;
+
+export function estateHoldingsKey(estate: string | undefined) {
+  return ["estate-holdings", estate] as const;
+}
+
+function vaultTokensOf(data: VaultHoldings | undefined): VaultToken[] | undefined {
+  return data?.tokens.flatMap((h) => (h.vaultToken === undefined ? [] : [h.vaultToken]));
+}
+
+/**
+ * The vault tokens the holdings query last loaded for `estate`, or undefined if it hasn't.
+ * Close, reassign and claim read this when they run, so a retry after a refetch sees fresh tokens.
+ */
+export function loadedVaultTokens(queryClient: QueryClient, estate: Address): VaultToken[] | undefined {
+  return vaultTokensOf(queryClient.getQueryData<VaultHoldings>(estateHoldingsKey(estate)));
+}
 
 /**
  * What an estate holds: SOL from the row, tokens and prices fetched. `totalUsd` sums priced rows.
@@ -16,7 +35,7 @@ import { failureLine } from "@/lib/failure";
 export function useEstateHoldings(row: EstateRow | undefined) {
   const { client } = useMobileWallet();
   const query = useQuery({
-    queryKey: ["estate-holdings", String(row?.address)],
+    queryKey: estateHoldingsKey(row?.address),
     queryFn: ({ signal }) => {
       if (row === undefined) throw new Error("No estate");
       return fetchVaultHoldings(client.rpc, row, signal);
@@ -25,7 +44,13 @@ export function useEstateHoldings(row: EstateRow | undefined) {
   });
 
   if (row === undefined) {
-    return { holdings: [], totalUsd: null, loading: true, error: undefined, refetch: query.refetch };
+    return {
+      holdings: [],
+      totalUsd: null,
+      loading: true,
+      error: undefined,
+      refetch: query.refetch,
+    };
   }
 
   const solUsd = query.data?.solUsd ?? null;

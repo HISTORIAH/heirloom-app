@@ -1,7 +1,7 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import type { Address } from "@solana/kit";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,23 +24,24 @@ import {
   TextLink,
 } from "@/components/ui";
 import { colors, font, space } from "@/theme";
-import type { CardClaimPlan } from "@/types/claim";
+import type { CardClaimPlan, Leftover } from "@/types/claim";
 import type { EstateHolding } from "@/types/estate";
-import type { EstateRow, EstateRpc } from "@/types/program";
-import { useConfirmSheet, useEstateHoldings, useHeirTx } from "@/hooks";
+import type { EstateRow } from "@/types/program";
 import {
-  bySoonest,
+  useCardLeftover,
+  useConfirmSheet,
+  useEstateHoldings,
+  useHeirEstate,
+  useHeirTx,
+} from "@/hooks";
+import {
   cancelScan,
-  cardHasSweepable,
   cardProblemMessage,
   digitsToPinBytes,
   estateSpan,
-  fetchEstateByAddress,
-  fetchEstatesByHeir,
   isUserCancel,
   lamportsToSolText,
   NFC_UI_SETTLE_MS,
-  parseAddress,
   rawToUiText,
   setFlash,
   shortAddress,
@@ -50,38 +51,8 @@ import { HeirTimeline } from "@/components/claim/HeirTimeline";
 import { claimDate, heirBadge, heirSteps } from "@/lib/estate/heir";
 import { nowSecs } from "@/lib/estate/state";
 import { adapterFor } from "@/lib/nfc/credentials";
-import { resolveCardClaimPlan } from "@/lib/tx/cardClaim";
-
-type Load =
-  | { kind: "loading" }
-  | { kind: "none" }
-  | { kind: "error"; message: string }
-  | { kind: "found"; row: EstateRow };
-
-type Leftover = "idle" | "checking" | "none" | "some";
-
-function useLeftoverOnCard(rpc: EstateRpc, heir: Address | undefined, active: boolean): Leftover {
-  const [leftover, setLeftover] = useState<Leftover>("idle");
-  useEffect(() => {
-    if (!active || heir === undefined) {
-      setLeftover("idle");
-      return;
-    }
-    let cancelled = false;
-    setLeftover("checking");
-    void cardHasSweepable(rpc, heir)
-      .then((some) => {
-        if (!cancelled) setLeftover(some ? "some" : "none");
-      })
-      .catch(() => {
-        if (!cancelled) setLeftover("none");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [rpc, heir, active]);
-  return leftover;
-}
+import { safeAddress } from "@/lib/solana/address";
+import { resolveCardClaimPlan } from "@/lib/card/claim";
 
 function claimHeadline(finishing: boolean, viaCredential: boolean, claimable: boolean): string {
   if (finishing) return "This card still holds assets.";
@@ -95,7 +66,8 @@ function claimFine(finishing: boolean, viaCredential: boolean, keep: boolean): s
     return "Hold the card to send what’s left. A little SOL stays on it so a retry can pay its fee.";
   }
   if (keep) return "The estate pays this card. After this, the assets stay on it.";
-  if (viaCredential) return "Fees are already covered by the card. You’ll tap it once more to sign.";
+  if (viaCredential)
+    return "Fees are already covered by the card. You’ll tap it once more to sign.";
   return "0.75% is taken from the estate when you claim.";
 }
 
@@ -103,15 +75,6 @@ function cardSendLabel(busy: boolean, leftover: Leftover): string {
   if (busy) return "Hold still…";
   if (leftover === "some") return "Hold to finish sending";
   return "Claim to this wallet";
-}
-
-function credentialHeir(raw: string | undefined): Address | undefined {
-  if (raw === undefined) return undefined;
-  try {
-    return parseAddress(raw, "credential");
-  } catch {
-    return undefined;
-  }
 }
 
 function alreadyClaimedFine(pinKnown: boolean, leftover: Leftover): string {
@@ -147,7 +110,11 @@ function holdingAmount(h: EstateHolding): string {
 function ClaimAssetCard({ from, holdings }: { from: string; holdings: EstateHolding[] }) {
   const rows = holdings.filter((h) => h.symbol === "SOL" || h.amount > 0n);
   return (
-    <Card radius={space.radiusHero} padding={0} style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+    <Card
+      radius={space.radiusHero}
+      padding={0}
+      style={{ paddingHorizontal: 16, paddingVertical: 4 }}
+    >
       <FactRow
         first
         label="From"
@@ -160,7 +127,6 @@ function ClaimAssetCard({ from, holdings }: { from: string; holdings: EstateHold
     </Card>
   );
 }
-
 
 function waitUi(): Promise<void> {
   return new Promise((resolve) => {
@@ -176,9 +142,8 @@ export default function ClaimScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ heir?: string; estate?: string; keep?: string }>();
-  const { account, client, connect } = useMobileWallet();
+  const { account, connect } = useMobileWallet();
   const { claimAll, claimWithCard } = useHeirTx();
-  const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [destOpen, setDestOpen] = useState(false);
   const [destError, setDestError] = useState<string | undefined>(undefined);
@@ -196,33 +161,10 @@ export default function ClaimScreen() {
   /** The card asks for its own code (Tangem), so our PIN pad and hold sheet stay away. */
   const ownCode = params.heir !== undefined && adapterFor(params.heir).asksForOwnCode;
 
-  const fetchRow = useCallback(async () => {
-    setLoad({ kind: "loading" });
-    try {
-      let row: EstateRow | undefined;
-      if (params.estate !== undefined) {
-        row = await fetchEstateByAddress(client.rpc, parseAddress(params.estate, "estate"));
-      } else if (params.heir !== undefined) {
-        const rows = await fetchEstatesByHeir(client.rpc, parseAddress(params.heir, "credential"));
-        row = bySoonest(rows)[0];
-      }
-      setLoad(row === undefined ? { kind: "none" } : { kind: "found", row });
-    } catch (cause) {
-      setLoad({
-        kind: "error",
-        message: cause instanceof Error ? cause.message : "Could not load",
-      });
-    }
-  }, [client, params.estate, params.heir]);
-
-  useEffect(() => {
-    void fetchRow();
-  }, [fetchRow]);
-
-  const found = load.kind === "found" ? load.row : undefined;
-  const { holdings } = useEstateHoldings(found);
-  const leftover = useLeftoverOnCard(
-    client.rpc,
+  const heirEstate = useHeirEstate({ estate: params.estate, heir: params.heir });
+  const found = heirEstate.row ?? undefined;
+  const { holdings, refetch: refetchHoldings } = useEstateHoldings(found);
+  const leftover = useCardLeftover(
     viaCredential ? found?.data.heir : undefined,
     viaCredential &&
       !pinKnown &&
@@ -239,8 +181,19 @@ export default function ClaimScreen() {
     router.replace(`/card?heir=${heir}`);
   }
 
-  function onWalletClaim(row: EstateRow) {
+  /** Retries are closures from an earlier render; build from the row as the query holds it now. */
+  function freshRow(row: EstateRow): EstateRow {
+    return heirEstate.latest() ?? row;
+  }
+
+  function reloadAfterFailure() {
+    void heirEstate.refetch();
+    void refetchHoldings();
+  }
+
+  function onWalletClaim(given: EstateRow) {
     if (busy) return;
+    const row = freshRow(given);
     setBusy(true);
     void (async () => {
       try {
@@ -249,14 +202,16 @@ export default function ClaimScreen() {
         close();
       } catch (cause) {
         fail("Claim", cause, () => onWalletClaim(row));
+        reloadAfterFailure();
       } finally {
         setBusy(false);
       }
     })();
   }
 
-  async function runPlan(row: EstateRow, plan: CardClaimPlan, pin?: Uint8Array, cashOut = false) {
+  async function runPlan(given: EstateRow, plan: CardClaimPlan, pin?: Uint8Array, cashOut = false) {
     if (busy) return;
+    const row = freshRow(given);
     pending.current = { row, plan, cashOut };
     setBusy(true);
     setPinOpen(false);
@@ -285,7 +240,8 @@ export default function ClaimScreen() {
         return;
       }
       fail("Claim", cause, () => void runPlan(row, plan, pin, cashOut));
-      void fetchRow();
+      // A card claim sends in batches, so some may have landed: reload what's left before a retry.
+      reloadAfterFailure();
     } finally {
       setHoldHint(false);
       setBusy(false);
@@ -312,7 +268,9 @@ export default function ClaimScreen() {
     }
     pending.current = { row, plan: next, cashOut };
     setPinDigits("");
-    setPinError(cause.kind === "pin_wrong" ? cardProblemMessage(cause, "Enter the PIN.") : undefined);
+    setPinError(
+      cause.kind === "pin_wrong" ? cardProblemMessage(cause, "Enter the PIN.") : undefined,
+    );
     setPinOpen(true);
   }
 
@@ -373,19 +331,19 @@ export default function ClaimScreen() {
 
   let body;
   let footer: ReactNode | undefined;
-  if (load.kind === "loading") {
+  if (heirEstate.loading) {
     body = <ChainLoading compact body="Checking what it can claim…" />;
-  } else if (load.kind === "error") {
+  } else if (found === undefined && heirEstate.error !== undefined) {
     body = (
       <View style={{ gap: 8 }}>
         <Text style={{ fontFamily: font.semibold, fontSize: 16, color: colors.ink }}>
           Couldn’t load this estate.
         </Text>
-        <TextLink align="left" label="Try again" onPress={() => void fetchRow()} />
+        <TextLink align="left" label="Try again" onPress={() => void heirEstate.refetch()} />
       </View>
     );
-  } else if (load.kind === "none") {
-    const heir = credentialHeir(params.heir);
+  } else if (found === undefined) {
+    const heir = safeAddress(params.heir);
     body = (
       <View style={{ gap: 14 }}>
         <View style={{ alignSelf: "flex-start" }}>
@@ -401,7 +359,7 @@ export default function ClaimScreen() {
       footer = <PrimaryButton label="Open this card" onPress={() => openCard(heir)} />;
     }
   } else {
-    const row = load.row;
+    const row = found;
     const span = estateSpan(row.data, row.claimableLamports);
     const claimable = span.state === "claimable";
     const walletIsHeir = account?.address === row.data.heir;
@@ -417,12 +375,12 @@ export default function ClaimScreen() {
         body = <ChainLoading compact body="Checking what’s still on the card…" />;
       } else {
         body = (
-          <AlreadyClaimed fine={viaCredential ? alreadyClaimedFine(pinKnown, leftover) : undefined} />
+          <AlreadyClaimed
+            fine={viaCredential ? alreadyClaimedFine(pinKnown, leftover) : undefined}
+          />
         );
         if (viaCredential) {
-          footer = (
-            <PrimaryButton label="Open this card" onPress={() => openCard(row.data.heir)} />
-          );
+          footer = <PrimaryButton label="Open this card" onPress={() => openCard(row.data.heir)} />;
         }
       }
     } else if (hidden) {
@@ -435,9 +393,7 @@ export default function ClaimScreen() {
           <Fine>Keep it somewhere safe. If the time comes, tap it again.</Fine>
         </View>
       );
-      footer = (
-        <PrimaryButton label="Open this card" onPress={() => openCard(row.data.heir)} />
-      );
+      footer = <PrimaryButton label="Open this card" onPress={() => openCard(row.data.heir)} />;
     } else {
       const waitingToOpen = !claimable && !finishing;
       body = (
@@ -446,7 +402,9 @@ export default function ClaimScreen() {
             <Pill
               dot
               label={
-                finishing ? "Claimed — finish sending" : heirBadge(claimable, span.claimableAtSecs, nowSecs())
+                finishing
+                  ? "Claimed — finish sending"
+                  : heirBadge(claimable, span.claimableAtSecs, nowSecs())
               }
               fill={claimable || finishing ? colors.yellow : colors.paper}
             />

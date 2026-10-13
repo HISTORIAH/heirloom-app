@@ -37,6 +37,16 @@ export function isAddress(raw: string): boolean {
   }
 }
 
+/** An address from untrusted RPC data, or undefined when it isn't one. */
+export function safeAddress(value: unknown): Address | undefined {
+  if (typeof value !== "string" || value.length === 0) return undefined;
+  try {
+    return address(value);
+  } catch {
+    return undefined;
+  }
+}
+
 /** Pull an address out of pasted or scanned text, `solana:` URIs included. */
 export function addressFromText(text: string): string {
   const trimmed = text.trim();

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { ConfirmSheet } from "@/components/ConfirmSheet";
@@ -10,7 +10,14 @@ import { ReminderTimeline } from "@/components/reminders/ReminderTimeline";
 import { TopBar } from "@/components/TopBar";
 import { Badge, Cap, Lede, PrimaryButton } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
-import { useConfirmSheet, useEstates, useOwnerTx, useRemindersFor, useSession } from "@/hooks";
+import {
+  useConfirmSheet,
+  useEstates,
+  useOwnerTx,
+  useRemindersFor,
+  useSession,
+  useToast,
+} from "@/hooks";
 import { estateName, estateSpan } from "@/lib";
 import { needsAttention } from "@/lib/attention";
 import { channelLine, remindersOn } from "@/lib/reminders";
@@ -133,7 +140,7 @@ export default function AlertsScreen() {
   const { checkIn } = useOwnerTx();
   const { ask, fail, cancel, confirm, extra } = useConfirmSheet();
   const [working, setWorking] = useState<string | undefined>(undefined);
-  const [toast, setToast] = useState<string | undefined>(undefined);
+  const { toast, showToast: setToast } = useToast();
 
   const live = rows.filter(
     (row) => estateSpan(row.data, row.claimableLamports).state !== "distributed",
@@ -142,11 +149,6 @@ export default function AlertsScreen() {
   const locked = reminders.some((r) => r.status === "locked");
   const attention = needsAttention(live, reminders);
 
-  useEffect(() => {
-    if (toast === undefined) return;
-    const id = setTimeout(() => setToast(undefined), 2600);
-    return () => clearTimeout(id);
-  }, [toast]);
 
   const openReminders = (estateAddress: string) =>
     router.push(`/reminders?estate=${estateAddress}`);

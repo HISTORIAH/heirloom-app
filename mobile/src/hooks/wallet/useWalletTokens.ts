@@ -1,8 +1,10 @@
-import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { address, type Address } from "@solana/kit";
 
-import { HELIUS_DAS_URL } from "@/config";
+import { DAS_RPC_URL } from "@/config";
+import { isTokenProgram } from "@/lib/solana/mint";
 import { toBigInt } from "@/lib/solana/parsed";
+import { errorMessage } from "@/lib/text";
 import {
   fetchAssetsByOwner,
   pickImage,
@@ -11,39 +13,34 @@ import {
 } from "@/services/api/das";
 import type { WalletToken } from "@/types/wallet";
 
-/** Fungible tokens held by `owner`, with metadata from the DAS API. */
+/** Stable empty list, so memos keyed on `tokens` don't rerun every render while loading. */
+const NO_TOKENS: WalletToken[] = [];
+
+/** Query key for a wallet's DAS token list. Sends invalidate it, since every send moves a balance. */
+export function walletTokensKey(owner: string | undefined) {
+  return ["wallet-tokens", owner] as const;
+}
+
+/**
+ * Fungible tokens held by `owner`, with metadata from the DAS API. One fetch shared by every
+ * screen that asks (create, top-up), so a picked token already carries its decimals and program.
+ */
 export function useWalletTokens(owner: string | undefined) {
-  const [tokens, setTokens] = useState<WalletToken[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const query = useQuery({
+    queryKey: walletTokensKey(owner),
+    queryFn: async ({ signal }) => {
+      if (owner === undefined) throw new Error("No wallet");
+      const assets = await fetchAssetsByOwner(DAS_RPC_URL, owner, signal);
+      return assets.filter(isFungible).map(toWalletToken);
+    },
+    enabled: owner !== undefined,
+  });
 
-  useEffect(() => {
-    if (!owner) {
-      setTokens([]);
-      return;
-    }
-
-    const ctrl = new AbortController();
-    setLoading(true);
-    setError(undefined);
-
-    fetchAssetsByOwner(HELIUS_DAS_URL, owner, ctrl.signal)
-      .then((assets) => {
-        if (ctrl.signal.aborted) return;
-        setTokens(assets.filter(isFungible).map(toWalletToken));
-      })
-      .catch((cause) => {
-        if (ctrl.signal.aborted) return;
-        setError(cause instanceof Error ? cause.message : "Could not load tokens.");
-      })
-      .finally(() => {
-        if (!ctrl.signal.aborted) setLoading(false);
-      });
-
-    return () => ctrl.abort();
-  }, [owner]);
-
-  return { tokens, loading, error };
+  return {
+    tokens: query.data ?? NO_TOKENS,
+    loading: query.isLoading,
+    error: query.isError ? errorMessage(query.error, "Could not load tokens.") : undefined,
+  };
 }
 
 /** DAS returns NFTs too when showFungible is on; decimals 0 means non-fungible. */
@@ -63,12 +60,17 @@ function toWalletToken(asset: DasFungibleAsset): WalletToken {
     balance: formatBalance(rawBalance, decimals),
     raw: toBigInt(info?.balance) ?? 0n,
     decimals,
-    tokenProgram: info?.token_program ?? TOKEN_PROGRAM_ADDRESS,
+    tokenProgram: knownTokenProgram(info?.token_program),
     image: pickImage(asset.content),
     named,
     usd: info?.price_info?.total_price ?? null,
     usdPerToken: info?.price_info?.price_per_token ?? null,
   };
+}
+
+/** Only trust DAS's program when it is Token or Token-2022; otherwise leave it for the chain. */
+function knownTokenProgram(value: string | undefined): Address | undefined {
+  return value !== undefined && isTokenProgram(value) ? address(value) : undefined;
 }
 
 function formatBalance(raw: number, decimals: number): string {

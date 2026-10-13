@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import Animated, { FadeInDown, LinearTransition, SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,7 +25,6 @@ import {
   PrimaryButton,
 } from "@/components/ui";
 import { BACKEND_URL } from "@/config";
-import { TOAST_MS } from "@/constants/ui";
 import {
   useEstates,
   useReminders,
@@ -33,6 +32,7 @@ import {
   useSaveReminders,
   useSession,
   useVerifyEmail,
+  useToast,
 } from "@/hooks";
 import { estateName, shortAddress } from "@/lib";
 import {
@@ -272,13 +272,7 @@ export default function RemindersScreen() {
   });
   const [profileDraft, setProfileDraft] = useState<HeirProfile | undefined>(undefined);
   const [reviewing, setReviewing] = useState(false);
-  const [toast, setToast] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (toast === undefined) return;
-    const id = setTimeout(() => setToast(undefined), TOAST_MS);
-    return () => clearTimeout(id);
-  }, [toast]);
+  const { toast, showToast: setToast } = useToast();
 
   const row = rows.find((item) => String(item.address) === estate);
   const hasOthers = rows.some((item) => String(item.address) !== estate);

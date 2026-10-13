@@ -67,5 +67,8 @@ export const walletIdentity: AppIdentity = {
 
 export const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-/** Helius DAS API URL for token metadata and wallet asset discovery. Falls back to the RPC endpoint. */
-export const HELIUS_DAS_URL = process.env.EXPO_PUBLIC_HELIUS_DAS_URL ?? SOLANA_RPC_ENDPOINT;
+/**
+ * Any RPC that serves the DAS API (Metaplex Digital Asset Standard: Helius, Triton, QuickNode, ...),
+ * for token metadata and wallet asset discovery. Falls back to the RPC endpoint.
+ */
+export const DAS_RPC_URL = process.env.EXPO_PUBLIC_DAS_RPC_URL ?? SOLANA_RPC_ENDPOINT;

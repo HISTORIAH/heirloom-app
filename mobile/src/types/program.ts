@@ -17,7 +17,19 @@ export type EstateRow = {
 /** How a wallet relates to an estate; each maps to an account field we filter on. */
 export type EstateRole = "authority" | "heir" | "checkInSigner" | "delegate";
 
-export type CreateTokenDeposit = {
+/**
+ * A token amount the owner picked, with what the DAS wallet list said about its mint.
+ * `tokenProgram` is undefined when DAS left it out; then it is read from chain once.
+ */
+export type PickedDeposit = {
+  mint: Address;
+  amount: bigint;
+  decimals: number;
+  tokenProgram?: Address;
+};
+
+/** A token deposit with its mint's program and decimals read from chain, ready to build with. */
+export type TokenDeposit = MintMeta & {
   mint: Address;
   amount: bigint;
 };
@@ -29,7 +41,7 @@ export type CreateEstateInput = {
   checkInIntervalSecs: bigint;
   gracePeriodSecs: bigint;
   amountLamports: bigint;
-  tokens?: CreateTokenDeposit[];
+  tokens?: PickedDeposit[];
   delegate?: Address;
   checkInSigner?: Address;
   fundHeir?: boolean;
@@ -45,12 +57,6 @@ export type VaultToken = {
   /** Raw units held in the vault. */
   amount: bigint;
   decimals: number;
-};
-
-/** A vault token plus the accounts a claim pays into. */
-export type ClaimToken = VaultToken & {
-  heirTokenAccount: Address;
-  treasuryTokenAccount: Address;
 };
 
 export type MintMeta = { decimals: number; tokenProgram: Address };

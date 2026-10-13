@@ -1,7 +1,7 @@
 import { address, type TransactionSigner } from "@solana/kit";
 import { describe, expect, test } from "bun:test";
 
-import { resolveCardClaimPlan, runCardClaim } from "@/lib/tx/cardClaim";
+import { resolveCardClaimPlan, runCardClaim } from "@/lib/card/claim";
 import type { EstateRow, EstateRpc } from "@/types/program";
 
 const HEIR = address("11111111111111111111111111111111");
@@ -28,6 +28,7 @@ describe("runCardClaim", () => {
         rpc,
         signer: signerAt(HEIR),
         row: rowFor(HEIR),
+        vaultTokens: [],
         plan: { kind: "sweep", destination: HEIR },
         skipClaim: true,
         maxMessageBytes: 1024,
@@ -41,6 +42,7 @@ describe("runCardClaim", () => {
         rpc,
         signer: signerAt(OTHER),
         row: rowFor(HEIR),
+        vaultTokens: [],
         plan: { kind: "keep" },
         skipClaim: true,
         maxMessageBytes: 1024,
@@ -54,6 +56,7 @@ describe("runCardClaim", () => {
         rpc,
         signer: signerAt(HEIR),
         row: rowFor(HEIR),
+        vaultTokens: [],
         plan: { kind: "keep" },
         skipClaim: true,
         maxMessageBytes: 1024,

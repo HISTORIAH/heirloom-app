@@ -1,6 +1,6 @@
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,6 +26,7 @@ import {
   useOwnerTx,
   useReminders,
   useRenameEstate,
+  useToast,
 } from "@/hooks";
 import {
   estateName,
@@ -49,7 +50,7 @@ export default function EstateScreen() {
   const deleteEstateData = useDeleteEstateData();
   const [busy, setBusy] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
-  const [toast, setToast] = useState<string | undefined>(undefined);
+  const { toast, showToast: setToast } = useToast();
   /** Open deposit sheet; `startAt` jumps to one asset's amount step. */
   const [topUp, setTopUp] = useState<{ startAt?: string } | undefined>(undefined);
   const { ask, prompt, notice, fail, cancel, confirm, extra } = useConfirmSheet();
@@ -58,11 +59,6 @@ export default function EstateScreen() {
   const holdings = useEstateHoldings(row);
   const reminders = useReminders(String(address));
 
-  useEffect(() => {
-    if (toast === undefined) return;
-    const id = setTimeout(() => setToast(undefined), 2600);
-    return () => clearTimeout(id);
-  }, [toast]);
 
   function back() {
     if (router.canGoBack()) router.back();
@@ -145,11 +141,14 @@ export default function EstateScreen() {
     const done = `${rawToUiText(amount, asset.decimals)} ${asset.symbol} deposited`;
     if (mint === undefined) {
       void runOwner("Deposit", () => topUpSol(heir, amount), done);
-    } else if (asset.registered) {
-      void runOwner("Deposit", () => topUpToken(heir, mint, amount), done);
+      return;
+    }
+    const picked = { mint, amount, decimals: asset.decimals, tokenProgram: asset.tokenProgram };
+    if (asset.registered) {
+      void runOwner("Deposit", () => topUpToken(heir, picked), done);
     } else {
       // Not in the estate yet: register_asset opens the vault account and moves the first amount.
-      void runOwner("Deposit", () => addToken(current, mint, amount), done);
+      void runOwner("Deposit", () => addToken(current, picked), done);
     }
   }
 

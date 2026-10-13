@@ -100,6 +100,28 @@ async function transceiveApdu(apdu: Uint8Array, timeoutMs: number): Promise<Uint
   throw last;
 }
 
+/*
+ * TODO(nfc): replace the native requestTechnology workaround below with the public API.
+ *
+ * nfc-manager 4 (bumped in #174) changed `readerModeDelay` from seconds to milliseconds,
+ * so our old value of 2 became a 2ms presence check and cards dropped mid-session.
+ * NFC_PRESENCE_CHECK_MS = 2000 is the actual fix (#188).
+ *
+ * #188 also stopped calling `NfcManager.requestTechnology` and reached the native
+ * module through TurboModuleRegistry with 2 args; the v4 native method takes 3
+ * (techs, options, callback), so #189 catches the arity error and retries with 3.
+ * Neither should be needed: in v4 the public call is
+ *   NfcManager.requestTechnology(NfcTech.IsoDep, { alertMessage, ...ISODEP_READER })
+ * which passes all 3 args and registers the tag event itself. It also wraps native
+ * errors (UserCancel etc.); here cancel is only recognised because isUserCancel's
+ * regex happens to match the string "cancelled".
+ *
+ * Not reverted yet because it is untested on hardware: Tangem cards worked for us,
+ * but the JavaCard JCOP 4 (our applet) path is the one that failed. Revert
+ * requestIsoDep / isRequestTechArity / nfcRequestTechnology and the manual
+ * register/unregisterTagEvent, keep NFC_PRESENCE_CHECK_MS, then test scan, PIN unlock,
+ * claim + sweep (45s session) and cancel on a JCOP 4 card and a Tangem card.
+ */
 function isRequestTechArity(cause: unknown): boolean {
   const text = errorMessage(cause, "");
   return text.includes("requestTechnology") && text.includes("expected argument count");

@@ -10,24 +10,19 @@ import {
 import { findAssociatedTokenPda } from "@solana-program/token";
 import type { Address, Instruction, TransactionSigner } from "@solana/kit";
 
-import { assertEstateFree, assertMintUnregistered, assertNotPaused } from "@/lib/estate/guards";
-import { assertAllTokensListed, discoverVaultRegisteredTokens } from "@/lib/estate/tokens";
-import { assertWalletCanDeposit, fetchMintMeta } from "@/lib/solana/mint";
-import type { EstateRow, EstateRpc } from "@/types/program";
+import type { EstateRow, TokenDeposit, VaultToken } from "@/types/program";
 
-/** Close the estate: every token, then SOL, back to the owner. */
+/** Close the estate: every token in `tokens`, then SOL, back to the owner. */
 export async function buildRevokeAllIxs(
-  rpc: EstateRpc,
   authority: TransactionSigner,
   row: EstateRow,
+  tokens: VaultToken[],
 ): Promise<Instruction[]> {
   const heir = row.data.heir;
   const [vault] = await findVaultPda({
     authority: authority.address,
     heir,
   });
-  const tokens = await discoverVaultRegisteredTokens(rpc, vault, row.address);
-  assertAllTokensListed(tokens.length, row.data.claimableAssets);
   const tokenIxs = await Promise.all(
     tokens.map(async (tok) => {
       const [[authorityTokenAccount], [treasuryTokenAccount]] = await Promise.all([
@@ -59,18 +54,13 @@ export async function buildRevokeAllIxs(
   return [...tokenIxs, solIx];
 }
 
-/** Move the estate, tokens and all, to a new heir. */
+/** Move the estate, every token in `tokens` included, to a new heir. */
 export async function buildReassignIxs(
-  rpc: EstateRpc,
   authority: TransactionSigner,
   row: EstateRow,
   newHeir: Address,
+  tokens: VaultToken[],
 ): Promise<Instruction[]> {
-  if (newHeir === row.data.heir) {
-    throw new Error("That address is already the heir.");
-  }
-  assertNotPaused(row.data.delegatePauseExpiresAt);
-  await assertEstateFree(rpc, authority.address, newHeir);
   const heir = row.data.heir;
   const [[estate], [vault], [newEstate], [newVault]] = await Promise.all([
     findEstatePda({ authority: authority.address, heir }),
@@ -78,8 +68,6 @@ export async function buildReassignIxs(
     findEstatePda({ authority: authority.address, heir: newHeir }),
     findVaultPda({ authority: authority.address, heir: newHeir }),
   ]);
-  const tokens = await discoverVaultRegisteredTokens(rpc, vault, estate);
-  assertAllTokensListed(tokens.length, row.data.claimableAssets);
   const tokenIxs = await Promise.all(
     tokens.map(async (tok) => {
       const [[newVaultTokenAccount], newAssetRecord] = await Promise.all([
@@ -117,20 +105,15 @@ export async function buildReassignIxs(
 
 /** Add a new token mint to the estate. */
 export async function buildRegisterTokenIx(
-  rpc: EstateRpc,
   authority: TransactionSigner,
   heir: Address,
-  mint: Address,
-  amount: bigint,
+  token: TokenDeposit,
 ): Promise<Instruction> {
-  if (amount <= 0n) throw new Error("Enter an amount greater than zero");
-  const [{ tokenProgram }, [estate], [vault]] = await Promise.all([
-    fetchMintMeta(rpc, mint),
+  const { mint, amount, tokenProgram } = token;
+  const [[estate], [vault]] = await Promise.all([
     findEstatePda({ authority: authority.address, heir }),
     findVaultPda({ authority: authority.address, heir }),
   ]);
-  await assertMintUnregistered(rpc, estate, mint);
-  await assertWalletCanDeposit(rpc, authority.address, mint, tokenProgram, amount);
   const [[vaultTokenAccount], [authorityTokenAccount], [assetRecord]] = await Promise.all([
     findAssociatedTokenPda({ owner: vault, mint, tokenProgram }),
     findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram }),

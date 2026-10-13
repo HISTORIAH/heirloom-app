@@ -1,8 +1,7 @@
-import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import * as Clipboard from "expo-clipboard";
 import type { Address } from "@solana/kit";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,18 +25,21 @@ import {
 } from "@/components/ui";
 import { colors, font, space } from "@/theme";
 import type { CardHolding } from "@/types/claim";
-import { useCardHoldings, useConfirmSheet, useHeirTx } from "@/hooks";
 import {
-  bySoonest,
+  useCardHoldings,
+  useConfirmSheet,
+  useHeirEstate,
+  useHeirTx,
+  useRentExemptMin,
+} from "@/hooks";
+import {
   cancelScan,
   cardProblemMessage,
   digitsToPinBytes,
   estateSpan,
-  fetchEstatesByHeir,
   isUserCancel,
   lamportsToSolText,
   NFC_UI_SETTLE_MS,
-  parseAddress,
   rawToUiText,
   setFlash,
   shortAddress,
@@ -47,6 +49,7 @@ import {
 } from "@/lib";
 import { isPinEntryError } from "@/lib/nfc/apdu";
 import { adapterFor } from "@/lib/nfc/credentials";
+import { safeAddress } from "@/lib/solana/address";
 
 type SendPick = {
   holding: CardHolding;
@@ -74,12 +77,8 @@ export default function CardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ heir?: string }>();
-  const { client } = useMobileWallet();
   const { sendFromCardWallet } = useHeirTx();
   const { fail, ask, cancel, confirm, extra } = useConfirmSheet();
-  const [heir, setHeir] = useState<Address | undefined>(undefined);
-  const [claimable, setClaimable] = useState(false);
-  const [rent, setRent] = useState(0n);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   /** The holding the amount sheet is open for. */
@@ -92,41 +91,15 @@ export default function CardScreen() {
   const [pinError, setPinError] = useState<string | undefined>(undefined);
   const [holdHint, setHoldHint] = useState(false);
   const pending = useRef<SendPick | undefined>(undefined);
+  const heir = safeAddress(params.heir);
+  const estate = useHeirEstate({ heir });
+  const claimable =
+    estate.row !== null &&
+    estateSpan(estate.row.data, estate.row.claimableLamports).state === "claimable";
+  const rent = useRentExemptMin();
   const { holdings, loading, refetch } = useCardHoldings(heir);
   /** The card asks for its own code (Tangem), so our PIN pad and hold sheet stay away. */
   const ownCode = heir !== undefined && adapterFor(heir).asksForOwnCode;
-
-  useEffect(() => {
-    try {
-      if (params.heir !== undefined) setHeir(parseAddress(params.heir, "credential"));
-    } catch {
-      setHeir(undefined);
-    }
-  }, [params.heir]);
-
-  const loadRoles = useCallback(async () => {
-    if (heir === undefined) return;
-    try {
-      const rows = await fetchEstatesByHeir(client.rpc, heir);
-      const next = bySoonest(rows)[0];
-      setClaimable(
-        next !== undefined && estateSpan(next.data, next.claimableLamports).state === "claimable",
-      );
-    } catch {
-      setClaimable(false);
-    }
-  }, [client, heir]);
-
-  useEffect(() => {
-    void loadRoles();
-  }, [loadRoles]);
-
-  useEffect(() => {
-    void client.rpc
-      .getMinimumBalanceForRentExemption(0n)
-      .send()
-      .then((value) => setRent(BigInt(value)));
-  }, [client]);
 
   function close() {
     if (router.canGoBack()) router.back();
@@ -302,7 +275,11 @@ export default function CardScreen() {
         </Fine>
         {loading ? <ChainLoading compact body="Reading balances…" /> : null}
         {heir !== undefined ? (
-          <Card radius={space.radiusHero} padding={0} style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+          <Card
+            radius={space.radiusHero}
+            padding={0}
+            style={{ paddingHorizontal: 16, paddingVertical: 4 }}
+          >
             <FactRow
               first
               label="Address"
@@ -310,9 +287,7 @@ export default function CardScreen() {
               aside={<CopyHit text={heir} />}
             />
             {visible.map((h) => {
-              const row = (
-                <FactRow strong label={holdingLabel(h)} value={holdingAmount(h)} />
-              );
+              const row = <FactRow strong label={holdingLabel(h)} value={holdingAmount(h)} />;
               if (!canSend(h)) return <View key={h.id}>{row}</View>;
               return (
                 <Pressable

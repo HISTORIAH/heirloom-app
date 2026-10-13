@@ -1,5 +1,7 @@
 import type { Address } from "@solana/kit";
 
+import type { VaultToken } from "@/types/program";
+
 export type EstateKind = "heirloom" | "ika";
 
 export type EstateResponse = {
@@ -123,6 +125,8 @@ export type EstateHolding = {
   usd: number | null;
   /** False when DAS had neither a name nor a symbol for the mint. */
   named: boolean;
+  /** The vault account behind a token row, for building close, reassign and claim. Undefined for SOL. */
+  vaultToken?: VaultToken;
 };
 
 /** One row in the top-up picker: something the wallet holds, and what the estate already has of it. */
@@ -131,6 +135,8 @@ export type TopUpAsset = {
   id: string;
   /** Undefined for native SOL. */
   mint?: Address;
+  /** Token or Token-2022 as DAS reported it; undefined for SOL or when DAS left it out. */
+  tokenProgram?: Address;
   symbol: string;
   name: string;
   image?: string;

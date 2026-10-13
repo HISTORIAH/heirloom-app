@@ -6,3 +6,6 @@ export const ESTATE_METADATA_STALE_MS = 30_000;
  * instead of refetching; pull-to-refresh and transactions still force a fetch.
  */
 export const QUERY_STALE_MS = 30_000;
+
+/** Most items one DAS call returns; getAssetsByOwner pages past it, getAssetBatch chunks by it. */
+export const DAS_PAGE_LIMIT = 1000;

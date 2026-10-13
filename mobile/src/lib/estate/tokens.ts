@@ -1,11 +1,11 @@
-import { fetchMaybeAssetRecord, findAssetRecordPda, TREASURY_ADDRESS, type Estate } from "@historiah/heirloom";
-import { findAssociatedTokenPda } from "@solana-program/token";
+import { fetchAllMaybeAssetRecord, findAssetRecordPda, type Estate } from "@historiah/heirloom";
 import { address, type Address } from "@solana/kit";
 
 import { TOKEN_PROGRAMS } from "@/constants/solana";
+import { safeAddress } from "@/lib/solana/address";
 import { unwrapOption } from "@/lib/solana/option";
 import { parsedTokenAccount, toBigInt } from "@/lib/solana/parsed";
-import type { ClaimToken, EstateRpc, VaultToken } from "@/types/program";
+import type { EstateRpc, VaultToken } from "@/types/program";
 
 /** `claimableAssets` counts SOL as one asset; the rest are registered tokens. */
 export function registeredTokenCount(claimableAssets: number): number {
@@ -19,40 +19,36 @@ export function assertAllTokensListed(found: number, claimableAssets: number): v
   }
 }
 
+/**
+ * The vault tokens a screen already loaded, checked against the estate's own count.
+ * `undefined` means they haven't loaded (or failed), so there is nothing safe to build with.
+ */
+export function requireListedTokens(tokens: VaultToken[] | undefined, claimableAssets: number): VaultToken[] {
+  if (tokens === undefined) {
+    if (registeredTokenCount(claimableAssets) === 0) return [];
+    throw new Error("This estate's tokens are still loading. Try again in a moment.");
+  }
+  assertAllTokensListed(tokens.length, claimableAssets);
+  return tokens;
+}
+
 export function estateDelegate(estate: Estate): Address | undefined {
   const raw = unwrapOption(estate.delegate);
   return raw === null || raw.length === 0 ? undefined : address(raw);
 }
 
-function safeAddress(value: unknown): Address | undefined {
-  if (typeof value !== "string" || value.length === 0) return undefined;
-  try {
-    return address(value);
-  } catch {
-    return undefined;
-  }
-}
+type VaultTokenAccount = { pubkey: Address; account: { data: unknown; owner: Address } };
 
-async function maybeVaultToken(
-  rpc: EstateRpc,
-  vaultAccount: { pubkey: Address; account: { data: unknown; owner: Address } },
-  estate: Address,
-): Promise<VaultToken | undefined> {
-  const parsed = parsedTokenAccount(vaultAccount.account.data);
-  const tokenProgram = safeAddress(vaultAccount.account.owner);
+/** A non-empty token account in the vault, before we know it is registered. */
+function heldVaultToken(item: VaultTokenAccount): Omit<VaultToken, "assetRecord"> | undefined {
+  const parsed = parsedTokenAccount(item.account.data);
+  const tokenProgram = safeAddress(item.account.owner);
   const mint = safeAddress(parsed?.mint);
   const amount = toBigInt(parsed?.amount);
   const decimals = parsed?.decimals;
   if (tokenProgram === undefined || mint === undefined || amount === undefined || amount <= 0n) return undefined;
   if (decimals === undefined) return undefined;
-
-  const [assetRecord] = await findAssetRecordPda({ estate, mint });
-  const maybe = await fetchMaybeAssetRecord(rpc, assetRecord);
-  if (!maybe.exists) return undefined;
-  if (maybe.data.hasProtectedExposure || maybe.data.hasBoostedExposure) {
-    throw new Error("This estate still has yield deployed. Recall it on the web app first.");
-  }
-  return { mint, vaultTokenAccount: vaultAccount.pubkey, tokenProgram, assetRecord, amount, decimals };
+  return { mint, vaultTokenAccount: item.pubkey, tokenProgram, amount, decimals };
 }
 
 /** Every registered, non-empty token in an estate's vault. */
@@ -66,28 +62,24 @@ export async function discoverVaultRegisteredTokens(
       rpc.getTokenAccountsByOwner(vault, { programId }, { encoding: "jsonParsed" }).send(),
     ),
   );
-  // One asset-record lookup per token account; run them together rather than one by one.
-  const found = await Promise.all(
-    groups.flatMap((group) => group.value.map((item) => maybeVaultToken(rpc, item, estate))),
-  );
-  return found.filter((tok): tok is VaultToken => tok !== undefined);
-}
+  const held = groups
+    .flatMap((group) => group.value.map(heldVaultToken))
+    .filter((tok) => tok !== undefined);
+  if (held.length === 0) return [];
 
-/** Vault tokens plus the heir and treasury accounts a claim pays into. */
-export async function discoverVaultClaimTokens(
-  rpc: EstateRpc,
-  vault: Address,
-  estate: Address,
-  heir: Address,
-): Promise<ClaimToken[]> {
-  const registered = await discoverVaultRegisteredTokens(rpc, vault, estate);
-  return Promise.all(
-    registered.map(async (tok) => {
-      const [[heirTokenAccount], [treasuryTokenAccount]] = await Promise.all([
-        findAssociatedTokenPda({ owner: heir, mint: tok.mint, tokenProgram: tok.tokenProgram }),
-        findAssociatedTokenPda({ owner: TREASURY_ADDRESS, mint: tok.mint, tokenProgram: tok.tokenProgram }),
-      ]);
-      return { ...tok, heirTokenAccount, treasuryTokenAccount };
-    }),
+  const assetRecords = await Promise.all(
+    held.map(async (tok) => (await findAssetRecordPda({ estate, mint: tok.mint }))[0]),
   );
+  // One getMultipleAccounts for every asset record, not one call per token.
+  const records = await fetchAllMaybeAssetRecord(rpc, assetRecords);
+  const registered: VaultToken[] = [];
+  for (const [i, tok] of held.entries()) {
+    const record = records[i];
+    if (record === undefined || !record.exists) continue;
+    if (record.data.hasProtectedExposure || record.data.hasBoostedExposure) {
+      throw new Error("This estate still has yield deployed. Recall it on the web app first.");
+    }
+    registered.push({ ...tok, assetRecord: record.address });
+  }
+  return registered;
 }

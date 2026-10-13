@@ -1,3 +1,5 @@
+import type { WalletToken } from "@/types/wallet";
+
 /** Who inherits: an Heirloom credential, someone else's wallet, or my own backup. */
 export type HeirKind = "credential" | "wallet" | "mine";
 
@@ -55,3 +57,6 @@ export type ReviewLine = { label: string; value: string; onEdit: () => void };
 
 /** One prepaid or network fee on the review step. */
 export type FeeLine = { label: string; value: string };
+
+/** What the create flow needs from a wallet token to parse a typed deposit. */
+export type CreateWalletMint = Pick<WalletToken, "mint" | "decimals" | "raw" | "tokenProgram">;

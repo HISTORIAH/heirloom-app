@@ -1,50 +1,38 @@
-import { useEffect, useState } from "react";
 import { Text } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Keyframe } from "react-native-reanimated";
 
 import { colors } from "@/theme";
 
+/** Rises 20px and fades in; the reverse on the way out. Reanimated keeps it mounted for the exit. */
+const ENTER = new Keyframe({
+  0: { opacity: 0, transform: [{ translateY: 20 }] },
+  100: { opacity: 1, transform: [{ translateY: 0 }] },
+}).duration(300);
+
+const EXIT = new Keyframe({
+  0: { opacity: 1, transform: [{ translateY: 0 }] },
+  100: { opacity: 0, transform: [{ translateY: 20 }] },
+}).duration(300);
+
 export function InkToast({ text }: { text?: string }) {
-  const [message, setMessage] = useState("");
-  const [mounted, setMounted] = useState(false);
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    if (text !== undefined) {
-      setMessage(text);
-      setMounted(true);
-      progress.set(withTiming(1, { duration: 300 }));
-      return;
-    }
-    progress.set(withTiming(0, { duration: 300 }));
-    const id = setTimeout(() => setMounted(false), 300);
-    return () => clearTimeout(id);
-  }, [text, progress]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ translateY: (1 - progress.value) * 20 }],
-  }));
-
-  if (!mounted) return null;
+  if (text === undefined) return null;
 
   return (
     <Animated.View
+      entering={ENTER}
+      exiting={EXIT}
       pointerEvents="none"
-      style={[
-        {
-          position: "absolute",
-          left: 16,
-          right: 16,
-          bottom: 124,
-          backgroundColor: colors.ink,
-          borderRadius: 16,
-          paddingVertical: 14,
-          paddingHorizontal: 16,
-          zIndex: 6,
-        },
-        style,
-      ]}
+      style={{
+        position: "absolute",
+        left: 16,
+        right: 16,
+        bottom: 124,
+        backgroundColor: colors.ink,
+        borderRadius: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        zIndex: 6,
+      }}
     >
       <Text
         style={{
@@ -55,7 +43,7 @@ export function InkToast({ text }: { text?: string }) {
           color: colors.white,
         }}
       >
-        {message}
+        {text}
       </Text>
     </Animated.View>
   );
