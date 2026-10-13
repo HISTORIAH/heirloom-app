@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMobileWallet } from "@wallet-ui/react-native-kit";
 import type { Address } from "@solana/kit";
 
-import { fetchCardHoldings } from "@/lib/estate/cardHoldings";
+import { fetchCardHoldings } from "@/lib/card/holdings";
 import type { CardHolding } from "@/types/claim";
 
 export function useCardHoldings(owner: Address | undefined) {

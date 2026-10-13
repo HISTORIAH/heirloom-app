@@ -1,6 +1,6 @@
 import { findVaultPda } from "@historiah/heirloom";
 
-import { HELIUS_DAS_URL } from "@/config";
+import { DAS_RPC_URL } from "@/config";
 import { WSOL_MINT } from "@/constants/solana";
 import { discoverVaultRegisteredTokens } from "@/lib/estate/tokens";
 import { fetchAssetBatch, pickImage, pickLabel, type DasAsset } from "@/services/api/das";
@@ -17,7 +17,7 @@ export async function fetchVaultHoldings(
   const tokens = await discoverVaultRegisteredTokens(rpc, vault, row.address);
   // Metadata is nice to have: an RPC without DAS still lists the tokens, unnamed.
   const meta = await fetchAssetBatch(
-    HELIUS_DAS_URL,
+    DAS_RPC_URL,
     [WSOL_MINT, ...tokens.map((tok) => tok.mint)],
     signal,
   ).catch(() => new Map<string, DasAsset>());
@@ -37,6 +37,7 @@ export async function fetchVaultHoldings(
         amount: tok.amount,
         usd: price === undefined ? null : (Number(tok.amount) / 10 ** tok.decimals) * price,
         named,
+        vaultToken: tok,
       };
     }),
   };

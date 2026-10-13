@@ -1,4 +1,4 @@
-import { fetchMaybeAssetRecord, fetchMaybeEstate, findAssetRecordPda, findEstatePda } from "@historiah/heirloom";
+import { fetchMaybeEstate, findEstatePda } from "@historiah/heirloom";
 import type { Address } from "@solana/kit";
 
 import type { EstateRpc } from "@/types/program";
@@ -20,10 +20,4 @@ export async function assertEstateFree(rpc: EstateRpc, authority: Address, heir:
   if (maybe.exists && maybe.lamports > 0n) {
     throw new Error("An estate already exists for this heir. Close it or pick a different heir.");
   }
-}
-
-export async function assertMintUnregistered(rpc: EstateRpc, estate: Address, mint: Address): Promise<void> {
-  const [assetRecord] = await findAssetRecordPda({ estate, mint });
-  const maybe = await fetchMaybeAssetRecord(rpc, assetRecord);
-  if (maybe.exists) throw new Error("This token is already in the estate. This only adds a new one.");
 }

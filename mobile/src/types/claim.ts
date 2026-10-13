@@ -24,3 +24,6 @@ export type HeirStepState = "done" | "current" | "next";
 
 /** One step in the heir's "What happens next". */
 export type HeirStep = { title: string; body: string; state: HeirStepState };
+
+/** Whether a credential still holds something to send on: not asked yet, asking, or the answer. */
+export type Leftover = "idle" | "checking" | "none" | "some";

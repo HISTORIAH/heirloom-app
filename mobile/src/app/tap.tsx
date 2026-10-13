@@ -160,8 +160,11 @@ export default function TapSheet() {
     }
     setState(stateFrom(result));
   }, [openCredential, readTangem]);
+  // Scan once on mount; a new `scan` identity must not restart (and cancel) a live session.
   const scanRef = useRef(scan);
-  scanRef.current = scan;
+  useEffect(() => {
+    scanRef.current = scan;
+  }, [scan]);
 
   useEffect(() => {
     alive.current = true;

@@ -1,36 +1,32 @@
-import { findVaultPda } from "@historiah/heirloom";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Address } from "@solana/kit";
 
+import { loadedVaultTokens } from "@/hooks/estate/useEstateHoldings";
 import { useSendIxs } from "@/hooks/tx/useSendIxs";
+import { resolveCardClaimPlan, runCardClaim } from "@/lib/card/claim";
+import { sendFromCard } from "@/lib/card/transfer";
 import { estateSpan } from "@/lib/estate/span";
-import { assertAllTokensListed, discoverVaultClaimTokens, estateDelegate } from "@/lib/estate/tokens";
+import { requireListedTokens } from "@/lib/estate/tokens";
 import { readNfcCapability } from "@/lib/nfc/reader";
 import { adapterFor, withCredentialSession } from "@/lib/nfc/credentials";
-import { resolveCardClaimPlan, runCardClaim } from "@/lib/tx/cardClaim";
-import { sendFromCard } from "@/lib/tx/cardSweep";
 import { buildClaimIxs } from "@/lib/tx/heir";
 import { buildCheckInIx } from "@/lib/tx/updateField";
 import type { CardClaimPlan, SweepToken } from "@/types/claim";
 import type { EstateRow } from "@/types/program";
 
-/** Writes signed by someone other than the owner: the heir's claim, the check-in signer's check-in. */
+/**
+ * Writes signed by someone other than the owner: the heir's claim, the check-in signer's check-in.
+ * Claims build from the estate's vault tokens as the claim screen's holdings query loaded them.
+ */
 export function useHeirTx() {
   const { account, client, sendIxs } = useSendIxs();
+  const queryClient = useQueryClient();
 
   async function claimAll(row: EstateRow): Promise<string> {
+    const tokens = requireListedTokens(loadedVaultTokens(queryClient, row.address), row.data.claimableAssets);
     return sendIxs(async (signer) => {
-      const heir = signer.address;
-      if (heir !== row.data.heir) throw new Error("This wallet is not the heir on that estate.");
-      const [vault] = await findVaultPda({ authority: row.data.authority, heir });
-      const tokens = await discoverVaultClaimTokens(client.rpc, vault, row.address, heir);
-      assertAllTokensListed(tokens.length, row.data.claimableAssets);
-      return buildClaimIxs(signer, {
-        authority: row.data.authority,
-        estate: row.address,
-        vault,
-        tokens,
-        delegate: estateDelegate(row.data),
-      });
+      if (signer.address !== row.data.heir) throw new Error("This wallet is not the heir on that estate.");
+      return buildClaimIxs(signer, row, tokens);
     });
   }
 
@@ -66,6 +62,7 @@ export function useHeirTx() {
         rpc: client.rpc,
         signer: session.signer,
         row,
+        vaultTokens: loadedVaultTokens(queryClient, row.address),
         plan: next,
         skipClaim,
         maxMessageBytes: session.maxMessageBytes,

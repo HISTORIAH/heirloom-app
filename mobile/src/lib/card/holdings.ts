@@ -1,7 +1,7 @@
-import { HELIUS_DAS_URL } from "@/config";
+import { DAS_RPC_URL } from "@/config";
 import { SOL_ASSET_ID } from "@/constants/create";
 import { SOL_DECIMALS, SOL_LOGO_URL, WSOL_MINT } from "@/constants/solana";
-import { discoverCardTokens } from "@/lib/tx/cardSweep";
+import { discoverCardTokens } from "@/lib/card/tokens";
 import { fetchAssetBatch, pickImage, pickLabel } from "@/services/api/das";
 import type { CardHolding } from "@/types/claim";
 import type { Address } from "@solana/kit";
@@ -17,7 +17,7 @@ export async function fetchCardHoldings(
     discoverCardTokens(rpc, owner),
   ]);
   const meta = await fetchAssetBatch(
-    HELIUS_DAS_URL,
+    DAS_RPC_URL,
     [WSOL_MINT, ...tokens.map((tok) => tok.mint)],
     signal,
   ).catch(() => new Map());

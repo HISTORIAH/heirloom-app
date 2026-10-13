@@ -1,21 +1,16 @@
 import { SOL_ASSET_ID } from "@/constants/create";
 import { parseAddress } from "@/lib/solana/address";
 import { solToLamports, uiAmountToRaw } from "@/lib/solana/amount";
-import type { CreateTokenDeposit } from "@/types/program";
-
-export type CreateWalletMint = {
-  mint: string;
-  decimals: number;
-  raw: bigint;
-};
+import type { CreateWalletMint } from "@/types/create";
+import type { PickedDeposit } from "@/types/program";
 
 export function parseCreateDeposits(
   amounts: Record<string, string>,
   walletTokens: CreateWalletMint[],
-): { amountLamports: bigint; tokens: CreateTokenDeposit[] } {
+): { amountLamports: bigint; tokens: PickedDeposit[] } {
   const byMint = new Map(walletTokens.map((tok) => [tok.mint, tok]));
   let amountLamports = 0n;
-  const tokens: CreateTokenDeposit[] = [];
+  const tokens: PickedDeposit[] = [];
   for (const [id, text] of Object.entries(amounts)) {
     if (text.trim().length === 0) continue;
     if (id === SOL_ASSET_ID) {
@@ -27,7 +22,7 @@ export function parseCreateDeposits(
     const amount = uiAmountToRaw(text, meta.decimals);
     if (amount <= 0n) throw new Error("Enter an amount greater than zero");
     if (amount > meta.raw) throw new Error("This wallet does not have that much of this token.");
-    tokens.push({ mint: parseAddress(id, "token"), amount });
+    tokens.push({ mint: parseAddress(id, "token"), amount, decimals: meta.decimals, tokenProgram: meta.tokenProgram });
   }
   return { amountLamports, tokens };
 }

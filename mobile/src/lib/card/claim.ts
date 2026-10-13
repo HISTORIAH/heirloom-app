@@ -1,19 +1,14 @@
-import { findVaultPda } from "@historiah/heirloom";
 import type { TransactionSigner } from "@solana/kit";
 
+import { sendCardBatches } from "@/lib/card/send";
+import { discoverCardTokens, fetchCardSpareLamports } from "@/lib/card/tokens";
 import { fetchEstateByAddress } from "@/lib/estate/fetch";
 import { estateSpan } from "@/lib/estate/span";
-import { assertAllTokensListed, discoverVaultClaimTokens, estateDelegate } from "@/lib/estate/tokens";
-import { sendCardBatches } from "@/lib/tx/cardSend";
-import {
-  buildSolSweepIx,
-  buildTokenSweepIxs,
-  discoverCardTokens,
-  spareLamports,
-} from "@/lib/tx/cardSweep";
+import { requireListedTokens } from "@/lib/estate/tokens";
+import { buildSolSweepIx, buildTokenSweepIxs } from "@/lib/tx/cardSweep";
 import { buildClaimIxs } from "@/lib/tx/heir";
 import type { CardClaimPlan } from "@/types/claim";
-import type { EstateRow, EstateRpc } from "@/types/program";
+import type { EstateRow, EstateRpc, VaultToken } from "@/types/program";
 
 /**
  * A locked card (a PIN on an Heirloom card, or a card with its own access code) is a wallet:
@@ -30,10 +25,22 @@ export function resolveCardClaimPlan(input: {
   return input.plan;
 }
 
+type CardClaimInput = {
+  rpc: EstateRpc;
+  signer: TransactionSigner;
+  row: EstateRow;
+  /** The estate's vault tokens, as the claim screen loaded them. */
+  vaultTokens: VaultToken[] | undefined;
+  plan: CardClaimPlan;
+  skipClaim: boolean;
+  maxMessageBytes: number;
+};
+
 async function sendClaimIfNeeded(input: {
   rpc: EstateRpc;
   signer: TransactionSigner;
   row: EstateRow;
+  vaultTokens: VaultToken[] | undefined;
   skipClaim: boolean;
   maxMessageBytes: number;
 }): Promise<boolean> {
@@ -42,17 +49,8 @@ async function sendClaimIfNeeded(input: {
   if (span.state === "distributed") return false;
   if (span.state !== "claimable") throw new Error("Nothing to claim yet.");
 
-  const heir = input.signer.address;
-  const [vault] = await findVaultPda({ authority: input.row.data.authority, heir });
-  const tokens = await discoverVaultClaimTokens(input.rpc, vault, input.row.address, heir);
-  assertAllTokensListed(tokens.length, input.row.data.claimableAssets);
-  const claimIxs = await buildClaimIxs(input.signer, {
-    authority: input.row.data.authority,
-    estate: input.row.address,
-    vault,
-    tokens,
-    delegate: estateDelegate(input.row.data),
-  });
+  const tokens = requireListedTokens(input.vaultTokens, input.row.data.claimableAssets);
+  const claimIxs = await buildClaimIxs(input.signer, input.row, tokens);
   try {
     await sendCardBatches(input.rpc, input.signer, claimIxs, input.maxMessageBytes);
     return true;
@@ -65,14 +63,7 @@ async function sendClaimIfNeeded(input: {
   }
 }
 
-export async function runCardClaim(input: {
-  rpc: EstateRpc;
-  signer: TransactionSigner;
-  row: EstateRow;
-  plan: CardClaimPlan;
-  skipClaim: boolean;
-  maxMessageBytes: number;
-}): Promise<{ claimed: boolean }> {
+export async function runCardClaim(input: CardClaimInput): Promise<{ claimed: boolean }> {
   const heir = input.signer.address;
   if (heir !== input.row.data.heir) {
     throw new Error("This credential is not the heir on that estate.");
@@ -84,19 +75,13 @@ export async function runCardClaim(input: {
   const claimed = await sendClaimIfNeeded(input);
   if (input.plan.kind === "keep") return { claimed };
 
+  // The claim just moved tokens onto the card (less the fee), so its balances are read fresh here.
   const tokens = await discoverCardTokens(input.rpc, heir);
   const tokenIxs = await buildTokenSweepIxs(input.signer, input.plan.destination, tokens);
   await sendCardBatches(input.rpc, input.signer, tokenIxs, input.maxMessageBytes);
 
-  const [bal, rent] = await Promise.all([
-    input.rpc.getBalance(heir).send(),
-    input.rpc.getMinimumBalanceForRentExemption(0n).send(),
-  ]);
-  const solIx = buildSolSweepIx(
-    input.signer,
-    input.plan.destination,
-    spareLamports(BigInt(bal.value), BigInt(rent)),
-  );
+  const spare = await fetchCardSpareLamports(input.rpc, heir);
+  const solIx = buildSolSweepIx(input.signer, input.plan.destination, spare);
   if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
   return { claimed };
 }

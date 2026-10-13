@@ -14,10 +14,9 @@ import {
 import type { Address, Instruction, TransactionSigner } from "@solana/kit";
 
 import { CARD_FEE_FLOAT_LAMPORTS } from "@/constants/fees";
-import { assertWalletCanDeposit, fetchMintMeta } from "@/lib/solana/mint";
 import { floatDestinations } from "@/lib/tx/cardFloat";
 import { buildRegisterTokenIx } from "@/lib/tx/manage";
-import type { CreateEstateInput, CreateTokenDeposit, EstateRpc } from "@/types/program";
+import type { CreateEstateInput, TokenDeposit } from "@/types/program";
 
 function timingAndPeople(authority: TransactionSigner, input: CreateEstateInput) {
   return {
@@ -33,17 +32,15 @@ function timingAndPeople(authority: TransactionSigner, input: CreateEstateInput)
 
 /** Token-only create: `amount` is token units, and initialize opens the vault ATA. */
 async function initializeWithFirstToken(
-  rpc: EstateRpc,
   authority: TransactionSigner,
   input: CreateEstateInput,
-  token: CreateTokenDeposit,
+  token: TokenDeposit,
 ): Promise<Instruction> {
-  const [{ tokenProgram }, [estate], [vault]] = await Promise.all([
-    fetchMintMeta(rpc, token.mint),
+  const { tokenProgram } = token;
+  const [[estate], [vault]] = await Promise.all([
     findEstatePda({ authority: authority.address, heir: input.heir }),
     findVaultPda({ authority: authority.address, heir: input.heir }),
   ]);
-  await assertWalletCanDeposit(rpc, authority.address, token.mint, tokenProgram, token.amount);
   const [[authorityTokenAccount], [vaultTokenAccount], [assetRecord]] = await Promise.all([
     findAssociatedTokenPda({ owner: authority.address, mint: token.mint, tokenProgram }),
     findAssociatedTokenPda({ owner: vault, mint: token.mint, tokenProgram }),
@@ -60,14 +57,14 @@ async function initializeWithFirstToken(
   });
 }
 
+/** `tokens` are `input.tokens` with each mint's program and decimals already read. */
 export async function buildCreateEstateIxs(
-  rpc: EstateRpc,
   authority: TransactionSigner,
   input: CreateEstateInput,
+  tokens: TokenDeposit[],
 ): Promise<Instruction[]> {
-  const tokens = input.tokens ?? [];
   let initIx: Instruction;
-  let extra: CreateTokenDeposit[];
+  let extra: TokenDeposit[];
   if (input.amountLamports > 0n) {
     initIx = await getInitializeInstructionAsync({
       ...timingAndPeople(authority, input),
@@ -77,11 +74,11 @@ export async function buildCreateEstateIxs(
   } else {
     const primary = tokens[0];
     if (primary === undefined) throw new Error("Select at least one asset");
-    initIx = await initializeWithFirstToken(rpc, authority, input, primary);
+    initIx = await initializeWithFirstToken(authority, input, primary);
     extra = tokens.slice(1);
   }
   const registerIxs = await Promise.all(
-    extra.map((tok) => buildRegisterTokenIx(rpc, authority, input.heir, tok.mint, tok.amount)),
+    extra.map((tok) => buildRegisterTokenIx(authority, input.heir, tok)),
   );
 
   const floatIxs = floatDestinations(input).map((destination) =>
@@ -105,24 +102,18 @@ export async function buildTopUpSolIx(
 
 /** Top up a token already registered on the estate: a plain transfer into the vault ATA. */
 export async function buildTopUpTokenIx(
-  rpc: EstateRpc,
   authority: TransactionSigner,
   heir: Address,
-  mint: Address,
-  amount: bigint,
+  token: TokenDeposit,
 ): Promise<Instruction> {
-  if (amount <= 0n) throw new Error("Enter an amount greater than zero");
-  const [{ decimals, tokenProgram }, [vault]] = await Promise.all([
-    fetchMintMeta(rpc, mint),
-    findVaultPda({ authority: authority.address, heir }),
-  ]);
-  await assertWalletCanDeposit(rpc, authority.address, mint, tokenProgram, amount);
+  const { mint, amount, decimals, tokenProgram } = token;
+  const [vault] = await findVaultPda({ authority: authority.address, heir });
   const [[source], [destination]] = await Promise.all([
     findAssociatedTokenPda({ owner: authority.address, mint, tokenProgram }),
     findAssociatedTokenPda({ owner: vault, mint, tokenProgram }),
   ]);
   const input = { source, mint, destination, authority, amount, decimals };
-  // fetchMintMeta only returns Token or Token-2022; use that program's own builder.
+  // The program comes from fetchMintMeta, so it is Token or Token-2022; use that program's own builder.
   return tokenProgram === TOKEN_2022_PROGRAM_ADDRESS
     ? getTransferChecked2022Instruction(input)
     : getTransferCheckedInstruction(input);

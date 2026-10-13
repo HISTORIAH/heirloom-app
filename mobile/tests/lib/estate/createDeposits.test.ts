@@ -1,11 +1,13 @@
+import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { address } from "@solana/kit";
 import { describe, expect, test } from "bun:test";
 
 import { SOL_ASSET_ID } from "@/constants/create";
-import { formatCreateAssetsLine, parseCreateDeposits } from "@/lib/tx/createDeposits";
+import { formatCreateAssetsLine, parseCreateDeposits } from "@/lib/estate/createDeposits";
 
-const USDC = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+const USDC = address("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 
-const usdcWallet = { mint: USDC, decimals: 6, raw: 12_000_000n };
+const usdcWallet = { mint: USDC, decimals: 6, raw: 12_000_000n, tokenProgram: TOKEN_PROGRAM_ADDRESS };
 
 describe("parseCreateDeposits", () => {
   test("SOL only", () => {
@@ -17,13 +19,13 @@ describe("parseCreateDeposits", () => {
   test("SOL plus a wallet token", () => {
     const got = parseCreateDeposits({ [SOL_ASSET_ID]: "1", [USDC]: "12" }, [usdcWallet]);
     expect(got.amountLamports).toBe(1_000_000_000n);
-    expect(got.tokens).toEqual([{ mint: USDC, amount: 12_000_000n }]);
+    expect(got.tokens).toEqual([{ mint: USDC, amount: 12_000_000n, decimals: 6, tokenProgram: TOKEN_PROGRAM_ADDRESS }]);
   });
 
   test("token only", () => {
     const got = parseCreateDeposits({ [SOL_ASSET_ID]: "", [USDC]: "0.5" }, [usdcWallet]);
     expect(got.amountLamports).toBe(0n);
-    expect(got.tokens).toEqual([{ mint: USDC, amount: 500_000n }]);
+    expect(got.tokens).toEqual([{ mint: USDC, amount: 500_000n, decimals: 6, tokenProgram: TOKEN_PROGRAM_ADDRESS }]);
   });
 
   test("skips blank rows", () => {

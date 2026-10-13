@@ -1,3 +1,5 @@
+import type { Address } from "@solana/kit";
+
 /** A fungible token the connected wallet holds, with DAS metadata. */
 export type WalletToken = {
   mint: string;
@@ -8,7 +10,8 @@ export type WalletToken = {
   /** Raw units held. */
   raw: bigint;
   decimals: number;
-  tokenProgram: string;
+  /** Token or Token-2022, as DAS reported it. Undefined when DAS left it out. */
+  tokenProgram?: Address;
   image?: string;
   /** False when DAS had neither a name nor a symbol for the mint. */
   named: boolean;

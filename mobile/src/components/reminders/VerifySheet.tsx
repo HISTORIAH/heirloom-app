@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Linking, Share, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -60,11 +60,12 @@ function EmailVerify({
   // Each full code is sent once by itself; editing it lets the next one go.
   const sentFor = useRef<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (!valid || verifying || sentFor.current === code) return;
-    sentFor.current = code;
-    onVerify(code);
-  }, [code, valid, verifying, onVerify]);
+  function onChangeCode(next: string) {
+    setCode(next);
+    if (!VERIFY_CODE_PATTERN.test(next) || verifying || sentFor.current === next) return;
+    sentFor.current = next;
+    onVerify(next);
+  }
 
   let status: string | undefined;
   if (!pending.sent) status = "Couldn't send the email. Send it again.";
@@ -81,7 +82,7 @@ function EmailVerify({
       </Lede>
       <CodeInput
         value={code}
-        onChange={setCode}
+        onChange={onChangeCode}
         error={malformed || error !== undefined}
         disabled={verifying}
       />

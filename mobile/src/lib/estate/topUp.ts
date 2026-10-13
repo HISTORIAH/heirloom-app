@@ -33,6 +33,7 @@ export function topUpAssets(
       return {
         id: tok.mint,
         mint: address(tok.mint),
+        tokenProgram: tok.tokenProgram,
         symbol: tok.symbol,
         name: tok.name,
         image: tok.image,

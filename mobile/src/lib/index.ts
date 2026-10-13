@@ -35,7 +35,7 @@ export { unwrapOption } from "./solana/option";
 export { asRecord, parsedInfo, parsedTokenAccount, toBigInt } from "./solana/parsed";
 
 // Mint utilities
-export { fetchMintMeta, assertWalletCanDeposit } from "./solana/mint";
+export { fetchMintMeta, isTokenProgram, toTokenDeposit } from "./solana/mint";
 
 // Estate fetch
 export {
@@ -54,8 +54,10 @@ export {
   isPausedNow,
   assertNotPaused,
   assertEstateFree,
-  assertMintUnregistered,
 } from "./estate/guards";
+
+// Create deposits
+export { parseCreateDeposits, formatCreateAssetsLine } from "./estate/createDeposits";
 
 // Estate span
 export { stateSlab, estateSpan } from "./estate/span";
@@ -73,7 +75,7 @@ export { computeEstateState, isVaultEmpty, nowSecs } from "./estate/state";
 
 // Estate summary
 export { daysToNext, bySoonest, estateName, assetsLine, heirLine } from "./estate/summary";
-export { fetchCardHoldings } from "./estate/cardHoldings";
+export { fetchCardHoldings } from "./card/holdings";
 
 // Estate timing
 export {
@@ -98,7 +100,7 @@ export {
   assertAllTokensListed,
   estateDelegate,
   discoverVaultRegisteredTokens,
-  discoverVaultClaimTokens,
+  requireListedTokens,
 } from "./estate/tokens";
 
 // TX - Heir
@@ -109,7 +111,6 @@ export { buildRevokeAllIxs, buildReassignIxs, buildRegisterTokenIx } from "./tx/
 
 // TX - Owner
 export { buildCreateEstateIxs, buildTopUpSolIx, buildTopUpTokenIx } from "./tx/owner";
-export { parseCreateDeposits, formatCreateAssetsLine } from "./tx/createDeposits";
 
 // TX - Update field
 export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
@@ -117,18 +118,14 @@ export { buildUpdateFieldIx, buildCheckInIx } from "./tx/updateField";
 // TX - Card float
 export { floatDestinations } from "./tx/cardFloat";
 
-// TX - Card claim (IsoDep fee payer; keep leaves funds on the chip)
-export { packInstructionsForCard, sendCardBatches } from "./tx/cardSend";
-export {
-  spareLamports,
-  discoverCardTokens,
-  cardHasSweepable,
-  buildTokenTransferIxs,
-  buildTokenSweepIxs,
-  buildSolSweepIx,
-  sendFromCard,
-} from "./tx/cardSweep";
-export { resolveCardClaimPlan, runCardClaim } from "./tx/cardClaim";
+// TX - Card sweep builders
+export { buildTokenTransferIxs, buildTokenSweepIxs, buildSolSweepIx } from "./tx/cardSweep";
+
+// Card: sending from a credential (IsoDep fee payer; keep leaves funds on the chip)
+export { packInstructionsForCard, sendCardBatches } from "./card/send";
+export { resolveCardClaimPlan, runCardClaim } from "./card/claim";
+export { sendFromCard } from "./card/transfer";
+export { spareLamports, discoverCardTokens, fetchCardSpareLamports, cardHasSweepable } from "./card/tokens";
 
 // NFC
 export { scanProblemMessage, setupProblemMessage, cardProblemMessage } from "./nfc/messages";

@@ -1,3 +1,5 @@
+import { DAS_PAGE_LIMIT } from "@/constants/api";
+
 export type DasFile = { uri?: string; cdn_uri?: string; mime?: string };
 export type DasMetadata = { name?: string; symbol?: string };
 export type DasLinks = { image?: string };
@@ -64,7 +66,7 @@ export async function fetchAssetBatch(
   if (ids.length === 0) return out;
 
   const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += 1000) chunks.push(ids.slice(i, i + 1000));
+  for (let i = 0; i < ids.length; i += DAS_PAGE_LIMIT) chunks.push(ids.slice(i, i + DAS_PAGE_LIMIT));
 
   for (const chunk of chunks) {
     const res = await fetch(url, {
@@ -78,7 +80,7 @@ export async function fetchAssetBatch(
         params: { ids: chunk },
       }),
     });
-    if (!res.ok) throw new Error(`Helius ${res.status}`);
+    if (!res.ok) throw new Error(`DAS ${res.status}`);
     const json = (await res.json()) as { result?: Array<DasAsset | null> };
     const items = Array.isArray(json.result) ? json.result : [];
     items.forEach((item, idx) => {
@@ -91,9 +93,10 @@ export async function fetchAssetBatch(
   return out;
 }
 
-export async function fetchAssetsByOwner(
+async function fetchAssetsByOwnerPage(
   url: string,
   owner: string,
+  page: number,
   signal: AbortSignal,
 ): Promise<DasFungibleAsset[]> {
   const res = await fetch(url, {
@@ -106,8 +109,8 @@ export async function fetchAssetsByOwner(
       method: "getAssetsByOwner",
       params: {
         ownerAddress: owner,
-        page: 1,
-        limit: 1000,
+        page,
+        limit: DAS_PAGE_LIMIT,
         options: {
           showFungible: true,
           showZeroBalance: false,
@@ -115,9 +118,23 @@ export async function fetchAssetsByOwner(
       },
     }),
   });
-  if (!res.ok) throw new Error(`Helius ${res.status}`);
+  if (!res.ok) throw new Error(`DAS ${res.status}`);
   const json = (await res.json()) as {
     result?: { items?: Array<DasFungibleAsset | null> };
   };
   return (json.result?.items ?? []).filter((item): item is DasFungibleAsset => !!item);
+}
+
+/** Everything `owner` holds, NFTs included. Pages until DAS returns a short page. */
+export async function fetchAssetsByOwner(
+  url: string,
+  owner: string,
+  signal: AbortSignal,
+): Promise<DasFungibleAsset[]> {
+  const all: DasFungibleAsset[] = [];
+  for (let page = 1; ; page++) {
+    const items = await fetchAssetsByOwnerPage(url, owner, page, signal);
+    all.push(...items);
+    if (items.length < DAS_PAGE_LIMIT) return all;
+  }
 }
