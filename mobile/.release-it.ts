@@ -41,7 +41,8 @@ const config: Config = {
     tagName: TAG,
     tagMatch: "mobile/v*",
     tagAnnotation: "Heirloom Mobile ${version}",
-    changelog: 'git log --pretty=format:"* %s (%h)" ${from}...${to} -- .',
+    // GitHub release notes only, no CHANGELOG.md: what users would notice since the last mobile/v* tag.
+    changelog: 'git log --pretty=format:"* %s (%h)" -E --grep="^(feat|fix|perf)" ${from}...${to} -- .',
   },
   npm: false,
   github: {
