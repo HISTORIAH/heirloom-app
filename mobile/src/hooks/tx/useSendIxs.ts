@@ -44,7 +44,7 @@ export function useSendIxs() {
     try {
       await waitForConfirmed(client.rpc, signature);
     } catch (cause) {
-      throw new SubmittedTxError(cause);
+      throw new SubmittedTxError(signature, cause);
     } finally {
       // Sent is enough: fees alone change the wallet, so the next picker refetches its balances.
       void queryClient.invalidateQueries({ queryKey: walletTokensKey(acc.address) });

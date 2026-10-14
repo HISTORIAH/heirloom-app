@@ -92,7 +92,7 @@ async function sendSigned(rpc: EstateRpc, signed: Transaction): Promise<string> 
   try {
     await waitForConfirmed(rpc, signature);
   } catch (cause) {
-    throw new SubmittedTxError(cause);
+    throw new SubmittedTxError(signature, cause);
   }
   return signature;
 }

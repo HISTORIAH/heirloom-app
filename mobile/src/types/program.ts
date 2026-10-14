@@ -48,6 +48,12 @@ export type CreateEstateInput = {
   delegatePauseDurationSecs?: bigint;
 };
 
+/** A create that landed: its transaction and the estate account it opened. */
+export type CreatedEstate = {
+  signature: string;
+  estatePda: Address;
+};
+
 /** A registered token sitting in an estate's vault. */
 export type VaultToken = {
   mint: Address;
