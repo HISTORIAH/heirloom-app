@@ -21,26 +21,26 @@ const blogHref = `${LANDING_URL}/blog/`;
 <header class="sticky top-0 z-50 border-b border-tile-line bg-background/95 backdrop-blur">
   <div class="flex h-[var(--nav-h)] items-center gap-4 px-[var(--page-pad)]">
     <a href={`${LANDING_URL}/`} class="flex shrink-0 items-center" aria-label="Heirloom home">
-      <Logo class="h-7" />
+      <Logo class="h-8 md:h-[var(--nav-logo-h)]" />
     </a>
 
     <nav class="hidden flex-1 items-center justify-center gap-1 lg:flex" aria-label="Site">
       <a
         href={homeHref}
-        class="rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+        class="flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground/75 transition-colors hover:bg-tile-soft hover:text-foreground"
       >
         Home
       </a>
       <span
         aria-current="page"
-        class="relative rounded-md px-3 py-2 text-[12.5px] font-bold text-foreground"
+        class="relative flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground"
       >
         Docs
-        <span class="absolute inset-x-3 -bottom-[3px] h-[3px] bg-accent-yellow"></span>
+        <span class="absolute inset-x-[var(--nav-link-px)] -bottom-[3px] h-[3px] bg-accent-yellow"></span>
       </span>
       <a
         href={blogHref}
-        class="rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:bg-tile-soft hover:text-foreground"
+        class="flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground/75 transition-colors hover:bg-tile-soft hover:text-foreground"
       >
         Blog
       </a>
@@ -49,11 +49,17 @@ const blogHref = `${LANDING_URL}/blog/`;
     <div class="ml-auto flex items-center gap-2 lg:ml-0">
       <a
         href={withBase("/reference/faq/")}
-        class="hidden rounded-md px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground sm:block"
+        class="hidden flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground/75 transition-colors hover:bg-tile-soft hover:text-foreground sm:flex"
       >
         FAQ
       </a>
-      <Button href={appPath("/create-vault")} variant="flat-yellow" size="sm" data-track="docs_nav_launch_app">
+      <Button
+        href={appPath("/create-vault")}
+        variant="flat-yellow"
+        size="sm"
+        class="ml-2 h-[var(--nav-link-h)] px-[calc(var(--nav-link-px)*1.2)] text-[length:var(--nav-text)] tracking-[0.12em]"
+        data-track="docs_nav_launch_app"
+      >
         Launch App
       </Button>
       <button

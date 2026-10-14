@@ -30,7 +30,7 @@ const icons: Record<string, string> = {
 <nav class="topnav" data-nav>
   <div class="shell topnav-inner">
     <a href={isDev ? "http://localhost:4321" : "https://heirlm.xyz"} class="topnav-logo">
-      <Logo />
+      <Logo class="topnav-logo-img" />
     </a>
 
     <div class="topnav-center">
@@ -181,6 +181,12 @@ const icons: Record<string, string> = {
     align-items: center;
   }
 
+  @media (min-width: 768px) {
+    .topnav-logo :global(.topnav-logo-img) {
+      height: var(--nav-logo-h);
+    }
+  }
+
   .topnav-center {
     display: none;
     flex: 1;
@@ -195,12 +201,16 @@ const icons: Record<string, string> = {
   }
 
   .topnav-link {
-    display: block;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: hsl(var(--muted-foreground));
+    display: flex;
+    align-items: center;
+    min-height: var(--nav-link-h);
+    font-size: var(--nav-text);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: hsl(var(--foreground) / 0.75);
     text-decoration: none;
-    padding: 8px 12px;
+    padding: 0 var(--nav-link-px);
     border-radius: 8px;
     transition: color 0.15s, background 0.15s;
     position: relative;
@@ -219,8 +229,8 @@ const icons: Record<string, string> = {
     content: "";
     position: absolute;
     bottom: -3px;
-    left: 12px;
-    right: 12px;
+    left: var(--nav-link-px);
+    right: var(--nav-link-px);
     height: 3px;
     background: hsl(var(--accent-yellow));
   }
@@ -242,9 +252,9 @@ const icons: Record<string, string> = {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 36px;
-    padding: 0 16px;
-    font-size: 11px;
+    height: var(--nav-link-h);
+    padding: 0 calc(var(--nav-link-px) * 1.2);
+    font-size: var(--nav-text);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
