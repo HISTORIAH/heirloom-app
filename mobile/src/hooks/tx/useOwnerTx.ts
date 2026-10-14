@@ -1,17 +1,19 @@
 import { findEstatePda } from "@historiah/heirloom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Address } from "@solana/kit";
+import { useRef } from "react";
 
 import { loadedVaultTokens } from "@/hooks/estate/useEstateHoldings";
 import { useSendIxs } from "@/hooks/tx/useSendIxs";
-import { assertEstateFree, assertNotPaused } from "@/lib/estate/guards";
+import { assertEstateFree, assertNotPaused, estateExists } from "@/lib/estate/guards";
+import { SubmittedTxError } from "@/lib/failure";
 import { requireListedTokens } from "@/lib/estate/tokens";
 import { toTokenDeposit } from "@/lib/solana/mint";
 import { buildReassignIxs, buildRegisterTokenIx, buildRevokeAllIxs } from "@/lib/tx/manage";
 import { buildCreateEstateIxs, buildTopUpSolIx, buildTopUpTokenIx } from "@/lib/tx/owner";
 import { buildCheckInIx, buildUpdateFieldIx } from "@/lib/tx/updateField";
 import type { EstateTimingFields } from "@/types/estate";
-import type { CreateEstateInput, EstateRow, PickedDeposit } from "@/types/program";
+import type { CreateEstateInput, CreatedEstate, EstateRow, PickedDeposit } from "@/types/program";
 
 /**
  * Every write the estate owner signs. lib/tx only builds; what it needs comes from what the
@@ -20,6 +22,7 @@ import type { CreateEstateInput, EstateRow, PickedDeposit } from "@/types/progra
 export function useOwnerTx() {
   const { account, client, sendIxs } = useSendIxs();
   const queryClient = useQueryClient();
+  const lastSubmittedCreate = useRef<CreatedEstate | undefined>(undefined);
 
   async function checkIn(heir: Address): Promise<string> {
     return sendIxs(async (signer) => [await buildCheckInIx(signer, signer.address, heir)]);
@@ -39,19 +42,34 @@ export function useOwnerTx() {
     return sendIxs(async (signer) => [await buildTopUpTokenIx(signer, heir, token)]);
   }
 
-  async function createEstate(input: CreateEstateInput): Promise<{ signature: string; estatePda: Address }> {
+  async function createEstate(input: CreateEstateInput): Promise<CreatedEstate> {
     const authority = account?.address;
     if (!authority) throw new Error("Connect a wallet first");
     const [estatePda] = await findEstatePda({ authority, heir: input.heir });
     const tokens = await Promise.all(
       (input.tokens ?? []).map((picked) => toTokenDeposit(client.rpc, picked)),
     );
-    const signature = await sendIxs(async (signer) => {
-      // The one read worth its cost: it stops a create that is sure to fail before the user signs.
-      await assertEstateFree(client.rpc, signer.address, input.heir);
-      return buildCreateEstateIxs(signer, input, tokens);
-    });
-    return { signature, estatePda };
+    // Try again after a create that went out but never confirmed: if it landed, that was the create.
+    const earlier = lastSubmittedCreate.current;
+    if (earlier?.estatePda === estatePda && (await estateExists(client.rpc, estatePda))) {
+      return earlier;
+    }
+    try {
+      const signature = await sendIxs(async (signer) => {
+        // The one read worth its cost: it stops a create that is sure to fail before the user signs.
+        await assertEstateFree(client.rpc, signer.address, input.heir);
+        return buildCreateEstateIxs(signer, input, tokens);
+      });
+      return { signature, estatePda };
+    } catch (cause) {
+      if (!(cause instanceof SubmittedTxError)) throw cause;
+      const submitted = { signature: cause.signature, estatePda };
+      lastSubmittedCreate.current = submitted;
+      // Confirming failed, not the send. The estate account is the proof it landed.
+      const landed = await estateExists(client.rpc, estatePda).catch(() => false);
+      if (landed) return submitted;
+      throw cause;
+    }
   }
 
   async function reassignHeir(row: EstateRow, newHeir: Address): Promise<string> {

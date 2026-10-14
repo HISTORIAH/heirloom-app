@@ -11,7 +11,10 @@ import type { FailureKind, FailureView } from "@/types/ui";
  * (usually waiting for confirmation). It may still land, so the copy mustn't say "wasn't sent".
  */
 export class SubmittedTxError extends Error {
-  constructor(cause: unknown) {
+  constructor(
+    readonly signature: string,
+    cause: unknown,
+  ) {
     super(errorMessage(cause, "Failed after sending"), { cause });
     this.name = "SubmittedTxError";
   }
@@ -64,6 +67,17 @@ function ourSentence(error: unknown): string | undefined {
   return text;
 }
 
+function networkFailure(chain: unknown[], text: string): boolean {
+  const transport = chain.some((e) => isSolanaError(e, SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR));
+  return transport || NETWORK_TEXT.test(text);
+}
+
+/** The request never got an answer: offline, DNS blip, dropped socket, HTTP 5xx. */
+export function isNetworkError(error: unknown): boolean {
+  const chain = causeChain(error);
+  return networkFailure(chain, chainText(chain));
+}
+
 function kindOf(error: unknown, chain: unknown[], text: string): FailureKind {
   const tx = classifyTxError(error);
   if (tx.kind === "rejected" || chain.some(isUserCancel) || CANCELLED_TEXT.test(text))
@@ -74,8 +88,7 @@ function kindOf(error: unknown, chain: unknown[], text: string): FailureKind {
     return "card";
   if (tx.kind === "insufficientSol" || tx.kind === "expired" || tx.kind === "program")
     return tx.kind;
-  const transport = chain.some((e) => isSolanaError(e, SOLANA_ERROR__RPC__TRANSPORT_HTTP_ERROR));
-  if (transport || NETWORK_TEXT.test(text)) return "network";
+  if (networkFailure(chain, text)) return "network";
   if (chain.some((e) => ourSentence(e) !== undefined)) return "known";
   return "unknown";
 }

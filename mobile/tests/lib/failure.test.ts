@@ -53,7 +53,7 @@ describe("describeFailure", () => {
 
   test("a failure after sending doesn't claim it wasn't sent", () => {
     const view = describeFailure(
-      new SubmittedTxError(new TypeError("Network request failed")),
+      new SubmittedTxError("sig", new TypeError("Network request failed")),
       "Check-in",
     );
     expect(view.body).toContain("It may still go through");

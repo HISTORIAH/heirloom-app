@@ -70,6 +70,7 @@ import {
   durationText,
 } from "@/lib";
 import { SECONDS_PER_DAY } from "@/constants/time";
+import { SubmittedTxError } from "@/lib/failure";
 import { CREDENTIAL_ADAPTERS, rememberCredential } from "@/lib/nfc/credentials";
 import {
   isTangemCancel,
@@ -133,6 +134,8 @@ export default function CreateScreen() {
   const [scanFor, setScanFor] = useState<"heir" | "signer" | "guardian">("heir");
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const scanToken = useRef(0);
+  /** A create went out but never confirmed, so Discard can't promise nothing was sent. */
+  const createMayHaveLanded = useRef(false);
 
   const isCredential = heirKind === "credential";
   const handoverSecret: HandoverSecret =
@@ -214,7 +217,9 @@ export default function CreateScreen() {
       {
         cap: "Discard",
         title: "Discard this estate?",
-        body: "Nothing has been sent yet.",
+        body: createMayHaveLanded.current
+          ? "It may already be created. Check your estates before making it again."
+          : "Nothing has been sent yet.",
         cancelLabel: "Keep going",
         confirmLabel: "Discard",
       },
@@ -451,6 +456,7 @@ export default function CreateScreen() {
       setFlash("Estate created.");
       router.replace("/");
     } catch (cause) {
+      if (cause instanceof SubmittedTxError) createMayHaveLanded.current = true;
       setPhase("review");
       fail("Estate creation", cause, () => void onCreate());
     }
