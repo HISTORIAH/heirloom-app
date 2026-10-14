@@ -33,7 +33,11 @@ function buildMessage(signer: TransactionSigner, ixs: Instruction[], lifetime: L
   );
 }
 
-function compileForCard(signer: TransactionSigner, ixs: Instruction[], lifetime: Lifetime): SignableTransaction {
+function compileForCard(
+  signer: TransactionSigner,
+  ixs: Instruction[],
+  lifetime: Lifetime,
+): SignableTransaction {
   const transaction = compileTransaction(buildMessage(signer, ixs, lifetime));
   assertIsTransactionWithinSizeLimit(transaction);
   return transaction;
@@ -54,7 +58,8 @@ export function packInstructionsForCard(
   for (const ix of ixs) {
     const trial = [...current, ix];
     if (measure(trial) > maxBytes) {
-      if (current.length === 0) throw new Error("This transaction is too large for the credential.");
+      if (current.length === 0)
+        throw new Error("This transaction is too large for the credential.");
       batches.push(current);
       current = [ix];
       if (measure(current) > maxBytes) {
@@ -109,7 +114,11 @@ export async function sendCardBatches(
 ): Promise<string[]> {
   if (ixs.length === 0) return [];
   const { value: lifetime } = await rpc.getLatestBlockhash().send();
-  const batches = packInstructionsForCard((batch) => messageLen(signer, batch, lifetime), ixs, maxBytes);
+  const batches = packInstructionsForCard(
+    (batch) => messageLen(signer, batch, lifetime),
+    ixs,
+    maxBytes,
+  );
   const compiled = batches.map((batch) => compileForCard(signer, batch, lifetime));
   const signed = await signAll(signer, compiled);
   const sigs: string[] = [];

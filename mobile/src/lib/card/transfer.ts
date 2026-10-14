@@ -16,6 +16,7 @@ export async function sendFromCard(input: {
   if (input.destination === input.signer.address) {
     throw new Error("Pick a wallet that isn’t this credential.");
   }
+
   if (input.asset.kind === "token") {
     const ixs = await buildTokenTransferIxs(
       input.signer,
@@ -26,6 +27,8 @@ export async function sendFromCard(input: {
     await sendCardBatches(input.rpc, input.signer, ixs, input.maxMessageBytes);
     return;
   }
+
   const solIx = buildSolSweepIx(input.signer, input.destination, input.asset.lamports);
-  if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
+  if (solIx !== undefined)
+    await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
 }
