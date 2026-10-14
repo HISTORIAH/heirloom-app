@@ -17,16 +17,6 @@
       "cache": false,
       "persistent": true
     },
-    "release:devnet": {
-      "cache": false,
-      "interactive": true,
-      "passThroughEnv": ["SSH_AUTH_SOCK", "GPG_TTY", "GNUPGHOME"]
-    },
-    "release:mainnet": {
-      "cache": false,
-      "interactive": true,
-      "passThroughEnv": ["SSH_AUTH_SOCK", "GPG_TTY", "GNUPGHOME"]
-    },
     "test": {
       "dependsOn": ["build"]
     }
