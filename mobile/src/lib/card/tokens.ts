@@ -28,7 +28,12 @@ export async function discoverCardTokens(rpc: EstateRpc, owner: Address): Promis
       const mint = safeAddress(parsed?.mint);
       const amount = toBigInt(parsed?.amount);
       const decimals = parsed?.decimals;
-      if (tokenProgram === undefined || mint === undefined || amount === undefined || amount <= 0n) {
+      if (
+        tokenProgram === undefined ||
+        mint === undefined ||
+        amount === undefined ||
+        amount <= 0n
+      ) {
         continue;
       }
       if (decimals === undefined) continue;

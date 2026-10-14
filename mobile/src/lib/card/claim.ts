@@ -56,7 +56,10 @@ async function sendClaimIfNeeded(input: {
     return true;
   } catch (cause) {
     const fresh = await fetchEstateByAddress(input.rpc, input.row.address);
-    if (fresh !== undefined && estateSpan(fresh.data, fresh.claimableLamports).state === "distributed") {
+    if (
+      fresh !== undefined &&
+      estateSpan(fresh.data, fresh.claimableLamports).state === "distributed"
+    ) {
       return false;
     }
     throw cause;
@@ -82,6 +85,7 @@ export async function runCardClaim(input: CardClaimInput): Promise<{ claimed: bo
 
   const spare = await fetchCardSpareLamports(input.rpc, heir);
   const solIx = buildSolSweepIx(input.signer, input.plan.destination, spare);
-  if (solIx !== undefined) await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
+  if (solIx !== undefined)
+    await sendCardBatches(input.rpc, input.signer, [solIx], input.maxMessageBytes);
   return { claimed };
 }

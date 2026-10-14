@@ -35,11 +35,11 @@ export async function fetchCardHoldings(
   };
   const named: CardHolding[] = tokens.map((tok) => {
     const asset = meta.get(tok.mint);
-    const { symbol, name, named: hasName } = pickLabel(
-      tok.mint,
-      asset?.token_info?.symbol,
-      asset?.content,
-    );
+    const {
+      symbol,
+      name,
+      named: hasName,
+    } = pickLabel(tok.mint, asset?.token_info?.symbol, asset?.content);
     const price = asset?.token_info?.price_info?.price_per_token;
     return {
       id: tok.mint,
