@@ -54,7 +54,7 @@
       ],
       "./plugins/with-splash-icon-background",
       "./plugins/with-tangem-sdk",
-      "./plugins/with-gradle-memory",
+      "./plugins/with-gradle-properties",
       "./plugins/with-release-signing"
     ],
     "experiments": {
