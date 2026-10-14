@@ -18,8 +18,16 @@
   --tile-soft: 60 10% 94%;
   --ink: 0 0% 5%;
   --radius: 0.75rem;
-  --nav-h: 4rem;
+  --nav-h: clamp(4rem, 3.5rem + 0.6vw, 4.5rem);
   --page-pad: clamp(1.25rem, 3.5vw, 3rem);
+
+  /* The bar's type and spacing follow the landing (landing/src/styles/global.css)
+     so the sites hand off without the chrome jumping. The bar itself stays
+     shorter: the landing's sits over a full-bleed hero, this one over prose. */
+  --nav-logo-h: clamp(2rem, 1.6rem + 0.5vw, 2.5rem);
+  --nav-link-h: clamp(2.5rem, 2.1rem + 0.5vw, 2.75rem);
+  --nav-link-px: clamp(1.25rem, 0.9rem + 0.4vw, 1.5rem);
+  --nav-text: clamp(0.75rem, 0.6rem + 0.2vw, 0.875rem);
 }
 
 /* ── Base ──────────────────────────────────────────────────── */

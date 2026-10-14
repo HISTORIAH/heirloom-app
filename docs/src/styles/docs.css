@@ -34,9 +34,17 @@
     --radius: 0.75rem;
 
     /* The three fixed metrics the whole page is solved against. */
-    --nav-h: 4rem;
+    --nav-h: clamp(4rem, 3.5rem + 0.6vw, 4.5rem);
     --page-pad: clamp(1.25rem, 3.5vw, 3rem);
     --sidebar-w: 16rem;
+
+    /* The bar's type and spacing follow the landing (landing/src/styles/global.css)
+       so the sites hand off without the chrome jumping. The bar itself stays
+       shorter: the landing's sits over a full-bleed hero, this one over prose. */
+    --nav-logo-h: clamp(2rem, 1.6rem + 0.5vw, 2.5rem);
+    --nav-link-h: clamp(2.5rem, 2.1rem + 0.5vw, 2.75rem);
+    --nav-link-px: clamp(1.25rem, 0.9rem + 0.4vw, 1.5rem);
+    --nav-text: clamp(0.75rem, 0.6rem + 0.2vw, 0.875rem);
     --toc-w: 14rem;
   }
 
