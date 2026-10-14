@@ -7,9 +7,9 @@ bun release:mobile:devnet    # preview: GitHub pre-release, never goes to the dA
 bun release:mobile:mainnet   # product: GitHub draft, then the dApp Store
 ```
 
-Turbo's UI opens; press `i` to answer the prompts, `Ctrl+z` to stop.
+release-it prompts in the terminal; `Ctrl+c` to stop.
 
-Rehearse first with `bun release:mobile:devnet -- -- --dry-run` (both `--` are needed). It runs the
+Rehearse first with `bun release:mobile:devnet --dry-run`. It runs the
 git checks and prints every step without running any. To test the signed build itself:
 `cd mobile && bunx expo prebuild -p android && HEIRLOOM_RELEASE_SIGNING=required bun apk:devnet`.
 
