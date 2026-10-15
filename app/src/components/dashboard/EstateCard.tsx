@@ -7,7 +7,7 @@ import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useReminders, useSaveHeirName } from "@/hooks/useReminders";
 import { useTokenPrices } from "@/hooks/useTokenPrices";
 import { SOL_DECIMALS, WRAPPED_SOL_MINT } from "@/lib/constants";
-import { errMsg, getClusterFromEndpoint } from "@/lib/utils";
+import { errMsg } from "@/lib/utils";
 import { FEATURE_YIELD_STAKING_UI } from "@/config";
 import { EstateStatusTile } from "@/components/dashboard/EstateStatusTile";
 import { EstateAssetsPanel } from "@/components/dashboard/EstateAssetsPanel";
@@ -51,11 +51,8 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
 
   const [stakingDialogOpen, setStakingDialogOpen] = useState(false);
 
-  // TEMP: network-aware feature toggle for yield/staking.
-  // Mainnet: always show. Devnet/local: only show if VITE_FEATURE_YIELD_STAKING_UI=true.
-  // TODO: Remove once feature ships to all networks.
-  const cluster = getClusterFromEndpoint();
-  const showYieldStaking = cluster === "solana:mainnet" || FEATURE_YIELD_STAKING_UI;
+  // TEMP: yield/staking is mocked, so it's local-dev only. See FEATURE_YIELD_STAKING_UI.
+  const showYieldStaking = FEATURE_YIELD_STAKING_UI;
 
   // TODO:Placeholder strategies — per-estate local state (replace with real data later)
   const [luloStrategy, setLuloStrategy] = useState<Strategy | null>(null);

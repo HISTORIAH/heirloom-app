@@ -34,7 +34,7 @@ Copy `.env.example` to `.env.local` and fill it in. It documents every variable:
 | `VITE_BACKEND_URL` | Backend API (auth, reminders, estate metadata) |
 | `VITE_JUPITER_API_KEY` | USD prices; prices are skipped without it |
 | `VITE_ANALYTICS_ENABLED`, `VITE_POSTHOG_*` | PostHog, off unless explicitly enabled |
-| `VITE_FEATURE_YIELD_STAKING_UI` | Temporary flag; the yield flows are mocked |
+| `VITE_FEATURE_YIELD_STAKING_UI` | Temporary flag; the yield flows are mocked, so they only show under `bun dev` (on unless `false`) and never in a build |
 
 After a program IDL change, run `bun generate` from the root. Broken contracts
 show up in `tsc`.
