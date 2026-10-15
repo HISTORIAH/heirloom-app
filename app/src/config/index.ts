@@ -44,10 +44,12 @@ export const ANALYTICS_ENABLED =
 
 // --- Feature flags (temporary — remove once shipped) ---
 
-// TEMP: Yield/staking is on by default. The flows are
-// still mocked. Set VITE_FEATURE_YIELD_STAKING_UI=false to hide them.
-// TODO: Flip back to opt-in (or delete) once the strategies are wired to real programs.
+// TEMP: The yield/staking flows are still mocked, so they only ever show in the
+// local dev server — production builds drop them whatever the env says. Locally
+// they're on by default; set VITE_FEATURE_YIELD_STAKING_UI=false to hide them.
+// TODO: Delete once the strategies are wired to real programs.
 export const FEATURE_YIELD_STAKING_UI =
+  import.meta.env.DEV &&
   import.meta.env.VITE_FEATURE_YIELD_STAKING_UI?.trim().toLowerCase() !== "false";
 
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
