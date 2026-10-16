@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import { Pencil } from "lucide-react";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useWithSession } from "@/hooks/useWithSession";
 import { updateEstate } from "@/services/api/estateMetadata";
 import { LABEL_MAX_LEN } from "@/lib/constants";

@@ -9,7 +9,7 @@ import { summarizeReminders, type NotificationsCardStatus } from "@/types/remind
 import { useReminders } from "@/hooks/useReminders";
 import { useAuthenticate } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { errMsg, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";
 

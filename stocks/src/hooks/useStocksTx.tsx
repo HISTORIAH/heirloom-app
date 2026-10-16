@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Instruction, TransactionSigner } from "@solana/kit";
 import { useTranslation } from "@heirloom/i18n";
 import { useWallet } from "@/contexts/WalletContext";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/useToast";
 import { explorerTxUrl } from "@/lib/format";
 import { STOCKS_QUERY_KEY } from "@/hooks/useStocks";
 import { isUserRejection, programErrorKey, sendAndConfirm } from "@/services/tx";

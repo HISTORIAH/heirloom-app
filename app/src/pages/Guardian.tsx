@@ -23,14 +23,10 @@ import {
   ScanSummary,
 } from "@/components/portal/ScanStates";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useEstateScan } from "@/hooks/useEstateScan";
 import { useLiveEstate } from "@/hooks/useLiveEstate";
-import {
-  delegateDefer,
-  lookupNamedEstateSnapshot,
-  type EstateSnapshot,
-} from "@/services/heirloom";
+import { delegateDefer, lookupNamedEstateSnapshot, type EstateSnapshot } from "@/services/heirloom";
 import {
   errMsg,
   formatCountdown,
@@ -48,7 +44,8 @@ const GuardianCard: React.FC<{
   const { t, i18n } = useTranslation("app");
   const live = useLiveEstate(estate);
 
-  const title = estate.label ?? t("roles.estateOf", { owner: truncateAddress(estate.authority, 4) });
+  const title =
+    estate.label ?? t("roles.estateOf", { owner: truncateAddress(estate.authority, 4) });
   const sub = t("roles.heir", { address: truncateAddress(estate.heir, 4) });
   const opensIn = (
     <>
@@ -113,9 +110,7 @@ const GuardianCard: React.FC<{
             <StatusPill tone="warning">{t("guardian.pillMissed")}</StatusPill>
           )
         }
-        note={note(
-          t("guardian.pausedNote", { time: formatCountdown(live.secondsUntilClaimable) }),
-        )}
+        note={note(t("guardian.pausedNote", { time: formatCountdown(live.secondsUntilClaimable) }))}
       >
         {opensIn}
       </RoleEstateCard>

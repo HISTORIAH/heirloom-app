@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useReminders, useSaveHeirName } from "@/hooks/useReminders";

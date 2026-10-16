@@ -6,7 +6,7 @@ import AlertPreview from "@/components/reminders/AlertPreview";
 import ContactFields from "@/components/reminders/ContactFields";
 import ReminderTimeline from "@/components/reminders/ReminderTimeline";
 import VerifyStage from "@/components/reminders/VerifyStage";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import {
   useReminders,
   useResendVerification,
