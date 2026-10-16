@@ -14,7 +14,7 @@ import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useTranslation } from "@heirloom/i18n";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { EstateLookupDetails, EstateLookupForm } from "@/components/portal/EstateLookup";
 import {

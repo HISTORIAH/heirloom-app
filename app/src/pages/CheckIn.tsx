@@ -22,14 +22,10 @@ import {
   ScanSummary,
 } from "@/components/portal/ScanStates";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useEstateScan } from "@/hooks/useEstateScan";
 import { useLiveEstate } from "@/hooks/useLiveEstate";
-import {
-  checkInAll,
-  lookupNamedEstateSnapshot,
-  type EstateSnapshot,
-} from "@/services/heirloom";
+import { checkInAll, lookupNamedEstateSnapshot, type EstateSnapshot } from "@/services/heirloom";
 import { SECONDS_PER_DAY } from "@/lib/constants";
 import {
   errMsg,
@@ -49,7 +45,8 @@ const CheckInCard: React.FC<{
   const { t, i18n } = useTranslation("app");
   const live = useLiveEstate(estate);
 
-  const title = estate.label ?? t("roles.estateOf", { owner: truncateAddress(estate.authority, 4) });
+  const title =
+    estate.label ?? t("roles.estateOf", { owner: truncateAddress(estate.authority, 4) });
   const sub = t("roles.ownerAndHeir", {
     owner: truncateAddress(estate.authority, 4),
     heir: truncateAddress(estate.heir, 4),
@@ -124,7 +121,10 @@ const CheckInCard: React.FC<{
         )}
         action={checkInButton(true)}
       >
-        <CardRow label={t("checkIn.graceEndsIn")} value={formatCountdown(live.secondsUntilClaimable)} />
+        <CardRow
+          label={t("checkIn.graceEndsIn")}
+          value={formatCountdown(live.secondsUntilClaimable)}
+        />
         <CountdownBar progress={live.progress} overdue />
       </RoleEstateCard>
     );

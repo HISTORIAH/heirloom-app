@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useVault, type EstateData } from "@/contexts/VaultContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useWithSession } from "@/hooks/useWithSession";
 import { deleteEstate } from "@/services/api/estateMetadata";
 import { errMsg } from "@/lib/utils";
@@ -37,10 +37,17 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, account, onTx }) =>
       onTx(tx);
       setWithdrawConfirmOpen(false);
       track("emergency_withdraw_succeeded");
-      toast({ title: t("dashboard.manage.estateClosedTitle"), description: t("dashboard.manage.vaultClosedDesc") });
+      toast({
+        title: t("dashboard.manage.estateClosedTitle"),
+        description: t("dashboard.manage.vaultClosedDesc"),
+      });
     } catch (err: unknown) {
       track("emergency_withdraw_failed", { stage: "transaction" });
-      toast({ title: t("dashboard.manage.withdrawFailedTitle"), description: errMsg(err), variant: "destructive" });
+      toast({
+        title: t("dashboard.manage.withdrawFailedTitle"),
+        description: errMsg(err),
+        variant: "destructive",
+      });
     } finally {
       setWithdrawing(false);
     }
@@ -54,9 +61,13 @@ const EmergencyWithdrawSection: React.FC<Props> = ({ estate, account, onTx }) =>
         className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-accent-red/50 px-4 py-3 text-center text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-accent-red transition-colors hover:bg-accent-red/10 disabled:opacity-50"
       >
         {withdrawing ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.withdrawing")}</>
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("dashboard.manage.withdrawing")}
+          </>
         ) : (
-          <><AlertTriangle className="h-4 w-4" /> {t("dashboard.manage.closeEstate")}</>
+          <>
+            <AlertTriangle className="h-4 w-4" /> {t("dashboard.manage.closeEstate")}
+          </>
         )}
       </button>
 

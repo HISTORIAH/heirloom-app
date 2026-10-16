@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { IS_MAINNET } from "@/config";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/useToast";
 import { canSignMainnet, useMainnetSwap, useSwapQuote } from "@/hooks/useJupiter";
 import { useNow } from "@/hooks/useStocks";
 import { formatNumber, formatPercent, formatUsd } from "@/lib/format";
@@ -174,7 +174,11 @@ function TradeForm({
         <span className="px-1 text-sm text-muted-foreground">
           {side === "buy" ? t("trade.payWith") : t("trade.receiveIn")}
         </span>
-        <div role="group" aria-label={side === "buy" ? t("trade.payWith") : t("trade.receiveIn")} className="hs-seg">
+        <div
+          role="group"
+          aria-label={side === "buy" ? t("trade.payWith") : t("trade.receiveIn")}
+          className="hs-seg"
+        >
           {(Object.keys(QUOTE_TOKENS) as QuoteSymbol[]).map((q) => (
             <button
               key={q}
@@ -253,9 +257,7 @@ function TradeForm({
           </span>
         </div>
         {quote.isError && amount !== null && (
-          <p className="hs-error">
-            {quote.error.message || t("trade.quoteFailed")}
-          </p>
+          <p className="hs-error">{quote.error.message || t("trade.quoteFailed")}</p>
         )}
         {quote.data && amount !== null && (
           <dl className="hs-mono-xs space-y-1.5 border-t border-tile-line pt-3 text-muted-foreground">
