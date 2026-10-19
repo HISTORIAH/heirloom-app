@@ -1,19 +1,46 @@
 import { useState } from "react";
+import { Shield } from "lucide-react";
 import { Panel, PanelCap } from "@/components/surface/Panel";
 import TokenRow from "@/components/dashboard/TokenRow";
 import TokenAvatar from "@/components/TokenAvatar";
 import { SolStakingIndicator } from "@/components/dashboard/SolStakingIndicator";
 import { DASHBOARD_CARD } from "@/components/dashboard/estateState";
 import { SOL_DECIMALS, SOL_LABEL, WRAPPED_SOL_MINT } from "@/lib/constants";
-import { cn, formatSol, formatUsd } from "@/lib/utils";
-import { useTranslation } from "@heirloom/i18n";
+import { cn, formatSol, formatUsd, truncateAddress } from "@/lib/utils";
+import { Trans, useTranslation } from "@heirloom/i18n";
 import type { EstateData } from "@/contexts/VaultContext";
 import type { VaultTokenHolding } from "@/types";
 import type { LuloStrategy, Strategy, StrategyProgressStep } from "@/types/strategy-ui";
 import type { UsdPriceMap } from "@/types/prices";
 
+type AssetTab = "sol" | "tokens" | "nfts";
+
+/** One NFT in the NFTs tab: its image, name and collection. No amount or price. */
+const NftCard: React.FC<{ nft: VaultTokenHolding }> = ({ nft }) => {
+  const label = nft.name || nft.symbol || truncateAddress(nft.mint, 4);
+  return (
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-tile-line">
+      <TokenAvatar
+        image={nft.image}
+        label={label}
+        size="fill"
+        accent="bg-tile-soft"
+        className="rounded-none border-0"
+      />
+      <div className="px-3.5 py-3">
+        <p className="truncate text-base font-semibold leading-tight">{label}</p>
+        {nft.collection && (
+          <p className="mt-0.5 truncate text-[0.8125rem] text-muted-foreground">{nft.collection}</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 interface EstateAssetsPanelProps {
   estate: EstateData;
+  /** The heir's name from their reminder profile, when one is set. */
+  heirName: string | null;
   /** USD prices by mint (SOL under the wrapped mint). Undefined while loading or unavailable. */
   prices: UsdPriceMap | undefined;
   /** Prices arrive after the estate; the value shimmers until they do. */
@@ -34,6 +61,7 @@ interface EstateAssetsPanelProps {
 
 export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   estate,
+  heirName,
   prices,
   pricesLoading,
   showYieldStaking,
@@ -50,10 +78,17 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   className,
 }) => {
   const { t } = useTranslation("app");
-  // An estate holding only tokens opens on them rather than on an empty SOL balance.
-  const [tab, setTab] = useState<"sol" | "tokens">(() =>
-    estate.solBalance === 0 && estate.vaultTokens.length > 0 ? "tokens" : "sol",
-  );
+  const tokens = estate.vaultTokens.filter((vt) => !vt.isNft);
+  const nfts = estate.vaultTokens.filter((vt) => vt.isNft);
+
+  // An estate without SOL opens on whatever it does hold, tokens first.
+  const [chosenTab, setTab] = useState<AssetTab>(() => {
+    if (estate.solBalance > 0) return "sol";
+    if (tokens.length > 0) return "tokens";
+    return nfts.length > 0 ? "nfts" : "sol";
+  });
+  // The NFTs tab disappears once the last NFT leaves the estate.
+  const tab = chosenTab === "nfts" && nfts.length === 0 ? "tokens" : chosenTab;
 
   const assetCount = 1 + estate.vaultTokens.length;
   const solVaultBalance = Number(estate.solBalance) / 10 ** SOL_DECIMALS;
@@ -65,10 +100,7 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   };
   const solUsd = usdOf(WRAPPED_SOL_MINT, solVaultBalance);
   const tokenUsd = new Map(
-    estate.vaultTokens.map((vt) => [
-      vt.mint,
-      usdOf(vt.mint, Number(vt.rawAmount) / 10 ** vt.decimals),
-    ]),
+    tokens.map((vt) => [vt.mint, usdOf(vt.mint, Number(vt.rawAmount) / 10 ** vt.decimals)]),
   );
   const pricedTokens = [...tokenUsd.values()].filter((v): v is number => v !== undefined);
   const tokensTotal = pricedTokens.length ? pricedTokens.reduce((a, b) => a + b, 0) : undefined;
@@ -95,8 +127,16 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
           </button>
           <span aria-hidden="true" className="w-px bg-tile-line" />
           <button onClick={() => setTab("tokens")} className={tabClass(tab === "tokens")}>
-            {t("dashboard.tokens")} ({estate.vaultTokens.length})
+            {t("dashboard.tokens")} ({tokens.length})
           </button>
+          {nfts.length > 0 && (
+            <>
+              <span aria-hidden="true" className="w-px bg-tile-line" />
+              <button onClick={() => setTab("nfts")} className={tabClass(tab === "nfts")}>
+                {t("dashboard.nfts")} ({nfts.length})
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -140,7 +180,13 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
             </div>
           )}
         </div>
-      ) : estate.vaultTokens.length === 0 ? (
+      ) : tab === "nfts" ? (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {nfts.map((nft) => (
+            <NftCard key={nft.ata} nft={nft} />
+          ))}
+        </div>
+      ) : tokens.length === 0 ? (
         <p className="py-10 text-center text-sm font-medium text-muted-foreground">
           {t("dashboard.noTokens")}
         </p>
@@ -151,10 +197,12 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
               <span className="text-sm text-muted-foreground">{t("dashboard.tokenValue")}</span>
               {pricesLoading ? (
                 <div aria-hidden="true" className="skeleton mt-1 h-[30px] w-40" />
-              ) : (
+              ) : tokensTotal !== undefined ? (
                 <p className="mt-1 font-display text-3xl font-bold leading-none tracking-[-0.02em] tabular-nums">
-                  {tokensTotal !== undefined ? formatUsd(tokensTotal) : t("dashboard.noPriceData")}
+                  {formatUsd(tokensTotal)}
                 </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.notPricedYet")}</p>
               )}
             </div>
             {estateTotal > 0 && (
@@ -166,10 +214,10 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
           <div
             className={cn(
               "flex flex-col gap-2",
-              estate.vaultTokens.length > 5 && "max-h-[460px] overflow-y-auto pr-1",
+              tokens.length > 5 && "max-h-[460px] overflow-y-auto pr-1",
             )}
           >
-            {estate.vaultTokens.map((vt) => (
+            {tokens.map((vt) => (
               <TokenRow
                 key={vt.ata}
                 vt={vt}
@@ -199,6 +247,24 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
           </div>
         </div>
       )}
+
+      <div className="mt-auto flex items-center gap-2.5 rounded-xl bg-tile-soft px-[18px] py-3.5 text-sm text-foreground/80">
+        <Shield aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-foreground" />
+        <p className="min-w-0">
+          <Trans
+            t={t}
+            i18nKey="dashboard.passesTo"
+            values={{ heir: heirName ?? truncateAddress(estate.heir, 4) }}
+            components={{
+              heir: heirName ? (
+                <span className="font-semibold text-foreground" />
+              ) : (
+                <span className="font-mono text-foreground" title={estate.heir} />
+              ),
+            }}
+          />
+        </p>
+      </div>
     </Panel>
   );
 };

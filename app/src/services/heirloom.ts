@@ -25,7 +25,7 @@ import type { VaultTokenHolding } from "@/types";
 import type { InitializeInput } from "@/types/program";
 import type { CreateAssetId, CreateEstateDraft } from "@/types/create";
 import type { EstateResponse, EstateRole } from "@/types/estate";
-import { assetDisplay, fetchOwnerAssets } from "@heirloom/core/assets";
+import { assetDisplay, fetchOwnerAssets, isNftAsset } from "@heirloom/core/assets";
 import { fetchEstates } from "@/services/api/estateMetadata";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import {
@@ -478,6 +478,7 @@ export async function discoverVaultTokenAccounts(vaultPda: Address): Promise<Vau
         decimals: asset.token_info?.decimals ?? 0,
         tokenProgram: asset.token_info?.token_program ?? TOKEN_PROGRAM_ADDRESS,
         ...assetDisplay(asset),
+        isNft: isNftAsset(asset),
       };
     }),
   );

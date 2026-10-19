@@ -14,10 +14,22 @@ export type DasPriceInfo = { price_per_token?: number; total_price?: number; cur
 export type DasTokenInfo = {
   /** Raw amount held by the owner. Can arrive as a string for large balances. */
   balance?: string | number;
+  /** Total supply of the mint, in raw units. 1 with 0 decimals is a lone NFT. */
+  supply?: string | number;
   decimals?: number;
   symbol?: string;
   token_program?: string;
   price_info?: DasPriceInfo;
+};
+
+/**
+ * What an asset belongs to. For `group_key: "collection"`, `group_value` is the collection
+ * mint; its metadata is only filled in when the call asks for `showCollectionMetadata`.
+ */
+export type DasGrouping = {
+  group_key: string;
+  group_value: string;
+  collection_metadata?: { name?: string; symbol?: string; image?: string };
 };
 
 export type DasAsset = {
@@ -26,6 +38,7 @@ export type DasAsset = {
   interface?: string;
   content?: DasContent;
   token_info?: DasTokenInfo;
+  grouping?: DasGrouping[];
   ownership?: { frozen?: boolean; owner?: string };
   /** Compressed NFTs live in a merkle tree, not a token account. */
   compression?: { compressed?: boolean };
@@ -40,7 +53,13 @@ export type DasRpcResponse<T> = {
 export type DasAssetPage = { items?: Array<DasAsset | null> };
 
 /** Name, symbol and image to show for an asset. Blank values from DAS come back undefined. */
-export type AssetDisplay = { name?: string; symbol?: string; image?: string };
+export type AssetDisplay = {
+  name?: string;
+  symbol?: string;
+  image?: string;
+  /** Name of the NFT's collection, when it belongs to one and DAS sent its metadata. */
+  collection?: string;
+};
 
 /** Why a wallet asset can't go into an estate yet. The vault only holds plain SPL token accounts. */
 export type UnsupportedAssetReason = "programmable" | "compressed" | "core" | "frozen";
