@@ -1,5 +1,4 @@
-/** Why a wallet asset can't go into an estate yet. The vault only holds plain SPL token accounts. */
-export type UnsupportedAssetReason = "programmable" | "compressed" | "core" | "frozen";
+import type { UnsupportedAssetReason } from "@heirloom/core/assets";
 
 /** A row in the Add asset token picker. SOL and estate tokens can be topped up; the rest are new. */
 export type PickerToken = {

@@ -1,12 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { address, type Address } from "@solana/kit";
+import {
+  fetchOwnerAssets,
+  heldAmount,
+  isNftAsset,
+  unsupportedReason,
+  type DasAsset,
+} from "@heirloom/core/assets";
 
 import { DAS_RPC_URL } from "@/config";
-import { heldAmount, isNftAsset, unsupportedReason } from "@/lib/solana/assets";
+import { assetLabel } from "@/lib/solana/assetLabel";
 import { isTokenProgram } from "@/lib/solana/mint";
 import { errorMessage } from "@/lib/text";
-import { assetImageUrl, fetchOwnerAssets, pickLabel } from "@/services/api/das";
-import type { DasAsset } from "@/types/das";
 import type { WalletToken } from "@/types/wallet";
 
 /** Stable empty list, so memos keyed on `tokens` don't rerun every render while loading. */
@@ -44,7 +49,7 @@ function toWalletToken(asset: DasAsset): WalletToken {
   const info = asset.token_info;
   const raw = heldAmount(asset);
   const decimals = info?.decimals ?? 0;
-  const { symbol, name, named } = pickLabel(asset.id, info?.symbol, asset.content);
+  const { symbol, name, named, image } = assetLabel(asset.id, asset);
   return {
     mint: asset.id,
     symbol,
@@ -53,7 +58,7 @@ function toWalletToken(asset: DasAsset): WalletToken {
     raw,
     decimals,
     tokenProgram: knownTokenProgram(info?.token_program),
-    image: assetImageUrl(asset.content),
+    image,
     named,
     usd: info?.price_info?.total_price ?? null,
     usdPerToken: info?.price_info?.price_per_token ?? null,

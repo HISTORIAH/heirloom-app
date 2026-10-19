@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    // DOM only for the fetch and AbortSignal types, which React Native provides too. Don't use
+    // window, document or other browser-only globals in this package.
+    "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "types": ["bun"]
+  },
+  "include": ["src", "tests"]
+}

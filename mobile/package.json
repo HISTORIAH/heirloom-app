@@ -16,6 +16,7 @@
     "release:mainnet": "HEIRLOOM_CLUSTER=mainnet GITHUB_TOKEN=$(gh auth token) release-it"
   },
   "dependencies": {
+    "@heirloom/core": "workspace:*",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/metro-runtime": "~57.0.16",
     "@historiah/heirloom": "workspace:*",

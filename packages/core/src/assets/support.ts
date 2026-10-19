@@ -1,5 +1,4 @@
-import type { DasAsset } from "@/types/das";
-import type { UnsupportedAssetReason } from "@/types/wallet";
+import type { DasAsset, UnsupportedAssetReason } from "../types/assets";
 
 function isCompressed(asset: DasAsset): boolean {
   return asset.compression?.compressed ?? false;

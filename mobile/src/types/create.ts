@@ -1,4 +1,5 @@
-import type { UnsupportedAssetReason, WalletToken } from "@/types/wallet";
+import type { UnsupportedAssetReason } from "@heirloom/core/assets";
+import type { WalletToken } from "@/types/wallet";
 
 /** Who inherits: an Heirloom credential, someone else's wallet, or my own backup. */
 export type HeirKind = "credential" | "wallet" | "mine";

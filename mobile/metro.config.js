@@ -12,11 +12,9 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [
   projectRoot,
   path.resolve(monorepoRoot, "clients/heirloom/js"),
+  path.resolve(monorepoRoot, "packages/core"),
 ];
-config.resolver.nodeModulesPaths = [
-  projectModules,
-  path.resolve(monorepoRoot, "node_modules"),
-];
+config.resolver.nodeModulesPaths = [projectModules, path.resolve(monorepoRoot, "node_modules")];
 config.resolver.extraNodeModules = {
   react: path.resolve(projectModules, "react"),
   "react-dom": path.resolve(projectModules, "react-dom"),
