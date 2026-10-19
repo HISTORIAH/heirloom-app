@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Coins } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface TokenAvatarProps {
   image?: string;
@@ -9,6 +10,7 @@ export interface TokenAvatarProps {
   accent?: string;
   /** Round for fungible tokens, square (the default) for collectibles. */
   shape?: "round" | "square";
+  className?: string;
 }
 
 const TokenAvatar: React.FC<TokenAvatarProps> = ({
@@ -17,6 +19,7 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
   size = "sm",
   accent = "bg-secondary",
   shape = "square",
+  className,
 }) => {
   const [broken, setBroken] = useState(false);
   const radius = shape === "round" ? "rounded-full" : "rounded-lg";
@@ -30,7 +33,12 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
         alt={label}
         loading="lazy"
         onError={() => setBroken(true)}
-        className={`${dim} shrink-0 ${radius} border border-tile-line bg-background object-cover`}
+        className={cn(
+          dim,
+          "shrink-0 border border-tile-line bg-background object-cover",
+          radius,
+          className,
+        )}
       />
     );
   }
@@ -41,7 +49,13 @@ const TokenAvatar: React.FC<TokenAvatarProps> = ({
     .toUpperCase();
   return (
     <div
-      className={`${dim} ${accent} flex shrink-0 items-center justify-center ${radius} border border-tile-line`}
+      className={cn(
+        dim,
+        accent,
+        "flex shrink-0 items-center justify-center border border-tile-line",
+        radius,
+        className,
+      )}
       aria-hidden="true"
     >
       {initials ? (

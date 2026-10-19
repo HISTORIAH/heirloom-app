@@ -91,6 +91,21 @@ describe("assetDisplay", () => {
       token_info: { symbol: " USDC " },
       content: { metadata: { name: "  ", symbol: "OLD" }, links: { image: "https://img" } },
     };
-    expect(assetDisplay(asset)).toEqual({ name: undefined, symbol: "USDC", image: "https://img" });
+    expect(assetDisplay(asset)).toEqual({
+      name: undefined,
+      symbol: "USDC",
+      image: "https://img",
+      collection: undefined,
+    });
+  });
+
+  test("reads the collection name from the collection group", () => {
+    const asset: DasAsset = {
+      id: "mint",
+      grouping: [
+        { group_key: "collection", group_value: "col", collection_metadata: { name: "Smithii" } },
+      ],
+    };
+    expect(assetDisplay(asset).collection).toBe("Smithii");
   });
 });

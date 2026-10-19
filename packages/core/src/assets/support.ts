@@ -10,11 +10,18 @@ function reportedBalance(asset: DasAsset): bigint | undefined {
   return balance === undefined ? undefined : BigInt(balance);
 }
 
-/** V1_NFT, ProgrammableNFT, Core assets and cNFTs, plus any lone token with no decimals. */
+/**
+ * Metaplex NFTs (V1_NFT, V2_NFT, LEGACY_NFT, ProgrammableNFT), Core assets and cNFTs. Anything
+ * else counts when it's a lone, indivisible token: 0 decimals and a supply of 1 (or, when DAS
+ * leaves out the supply, a balance of 1).
+ */
 export function isNftAsset(asset: DasAsset): boolean {
   if (isCompressed(asset) || asset.interface === "MplCoreAsset") return true;
   if (asset.interface?.includes("NFT")) return true;
-  return asset.token_info?.decimals === 0 && reportedBalance(asset) === 1n;
+  const info = asset.token_info;
+  if (info?.decimals !== 0) return false;
+  const loneUnit = info.supply !== undefined ? BigInt(info.supply) : reportedBalance(asset);
+  return loneUnit === 1n;
 }
 
 /**

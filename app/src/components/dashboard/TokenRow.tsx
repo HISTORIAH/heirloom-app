@@ -34,13 +34,8 @@ const TokenRow: React.FC<TokenRowProps> = ({
   const { t } = useTranslation("app");
   const { symbol, name, image } = vt;
   const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
-  const isNft = vt.decimals === 0 && vt.rawAmount === 1n;
   const primary = name || symbol || shortMint;
-  const secondary = isNft
-    ? t("addAsset.nftTag")
-    : symbol && symbol !== primary
-      ? symbol
-      : shortMint;
+  const secondary = symbol && symbol !== primary ? symbol : shortMint;
   const isYieldActive = luloStrategy?.mint === vt.mint && luloStrategy.active;
 
   const fallbackAccent = getTokenAccent(vt.mint);
@@ -58,7 +53,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
           label={primary}
           size="md"
           accent={fallbackAccent.bg}
-          shape={isNft ? "square" : "round"}
+          shape="round"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -85,9 +80,12 @@ const TokenRow: React.FC<TokenRowProps> = ({
           <p className="font-display text-xl font-bold leading-tight tabular-nums">
             {formatTokenAmount(vt.rawAmount, vt.decimals)}
           </p>
-          <p className="mt-0.5 text-[0.8125rem] text-muted-foreground tabular-nums">
-            {usdValue !== undefined ? formatUsd(usdValue) : t("addAsset.noPrice")}
-          </p>
+          {symbol && <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">{symbol}</p>}
+          {usdValue !== undefined && (
+            <p className="mt-0.5 text-[0.8125rem] text-muted-foreground tabular-nums">
+              {formatUsd(usdValue)}
+            </p>
+          )}
         </div>
         {showYieldStaking && (
           <InlineTokenYield

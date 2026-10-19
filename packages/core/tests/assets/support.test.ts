@@ -26,6 +26,22 @@ describe("isNftAsset", () => {
     );
   });
 
+  test("a mint with 0 decimals and a supply of 1 is an NFT, even if this wallet holds 0", () => {
+    const edition = asset({
+      interface: "Custom",
+      token_info: { decimals: 0, supply: 1, balance: 0 },
+    });
+    expect(isNftAsset(edition)).toBe(true);
+  });
+
+  test("0 decimals with a larger supply is a fungible token", () => {
+    const points = asset({
+      interface: "Custom",
+      token_info: { decimals: 0, supply: 500, balance: 1 },
+    });
+    expect(isNftAsset(points)).toBe(false);
+  });
+
   test("a lone token with no decimals counts as an NFT whatever its interface", () => {
     const odd = asset({ interface: "Custom", token_info: { decimals: 0, balance: "1" } });
     expect(isNftAsset(odd)).toBe(true);

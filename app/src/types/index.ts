@@ -9,6 +9,10 @@ export type VaultTokenHolding = {
   name?: string;
   symbol?: string;
   image?: string;
+  /** Shown in the NFTs tab rather than with the tokens. */
+  isNft: boolean;
+  /** The NFT's collection name, when it has one. */
+  collection?: string;
 };
 
 export type SplTokenAsset = {

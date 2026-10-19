@@ -3,6 +3,7 @@ import type {
   DasAsset,
   DasAssetPage,
   DasContent,
+  DasGrouping,
   DasRpcResponse,
 } from "../types/assets";
 import { DAS_BATCH_SIZE, DAS_MAX_PAGES, DAS_PAGE_SIZE } from "./constants";
@@ -45,6 +46,10 @@ function nonBlank(text: string | undefined): string | undefined {
   return text?.trim() || undefined;
 }
 
+function collectionGroup(asset: DasAsset): DasGrouping | undefined {
+  return asset.grouping?.find((group) => group.group_key === "collection");
+}
+
 /** The asset's image: first image file (CDN copy preferred), else the metadata link. */
 export function assetImageUrl(content?: DasContent): string | undefined {
   const imageFile = content?.files?.find((file) => !file.mime || file.mime.startsWith("image/"));
@@ -58,6 +63,7 @@ export function assetDisplay(asset: DasAsset): AssetDisplay {
     name: nonBlank(metadata?.name),
     symbol: nonBlank(asset.token_info?.symbol) ?? nonBlank(metadata?.symbol),
     image: assetImageUrl(asset.content),
+    collection: nonBlank(collectionGroup(asset)?.collection_metadata?.name),
   };
 }
 
@@ -94,7 +100,8 @@ export async function fetchOwnerAssets(
         ownerAddress: owner,
         page,
         limit: DAS_PAGE_SIZE,
-        options: { showFungible: true, showZeroBalance: false },
+        // Collection metadata rides on the same call, so NFTs can show their collection name.
+        options: { showFungible: true, showZeroBalance: false, showCollectionMetadata: true },
       },
       signal,
     );

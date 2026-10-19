@@ -6,6 +6,7 @@ export type {
   DasAsset,
   DasContent,
   DasFile,
+  DasGrouping,
   DasPriceInfo,
   DasTokenInfo,
   UnsupportedAssetReason,

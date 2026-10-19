@@ -258,6 +258,7 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
         />
         <EstateAssetsPanel
           estate={estate}
+          heirName={heirName}
           prices={prices}
           pricesLoading={pricesLoading}
           showYieldStaking={showYieldStaking}
