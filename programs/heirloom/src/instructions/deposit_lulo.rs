@@ -65,15 +65,13 @@ impl DepositLulo {
 
         // let lulo_cpi_program_addr = ctx.accounts.lulo_accounts.0.program_id.address();
 
-        let authority_addr_arr = *ctx.accounts.authority.address().as_array();
-        let heir_addr_arr = *ctx.accounts.heir.address().as_array();
-        let vault_seeds: &[&[u8]] = &[
-            Vault::SEED,
-            authority_addr_arr.as_ref(),
-            heir_addr_arr.as_ref(),
-            &[ctx.accounts.vault.bump],
-        ];
-        let signer_seeds = &[vault_seeds];
+        let vault_seeds = Vault::signer_seeds_for(
+            ctx.accounts.authority.address(),
+            ctx.accounts.heir.address(),
+            ctx.accounts.vault.bump,
+        );
+        let vault_seeds = vault_seeds.as_seeds();
+        let signer_seeds: &[&[&[u8]]] = &[&vault_seeds];
 
         match deposit_type {
             DepositType::Protected => {

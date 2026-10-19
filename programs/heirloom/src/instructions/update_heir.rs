@@ -1,10 +1,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TransferChecked},
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount},
 };
 
-use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
+use crate::{
+    error::HeirloomError,
+    helpers::{
+        close_vault_token_account, create_token_account_if_missing, transfer_tokens_checked,
+    },
+    AssetRecord, Estate, Vault,
+};
 
 #[derive(Accounts)]
 pub struct UpdateHeir {
@@ -212,15 +218,13 @@ impl UpdateHeir {
             return Ok(());
         };
 
-        let authority_addr_arr = *self.authority.address().as_array();
-        let heir_addr_arr = *self.heir.address().as_array();
-        let vault_seeds: &[&[u8]] = &[
-            b"vault",
-            authority_addr_arr.as_ref(),
-            heir_addr_arr.as_ref(),
-            &[self.vault.bump],
-        ];
-        let signer_seeds = &[vault_seeds];
+        let vault_seeds = Vault::signer_seeds_for(
+            self.authority.address(),
+            self.heir.address(),
+            self.vault.bump,
+        );
+        let vault_seeds = vault_seeds.as_seeds();
+        let signer_seeds: &[&[&[u8]]] = &[&vault_seeds];
 
         let mut new_vault_ta = self.new_vault_token_account.take().unwrap();
         let token_program_addr = self.token_program.address();
@@ -228,44 +232,34 @@ impl UpdateHeir {
         let amount = vault_ta.amount();
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
-        // Create new vault ATA idempotently.
-        let cpi_accounts = associated_token::Create {
-            payer: self.authority.to_cpi_handle_mut(),
-            associated_token: new_vault_ta.to_cpi_handle_mut(),
-            authority: self.new_vault.to_cpi_handle(),
-            mint: mint.to_cpi_handle(),
-            system_program: self.system_program.to_cpi_handle(),
-            token_program: self.token_program.to_cpi_handle(),
-        };
-        associated_token::create_idempotent(CpiContext::new(
+        create_token_account_if_missing(
             self.associated_token_program.address(),
-            cpi_accounts,
-        ))?;
+            self.authority.to_cpi_handle_mut(),
+            new_vault_ta.to_cpi_handle_mut(),
+            self.new_vault.to_cpi_handle(),
+            mint.to_cpi_handle(),
+            self.system_program.to_cpi_handle(),
+            self.token_program.to_cpi_handle(),
+        )?;
 
-        // Transfer tokens to new vault ATA.
-        let transfer_ctx = CpiContext::new_with_signer(
+        transfer_tokens_checked(
             token_program_addr,
-            TransferChecked {
-                from: vault_ta.to_cpi_handle_mut(),
-                mint: mint.to_cpi_handle(),
-                to: new_vault_ta.to_cpi_handle_mut(),
-                authority: self.vault.to_cpi_handle(),
-            },
+            vault_ta.to_cpi_handle_mut(),
+            new_vault_ta.to_cpi_handle_mut(),
+            self.vault.to_cpi_handle(),
+            mint,
+            amount,
             signer_seeds,
-        );
-        token_interface::transfer_checked(transfer_ctx, amount, mint.decimals())?;
+        )?;
 
         // Close old ATA; rent goes back to authority.
-        let close_ctx = CpiContext::new_with_signer(
+        close_vault_token_account(
             token_program_addr,
-            token_interface::CloseAccount {
-                account: vault_ta.to_cpi_handle_mut(),
-                destination: self.authority.to_cpi_handle_mut(),
-                authority: self.vault.to_cpi_handle(),
-            },
+            vault_ta.to_cpi_handle_mut(),
+            self.authority.to_cpi_handle_mut(),
+            self.vault.to_cpi_handle(),
             signer_seeds,
-        );
-        token_interface::close_account(close_ctx)?;
+        )?;
 
         self.new_asset_record.as_mut().unwrap().bump = new_asset_record_bump.unwrap();
 

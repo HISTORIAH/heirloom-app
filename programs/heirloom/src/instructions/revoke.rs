@@ -1,13 +1,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TransferChecked},
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount},
 };
 
 use crate::{
     constants::{EMERGENCY_EXIT_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, is_nft},
+    helpers::{
+        close_vault_token_account, create_token_account_if_missing, is_nft_mint,
+        move_lamports_from_vault, split_amount_into_fee_and_payout, transfer_tokens_checked,
+    },
     AssetRecord, Estate, Vault,
 };
 
@@ -159,15 +162,13 @@ impl Revoke {
     }
 
     pub fn return_assets(&mut self) -> Result<()> {
-        let authority_addr_arr = *self.authority.address().as_array();
-        let heir_addr_arr = *self.heir.address().as_array();
-        let vault_seeds: &[&[u8]] = &[
-            b"vault",
-            authority_addr_arr.as_ref(),
-            heir_addr_arr.as_ref(),
-            &[self.vault.bump],
-        ];
-        let signer_seeds = &[vault_seeds];
+        let vault_seeds = Vault::signer_seeds_for(
+            self.authority.address(),
+            self.heir.address(),
+            self.vault.bump,
+        );
+        let vault_seeds = vault_seeds.as_seeds();
+        let signer_seeds: &[&[&[u8]]] = &[&vault_seeds];
 
         match self.authority_token_account.take() {
             Some(mut authority_ta) => {
@@ -178,77 +179,60 @@ impl Revoke {
                 let amount = vault_ta.amount();
 
                 // NFTs paid a flat fee on deposit
-                let fee_bps = if is_nft(mint) {
+                let fee_bps = if is_nft_mint(mint) {
                     0
                 } else {
                     EMERGENCY_EXIT_FEE_BPS
                 };
-                let (fee, authority_amt) = calculate_distribution(amount, fee_bps)?;
+                let (fee, authority_amt) = split_amount_into_fee_and_payout(amount, fee_bps)?;
 
                 if fee > 0 {
-                    let cpi_accounts = associated_token::Create {
-                        payer: self.authority.to_cpi_handle_mut(),
-                        associated_token: treasury_ta.to_cpi_handle_mut(),
-                        authority: self.treasury.to_cpi_handle(),
-                        mint: mint.to_cpi_handle(),
-                        system_program: self.system_program.to_cpi_handle(),
-                        token_program: self.token_program.to_cpi_handle(),
-                    };
+                    create_token_account_if_missing(
+                        self.associated_token_program.address(),
+                        self.authority.to_cpi_handle_mut(),
+                        treasury_ta.to_cpi_handle_mut(),
+                        self.treasury.to_cpi_handle(),
+                        mint.to_cpi_handle(),
+                        self.system_program.to_cpi_handle(),
+                        self.token_program.to_cpi_handle(),
+                    )?;
 
-                    let associated_program_addr = self.associated_token_program.address();
-                    let cpi_context = CpiContext::new(associated_program_addr, cpi_accounts);
-
-                    associated_token::create_idempotent(cpi_context)?;
-
-                    // transfer fee
-                    let cpi_accounts = TransferChecked {
-                        from: vault_ta.to_cpi_handle_mut(),
-                        mint: mint.to_cpi_handle(),
-                        to: treasury_ta.to_cpi_handle_mut(),
-                        authority: self.vault.to_cpi_handle(),
-                    };
-
-                    let token_program_addr = self.token_program.address();
-                    let cpi_context =
-                        CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-                    token_interface::transfer_checked(cpi_context, fee, mint.decimals())?;
+                    transfer_tokens_checked(
+                        token_program_addr,
+                        vault_ta.to_cpi_handle_mut(),
+                        treasury_ta.to_cpi_handle_mut(),
+                        self.vault.to_cpi_handle(),
+                        mint,
+                        fee,
+                        signer_seeds,
+                    )?;
                 }
 
                 // transfer back to authority
-                let cpi_accounts = TransferChecked {
-                    from: vault_ta.to_cpi_handle_mut(),
-                    mint: mint.to_cpi_handle(),
-                    to: authority_ta.to_cpi_handle_mut(),
-                    authority: self.vault.to_cpi_handle(),
-                };
-
-                let transfer_ctx =
-                    CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-                token_interface::transfer_checked(transfer_ctx, authority_amt, mint.decimals())?;
-
-                // close token account
-                let close_cpi_accounts = token_interface::CloseAccount {
-                    account: vault_ta.to_cpi_handle_mut(),
-                    destination: self.authority.to_cpi_handle_mut(),
-                    authority: self.vault.to_cpi_handle(),
-                };
-                let close_ctx = CpiContext::new_with_signer(
+                transfer_tokens_checked(
                     token_program_addr,
-                    close_cpi_accounts,
+                    vault_ta.to_cpi_handle_mut(),
+                    authority_ta.to_cpi_handle_mut(),
+                    self.vault.to_cpi_handle(),
+                    mint,
+                    authority_amt,
                     signer_seeds,
-                );
+                )?;
 
-                token_interface::close_account(close_ctx)?;
+                close_vault_token_account(
+                    token_program_addr,
+                    vault_ta.to_cpi_handle_mut(),
+                    self.authority.to_cpi_handle_mut(),
+                    self.vault.to_cpi_handle(),
+                    signer_seeds,
+                )?;
             }
             None => {
                 let vault_lamports = self.vault.get_lamports();
                 let (protocol_fee, _) =
-                    calculate_distribution(vault_lamports, EMERGENCY_EXIT_FEE_BPS)?;
+                    split_amount_into_fee_and_payout(vault_lamports, EMERGENCY_EXIT_FEE_BPS)?;
 
-                self.vault.sub_lamports(protocol_fee)?;
-                self.treasury.add_lamports(protocol_fee)?;
+                move_lamports_from_vault(&mut self.vault, &mut self.treasury, protocol_fee)?;
             }
         }
 

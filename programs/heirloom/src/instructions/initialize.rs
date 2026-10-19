@@ -1,13 +1,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TransferChecked},
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount},
 };
 
 use crate::{
     constants::{NFT_DEPOSIT_FEE_LAMPORTS, TREASURY},
     error::HeirloomError,
-    helpers::{is_nft, transfer_sol, validate_interval},
+    helpers::{
+        create_token_account_if_missing, is_nft_mint, transfer_sol_from_signer,
+        transfer_tokens_checked,
+    },
     AssetRecord, Estate, Vault,
 };
 
@@ -121,9 +124,9 @@ impl Initialize {
     ) -> Result<()> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
-        validate_interval(check_in_interval_secs)?;
-        validate_interval(grace_period_secs)?;
-        validate_interval(delegate_pause_duration_secs)?;
+        Estate::validate_interval_secs(check_in_interval_secs)?;
+        Estate::validate_interval_secs(grace_period_secs)?;
+        Estate::validate_interval_secs(delegate_pause_duration_secs)?;
 
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
@@ -202,19 +205,15 @@ impl Initialize {
         };
         let mint = self.mint.as_ref().unwrap();
 
-        let cpi_accounts = associated_token::Create {
-            payer: self.authority.cpi_handle_mut(),
-            associated_token: vault_ta.cpi_handle_mut(),
-            authority: self.vault.cpi_handle(),
-            mint: mint.cpi_handle(),
-            system_program: self.system_program.cpi_handle(),
-            token_program: self.token_program.cpi_handle(),
-        };
-
-        let cpi_program_addr = self.associated_token_program.address();
-        let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
-
-        associated_token::create_idempotent(cpi_context)?;
+        create_token_account_if_missing(
+            self.associated_token_program.address(),
+            self.authority.cpi_handle_mut(),
+            vault_ta.cpi_handle_mut(),
+            self.vault.cpi_handle(),
+            mint.cpi_handle(),
+            self.system_program.cpi_handle(),
+            self.token_program.cpi_handle(),
+        )?;
 
         self.vault_token_account = Some(vault_ta);
 
@@ -238,20 +237,18 @@ impl Initialize {
                 let mut vault_ta = self.vault_token_account.take().unwrap();
                 let mint = self.mint.as_ref().unwrap();
 
-                let cpi_accounts = TransferChecked {
-                    from: authority_ta.to_cpi_handle_mut(),
-                    mint: mint.to_cpi_handle(),
-                    to: vault_ta.to_cpi_handle_mut().clone(),
-                    authority: self.authority.to_cpi_handle(),
-                };
+                transfer_tokens_checked(
+                    self.token_program.address(),
+                    authority_ta.to_cpi_handle_mut(),
+                    vault_ta.to_cpi_handle_mut(),
+                    self.authority.to_cpi_handle(),
+                    mint,
+                    amount,
+                    &[],
+                )?;
 
-                let cpi_program_addr = self.token_program.address();
-                let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
-
-                token_interface::transfer_checked(cpi_context, amount, mint.decimals())?;
-
-                if is_nft(mint) {
-                    transfer_sol(
+                if is_nft_mint(mint) {
+                    transfer_sol_from_signer(
                         &mut self.authority,
                         &mut self.treasury,
                         &self.system_program,
@@ -260,7 +257,7 @@ impl Initialize {
                 }
             }
             None => {
-                transfer_sol(
+                transfer_sol_from_signer(
                     &mut self.authority,
                     &mut self.vault,
                     &self.system_program,
