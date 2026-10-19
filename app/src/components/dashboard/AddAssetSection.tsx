@@ -76,10 +76,6 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
       // The same mint twice is a bug upstream; keep the first.
       if (seen.has(tok.mint) || tok.mint === WRAPPED_SOL_MINT) continue;
       seen.add(tok.mint);
-      // pNFTs sit in frozen accounts the vault can't move, so they're not offered.
-      if (tok.frozen || tok.assetInterface === "ProgrammableNFT") continue;
-      const isNft =
-        (tok.assetInterface?.includes("NFT") ?? false) || (tok.decimals === 0 && tok.amount === 1n);
       list.push({
         mint: tok.mint,
         name: tok.name?.trim() || tok.symbol?.trim() || "",
@@ -88,10 +84,11 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
         decimals: tok.decimals,
         balance: tok.uiAmount,
         tokenProgram: tok.tokenProgram,
-        isNft,
+        isNft: tok.isNft,
         inEstate: vaultMints.has(tok.mint),
         isSol: false,
         unverified: !tok.name?.trim() && !tok.symbol?.trim(),
+        unsupportedReason: tok.unsupportedReason,
       });
     }
     return list;
@@ -104,7 +101,11 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
     () =>
       baseTokens.map((tok) => {
         const usdPrice = prices?.get(tok.mint);
-        return { ...tok, usdPrice, usdValue: usdPrice !== undefined ? usdPrice * tok.balance : undefined };
+        return {
+          ...tok,
+          usdPrice,
+          usdValue: usdPrice !== undefined ? usdPrice * tok.balance : undefined,
+        };
       }),
     [baseTokens, prices],
   );
@@ -165,7 +166,8 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
   if (!selected) primary = { label: t("addAsset.chooseToken"), enabled: false };
   else if (selected.isNft) primary = { label: t("addAsset.addToEstate"), enabled: true };
   else if (!value) primary = { label: t("addAsset.enterAmount"), enabled: false };
-  else if (over) primary = { label: t("addAsset.notEnough", { symbol: selected.symbol }), enabled: false };
+  else if (over)
+    primary = { label: t("addAsset.notEnough", { symbol: selected.symbol }), enabled: false };
   else
     primary = {
       label: t(selected.inEstate ? "addAsset.addMore" : "addAsset.addToEstate"),
@@ -199,7 +201,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
         size="lg"
         cap={inTx ? t("tx.cap") : t("addAsset.cap")}
         title={inTx ? t("addAsset.txTitle") : t("addAsset.title")}
-        description={inTx ? (tx.step === "done" ? undefined : t("tx.keepOpen")) : t("addAsset.subtitle")}
+        description={
+          inTx ? (tx.step === "done" ? undefined : t("tx.keepOpen")) : t("addAsset.subtitle")
+        }
         busy={tx.busy}
         onClose={close}
         cost={inTx ? (tx.busy ? t("tx.backgroundNote") : null) : costText}
@@ -266,7 +270,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                   )}
                   <div className="min-w-0">
                     <div className="truncate text-[0.9375rem] font-semibold">{selected.name}</div>
-                    <div className="mt-1 text-[0.8125rem] text-muted-foreground">{t("addAsset.nftNote")}</div>
+                    <div className="mt-1 text-[0.8125rem] text-muted-foreground">
+                      {t("addAsset.nftNote")}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -277,7 +283,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                 <FieldLabel
                   htmlFor="add-asset-amount"
                   hint={t("addAsset.walletBalance", {
-                    amount: selected.balance.toLocaleString(undefined, { maximumFractionDigits: 4 }),
+                    amount: selected.balance.toLocaleString(undefined, {
+                      maximumFractionDigits: 4,
+                    }),
                     symbol: selected.symbol,
                   })}
                 >
@@ -297,7 +305,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                       }}
                       className="w-full min-w-0 bg-transparent font-display text-[1.75rem] font-bold tracking-[-0.02em] outline-hidden sm:text-4xl"
                     />
-                    <span className="text-[0.9375rem] font-semibold text-muted-foreground">{selected.symbol}</span>
+                    <span className="text-[0.9375rem] font-semibold text-muted-foreground">
+                      {selected.symbol}
+                    </span>
                   </div>
                   <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2.5">
                     <span className="text-[0.8125rem] text-muted-foreground tabular-nums">
@@ -315,7 +325,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                           small
                           on={false}
                           onClick={() =>
-                            setAmount(toInputAmount((selected.balance * p) / 100, selected.decimals))
+                            setAmount(
+                              toInputAmount((selected.balance * p) / 100, selected.decimals),
+                            )
                           }
                         >
                           {p}%
@@ -327,7 +339,9 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                         onClick={() =>
                           setAmount(
                             toInputAmount(
-                              selected.isSol ? selected.balance - SOL_MAX_RESERVE : selected.balance,
+                              selected.isSol
+                                ? selected.balance - SOL_MAX_RESERVE
+                                : selected.balance,
                               selected.decimals,
                             ),
                           )
@@ -338,7 +352,11 @@ const AddAssetSection: React.FC<Props> = ({ estate, onTx }) => {
                     </div>
                   </div>
                 </div>
-                {over && <p className="mt-2 text-[0.8125rem] text-accent-red">{t("addAsset.overBalance")}</p>}
+                {over && (
+                  <p className="mt-2 text-[0.8125rem] text-accent-red">
+                    {t("addAsset.overBalance")}
+                  </p>
+                )}
               </div>
             )}
           </>

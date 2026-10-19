@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import TokenAvatar from "@/components/TokenAvatar";
 import { SOL_DECIMALS, SOL_MAX_RESERVE } from "@/lib/constants";
-import { cn, formatUiAmount } from "@/lib/utils";
+import { cn, formatUiAmount, truncateAddress } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
 import { Check, ChevronDown, Loader2, Search, X } from "lucide-react";
 import type { TokenSelection } from "@/pages/CreateVault";
@@ -21,6 +21,53 @@ interface Props {
 
 type AssetTab = "sol" | "tokens" | "collectibles";
 
+/** One NFT in the Collectibles grid. Ones the vault can't hold are greyed out, with the reason. */
+const CollectibleCard: React.FC<{
+  nft: SplTokenAsset;
+  selected: boolean;
+  onToggle: () => void;
+}> = ({ nft, selected, onToggle }) => {
+  const { t } = useTranslation("app");
+  const reason = nft.unsupportedReason;
+  const name = nft.name || nft.label;
+
+  return (
+    <button
+      type="button"
+      disabled={!!reason}
+      onClick={onToggle}
+      aria-pressed={selected}
+      aria-label={`${selected ? t("createVault.wizard.remove") : t("createVault.wizard.add")} ${name}`}
+      className={cn(
+        "relative overflow-hidden rounded-xl border-[1.5px] text-left transition-colors disabled:cursor-not-allowed",
+        selected ? "border-foreground" : "border-tile-line enabled:hover:border-foreground/40",
+      )}
+    >
+      <div className={cn(reason && "opacity-50 grayscale")}>
+        <TokenAvatar image={nft.image} label={name} size="fill" accent="bg-tile-soft" />
+        <div className="px-2.5 py-2">
+          <p className="truncate text-sm font-semibold leading-tight">{name}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {reason
+              ? t(`addAsset.unsupported.${reason}`)
+              : nft.symbol || truncateAddress(nft.mint, 4)}
+          </p>
+        </div>
+      </div>
+      {reason && (
+        <span className="absolute left-2 top-2 rounded-full bg-background px-2 py-[3px] text-[0.625rem] font-bold uppercase tracking-[0.12em]">
+          {t("addAsset.cantAddTag")}
+        </span>
+      )}
+      {selected && (
+        <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-foreground text-background">
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        </span>
+      )}
+    </button>
+  );
+};
+
 const DepositStep: React.FC<Props> = ({
   solAmount,
   setSolAmount,
@@ -39,9 +86,20 @@ const DepositStep: React.FC<Props> = ({
   const [showAllTokens, setShowAllTokens] = useState(false);
   const [hideDust, setHideDust] = useState(true);
 
+  const fungibleTokens = useMemo(() => (tokens ?? []).filter((tok) => !tok.isNft), [tokens]);
+  // Addable collectibles first; the greyed-out ones sit at the end.
+  const collectibles = useMemo(
+    () =>
+      (tokens ?? [])
+        .filter((tok) => tok.isNft)
+        .sort((a, b) => Number(!!a.unsupportedReason) - Number(!!b.unsupportedReason)),
+    [tokens],
+  );
+  const hasUnsupportedCollectibles = collectibles.some((nft) => nft.unsupportedReason);
+
   const filteredTokens = useMemo(() => {
     const q = tokenSearch.trim().toLowerCase();
-    let list = tokens ?? [];
+    let list = fungibleTokens;
 
     if (hideDust) {
       list = list.filter((tok) => tok.uiAmount >= 0.01 || tok.mint in tokenSelections);
@@ -64,7 +122,7 @@ const DepositStep: React.FC<Props> = ({
       }
       return a.label.localeCompare(b.label);
     });
-  }, [tokens, tokenSearch, tokenSort, hideDust, tokenSelections]);
+  }, [fungibleTokens, tokenSearch, tokenSort, hideDust, tokenSelections]);
 
   const displayTokens = showAllTokens ? filteredTokens : filteredTokens.slice(0, 50);
   const hasMoreTokens = filteredTokens.length > 50;
@@ -87,14 +145,17 @@ const DepositStep: React.FC<Props> = ({
         kind: "tok",
         id: mint,
         amount: formatUiAmount(sel.amount),
-        label: tok?.symbol || tok?.label || "token",
+        label: (tok?.isNft ? tok.name : tok?.symbol) || tok?.label || "token",
       });
     }
     return items;
   }, [solAmount, tokenSelections, tokens]);
 
   const assetCount = trayItems.length;
-  const tokenCount = Object.values(tokenSelections).filter((v) => v.amount > 0).length;
+  const selectedCount = (list: SplTokenAsset[]) =>
+    list.filter((tok) => tokenSelections[tok.mint]?.amount > 0).length;
+  const tokenCount = selectedCount(fungibleTokens);
+  const collectibleCount = selectedCount(collectibles);
   const solCount = solAmount > 0 ? 1 : 0;
 
   const removeTrayItem = (kind: string, id: string) => {
@@ -166,7 +227,7 @@ const DepositStep: React.FC<Props> = ({
   const tabs: { id: AssetTab; label: string; count: number }[] = [
     { id: "sol", label: t("createVault.wizard.solTab"), count: solCount },
     { id: "tokens", label: t("createVault.wizard.tokensTab"), count: tokenCount },
-    { id: "collectibles", label: t("createVault.wizard.collectiblesTab"), count: 0 },
+    { id: "collectibles", label: t("createVault.wizard.collectiblesTab"), count: collectibleCount },
   ];
 
   return (
@@ -365,6 +426,7 @@ const DepositStep: React.FC<Props> = ({
             {displayTokens.map((tok) => {
               const sel = tokenSelections[tok.mint];
               const isSelected = tok.mint in tokenSelections;
+              const reason = tok.unsupportedReason;
               const unit =
                 (tok.symbol || tok.label).length > 6
                   ? (tok.symbol || tok.label).slice(0, 4)
@@ -378,7 +440,7 @@ const DepositStep: React.FC<Props> = ({
                     isSelected && "bg-tile-soft",
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className={cn("flex items-center gap-3", reason && "opacity-50 grayscale")}>
                     <TokenAvatar
                       image={tok.image}
                       label={tok.label}
@@ -390,9 +452,11 @@ const DepositStep: React.FC<Props> = ({
                         {tok.symbol || tok.label}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {tok.name && tok.name !== (tok.symbol || tok.label)
-                          ? tok.name
-                          : `${tok.mint.slice(0, 8)}…${tok.mint.slice(-4)}`}
+                        {reason
+                          ? t(`addAsset.unsupported.${reason}`)
+                          : tok.name && tok.name !== (tok.symbol || tok.label)
+                            ? tok.name
+                            : `${tok.mint.slice(0, 8)}…${tok.mint.slice(-4)}`}
                       </p>
                     </div>
                     <p className="shrink-0 font-mono text-sm tabular-nums">
@@ -400,11 +464,12 @@ const DepositStep: React.FC<Props> = ({
                     </p>
                     <button
                       type="button"
+                      disabled={!!reason}
                       onClick={() => toggleToken(tok.mint)}
                       aria-pressed={isSelected}
                       aria-label={`${isSelected ? t("createVault.wizard.remove") : t("createVault.wizard.add")} ${tok.symbol || tok.label}`}
                       className={cn(
-                        "grid h-10 w-[4.5rem] shrink-0 place-items-center rounded-xl border-[1.5px] text-[0.8125rem] font-bold transition-colors",
+                        "grid h-10 w-[4.5rem] shrink-0 place-items-center rounded-xl border-[1.5px] text-[0.8125rem] font-bold transition-colors disabled:cursor-not-allowed",
                         isSelected
                           ? "border-foreground bg-foreground text-background"
                           : "border-foreground bg-background hover:bg-tile-soft",
@@ -490,11 +555,25 @@ const DepositStep: React.FC<Props> = ({
       {activeTab === "collectibles" && (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            {t("createVault.wizard.nCollectibles", { count: 0 })}
+            {t("createVault.wizard.nCollectibles", { count: collectibles.length })}
+            {hasUnsupportedCollectibles && ` · ${t("createVault.wizard.greyedOutNote")}`}
           </p>
-          <p className="rounded-xl bg-tile-soft px-4 py-6 text-center text-sm text-muted-foreground">
-            {t("createVault.wizard.noSplTokens")}
-          </p>
+          {collectibles.length === 0 ? (
+            <p className="rounded-xl bg-tile-soft px-4 py-6 text-center text-sm text-muted-foreground">
+              {t("createVault.wizard.noCollectibles")}
+            </p>
+          ) : (
+            <div className="grid max-h-[26.25rem] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">
+              {collectibles.map((nft) => (
+                <CollectibleCard
+                  key={nft.mint}
+                  nft={nft}
+                  selected={nft.mint in tokenSelections}
+                  onToggle={() => toggleToken(nft.mint)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

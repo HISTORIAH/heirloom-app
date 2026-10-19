@@ -383,7 +383,9 @@ const app: AppMessages = {
       missOneDesc:
         "A {{grace}} grace period starts. Check in any time to cancel it. Your heir hears nothing yet.",
       nAssets: "{{count}} assets",
-      nCollectibles: "{{count}} collectibles · Metaplex NFTs. Core assets coming later.",
+      nCollectibles: "Cüzdanında {{count}}",
+      noCollectibles: "Cüzdanında NFT bulunamadı.",
+      greyedOutNote: "soluk olanlar henüz terekeye eklenemez",
       nDaysShort: "{{count}}d",
       newEstate: "NEW ESTATE",
       nextCheckInDue:
@@ -1010,6 +1012,13 @@ const app: AppMessages = {
     hideOther: "Diğer token'ları gizle ({{count}})",
     unknownToken: "Bilinmeyen token",
     nftTag: "NFT",
+    cantAddTag: "Henüz eklenemez",
+    unsupported: {
+      programmable: "Programlanabilir NFT · henüz desteklenmiyor",
+      compressed: "Sıkıştırılmış NFT · henüz desteklenmiyor",
+      core: "Metaplex Core · henüz desteklenmiyor",
+      frozen: "İhraççı tarafından donduruldu",
+    },
     inEstateTag: "Terekede",
     oneItem: "1 öğe",
     noPrice: "Fiyat yok",

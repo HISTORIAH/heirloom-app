@@ -380,7 +380,9 @@ const app: AppMessages = {
       missOneDesc:
         "A {{grace}} grace period starts. Check in any time to cancel it. Your heir hears nothing yet.",
       nAssets: "{{count}} assets",
-      nCollectibles: "{{count}} collectibles · Metaplex NFTs. Core assets coming later.",
+      nCollectibles: "지갑에 {{count}}개",
+      noCollectibles: "지갑에서 NFT를 찾을 수 없습니다.",
+      greyedOutNote: "회색으로 표시된 항목은 아직 에스테이트에 추가할 수 없습니다",
       nDaysShort: "{{count}}d",
       newEstate: "NEW ESTATE",
       nextCheckInDue:
@@ -992,6 +994,13 @@ const app: AppMessages = {
     hideOther: "기타 토큰 숨기기 ({{count}})",
     unknownToken: "알 수 없는 토큰",
     nftTag: "NFT",
+    cantAddTag: "추가 불가",
+    unsupported: {
+      programmable: "프로그래머블 NFT · 아직 미지원",
+      compressed: "압축 NFT · 아직 미지원",
+      core: "Metaplex Core · 아직 미지원",
+      frozen: "발행자가 동결함",
+    },
     inEstateTag: "에스테이트 내",
     oneItem: "1개",
     noPrice: "가격 없음",

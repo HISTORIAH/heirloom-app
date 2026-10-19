@@ -1,99 +1,76 @@
-export type DasFile = { uri?: string; cdn_uri?: string; mime?: string };
-export type DasMetadata = { name?: string; symbol?: string };
-export type DasLinks = { image?: string };
-export type DasContent = {
-  metadata?: DasMetadata;
-  links?: DasLinks;
-  files?: DasFile[];
-};
-export type DasTokenInfo = { symbol?: string };
-export type DasAsset = {
-  id?: string;
-  content?: DasContent;
-  token_info?: DasTokenInfo;
-};
+import { DAS_PAGE_LIMIT } from "@/lib/constants";
+import type {
+  DasAsset,
+  DasAssetDisplay,
+  DasAssetPage,
+  DasContent,
+  DasRpcResponse,
+} from "@/types/das";
 
-export type DasFungibleAsset = {
-  id: string;
-  interface?: string;
-  ownership?: { frozen?: boolean };
-  token_info?: {
-    balance?: string | number;
-    decimals?: number;
-    symbol?: string;
-    token_program?: string;
-  };
-  content?: DasContent;
-};
-
-export function pickImage(content?: DasContent): string | undefined {
-  const file = content?.files?.find((f) => !f.mime || f.mime.startsWith("image/"));
-  return file?.cdn_uri || content?.links?.image || file?.uri;
-}
-
-export async function fetchAssetBatch(
+/** One JSON-RPC call to a DAS-enabled endpoint (Helius). Throws on HTTP or RPC errors. */
+async function callDas<T>(
   url: string,
-  ids: string[],
-  signal: AbortSignal,
-): Promise<Map<string, DasAsset>> {
-  const out = new Map<string, DasAsset>();
-  if (ids.length === 0) return out;
-
-  const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += 1000) chunks.push(ids.slice(i, i + 1000));
-
-  for (const chunk of chunks) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal,
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "heirloom-token-metadata",
-        method: "getAssetBatch",
-        params: { ids: chunk },
-      }),
-    });
-    if (!res.ok) throw new Error(`Helius ${res.status}`);
-    const json = (await res.json()) as { result?: Array<DasAsset | null> };
-    const items = Array.isArray(json.result) ? json.result : [];
-    items.forEach((item, idx) => {
-      if (!item) return;
-      const mint = item.id ?? chunk[idx];
-      if (!mint) return;
-      out.set(mint, item);
-    });
-  }
-  return out;
-}
-
-export async function fetchAssetsByOwner(
-  url: string,
-  owner: string,
-  signal: AbortSignal,
-): Promise<DasFungibleAsset[]> {
+  method: string,
+  params: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<T | undefined> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     signal,
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: "heirloom-assets",
-      method: "getAssetsByOwner",
-      params: {
-        ownerAddress: owner,
-        page: 1,
-        limit: 1000,
-        options: {
-          showFungible: true,
-          showZeroBalance: false,
-        },
-      },
-    }),
+    body: JSON.stringify({ jsonrpc: "2.0", id: `heirloom-${method}`, method, params }),
   });
-  if (!res.ok) throw new Error(`Helius ${res.status}`);
-  const json = (await res.json()) as {
-    result?: { items?: Array<DasFungibleAsset | null> };
+  if (!res.ok) throw new Error(`DAS ${method} failed: HTTP ${res.status}`);
+
+  const json = (await res.json()) as DasRpcResponse<T>;
+  if (json.error) throw new Error(`DAS ${method} failed: ${json.error.message ?? json.error.code}`);
+  return json.result;
+}
+
+function isAsset(item: DasAsset | null | undefined): item is DasAsset {
+  return !!item?.id;
+}
+
+/** The asset's image: first image file (CDN copy preferred), else the metadata link. */
+function assetImageUrl(content?: DasContent): string | undefined {
+  const imageFile = content?.files?.find((file) => !file.mime || file.mime.startsWith("image/"));
+  return imageFile?.cdn_uri || content?.links?.image || imageFile?.uri;
+}
+
+/** Name, symbol and image to show for an asset. Blank values come back undefined. */
+export function assetDisplay(asset: DasAsset): DasAssetDisplay {
+  const metadata = asset.content?.metadata;
+  return {
+    name: metadata?.name?.trim() || undefined,
+    symbol: asset.token_info?.symbol?.trim() || metadata?.symbol?.trim() || undefined,
+    image: assetImageUrl(asset.content),
   };
-  return (json.result?.items ?? []).filter((item): item is DasFungibleAsset => !!item);
+}
+
+/** Every asset the owner holds with a non-zero balance: fungible tokens, NFTs and cNFTs. */
+export async function fetchOwnerAssets(
+  url: string,
+  owner: string,
+  signal?: AbortSignal,
+): Promise<DasAsset[]> {
+  const assets: DasAsset[] = [];
+
+  for (let page = 1; ; page++) {
+    const result = await callDas<DasAssetPage>(
+      url,
+      "getAssetsByOwner",
+      {
+        ownerAddress: owner,
+        page,
+        limit: DAS_PAGE_LIMIT,
+        options: { showFungible: true, showZeroBalance: false },
+      },
+      signal,
+    );
+    const items = result?.items ?? [];
+    assets.push(...items.filter(isAsset));
+
+    const isLastPage = items.length < DAS_PAGE_LIMIT;
+    if (isLastPage) return assets;
+  }
 }

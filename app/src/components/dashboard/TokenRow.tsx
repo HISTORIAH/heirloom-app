@@ -6,15 +6,8 @@ import type { VaultTokenHolding } from "@/types";
 import type { LuloStrategy, StrategyProgressStep } from "@/types/strategy-ui";
 import { useTranslation } from "@heirloom/i18n";
 
-interface TokenMeta {
-  symbol?: string;
-  name?: string;
-  image?: string;
-}
-
 interface TokenRowProps {
   vt: VaultTokenHolding;
-  meta: TokenMeta | undefined;
   /** USD value of the holding; undefined when the token has no price. */
   usdValue?: number;
   /** Fraction of the estate's priced value this holding makes up, for the allocation bar. */
@@ -29,7 +22,6 @@ interface TokenRowProps {
 
 const TokenRow: React.FC<TokenRowProps> = ({
   vt,
-  meta,
   usdValue,
   share,
   showYieldStaking,
@@ -40,8 +32,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
   yieldProgressStep,
 }) => {
   const { t } = useTranslation("app");
-  const symbol = meta?.symbol;
-  const name = meta?.name;
+  const { symbol, name, image } = vt;
   const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
   const isNft = vt.decimals === 0 && vt.rawAmount === 1n;
   const primary = name || symbol || shortMint;
@@ -53,8 +44,8 @@ const TokenRow: React.FC<TokenRowProps> = ({
   const isYieldActive = luloStrategy?.mint === vt.mint && luloStrategy.active;
 
   const fallbackAccent = getTokenAccent(vt.mint);
-  const dominantColor = useDominantColor(meta?.image, fallbackAccent.shadow);
-  const accentColor = meta?.image ? dominantColor : fallbackAccent.shadow;
+  const dominantColor = useDominantColor(image, fallbackAccent.shadow);
+  const accentColor = image ? dominantColor : fallbackAccent.shadow;
 
   return (
     <div
@@ -63,7 +54,7 @@ const TokenRow: React.FC<TokenRowProps> = ({
     >
       <div className="flex items-center gap-3.5">
         <TokenAvatar
-          image={meta?.image}
+          image={image}
           label={primary}
           size="md"
           accent={fallbackAccent.bg}

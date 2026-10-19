@@ -377,7 +377,9 @@ const app: AppMessages = {
       missOneDesc:
         "A {{grace}} grace period starts. Check in any time to cancel it. Your heir hears nothing yet.",
       nAssets: "{{count}} assets",
-      nCollectibles: "{{count}} collectibles · Metaplex NFTs. Core assets coming later.",
+      nCollectibles: "钱包中有 {{count}} 个",
+      noCollectibles: "钱包中没有找到 NFT。",
+      greyedOutNote: "灰色项目暂时无法加入遗产",
       nDaysShort: "{{count}}d",
       newEstate: "NEW ESTATE",
       nextCheckInDue:
@@ -981,6 +983,13 @@ const app: AppMessages = {
     hideOther: "隐藏其他代币 ({{count}})",
     unknownToken: "未知代币",
     nftTag: "NFT",
+    cantAddTag: "暂不支持",
+    unsupported: {
+      programmable: "可编程 NFT · 暂不支持",
+      compressed: "压缩 NFT · 暂不支持",
+      core: "Metaplex Core · 暂不支持",
+      frozen: "已被发行方冻结",
+    },
     inEstateTag: "已在遗产中",
     oneItem: "1 件",
     noPrice: "无价格",

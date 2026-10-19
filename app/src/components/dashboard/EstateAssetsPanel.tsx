@@ -12,15 +12,8 @@ import type { VaultTokenHolding } from "@/types";
 import type { LuloStrategy, Strategy, StrategyProgressStep } from "@/types/strategy-ui";
 import type { UsdPriceMap } from "@/types/prices";
 
-interface TokenMeta {
-  symbol?: string;
-  name?: string;
-  image?: string;
-}
-
 interface EstateAssetsPanelProps {
   estate: EstateData;
-  tokenMeta: Map<string, TokenMeta>;
   /** USD prices by mint (SOL under the wrapped mint). Undefined while loading or unavailable. */
   prices: UsdPriceMap | undefined;
   /** Prices arrive after the estate; the value shimmers until they do. */
@@ -41,7 +34,6 @@ interface EstateAssetsPanelProps {
 
 export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
   estate,
-  tokenMeta,
   prices,
   pricesLoading,
   showYieldStaking,
@@ -181,7 +173,6 @@ export const EstateAssetsPanel: React.FC<EstateAssetsPanelProps> = ({
               <TokenRow
                 key={vt.ata}
                 vt={vt}
-                meta={tokenMeta.get(vt.mint)}
                 usdValue={tokenUsd.get(vt.mint)}
                 share={
                   estateTotal > 0 && tokenUsd.get(vt.mint) !== undefined

@@ -381,7 +381,9 @@ const app: AppMessages = {
       missOneDesc:
         "A {{grace}} grace period starts. Check in any time to cancel it. Your heir hears nothing yet.",
       nAssets: "{{count}} assets",
-      nCollectibles: "{{count}} collectibles · Metaplex NFTs. Core assets coming later.",
+      nCollectibles: "ウォレット内に{{count}}件",
+      noCollectibles: "ウォレットにNFTが見つかりません。",
+      greyedOutNote: "グレー表示のものはまだエステートに追加できません",
       nDaysShort: "{{count}}d",
       newEstate: "NEW ESTATE",
       nextCheckInDue:
@@ -997,6 +999,13 @@ const app: AppMessages = {
     hideOther: "その他のトークンを隠す ({{count}})",
     unknownToken: "不明なトークン",
     nftTag: "NFT",
+    cantAddTag: "追加不可",
+    unsupported: {
+      programmable: "プログラマブルNFT・未対応",
+      compressed: "圧縮NFT・未対応",
+      core: "Metaplex Core・未対応",
+      frozen: "発行者により凍結",
+    },
     inEstateTag: "エステート内",
     oneItem: "1 点",
     noPrice: "価格なし",

@@ -42,6 +42,9 @@ export const POSTHOG_PROJECT_TOKEN = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN?
 export const ANALYTICS_ENABLED =
   import.meta.env.VITE_ANALYTICS_ENABLED?.trim().toLowerCase() === "true";
 
+/** True on the local dev server. Gates debug logging. */
+export const IS_DEV = import.meta.env.DEV;
+
 // --- Feature flags (temporary — remove once shipped) ---
 
 // TEMP: The yield/staking flows are still mocked, so they only ever show in the
