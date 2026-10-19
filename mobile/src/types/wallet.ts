@@ -1,7 +1,5 @@
+import type { UnsupportedAssetReason } from "@heirloom/core/assets";
 import type { Address } from "@solana/kit";
-
-/** Why a wallet asset can't go into an estate yet. The vault only holds plain SPL token accounts. */
-export type UnsupportedAssetReason = "programmable" | "compressed" | "core" | "frozen";
 
 /** A token or NFT the connected wallet holds, with DAS metadata. */
 export type WalletToken = {

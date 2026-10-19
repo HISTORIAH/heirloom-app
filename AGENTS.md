@@ -13,6 +13,73 @@ These apply to the whole repo. Sections name the packages they cover.
   changes with **Breaking:**.
 - Don't add changelog entries for app/, mobile/, landing/ or docs/.
 
+## Shared code between web and mobile
+
+Covers `packages/core` and, once it exists, `packages/react`.
+
+### What goes where
+
+- `@heirloom/core` (`packages/core`): logic both apps run the same way. Plain
+  TypeScript: no React, no `window`, `document`, `localStorage`, Node or React Native
+  APIs. Platform things (RPC client, URLs, signer, transaction version) come in as
+  arguments.
+- `@heirloom/react` (`packages/react`, not created yet): react-query hooks over core,
+  reading the RPC, config and signer from one provider. Create it only once two or
+  three hooks are identical in both apps; until then each app keeps thin hooks of
+  its own over core.
+- Stays in each app: UI and styling, navigation, wallet connection and signing
+  (wallet-standard on web; Mobile Wallet Adapter and NFC on mobile), storage and
+  secrets, environment variables, and the wording users see.
+- Imports only go one way: apps → `@heirloom/react` → `@heirloom/core` →
+  `@historiah/heirloom`. Core never imports React or an app; packages never import
+  from `app/`, `app-ika/` or `mobile/`.
+
+### Shared first
+
+- Before writing logic in `app/`, `app-ika/` or `mobile/`, check whether the other
+  app has it or will need it: API calls, DAS lookups, estate reads, role checks
+  (owner, heir, guardian), instruction builders, transaction planning and error
+  handling. If so, write it in `@heirloom/core` and import it from both, instead
+  of adding a second copy.
+- When you touch logic that is still duplicated in both apps, move it to core in the
+  same change if it's small; otherwise note the duplication in your summary.
+- Share only what is the same. Code that only looks alike (different dust rules,
+  sorting, fallbacks, copy) stays in each app; don't merge it behind flags. Share
+  the common part and keep the differences in the app, like mobile's `assetLabel`
+  over core's `assetDisplay`.
+- Never hard-code a transaction message version in shared code. Web picks v1 or v0
+  per wallet (`transactionVersionFor`); MWA only signs v0. Core takes the version as
+  an argument.
+
+### Layout
+
+- Organise core by domain, one folder each: `src/assets/`, later `src/estate/`,
+  `src/tx/`, `src/api/`. Each domain is one entry in `package.json` `exports`
+  (`@heirloom/core/assets`) with an `index.ts`. A file that fits no domain is
+  usually app code; add a domain only for a real new area, never `utils`, `lib`,
+  `helpers` or `common`.
+- Types go in `src/types/<domain>.ts`; fixed values in `src/<domain>/constants.ts`.
+  Apps import both from the package (`import type { DasAsset } from
+  "@heirloom/core/assets"`) and don't redeclare them in their own `types/`.
+- Core exports plain functions, not factories or classes that wrap them. Anything that
+  comes from the app's config (backend URL, RPC URL) is the first argument:
+  `fetchOwnerAssets(rpcUrl, owner)`, `requestChallenge(backendUrl, address)`.
+- Backend endpoints live in `@heirloom/core/api`, one file per service with its path
+  as a constant at the top (`const AUTH_PATH = "/v1/auth"`). Build requests with
+  `getJson`/`postJson`/`putJson`/`patchJson`/`deleteJson`; for endpoints that wrap
+  their result, type it as `ApiSuccess<T>` and read `.data`. Use `ApiError`,
+  `isUnauthorized` and `isNotFound` from core only, so `instanceof ApiError` checks
+  keep matching.
+- Each `index.ts` names its exports; no `export *`. Helpers a domain uses internally
+  stay unexported.
+- Inside packages, use relative imports. Never use `@/`: packages are consumed as
+  source, so `@/` would resolve to the importing app's `src/`.
+- Tests live in `packages/<name>/tests/`, mirroring `src/`, and import through the
+  public entry point (`@heirloom/core/assets`). Run them with `bun test tests`.
+- A new package must be added to both bundlers: `optimizeDeps.exclude` and
+  `server.watch` in `app/vite.config.ts`, and `watchFolders` in
+  `mobile/metro.config.js`. Pin dev dependencies to versions the repo already uses.
+
 ## TypeScript apps — separation of concerns
 
 Covers `app/`, `app-ika/` and `mobile/`. `<pkg>` below is the package's `src/`.

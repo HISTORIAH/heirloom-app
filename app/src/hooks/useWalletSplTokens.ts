@@ -1,47 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { assetDisplay, fetchOwnerAssets } from "@/services/das";
+import {
+  assetDisplay,
+  fetchOwnerAssets,
+  heldAmount,
+  isNftAsset,
+  unsupportedReason,
+  type DasAsset,
+} from "@heirloom/core/assets";
 import { truncateAddress, toUiAmount } from "@/lib/utils";
 import type { SplTokenAsset } from "@/types";
-import type { UnsupportedAssetReason } from "@/types/assets";
-import type { DasAsset } from "@/types/das";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { IS_DEV, SOLANA_RPC_ENDPOINT } from "@/config";
 
-function isCompressed(asset: DasAsset): boolean {
-  return asset.compression?.compressed ?? false;
-}
-
-/** Covers V1_NFT, ProgrammableNFT, Core assets and cNFTs (some of which report V1_NFT). */
-function isNftAsset(asset: DasAsset): boolean {
-  return (
-    isCompressed(asset) ||
-    asset.interface === "MplCoreAsset" ||
-    (asset.interface?.includes("NFT") ?? false)
-  );
-}
-
-/**
- * The vault holds plain SPL token accounts it can transfer out of. Compressed NFTs and Core
- * assets have no token account, pNFTs sit in a locked one, and frozen accounts can't move.
- */
-function unsupportedReason(asset: DasAsset): UnsupportedAssetReason | undefined {
-  if (isCompressed(asset)) return "compressed";
-  if (asset.interface === "MplCoreAsset") return "core";
-  if (asset.interface === "ProgrammableNFT") return "programmable";
-  if (asset.ownership?.frozen) return "frozen";
-  return undefined;
-}
-
 function dasAssetToToken(asset: DasAsset): SplTokenAsset | null {
   const tokenInfo = asset.token_info;
-  // Core assets and cNFTs carry no token info. DAS only returns what the owner holds, so an
-  // NFT without a balance is still one item.
-  const balance = BigInt(tokenInfo?.balance ?? (isNftAsset(asset) ? 1 : 0));
-  if (asset.burnt || balance === 0n) return null;
+  const balance = heldAmount(asset);
+  if (balance === 0n) return null;
 
   const decimals = tokenInfo?.decimals ?? 0;
-  // A lone, indivisible token is an NFT even when DAS reports an odd interface.
-  const isNft = isNftAsset(asset) || (decimals === 0 && balance === 1n);
   const { name, symbol, image } = assetDisplay(asset);
 
   return {
@@ -55,7 +31,7 @@ function dasAssetToToken(asset: DasAsset): SplTokenAsset | null {
     uiAmount: toUiAmount(balance, decimals),
     // DAS omits the program for some legacy mints.
     tokenProgram: tokenInfo?.token_program ?? TOKEN_PROGRAM_ADDRESS,
-    isNft,
+    isNft: isNftAsset(asset),
     unsupportedReason: unsupportedReason(asset),
   };
 }
@@ -77,7 +53,7 @@ function logWalletAssets(owner: string, assets: DasAsset[], tokens: SplTokenAsse
     balance: asset.token_info?.balance,
     decimals: asset.token_info?.decimals,
     frozen: asset.ownership?.frozen,
-    compressed: isCompressed(asset),
+    compressed: asset.compression?.compressed,
     kept: keptMints.has(asset.id),
     unsupported: unsupportedReason(asset),
   });

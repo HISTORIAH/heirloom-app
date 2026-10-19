@@ -1,4 +1,4 @@
-import type { UnsupportedAssetReason } from "@/types/assets";
+import type { UnsupportedAssetReason } from "@heirloom/core/assets";
 
 export type VaultTokenHolding = {
   mint: string;

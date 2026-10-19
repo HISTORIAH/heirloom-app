@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useSignMessage } from "@solana/react";
 import type { UiWalletAccount } from "@wallet-standard/ui";
 import { useAuthenticate } from "@/hooks/useAuth";
-import { ApiError } from "@/lib/api";
+import { isUnauthorized } from "@heirloom/core/api";
 
 /**
  * Runs a backend call that needs the session cookie. On 401 it asks the wallet to sign in
@@ -17,9 +17,7 @@ export function useWithSession(account: UiWalletAccount) {
       try {
         return await call();
       } catch (err) {
-        const unauthorized =
-          err instanceof ApiError && (err.code === "UNAUTHORIZED" || err.code === "unauthorized");
-        if (!unauthorized) throw err;
+        if (!isUnauthorized(err)) throw err;
         await mutateAsync({ address: account.address });
         return call();
       }

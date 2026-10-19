@@ -12,7 +12,7 @@ import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useWallet } from "@/contexts/WalletContext";
 import { useAuthenticate } from "@/hooks/useAuth";
 import { useVerifyEmail } from "@/hooks/useReminders";
-import { ApiError, isUnauthorized } from "@/lib/api";
+import { ApiError, isUnauthorized } from "@heirloom/core/api";
 import { VERIFY_CODE_LENGTH, VERIFY_CODE_PATTERN } from "@/lib/constants";
 import { verifyErrorKey } from "@/lib/reminders";
 import { useTranslation } from "@heirloom/i18n";

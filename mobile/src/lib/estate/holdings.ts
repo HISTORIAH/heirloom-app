@@ -1,10 +1,10 @@
+import { fetchAssetsByMint, type DasAsset } from "@heirloom/core/assets";
 import { findVaultPda } from "@historiah/heirloom";
 
 import { DAS_RPC_URL } from "@/config";
 import { WSOL_MINT } from "@/constants/solana";
 import { discoverVaultRegisteredTokens } from "@/lib/estate/tokens";
-import { assetImageUrl, fetchAssetsByMint, pickLabel } from "@/services/api/das";
-import type { DasAsset } from "@/types/das";
+import { assetLabel } from "@/lib/solana/assetLabel";
 import type { EstateHolding } from "@/types/estate";
 import type { EstateRow, EstateRpc } from "@/types/program";
 
@@ -26,18 +26,14 @@ export async function fetchVaultHoldings(
     solUsd: meta.get(WSOL_MINT)?.token_info?.price_info?.price_per_token ?? null,
     tokens: tokens.map((tok) => {
       const asset = meta.get(tok.mint);
-      const { symbol, name, named } = pickLabel(
-        tok.mint,
-        asset?.token_info?.symbol,
-        asset?.content,
-      );
+      const { symbol, name, named, image } = assetLabel(tok.mint, asset);
       const price = asset?.token_info?.price_info?.price_per_token;
       return {
         id: tok.mint,
         mint: tok.mint,
         symbol,
         name,
-        image: assetImageUrl(asset?.content),
+        image,
         decimals: tok.decimals,
         amount: tok.amount,
         usd: price === undefined ? null : (Number(tok.amount) / 10 ** tok.decimals) * price,

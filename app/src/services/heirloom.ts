@@ -25,7 +25,7 @@ import type { VaultTokenHolding } from "@/types";
 import type { InitializeInput } from "@/types/program";
 import type { CreateAssetId, CreateEstateDraft } from "@/types/create";
 import type { EstateResponse, EstateRole } from "@/types/estate";
-import { assetDisplay, fetchOwnerAssets } from "@/services/das";
+import { assetDisplay, fetchOwnerAssets } from "@heirloom/core/assets";
 import { fetchEstates } from "@/services/api/estateMetadata";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import {

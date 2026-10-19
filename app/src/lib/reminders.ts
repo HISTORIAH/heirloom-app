@@ -1,4 +1,4 @@
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@heirloom/core/api";
 import { EMAIL_PATTERN, TELEGRAM_USERNAME_PATTERN } from "@/lib/constants";
 import {
   sameEnum,

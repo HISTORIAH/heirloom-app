@@ -7,7 +7,7 @@ import {
   saveReminder,
   verifyEmailCode,
 } from "@/services/api/reminders";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@heirloom/core/api";
 import { channelOf, normalizeDestination, pendingFrom, roleOf } from "@/lib/reminders";
 import {
   cleanProfile,

@@ -1,5 +1,11 @@
-import { DAS_PAGE_LIMIT } from "@/constants/api";
-import type { DasAsset, DasAssetPage, DasContent, DasRpcResponse } from "@/types/das";
+import type {
+  AssetDisplay,
+  DasAsset,
+  DasAssetPage,
+  DasContent,
+  DasRpcResponse,
+} from "../types/assets";
+import { DAS_BATCH_SIZE, DAS_MAX_PAGES, DAS_PAGE_SIZE } from "./constants";
 
 /** One JSON-RPC call to a DAS-enabled endpoint (Helius). Throws on HTTP or RPC errors. */
 async function callDas<T>(
@@ -7,7 +13,7 @@ async function callDas<T>(
   method: string,
   params: Record<string, unknown>,
   signal?: AbortSignal,
-): Promise<T | undefined> {
+): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -18,6 +24,7 @@ async function callDas<T>(
 
   const json = (await res.json()) as DasRpcResponse<T>;
   if (json.error) throw new Error(`DAS ${method} failed: ${json.error.message ?? json.error.code}`);
+  if (json.result === undefined) throw new Error(`DAS ${method} failed: no result`);
   return json.result;
 }
 
@@ -33,33 +40,25 @@ function isAsset(item: DasAsset | null | undefined): item is DasAsset {
   return !!item?.id;
 }
 
-function present(text: string | undefined): string | undefined {
-  const trimmed = text?.trim();
-  return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
-}
-
-/**
- * Symbol and name for a mint. DAS often sends "" for mints without metadata, so blanks count
- * as missing; with neither, the token is "Unknown token" and `named` is false.
- */
-export function pickLabel(
-  mint: string,
-  tokenSymbol: string | undefined,
-  content?: DasContent,
-): { symbol: string; name: string; named: boolean } {
-  const symbol = present(tokenSymbol) ?? present(content?.metadata?.symbol);
-  const name = present(content?.metadata?.name) ?? symbol;
-  return {
-    symbol: symbol ?? mint.slice(0, 4),
-    name: name ?? "Unknown token",
-    named: name !== undefined,
-  };
+/** Trimmed text, or undefined when DAS sent nothing or only whitespace. */
+function nonBlank(text: string | undefined): string | undefined {
+  return text?.trim() || undefined;
 }
 
 /** The asset's image: first image file (CDN copy preferred), else the metadata link. */
 export function assetImageUrl(content?: DasContent): string | undefined {
   const imageFile = content?.files?.find((file) => !file.mime || file.mime.startsWith("image/"));
   return imageFile?.cdn_uri || content?.links?.image || imageFile?.uri;
+}
+
+/** Name, symbol and image to show for an asset. Fallback wording is up to each app. */
+export function assetDisplay(asset: DasAsset): AssetDisplay {
+  const metadata = asset.content?.metadata;
+  return {
+    name: nonBlank(metadata?.name),
+    symbol: nonBlank(asset.token_info?.symbol) ?? nonBlank(metadata?.symbol),
+    image: assetImageUrl(asset.content),
+  };
 }
 
 /** Looks up assets by mint, keyed by mint. Mints DAS doesn't know are left out. */
@@ -70,9 +69,9 @@ export async function fetchAssetsByMint(
 ): Promise<Map<string, DasAsset>> {
   const assetsByMint = new Map<string, DasAsset>();
 
-  for (const ids of chunk(mints, DAS_PAGE_LIMIT)) {
+  for (const ids of chunk(mints, DAS_BATCH_SIZE)) {
     const items = await callDas<Array<DasAsset | null>>(url, "getAssetBatch", { ids }, signal);
-    for (const asset of (items ?? []).filter(isAsset)) {
+    for (const asset of items.filter(isAsset)) {
       assetsByMint.set(asset.id, asset);
     }
   }
@@ -87,22 +86,22 @@ export async function fetchOwnerAssets(
 ): Promise<DasAsset[]> {
   const assets: DasAsset[] = [];
 
-  for (let page = 1; ; page++) {
-    const result = await callDas<DasAssetPage>(
+  for (let page = 1; page <= DAS_MAX_PAGES; page++) {
+    const { items = [] } = await callDas<DasAssetPage>(
       url,
       "getAssetsByOwner",
       {
         ownerAddress: owner,
         page,
-        limit: DAS_PAGE_LIMIT,
+        limit: DAS_PAGE_SIZE,
         options: { showFungible: true, showZeroBalance: false },
       },
       signal,
     );
-    const items = result?.items ?? [];
     assets.push(...items.filter(isAsset));
 
-    const isLastPage = items.length < DAS_PAGE_LIMIT;
+    const isLastPage = items.length < DAS_PAGE_SIZE;
     if (isLastPage) return assets;
   }
+  throw new Error(`DAS getAssetsByOwner returned more than ${DAS_MAX_PAGES} full pages`);
 }

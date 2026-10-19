@@ -2,11 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
   define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
   },
   resolve: {
     // One React for the whole bundle. @heirloom/i18n is loaded as source from packages/, and
@@ -17,16 +15,16 @@ export default defineConfig({
       "@": `${import.meta.dirname}/src`,
     },
   },
-  // @heirloom/i18n is consumed as source from packages/, outside this app's
+  // @heirloom/i18n and @heirloom/core are consumed as source from packages/, outside this app's
   // root. Without excluding it from dep pre-bundling, edits to the locale
   // files can be served from a stale cache and every new key renders as its
   // own name until the dev server is restarted.
   optimizeDeps: {
-    exclude: ["@heirloom/i18n"],
+    exclude: ["@heirloom/i18n", "@heirloom/core"],
   },
   server: {
     watch: {
-      ignored: ["!**/packages/i18n/src/**"],
+      ignored: ["!**/packages/i18n/src/**", "!**/packages/core/src/**"],
     },
   },
 });

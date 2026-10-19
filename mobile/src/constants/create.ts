@@ -1,5 +1,5 @@
 import type { HandoverSecret } from "@/types/create";
-import type { UnsupportedAssetReason } from "@/types/wallet";
+import type { UnsupportedAssetReason } from "@heirloom/core/assets";
 
 /** Asset-picker id for native SOL; token rows use their mint. */
 export const SOL_ASSET_ID = "sol";

@@ -1,16 +1,20 @@
-import type { DasAsset } from "@/types/das";
-import type { UnsupportedAssetReason } from "@/types/wallet";
+import type { DasAsset, UnsupportedAssetReason } from "../types/assets";
 
 function isCompressed(asset: DasAsset): boolean {
   return asset.compression?.compressed ?? false;
+}
+
+/** The token balance DAS reported, or undefined when it sent none (Core assets, cNFTs). */
+function reportedBalance(asset: DasAsset): bigint | undefined {
+  const balance = asset.token_info?.balance;
+  return balance === undefined ? undefined : BigInt(balance);
 }
 
 /** V1_NFT, ProgrammableNFT, Core assets and cNFTs, plus any lone token with no decimals. */
 export function isNftAsset(asset: DasAsset): boolean {
   if (isCompressed(asset) || asset.interface === "MplCoreAsset") return true;
   if (asset.interface?.includes("NFT")) return true;
-  const info = asset.token_info;
-  return info?.decimals === 0 && Number(info.balance) === 1;
+  return asset.token_info?.decimals === 0 && reportedBalance(asset) === 1n;
 }
 
 /**
@@ -31,7 +35,5 @@ export function unsupportedReason(asset: DasAsset): UnsupportedAssetReason | und
  */
 export function heldAmount(asset: DasAsset): bigint {
   if (asset.burnt) return 0n;
-  const balance = asset.token_info?.balance;
-  if (balance !== undefined) return BigInt(balance);
-  return isNftAsset(asset) ? 1n : 0n;
+  return reportedBalance(asset) ?? (isNftAsset(asset) ? 1n : 0n);
 }

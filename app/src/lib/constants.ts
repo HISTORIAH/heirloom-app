@@ -43,9 +43,6 @@ export const JUPITER_PRICE_API_URL = "https://api.jup.ag/price/v3";
 export const PRICE_BATCH_SIZE = 50;
 export const PRICE_STALE_MS = 60_000;
 
-/** Helius DAS caps getAssetsByOwner's page size at 1000. */
-export const DAS_PAGE_LIMIT = 1000;
-
 /**
  * The runtime caps a transaction's instruction trace — every instruction it runs, top-level
  * plus every CPI at any depth — at 64 (MAX_INSTRUCTION_TRACE_LENGTH in

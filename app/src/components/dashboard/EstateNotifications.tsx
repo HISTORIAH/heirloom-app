@@ -8,7 +8,7 @@ import NotificationsDialog from "@/components/dashboard/NotificationsDialog";
 import { summarizeReminders, type NotificationsCardStatus } from "@/types/reminders";
 import { useReminders } from "@/hooks/useReminders";
 import { useAuthenticate } from "@/hooks/useAuth";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@heirloom/core/api";
 import { useToast } from "@/hooks/useToast";
 import { errMsg, truncateAddress } from "@/lib/utils";
 import { useTranslation } from "@heirloom/i18n";

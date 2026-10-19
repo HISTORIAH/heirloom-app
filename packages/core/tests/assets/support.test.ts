@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { heldAmount, isNftAsset, unsupportedReason } from "@/lib/solana/assets";
-import type { DasAsset } from "@/types/das";
+import { heldAmount, isNftAsset, unsupportedReason, type DasAsset } from "@heirloom/core/assets";
 
 const MINT = "So11111111111111111111111111111111111111112";
 
