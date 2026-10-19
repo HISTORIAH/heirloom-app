@@ -1,5 +1,6 @@
 [toolchain]
 package_manager = "bun"
+anchor_version = "1.2.1" # SO THAT THE CLI STOPS SCREAMING WHEN I TRY TO BUILD
 
 [features]
 resolution = true
