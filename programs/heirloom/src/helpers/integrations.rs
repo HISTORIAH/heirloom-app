@@ -1,75 +1,19 @@
-//! Shared helpers and reusable CPI account structs.
-//!
-//! Contains math utilities, account lifecycle helpers, and account bundles
-//! used when calling external programs (Lulo, Kamino).
+//! Helpers and reusable CPI account structs for the external programs the
+//! vault deploys into (Lulo, Kamino).
 
-use anchor_lang::{prelude::*, system_program};
+use anchor_lang::prelude::*;
 use anchor_spl::{
     token,
-    token_interface::{self, Mint, TokenAccount},
+    token_interface::{Mint, TokenAccount},
 };
 use solana_instructions_sysvar::ID as SOLANA_SYSVAR_IX_ID;
 
 use crate::{
-    error::HeirloomError, lulo_v2, AssetRecord, DepositType, Vault, KAMINO_FARMS_PROGRAM_ID,
-    KAMINO_PROGRAM_ID, MAX_INTERVAL_SECONDS, SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
+    error::HeirloomError,
+    helpers::transfers::{split_amount_into_fee_and_payout, transfer_tokens_checked},
+    lulo_v2, AssetRecord, DepositType, Vault, KAMINO_FARMS_PROGRAM_ID, KAMINO_PROGRAM_ID,
+    SCOPE_PRICES_PROGRAM_ID, YIELD_FEE_BPS,
 };
-
-// ----------------------------------------------------------------- Math & validation
-
-/// Splits `gross_amount` into a protocol fee and a net payout using ceiling
-/// division so the fee always rounds up.
-pub(crate) fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
-    let gross = gross_amount as u128;
-    let fee = fee_bps as u128;
-    let protocol_fee = ((gross * fee + 9_999) / 10_000) as u64;
-
-    let payout = gross_amount
-        .checked_sub(protocol_fee)
-        .ok_or(HeirloomError::MathUnderflow)?;
-
-    Ok((protocol_fee, payout))
-}
-
-/// A mint with no decimals and a supply of one is treated as an NFT. NFTs
-/// pay a flat deposit fee instead of the bps fee, which would round up to
-/// the whole token.
-pub(crate) fn is_nft(mint: &InterfaceAccount<Mint>) -> bool {
-    mint.decimals() == 0 && mint.supply() == 1
-}
-
-// ----------------------------------------------------------------- Transfers
-
-/// Transfers `lamports` from a signing wallet to any writable account via
-/// the system program.
-pub(crate) fn transfer_sol(
-    from: &mut Signer,
-    to: &mut impl ToCpiHandleMut,
-    system_program: &Program<System>,
-    lamports: u64,
-) -> Result<()> {
-    let cpi_accounts = system_program::Transfer {
-        from: from.to_cpi_handle_mut(),
-        to: to.to_cpi_handle_mut(),
-    };
-
-    let cpi_context = CpiContext::new(system_program.address(), cpi_accounts);
-
-    system_program::transfer(cpi_context, lamports)?;
-
-    Ok(())
-}
-
-/// Ensures `value` is a non-negative interval that does not exceed the max
-/// allowed duration.
-pub(crate) fn validate_interval(value: i64) -> Result<()> {
-    require!(value >= 0, HeirloomError::IntervalNegative);
-    require!(
-        value <= MAX_INTERVAL_SECONDS,
-        HeirloomError::IntervalTooLong
-    );
-    Ok(())
-}
 
 // ----------------------------------------------------------------- Lulo integration
 
@@ -99,18 +43,16 @@ pub(crate) fn skim_lulo_yield_fee(
     asset_record.principal_deployed -= principal_returned;
 
     if yield_amount > 0 {
-        let (fee, _) = calculate_distribution(yield_amount, YIELD_FEE_BPS)?;
-        let cpi_accounts = token_interface::TransferChecked {
-            from: vault_token_account.to_cpi_handle_mut(),
-            mint: input_mint.to_cpi_handle(),
-            to: treasury_token_account.to_cpi_handle_mut(),
-            authority: vault.to_cpi_handle(),
-        };
-
-        let cpi_context =
-            CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-        token_interface::transfer_checked(cpi_context, fee, input_mint.decimals())?;
+        let (fee, _) = split_amount_into_fee_and_payout(yield_amount, YIELD_FEE_BPS)?;
+        transfer_tokens_checked(
+            token_program_addr,
+            vault_token_account.to_cpi_handle_mut(),
+            treasury_token_account.to_cpi_handle_mut(),
+            vault.to_cpi_handle(),
+            input_mint,
+            fee,
+            signer_seeds,
+        )?;
     }
 
     Ok(())

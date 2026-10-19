@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::{error::HeirloomError, MAX_INTERVAL_SECONDS};
+
 #[account(borsh)]
 pub struct Estate {
     pub authority: Address,
@@ -54,6 +56,17 @@ impl Estate {
     + 1 + 32                         // delegate
     + 1 + 32                         // check_in_signer
     + 1; // claimable_assets
+
+    /// Ensures an interval argument is non-negative and does not exceed the
+    /// max allowed duration.
+    pub fn validate_interval_secs(value: i64) -> Result<()> {
+        require!(value >= 0, HeirloomError::IntervalNegative);
+        require!(
+            value <= MAX_INTERVAL_SECONDS,
+            HeirloomError::IntervalTooLong
+        );
+        Ok(())
+    }
 }
 
 #[account]
@@ -69,6 +82,28 @@ impl Vault {
     pub const LEN: usize = 8           // discriminator
     + 32                             // estate
     + 1; // bump
+
+    /// Owned copies of the seeds the vault PDA signs with. Copying the
+    /// addresses means no account stays borrowed while CPI handles are taken.
+    pub fn signer_seeds_for(authority: &Address, heir: &Address, bump: u8) -> VaultSignerSeeds {
+        VaultSignerSeeds {
+            authority: *authority.as_array(),
+            heir: *heir.as_array(),
+            bump: [bump],
+        }
+    }
+}
+
+pub struct VaultSignerSeeds {
+    authority: [u8; 32],
+    heir: [u8; 32],
+    bump: [u8; 1],
+}
+
+impl VaultSignerSeeds {
+    pub fn as_seeds(&self) -> [&[u8]; 4] {
+        [Vault::SEED, &self.authority, &self.heir, &self.bump]
+    }
 }
 
 /// Marker PDA proving a given mint was registered as a claimable asset for

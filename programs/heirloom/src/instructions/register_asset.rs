@@ -1,13 +1,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TransferChecked},
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount},
 };
 
 use crate::{
     constants::{NFT_DEPOSIT_FEE_LAMPORTS, TREASURY},
     error::HeirloomError,
-    helpers::{is_nft, transfer_sol},
+    helpers::{
+        create_token_account_if_missing, is_nft_mint, transfer_sol_from_signer,
+        transfer_tokens_checked,
+    },
     AssetRecord, Estate, Vault,
 };
 
@@ -86,35 +89,28 @@ impl RegisterAsset {
                 let mut vault_ta = ctx.accounts.vault_token_account.take().unwrap();
                 let mut authority_ta = ctx.accounts.authority_token_account.take().unwrap();
 
-                let cpi_accounts = associated_token::Create {
-                    payer: ctx.accounts.authority.to_cpi_handle_mut(),
-                    associated_token: vault_ta.to_cpi_handle_mut(),
-                    authority: ctx.accounts.vault.to_cpi_handle(),
-                    mint: mint.to_cpi_handle(),
-                    system_program: ctx.accounts.system_program.to_cpi_handle(),
-                    token_program: ctx.accounts.token_program.to_cpi_handle(),
-                };
+                create_token_account_if_missing(
+                    ctx.accounts.associated_token_program.address(),
+                    ctx.accounts.authority.to_cpi_handle_mut(),
+                    vault_ta.to_cpi_handle_mut(),
+                    ctx.accounts.vault.to_cpi_handle(),
+                    mint.to_cpi_handle(),
+                    ctx.accounts.system_program.to_cpi_handle(),
+                    ctx.accounts.token_program.to_cpi_handle(),
+                )?;
 
-                let associated_program_addr = ctx.accounts.associated_token_program.address();
-                let cpi_context = CpiContext::new(associated_program_addr, cpi_accounts);
+                transfer_tokens_checked(
+                    ctx.accounts.token_program.address(),
+                    authority_ta.to_cpi_handle_mut(),
+                    vault_ta.to_cpi_handle_mut(),
+                    ctx.accounts.authority.to_cpi_handle(),
+                    &mint,
+                    amount,
+                    &[],
+                )?;
 
-                associated_token::create_idempotent(cpi_context)?;
-
-                // transfer
-                let cpi_accounts = TransferChecked {
-                    from: authority_ta.to_cpi_handle_mut(),
-                    mint: mint.to_cpi_handle(),
-                    to: vault_ta.to_cpi_handle_mut(),
-                    authority: ctx.accounts.authority.to_cpi_handle(),
-                };
-
-                let token_program_addr = ctx.accounts.token_program.address();
-                let cpi_context = CpiContext::new(token_program_addr, cpi_accounts);
-
-                token_interface::transfer_checked(cpi_context, amount, mint.decimals())?;
-
-                if is_nft(&mint) {
-                    transfer_sol(
+                if is_nft_mint(&mint) {
+                    transfer_sol_from_signer(
                         &mut ctx.accounts.authority,
                         &mut ctx.accounts.treasury,
                         &ctx.accounts.system_program,
@@ -132,7 +128,7 @@ impl RegisterAsset {
                     .ok_or(ProgramError::ArithmeticOverflow)?;
             }
             None => {
-                transfer_sol(
+                transfer_sol_from_signer(
                     &mut ctx.accounts.authority,
                     &mut ctx.accounts.vault,
                     &ctx.accounts.system_program,

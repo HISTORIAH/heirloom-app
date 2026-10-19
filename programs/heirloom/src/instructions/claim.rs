@@ -1,13 +1,16 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken},
-    token_interface::{self, Mint, TokenAccount, TransferChecked},
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount},
 };
 
 use crate::{
     constants::{CLAIM_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::{calculate_distribution, is_nft},
+    helpers::{
+        close_vault_token_account, create_token_account_if_missing, is_nft_mint,
+        move_lamports_from_vault, split_amount_into_fee_and_payout, transfer_tokens_checked,
+    },
     AssetRecord, Estate, Vault,
 };
 
@@ -174,16 +177,13 @@ impl Claim {
     }
 
     pub fn transfer_assets(&mut self) -> Result<()> {
-        let authority_addr_arr = *self.authority.address().as_array(); // [u8; 32], owned
-        let heir_addr_arr = *self.heir.address().as_array();
-
-        let vault_seeds: &[&[u8]] = &[
-            b"vault",
-            authority_addr_arr.as_ref(),
-            heir_addr_arr.as_ref(),
-            &[self.vault.bump],
-        ];
-        let signer_seeds = &[vault_seeds];
+        let vault_seeds = Vault::signer_seeds_for(
+            self.authority.address(),
+            self.heir.address(),
+            self.vault.bump,
+        );
+        let vault_seeds = vault_seeds.as_seeds();
+        let signer_seeds: &[&[&[u8]]] = &[&vault_seeds];
         let token_program_addr = self.token_program.address();
         let associated_token_program_addr = self.associated_token_program.address();
 
@@ -195,88 +195,68 @@ impl Claim {
                 let amount = vault_ta.amount();
 
                 // NFTs paid a flat fee on deposit
-                let fee_bps = if is_nft(mint) { 0 } else { CLAIM_FEE_BPS };
-                let (protocol_fee, heir_payout) = calculate_distribution(amount, fee_bps)?;
+                let fee_bps = if is_nft_mint(mint) { 0 } else { CLAIM_FEE_BPS };
+                let (protocol_fee, heir_payout) =
+                    split_amount_into_fee_and_payout(amount, fee_bps)?;
 
                 if protocol_fee > 0 {
-                    let cpi_accounts = associated_token::Create {
-                        payer: self.heir.to_cpi_handle_mut(),
-                        associated_token: treasury_ta.to_cpi_handle_mut(),
-                        authority: self.treasury.to_cpi_handle(),
-                        mint: mint.to_cpi_handle(),
-                        system_program: self.system_program.to_cpi_handle(),
-                        token_program: self.token_program.to_cpi_handle(),
-                    };
+                    create_token_account_if_missing(
+                        associated_token_program_addr,
+                        self.heir.to_cpi_handle_mut(),
+                        treasury_ta.to_cpi_handle_mut(),
+                        self.treasury.to_cpi_handle(),
+                        mint.to_cpi_handle(),
+                        self.system_program.to_cpi_handle(),
+                        self.token_program.to_cpi_handle(),
+                    )?;
 
-                    let create_idempotent_ctx =
-                        CpiContext::new(associated_token_program_addr, cpi_accounts);
-
-                    associated_token::create_idempotent(create_idempotent_ctx)?;
-
-                    // transfer
-                    let cpi_accounts = TransferChecked {
-                        from: vault_ta.to_cpi_handle_mut(),
-                        mint: mint.to_cpi_handle(),
-                        to: treasury_ta.to_cpi_handle_mut(),
-                        authority: self.vault.to_cpi_handle(),
-                    };
-
-                    let transfer_ctx =
-                        CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-                    token_interface::transfer_checked(transfer_ctx, protocol_fee, mint.decimals())?;
+                    transfer_tokens_checked(
+                        token_program_addr,
+                        vault_ta.to_cpi_handle_mut(),
+                        treasury_ta.to_cpi_handle_mut(),
+                        self.vault.to_cpi_handle(),
+                        mint,
+                        protocol_fee,
+                        signer_seeds,
+                    )?;
                 }
 
                 // heir
                 let heir_handle = self.heir.to_cpi_handle_mut();
-                let cpi_accounts = associated_token::Create {
-                    payer: heir_handle,
-                    associated_token: heir_ta.to_cpi_handle_mut(),
-                    authority: heir_handle.into_readonly(),
-                    mint: mint.to_cpi_handle(),
-                    system_program: self.system_program.to_cpi_handle(),
-                    token_program: self.token_program.to_cpi_handle(),
-                };
+                create_token_account_if_missing(
+                    associated_token_program_addr,
+                    heir_handle,
+                    heir_ta.to_cpi_handle_mut(),
+                    heir_handle.into_readonly(),
+                    mint.to_cpi_handle(),
+                    self.system_program.to_cpi_handle(),
+                    self.token_program.to_cpi_handle(),
+                )?;
 
-                let token_program_addr = self.token_program.address();
-                let create_idempotent_ctx =
-                    CpiContext::new(associated_token_program_addr, cpi_accounts);
-
-                associated_token::create_idempotent(create_idempotent_ctx)?;
-
-                // transfer
-                let cpi_accounts = TransferChecked {
-                    from: vault_ta.to_cpi_handle_mut(),
-                    mint: mint.to_cpi_handle(),
-                    to: heir_ta.to_cpi_handle_mut(),
-                    authority: self.vault.to_cpi_handle(),
-                };
-
-                let transfer_ctx =
-                    CpiContext::new_with_signer(token_program_addr, cpi_accounts, signer_seeds);
-
-                token_interface::transfer_checked(transfer_ctx, heir_payout, mint.decimals())?;
-
-                // close accounts
-                let close_cpi_accounts = token_interface::CloseAccount {
-                    account: vault_ta.to_cpi_handle_mut(),
-                    destination: self.heir.to_cpi_handle_mut(),
-                    authority: self.vault.to_cpi_handle(),
-                };
-                let close_ctx = CpiContext::new_with_signer(
+                transfer_tokens_checked(
                     token_program_addr,
-                    close_cpi_accounts,
+                    vault_ta.to_cpi_handle_mut(),
+                    heir_ta.to_cpi_handle_mut(),
+                    self.vault.to_cpi_handle(),
+                    mint,
+                    heir_payout,
                     signer_seeds,
-                );
+                )?;
 
-                token_interface::close_account(close_ctx)?;
+                close_vault_token_account(
+                    token_program_addr,
+                    vault_ta.to_cpi_handle_mut(),
+                    self.heir.to_cpi_handle_mut(),
+                    self.vault.to_cpi_handle(),
+                    signer_seeds,
+                )?;
             }
             None => {
                 let vault_lamports = self.vault.get_lamports();
-                let (protocol_fee, _) = calculate_distribution(vault_lamports, CLAIM_FEE_BPS)?;
+                let (protocol_fee, _) =
+                    split_amount_into_fee_and_payout(vault_lamports, CLAIM_FEE_BPS)?;
 
-                self.vault.sub_lamports(protocol_fee)?;
-                self.treasury.add_lamports(protocol_fee)?;
+                move_lamports_from_vault(&mut self.vault, &mut self.treasury, protocol_fee)?;
 
                 // NOTE: Heir payout happens implicitly via `close_pda` helper
             }
