@@ -3,7 +3,6 @@ import { useVault, type EstateData } from "@/contexts/VaultContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/useToast";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useReminders, useSaveHeirName } from "@/hooks/useReminders";
 import { useTokenPrices } from "@/hooks/useTokenPrices";
 import { SOL_DECIMALS, WRAPPED_SOL_MINT } from "@/lib/constants";
@@ -82,7 +81,6 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
 
   const vaultEmpty = isVaultEmpty(estate);
   const vaultMints = estate.vaultTokens.map((vt) => vt.mint);
-  const { metadata: tokenMeta } = useTokenMetadata(vaultMints);
   const { data: prices, isLoading: pricesLoading } = useTokenPrices([
     WRAPPED_SOL_MINT,
     ...vaultMints,
@@ -131,8 +129,7 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
   const activeLuloHolding = luloTargetMint
     ? estate.vaultTokens.find((vt) => vt.mint === luloTargetMint)
     : null;
-  const luloTokenMeta = activeLuloHolding ? tokenMeta.get(activeLuloHolding.mint) : undefined;
-  const luloSymbol = luloTokenMeta?.symbol;
+  const luloSymbol = activeLuloHolding?.symbol;
   const luloVaultBalance = activeLuloHolding
     ? Number(activeLuloHolding.rawAmount) / 10 ** activeLuloHolding.decimals
     : 0;
@@ -261,7 +258,6 @@ export const EstateCard: React.FC<{ estate: EstateData }> = ({ estate }) => {
         />
         <EstateAssetsPanel
           estate={estate}
-          tokenMeta={tokenMeta}
           prices={prices}
           pricesLoading={pricesLoading}
           showYieldStaking={showYieldStaking}

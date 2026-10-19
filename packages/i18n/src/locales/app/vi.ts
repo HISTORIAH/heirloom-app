@@ -381,7 +381,9 @@ const app: AppMessages = {
       missOneDesc:
         "A {{grace}} grace period starts. Check in any time to cancel it. Your heir hears nothing yet.",
       nAssets: "{{count}} assets",
-      nCollectibles: "{{count}} collectibles · Metaplex NFTs. Core assets coming later.",
+      nCollectibles: "{{count}} trong ví",
+      noCollectibles: "Không tìm thấy NFT nào trong ví của bạn.",
+      greyedOutNote: "mục bị làm mờ chưa thể thêm vào di sản",
       nDaysShort: "{{count}}d",
       newEstate: "NEW ESTATE",
       nextCheckInDue:
@@ -1005,6 +1007,13 @@ const app: AppMessages = {
     hideOther: "Ẩn token khác ({{count}})",
     unknownToken: "Token không xác định",
     nftTag: "NFT",
+    cantAddTag: "Chưa thể thêm",
+    unsupported: {
+      programmable: "NFT lập trình · chưa hỗ trợ",
+      compressed: "NFT nén · chưa hỗ trợ",
+      core: "Metaplex Core · chưa hỗ trợ",
+      frozen: "Bị nhà phát hành đóng băng",
+    },
     inEstateTag: "Trong di sản",
     oneItem: "1 vật phẩm",
     noPrice: "Không có giá",

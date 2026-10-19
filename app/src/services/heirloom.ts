@@ -25,7 +25,7 @@ import type { VaultTokenHolding } from "@/types";
 import type { InitializeInput } from "@/types/program";
 import type { CreateAssetId, CreateEstateDraft } from "@/types/create";
 import type { EstateResponse, EstateRole } from "@/types/estate";
-import { fetchAssetsByOwner } from "@/services/das";
+import { assetDisplay, fetchOwnerAssets } from "@/services/das";
 import { fetchEstates } from "@/services/api/estateMetadata";
 import { SOLANA_RPC_ENDPOINT } from "@/config";
 import {
@@ -464,11 +464,7 @@ async function fetchEstatesByMemcmp(
 export async function discoverVaultTokenAccounts(vaultPda: Address): Promise<VaultTokenHolding[]> {
   if (!SOLANA_RPC_ENDPOINT) return [];
 
-  const assets = await fetchAssetsByOwner(
-    SOLANA_RPC_ENDPOINT,
-    vaultPda,
-    new AbortController().signal,
-  );
+  const assets = await fetchOwnerAssets(SOLANA_RPC_ENDPOINT, vaultPda);
 
   return Promise.all(
     assets.map(async (asset) => {
@@ -481,6 +477,7 @@ export async function discoverVaultTokenAccounts(vaultPda: Address): Promise<Vau
         rawAmount: BigInt(asset.token_info?.balance ?? 0),
         decimals: asset.token_info?.decimals ?? 0,
         tokenProgram: asset.token_info?.token_program ?? TOKEN_PROGRAM_ADDRESS,
+        ...assetDisplay(asset),
       };
     }),
   );

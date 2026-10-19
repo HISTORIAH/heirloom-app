@@ -12,7 +12,6 @@ import TokenAvatar from "@/components/TokenAvatar";
 import { WithWallet } from "@/components/WithWallet";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
 import { useAnalytics } from "@/contexts/AnalyticsContext";
-import { useTokenMetadata } from "@/hooks/useTokenMetadata";
 import { useTranslation } from "@heirloom/i18n";
 import { useToast } from "@/hooks/useToast";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -46,9 +45,6 @@ const ClaimPageInner: React.FC<{
   const [claimingOwner, setClaimingOwner] = useState<string | null>(null);
   const [claimTxIds, setClaimTxIds] = useState<Record<string, string>>({});
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
-
-  const allVaultMints = inheritances.flatMap((inh) => inh.vaultTokens.map((vt) => vt.mint));
-  const { metadata: tokenMeta } = useTokenMetadata(allVaultMints);
 
   // A link from a reminder email carries the owner, so that estate shows even if the scan
   // can't run.
@@ -225,16 +221,14 @@ const ClaimPageInner: React.FC<{
               {inh.vaultTokens.length > 0 && (
                 <div className="mt-5 divide-y divide-tile-line border-t border-tile-line">
                   {inh.vaultTokens.map((vt) => {
-                    const meta = tokenMeta.get(vt.mint);
-                    const symbol = meta?.symbol;
-                    const name = meta?.name;
+                    const { symbol, name } = vt;
                     const shortMint = `${vt.mint.slice(0, 4)}…${vt.mint.slice(-4)}`;
                     const primary = symbol || name || shortMint;
                     const secondary = name && name !== primary ? name : symbol ? shortMint : null;
                     return (
                       <div key={vt.ata} className="flex items-center gap-3 py-3">
                         <TokenAvatar
-                          image={meta?.image}
+                          image={vt.image}
                           label={primary}
                           size="md"
                           accent="bg-accent-cyan"

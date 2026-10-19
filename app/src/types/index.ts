@@ -1,9 +1,14 @@
+import type { UnsupportedAssetReason } from "@/types/assets";
+
 export type VaultTokenHolding = {
   mint: string;
   ata: string;
   rawAmount: bigint;
   decimals: number;
   tokenProgram: string;
+  name?: string;
+  symbol?: string;
+  image?: string;
 };
 
 export type SplTokenAsset = {
@@ -16,10 +21,9 @@ export type SplTokenAsset = {
   uiAmount: number;
   amount: bigint;
   tokenProgram: string;
-  /** DAS interface, e.g. "FungibleToken", "V1_NFT", "ProgrammableNFT". */
-  assetInterface?: string;
-  /** Frozen token account. pNFTs sit frozen, and the vault can't move them. */
-  frozen?: boolean;
+  isNft: boolean;
+  /** Set when the asset can't go into an estate; it's listed but greyed out. */
+  unsupportedReason?: UnsupportedAssetReason;
 };
 
 export type AnalyticsEvent =

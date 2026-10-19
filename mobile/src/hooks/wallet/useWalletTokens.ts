@@ -2,15 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { address, type Address } from "@solana/kit";
 
 import { DAS_RPC_URL } from "@/config";
+import { heldAmount, isNftAsset, unsupportedReason } from "@/lib/solana/assets";
 import { isTokenProgram } from "@/lib/solana/mint";
-import { toBigInt } from "@/lib/solana/parsed";
 import { errorMessage } from "@/lib/text";
-import {
-  fetchAssetsByOwner,
-  pickImage,
-  pickLabel,
-  type DasFungibleAsset,
-} from "@/services/api/das";
+import { assetImageUrl, fetchOwnerAssets, pickLabel } from "@/services/api/das";
+import type { DasAsset } from "@/types/das";
 import type { WalletToken } from "@/types/wallet";
 
 /** Stable empty list, so memos keyed on `tokens` don't rerun every render while loading. */
@@ -22,16 +18,17 @@ export function walletTokensKey(owner: string | undefined) {
 }
 
 /**
- * Fungible tokens held by `owner`, with metadata from the DAS API. One fetch shared by every
+ * Tokens and NFTs held by `owner`, with metadata from the DAS API. One fetch shared by every
  * screen that asks (create, top-up), so a picked token already carries its decimals and program.
+ * NFTs the vault can't hold come back with an `unsupportedReason` rather than being dropped.
  */
 export function useWalletTokens(owner: string | undefined) {
   const query = useQuery({
     queryKey: walletTokensKey(owner),
     queryFn: async ({ signal }) => {
       if (owner === undefined) throw new Error("No wallet");
-      const assets = await fetchAssetsByOwner(DAS_RPC_URL, owner, signal);
-      return assets.filter(isFungible).map(toWalletToken);
+      const assets = await fetchOwnerAssets(DAS_RPC_URL, owner, signal);
+      return assets.filter((asset) => heldAmount(asset) > 0n).map(toWalletToken);
     },
     enabled: owner !== undefined,
   });
@@ -43,28 +40,25 @@ export function useWalletTokens(owner: string | undefined) {
   };
 }
 
-/** DAS returns NFTs too when showFungible is on; decimals 0 means non-fungible. */
-function isFungible(asset: DasFungibleAsset): boolean {
-  return (asset.token_info?.decimals ?? 0) > 0;
-}
-
-function toWalletToken(asset: DasFungibleAsset): WalletToken {
+function toWalletToken(asset: DasAsset): WalletToken {
   const info = asset.token_info;
-  const rawBalance = Number(info?.balance ?? 0);
+  const raw = heldAmount(asset);
   const decimals = info?.decimals ?? 0;
   const { symbol, name, named } = pickLabel(asset.id, info?.symbol, asset.content);
   return {
     mint: asset.id,
     symbol,
     name,
-    balance: formatBalance(rawBalance, decimals),
-    raw: toBigInt(info?.balance) ?? 0n,
+    balance: formatBalance(Number(raw), decimals),
+    raw,
     decimals,
     tokenProgram: knownTokenProgram(info?.token_program),
-    image: pickImage(asset.content),
+    image: assetImageUrl(asset.content),
     named,
     usd: info?.price_info?.total_price ?? null,
     usdPerToken: info?.price_info?.price_per_token ?? null,
+    isNft: isNftAsset(asset),
+    unsupportedReason: unsupportedReason(asset),
   };
 }
 

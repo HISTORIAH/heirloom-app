@@ -37,9 +37,14 @@ const TokenLine: React.FC<{ token: PickerToken }> = ({ token }) => {
           )}
           {token.isNft && <Tag>{t("addAsset.nftTag")}</Tag>}
           {token.inEstate && <Tag dark>{t("addAsset.inEstateTag")}</Tag>}
+          {token.unsupportedReason && <Tag>{t("addAsset.cantAddTag")}</Tag>}
         </div>
         <div className="truncate text-[0.8125rem] text-muted-foreground">
-          {token.unverified ? t("addAsset.unknownToken") : token.symbol}
+          {token.unsupportedReason
+            ? t(`addAsset.unsupported.${token.unsupportedReason}`)
+            : token.unverified
+              ? t("addAsset.unknownToken")
+              : token.symbol}
         </div>
       </div>
       <div className="ml-auto shrink-0 text-right">
@@ -57,6 +62,25 @@ const TokenLine: React.FC<{ token: PickerToken }> = ({ token }) => {
     </>
   );
 };
+
+/** A pickable row. Assets the vault can't hold stay visible but greyed out and disabled. */
+const TokenOption: React.FC<{ token: PickerToken; onPick: (token: PickerToken) => void }> = ({
+  token,
+  onPick,
+}) => (
+  <button
+    type="button"
+    disabled={!!token.unsupportedReason}
+    onClick={() => onPick(token)}
+    className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors enabled:hover:bg-tile-soft disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale"
+  >
+    <TokenLine token={token} />
+  </button>
+);
+
+/** Supported assets first, so greyed-out ones sink to the bottom of their group. */
+const supportedFirst = (a: PickerToken, b: PickerToken) =>
+  Number(!!a.unsupportedReason) - Number(!!b.unsupportedReason);
 
 /** Highest USD value first; unpriced tokens after, by balance. */
 const byValue = (a: PickerToken, b: PickerToken) => {
@@ -89,8 +113,11 @@ export const TokenPicker: React.FC<{
     const visible = tokens.filter((tok) => !hidden(tok) && match(tok));
     return {
       inEstate: visible.filter((tok) => tok.inEstate && !tok.isNft).sort(byValue),
-      fungible: visible.filter((tok) => !tok.inEstate && !tok.isNft).sort(byValue),
-      nfts: visible.filter((tok) => tok.isNft),
+      fungible: visible
+        .filter((tok) => !tok.inEstate && !tok.isNft)
+        .sort(byValue)
+        .sort(supportedFirst),
+      nfts: visible.filter((tok) => tok.isNft).sort(supportedFirst),
       other: tokens.filter((tok) => hidden(tok) && match(tok)),
     };
   }, [tokens, query]);
@@ -112,14 +139,7 @@ export const TokenPicker: React.FC<{
           {title}
         </div>
         {list.map((tok) => (
-          <button
-            key={tok.mint}
-            type="button"
-            onClick={() => pick(tok)}
-            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-tile-soft"
-          >
-            <TokenLine token={tok} />
-          </button>
+          <TokenOption key={tok.mint} token={tok} onPick={pick} />
         ))}
       </>
     );
@@ -169,12 +189,14 @@ export const TokenPicker: React.FC<{
 
           <div className="max-h-[min(440px,48vh)] overflow-y-auto">
             {loading && tokens.length <= 1 && (
-              <div className="px-3.5 py-4 text-sm text-muted-foreground">{t("addAsset.loading")}</div>
+              <div className="px-3.5 py-4 text-sm text-muted-foreground">
+                {t("addAsset.loading")}
+              </div>
             )}
             {pastedMint && (
               <button
                 type="button"
-                disabled={!pastedMatch}
+                disabled={!pastedMatch || !!pastedMatch.unsupportedReason}
                 onClick={() => pastedMatch && pick(pastedMatch)}
                 className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors enabled:hover:bg-tile-soft"
               >
@@ -213,14 +235,7 @@ export const TokenPicker: React.FC<{
               {showOther && (
                 <div className="max-h-[min(240px,30vh)] overflow-y-auto">
                   {groups.other.map((tok) => (
-                    <button
-                      key={tok.mint}
-                      type="button"
-                      onClick={() => pick(tok)}
-                      className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-tile-soft"
-                    >
-                      <TokenLine token={tok} />
-                    </button>
+                    <TokenOption key={tok.mint} token={tok} onPick={pick} />
                   ))}
                 </div>
               )}

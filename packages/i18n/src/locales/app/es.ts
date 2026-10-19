@@ -386,7 +386,9 @@ const app: AppMessages = {
       missOneDesc:
         "A {{grace}} grace period starts. Check in any time to cancel it. Your heir hears nothing yet.",
       nAssets: "{{count}} assets",
-      nCollectibles: "{{count}} collectibles · Metaplex NFTs. Core assets coming later.",
+      nCollectibles: "{{count}} en tu wallet",
+      noCollectibles: "No se encontraron NFTs en tu wallet.",
+      greyedOutNote: "los atenuados aún no pueden entrar en un estado",
       nDaysShort: "{{count}}d",
       newEstate: "NEW ESTATE",
       nextCheckInDue:
@@ -1033,6 +1035,13 @@ const app: AppMessages = {
     hideOther: "Ocultar otros tokens ({{count}})",
     unknownToken: "Token desconocido",
     nftTag: "NFT",
+    cantAddTag: "Aún no disponible",
+    unsupported: {
+      programmable: "NFT programable · aún no compatible",
+      compressed: "NFT comprimido · aún no compatible",
+      core: "Metaplex Core · aún no compatible",
+      frozen: "Congelado por su emisor",
+    },
     inEstateTag: "En el estado",
     oneItem: "1 artículo",
     noPrice: "Sin precio",

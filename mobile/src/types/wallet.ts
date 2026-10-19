@@ -1,6 +1,9 @@
 import type { Address } from "@solana/kit";
 
-/** A fungible token the connected wallet holds, with DAS metadata. */
+/** Why a wallet asset can't go into an estate yet. The vault only holds plain SPL token accounts. */
+export type UnsupportedAssetReason = "programmable" | "compressed" | "core" | "frozen";
+
+/** A token or NFT the connected wallet holds, with DAS metadata. */
 export type WalletToken = {
   mint: string;
   symbol: string;
@@ -19,4 +22,7 @@ export type WalletToken = {
   usd: number | null;
   /** USD per whole token; null when DAS has no price. */
   usdPerToken: number | null;
+  isNft: boolean;
+  /** Set when the asset can't go into an estate; pickers show it greyed out. */
+  unsupportedReason?: UnsupportedAssetReason;
 };
