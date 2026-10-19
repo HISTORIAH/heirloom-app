@@ -6,13 +6,16 @@ order: 2
 keywords: ["deposit", "top up", "add asset", "register", "fund", "tokens", "spl", "token-2022", "freeze", "transfer hook", "nft"]
 ---
 
-You can add assets to a live estate at any time from the owner wallet. There is no
-protocol fee and no limit on how often.
+You can add assets to a live estate at any time from the owner wallet, with no limit on
+how often. SOL and tokens have no protocol fee; each NFT costs a flat **0.01 SOL**.
 
 ## What you can add
 
-SOL and any SPL token, from both the classic Token program and Token-2022. NFTs and
-compressed assets aren't supported.
+SOL and any SPL token, from both the classic Token program and Token-2022.
+
+NFTs work too, as long as they are a regular token with a supply of one: these pay the
+0.01 SOL fee when they go in, and leave the estate whole. Programmable NFTs (pNFTs),
+Metaplex Core assets and compressed NFTs aren't supported yet.
 
 The first time a token goes into an estate it is registered, which costs a little rent
 for its accounts. You get that back when the estate closes. After that, adding more of
