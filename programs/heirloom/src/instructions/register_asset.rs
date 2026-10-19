@@ -1,13 +1,15 @@
-use anchor_lang::{
-    prelude::*,
-    system_program::{self},
-};
+use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::{self, AssociatedToken},
     token_interface::{self, Mint, TokenAccount, TransferChecked},
 };
 
-use crate::{error::HeirloomError, AssetRecord, Estate, Vault};
+use crate::{
+    constants::{NFT_DEPOSIT_FEE_LAMPORTS, TREASURY},
+    error::HeirloomError,
+    helpers::{is_nft, transfer_sol},
+    AssetRecord, Estate, Vault,
+};
 
 #[derive(Accounts)]
 pub struct RegisterAsset {
@@ -54,6 +56,10 @@ pub struct RegisterAsset {
         bump,
     )]
     pub asset_record: Option<BorshAccount<AssetRecord>>,
+
+    /// CHECK: treasury address
+    #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
+    pub treasury: UncheckedAccount,
 
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     #[account(
@@ -107,6 +113,15 @@ impl RegisterAsset {
 
                 token_interface::transfer_checked(cpi_context, amount, mint.decimals())?;
 
+                if is_nft(&mint) {
+                    transfer_sol(
+                        &mut ctx.accounts.authority,
+                        &mut ctx.accounts.treasury,
+                        &ctx.accounts.system_program,
+                        NFT_DEPOSIT_FEE_LAMPORTS,
+                    )?;
+                }
+
                 ctx.accounts.asset_record.as_mut().unwrap().bump = ctx.bumps.asset_record.unwrap();
 
                 ctx.accounts.estate.claimable_assets = ctx
@@ -117,15 +132,12 @@ impl RegisterAsset {
                     .ok_or(ProgramError::ArithmeticOverflow)?;
             }
             None => {
-                let cpi_accounts = system_program::Transfer {
-                    from: ctx.accounts.authority.to_cpi_handle_mut(),
-                    to: ctx.accounts.vault.to_cpi_handle_mut(),
-                };
-
-                let cpi_program_addr = ctx.accounts.system_program.address();
-                let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
-
-                system_program::transfer(cpi_context, amount)?;
+                transfer_sol(
+                    &mut ctx.accounts.authority,
+                    &mut ctx.accounts.vault,
+                    &ctx.accounts.system_program,
+                    amount,
+                )?;
             }
         }
 

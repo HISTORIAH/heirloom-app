@@ -3,7 +3,7 @@
 //! Contains math utilities, account lifecycle helpers, and account bundles
 //! used when calling external programs (Lulo, Kamino).
 
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program};
 use anchor_spl::{
     token,
     token_interface::{self, Mint, TokenAccount},
@@ -29,6 +29,35 @@ pub(crate) fn calculate_distribution(gross_amount: u64, fee_bps: u16) -> Result<
         .ok_or(HeirloomError::MathUnderflow)?;
 
     Ok((protocol_fee, payout))
+}
+
+/// A mint with no decimals and a supply of one is treated as an NFT. NFTs
+/// pay a flat deposit fee instead of the bps fee, which would round up to
+/// the whole token.
+pub(crate) fn is_nft(mint: &InterfaceAccount<Mint>) -> bool {
+    mint.decimals() == 0 && mint.supply() == 1
+}
+
+// ----------------------------------------------------------------- Transfers
+
+/// Transfers `lamports` from a signing wallet to any writable account via
+/// the system program.
+pub(crate) fn transfer_sol(
+    from: &mut Signer,
+    to: &mut impl ToCpiHandleMut,
+    system_program: &Program<System>,
+    lamports: u64,
+) -> Result<()> {
+    let cpi_accounts = system_program::Transfer {
+        from: from.to_cpi_handle_mut(),
+        to: to.to_cpi_handle_mut(),
+    };
+
+    let cpi_context = CpiContext::new(system_program.address(), cpi_accounts);
+
+    system_program::transfer(cpi_context, lamports)?;
+
+    Ok(())
 }
 
 /// Ensures `value` is a non-negative interval that does not exceed the max

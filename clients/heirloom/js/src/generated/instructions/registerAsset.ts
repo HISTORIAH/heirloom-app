@@ -63,6 +63,8 @@ export type RegisterAssetInstruction<
   TAccountVaultTokenAccount extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
   TAccountAssetRecord extends string | AccountMeta<string> = string,
+  TAccountTreasury extends string | AccountMeta<string> =
+    "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q",
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
@@ -90,6 +92,7 @@ export type RegisterAssetInstruction<
       TAccountAssetRecord extends string
         ? WritableAccount<TAccountAssetRecord>
         : TAccountAssetRecord,
+      TAccountTreasury extends string ? WritableAccount<TAccountTreasury> : TAccountTreasury,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -144,6 +147,7 @@ export type RegisterAssetAsyncInput<
   TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
   TAccountMint extends InstructionAccountInput = InstructionAccountInput,
   TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput = InstructionAccountInput,
   TAccountTokenProgram extends InstructionAccountInput = InstructionAccountInput,
   TAccountAssociatedTokenProgram extends InstructionAccountInput = InstructionAccountInput,
   TAccountRent extends InstructionAccountInput = InstructionAccountInput,
@@ -160,6 +164,8 @@ export type RegisterAssetAsyncInput<
   mint?: TAccountMint;
   /** Marker PDA proving mint is registered as claimable asset for current estate */
   assetRecord?: TAccountAssetRecord;
+  /** CHECK: treasury address */
+  treasury?: TAccountTreasury;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: TAccountTokenProgram;
   associatedTokenProgram?: TAccountAssociatedTokenProgram;
@@ -177,6 +183,7 @@ export async function getRegisterAssetInstructionAsync<
   TAccountVaultTokenAccount extends InstructionAccountInput,
   TAccountMint extends InstructionAccountInput,
   TAccountAssetRecord extends InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput,
   TAccountTokenProgram extends InstructionAccountInput,
   TAccountAssociatedTokenProgram extends InstructionAccountInput,
   TAccountRent extends InstructionAccountInput,
@@ -192,6 +199,7 @@ export async function getRegisterAssetInstructionAsync<
     TAccountVaultTokenAccount,
     TAccountMint,
     TAccountAssetRecord,
+    TAccountTreasury,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountRent,
@@ -220,6 +228,10 @@ export async function getRegisterAssetInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountAssetRecord,
       InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasury,
+      InstructionAccountInputAddress<TAccountTreasury>
     >,
     ResolvedInstructionAccountMeta<
       TAccountTokenProgram,
@@ -260,6 +272,7 @@ export async function getRegisterAssetInstructionAsync<
     },
     mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
     assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    treasury: { value: input.treasury ?? null, isSigner: false, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isSigner: false, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -296,6 +309,10 @@ export async function getRegisterAssetInstructionAsync<
       { programAddress },
     );
   }
+  if (!accounts.treasury.value) {
+    accounts.treasury.value =
+      "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q" as Address<"tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q">;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
@@ -323,6 +340,7 @@ export async function getRegisterAssetInstructionAsync<
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
       getAccountMeta("assetRecord", accounts.assetRecord),
+      getAccountMeta("treasury", accounts.treasury),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("rent", accounts.rent),
@@ -353,6 +371,10 @@ export async function getRegisterAssetInstructionAsync<
       InstructionAccountInputAddress<TAccountAssetRecord>
     >,
     ResolvedInstructionAccountMeta<
+      TAccountTreasury,
+      InstructionAccountInputAddress<TAccountTreasury>
+    >,
+    ResolvedInstructionAccountMeta<
       TAccountTokenProgram,
       InstructionAccountInputAddress<TAccountTokenProgram>
     >,
@@ -377,6 +399,7 @@ export type RegisterAssetInput<
   TAccountVaultTokenAccount extends InstructionAccountInput = InstructionAccountInput,
   TAccountMint extends InstructionAccountInput = InstructionAccountInput,
   TAccountAssetRecord extends InstructionAccountInput = InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput = InstructionAccountInput,
   TAccountTokenProgram extends InstructionAccountInput = InstructionAccountInput,
   TAccountAssociatedTokenProgram extends InstructionAccountInput = InstructionAccountInput,
   TAccountRent extends InstructionAccountInput = InstructionAccountInput,
@@ -393,6 +416,8 @@ export type RegisterAssetInput<
   mint?: TAccountMint;
   /** Marker PDA proving mint is registered as claimable asset for current estate */
   assetRecord?: TAccountAssetRecord;
+  /** CHECK: treasury address */
+  treasury?: TAccountTreasury;
   /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
   tokenProgram?: TAccountTokenProgram;
   associatedTokenProgram?: TAccountAssociatedTokenProgram;
@@ -410,6 +435,7 @@ export function getRegisterAssetInstruction<
   TAccountVaultTokenAccount extends InstructionAccountInput,
   TAccountMint extends InstructionAccountInput,
   TAccountAssetRecord extends InstructionAccountInput,
+  TAccountTreasury extends InstructionAccountInput,
   TAccountTokenProgram extends InstructionAccountInput,
   TAccountAssociatedTokenProgram extends InstructionAccountInput,
   TAccountRent extends InstructionAccountInput,
@@ -425,6 +451,7 @@ export function getRegisterAssetInstruction<
     TAccountVaultTokenAccount,
     TAccountMint,
     TAccountAssetRecord,
+    TAccountTreasury,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram,
     TAccountRent,
@@ -452,6 +479,10 @@ export function getRegisterAssetInstruction<
   ResolvedInstructionAccountMeta<
     TAccountAssetRecord,
     InstructionAccountInputAddress<TAccountAssetRecord>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountTreasury,
+    InstructionAccountInputAddress<TAccountTreasury>
   >,
   ResolvedInstructionAccountMeta<
     TAccountTokenProgram,
@@ -491,6 +522,7 @@ export function getRegisterAssetInstruction<
     },
     mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
     assetRecord: { value: input.assetRecord ?? null, isSigner: false, isWritable: true },
+    treasury: { value: input.treasury ?? null, isSigner: false, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isSigner: false, isWritable: false },
     associatedTokenProgram: {
       value: input.associatedTokenProgram ?? null,
@@ -509,6 +541,10 @@ export function getRegisterAssetInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.treasury.value) {
+    accounts.treasury.value =
+      "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q" as Address<"tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q">;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
@@ -536,6 +572,7 @@ export function getRegisterAssetInstruction<
       getAccountMeta("vaultTokenAccount", accounts.vaultTokenAccount),
       getAccountMeta("mint", accounts.mint),
       getAccountMeta("assetRecord", accounts.assetRecord),
+      getAccountMeta("treasury", accounts.treasury),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
       getAccountMeta("rent", accounts.rent),
@@ -564,6 +601,10 @@ export function getRegisterAssetInstruction<
     ResolvedInstructionAccountMeta<
       TAccountAssetRecord,
       InstructionAccountInputAddress<TAccountAssetRecord>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountTreasury,
+      InstructionAccountInputAddress<TAccountTreasury>
     >,
     ResolvedInstructionAccountMeta<
       TAccountTokenProgram,
@@ -598,11 +639,13 @@ export type ParsedRegisterAssetInstruction<
     mint?: TAccountMetas[6] | undefined;
     /** Marker PDA proving mint is registered as claimable asset for current estate */
     assetRecord?: TAccountMetas[7] | undefined;
+    /** CHECK: treasury address */
+    treasury: TAccountMetas[8];
     /** CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release. */
-    tokenProgram: TAccountMetas[8];
-    associatedTokenProgram: TAccountMetas[9];
-    rent: TAccountMetas[10];
-    systemProgram: TAccountMetas[11];
+    tokenProgram: TAccountMetas[9];
+    associatedTokenProgram: TAccountMetas[10];
+    rent: TAccountMetas[11];
+    systemProgram: TAccountMetas[12];
   };
   data: RegisterAssetInstructionData;
 };
@@ -615,10 +658,10 @@ export function parseRegisterAssetInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRegisterAssetInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 12) {
+  if (instruction.accounts.length < 13) {
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
       actualAccountMetas: instruction.accounts.length,
-      expectedAccountMetas: 12,
+      expectedAccountMetas: 13,
     });
   }
   let accountIndex = 0;
@@ -642,6 +685,7 @@ export function parseRegisterAssetInstruction<
       vaultTokenAccount: getNextOptionalAccount(),
       mint: getNextOptionalAccount(),
       assetRecord: getNextOptionalAccount(),
+      treasury: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),
       rent: getNextAccount(),

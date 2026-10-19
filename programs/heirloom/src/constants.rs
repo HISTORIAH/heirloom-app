@@ -6,6 +6,9 @@ pub const EMERGENCY_EXIT_FEE_BPS: u16 = 50;
 
 pub const YIELD_FEE_BPS: u16 = 1000; // 10%
 
+/// Flat fee per NFT deposited, in place of the bps fee on claim/revoke
+pub const NFT_DEPOSIT_FEE_LAMPORTS: u64 = 10_000_000; // 0.01 SOL
+
 pub const MAX_INTERVAL_SECONDS: i64 = 31_536_000; // 365 days
 
 // TEMP! for testing
