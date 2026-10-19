@@ -8,7 +8,7 @@ export function assetLabel(
   mint: string,
   asset: DasAsset | undefined,
 ): { symbol: string; name: string; named: boolean; image?: string } {
-  const { name, symbol, image } = assetDisplay(asset);
+  const { name, symbol, image } = asset ? assetDisplay(asset) : {};
   const shownName = name ?? symbol;
   return {
     symbol: symbol ?? mint.slice(0, 4),

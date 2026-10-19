@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./api": "./src/api/index.ts",
     "./assets": "./src/assets/index.ts"
   },
   "scripts": {

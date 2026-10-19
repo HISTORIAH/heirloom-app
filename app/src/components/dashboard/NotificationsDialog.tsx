@@ -13,7 +13,7 @@ import {
   useSaveReminders,
   useVerifyEmail,
 } from "@/hooks/useReminders";
-import { ApiError, isUnauthorized } from "@/lib/api";
+import { ApiError, isUnauthorized } from "@heirloom/core/api";
 import { HEIR_NAME_MAX, HEIR_NOTE_MAX } from "@/lib/constants";
 import {
   channelOf,

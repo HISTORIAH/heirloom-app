@@ -2,7 +2,9 @@ import { afterEach, describe, expect, mock, test } from "bun:test";
 
 import {
   assetDisplay,
-  DAS_PAGE_LIMIT,
+  DAS_BATCH_SIZE,
+  DAS_MAX_PAGES,
+  DAS_PAGE_SIZE,
   fetchAssetsByMint,
   fetchOwnerAssets,
   type DasAsset,
@@ -32,17 +34,28 @@ afterEach(() => {
 describe("fetchOwnerAssets", () => {
   test("keeps paging while pages come back full", async () => {
     const bodies = stubFetch([
-      { result: { items: assets(DAS_PAGE_LIMIT, "a") } },
+      { result: { items: assets(DAS_PAGE_SIZE, "a") } },
       { result: { items: assets(3, "b") } },
     ]);
     const owned = await fetchOwnerAssets(URL, "owner");
-    expect(owned).toHaveLength(DAS_PAGE_LIMIT + 3);
+    expect(owned).toHaveLength(DAS_PAGE_SIZE + 3);
     expect(bodies.map((body) => body.params.page)).toEqual([1, 2]);
   });
 
   test("drops null and id-less items", async () => {
     stubFetch([{ result: { items: [null, {}, { id: "kept" }] } }]);
     expect(await fetchOwnerAssets(URL, "owner")).toEqual([{ id: "kept" }]);
+  });
+
+  test("gives up on an endpoint that never stops returning full pages", async () => {
+    const fullPage = { result: { items: assets(DAS_PAGE_SIZE, "a") } };
+    stubFetch(Array.from({ length: DAS_MAX_PAGES }, () => fullPage));
+    expect(fetchOwnerAssets(URL, "owner")).rejects.toThrow(`more than ${DAS_MAX_PAGES}`);
+  });
+
+  test("throws when DAS answers with neither a result nor an error", async () => {
+    stubFetch([{}]);
+    expect(fetchOwnerAssets(URL, "owner")).rejects.toThrow("no result");
   });
 
   test("throws when DAS answers with an RPC error", async () => {
@@ -53,14 +66,14 @@ describe("fetchOwnerAssets", () => {
 
 describe("fetchAssetsByMint", () => {
   test("splits large lookups into batches and keys the result by mint", async () => {
-    const mints = assets(DAS_PAGE_LIMIT + 1, "m").map((asset) => asset.id);
+    const mints = assets(DAS_BATCH_SIZE + 1, "m").map((asset) => asset.id);
     const bodies = stubFetch([
-      { result: mints.slice(0, DAS_PAGE_LIMIT).map((id) => ({ id })) },
+      { result: mints.slice(0, DAS_BATCH_SIZE).map((id) => ({ id })) },
       { result: [null] },
     ]);
     const byMint = await fetchAssetsByMint(URL, mints);
     expect(bodies).toHaveLength(2);
-    expect(byMint.size).toBe(DAS_PAGE_LIMIT);
+    expect(byMint.size).toBe(DAS_BATCH_SIZE);
     expect(byMint.get("m0")).toEqual({ id: "m0" });
   });
 

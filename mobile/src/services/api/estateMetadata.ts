@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { ApiError, requestRaw } from "@/services/api/request";
+import { deleteJson, getJson, isNotFound, patchJson, postJson } from "@heirloom/core/api";
 import type { EstateResponse, RegisterEstateRequest, UpdateEstateRequest } from "@/types/estate";
 
 const API_BASE = `${BACKEND_URL}/v1/estates`;
@@ -11,18 +11,15 @@ const API_BASE = `${BACKEND_URL}/v1/estates`;
  * backend from the SPL Memo in that tx, so no session cookie is needed.
  */
 export async function registerEstate(payload: RegisterEstateRequest): Promise<EstateResponse> {
-  return requestRaw<EstateResponse>(API_BASE, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return postJson<EstateResponse>(API_BASE, payload);
 }
 
 /** DB-only read. Resolves to null when the backend isn't tracking the estate (404). */
 export async function fetchEstate(estateAddress: string): Promise<EstateResponse | null> {
   try {
-    return await requestRaw<EstateResponse>(`${API_BASE}/${estateAddress}`);
+    return await getJson<EstateResponse>(`${API_BASE}/${estateAddress}`);
   } catch (err) {
-    if (err instanceof ApiError && err.code === "NOT_FOUND") return null;
+    if (isNotFound(err)) return null;
     throw err;
   }
 }
@@ -48,10 +45,7 @@ export async function updateEstate(
   estateAddress: string,
   payload: UpdateEstateRequest,
 ): Promise<EstateResponse> {
-  return requestRaw<EstateResponse>(`${API_BASE}/${estateAddress}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
+  return patchJson<EstateResponse>(`${API_BASE}/${estateAddress}`, payload);
 }
 
 /**
@@ -61,9 +55,9 @@ export async function updateEstate(
  */
 export async function deleteEstate(estateAddress: string): Promise<void> {
   try {
-    await requestRaw<null>(`${API_BASE}/${estateAddress}`, { method: "DELETE" });
+    await deleteJson<null>(`${API_BASE}/${estateAddress}`);
   } catch (err) {
-    if (err instanceof ApiError && err.code === "NOT_FOUND") return;
+    if (isNotFound(err)) return;
     throw err;
   }
 }

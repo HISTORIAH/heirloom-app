@@ -5,7 +5,7 @@ import type {
   DasContent,
   DasRpcResponse,
 } from "../types/assets";
-import { DAS_PAGE_LIMIT } from "./constants";
+import { DAS_BATCH_SIZE, DAS_MAX_PAGES, DAS_PAGE_SIZE } from "./constants";
 
 /** One JSON-RPC call to a DAS-enabled endpoint (Helius). Throws on HTTP or RPC errors. */
 async function callDas<T>(
@@ -13,7 +13,7 @@ async function callDas<T>(
   method: string,
   params: Record<string, unknown>,
   signal?: AbortSignal,
-): Promise<T | undefined> {
+): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -24,6 +24,7 @@ async function callDas<T>(
 
   const json = (await res.json()) as DasRpcResponse<T>;
   if (json.error) throw new Error(`DAS ${method} failed: ${json.error.message ?? json.error.code}`);
+  if (json.result === undefined) throw new Error(`DAS ${method} failed: no result`);
   return json.result;
 }
 
@@ -40,7 +41,7 @@ function isAsset(item: DasAsset | null | undefined): item is DasAsset {
 }
 
 /** Trimmed text, or undefined when DAS sent nothing or only whitespace. */
-function present(text: string | undefined): string | undefined {
+function nonBlank(text: string | undefined): string | undefined {
   return text?.trim() || undefined;
 }
 
@@ -51,12 +52,12 @@ export function assetImageUrl(content?: DasContent): string | undefined {
 }
 
 /** Name, symbol and image to show for an asset. Fallback wording is up to each app. */
-export function assetDisplay(asset: DasAsset | undefined): AssetDisplay {
-  const metadata = asset?.content?.metadata;
+export function assetDisplay(asset: DasAsset): AssetDisplay {
+  const metadata = asset.content?.metadata;
   return {
-    name: present(metadata?.name),
-    symbol: present(asset?.token_info?.symbol) ?? present(metadata?.symbol),
-    image: assetImageUrl(asset?.content),
+    name: nonBlank(metadata?.name),
+    symbol: nonBlank(asset.token_info?.symbol) ?? nonBlank(metadata?.symbol),
+    image: assetImageUrl(asset.content),
   };
 }
 
@@ -68,9 +69,9 @@ export async function fetchAssetsByMint(
 ): Promise<Map<string, DasAsset>> {
   const assetsByMint = new Map<string, DasAsset>();
 
-  for (const ids of chunk(mints, DAS_PAGE_LIMIT)) {
+  for (const ids of chunk(mints, DAS_BATCH_SIZE)) {
     const items = await callDas<Array<DasAsset | null>>(url, "getAssetBatch", { ids }, signal);
-    for (const asset of (items ?? []).filter(isAsset)) {
+    for (const asset of items.filter(isAsset)) {
       assetsByMint.set(asset.id, asset);
     }
   }
@@ -85,22 +86,22 @@ export async function fetchOwnerAssets(
 ): Promise<DasAsset[]> {
   const assets: DasAsset[] = [];
 
-  for (let page = 1; ; page++) {
-    const result = await callDas<DasAssetPage>(
+  for (let page = 1; page <= DAS_MAX_PAGES; page++) {
+    const { items = [] } = await callDas<DasAssetPage>(
       url,
       "getAssetsByOwner",
       {
         ownerAddress: owner,
         page,
-        limit: DAS_PAGE_LIMIT,
+        limit: DAS_PAGE_SIZE,
         options: { showFungible: true, showZeroBalance: false },
       },
       signal,
     );
-    const items = result?.items ?? [];
     assets.push(...items.filter(isAsset));
 
-    const isLastPage = items.length < DAS_PAGE_LIMIT;
+    const isLastPage = items.length < DAS_PAGE_SIZE;
     if (isLastPage) return assets;
   }
+  throw new Error(`DAS getAssetsByOwner returned more than ${DAS_MAX_PAGES} full pages`);
 }

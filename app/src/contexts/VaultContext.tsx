@@ -39,7 +39,7 @@ import {
 } from "@/services/heirloom";
 import { notifyOnSign, sendPlannedTransaction, waitForFinalized } from "@/lib/heirloom/client";
 import type { CreateEstateDraft, CreateEstateProgressEvents } from "@/types/create";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@heirloom/core/api";
 import { errMsg } from "@/lib/utils";
 import {
   fetchEstates as fetchEstatesMetadata,

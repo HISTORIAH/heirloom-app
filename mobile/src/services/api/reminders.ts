@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { ApiError, requestRaw } from "@/services/api/request";
+import { getJson, isNotFound, postJson, putJson } from "@heirloom/core/api";
 import type {
   AddContactResponse,
   AddRecipientRequest,
@@ -20,9 +20,9 @@ function remindersUrl(estateAddress: string, path = ""): string {
 /** Contacts, whether each is verified, and the heir profile. Owner only. No subscription yet reads as empty. */
 export async function fetchReminders(estateAddress: string): Promise<FetchReminderResponse> {
   try {
-    return await requestRaw<FetchReminderResponse>(remindersUrl(estateAddress));
+    return await getJson<FetchReminderResponse>(remindersUrl(estateAddress));
   } catch (cause) {
-    if (cause instanceof ApiError && cause.code === "NOT_FOUND") {
+    if (isNotFound(cause)) {
       return { estateAddress, recipients: [], heir: null };
     }
     throw cause;
@@ -36,10 +36,7 @@ export async function createReminders(
   heir?: HeirProfile,
 ): Promise<CreateReminderResponse> {
   const payload: CreateReminderRequest = { estateKind: "heirloom", recipients, heir };
-  return requestRaw<CreateReminderResponse>(remindersUrl(estateAddress), {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return postJson<CreateReminderResponse>(remindersUrl(estateAddress), payload);
 }
 
 /** One contact per call. 409 if that role already has this channel. */
@@ -47,10 +44,7 @@ export async function addContact(
   estateAddress: string,
   recipient: AddRecipientRequest,
 ): Promise<AddContactResponse> {
-  return requestRaw<AddContactResponse>(remindersUrl(estateAddress, "/add/contact"), {
-    method: "POST",
-    body: JSON.stringify(recipient),
-  });
+  return postJson<AddContactResponse>(remindersUrl(estateAddress, "/add/contact"), recipient);
 }
 
 /** Replaces all three fields; null or blank clears one. 404 until reminders are set up. */
@@ -58,10 +52,7 @@ export async function saveHeirProfile(
   estateAddress: string,
   heir: HeirProfile,
 ): Promise<HeirProfile> {
-  return requestRaw<HeirProfile>(remindersUrl(estateAddress, "/heir"), {
-    method: "PUT",
-    body: JSON.stringify(heir),
-  });
+  return putJson<HeirProfile>(remindersUrl(estateAddress, "/heir"), heir);
 }
 
 /** A fresh link/code for an unverified contact. 409 if it's already verified. */
@@ -69,9 +60,8 @@ export async function resendVerification(
   estateAddress: string,
   recipientId: string,
 ): Promise<VerificationStatus> {
-  return requestRaw<VerificationStatus>(
+  return postJson<VerificationStatus>(
     remindersUrl(estateAddress, `/recipients/${recipientId}/resend`),
-    { method: "POST" },
   );
 }
 
@@ -81,8 +71,5 @@ export async function verifyEmailCode(
   code: string,
 ): Promise<VerifyEmailResponse> {
   const payload: VerifyEmailRequest = { code };
-  return requestRaw<VerifyEmailResponse>(remindersUrl(estateAddress, "/verify"), {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return postJson<VerifyEmailResponse>(remindersUrl(estateAddress, "/verify"), payload);
 }

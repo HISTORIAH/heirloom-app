@@ -7,13 +7,12 @@ import { REMINDER_POLL_MS } from "@/constants/alerts";
 import { useSession } from "@/hooks/auth/useSession";
 import {
   cleanProfile,
-  isUnauthorized,
   reminderError,
   sameEnum,
   telegramHandle,
   telegramLink,
 } from "@/lib/reminders";
-import { ApiError } from "@/services/api/request";
+import { ApiError, isUnauthorized } from "@heirloom/core/api";
 import {
   addContact,
   createReminders,

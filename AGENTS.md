@@ -61,6 +61,17 @@ Covers `packages/core` and, once it exists, `packages/react`.
 - Types go in `src/types/<domain>.ts`; fixed values in `src/<domain>/constants.ts`.
   Apps import both from the package (`import type { DasAsset } from
   "@heirloom/core/assets"`) and don't redeclare them in their own `types/`.
+- Core exports plain functions, not factories or classes that wrap them. Anything that
+  comes from the app's config (backend URL, RPC URL) is the first argument:
+  `fetchOwnerAssets(rpcUrl, owner)`, `requestChallenge(backendUrl, address)`.
+- Backend endpoints live in `@heirloom/core/api`, one file per service with its path
+  as a constant at the top (`const AUTH_PATH = "/v1/auth"`). Build requests with
+  `getJson`/`postJson`/`putJson`/`patchJson`/`deleteJson`; for endpoints that wrap
+  their result, type it as `ApiSuccess<T>` and read `.data`. Use `ApiError`,
+  `isUnauthorized` and `isNotFound` from core only, so `instanceof ApiError` checks
+  keep matching.
+- Each `index.ts` names its exports; no `export *`. Helpers a domain uses internally
+  stay unexported.
 - Inside packages, use relative imports. Never use `@/`: packages are consumed as
   source, so `@/` would resolve to the importing app's `src/`.
 - Tests live in `packages/<name>/tests/`, mirroring `src/`, and import through the

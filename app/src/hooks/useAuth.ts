@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBase58Decoder } from "@solana/kit";
-import { requestChallenge, verifyChallenge } from "@/services/api/auth";
+import { requestChallenge, verifyChallenge } from "@heirloom/core/api";
+import { BACKEND_URL } from "@/config";
 
 /**
  * SIWS auth flow as a single mutation:
@@ -21,12 +22,12 @@ export function useAuthenticate(signMessage: SignMessageFn) {
 
   return useMutation<string, Error, { address: string }>({
     mutationFn: async ({ address }) => {
-      const challengeMessage = await requestChallenge(address);
+      const challengeMessage = await requestChallenge(BACKEND_URL, address);
       const { signature } = await signMessage({
         message: new TextEncoder().encode(challengeMessage),
       });
       // The backend expects the signature in base58.
-      return verifyChallenge(address, base58.decode(signature));
+      return verifyChallenge(BACKEND_URL, address, base58.decode(signature));
     },
     onSuccess: () => {
       // Session cookie refreshed — invalidate so next access refetches with the new cookie

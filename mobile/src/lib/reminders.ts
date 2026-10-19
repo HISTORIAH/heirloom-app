@@ -1,4 +1,4 @@
-import { ApiError } from "@/services/api/request";
+import { ApiError } from "@heirloom/core/api";
 import { EMAIL_PATTERN, REMINDER_CHANNELS, TELEGRAM_USERNAME_PATTERN } from "@/constants/alerts";
 import type {
   ContactDraft,
@@ -133,11 +133,6 @@ export function channelLine(recipients: RecipientResponse[]): string {
   if (you.length === 0 && heir.length === 0) return "Not set up";
   const list = (names: string[]) => (names.length === 0 ? "not set" : names.join(", "));
   return `You: ${list(you)} · Heir: ${list(heir)}`;
-}
-
-/** No session, or it expired: sign the challenge again. */
-export function isUnauthorized(cause: unknown): boolean {
-  return cause instanceof ApiError && (cause.status === 401 || cause.code === "unauthorized");
 }
 
 /** Plain-language message for a failed email code. */

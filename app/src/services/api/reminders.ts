@@ -1,5 +1,5 @@
 import { BACKEND_URL } from "@/config";
-import { ApiError, requestRaw } from "@/lib/api";
+import { getJson, isNotFound, postJson, putJson } from "@heirloom/core/api";
 import type {
   AddContactResponse,
   AddRecipientRequest,
@@ -25,11 +25,10 @@ function remindersUrl(estateAddress: string, path = ""): string {
 // Unlike the other reminder endpoints, GET returns the resource directly — not wrapped in { data }.
 export async function fetchReminders(estateAddress: string): Promise<FetchReminderResponse> {
   try {
-    return await requestRaw<FetchReminderResponse>(remindersUrl(estateAddress));
+    return await getJson<FetchReminderResponse>(remindersUrl(estateAddress));
   } catch (err) {
     // No subscription yet reads as no contacts, not as a failure.
-    if (err instanceof ApiError && err.code === "NOT_FOUND")
-      return { estateAddress, recipients: [], heir: null };
+    if (isNotFound(err)) return { estateAddress, recipients: [], heir: null };
     throw err;
   }
 }
@@ -41,10 +40,7 @@ export async function saveReminder(
   heir?: HeirProfile,
 ): Promise<CreateReminderResponse> {
   const payload: CreateReminderRequest = { estateKind, recipients, heir };
-  return requestRaw<CreateReminderResponse>(remindersUrl(estateAddress), {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return postJson<CreateReminderResponse>(remindersUrl(estateAddress), payload);
 }
 
 /** Adds one contact to an existing subscription. 404 if the estate has no subscription yet. */
@@ -52,10 +48,7 @@ export async function addContact(
   estateAddress: string,
   recipient: AddRecipientRequest,
 ): Promise<AddContactResponse> {
-  return requestRaw<AddContactResponse>(remindersUrl(estateAddress, "/add/contact"), {
-    method: "POST",
-    body: JSON.stringify(recipient),
-  });
+  return postJson<AddContactResponse>(remindersUrl(estateAddress, "/add/contact"), recipient);
 }
 
 // ─── Heir profile ─────────────────────────────────────────────────
@@ -65,10 +58,7 @@ export async function saveHeirProfile(
   estateAddress: string,
   heir: HeirProfile,
 ): Promise<HeirProfile> {
-  return requestRaw<HeirProfile>(remindersUrl(estateAddress, "/heir"), {
-    method: "PUT",
-    body: JSON.stringify(heir),
-  });
+  return putJson<HeirProfile>(remindersUrl(estateAddress, "/heir"), heir);
 }
 
 // ─── Verification ─────────────────────────────────────────────────
@@ -79,10 +69,7 @@ export async function verifyEmailCode(
   code: string,
 ): Promise<VerifyEmailResponse> {
   const payload: VerifyEmailRequest = { code };
-  return requestRaw<VerifyEmailResponse>(remindersUrl(estateAddress, "/verify"), {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return postJson<VerifyEmailResponse>(remindersUrl(estateAddress, "/verify"), payload);
 }
 
 /** Resend verification for an existing recipient. Returns a fresh prompt with a new code. */
@@ -90,8 +77,7 @@ export async function resendVerification(
   estateAddress: string,
   recipientId: string,
 ): Promise<VerificationStatus> {
-  return requestRaw<VerificationStatus>(
+  return postJson<VerificationStatus>(
     remindersUrl(estateAddress, `/recipients/${recipientId}/resend`),
-    { method: "POST" },
   );
 }
