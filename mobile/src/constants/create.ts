@@ -1,4 +1,5 @@
 import type { HandoverSecret } from "@/types/create";
+import type { UnsupportedAssetReason } from "@/types/wallet";
 
 /** Asset-picker id for native SOL; token rows use their mint. */
 export const SOL_ASSET_ID = "sol";
@@ -9,4 +10,12 @@ export const HANDOVER_NOTE: Record<HandoverSecret, string> = {
   pin: "I’ve set up an Heirloom credential for you. I’ll give you the PIN separately. If something happens to me, tap it on your phone.",
   accessCode:
     "I’ve set up your Tangem card as an Heirloom credential. I’ll give you its access code separately. If something happens to me, tap it on your phone.",
+};
+
+/** Why a greyed-out asset can't go into an estate, shown under its name in the picker. */
+export const UNSUPPORTED_ASSET_LABEL: Record<UnsupportedAssetReason, string> = {
+  programmable: "Programmable NFT · not yet",
+  compressed: "Compressed NFT · not yet",
+  core: "Metaplex Core · not yet",
+  frozen: "Frozen by its issuer",
 };

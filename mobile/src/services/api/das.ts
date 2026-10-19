@@ -1,33 +1,37 @@
 import { DAS_PAGE_LIMIT } from "@/constants/api";
+import type { DasAsset, DasAssetPage, DasContent, DasRpcResponse } from "@/types/das";
 
-export type DasFile = { uri?: string; cdn_uri?: string; mime?: string };
-export type DasMetadata = { name?: string; symbol?: string };
-export type DasLinks = { image?: string };
-export type DasContent = {
-  metadata?: DasMetadata;
-  links?: DasLinks;
-  files?: DasFile[];
-};
-/** USD price DAS attaches to well-known fungibles. Absent for most long-tail mints. */
-export type DasPriceInfo = { price_per_token?: number; total_price?: number; currency?: string };
-export type DasTokenInfo = { symbol?: string; decimals?: number; price_info?: DasPriceInfo };
-export type DasAsset = {
-  id?: string;
-  content?: DasContent;
-  token_info?: DasTokenInfo;
-};
+/** One JSON-RPC call to a DAS-enabled endpoint (Helius). Throws on HTTP or RPC errors. */
+async function callDas<T>(
+  url: string,
+  method: string,
+  params: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<T | undefined> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal,
+    body: JSON.stringify({ jsonrpc: "2.0", id: `heirloom-${method}`, method, params }),
+  });
+  if (!res.ok) throw new Error(`DAS ${method} failed: HTTP ${res.status}`);
 
-export type DasFungibleAsset = {
-  id: string;
-  token_info?: {
-    balance?: string | number;
-    decimals?: number;
-    symbol?: string;
-    token_program?: string;
-    price_info?: DasPriceInfo;
-  };
-  content?: DasContent;
-};
+  const json = (await res.json()) as DasRpcResponse<T>;
+  if (json.error) throw new Error(`DAS ${method} failed: ${json.error.message ?? json.error.code}`);
+  return json.result;
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let start = 0; start < items.length; start += size) {
+    chunks.push(items.slice(start, start + size));
+  }
+  return chunks;
+}
+
+function isAsset(item: DasAsset | null | undefined): item is DasAsset {
+  return !!item?.id;
+}
 
 function present(text: string | undefined): string | undefined {
   const trimmed = text?.trim();
@@ -52,89 +56,53 @@ export function pickLabel(
   };
 }
 
-export function pickImage(content?: DasContent): string | undefined {
-  const file = content?.files?.find((f) => !f.mime || f.mime.startsWith("image/"));
-  return file?.cdn_uri || content?.links?.image || file?.uri;
+/** The asset's image: first image file (CDN copy preferred), else the metadata link. */
+export function assetImageUrl(content?: DasContent): string | undefined {
+  const imageFile = content?.files?.find((file) => !file.mime || file.mime.startsWith("image/"));
+  return imageFile?.cdn_uri || content?.links?.image || imageFile?.uri;
 }
 
-export async function fetchAssetBatch(
+/** Looks up assets by mint, keyed by mint. Mints DAS doesn't know are left out. */
+export async function fetchAssetsByMint(
   url: string,
-  ids: string[],
-  signal: AbortSignal,
+  mints: string[],
+  signal?: AbortSignal,
 ): Promise<Map<string, DasAsset>> {
-  const out = new Map<string, DasAsset>();
-  if (ids.length === 0) return out;
+  const assetsByMint = new Map<string, DasAsset>();
 
-  const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += DAS_PAGE_LIMIT) chunks.push(ids.slice(i, i + DAS_PAGE_LIMIT));
-
-  for (const chunk of chunks) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal,
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "heirloom-token-metadata",
-        method: "getAssetBatch",
-        params: { ids: chunk },
-      }),
-    });
-    if (!res.ok) throw new Error(`DAS ${res.status}`);
-    const json = (await res.json()) as { result?: Array<DasAsset | null> };
-    const items = Array.isArray(json.result) ? json.result : [];
-    items.forEach((item, idx) => {
-      if (!item) return;
-      const mint = item.id ?? chunk[idx];
-      if (!mint) return;
-      out.set(mint, item);
-    });
+  for (const ids of chunk(mints, DAS_PAGE_LIMIT)) {
+    const items = await callDas<Array<DasAsset | null>>(url, "getAssetBatch", { ids }, signal);
+    for (const asset of (items ?? []).filter(isAsset)) {
+      assetsByMint.set(asset.id, asset);
+    }
   }
-  return out;
+  return assetsByMint;
 }
 
-async function fetchAssetsByOwnerPage(
+/** Every asset the owner holds with a non-zero balance: fungible tokens, NFTs and cNFTs. */
+export async function fetchOwnerAssets(
   url: string,
   owner: string,
-  page: number,
-  signal: AbortSignal,
-): Promise<DasFungibleAsset[]> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal,
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: "heirloom-assets",
-      method: "getAssetsByOwner",
-      params: {
+  signal?: AbortSignal,
+): Promise<DasAsset[]> {
+  const assets: DasAsset[] = [];
+
+  for (let page = 1; ; page++) {
+    const result = await callDas<DasAssetPage>(
+      url,
+      "getAssetsByOwner",
+      {
         ownerAddress: owner,
         page,
         limit: DAS_PAGE_LIMIT,
-        options: {
-          showFungible: true,
-          showZeroBalance: false,
-        },
+        options: { showFungible: true, showZeroBalance: false },
       },
-    }),
-  });
-  if (!res.ok) throw new Error(`DAS ${res.status}`);
-  const json = (await res.json()) as {
-    result?: { items?: Array<DasFungibleAsset | null> };
-  };
-  return (json.result?.items ?? []).filter((item): item is DasFungibleAsset => !!item);
-}
+      signal,
+    );
+    const items = result?.items ?? [];
+    assets.push(...items.filter(isAsset));
 
-/** Everything `owner` holds, NFTs included. Pages until DAS returns a short page. */
-export async function fetchAssetsByOwner(
-  url: string,
-  owner: string,
-  signal: AbortSignal,
-): Promise<DasFungibleAsset[]> {
-  const all: DasFungibleAsset[] = [];
-  for (let page = 1; ; page++) {
-    const items = await fetchAssetsByOwnerPage(url, owner, page, signal);
-    all.push(...items);
-    if (items.length < DAS_PAGE_LIMIT) return all;
+    const isLastPage = items.length < DAS_PAGE_LIMIT;
+    if (isLastPage) return assets;
   }
 }

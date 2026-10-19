@@ -1,10 +1,11 @@
-import { memo } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { memo, useState } from "react";
+import { Image, Pressable, Text, TextInput, View } from "react-native";
 
 import { ErrorLine, StepHead } from "@/components/create/WizardChrome";
 import { Icon } from "@/components/Icon";
 import { TokenAvatar } from "@/components/TokenAvatar";
 import { Cap, PillButton, Toggle } from "@/components/ui";
+import { UNSUPPORTED_ASSET_LABEL } from "@/constants/create";
 import { colors, font, space } from "@/theme";
 import type { AssetOption, AssetSort, AssetTab } from "@/types/create";
 
@@ -107,11 +108,7 @@ const TokenRow = memo(function TokenRow({
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <TokenAvatar
-          image={asset.image}
-          symbol={asset.symbol}
-          checked={checked}
-        />
+        <TokenAvatar image={asset.image} symbol={asset.symbol} checked={checked} />
         <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
           <Text style={{ fontFamily: font.bold, fontSize: 16, color: colors.ink }}>
             {asset.symbol}
@@ -203,14 +200,34 @@ const TokenRow = memo(function TokenRow({
   );
 });
 
+/** The NFT's artwork, square. A sage face stands in when there's none or it fails to load. */
+function NftArt({ image }: { image?: string }) {
+  const [failed, setFailed] = useState(false);
+  const frame = {
+    aspectRatio: 1,
+    borderRadius: 8,
+    borderWidth: space.rule,
+    borderColor: colors.ink,
+    backgroundColor: colors.sage,
+  } as const;
+  if (!image || failed) return <View style={frame} />;
+  return <Image source={{ uri: image }} style={frame} onError={() => setFailed(true)} />;
+}
+
 function NftTile({ asset, on, onPress }: { asset: AssetOption; on: boolean; onPress: () => void }) {
+  const reason = asset.unsupportedReason;
+  const unsupported = reason !== undefined;
   return (
     <Pressable
       onPress={onPress}
-      disabled={asset.unsupported}
+      disabled={unsupported}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: on, disabled: asset.unsupported }}
-      accessibilityLabel={`${on ? "Remove" : "Add"} collectible ${asset.name}`}
+      accessibilityState={{ checked: on, disabled: unsupported }}
+      accessibilityLabel={
+        unsupported
+          ? `${asset.name}, can't add: ${UNSUPPORTED_ASSET_LABEL[reason]}`
+          : `${on ? "Remove" : "Add"} collectible ${asset.name}`
+      }
       style={{
         flex: 1,
         gap: 6,
@@ -219,21 +236,23 @@ function NftTile({ asset, on, onPress }: { asset: AssetOption; on: boolean; onPr
         borderWidth: space.rule,
         borderColor: on ? colors.ink : colors.line,
         backgroundColor: on ? colors.paper : "transparent",
-        opacity: asset.unsupported ? 0.4 : 1,
+        opacity: unsupported ? 0.4 : 1,
       }}
     >
-      <View
-        style={{
-          aspectRatio: 1,
-          borderRadius: 8,
-          borderWidth: space.rule,
-          borderColor: colors.ink,
-          backgroundColor: colors.sage,
-        }}
-      />
-      <Text numberOfLines={1} style={{ fontFamily: font.bold, fontSize: 12, color: colors.ink }}>
-        {asset.name}
-      </Text>
+      <NftArt image={asset.image} />
+      <View style={{ gap: 2 }}>
+        <Text numberOfLines={1} style={{ fontFamily: font.bold, fontSize: 12, color: colors.ink }}>
+          {asset.name}
+        </Text>
+        {unsupported ? (
+          <Text
+            numberOfLines={2}
+            style={{ fontFamily: font.regular, fontSize: 11, lineHeight: 14, color: colors.mute }}
+          >
+            {UNSUPPORTED_ASSET_LABEL[reason]}
+          </Text>
+        ) : null}
+      </View>
       {on ? (
         <View
           style={{
@@ -297,7 +316,11 @@ export function AssetsStep({
   );
   const shown = fungible.filter((a) => !hideDust || !a.dust || amounts[a.id] !== undefined);
   const hidden = fungible.length - shown.length;
-  const nfts = assets.filter((a) => a.kind === "nft");
+  // Addable NFTs first; the greyed-out ones sit at the end.
+  const nfts = assets
+    .filter((a) => a.kind === "nft")
+    .sort((a, b) => Number(!!a.unsupportedReason) - Number(!!b.unsupportedReason));
+  const hasUnsupportedNfts = nfts.some((a) => a.unsupportedReason !== undefined);
   const showTokens = tab !== "nfts";
   const showNfts = tab !== "tokens";
 
@@ -384,11 +407,13 @@ export function AssetsStep({
               No collectibles to add yet.
             </Text>
           )}
-          <Text
-            style={{ fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: colors.mute }}
-          >
-            Metaplex Core assets in this wallet can’t go into an estate yet.
-          </Text>
+          {hasUnsupportedNfts ? (
+            <Text
+              style={{ fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: colors.mute }}
+            >
+              Greyed-out collectibles can’t go into an estate yet.
+            </Text>
+          ) : null}
         </View>
       ) : null}
     </View>

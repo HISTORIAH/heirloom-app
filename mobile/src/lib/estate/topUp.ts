@@ -27,7 +27,8 @@ export function topUpAssets(
     named: true,
   };
   const tokens = wallet
-    .filter((tok) => tok.raw > 0n)
+    // The top-up sheet takes amounts; NFTs go in from the create flow.
+    .filter((tok) => tok.raw > 0n && !tok.isNft)
     .map((tok): TopUpAsset => {
       const held = inEstate.get(tok.mint);
       return {
@@ -53,7 +54,13 @@ export function isDust(asset: TopUpAsset): boolean {
   return asset.id !== SOL_ASSET_ID && asset.usd !== null && asset.usd < DUST_USD;
 }
 
-type Sortable = { id: string; usd: number | null; symbol: string; named: boolean; decimals: number };
+type Sortable = {
+  id: string;
+  usd: number | null;
+  symbol: string;
+  named: boolean;
+  decimals: number;
+};
 
 /** Whole-token amount, for comparing balances across mints with different decimals. */
 function wholeUnits(raw: bigint, decimals: number): number {

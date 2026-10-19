@@ -161,7 +161,8 @@ export default function CreateScreen() {
     };
     const spl: AssetOption[] = walletTokens.map((t) => ({
       id: t.mint,
-      kind: "token" as const,
+      kind: t.isNft ? ("nft" as const) : ("token" as const),
+      unsupportedReason: t.unsupportedReason,
       symbol: t.symbol,
       name: t.name,
       balance: t.balance,
@@ -684,9 +685,11 @@ export default function CreateScreen() {
           onHideDust={setHideDust}
           onToggle={(id) => {
             setError(id, undefined);
+            // An NFT has no amount to type: picking it means the whole item.
+            const isNft = assets.find((asset) => asset.id === id)?.kind === "nft";
             setAmounts((prev) => {
               const next = { ...prev };
-              if (next[id] === undefined) next[id] = "";
+              if (next[id] === undefined) next[id] = isNft ? "1" : "";
               else delete next[id];
               return next;
             });

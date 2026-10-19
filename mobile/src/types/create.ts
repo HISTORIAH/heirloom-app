@@ -1,4 +1,4 @@
-import type { WalletToken } from "@/types/wallet";
+import type { UnsupportedAssetReason, WalletToken } from "@/types/wallet";
 
 /** Who inherits: an Heirloom credential, someone else's wallet, or my own backup. */
 export type HeirKind = "credential" | "wallet" | "mine";
@@ -39,8 +39,8 @@ export type AssetOption = {
   usd: number | null;
   /** Below the dust line: hidden while "Hide dust" is on. */
   dust: boolean;
-  /** Metaplex Core assets can't go into an estate yet. */
-  unsupported?: boolean;
+  /** Set when the asset can't go into an estate yet; shown greyed out. */
+  unsupportedReason?: UnsupportedAssetReason;
   /** Token icon URL from DAS metadata. */
   image?: string;
 };
