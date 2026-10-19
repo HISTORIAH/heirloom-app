@@ -1,10 +1,15 @@
-use anchor_lang::{prelude::*, system_program};
+use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::{self, AssociatedToken},
     token_interface::{self, Mint, TokenAccount, TransferChecked},
 };
 
-use crate::{error::HeirloomError, helpers::validate_interval, AssetRecord, Estate, Vault};
+use crate::{
+    constants::{NFT_DEPOSIT_FEE_LAMPORTS, TREASURY},
+    error::HeirloomError,
+    helpers::{is_nft, transfer_sol, validate_interval},
+    AssetRecord, Estate, Vault,
+};
 
 #[derive(Accounts)]
 pub struct Initialize {
@@ -60,6 +65,10 @@ pub struct Initialize {
         bump,
     )]
     pub asset_record: Option<BorshAccount<AssetRecord>>,
+
+    /// CHECK: treasury address
+    #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
+    pub treasury: UncheckedAccount,
 
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     #[account(
@@ -240,17 +249,23 @@ impl Initialize {
                 let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
 
                 token_interface::transfer_checked(cpi_context, amount, mint.decimals())?;
+
+                if is_nft(mint) {
+                    transfer_sol(
+                        &mut self.authority,
+                        &mut self.treasury,
+                        &self.system_program,
+                        NFT_DEPOSIT_FEE_LAMPORTS,
+                    )?;
+                }
             }
             None => {
-                let cpi_accounts = system_program::Transfer {
-                    from: self.authority.to_cpi_handle_mut(),
-                    to: self.vault.to_cpi_handle_mut(),
-                };
-
-                let cpi_program_addr = self.system_program.address();
-                let cpi_context = CpiContext::new(cpi_program_addr, cpi_accounts);
-
-                system_program::transfer(cpi_context, amount)?;
+                transfer_sol(
+                    &mut self.authority,
+                    &mut self.vault,
+                    &self.system_program,
+                    amount,
+                )?;
             }
         }
 

@@ -6,7 +6,21 @@ Notable changes to the `heirloom` program and its generated clients
 
 ## [Unreleased]
 
+### Added
+
+- Flat NFT deposit fee of 0.01 SOL (`NFT_DEPOSIT_FEE_LAMPORTS`), paid by the authority to
+  the treasury when `initialize` or `register_asset` deposits an NFT (a mint with 0
+  decimals and a supply of 1). The JS client exports the same constant.
+
 ### Changed
+
+- **Breaking:** `initialize` and `register_asset` take a writable `treasury` account. The
+  generated clients fill it in with the treasury address by default.
+
+### Fixed
+
+- `claim` and `revoke` no longer take the bps fee on NFTs. The fee rounded up to the whole
+  token, so the NFT went to the treasury and the heir or authority received nothing.
 
 - **Breaking:** renamed `Estate` fields and instruction arguments. Logic is unchanged.
 

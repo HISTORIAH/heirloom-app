@@ -34,7 +34,7 @@ pub struct Estate {
     pub check_in_signer: Option<Address>,
 
     /// Number of remaining claimable assets (tokens + 1 for SOL)
-    pub claimable_assets: u8,
+    pub claimable_assets: u8, // TODO: FOR REDEPLOYMENT, CHANGE TYPE TO U16
 }
 
 impl Estate {

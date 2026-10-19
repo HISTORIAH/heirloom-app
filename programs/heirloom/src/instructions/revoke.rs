@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::{
     constants::{EMERGENCY_EXIT_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::calculate_distribution,
+    helpers::{calculate_distribution, is_nft},
     AssetRecord, Estate, Vault,
 };
 
@@ -177,7 +177,13 @@ impl Revoke {
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_ta.amount();
 
-                let (fee, authority_amt) = calculate_distribution(amount, EMERGENCY_EXIT_FEE_BPS)?;
+                // NFTs paid a flat fee on deposit
+                let fee_bps = if is_nft(mint) {
+                    0
+                } else {
+                    EMERGENCY_EXIT_FEE_BPS
+                };
+                let (fee, authority_amt) = calculate_distribution(amount, fee_bps)?;
 
                 if fee > 0 {
                     let cpi_accounts = associated_token::Create {

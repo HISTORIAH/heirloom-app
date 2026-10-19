@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::{
     constants::{CLAIM_FEE_BPS, TREASURY},
     error::HeirloomError,
-    helpers::calculate_distribution,
+    helpers::{calculate_distribution, is_nft},
     AssetRecord, Estate, Vault,
 };
 
@@ -194,7 +194,9 @@ impl Claim {
                 let mint = self.mint.as_ref().unwrap();
                 let amount = vault_ta.amount();
 
-                let (protocol_fee, heir_payout) = calculate_distribution(amount, CLAIM_FEE_BPS)?;
+                // NFTs paid a flat fee on deposit
+                let fee_bps = if is_nft(mint) { 0 } else { CLAIM_FEE_BPS };
+                let (protocol_fee, heir_payout) = calculate_distribution(amount, fee_bps)?;
 
                 if protocol_fee > 0 {
                     let cpi_accounts = associated_token::Create {

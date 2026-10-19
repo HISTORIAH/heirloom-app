@@ -93,6 +93,10 @@ export async function createAndMintTokens(
   client: LiteSvmClient,
   authority: KeyPairSigner,
   tokenProgram: Address = TOKEN_2022_PROGRAM_ADDRESS,
+  { decimals, amount }: { decimals: number; amount: bigint } = {
+    decimals: 6,
+    amount: 1_000_000_000n, // 1000 tokens
+  },
 ) {
   const mint = await generateKeyPairSigner();
   const [authorityAta] = await findAssociatedTokenPda({
@@ -103,20 +107,32 @@ export async function createAndMintTokens(
 
   // create token
   await client.token2022.instructions
-    .createMint({ newMint: mint, decimals: 6, mintAuthority: authority })
+    .createMint({ newMint: mint, decimals, mintAuthority: authority })
     .sendTransaction();
 
   await client.token2022.instructions
     .mintToATA({
       mint: mint.address,
       mintAuthority: authority,
-      amount: 1_000_000_000, // 1000 tokens
+      amount,
       owner: authority.address,
-      decimals: 6,
+      decimals,
     })
     .sendTransaction();
 
   return { mint: mint.address, authorityAta };
+}
+
+/** Mints a single token with no decimals, which the program treats as an NFT. */
+export async function createNft(client: LiteSvmClient, authority: KeyPairSigner) {
+  return createAndMintTokens(client, authority, TOKEN_2022_PROGRAM_ADDRESS, {
+    decimals: 0,
+    amount: 1n,
+  });
+}
+
+export async function getLamports(client: LiteSvmClient, account: Address): Promise<bigint> {
+  return (await client.rpc.getBalance(account).send()).value;
 }
 
 // ---------------------------------------------------------------------------
