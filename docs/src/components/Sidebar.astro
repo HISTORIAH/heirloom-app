@@ -25,7 +25,7 @@ const { groups, current, keywords } = Astro.props;
 <aside
   id="docs-sidebar"
   data-sidebar
-  class="docs-rail hidden border-b border-tile-line pb-6 lg:block lg:border-0"
+  class="docs-rail docs-sidebar hidden lg:block"
 >
   <div class="relative mb-6">
     <Icon
@@ -84,12 +84,22 @@ const { groups, current, keywords } = Astro.props;
     const iconOpen = toggle.querySelector<HTMLElement>("[data-sidebar-icon-open]");
     const iconClose = toggle.querySelector<HTMLElement>("[data-sidebar-icon-close]");
 
-    toggle.addEventListener("click", () => {
-      const open = sidebar.classList.toggle("!block");
+    const setOpen = (open: boolean) => {
+      sidebar.classList.toggle("!block", open);
       toggle.setAttribute("aria-expanded", String(open));
       toggle.setAttribute("aria-label", open ? "Close documentation menu" : "Open documentation menu");
       if (iconOpen) iconOpen.hidden = open;
       if (iconClose) iconClose.hidden = !open;
+      // The drawer covers the page, so the page under it should not scroll.
+      document.documentElement.classList.toggle("overflow-hidden", open);
+    };
+
+    toggle.addEventListener("click", () => setOpen(!sidebar.classList.contains("!block")));
+
+    // Widening past lg turns the drawer back into a rail; drop the drawer state
+    // so the page is not left scroll-locked.
+    window.matchMedia("(min-width: 1024px)").addEventListener("change", (e) => {
+      if (e.matches) setOpen(false);
     });
   }
 
