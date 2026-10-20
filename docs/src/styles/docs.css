@@ -130,6 +130,20 @@
   }
 
   /* ------------------------------------------------------------- sidebar */
+  /* Below lg the rail is a drawer opened from the bar. It covers the page
+     rather than sitting sticky in the grid, where the article scrolled up
+     underneath it. */
+  @media (max-width: 1023.98px) {
+    .docs-sidebar {
+      position: fixed;
+      inset: var(--nav-h) 0 0;
+      z-index: 40;
+      max-height: none;
+      padding-inline: var(--page-pad);
+      background-color: hsl(var(--background));
+    }
+  }
+
   .side-group + .side-group {
     margin-top: 1.75rem;
   }
