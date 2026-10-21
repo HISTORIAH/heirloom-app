@@ -42,11 +42,18 @@ async function setupNftEstate() {
     amount: 1n,
   });
 
-  return { client, authority, heir, mint, authorityAta, registerIx, vaultTokenAccount: vaultTokenAccount! };
+  return {
+    client,
+    authority,
+    heir,
+    mint,
+    authorityAta,
+    registerIx,
+    vaultTokenAccount: vaultTokenAccount!,
+  };
 }
 
-// TODO(nft-fee): unskip once `register_asset` takes the treasury account again.
-test.skip("it charges the flat NFT fee when registering an NFT", async () => {
+test("it charges the flat NFT fee when registering an NFT", async () => {
   const { client, registerIx, vaultTokenAccount } = await setupNftEstate();
 
   const treasuryBalanceBefore = await getLamports(client, TREASURY_ADDRESS);
@@ -118,7 +125,11 @@ test("it gives the heir the whole NFT on claim, with no fee taken", async () => 
   const { client, authority, heir, mint, registerIx } = await setupNftEstate();
   await client.sendTransaction(registerIx);
 
-  const { ix: claimIx, heirTokenAccount, treasuryTokenAccount } = await genClaimIx({
+  const {
+    ix: claimIx,
+    heirTokenAccount,
+    treasuryTokenAccount,
+  } = await genClaimIx({
     client,
     authority: authority.address,
     heir,
