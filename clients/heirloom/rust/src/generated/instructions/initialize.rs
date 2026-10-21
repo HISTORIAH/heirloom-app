@@ -32,8 +32,6 @@ pub struct Initialize {
     pub mint: Option<solana_address::Address>,
     /// Marker PDA proving mint is registered as claimable asset for current estate
     pub asset_record: Option<solana_address::Address>,
-    /// CHECK: treasury address
-    pub treasury: solana_address::Address,
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     pub token_program: solana_address::Address,
 
@@ -53,7 +51,7 @@ impl Initialize {
         args: InitializeInstructionArgs,
         remaining_accounts: &[solana_instruction::AccountMeta],
     ) -> solana_instruction::Instruction {
-        let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(13 + remaining_accounts.len());
         accounts.push(solana_instruction::AccountMeta::new(self.authority, true));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.heir, false,
@@ -119,7 +117,6 @@ impl Initialize {
                 false,
             ));
         }
-        accounts.push(solana_instruction::AccountMeta::new(self.treasury, false));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
@@ -196,10 +193,9 @@ impl InitializeInstructionArgs {
 ///   7. `[writable, optional]` vault_token_account
 ///   8. `[optional]` mint
 ///   9. `[writable, optional]` asset_record
-///   10. `[writable, optional]` treasury (default to `tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q`)
-///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   12. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
-///   13. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   11. `[optional]` associated_token_program (default to `ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL`)
+///   12. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct InitializeBuilder {
     authority: Option<solana_address::Address>,
@@ -212,7 +208,6 @@ pub struct InitializeBuilder {
     vault_token_account: Option<solana_address::Address>,
     mint: Option<solana_address::Address>,
     asset_record: Option<solana_address::Address>,
-    treasury: Option<solana_address::Address>,
     token_program: Option<solana_address::Address>,
     associated_token_program: Option<solana_address::Address>,
     system_program: Option<solana_address::Address>,
@@ -297,13 +292,6 @@ impl InitializeBuilder {
         self.asset_record = asset_record;
         self
     }
-    /// `[optional account, default to 'tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q']`
-    /// CHECK: treasury address
-    #[inline(always)]
-    pub fn treasury(&mut self, treasury: solana_address::Address) -> &mut Self {
-        self.treasury = Some(treasury);
-        self
-    }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     #[inline(always)]
@@ -374,9 +362,6 @@ impl InitializeBuilder {
             vault_token_account: self.vault_token_account,
             mint: self.mint,
             asset_record: self.asset_record,
-            treasury: self.treasury.unwrap_or(solana_address::address!(
-                "tr31o8FF9v2rEukh84ZwjRQgYa3x74PHssighePMP1Q"
-            )),
             token_program: self.token_program.unwrap_or(solana_address::address!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
@@ -428,8 +413,6 @@ pub struct InitializeCpiAccounts<'a, 'b> {
     pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
     /// Marker PDA proving mint is registered as claimable asset for current estate
     pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-    /// CHECK: treasury address
-    pub treasury: &'b solana_account_info::AccountInfo<'a>,
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     pub token_program: &'b solana_account_info::AccountInfo<'a>,
 
@@ -462,8 +445,6 @@ pub struct InitializeCpi<'a, 'b> {
     pub mint: Option<&'b solana_account_info::AccountInfo<'a>>,
     /// Marker PDA proving mint is registered as claimable asset for current estate
     pub asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-    /// CHECK: treasury address
-    pub treasury: &'b solana_account_info::AccountInfo<'a>,
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     pub token_program: &'b solana_account_info::AccountInfo<'a>,
 
@@ -492,7 +473,6 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             vault_token_account: accounts.vault_token_account,
             mint: accounts.mint,
             asset_record: accounts.asset_record,
-            treasury: accounts.treasury,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
             system_program: accounts.system_program,
@@ -522,7 +502,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
         remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
     ) -> solana_program_error::ProgramResult {
-        let mut accounts = Vec::with_capacity(14 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(13 + remaining_accounts.len());
         accounts.push(solana_instruction::AccountMeta::new(
             *self.authority.key,
             true,
@@ -601,10 +581,6 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
                 false,
             ));
         }
-        accounts.push(solana_instruction::AccountMeta::new(
-            *self.treasury.key,
-            false,
-        ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
@@ -633,7 +609,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(15 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(14 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.authority.clone());
         account_infos.push(self.heir.clone());
@@ -657,7 +633,6 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         if let Some(asset_record) = self.asset_record {
             account_infos.push(asset_record.clone());
         }
-        account_infos.push(self.treasury.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
         account_infos.push(self.system_program.clone());
@@ -687,10 +662,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 ///   7. `[writable, optional]` vault_token_account
 ///   8. `[optional]` mint
 ///   9. `[writable, optional]` asset_record
-///   10. `[writable]` treasury
-///   11. `[]` token_program
-///   12. `[]` associated_token_program
-///   13. `[]` system_program
+///   10. `[]` token_program
+///   11. `[]` associated_token_program
+///   12. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct InitializeCpiBuilder<'a, 'b> {
     instruction: Box<InitializeCpiBuilderInstruction<'a, 'b>>,
@@ -710,7 +684,6 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
             vault_token_account: None,
             mint: None,
             asset_record: None,
-            treasury: None,
             token_program: None,
             associated_token_program: None,
             system_program: None,
@@ -796,12 +769,6 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
     ) -> &mut Self {
         self.instruction.asset_record = asset_record;
-        self
-    }
-    /// CHECK: treasury address
-    #[inline(always)]
-    pub fn treasury(&mut self, treasury: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.treasury = Some(treasury);
         self
     }
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
@@ -924,8 +891,6 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
 
             asset_record: self.instruction.asset_record,
 
-            treasury: self.instruction.treasury.expect("treasury is not set"),
-
             token_program: self
                 .instruction
                 .token_program
@@ -962,7 +927,6 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
     vault_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_account_info::AccountInfo<'a>>,
     asset_record: Option<&'b solana_account_info::AccountInfo<'a>>,
-    treasury: Option<&'b solana_account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
