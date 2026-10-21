@@ -8,14 +8,10 @@ Notable changes to the `heirloom` program and its generated clients
 
 ### Added
 
-- Flat NFT deposit fee of 0.01 SOL (`NFT_DEPOSIT_FEE_LAMPORTS`), paid by the authority to
-  the treasury when `register_asset` deposits an NFT (a mint with 0 decimals and a supply
-  of 1). The JS client exports the same constant. `initialize` doesn't charge it yet.
-
-### Changed
-
-- **Breaking:** `register_asset` takes a writable `treasury` account. The generated
-  clients fill it in with the treasury address by default.
+- `NFT_DEPOSIT_FEE_LAMPORTS` (0.01 SOL), a flat fee for depositing an NFT (a mint with 0
+  decimals and a supply of 1). The JS client exports the same constant. Not charged yet:
+  `initialize` and `register_asset` need a `treasury` account to collect it, which would
+  break clients built before this change.
 
 ### Fixed
 
