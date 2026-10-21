@@ -1,4 +1,3 @@
-import { TurboModuleRegistry } from "react-native";
 import NfcManager, { NfcAdapter, NfcTech } from "react-native-nfc-manager";
 
 import { isLostField } from "./messages";
@@ -100,77 +99,16 @@ async function transceiveApdu(apdu: Uint8Array, timeoutMs: number): Promise<Uint
   throw last;
 }
 
-/*
- * TODO(nfc): replace the native requestTechnology workaround below with the public API.
- *
- * nfc-manager 4 (bumped in #174) changed `readerModeDelay` from seconds to milliseconds,
- * so our old value of 2 became a 2ms presence check and cards dropped mid-session.
- * NFC_PRESENCE_CHECK_MS = 2000 is the actual fix (#188).
- *
- * #188 also stopped calling `NfcManager.requestTechnology` and reached the native
- * module through TurboModuleRegistry with 2 args; the v4 native method takes 3
- * (techs, options, callback), so #189 catches the arity error and retries with 3.
- * Neither should be needed: in v4 the public call is
- *   NfcManager.requestTechnology(NfcTech.IsoDep, { alertMessage, ...ISODEP_READER })
- * which passes all 3 args and registers the tag event itself. It also wraps native
- * errors (UserCancel etc.); here cancel is only recognised because isUserCancel's
- * regex happens to match the string "cancelled".
- *
- * Not reverted yet because it is untested on hardware: Tangem cards worked for us,
- * but the JavaCard JCOP 4 (our applet) path is the one that failed. Revert
- * requestIsoDep / isRequestTechArity / nfcRequestTechnology and the manual
- * register/unregisterTagEvent, keep NFC_PRESENCE_CHECK_MS, then test scan, PIN unlock,
- * claim + sweep (45s session) and cancel on a JCOP 4 card and a Tangem card.
- */
-function isRequestTechArity(cause: unknown): boolean {
-  const text = errorMessage(cause, "");
-  return text.includes("requestTechnology") && text.includes("expected argument count");
-}
-
-function nfcRequestTechnology(): (...args: unknown[]) => unknown {
-  const native = TurboModuleRegistry.getEnforcing("NfcManager");
-  const fn = Reflect.get(native, "requestTechnology");
-  if (typeof fn !== "function") {
-    throw new Error("NFC native requestTechnology missing");
-  }
-  return fn.bind(native);
-}
-
-function requestIsoDep(): Promise<string | undefined> {
-  const requestTechnology = nfcRequestTechnology();
-  const techs = [NfcTech.IsoDep];
-  return new Promise((resolve, reject) => {
-    const finish = (error?: string, tech?: string) => {
-      if (typeof error === "string" && error.length > 0) {
-        reject(new Error(error));
-        return;
-      }
-      resolve(tech);
-    };
-    try {
-      requestTechnology(techs, finish);
-    } catch (cause) {
-      if (!isRequestTechArity(cause)) {
-        reject(cause instanceof Error ? cause : new Error(errorMessage(cause, "NFC request failed")));
-        return;
-      }
-      try {
-        requestTechnology(techs, {}, finish);
-      } catch (retry) {
-        reject(retry instanceof Error ? retry : new Error(errorMessage(retry, "NFC request failed")));
-      }
-    }
-  });
-}
-
 async function runIsoDepSession<T>(
   run: (tx: IsoDepTransceive) => Promise<T>,
   timeoutMs: number,
   alertMessage: string,
 ): Promise<T> {
   try {
-    await NfcManager.registerTagEvent({ alertMessage, ...ISODEP_READER });
-    const connected = await requestIsoDep();
+    const connected = await NfcManager.requestTechnology(NfcTech.IsoDep, {
+      alertMessage,
+      ...ISODEP_READER,
+    });
     if (connected !== NfcTech.IsoDep) {
       nfcWarn("requestTechnology", connected);
       throw new Error("not connected");
