@@ -4,13 +4,11 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount},
 };
 
+// TODO(nft-fee): restore with the treasury account below.
+// use crate::{constants::{NFT_DEPOSIT_FEE_LAMPORTS, TREASURY}, helpers::is_nft_mint};
 use crate::{
-    constants::{NFT_DEPOSIT_FEE_LAMPORTS, TREASURY},
     error::HeirloomError,
-    helpers::{
-        create_token_account_if_missing, is_nft_mint, transfer_sol_from_signer,
-        transfer_tokens_checked,
-    },
+    helpers::{create_token_account_if_missing, transfer_sol_from_signer, transfer_tokens_checked},
     AssetRecord, Estate, Vault,
 };
 
@@ -69,9 +67,15 @@ pub struct Initialize {
     )]
     pub asset_record: Option<BorshAccount<AssetRecord>>,
 
-    /// CHECK: treasury address
-    #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
-    pub treasury: UncheckedAccount,
+    // TODO(nft-fee): disabled so clients built before the NFT fee (the hackathon
+    // APK) keep working: a new account here shifts every account after it and
+    // breaks their `initialize` calls. Re-enable together with a client release,
+    // or charge the fee another way (e.g. treasury via remaining_accounts only
+    // for NFT deposits). Until then, NFTs deposited at initialize pay no fee.
+    //
+    // /// CHECK: treasury address
+    // #[account(mut, address = TREASURY @ HeirloomError::MismatchedAddress)]
+    // pub treasury: UncheckedAccount,
 
     /// CHECK: verified below via constraint, Switch to Interface<TokenInterface>/similar on stable release.
     #[account(
@@ -247,14 +251,15 @@ impl Initialize {
                     &[],
                 )?;
 
-                if is_nft_mint(mint) {
-                    transfer_sol_from_signer(
-                        &mut self.authority,
-                        &mut self.treasury,
-                        &self.system_program,
-                        NFT_DEPOSIT_FEE_LAMPORTS,
-                    )?;
-                }
+                // TODO(nft-fee): see the `treasury` account above.
+                // if is_nft_mint(mint) {
+                //     transfer_sol_from_signer(
+                //         &mut self.authority,
+                //         &mut self.treasury,
+                //         &self.system_program,
+                //         NFT_DEPOSIT_FEE_LAMPORTS,
+                //     )?;
+                // }
             }
             None => {
                 transfer_sol_from_signer(
