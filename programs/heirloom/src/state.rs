@@ -36,7 +36,13 @@ pub struct Estate {
     pub check_in_signer: Option<Address>,
 
     /// Number of remaining claimable assets (tokens + 1 for SOL)
-    pub claimable_assets: u8, // TODO: FOR REDEPLOYMENT, CHANGE TYPE TO U16
+    pub claimable_assets: u16,
+
+    /// Number of equal payouts (1 = lump sum)
+    pub total_periods: u16,
+
+    /// Seconds between payouts (ignored when total_periods == 1)
+    pub period_secs: i64,
 }
 
 impl Estate {
@@ -55,7 +61,9 @@ impl Estate {
     + 1                              // is_migrating
     + 1 + 32                         // delegate
     + 1 + 32                         // check_in_signer
-    + 1; // claimable_assets
+    + 2                              // claimable_assets
+    + 2                              // total_periods
+    + 8; // period_secs
 
     /// Ensures an interval argument is non-negative and does not exceed the
     /// max allowed duration.
@@ -67,13 +75,60 @@ impl Estate {
         );
         Ok(())
     }
+
+    /// Ensures a payout schedule has at least one payout, and a positive
+    /// interval when there is more than one.
+    pub fn validate_schedule(total_periods: u16, period_secs: i64) -> Result<()> {
+        require!(total_periods >= 1, HeirloomError::InvalidSchedule);
+        if total_periods > 1 {
+            require!(period_secs > 0, HeirloomError::InvalidSchedule);
+            Estate::validate_interval_secs(period_secs)?;
+        }
+        Ok(())
+    }
+
+    /// Check-in deadline plus grace period.
+    pub fn claimable_at(&self) -> Result<i64> {
+        let claimable_at = self
+            .last_check_in_ts
+            .checked_add(self.check_in_interval_secs)
+            .and_then(|t| t.checked_add(self.grace_period_secs))
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+        Ok(claimable_at)
+    }
+
+    /// When the heir can start claiming: `claimable_at`, or later if a
+    /// delegate pause runs past it. Fixed once reached, since check-ins and
+    /// heir changes are blocked from then on.
+    pub fn opens_at(&self) -> Result<i64> {
+        Ok(self.claimable_at()?.max(self.delegate_pause_expires_at))
+    }
+
+    /// Payouts unlocked by `now`, counting the first one at open. 0 before
+    /// open.
+    pub fn periods_due(&self, now: i64) -> Result<u16> {
+        let opens_at = self.opens_at()?;
+        if now < opens_at {
+            return Ok(0);
+        }
+        if self.total_periods == 1 {
+            return Ok(1);
+        }
+
+        let unlocked = (now - opens_at) / self.period_secs + 1;
+
+        Ok(unlocked.min(self.total_periods as i64) as u16)
+    }
 }
 
-#[account]
+#[account(borsh)]
 pub struct Vault {
     pub estate: Address,
 
     pub bump: u8,
+
+    /// SOL payouts already taken.
+    pub periods_claimed: u16,
 }
 
 impl Vault {
@@ -81,7 +136,8 @@ impl Vault {
 
     pub const LEN: usize = 8           // discriminator
     + 32                             // estate
-    + 1; // bump
+    + 1                              // bump
+    + 2; // periods_claimed
 
     /// Owned copies of the seeds the vault PDA signs with. Copying the
     /// addresses means no account stays borrowed while CPI handles are taken.
@@ -124,6 +180,9 @@ pub struct AssetRecord {
 
     /// count of in-flight `init_withdraw_regular_lulo` requests not yet completed
     pub pending_boosted_withdrawals: u16,
+
+    /// Payouts already taken for this mint
+    pub periods_claimed: u16,
 }
 
 impl AssetRecord {
@@ -134,7 +193,8 @@ impl AssetRecord {
     + 8 // principal deployed
     + 1 // has_protected_exposure
     + 1 // has_boosted_exposure
-    + 2; // pending_boosted_withdrawals
+    + 2 // pending_boosted_withdrawals
+    + 2; // periods_claimed
 }
 
 #[derive(SchemaWrite, SchemaRead, IdlType, Debug, PartialEq, Eq, Copy, Clone)]

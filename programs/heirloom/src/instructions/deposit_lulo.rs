@@ -17,7 +17,7 @@ pub struct DepositLulo {
         seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<Vault>,
+    pub vault: BorshAccount<Vault>,
 
     // We expect this to exist
     #[account(

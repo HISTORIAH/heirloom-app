@@ -45,7 +45,7 @@ pub struct UpdateHeir {
         seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<Vault>,
+    pub vault: BorshAccount<Vault>,
 
     #[account(
         init_if_needed,
@@ -54,7 +54,7 @@ pub struct UpdateHeir {
         seeds = [Vault::SEED, authority.address().as_ref(), new_heir.address().as_ref()],
         bump
     )]
-    pub new_vault: Account<Vault>,
+    pub new_vault: BorshAccount<Vault>,
 
     #[account(mut)]
     pub vault_token_account: Option<Box<InterfaceAccount<TokenAccount>>>,
@@ -143,6 +143,13 @@ impl UpdateHeir {
 
         let is_first_call = self.new_estate.authority == Address::default();
 
+        // Changing heir after open would take the estate from the heir. Only
+        // the first call is gated: a migration started before open must be
+        // able to finish, or tokens already moved stay stuck in new_estate.
+        if is_first_call {
+            require!(now < self.estate.opens_at()?, HeirloomError::EstateOpened);
+        }
+
         if !is_first_call {
             // Subsequent calls: ensure new_estate belongs to this authority and is
             // mid-migration (is_migrating), not an unrelated live estate.
@@ -201,6 +208,8 @@ impl UpdateHeir {
         self.new_estate.claimable_assets = self.estate.claimable_assets;
         self.new_estate.delegate_pause_duration_secs = self.estate.delegate_pause_duration_secs;
         self.new_estate.delegate_pause_expires_at = 0;
+        self.new_estate.total_periods = self.estate.total_periods;
+        self.new_estate.period_secs = self.estate.period_secs;
         // Block claim on new estate until migration is complete.
         self.new_estate.is_migrating = true;
 

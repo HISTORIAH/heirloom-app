@@ -21,7 +21,7 @@ pub struct InitWithdrawRegular {
         seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<Vault>,
+    pub vault: BorshAccount<Vault>,
 
     #[account(
         mut,
@@ -163,7 +163,7 @@ pub struct CompleteWithdrawRegular {
         seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Box<Account<Vault>>,
+    pub vault: Box<BorshAccount<Vault>>,
 
     // We expect this to exist
     #[account(
@@ -401,15 +401,8 @@ impl CompleteWithdrawRegular {
         }
 
         if caller == self.estate.heir {
-            let claimable_at = self
-                .estate
-                .last_check_in_ts
-                .checked_add(self.estate.check_in_interval_secs)
-                .and_then(|t| t.checked_add(self.estate.grace_period_secs))
-                .ok_or(ProgramError::ArithmeticOverflow)?;
-
             require!(
-                now >= claimable_at.max(self.estate.delegate_pause_expires_at),
+                now >= self.estate.opens_at()?,
                 HeirloomError::NotYetClaimable
             );
 

@@ -26,7 +26,7 @@ pub(crate) fn skim_lulo_yield_fee(
     asset_record: &mut BorshAccount<AssetRecord>,
     input_mint: &InterfaceAccount<Mint>,
     treasury_token_account: &mut InterfaceAccount<TokenAccount>,
-    vault: &Account<Vault>,
+    vault: &BorshAccount<Vault>,
     token_program_addr: &Address,
     signer_seeds: &[&[&[u8]]],
     vault_balance_before: u64,

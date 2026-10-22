@@ -43,7 +43,7 @@ pub struct Claim {
         seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump = vault.bump,
     )]
-    pub vault: Account<Vault>,
+    pub vault: BorshAccount<Vault>,
 
     #[account(mut)]
     pub vault_token_account: Option<InterfaceAccount<TokenAccount>>,
@@ -53,9 +53,9 @@ pub struct Claim {
 
     /// Proves `mint` was actually registered as a claimable asset for this
     /// estate, rather than an arbitrary vault-owned token account.
+    /// Closed to the heir manually on the final payout.
     #[account(
         mut,
-        close = heir,
         seeds = [
             AssetRecord::SEED,
             estate.address().as_ref(),
@@ -85,11 +85,32 @@ pub struct Claim {
 
 impl Claim {
     pub fn claim_handler(ctx: &mut Context<Claim>) -> Result<()> {
-        ctx.accounts.validate()?;
+        let now = Clock::get()?.unix_timestamp;
+        let periods_claimed = ctx.accounts.periods_claimed();
+        let periods_due = ctx.accounts.estate.periods_due(now)?;
+        let is_final = periods_due == ctx.accounts.estate.total_periods;
 
-        ctx.accounts.transfer_assets()?;
+        ctx.accounts
+            .validate(now, periods_claimed, periods_due, is_final)?;
+
+        ctx.accounts
+            .transfer_assets(periods_claimed, periods_due, is_final)?;
+
+        if !is_final {
+            match ctx.accounts.heir_token_account.as_ref() {
+                Some(_) => {
+                    ctx.accounts.asset_record.as_mut().unwrap().periods_claimed = periods_due
+                }
+                None => ctx.accounts.vault.periods_claimed = periods_due,
+            }
+            return Ok(());
+        }
 
         let heir_view = ctx.accounts.heir.account().clone();
+        if let Some(asset_record) = ctx.accounts.asset_record.as_mut() {
+            asset_record.close(heir_view.clone())?;
+        }
+
         let remaining = ctx.accounts.estate.claimable_assets.saturating_sub(1);
         ctx.accounts.estate.claimable_assets = remaining;
 
@@ -105,7 +126,13 @@ impl Claim {
         Ok(())
     }
 
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(
+        &self,
+        now: i64,
+        periods_claimed: u16,
+        periods_due: u16,
+        is_final: bool,
+    ) -> Result<()> {
         if let (Some(stored_delegate), Some(delegate_acc)) =
             (self.estate.delegate, self.delegate.as_ref())
         {
@@ -116,18 +143,11 @@ impl Claim {
             );
         }
 
-        let now = Clock::get()?.unix_timestamp;
-        let claimable_at = self
-            .estate
-            .last_check_in_ts
-            .checked_add(self.estate.check_in_interval_secs)
-            .and_then(|t| t.checked_add(self.estate.grace_period_secs))
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
         require!(
-            now >= claimable_at.max(self.estate.delegate_pause_expires_at),
+            now >= self.estate.opens_at()?,
             HeirloomError::NotYetClaimable
         );
+        require!(periods_due > periods_claimed, HeirloomError::NothingToClaim);
 
         match self.heir_token_account.as_ref() {
             Some(_) => {
@@ -162,10 +182,14 @@ impl Claim {
                 );
             }
             None => {
-                require!(
-                    self.estate.claimable_assets <= 1,
-                    HeirloomError::TokensFirst
-                );
+                // Partial SOL payouts can run alongside tokens; only the
+                // final one, which closes the estate, waits for the tokens.
+                if is_final {
+                    require!(
+                        self.estate.claimable_assets <= 1,
+                        HeirloomError::TokensFirst
+                    );
+                }
                 require!(
                     self.vault.get_lamports() > 0,
                     HeirloomError::InsufficientVaultBalance
@@ -176,7 +200,45 @@ impl Claim {
         Ok(())
     }
 
-    pub fn transfer_assets(&mut self) -> Result<()> {
+    /// Payouts already taken for the asset being claimed: the mint's
+    /// `asset_record` for tokens, the vault for SOL.
+    fn periods_claimed(&self) -> u16 {
+        match self.heir_token_account.as_ref() {
+            // a missing asset_record is rejected in validate
+            Some(_) => self
+                .asset_record
+                .as_ref()
+                .map_or(0, |asset_record| asset_record.periods_claimed),
+            None => self.vault.periods_claimed,
+        }
+    }
+
+    /// Equal share of `balance` for the payouts unlocked since the last
+    /// claim. Splitting what's left (not the starting amount) absorbs yield,
+    /// extra deposits and rounding dust; the final payout takes the rest.
+    fn payout_share(
+        &self,
+        balance: u64,
+        periods_claimed: u16,
+        periods_due: u16,
+        is_final: bool,
+    ) -> u64 {
+        if is_final {
+            return balance;
+        }
+
+        let periods_now = (periods_due - periods_claimed) as u128;
+        let periods_left = (self.estate.total_periods - periods_claimed) as u128;
+
+        (balance as u128 * periods_now / periods_left) as u64
+    }
+
+    pub fn transfer_assets(
+        &mut self,
+        periods_claimed: u16,
+        periods_due: u16,
+        is_final: bool,
+    ) -> Result<()> {
         let vault_seeds = Vault::signer_seeds_for(
             self.authority.address(),
             self.heir.address(),
@@ -192,7 +254,9 @@ impl Claim {
                 let mut treasury_ta = self.treasury_token_account.take().unwrap();
                 let mut vault_ta = self.vault_token_account.take().unwrap();
                 let mint = self.mint.as_ref().unwrap();
-                let amount = vault_ta.amount();
+                let amount =
+                    self.payout_share(vault_ta.amount(), periods_claimed, periods_due, is_final);
+                require!(amount > 0, HeirloomError::NothingToClaim);
 
                 // NFTs paid a flat fee on deposit
                 let fee_bps = if is_nft_mint(mint) { 0 } else { CLAIM_FEE_BPS };
@@ -243,13 +307,33 @@ impl Claim {
                     signer_seeds,
                 )?;
 
-                close_vault_token_account(
-                    token_program_addr,
-                    vault_ta.to_cpi_handle_mut(),
-                    self.heir.to_cpi_handle_mut(),
-                    self.vault.to_cpi_handle(),
-                    signer_seeds,
-                )?;
+                if is_final {
+                    close_vault_token_account(
+                        token_program_addr,
+                        vault_ta.to_cpi_handle_mut(),
+                        self.heir.to_cpi_handle_mut(),
+                        self.vault.to_cpi_handle(),
+                        signer_seeds,
+                    )?;
+                }
+            }
+            None if !is_final => {
+                // Partial payouts never touch the vault's rent; it goes to
+                // the heir when the vault closes on the final payout.
+                let rent_exempt_minimum =
+                    Rent::get()?.try_minimum_balance(self.vault.account().data_len())?;
+                let balance = self
+                    .vault
+                    .get_lamports()
+                    .saturating_sub(rent_exempt_minimum);
+                let amount = self.payout_share(balance, periods_claimed, periods_due, is_final);
+                require!(amount > 0, HeirloomError::NothingToClaim);
+
+                let (protocol_fee, heir_payout) =
+                    split_amount_into_fee_and_payout(amount, CLAIM_FEE_BPS)?;
+
+                move_lamports_from_vault(&mut self.vault, &mut self.treasury, protocol_fee)?;
+                move_lamports_from_vault(&mut self.vault, &mut self.heir, heir_payout)?;
             }
             None => {
                 let vault_lamports = self.vault.get_lamports();
