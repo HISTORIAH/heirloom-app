@@ -12,7 +12,7 @@ import NavBar from "@/components/nav/NavBar.astro";
 import VaultMark from "@/components/landing/VaultMark.astro";
 import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
-import { appPath, appUrl, BLOG_PATH, DOCS_PATH } from "@/lib/site";
+import { appPath, appUrl, BLOG_HREF, DOCS_HREF } from "@/lib/site";
 
 const t = createLandingT(DEFAULT_LANGUAGE);
 const helpLink =
@@ -84,8 +84,8 @@ const helpLink =
           class="mt-12 flex w-full max-w-lg flex-col items-center gap-3 border-t border-tile-line pt-6 text-[15px] sm:flex-row sm:justify-center sm:gap-6"
         >
           <span class="ed-label">{t("notFound.orTry")}</span>
-          <a href={DOCS_PATH} data-track="docs_404" class={helpLink}>{t("notFound.docs")}</a>
-          <a href={BLOG_PATH} class={helpLink}>{t("notFound.blog")}</a>
+          <a href={DOCS_HREF} data-track="docs_404" class={helpLink}>{t("notFound.docs")}</a>
+          <a href={BLOG_HREF} class={helpLink}>{t("notFound.blog")}</a>
           <a
             href={appPath("/inherit", DEFAULT_LANGUAGE)}
             data-track="launch_app_404_claim"

@@ -9,24 +9,22 @@
  * this button is the only way back to the table of contents, so it is chrome,
  * not a sidebar affordance.
  */
-import { appPath, LANDING_URL, withBase } from "@/lib/site";
+import { appPath, BLOG_HREF, HOME_HREF, withBase } from "@/lib/site";
 import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
 import Logo from "@/components/Logo.astro";
 
-const homeHref = `${LANDING_URL}/`;
-const blogHref = `${LANDING_URL}/blog/`;
 ---
 
 <header class="sticky top-0 z-50 border-b border-tile-line bg-background/95 backdrop-blur">
   <div class="flex h-[var(--nav-h)] items-center gap-4 px-[var(--page-pad)]">
-    <a href={`${LANDING_URL}/`} class="flex shrink-0 items-center" aria-label="Heirloom home">
+    <a href={HOME_HREF} class="flex shrink-0 items-center" aria-label="Heirloom home">
       <Logo class="h-8 md:h-[var(--nav-logo-h)]" />
     </a>
 
     <nav class="hidden flex-1 items-center justify-center gap-1 lg:flex" aria-label="Site">
       <a
-        href={homeHref}
+        href={HOME_HREF}
         class="flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground/75 transition-colors hover:bg-tile-soft hover:text-foreground"
       >
         Home
@@ -39,7 +37,7 @@ const blogHref = `${LANDING_URL}/blog/`;
         <span class="absolute inset-x-[var(--nav-link-px)] -bottom-[3px] h-[3px] bg-accent-yellow"></span>
       </span>
       <a
-        href={blogHref}
+        href={BLOG_HREF}
         class="flex min-h-[var(--nav-link-h)] items-center rounded-lg px-[var(--nav-link-px)] text-[length:var(--nav-text)] font-bold uppercase tracking-[0.12em] text-foreground/75 transition-colors hover:bg-tile-soft hover:text-foreground"
       >
         Blog

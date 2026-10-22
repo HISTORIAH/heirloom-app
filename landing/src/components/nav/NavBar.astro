@@ -6,7 +6,7 @@
  * a wallet is hand the visitor over to the app, so that is all it does.
  */
 import type { LandingT } from "@heirloom/i18n/landing";
-import { appPath, appUrl, DOCS_PATH, STOCKS_URL } from "@/lib/site";
+import { appPath, appUrl, DOCS_HREF, STOCKS_URL } from "@/lib/site";
 import Button from "@/components/Button.astro";
 import Icon from "@/components/Icon.astro";
 import Logo from "@/components/Logo.astro";
@@ -24,7 +24,7 @@ const { t, locale, home } = Astro.props;
 // origin, so they are a path.
 const destinations = [
   {
-    href: DOCS_PATH,
+    href: DOCS_HREF,
     label: t("nav.docs"),
     icon: "book-open",
     track: "docs_nav",

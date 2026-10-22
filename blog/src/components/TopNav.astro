@@ -4,18 +4,16 @@ import Logo from "./Logo.astro";
 const isDev = import.meta.env.DEV;
 const base = import.meta.env.BASE_URL;
 
-// In dev, link to local ports. In prod, link to live domains.
-const links = isDev
-  ? [
-      { label: "Home", href: "http://localhost:4321", icon: "home" },
-      { label: "Docs", href: "http://localhost:4322/docs/", icon: "book-open" },
-      { label: "Blog", href: base, icon: "file-text", current: true },
-    ]
-  : [
-      { label: "Home", href: "https://heirlm.xyz", icon: "home" },
-      { label: "Docs", href: "https://heirlm.xyz/docs/", icon: "book-open" },
-      { label: "Blog", href: base, icon: "file-text", current: true },
-    ];
+// In dev each site runs on its own port. In prod the landing, docs and blog
+// share one origin, so links between them are paths.
+const homeHref = isDev ? "http://localhost:4321" : "/";
+const docsHref = isDev ? "http://localhost:4322/docs/" : "/docs/";
+
+const links = [
+  { label: "Home", href: homeHref, icon: "home" },
+  { label: "Docs", href: docsHref, icon: "book-open" },
+  { label: "Blog", href: base, icon: "file-text", current: true },
+];
 
 // lucide-static v1.47.0 paths (same icons as the landing nav).
 const icons: Record<string, string> = {
@@ -29,7 +27,7 @@ const icons: Record<string, string> = {
 
 <nav class="topnav" data-nav>
   <div class="shell topnav-inner">
-    <a href={isDev ? "http://localhost:4321" : "https://heirlm.xyz"} class="topnav-logo">
+    <a href={homeHref} class="topnav-logo">
       <Logo class="topnav-logo-img" />
     </a>
 

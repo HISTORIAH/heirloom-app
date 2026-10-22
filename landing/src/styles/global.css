@@ -1,5 +1,5 @@
-/* Space Grotesk is loaded via <link> in Layout.astro — an @import here would
-   delay discovery until this file downloads and parses. */
+/* Space Grotesk is self-hosted from @fontsource-variable, imported in
+   Layout.astro, so first paint never waits on a third-party origin. */
 @import "tailwindcss/index.css";
 @config "../../tailwind.config.ts";
 

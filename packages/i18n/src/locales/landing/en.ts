@@ -52,7 +52,7 @@ const landing = {
     rail1Label: "Custody",
     rail1Value: "Only the program moves funds",
     rail2Label: "Fee",
-    rail2Value: "10% of yield, 0% of principal",
+    rail2Value: "10% of yield, free to hold",
     rail3Label: "Check-ins",
     rail3Value: "~200ms, a fraction of a cent",
     rail4Label: "Program",
@@ -128,9 +128,9 @@ const landing = {
     c3Desc:
       "Unwind any strategy whenever you like. Principal and yield return to the estate, and every claim settles from the estate itself.",
     feeTitle: "The fee, plainly",
-    feeHeadline: "10% of the yield. 0% of your principal.",
+    feeHeadline: "10% of the yield. Nothing while it sits.",
     feeDesc:
-      "Heirloom takes 10% of the yield a strategy earns, and nothing at all from your principal. Deposits, check-ins, and opening an estate carry no protocol fee.",
+      "Heirloom takes 10% of the yield a strategy earns, and never a recurring cut of your principal. Opening an estate and checking in are free. Two small one-time fees apply only when assets leave the estate: 0.75% when your heir claims, and 0.5% if you emergency-withdraw.",
   },
   recovery: {
     eyebrow: "Wallet recovery",
@@ -235,7 +235,7 @@ const landing = {
     q3: "What does a check-in cost?",
     a3: "A check-in costs only the standard Solana network transaction fee (typically a fraction of a cent). There is no protocol fee for checking in.",
     q4: "What are the protocol fees?",
-    a4: "Inheritance claims incur a 0.75% protocol fee, and emergency withdrawals incur a 0.5% fee. These fees are deducted automatically from the estate assets and sent to the protocol treasury. Check-ins and opening an estate have no protocol fee.",
+    a4: "Heirloom's main fee is 10% of the yield a strategy earns. It never takes a recurring cut of your principal. Two small one-time protocol fees apply only when assets leave the estate: 0.75% when your heir claims, and 0.5% if you emergency-withdraw. Both are deducted at that moment and sent to the protocol treasury. Opening an estate and checking in carry no protocol fee.",
     q5: "Can my heir claim early?",
     a5: "No. The claim function enforces that the full check-in interval plus the grace period must have elapsed. Until that deadline passes, the contract will reject any claim attempt. The estate state is computed from on-chain timestamps, so it cannot be spoofed.",
     q6: "What is the guardian role?",
@@ -247,7 +247,7 @@ const landing = {
     q9: "Can I get my assets back after creating an estate?",
     a9: "Yes, at any time before the estate is fully distributed. The emergency-withdraw function returns all tokens to your wallet and permanently closes the estate. You retain full control for as long as the estate is active.",
     q10: "Do my assets earn anything while they are locked?",
-    a10: "Yes. Estate balances can be routed into Lulo lending or staked natively with a Solana validator, and the yield accrues inside the estate rather than in a separate account. Heirloom takes 10% of the yield earned and never touches your principal. You can recall a strategy at any time, and claims always settle from the estate.",
+    a10: "Yes. Estate balances can be routed into Lulo lending or staked natively with a Solana validator, and the yield accrues inside the estate rather than in a separate account. Heirloom takes 10% of the yield earned, and nothing from your principal while it sits. You can recall a strategy at any time, and claims always settle from the estate.",
     q11: "Can I name my own wallet as the heir?",
     a11: "Yes, and it is one of the most common setups. Point the estate at a second wallet you control. If you ever lose access to your main wallet, simply stop checking in and the backup claims the estate once the grace period elapses, without you ever sharing a seed phrase with anyone.",
   },
