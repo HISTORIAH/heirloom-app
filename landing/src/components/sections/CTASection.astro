@@ -6,7 +6,7 @@ import Tile from "@/components/surface/Tile.astro";
 import Cap from "@/components/surface/Cap.astro";
 import Section from "@/components/landing/Section.astro";
 import HeroWordmark from "@/components/HeroWordmark.astro";
-import { appCreateVaultUrl, DOCS_URL } from "@/lib/site";
+import { appCreateVaultUrl, DOCS_HREF } from "@/lib/site";
 
 interface Props {
   t: LandingT;
@@ -37,9 +37,7 @@ const { t, locale } = Astro.props;
             {t("cta.createVault")}
           </Button>
           <Button
-            href={DOCS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={DOCS_HREF}
             variant="flat-outline"
             size="lg"
             data-track="docs_cta"

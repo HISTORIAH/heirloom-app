@@ -6,8 +6,15 @@
 /** Canonical origin. The docs live on the apex, under /docs. */
 export const SITE_URL = "https://heirlm.xyz";
 
-/** The marketing site. Same origin as the docs, so links to it are paths. */
-export const LANDING_URL = SITE_URL;
+/**
+ * The marketing site and the blog. In prod they share the docs' origin, so
+ * links to them are paths: they stay on whatever host serves this build
+ * (preview or prod). In dev each runs its own server: the landing on Astro's
+ * default 4321, the blog on the 4323 its package.json pins.
+ */
+const isDev = import.meta.env.DEV;
+export const HOME_HREF = isDev ? "http://localhost:4321/" : "/";
+export const BLOG_HREF = isDev ? "http://localhost:4323/blog/" : "/blog/";
 
 /** The app is a separate origin; every link to it leaves this one. */
 export const APP_URL = "https://app.heirlm.xyz";
