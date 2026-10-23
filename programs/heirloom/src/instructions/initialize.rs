@@ -45,7 +45,7 @@ pub struct Initialize {
         seeds = [Vault::SEED, authority.address().as_ref(), heir.address().as_ref()],
         bump
     )]
-    pub vault: Account<Vault>,
+    pub vault: BorshAccount<Vault>,
 
     /// CHECK: vault ATA, created by this instruction if needed
     #[account(mut)]
@@ -96,18 +96,24 @@ impl Initialize {
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
         amount: u64,
+        total_periods: u16,
+        period_secs: i64,
     ) -> Result<()> {
         ctx.accounts.validate(
             amount,
             check_in_interval_secs,
             grace_period_secs,
             delegate_pause_duration_secs,
+            total_periods,
+            period_secs,
         )?;
 
         ctx.accounts.set_acc_fields(
             check_in_interval_secs,
             grace_period_secs,
             delegate_pause_duration_secs,
+            total_periods,
+            period_secs,
             ctx.bumps.estate,
             ctx.bumps.vault,
         )?;
@@ -125,12 +131,15 @@ impl Initialize {
         check_in_interval_secs: i64,
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
+        total_periods: u16,
+        period_secs: i64,
     ) -> Result<()> {
         require!(amount > 0, HeirloomError::ZeroDepositAmount);
 
         Estate::validate_interval_secs(check_in_interval_secs)?;
         Estate::validate_interval_secs(grace_period_secs)?;
         Estate::validate_interval_secs(delegate_pause_duration_secs)?;
+        Estate::validate_schedule(total_periods, period_secs)?;
 
         match self.authority_token_account.as_ref() {
             Some(authority_ta) => {
@@ -178,6 +187,8 @@ impl Initialize {
         check_in_interval_secs: i64,
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
+        total_periods: u16,
+        period_secs: i64,
         estate_bump: u8,
         vault_bump: u8,
     ) -> Result<()> {
@@ -195,6 +206,8 @@ impl Initialize {
         self.estate.claimable_assets = 1;
         self.estate.delegate_pause_duration_secs = delegate_pause_duration_secs;
         self.estate.delegate_pause_expires_at = 0;
+        self.estate.total_periods = total_periods;
+        self.estate.period_secs = period_secs;
 
         self.vault.estate = *self.estate.address();
         self.vault.bump = vault_bump;

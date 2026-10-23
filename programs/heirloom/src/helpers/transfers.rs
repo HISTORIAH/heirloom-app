@@ -61,7 +61,7 @@ pub(crate) fn transfer_sol_from_signer(
 /// program can't debit an account with data, so this edits balances
 /// directly instead of a CPI.
 pub(crate) fn move_lamports_from_vault(
-    vault: &mut Account<Vault>,
+    vault: &mut BorshAccount<Vault>,
     to: &mut impl Lamports,
     lamports: u64,
 ) -> Result<()> {

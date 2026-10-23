@@ -36,4 +36,10 @@ pub enum HeirloomError {
     IntervalNegative,
     #[msg("Cannot claim/close while funds are still deployed.")]
     FundsStillDeployed,
+    #[msg("Estate is open to the heir; check-ins and heir changes are closed.")]
+    EstateOpened,
+    #[msg("Nothing to claim until the next payout.")]
+    NothingToClaim,
+    #[msg("Payout schedule needs at least 1 payout, and a valid interval when more than 1.")]
+    InvalidSchedule,
 }

@@ -35,6 +35,8 @@ pub mod heirloom {
         grace_period_secs: i64,
         delegate_pause_duration_secs: i64,
         amount: u64,
+        total_periods: u16,
+        period_secs: i64,
     ) -> Result<()> {
         Initialize::initialize_handler(
             ctx,
@@ -42,6 +44,8 @@ pub mod heirloom {
             grace_period_secs,
             delegate_pause_duration_secs,
             amount,
+            total_periods,
+            period_secs,
         )
     }
 
@@ -66,12 +70,16 @@ pub mod heirloom {
         check_in_interval_secs: Option<i64>,
         grace_period_secs: Option<i64>,
         delegate_pause_duration_secs: Option<i64>,
+        total_periods: Option<u16>,
+        period_secs: Option<i64>,
     ) -> Result<()> {
         UpdateField::update_fields_handler(
             ctx,
             check_in_interval_secs,
             grace_period_secs,
             delegate_pause_duration_secs,
+            total_periods,
+            period_secs,
         )
     }
 
