@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import NfcManager, { NfcAdapter, NfcTech } from "react-native-nfc-manager";
 
 import { isLostField } from "./messages";
@@ -29,6 +30,8 @@ const ISODEP_READER = {
 };
 
 let started = false;
+let holdWanted = false;
+let nfcBusy = 0;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -58,9 +61,57 @@ export async function ensureNfcStarted(): Promise<void> {
   started = true;
 }
 
+async function registerHold(): Promise<void> {
+  await ensureNfcStarted();
+  await NfcManager.registerTagEvent({ ...ISODEP_READER });
+}
+
+/**
+ * Android toasts "No supported application for this NFC tag" when a card is
+ * seen and reader mode is off. Hold the same reader flags as a scan for the
+ * whole time the app is in the foreground, so the system never dispatches it.
+ */
+export async function armNfcHold(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  holdWanted = true;
+  if (nfcBusy > 0) return;
+  await registerHold().catch((cause: unknown) => nfcWarn("hold", cause));
+}
+
+export async function releaseNfcHold(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  holdWanted = false;
+  if (nfcBusy > 0) return;
+  await NfcManager.unregisterTagEvent().catch(() => undefined);
+}
+
+async function restoreNfcHold(): Promise<void> {
+  if (Platform.OS !== "android" || nfcBusy > 0) return;
+  if (!holdWanted) {
+    await NfcManager.unregisterTagEvent().catch(() => undefined);
+    return;
+  }
+  await registerHold().catch((cause: unknown) => nfcWarn("hold", cause));
+}
+
+/** One NFC owner at a time. The foreground hold comes back when `run` finishes. */
+export async function withNfcField<T>(run: () => Promise<T>): Promise<T> {
+  nfcBusy += 1;
+  try {
+    return await run();
+  } finally {
+    nfcBusy -= 1;
+    await restoreNfcHold();
+  }
+}
+
 export async function cancelScan(): Promise<void> {
   await NfcManager.cancelTechnologyRequest({ delayMsAndroid: 0 }).catch(() => undefined);
-  await NfcManager.unregisterTagEvent().catch(() => undefined);
+  if (Platform.OS !== "android") {
+    await NfcManager.unregisterTagEvent().catch(() => undefined);
+    return;
+  }
+  await restoreNfcHold();
 }
 
 async function reconnectIsoDep(timeoutMs: number): Promise<void> {
@@ -124,6 +175,14 @@ export async function withIsoDep<T>(
   run: (tx: IsoDepTransceive) => Promise<T>,
   timeoutMs = ISODEP_TIMEOUT_MS,
   alertMessage = "Hold the credential to the phone",
+): Promise<T> {
+  return withNfcField(() => listenIsoDep(run, timeoutMs, alertMessage));
+}
+
+async function listenIsoDep<T>(
+  run: (tx: IsoDepTransceive) => Promise<T>,
+  timeoutMs: number,
+  alertMessage: string,
 ): Promise<T> {
   await ensureNfcStarted();
   let last: unknown;

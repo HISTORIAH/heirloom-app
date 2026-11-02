@@ -11,11 +11,12 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { StatusBar as NativeStatusBar } from "react-native";
+import { AppState, StatusBar as NativeStatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { solanaCluster, walletIdentity } from "@/config";
 import { QUERY_STALE_MS } from "@/constants/api";
+import { armNfcHold, releaseNfcHold } from "@/lib/nfc/isoDep";
 import { colors } from "@/theme";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -35,6 +36,18 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync().catch(() => undefined);
   }, [loaded]);
+
+  useEffect(() => {
+    void armNfcHold();
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") void armNfcHold();
+      if (state === "background") void releaseNfcHold();
+    });
+    return () => {
+      sub.remove();
+      void releaseNfcHold();
+    };
+  }, []);
 
   useEffect(() => {
     NativeStatusBar.setBarStyle("dark-content");
