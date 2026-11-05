@@ -62,6 +62,25 @@ export async function createTestClient() {
 
 export type LiteSvmClient = Awaited<ReturnType<typeof createTestClient>>;
 
+// Warp forward by N seconds (each slot = 350ms).
+//
+// litesvm's `warpToSlot` only bumps `clock.slot` — it does NOT advance
+// `clock.unixTimestamp`, which is what the program actually reads via
+// `Clock::get()?.unix_timestamp`. So we have to set the clock directly.
+// We also have to expire the blockhash: otherwise two transactions built
+// from the same instructions before/after a warp hash identically and the
+// second send is rejected as "already processed" instead of being replayed
+// against the warped clock.
+export function warpSeconds(client: LiteSvmClient, seconds: bigint) {
+  const slots = (seconds * 1000n) / 350n;
+  const clock = client.svm.getClock();
+
+  clock.slot += slots;
+  clock.unixTimestamp += seconds;
+  client.svm.setClock(clock);
+  client.svm.expireBlockhash();
+}
+
 // ---------------------------------------------------------------------------
 // General test helpers
 // ---------------------------------------------------------------------------
@@ -222,6 +241,8 @@ export async function genInitSolEstateIx(input: {
   checkInIntervalSecs?: bigint;
   gracePeriodSecs?: bigint;
   delegatePauseDurationSecs?: bigint;
+  totalPeriods?: number;
+  periodSecs?: bigint;
   checkInSigner?: Address;
   delegate?: Address;
 }) {
@@ -233,6 +254,8 @@ export async function genInitSolEstateIx(input: {
     checkInIntervalSecs,
     gracePeriodSecs,
     delegatePauseDurationSecs,
+    totalPeriods,
+    periodSecs,
     checkInSigner,
     delegate,
   } = input;
@@ -249,6 +272,8 @@ export async function genInitSolEstateIx(input: {
     checkInIntervalSecs: checkInIntervalSecs ?? 0,
     gracePeriodSecs: gracePeriodSecs ?? 0,
     delegatePauseDurationSecs: delegatePauseDurationSecs ?? 0,
+    totalPeriods: totalPeriods ?? 1,
+    periodSecs: periodSecs ?? 0,
     checkInSigner,
     amount,
   });
@@ -263,8 +288,21 @@ export async function genInitTokenEstateIx(input: {
   mint: Address;
   amount: bigint;
   tokenProgram: Address;
+  checkInIntervalSecs?: bigint;
+  totalPeriods?: number;
+  periodSecs?: bigint;
 }) {
-  let { client, authority, heir, amount, tokenProgram, mint } = input;
+  let {
+    client,
+    authority,
+    heir,
+    amount,
+    tokenProgram,
+    mint,
+    checkInIntervalSecs,
+    totalPeriods,
+    periodSecs,
+  } = input;
 
   const { vault, estate } = await deriveEstateVaultPDAs({ authority: authority.address, heir });
   const [assetRecord] = await findAssetRecordPda({ estate, mint });
@@ -281,9 +319,11 @@ export async function genInitTokenEstateIx(input: {
     vaultTokenAccount,
     authorityTokenAccount,
     assetRecord,
-    checkInIntervalSecs: 0,
+    checkInIntervalSecs: checkInIntervalSecs ?? 0,
     gracePeriodSecs: 0,
     delegatePauseDurationSecs: 0,
+    totalPeriods: totalPeriods ?? 1,
+    periodSecs: periodSecs ?? 0,
     amount,
   });
 

@@ -34,8 +34,20 @@ Notable changes to the `heirloom` program and its generated clients
   open (`claimable_at`, or the end of a delegate pause if later). So the open time no
   longer moves, and the payout schedule counts from it. `update_heir` can't start a
   migration after open either; a migration started before open can still finish.
+- **Breaking:** `revoke` fails with `EstateOpened` once the estate is open, so the owner
+  can't take the estate back from the heir partway through the payouts.
+- **Breaking:** `claim` fails with the new `EstateMigrating` error while the estate is
+  still being migrated to a new heir.
+- `claim`, `revoke` and `update_heir` require the vault token account to be the vault's
+  associated token account for the mint, not just any vault-owned account.
+- `update_heir` carries `periods_claimed` over to the new `AssetRecord` and vault, so
+  the new heir doesn't restart the payout schedule.
 
 ### Fixed
+
+- `update_heir` fails with `FundsStillDeployed` while the token is deployed in Lulo.
+  It used to migrate the vault's balance and close the old `AssetRecord`, leaving the
+  Lulo position unreachable.
 
 - `claim` and `revoke` no longer take the bps fee on NFTs. The fee rounded up to the whole
   token, so the NFT went to the treasury and the heir or authority received nothing.

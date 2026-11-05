@@ -8,33 +8,10 @@ import {
   genClaimIx,
   genInitSolEstateIx,
   genUpdateFieldsIx,
-  type LiteSvmClient,
+  warpSeconds,
 } from "./setup";
 import { fetchEstate } from "../src/generated";
 import { HEIRLOOM_ERROR__NOT_YET_CLAIMABLE } from "../src/generated/errors";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-// Warp forward by N seconds (each slot = 350ms).
-//
-// litesvm's `warpToSlot` only bumps `clock.slot` — it does NOT advance
-// `clock.unixTimestamp`, which is what the program actually reads via
-// `Clock::get()?.unix_timestamp`. So we have to set the clock directly.
-// We also have to expire the blockhash: otherwise two transactions built
-// from the same instructions before/after a warp hash identically and the
-// second send is rejected as "already processed" instead of being replayed
-// against the warped clock.
-function warpSeconds(client: LiteSvmClient, seconds: bigint) {
-  const slots = (seconds * 1000n) / 350n;
-  const clock = client.svm.getClock();
-
-  clock.slot += slots;
-  clock.unixTimestamp += seconds;
-  client.svm.setClock(clock);
-  client.svm.expireBlockhash();
-}
 
 // ---------------------------------------------------------------------------
 // Claim timing tests

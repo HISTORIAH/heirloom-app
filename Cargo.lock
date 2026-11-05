@@ -1457,6 +1457,7 @@ dependencies = [
  "solana-instructions-sysvar 3.0.1",
  "solana-program-log",
  "solana-security-txt",
+ "spl-associated-token-account-interface",
  "wincode 0.6.1",
 ]
 
