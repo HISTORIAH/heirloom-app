@@ -11,6 +11,7 @@ import {
   genInitSolEstateIx,
   genInitTokenEstateIx,
   genUpdateHeirIx,
+  warpSeconds,
 } from "./setup";
 import { fetchEstate } from "../src/generated";
 
@@ -28,6 +29,7 @@ test("init → update heir → claim SOL with new heir", async () => {
     authority,
     heir: oldHeir,
     amount: 1_000_000_000n,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 
@@ -43,6 +45,8 @@ test("init → update heir → claim SOL with new heir", async () => {
   });
   await client.sendTransaction(updateHeirIx);
 
+  // The new estate keeps the old timing, so it opens after the interval.
+  warpSeconds(client, 3_600n);
   const { ix: claimIx } = await genClaimIx({ client, authority: authority.address, heir: newHeir });
   await client.sendTransaction(claimIx);
 
@@ -66,6 +70,7 @@ test("init → update heir → claim token with new heir", async () => {
     mint,
     amount: 1_000_000n,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 
@@ -94,6 +99,7 @@ test("init → update heir → claim token with new heir", async () => {
   expect(await accountExists(client, oldEstate)).toBe(false);
   expect(await accountExists(client, oldVault)).toBe(false);
 
+  warpSeconds(client, 3_600n);
   const {
     ix: claimIx,
     estate: newEstate,

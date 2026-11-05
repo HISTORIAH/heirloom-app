@@ -36,6 +36,7 @@ test("it migrates multi-asset vault (sol + 2 tokens) to a new heir", async () =>
     authority,
     heir: oldHeir,
     amount: 1_000_000_000n,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 

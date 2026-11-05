@@ -37,6 +37,7 @@ test("it creates a token-only vault and revokes it", async () => {
     mint,
     amount: 500_000n,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 
@@ -92,6 +93,7 @@ test("it creates a token-only vault, updates heir and revokes it", async () => {
     mint,
     amount: 500_000n,
     tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 
@@ -154,6 +156,7 @@ test("it rejects a revoke signed by a wallet other than the authority", async ()
     authority,
     heir,
     amount: 1_000_000_000n,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 
@@ -189,6 +192,7 @@ test("it rejects revoking a vault-owned token account that was never registered"
     authority,
     heir,
     amount: 1_000_000_000n,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 

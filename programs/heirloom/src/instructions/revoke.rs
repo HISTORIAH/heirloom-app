@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken,
+    associated_token::{get_associated_token_address_with_program_id, AssociatedToken},
     token_interface::{Mint, TokenAccount},
 };
 
@@ -98,6 +98,11 @@ impl Revoke {
     }
 
     pub fn validate(&self) -> Result<()> {
+        // Once open the estate belongs to the heir; the owner can't take it
+        // back, same as they can't check in.
+        let now = Clock::get()?.unix_timestamp;
+        require!(now < self.estate.opens_at()?, HeirloomError::EstateOpened);
+
         match self.mint.as_ref() {
             Some(mint) => {
                 let vault_ta = self
@@ -117,9 +122,14 @@ impl Revoke {
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-                require_keys_eq!(
-                    vault_ta.owner(),
+                let vault_ata = get_associated_token_address_with_program_id(
                     self.vault.address(),
+                    mint.address(),
+                    self.token_program.address(),
+                );
+                require_keys_eq!(
+                    *vault_ta.address(),
+                    vault_ata,
                     HeirloomError::InvalidAccount
                 );
                 require_keys_eq!(

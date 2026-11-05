@@ -13,6 +13,7 @@ import {
   genRegisterAssetIx,
   genRevokeIx,
   getLamports,
+  warpSeconds,
 } from "./setup";
 import { NFT_DEPOSIT_FEE_LAMPORTS, TREASURY_ADDRESS } from "../src/main";
 
@@ -30,6 +31,7 @@ async function setupNftEstate() {
     authority,
     heir,
     amount: 1_000_000_000n,
+    checkInIntervalSecs: 3_600n,
   });
   await client.sendTransaction(initIx);
 
@@ -124,6 +126,7 @@ test("it does not charge the NFT fee when registering a fungible token", async (
 test("it gives the heir the whole NFT on claim, with no fee taken", async () => {
   const { client, authority, heir, mint, registerIx } = await setupNftEstate();
   await client.sendTransaction(registerIx);
+  warpSeconds(client, 3_600n);
 
   const {
     ix: claimIx,

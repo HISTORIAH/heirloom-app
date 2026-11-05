@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken,
+    associated_token::{get_associated_token_address_with_program_id, AssociatedToken},
     token_interface::{Mint, TokenAccount},
 };
 
@@ -123,6 +123,9 @@ impl UpdateHeir {
 
         if all_tokens_migrated {
             ctx.accounts.new_estate.is_migrating = false;
+            // Copied on the last call: the old heir can still take SOL
+            // payouts from the old vault until it closes.
+            ctx.accounts.new_vault.periods_claimed = ctx.accounts.vault.periods_claimed;
 
             let authority_view = ctx.accounts.authority.account();
             let new_vault_view = ctx.accounts.new_vault.account();
@@ -177,15 +180,28 @@ impl UpdateHeir {
                 .as_ref()
                 .ok_or(HeirloomError::MissingTokenAccounts)?;
 
-            require_keys_eq!(
-                vault_ta.owner(),
+            let vault_ata = get_associated_token_address_with_program_id(
                 self.vault.address(),
+                mint_acc.address(),
+                self.token_program.address(),
+            );
+            require_keys_eq!(
+                *vault_ta.address(),
+                vault_ata,
                 HeirloomError::InvalidAccount
             );
             require_keys_eq!(
                 vault_ta.mint(),
                 mint_acc.address(),
                 HeirloomError::MintMismatch
+            );
+
+            // Lulo positions belong to the old vault and are only reachable
+            // through the old asset_record, which this migration closes.
+            let asset_record = self.asset_record.as_ref().unwrap();
+            require!(
+                !asset_record.has_protected_exposure && !asset_record.has_boosted_exposure,
+                HeirloomError::FundsStillDeployed
             );
         }
 
@@ -270,7 +286,10 @@ impl UpdateHeir {
             signer_seeds,
         )?;
 
-        self.new_asset_record.as_mut().unwrap().bump = new_asset_record_bump.unwrap();
+        let new_asset_record = self.new_asset_record.as_mut().unwrap();
+        new_asset_record.bump = new_asset_record_bump.unwrap();
+        // Carry payouts already taken, or the new heir restarts the schedule.
+        new_asset_record.periods_claimed = self.asset_record.as_ref().unwrap().periods_claimed;
 
         let unclaimed_assets_count = self.estate.claimable_assets.saturating_sub(1);
         self.estate.claimable_assets = unclaimed_assets_count;

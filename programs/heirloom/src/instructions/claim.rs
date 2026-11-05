@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken,
+    associated_token::{get_associated_token_address_with_program_id, AssociatedToken},
     token_interface::{Mint, TokenAccount},
 };
 
@@ -143,6 +143,7 @@ impl Claim {
             );
         }
 
+        require!(!self.estate.is_migrating, HeirloomError::EstateMigrating);
         require!(
             now >= self.estate.opens_at()?,
             HeirloomError::NotYetClaimable
@@ -163,10 +164,18 @@ impl Claim {
                     .as_ref()
                     .ok_or(HeirloomError::MissingTokenAccounts)?;
 
+                // Only the vault's ATA holds the registered balance; any other
+                // vault-owned account for the mint would move the counter and
+                // close the record without paying it out.
                 let vault_ta = self.vault_token_account.as_ref().unwrap();
-                require_keys_eq!(
-                    vault_ta.owner(),
+                let vault_ata = get_associated_token_address_with_program_id(
                     self.vault.address(),
+                    self.mint.as_ref().unwrap().address(),
+                    self.token_program.address(),
+                );
+                require_keys_eq!(
+                    *vault_ta.address(),
+                    vault_ata,
                     HeirloomError::InvalidAccount
                 );
 
