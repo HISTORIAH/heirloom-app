@@ -1,7 +1,20 @@
 # https://heirlm.xyz — the marketing site, the docs at /docs, and the blog at
-# /blog. The app is a separate origin (https://app.heirlm.xyz) and carries its
-# own, stricter robots.txt.
+# /blog. The app is a separate origin (https://app.heirlm.xyz) with its own
+# robots.txt; it stays out of search through noindex, not through this file.
+#
+# This file is the whole policy, so Cloudflare's "Managed robots.txt" must stay
+# OFF for the zone. When it is on, Cloudflare prepends its own block to every
+# hostname's robots.txt: it blocked Baiduspider and PetalBot (two search
+# engines, and Baidu is the one that matters for /zh-cn/), blocked every AI
+# crawler, and added a second `User-agent: *` group that cancelled the app
+# hosts' rules.
+#
+# Every crawler is welcome here, AI crawlers included, on purpose: the public
+# site exists to be found and explained, and that now includes answer engines
+# and the models behind them. Content-Signal states the same thing
+# in Cloudflare's vocabulary; crawlers that don't know the line ignore it.
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # Indexes the sitemaps of all three builds: landing, docs, and blog.

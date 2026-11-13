@@ -3,7 +3,7 @@ import type { LandingT } from "@heirloom/i18n/landing";
 import { cn } from "@/lib/cn";
 import Logo from "@/components/Logo.astro";
 import LanguageSwitcher from "@/components/LanguageSwitcher.astro";
-import { BLOG_HREF, DOCS_HREF, GITHUB_URL, TWITTER_URL } from "@/lib/site";
+import { BLOG_HREF, DOCS_HREF, GITHUB_URL, TWITTER_URL, docsHref } from "@/lib/site";
 
 interface Props {
   t: LandingT;
@@ -11,18 +11,21 @@ interface Props {
 }
 const { t, locale } = Astro.props;
 
+// `me` marks a link as one of this site's own profiles, so the X and GitHub
+// accounts and heirlm.xyz read as one entity.
 const linkGroups = [
   {
     heading: t("footer.protocol"),
     links: [
       { name: t("footer.documentation"), href: DOCS_HREF },
-      { name: t("footer.github"), href: GITHUB_URL },
+      { name: t("footer.security"), href: docsHref("reference/security/") },
+      { name: t("footer.github"), href: GITHUB_URL, me: true },
       { name: t("footer.blog"), href: BLOG_HREF },
     ],
   },
   {
     heading: t("footer.community"),
-    links: [{ name: t("footer.twitter"), href: TWITTER_URL }],
+    links: [{ name: t("footer.twitter"), href: TWITTER_URL, me: true }],
   },
 ];
 ---
@@ -35,16 +38,16 @@ const linkGroups = [
         half and the link columns stand against the right margin. */}
     <div class="mb-14 grid grid-cols-1 gap-10 md:grid-cols-12">
       <div class="md:col-span-6 lg:col-span-5">
-        <h3><Logo tone="ink" class="h-12 md:h-14" /></h3>
+        <Logo tone="ink" class="h-12 md:h-14" />
         <p class="ed-body mt-5 max-w-[42ch] text-muted-foreground">{t("footer.lede")}</p>
       </div>
 
       {
         linkGroups.map((group, i) => (
           <div class={cn("md:col-span-3", i === 0 && "lg:col-start-8")}>
-            <h4 class="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
               {group.heading}
-            </h4>
+            </p>
             <ul class="mt-4 space-y-2.5">
               {group.links.map((link) => (
                 <li>
@@ -52,7 +55,11 @@ const linkGroups = [
                     href={link.href}
                     class="text-base font-bold underline-offset-4 transition-colors hover:underline"
                     target={link.href.startsWith("http") ? "_blank" : undefined}
-                    rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    rel={
+                      link.href.startsWith("http")
+                        ? `${"me" in link && link.me ? "me " : ""}noopener noreferrer`
+                        : undefined
+                    }
                   >
                     {link.name}
                   </a>

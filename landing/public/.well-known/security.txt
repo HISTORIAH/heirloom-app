@@ -1,0 +1,10 @@
+# Security contact for Heirloom (https://heirlm.xyz), per RFC 9116.
+# Covers the website, the app at app.heirlm.xyz and the on-chain programs.
+# "Expires" is required and must be renewed before it passes: update it every
+# year (next due by 2027-10).
+Contact: mailto:hey@heirlm.xyz
+Contact: https://x.com/heirloom_app
+Expires: 2027-11-01T00:00:00.000Z
+Preferred-Languages: en
+Policy: https://heirlm.xyz/docs/reference/security/
+Canonical: https://heirlm.xyz/.well-known/security.txt

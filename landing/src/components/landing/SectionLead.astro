@@ -4,14 +4,20 @@
  * against the right margin. It sits above the mosaic rather than inside it —
  * a headline is type on the page, and giving it grid rows of its own only
  * bought empty space once sections started filling the screen.
+ *
+ * `more` closes the lede with a link to the docs page that explains the
+ * section in depth. The anchor text says what is there, so the link tells
+ * both readers and crawlers where it leads.
  */
 import { cn } from "@/lib/cn";
+import Icon from "@/components/Icon.astro";
 
 interface Props {
   class?: string;
+  more?: { href: string; label: string };
 }
 
-const { class: className } = Astro.props;
+const { class: className, more } = Astro.props;
 const hasLede = Astro.slots.has("lede");
 ---
 
@@ -21,6 +27,15 @@ const hasLede = Astro.slots.has("lede");
     hasLede && (
       <p class="ed-lede max-w-[46ch] text-muted-foreground lg:col-span-5 lg:ml-auto lg:text-right">
         <slot name="lede" />
+        {more && (
+          <a
+            href={more.href}
+            class="mt-4 flex items-center gap-1.5 text-[15px] font-bold text-foreground underline-offset-4 hover:underline lg:justify-end"
+          >
+            {more.label}
+            <Icon name="arrow-right" aria-hidden="true" class="h-4 w-4 shrink-0" strokeWidth={2.5} />
+          </a>
+        )}
       </p>
     )
   }

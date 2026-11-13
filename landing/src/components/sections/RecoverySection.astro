@@ -5,6 +5,7 @@ import Mosaic from "@/components/surface/Mosaic.astro";
 import Tile from "@/components/surface/Tile.astro";
 import Section from "@/components/landing/Section.astro";
 import SectionLead from "@/components/landing/SectionLead.astro";
+import { docsHref } from "@/lib/site";
 import SectionNote from "@/components/landing/SectionNote.astro";
 import { toneMuted, toneCap, type TileTone } from "@/lib/tones";
 
@@ -24,7 +25,7 @@ const beats: { icon: string; label: string; desc: string; tone: TileTone }[] = [
 ---
 
 <Section id="recovery" index={5} total={10} label={t("recovery.eyebrow")}>
-  <SectionLead>
+  <SectionLead more={{ href: docsHref("using/wallet-recovery/"), label: t("recovery.docsLink") }}>
     <Fragment slot="headline">
       {t("recovery.title1")}{" "}
       <span class="bg-accent-pink px-1.5">{t("recovery.title2")}</span>

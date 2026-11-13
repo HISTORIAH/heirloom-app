@@ -6,6 +6,7 @@ import Tile from "@/components/surface/Tile.astro";
 import Cap from "@/components/surface/Cap.astro";
 import Section from "@/components/landing/Section.astro";
 import SectionLead from "@/components/landing/SectionLead.astro";
+import { docsHref } from "@/lib/site";
 import { toneMuted, type TileTone } from "@/lib/tones";
 
 interface Props {
@@ -26,7 +27,7 @@ const reasons: { icon: string; title: string; desc: string; tag: string; tone: T
 ---
 
 <Section id="why-solana" index={7} total={10} label={t("whySolana.eyebrow")}>
-  <SectionLead>
+  <SectionLead more={{ href: docsHref("reference/security/"), label: t("whySolana.docsLink") }}>
     <Fragment slot="headline">{t("whySolana.title")}</Fragment>
     <Fragment slot="lede">{t("whySolana.lede")}</Fragment>
   </SectionLead>

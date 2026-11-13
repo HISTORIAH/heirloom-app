@@ -1,0 +1,39 @@
+# Heirloom
+
+> Heirloom is a self-custody crypto inheritance and wallet recovery protocol on Solana. You lock SOL and SPL tokens in an on-chain estate, check in on a schedule you choose, and if the check-ins stop, the heir you named (another person, or a backup wallet of your own) claims the estate on-chain. No custodian, no lawyer, and no shared seed phrase.
+
+Key facts:
+
+- Non-custodial: estate accounts are program-derived, so only the Heirloom program can move funds, and there are no admin instructions.
+- The deadline: an estate becomes claimable at last check-in + check-in interval + grace period. The owner can take everything back at any time before the heir claims.
+- Optional roles: a guardian who can pause the deadline once, and a check-in signer who can check in for the owner.
+- Fees: opening an estate, adding SOL or tokens and checking in are free. 10% of yield earned, 0.75% when an heir claims, 0.5% when the owner closes an estate, 0.01 SOL per NFT added.
+- Not a legal will: Heirloom is programmable self-custody continuity, a complement to estate planning.
+
+## Docs
+
+- [Overview](https://heirlm.xyz/docs/): what Heirloom is and the problem it solves
+- [Quickstart](https://heirlm.xyz/docs/quickstart/): open, fund and check in on a first estate
+- [How it works](https://heirlm.xyz/docs/how-it-works/): the deadline, estate states and roles
+- [Fees](https://heirlm.xyz/docs/fees/): every fee, with examples
+- [Claim an inheritance](https://heirlm.xyz/docs/using/claim/): what an heir needs and does
+- [Wallet recovery](https://heirlm.xyz/docs/using/wallet-recovery/): naming your own backup wallet as heir
+- [Earn yield](https://heirlm.xyz/docs/using/yield/): Lulo lending from inside an estate
+- [Tokenized stocks](https://heirlm.xyz/docs/stocks/overview/): backup and vault modes for xStocks and Ondo
+- [Security & trust](https://heirlm.xyz/docs/reference/security/): guarantees, risks and disclosure
+- [FAQ](https://heirlm.xyz/docs/reference/faq/)
+
+## Developers
+
+- [Clients](https://heirlm.xyz/docs/developers/clients/): TypeScript (`@historiah/heirloom`) and Rust (`heirloom-client`)
+- [Instructions](https://heirlm.xyz/docs/developers/instructions/)
+- [Errors](https://heirlm.xyz/docs/developers/errors/)
+- [Addresses & clusters](https://heirlm.xyz/docs/reference/addresses/): program IDs and current network status
+- [Full docs as one text file](https://heirlm.xyz/docs/llms-full.txt)
+- [Source code](https://github.com/HISTORIAH/Heirloom-app)
+
+## Optional
+
+- [Blog](https://heirlm.xyz/blog/): product updates and engineering write-ups
+- [App](https://app.heirlm.xyz/): create, check in on, and claim estates
+- [Heirloom Stocks](https://stocks.heirlm.xyz/): backup and inheritance for tokenized stocks

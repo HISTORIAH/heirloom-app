@@ -3,6 +3,7 @@ import type { LandingT } from "@heirloom/i18n/landing";
 import Icon from "@/components/Icon.astro";
 import Section from "@/components/landing/Section.astro";
 import SectionLead from "@/components/landing/SectionLead.astro";
+import { docsHref } from "@/lib/site";
 import SectionNote from "@/components/landing/SectionNote.astro";
 
 interface Props {
@@ -35,7 +36,7 @@ const states: { name: string; desc: string; icon: string; chip: string }[] = [
 ---
 
 <Section id="vault-lifecycle" index={6} total={10} label={t("vaultLifecycle.eyebrow")}>
-  <SectionLead>
+  <SectionLead more={{ href: docsHref("how-it-works/"), label: t("vaultLifecycle.docsLink") }}>
     <Fragment slot="headline">{t("vaultLifecycle.title")}</Fragment>
     <Fragment slot="lede">{t("vaultLifecycle.lede")}</Fragment>
   </SectionLead>

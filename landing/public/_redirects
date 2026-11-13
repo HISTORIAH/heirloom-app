@@ -8,6 +8,64 @@
 /defer          https://app.heirlm.xyz/defer          301
 /heartbeat      https://app.heirlm.xyz/check-in       301
 
+# Docs pages merged or renamed in the docs trim. docs/astro.config.mjs also
+# lists these, but in a static build Astro can only emit a 200 page with a
+# meta refresh. These rules run first and answer with a real 301, so crawlers,
+# link checkers and old bookmarks get one clean hop. Keep both lists in step.
+# Each path appears with and without its trailing slash, because the
+# platform's own slash redirect is a 307 that would add a hop.
+/docs/concepts/heartbeat/        /docs/using/check-in/          301
+/docs/concepts/heartbeat         /docs/using/check-in/          301
+/docs/concepts/lifecycle/        /docs/how-it-works/            301
+/docs/concepts/lifecycle         /docs/how-it-works/            301
+/docs/concepts/estate/           /docs/how-it-works/            301
+/docs/concepts/estate            /docs/how-it-works/            301
+/docs/concepts/roles/            /docs/how-it-works/            301
+/docs/concepts/roles             /docs/how-it-works/            301
+/docs/concepts/assets/           /docs/using/fund-estate/       301
+/docs/concepts/assets            /docs/using/fund-estate/       301
+/docs/concepts/fees/             /docs/fees/                    301
+/docs/concepts/fees              /docs/fees/                    301
+/docs/using/emergency-withdraw/  /docs/using/close-estate/      301
+/docs/using/emergency-withdraw   /docs/using/close-estate/      301
+/docs/program/architecture/      /docs/developers/clients/      301
+/docs/program/architecture       /docs/developers/clients/      301
+/docs/program/accounts/          /docs/developers/clients/      301
+/docs/program/accounts           /docs/developers/clients/      301
+/docs/program/instructions/      /docs/developers/instructions/ 301
+/docs/program/instructions       /docs/developers/instructions/ 301
+/docs/program/errors/            /docs/developers/errors/       301
+/docs/program/errors             /docs/developers/errors/       301
+/docs/reference/js-client/       /docs/developers/clients/      301
+/docs/reference/js-client        /docs/developers/clients/      301
+
+# The entry points people type or link without a trailing slash. Workers static
+# assets add the slash with a 307 (temporary); a 301 tells crawlers it is
+# permanent and consolidates any link pointing at the slashless form. Deeper
+# pages keep the platform's 307: every internal link already ends in a slash.
+/docs     /docs/     301
+/blog     /blog/     301
+/es       /es/       301
+/pt       /pt/       301
+/ja       /ja/       301
+/ko       /ko/       301
+/vi       /vi/       301
+/tr       /tr/       301
+/zh-cn    /zh-cn/    301
+/zh-tw    /zh-tw/    301
+
+# Blog images that moved into the build pipeline (blog/src/assets/blog, served
+# as hashed WebP from /blog/_astro/). Their old public URLs were live, so each
+# goes to the post that showed it rather than a 404. The target is the post, not
+# the new file, because the file's hashed name changes whenever it is edited.
+/blog/images/email-verify.png                   /blog/email-reminders-live/          301
+/blog/images/email-connected.png                /blog/email-reminders-live/          301
+/blog/images/email-due-soon.png                 /blog/email-reminders-live/          301
+/blog/images/email-grace-started.png            /blog/email-reminders-live/          301
+/blog/images/email-check-in-recorded.png        /blog/email-reminders-live/          301
+/blog/images/email-heir.png                     /blog/email-reminders-live/          301
+/blog/images/shapes-at-26-09-15-20.09.30.png    /blog/apalis-reminder-workers-solana/ 301
+
 # /sitemap.xml is a real file (public/sitemap.xml), not a redirect: it is the
 # path Search Console has on record, and it indexes all three builds.
 
@@ -19,4 +77,9 @@
 #
 # Google did crawl the Mintlify site (Search Console still lists
 # docs.heirlm.xyz/quickstart and others as "Crawled - currently not indexed"),
-# so a zone Redirect Rule sending it to heirlm.xyz/docs/ is worth adding.
+# so the zone has a Redirect Rule for it. As of 2026-11-13 that rule maps only
+# /quickstart to its page and sends every other path to /docs/ itself, which
+# Google treats as a soft 404. It should preserve the path:
+#   when:  http.host eq "docs.heirlm.xyz"
+#   then:  dynamic, 301, concat("https://heirlm.xyz/docs", http.request.uri.path)
+# The renamed-page rules above then finish the job.

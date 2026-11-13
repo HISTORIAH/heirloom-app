@@ -16,8 +16,11 @@ analytics is off.
 | `/` | English, unprefixed |
 | `/es/` `/pt/` `/ja/` `/ko/` `/vi/` `/tr/` `/zh-cn/` `/zh-tw/` | one document each, with `hreflang` alternates |
 | `/404.html` | not a SPA fallback — unknown paths 404 |
-| `/sitemap-index.xml` | generated, with per-locale alternates |
-| `_redirects` | old app paths 301 → `app.heirlm.xyz` |
+| `/sitemap-0.xml` | generated, with per-locale `hreflang` alternates (plus `x-default`, `zh-HK`/`zh-MO`) and a git-dated `<lastmod>` |
+| `/sitemap.xml` | hand-written index of the landing, docs and blog sitemaps; the one URL submitted to Search Console |
+| `robots.txt` | the whole crawl policy for the apex; Cloudflare's Managed robots.txt must stay off |
+| `llms.txt`, `.well-known/security.txt` | a plain index for AI tools, and the RFC 9116 security contact (renew `Expires` yearly) |
+| `_redirects` | old app paths 301 → `app.heirlm.xyz`; renamed docs pages and slashless entry points 301 |
 | `docs/` | not built here — copied in from the `docs` package, see below |
 | `_headers` | immutable caching for `/_astro/*` |
 
@@ -42,8 +45,8 @@ origin, one Worker, one deploy — and the handbook feeds the same host the
 marketing pages rank on instead of a subdomain of its own.
 
 `bun run build` here wipes `dist/`, which is why deploying goes through
-`bun build:site` at the repo root rather than `astro build` alone. Deploy with
-`bun deploy:site`, or `bun run deploy` here, which calls it.
+`bun build:web` at the repo root rather than `astro build` alone. Deploy with
+`bun deploy:web`, or `bun run deploy` here, which calls it.
 
 ## Environment
 
@@ -61,6 +64,9 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 - **Copy** lives in `@heirloom/i18n/landing`, not in the components. There is no
   React here, so it uses a plain `createLandingT(locale)` that falls back to
   English key by key — never the i18next entry point next door.
+- **Links into the docs go to the page that explains the section**, built by
+  `docsHref()` in `src/lib/site.ts`, with anchor text that says what is there.
+  Their labels are locale keys (`howItWorks.docsLink` and friends).
 - **Every link to the app carries the locale.** They are built by
   `src/lib/site.ts` (`appPath`, `appUrl`, `appCreateVaultUrl`, `appTourUrl`),
   never written out by hand, because the app is a separate origin and a path
