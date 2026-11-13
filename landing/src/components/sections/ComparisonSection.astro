@@ -108,8 +108,9 @@ const srFor = (value: Attr) =>
       solutions.map((s, i) => {
         const st = toneStyles[s.tone]!;
         // The winning cell is the page's one comparison-shaped call to
-        // action, so it is a link across to the app rather than a dead card.
-        const Cell = s.best ? "a" : "div";
+        // action, so the whole card is clickable. The link itself sits on the
+        // name, stretched over the card by an ::after, so its anchor text is
+        // the name and the action rather than every word in the card.
         return (
           <Tile
             col={s.col}
@@ -119,9 +120,7 @@ const srFor = (value: Attr) =>
             bare
             class={`group relative transition-colors duration-200 ${st.cell}`}
           >
-            <Cell
-              href={s.best ? appCreateVaultUrl(locale) : undefined}
-              data-track={s.best ? "launch_app_comparison" : undefined}
+            <div
               class={`flex h-full w-full flex-col justify-between p-6 md:p-7 xl:p-8 2xl:p-10${s.best ? " text-left" : ""}`}
             >
               {/* Corner tick — the detail that made this grid read as a spec sheet. */}
@@ -141,7 +140,18 @@ const srFor = (value: Attr) =>
               </div>
               <div class="mt-10">
                 <h3 class="font-display text-3xl font-semibold leading-none tracking-tight md:text-4xl">
-                  {s.name}
+                  {s.best ? (
+                    <a
+                      href={appCreateVaultUrl(locale)}
+                      data-track="launch_app_comparison"
+                      class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+                    >
+                      {s.name}
+                      <span class="sr-only"> — {t("cta.createVault")}</span>
+                    </a>
+                  ) : (
+                    s.name
+                  )}
                 </h3>
                 <p class={`mt-3 max-w-md text-sm font-medium leading-relaxed ${st.blurb}`}>
                   {s.blurb}
@@ -164,7 +174,7 @@ const srFor = (value: Attr) =>
                   ))}
                 </div>
               </div>
-            </Cell>
+            </div>
           </Tile>
         );
       })

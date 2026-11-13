@@ -1,8 +1,9 @@
 {
   // Heirloom Stocks, on its own subdomain. Like the app it is client-rendered
   // and wallet-gated, so it keeps the SPA fallback: any path is served the
-  // shell and the router takes it from there. Nothing here is meant to be
-  // crawled — see public/robots.txt.
+  // shell and the router takes it from there. Only the root landing is meant
+  // to be indexed: the app routes carry noindex as an X-Robots-Tag header (see
+  // public/_headers) and as a robots meta set by src/components/Seo.tsx.
   //
   // Deploys are manual: `bun run deploy:stocks` from the repo root builds and
   // uploads it.

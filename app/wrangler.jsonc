@@ -1,8 +1,10 @@
 {
   // The application, on its own subdomain. Client-rendered and wallet-gated,
   // so it keeps the SPA fallback: any path is served the shell and the router
-  // takes it from there. Nothing here is meant to be crawled — see
-  // public/robots.txt.
+  // takes it from there. Nothing here is meant to be indexed: every response
+  // carries noindex (the meta tag in index.html and X-Robots-Tag in
+  // public/_headers), and public/robots.txt leaves crawling open so crawlers
+  // actually see it.
   //
   // NOTE: this name must match the Worker that already exists in the account,
   // or `wrangler deploy` creates a second one alongside it. It is deliberately

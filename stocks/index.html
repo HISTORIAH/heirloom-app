@@ -14,7 +14,8 @@
       The stocks shell. The root is the marketing page and the one route meant
       to be indexed; the app routes behind it are per-wallet, so they are not.
       Robots, titles and descriptions are set per route from
-      src/components/Seo.tsx, and public/robots.txt keeps crawlers to the root.
+      src/components/Seo.tsx, and public/_headers sends noindex for each app
+      route, so it reaches crawlers that don't run JS.
       These defaults describe the landing, for anything that doesn't run JS.
 
       That includes every link preview: X, Slack, iMessage and the rest read

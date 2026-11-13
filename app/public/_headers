@@ -3,9 +3,16 @@
 # copy of this file. The SPA shell keeps the platform default
 # (public, max-age=0, must-revalidate), which is exactly right: a cached shell
 # that outlived its asset hashes is a blank page.
+#
+# X-Robots-Tag is the header twin of the noindex in index.html: the app is
+# per-user and wallet-gated, so nothing on this origin belongs in search. The
+# header also covers what the meta tag can't (assets, robots.txt, and any
+# crawler that reads headers before HTML). robots.txt leaves crawling open so
+# both signals are actually seen.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  X-Robots-Tag: noindex, nofollow
 
 # Vite fingerprints these.
 /assets/*

@@ -19,7 +19,8 @@ export interface SeoProps {
 /**
  * Per-route head tags. The app routes show what a wallet holds, per visitor,
  * so they carry noindex; the landing at the root is the one page here meant
- * to be found. robots.txt keeps crawlers to that one path.
+ * to be found. public/_headers sends the same noindex as an X-Robots-Tag
+ * header for each app route, for crawlers that never run this code.
  */
 const Seo = ({ title, description, path = "/", indexable = false }: SeoProps) => {
   const canonical = `${STOCKS_URL}${path}`;

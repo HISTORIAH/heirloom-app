@@ -36,7 +36,7 @@ The tradeoff we accepted was that with a large number of jobs, this would bottle
 ## Architecture: a dispatch worker and a chain reconciler
 With our stack locked in, it was time to put it all together and ship. The flow chart below illustrates what was needed.
 
-![Flow chart of the reminder pipeline: opt-in and contact verification, the Apalis dispatch worker with its guards (already checked in, estate closed or paused, fire time out of range), and the sweep worker that reconciles the database with onchain state](/blog/images/shapes-at-26-09-15-20.09.30.png)
+![Flow chart of the reminder pipeline: opt-in and contact verification, the Apalis dispatch worker with its guards (already checked in, estate closed or paused, fire time out of range), and the sweep worker that reconciles the database with onchain state](../../assets/blog/apalis-reminder-pipeline-diagram.webp)
 
 We had two tasks running separately from main:
 - The Apalis worker responsible for dispatching enqueued jobs/reminders.

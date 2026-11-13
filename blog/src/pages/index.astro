@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BlogLayout from "@/layouts/BlogLayout.astro";
 import PostCard from "@/components/PostCard.astro";
+import { readingTime } from "@/lib/readingTime";
 import FilterBar from "@/components/FilterBar.astro";
 
 const isDev = import.meta.env.DEV;
@@ -20,8 +21,8 @@ const regular = posts.filter((p) => p !== featured);
 ---
 
 <BlogLayout
-  title="Solana inheritance and wallet recovery"
-  description="Engineering deep-dives, product updates, and essays on self-custody inheritance and wallet recovery on Solana, from the team building Heirloom."
+  title="Crypto inheritance and wallet recovery"
+  description="Engineering deep-dives, product updates and essays on self-custody crypto inheritance and wallet recovery on Solana, from the team building Heirloom."
 >
   <section class="hero">
     <div class="shell">
@@ -51,6 +52,7 @@ const regular = posts.filter((p) => p !== featured);
           pubDate={featured.data.pubDate}
           tags={featured.data.tags}
           slug={featured.id}
+          readingTime={readingTime(featured.body)}
           draft={featured.data.draft}
           featured={true}
         />
@@ -64,6 +66,7 @@ const regular = posts.filter((p) => p !== featured);
             pubDate={post.data.pubDate}
             tags={post.data.tags}
             slug={post.id}
+            readingTime={readingTime(post.body)}
             draft={post.data.draft}
           />
         ))

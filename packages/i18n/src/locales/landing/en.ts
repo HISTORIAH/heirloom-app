@@ -24,11 +24,11 @@ const landing = {
   },
   seo: {
     notFoundTitle: "Page Not Found | Heirloom",
-    homeTitle: "Heirloom - Solana Inheritance Protocol",
+    homeTitle: "Heirloom: Crypto Inheritance and Wallet Recovery on Solana",
     homeDescription:
-      "A Solana inheritance protocol for self-custody continuity. Lock digital assets in an estate, check in on your own schedule, or your heir inherits on-chain.",
-    ogImageAlt: "Heirloom - your wallet should outlive you, even if your seed phrase doesn't.",
-    twitterImageAlt: "Heirloom - self-custody estates on Solana.",
+      "Crypto inheritance on Solana, without giving up custody. Lock SOL and tokens in an estate, earn yield, and if you stop checking in, your heir claims on-chain.",
+    ogImageAlt: "Heirloom, crypto inheritance on Solana: your wallet should outlive you, even if your seed phrase doesn't.",
+    twitterImageAlt: "Heirloom: self-custody crypto inheritance on Solana.",
     orgDescription:
       "Heirloom is a Solana-native inheritance protocol. Lock digital assets into an estate you control, earn yield on idle balances, recover a lost wallet through a backup you name, and hand off on-chain if you stop checking in. No custodians, no seed-phrase sharing.",
     websiteDescription:
@@ -41,11 +41,11 @@ const landing = {
       "Free to open an estate and check in; standard Solana network fees apply. Claims incur a 0.75% protocol fee, emergency withdrawals a 0.5% fee, and yield strategies a 10% fee on yield earned only.",
   },
   hero: {
-    kicker: "Self-custody estates on Solana",
+    kicker: "Self-custody crypto inheritance on Solana",
     line1: "Protect your assets.",
     line2: "Put them to work.",
     line3: "Pass them on.",
-    lede: "Lock digital assets into an estate only you control. They earn while they sit. Check in whenever it suits you. If you ever go quiet, everything lands in the wallet you named, which can be your own next one.",
+    lede: "Lock your crypto into an estate only you control. It earns while it sits. Check in whenever it suits you. If you ever go quiet, everything lands in the wallet you named, which can be your own next one.",
     createVault: "Create Estate",
     launchTour: "Launch Tour",
     viewDemo: "View Demo",
@@ -95,6 +95,7 @@ const landing = {
     turnLink3: "works",
   },
   howItWorks: {
+    docsLink: "Quickstart: your first estate, step by step",
     eyebrow: "How it works",
     title1: "Four steps.",
     title2: "Then forget about it.",
@@ -113,6 +114,8 @@ const landing = {
       "Go quiet past the window and a grace period opens. After it, your heir can claim. That heir can be a backup wallet of your own.",
   },
   yieldSection: {
+    feeLink: "Full fee breakdown",
+    docsLink: "How yield works inside an estate",
     eyebrow: "Yield",
     availability: "Live on mainnet",
     title1: "Locked,",
@@ -133,6 +136,7 @@ const landing = {
       "Heirloom takes 10% of the yield a strategy earns, and never a recurring cut of your principal. Opening an estate and checking in are free. Two small one-time fees apply only when assets leave the estate: 0.75% when your heir claims, and 0.5% if you emergency-withdraw.",
   },
   recovery: {
+    docsLink: "Set up wallet recovery",
     eyebrow: "Wallet recovery",
     title1: "Name your",
     title2: "next wallet.",
@@ -149,6 +153,7 @@ const landing = {
       "name a guardian and they can push the deadline out, by a length of time you set, while you sort things out. They can never move your funds, change your heir, or touch the estate in any other way.",
   },
   vaultLifecycle: {
+    docsLink: "Deadlines, states and claims in detail",
     eyebrow: "Estate lifecycle",
     title: "Five states. One direction.",
     lede: "Every state is computed from on-chain timestamps, so there is nothing to trust and nothing to spoof. While the estate is active, you are the only one who can move anything.",
@@ -173,6 +178,7 @@ const landing = {
     emergencyDesc: "Pull everything back to your wallet, any time before distribution.",
   },
   whySolana: {
+    docsLink: "What the program guarantees",
     eyebrow: "Why Solana",
     title: "Built where speed meets safety.",
     lede: "The estate is an Anchor program on Solana. Every rule it follows is in the code, and every deadline it keeps is read from the chain.",
@@ -224,6 +230,7 @@ const landing = {
     b5: "Self-custodial, trustless, fully on-chain on Solana, and the only one that earns while it waits.",
   },
   faq: {
+    docsLink: "More answers in the docs",
     eyebrow: "FAQ",
     headline1: "Common",
     headline2: "questions.",
@@ -263,6 +270,7 @@ const landing = {
     readDocs: "Read the docs",
   },
   footer: {
+    security: "Security",
     lede: "Self-custody estates on Solana. Your assets keep earning while they sit, and they always know where to go next.",
     protocol: "Protocol",
     documentation: "Documentation",

@@ -28,16 +28,22 @@ const rail = [
   <div class="section-body">
     <div class="section-inner grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-8">
       <div class="lg:col-span-7 lg:pr-[6%]">
-        <div class="flex items-center gap-4">
-          <Cap tone="plain">{t("hero.kicker")}</Cap>
-          <span aria-hidden="true" class="h-px flex-1 bg-tile-line"></span>
-        </div>
-        <h1 class="hero-display mt-7">
-          {t("hero.line1")}
-          <br />
-          {t("hero.line2")}
-          <br />
-          {t("hero.line3")}
+        {/* The kicker is part of the H1 on purpose: it carries the words people
+            search with ("crypto inheritance"), while the three display lines
+            keep the voice. It looks exactly as it did as a separate label; the
+            row resets the display line-height so the cap sits as before. */}
+        <h1 class="hero-display">
+          <span class="flex items-center gap-4 leading-normal">
+            <Cap tone="plain">{t("hero.kicker")}</Cap>
+            <span aria-hidden="true" class="h-px flex-1 bg-tile-line"></span>
+          </span>{" "}
+          <span class="mt-7 block">
+            {t("hero.line1")}
+            <br />
+            {t("hero.line2")}
+            <br />
+            {t("hero.line3")}
+          </span>
         </h1>
         <p class="ed-lede mt-8 max-w-[42ch] text-muted-foreground">{t("hero.lede")}</p>
         <div class="mt-9 flex flex-wrap items-center gap-3">

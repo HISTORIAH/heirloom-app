@@ -2,6 +2,7 @@
 import type { LandingT } from "@heirloom/i18n/landing";
 import Icon from "@/components/Icon.astro";
 import Section from "@/components/landing/Section.astro";
+import { docsHref } from "@/lib/site";
 
 interface Props {
   t: LandingT;
@@ -33,6 +34,13 @@ const faqs = Array.from({ length: 11 }, (_, i) => ({
         <span class="bg-accent-purple px-1.5 text-background">{t("faq.headline2")}</span>
       </h2>
       <p class="ed-lede mt-6 max-w-[38ch] text-muted-foreground">{t("faq.lede")}</p>
+      <a
+        href={docsHref("reference/faq/")}
+        class="mt-5 inline-flex items-center gap-1.5 text-[15px] font-bold underline-offset-4 hover:underline"
+      >
+        {t("faq.docsLink")}
+        <Icon name="arrow-right" aria-hidden="true" class="h-4 w-4 shrink-0" strokeWidth={2.5} />
+      </a>
     </div>
 
     <div class="space-y-2 lg:col-span-8" data-faq>
@@ -48,27 +56,36 @@ const faqs = Array.from({ length: 11 }, (_, i) => ({
                 : "border-tile-line bg-background hover:border-foreground/25",
             ]}
           >
-            <button
-              type="button"
-              data-faq-toggle
-              aria-expanded={i === 0 ? "true" : "false"}
-              aria-controls={`faq-answer-${i}`}
-              class="flex w-full items-center gap-5 p-5 text-left md:px-7 md:py-6"
-            >
-              <span class="w-7 shrink-0 text-xs font-bold tabular-nums tracking-[0.16em] text-muted-foreground">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span class="ed-h3 flex-1 pr-4">{faq.question}</span>
-              <Icon
-                name="plus"
-                data-faq-mark
-                class:list={[
-                  "h-5 w-5 shrink-0 transition-transform duration-200",
-                  i === 0 && "rotate-45",
-                ]}
-                strokeWidth={2.5}
-              />
-            </button>
+            {/* The WAI-ARIA accordion pattern: each question is a real heading
+                wrapping its button, so the questions are part of the page's
+                outline for screen readers and crawlers alike. */}
+            <h3>
+              <button
+                type="button"
+                data-faq-toggle
+                aria-expanded={i === 0 ? "true" : "false"}
+                aria-controls={`faq-answer-${i}`}
+                class="flex w-full items-center gap-5 p-5 text-left md:px-7 md:py-6"
+              >
+                {/* The counter is drawn by CSS from data-n, so the heading's
+                    text is the question alone, not "01What happens…". */}
+                <span
+                  aria-hidden="true"
+                  data-n={String(i + 1).padStart(2, "0")}
+                  class="w-7 shrink-0 text-xs font-bold tabular-nums tracking-[0.16em] text-muted-foreground before:content-[attr(data-n)]"
+                ></span>
+                <span class="ed-h3 flex-1 pr-4">{faq.question}</span>
+                <Icon
+                  name="plus"
+                  data-faq-mark
+                  class:list={[
+                    "h-5 w-5 shrink-0 transition-transform duration-200",
+                    i === 0 && "rotate-45",
+                  ]}
+                  strokeWidth={2.5}
+                />
+              </button>
+            </h3>
 
             {/* 0fr → 1fr grid trick expands to the answer's real height, no clipping.
                 The answer stays in the document either way, which is what makes

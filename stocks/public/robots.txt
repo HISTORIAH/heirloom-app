@@ -1,21 +1,13 @@
-# https://stocks.heirlm.xyz — the landing at the root is public. Every other
-# route is the wallet-gated app, per-user and noindex, so crawlers stay on the
-# root. The main site, https://heirlm.xyz, serves its own robots.txt and sitemap.
+# https://stocks.heirlm.xyz — the landing at the root is public; every other
+# route is the wallet-gated app, per-user and noindex. The main site,
+# https://heirlm.xyz, serves its own robots.txt and sitemap.
 #
-# The landing is client-rendered: the root document is an empty shell until
-# its script runs. Google renders it, but only with the files it is allowed to
-# fetch, so the bundle, the catalog the landing counts from, and the icons have
-# to be open too — with `Disallow: /` alone the crawler sees a blank page.
-#
-# The share card is open for the same reason: X, Slack and the rest fetch it
-# from index.html's og:image, and Twitterbot won't show an image it is barred
-# from.
+# Crawling is left fully open on purpose. The old allow-list (Allow: /$ …
+# Disallow: /) kept crawlers from ever seeing the app routes' noindex, and a
+# disallowed URL linked from elsewhere can still be indexed without its content.
+# The app routes are kept out of search by noindex instead: an X-Robots-Tag
+# header on each route in _headers, plus the robots meta that Seo.tsx sets. The
+# landing renders client-side, so the bundle, catalog, icons and share card all
+# have to be fetchable too, which an open file guarantees.
 User-agent: *
-Allow: /$
-Allow: /assets/
-Allow: /catalog.json$
-Allow: /favicon
-Allow: /apple-touch-icon.png$
-Allow: /site.webmanifest$
-Allow: /og-image.png$
-Disallow: /
+Allow: /

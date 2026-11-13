@@ -26,12 +26,12 @@ const landing: LandingMessages = {
   },
   seo: {
     notFoundTitle: "Sayfa bulunamadı | Heirloom",
-    homeTitle: "Heirloom — Solana Miras Protokolü",
+    homeTitle: "Heirloom: Kripto Para Mirası ve Cüzdan Kurtarma (Solana)",
     homeDescription:
-      "Kendi saklamalı süreklilik için bir Solana miras protokolü. Dijital varlıklarınızı bir mirasa kilitleyin, size uyan zamanlarda check-in yapın, yoksa mirasçınız zincir üstünde miras alır.",
+      "Saklamayı bırakmadan Solana'da kripto para mirası: SOL ve tokenları bir mirasa kilitleyin, getiri kazanın; check-in durursa mirasçınız zincir üstünde talep eder.",
     ogImageAlt:
-      "Heirloom — cüzdanınız sizden uzun yaşamalı, tohum cümleniz yaşamasın bile.",
-    twitterImageAlt: "Heirloom — Solana'da kendi saklamalı miraslar.",
+      "Heirloom, Solana'da kripto para mirası: cüzdanınız sizden uzun yaşamalı, tohum cümleniz yaşamasın bile.",
+    twitterImageAlt: "Heirloom: Solana'da kendi saklamalı kripto para mirası.",
     orgDescription:
       "Heirloom, Solana yerlisi bir miras protokolüdür. Dijital varlıkları sizin kontrol ettiğiniz bir mirasa kilitleyin, atıl bakiyelerde getiri kazanın, adlandırdığınız bir yedekle kayıp cüzdanı kurtarın ve check-in durursa zincir üstünde devredin — saklamacı yok, tohum cümlesi paylaşımı yok.",
     websiteDescription:
@@ -44,7 +44,7 @@ const landing: LandingMessages = {
       "Miras açmak ve check-in yapmak ücretsizdir; standart Solana ağ ücretleri geçerlidir. Talepler %0,75 protokol ücreti, acil çekimler %0,5, getiri stratejileri ise yalnızca kazanılan getiri üzerinden %10 alır.",
   },
   hero: {
-    kicker: "Solana'da kendi saklamalı miraslar",
+    kicker: "Solana'da kendi saklamalı kripto para mirası",
     line1: "Varlıklarınızı koruyun.",
     line2: "Onları çalıştırın.",
     line3: "Sonra devredin.",
@@ -98,6 +98,7 @@ const landing: LandingMessages = {
     turnLink3: "çalışır",
   },
   howItWorks: {
+    docsLink: "Hızlı başlangıç: ilk mirasınız, adım adım",
     eyebrow: "Nasıl çalışır",
     title1: "Dört adım.",
     title2: "Sonra unutun.",
@@ -116,6 +117,8 @@ const landing: LandingMessages = {
       "Pencereyi aşacak kadar sessizleşin, ek süre açılır. Ondan sonra adlandırdığınız cüzdanlar talep edebilir — kendi yedeğiniz dahil.",
   },
   yieldSection: {
+    feeLink: "Tüm ücretler, ayrıntılı",
+    docsLink: "Miras içinde getiri nasıl işler",
     eyebrow: "Getiri",
     availability: "Mainnet'te aktif",
     title1: "Kilitli,",
@@ -136,6 +139,7 @@ const landing: LandingMessages = {
       "Heirloom, bir stratejinin kazandığı getirinin %10'unu alır; anaparanızdan asla düzenli bir pay almaz. Miras oluşturmak ve check-in yapmak ücretsizdir. Yalnızca varlıklar mirastan çıktığında iki küçük, tek seferlik ücret uygulanır: mirasçınız talep ettiğinde %0,75, acil çekim yaptığınızda %0,5.",
   },
   recovery: {
+    docsLink: "Cüzdan kurtarmayı kurun",
     eyebrow: "Cüzdan kurtarma",
     title1: "Sonraki",
     title2: "cüzdanınızı adlandırın.",
@@ -152,6 +156,7 @@ const landing: LandingMessages = {
       "bir vasi adlandırın, onlar işleri toparlarken süreyi belirlediğiniz kadar uzatabilir. Fonlarınızı asla taşıyamaz, mirasçılarınızı değiştiremez veya mirasa başka hiçbir şekilde dokunamaz.",
   },
   vaultLifecycle: {
+    docsLink: "Süreler, durumlar ve talepler ayrıntılı",
     eyebrow: "Miras yaşam döngüsü",
     title: "Beş durum. Tek yön.",
     lede: "Her durum zincir üstü zaman damgalarından hesaplanır, bu yüzden güvenilecek bir şey yoktur ve taklit edilecek bir şey yoktur. Miras aktifken herhangi bir şeyi yalnızca siz taşıyabilirsiniz.",
@@ -173,6 +178,7 @@ const landing: LandingMessages = {
       "Dağıtımdan önce her an her şeyi cüzdanınıza geri çekin.",
   },
   whySolana: {
+    docsLink: "Programın garanti ettikleri",
     eyebrow: "Neden Solana",
     title: "Hızın güvenlikle buluştuğu yerde inşa edildi.",
     lede: "Miras, Solana üzerinde bir Anchor programıdır. İzlediği her kural kodda, tuttuğu her süre zincirden okunur.",
@@ -219,6 +225,7 @@ const landing: LandingMessages = {
     b5: "Kendi saklamalı, güven gerektirmez, Solana'da tamamen zincir üstü — ve beklerken kazanç sağlayan tek seçenek.",
   },
   faq: {
+    docsLink: "Belgelerde daha fazla yanıt",
     eyebrow: "SSS",
     headline1: "Sık sorulan",
     headline2: "sorular.",
@@ -258,6 +265,7 @@ const landing: LandingMessages = {
     readDocs: "Dokümanları oku",
   },
   footer: {
+    security: "Güvenlik",
     lede: "Solana'da kendi saklamalı miraslar. Varlıklarınız dururken kazanç sağlamaya devam eder ve her zaman sıradaki yeri bilir.",
     protocol: "Protokol",
     documentation: "Dokümantasyon",

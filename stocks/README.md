@@ -31,7 +31,10 @@ submitted without a wallet opens the wallet dialog; once connected, the page
 creates the plan from what was typed (or shows the plan that wallet already
 has). `src/contexts/PageSession.ts` holds the drafts and pending actions that
 make that work across the connect. Only the landing is indexable: the app
-routes carry `noindex`, and `public/robots.txt` keeps crawlers to `/`.
+routes carry `noindex`, as an `X-Robots-Tag` header from `public/_headers` and as
+the robots meta `src/components/Seo.tsx` sets. `public/robots.txt` leaves crawling
+open so that `noindex` is actually seen; a new app route needs a line in
+`public/_headers` too.
 
 The whole origin, landing and app, speaks one visual language of its own, not
 app.heirlm.xyz's panels or heirlm.xyz's mosaic: one column ruled into quarters,

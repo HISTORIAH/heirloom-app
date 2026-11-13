@@ -44,8 +44,6 @@ export const appTourUrl = (locale: string) => {
  * instead of splitting authority across two.
  */
 export const DOCS_PATH = "/docs/";
-/** Absolute, for structured data. Links on the page use DOCS_HREF. */
-export const DOCS_URL = `${SITE_URL}${DOCS_PATH}`;
 /** The blog is the same kind of neighbour: `blog/` built and copied in under /blog. */
 export const BLOG_PATH = "/blog/";
 
@@ -57,6 +55,14 @@ export const BLOG_PATH = "/blog/";
 const isDev = import.meta.env.DEV;
 export const DOCS_HREF = isDev ? `http://localhost:4322${DOCS_PATH}` : DOCS_PATH;
 export const BLOG_HREF = isDev ? `http://localhost:4323${BLOG_PATH}` : BLOG_PATH;
+
+/**
+ * A page inside the docs, e.g. `docsHref("using/wallet-recovery/")`. Sections
+ * link to the page that explains them in depth, with anchor text that says what
+ * is there, rather than every link pointing at /docs/.
+ */
+export const docsHref = (path: string) => `${DOCS_HREF}${path.replace(/^\//, "")}`;
 export const GITHUB_URL = "https://github.com/HISTORIAH/Heirloom-app";
 export const TWITTER_URL = "https://x.com/heirloom_app";
+export const CONTACT_EMAIL = "hey@heirlm.xyz";
 export const OG_IMAGE = `${SITE_URL}/og-image.png`;

@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BlogLayout from "@/layouts/BlogLayout.astro";
 import PostCard from "@/components/PostCard.astro";
+import { readingTime } from "@/lib/readingTime";
 import FilterBar from "@/components/FilterBar.astro";
 
 export async function getStaticPaths() {
@@ -60,6 +61,7 @@ const allTags = [
             pubDate={post.data.pubDate}
             tags={post.data.tags}
             slug={post.id}
+            readingTime={readingTime(post.body)}
             draft={post.data.draft}
           />
         ))
