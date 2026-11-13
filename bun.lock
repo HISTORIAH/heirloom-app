@@ -100,6 +100,8 @@
     "blog": {
       "name": "blog",
       "dependencies": {
+        "@fontsource-variable/jetbrains-mono": "5.3.0",
+        "@fontsource-variable/space-grotesk": "5.3.0",
         "astro": "^7.3.2",
       },
       "devDependencies": {
@@ -175,6 +177,8 @@
       "version": "0.0.0",
       "dependencies": {
         "@astrojs/markdown-remark": "^7.3.1",
+        "@fontsource-variable/jetbrains-mono": "5.3.0",
+        "@fontsource-variable/space-grotesk": "5.3.0",
         "astro": "^7.3.3",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -835,6 +839,8 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.9", "", { "dependencies": { "@floating-ui/dom": "^1.8.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-JDjEFGCpImxDCA7JJKviA0M9+RtmJdj0m/NVU5IMgBK+AmZouAQQ7/+2GLH0GXXY0YMw9oXPB8hKdbPYg5QLYg=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
+
+    "@fontsource-variable/jetbrains-mono": ["@fontsource-variable/jetbrains-mono@5.3.0", "", {}, "sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw=="],
 
     "@fontsource-variable/space-grotesk": ["@fontsource-variable/space-grotesk@5.3.0", "", {}, "sha512-2IxmvfB08i9vnGB3Ym/AXvhRE+8XOjWMXIyDum03c+tPwH0FUoMNQfGpU8NXPxjbws0Vvss3AH0Zqt4oJBBAdw=="],
 

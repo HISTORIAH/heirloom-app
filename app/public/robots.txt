@@ -1,5 +1,11 @@
 # https://app.heirlm.xyz — the application. Every route is wallet-gated and
-# per-user, so there is nothing here to index. The public, indexable site is
+# per-user, so none of it belongs in search. The public, indexable site is
 # https://heirlm.xyz, which serves its own robots.txt and sitemap.
+#
+# This file deliberately does NOT disallow anything. A Disallow stops a crawler
+# from ever seeing the page's noindex, and a disallowed URL that is linked from
+# elsewhere can still be indexed ("Indexed, though blocked by robots.txt").
+# Keeping the app out of the index is the job of two noindex signals instead:
+# <meta name="robots"> in index.html and the X-Robots-Tag header in _headers.
 User-agent: *
-Disallow: /
+Allow: /
