@@ -7,6 +7,7 @@ interface Props {
   slug: string;
   draft?: boolean;
   featured?: boolean;
+  /** Minutes, from lib/readingTime.ts. Omitted, the meta line leaves it out. */
   readingTime?: number;
 }
 
@@ -29,18 +30,27 @@ function formatDate(date: Date): string {
 }
 ---
 
-<a href={`/blog/${slug}/`} class:list={["post-card", { "post-card--featured": featured }]}>
+{/* The whole card is clickable, but the link itself is the title, stretched
+    over the card by .post-card-link::after. Wrapping the card in one <a> made
+    its anchor text the tag, title, excerpt and date run together. */}
+<article class:list={["post-card", { "post-card--featured": featured }]}>
   <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
     {tags.map((tag) => (
       <span class:list={["post-tag", tagColors[tag] || "post-tag--outline"]}>{tag}</span>
     ))}
     {draft && <span class="draft-badge">Draft</span>}
   </div>
-  <h3>{title}</h3>
+  <h2><a href={`/blog/${slug}/`} class="post-card-link">{title}</a></h2>
   <p class="post-excerpt">{description}</p>
   <div class="post-meta">
-    <span>{formatDate(pubDate)}</span>
-    <span class="dot"></span>
-    <span>{readingTime || 5} min read</span>
+    <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+    {
+      readingTime && (
+        <>
+          <span class="dot" />
+          <span>{readingTime} min read</span>
+        </>
+      )
+    }
   </div>
-</a>
+</article>

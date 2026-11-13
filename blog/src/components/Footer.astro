@@ -5,8 +5,10 @@ const year = new Date().getFullYear();
   <div class="shell footer-inner">
     <p>&copy; {year} Heirloom</p>
     <ul class="footer-links">
-      <li><a href="https://x.com/heirloom_app" target="_blank" rel="noopener">Twitter / X</a></li>
-      <li><a href="https://github.com/HISTORIAH/heirloom-app" target="_blank" rel="noopener">GitHub</a></li>
+      {/* rel="me": these are Heirloom's own profiles. The GitHub URL matches the
+          casing the landing and docs use, so all three name one repo. */}
+      <li><a href="https://x.com/heirloom_app" target="_blank" rel="me noopener">Twitter / X</a></li>
+      <li><a href="https://github.com/HISTORIAH/Heirloom-app" target="_blank" rel="me noopener">GitHub</a></li>
       <li><a href="mailto:hey@heirlm.xyz">Email</a></li>
     </ul>
   </div>
