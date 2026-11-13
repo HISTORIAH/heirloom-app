@@ -26,11 +26,11 @@ const landing: LandingMessages = {
   },
   seo: {
     notFoundTitle: "ページが見つかりません | Heirloom",
-    homeTitle: "Heirloom — Solana 相続プロトコル",
+    homeTitle: "Heirloom｜暗号資産（仮想通貨）の相続とウォレット復旧 – Solana",
     homeDescription:
-      "自己管理の継続のための Solana 相続プロトコル。デジタル資産をエステートにロックし、自分のペースでチェックインしてください。チェックインが途絶えれば、相続人がオンチェーンで相続します。",
-    ogImageAlt: "Heirloom — シードフレーズがなくなっても、ウォレットはあなたより長く残るべきです。",
-    twitterImageAlt: "Heirloom — Solana 上の自己管理エステート。",
+      "自己管理のまま使える Solana の暗号資産（仮想通貨）相続。SOL やトークンをエステートにロックして利回りを得て、チェックインが途絶えれば相続人がオンチェーンで受け取ります。",
+    ogImageAlt: "Heirloom｜Solana の暗号資産相続。シードフレーズがなくなっても、ウォレットはあなたより長く残るべきです。",
+    twitterImageAlt: "Heirloom｜Solana 上の自己管理型・暗号資産相続。",
     orgDescription:
       "Heirloom は Solana ネイティブの相続プロトコルです。自分が管理するエステートにデジタル資産をロックし、遊休残高で利回りを得て、指定したバックアップで紛失ウォレットを復旧し、チェックインを止めればオンチェーンで引き継ぎます。カストディアンもシードフレーズの共有もありません。",
     websiteDescription:
@@ -43,7 +43,7 @@ const landing: LandingMessages = {
       "エステートの開設とチェックインは無料です。Solana のネットワーク手数料は別途かかります。請求はプロトコル手数料 0.75%、緊急出金は 0.5%、利回り戦略は得た利回りに対してのみ 10% です。",
   },
   hero: {
-    kicker: "Solana 上の自己管理エステート",
+    kicker: "Solana 上の自己管理型・暗号資産相続",
     line1: "資産を守る。",
     line2: "働かせる。",
     line3: "引き継ぐ。",
@@ -97,6 +97,7 @@ const landing: LandingMessages = {
     turnLink3: "の仕組み",
   },
   howItWorks: {
+    docsLink: "クイックスタート：最初のエステートを順を追って",
     eyebrow: "仕組み",
     title1: "4つのステップ。",
     title2: "あとは忘れる。",
@@ -115,6 +116,8 @@ const landing: LandingMessages = {
       "期限を超えて静かになると猶予期間が始まります。その後、指定したウォレットが請求できます。あなた自身の予備も含めて。",
   },
   yieldSection: {
+    feeLink: "手数料の詳細",
+    docsLink: "エステート内で利回りが生まれる仕組み",
     eyebrow: "利回り",
     availability: "メインネットで稼働中",
     title1: "ロックしても、",
@@ -135,6 +138,7 @@ const landing: LandingMessages = {
       "Heirloom は戦略が稼いだ利回りの 10% を受け取ります。元本から継続的に手数料を取ることはありません。エステート作成とチェックインは無料です。資産がエステートから出るときにだけ、小さな一回限りの手数料が二つかかります。相続人の請求時に 0.75%、緊急引き出し時に 0.5% です。",
   },
   recovery: {
+    docsLink: "ウォレット復旧を設定する",
     eyebrow: "ウォレット復旧",
     title1: "次の",
     title2: "ウォレットを指定する。",
@@ -151,6 +155,7 @@ const landing: LandingMessages = {
       "ガーディアンを指定すれば、あなたが立て直している間、期限をあなたが設定した期間だけ延ばせます。資金の移動、相続人の変更、それ以外のエステート操作は一切できません。",
   },
   vaultLifecycle: {
+    docsLink: "期限・状態・請求の詳細",
     eyebrow: "エステートのライフサイクル",
     title: "5つの状態。一方向。",
     lede: "すべての状態はオンチェーンのタイムスタンプから計算されます。信じるものも、偽装するものもありません。エステートがアクティブな間、動かせるのはあなただけです。",
@@ -172,6 +177,7 @@ const landing: LandingMessages = {
       "分配前ならいつでも、すべてをウォレットに引き戻せます。",
   },
   whySolana: {
+    docsLink: "プログラムが保証すること",
     eyebrow: "なぜ Solana か",
     title: "速度と安全が出会う場所に構築。",
     lede: "エステートは Solana 上の Anchor プログラムです。従う規則はすべてコードにあり、守る期限はすべてチェーンから読みます。",
@@ -218,6 +224,7 @@ const landing: LandingMessages = {
     b5: "自己管理、トラストレス、Solana 上で完全オンチェーン。待っている間も稼ぐ、唯一の選択肢です。",
   },
   faq: {
+    docsLink: "ドキュメントでさらに詳しく",
     eyebrow: "FAQ",
     headline1: "よくある",
     headline2: "質問。",
@@ -257,6 +264,7 @@ const landing: LandingMessages = {
     readDocs: "ドキュメントを読む",
   },
   footer: {
+    security: "セキュリティ",
     lede: "Solana 上の自己管理エステート。資産は置いてある間も稼ぎ続け、次の行き先を常に知っています。",
     protocol: "プロトコル",
     documentation: "ドキュメント",

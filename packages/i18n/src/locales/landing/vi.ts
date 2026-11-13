@@ -26,12 +26,12 @@ const landing: LandingMessages = {
   },
   seo: {
     notFoundTitle: "Không tìm thấy trang | Heirloom",
-    homeTitle: "Heirloom — Giao thức Thừa kế Solana",
+    homeTitle: "Heirloom: Thừa kế tiền mã hóa và khôi phục ví trên Solana",
     homeDescription:
-      "Giao thức thừa kế Solana cho liên tục tự lưu ký. Khóa tài sản số trong một di sản, điểm danh theo lịch của bạn, hoặc người thừa kế thừa hưởng on-chain.",
+      "Thừa kế tiền mã hóa trên Solana mà vẫn tự lưu ký: khóa SOL và token vào di sản, kiếm lợi suất, và nếu bạn ngừng điểm danh, người thừa kế nhận on-chain.",
     ogImageAlt:
-      "Heirloom — ví của bạn nên sống lâu hơn bạn, ngay cả khi cụm từ khôi phục thì không.",
-    twitterImageAlt: "Heirloom — di sản tự lưu ký trên Solana.",
+      "Heirloom, thừa kế tiền mã hóa trên Solana: ví của bạn nên sống lâu hơn bạn, ngay cả khi cụm từ khôi phục thì không.",
+    twitterImageAlt: "Heirloom: thừa kế tiền mã hóa tự lưu ký trên Solana.",
     orgDescription:
       "Heirloom là giao thức thừa kế gốc Solana. Khóa tài sản số vào di sản bạn kiểm soát, kiếm lợi suất trên số dư nhàn rỗi, khôi phục ví mất qua bản sao lưu bạn chỉ định, và chuyển on-chain nếu bạn ngừng điểm danh — không bên lưu ký, không chia sẻ cụm từ khôi phục.",
     websiteDescription:
@@ -44,7 +44,7 @@ const landing: LandingMessages = {
       "Mở di sản và điểm danh miễn phí; phí mạng Solana vẫn áp dụng. Nhận thừa kế chịu phí giao thức 0,75%, rút khẩn cấp 0,5%, và chiến lược lợi suất 10% chỉ trên lợi suất đã kiếm được.",
   },
   hero: {
-    kicker: "Di sản tự lưu ký trên Solana",
+    kicker: "Thừa kế tiền mã hóa tự lưu ký trên Solana",
     line1: "Bảo vệ tài sản của bạn.",
     line2: "Để chúng sinh lời.",
     line3: "Chuyển giao về sau.",
@@ -98,6 +98,7 @@ const landing: LandingMessages = {
     turnLink3: "hoạt động",
   },
   howItWorks: {
+    docsLink: "Bắt đầu nhanh: di sản đầu tiên, từng bước",
     eyebrow: "Cách hoạt động",
     title1: "Bốn bước.",
     title2: "Rồi quên đi.",
@@ -116,6 +117,8 @@ const landing: LandingMessages = {
       "Im lặng quá cửa sổ và thời gian ân hạn mở ra. Sau đó, các ví bạn đã đặt tên có thể nhận — kể cả ví dự phòng của chính bạn.",
   },
   yieldSection: {
+    feeLink: "Chi tiết toàn bộ phí",
+    docsLink: "Lợi suất hoạt động thế nào trong di sản",
     eyebrow: "Lợi suất",
     availability: "Hoạt động trên mainnet",
     title1: "Khóa,",
@@ -136,6 +139,7 @@ const landing: LandingMessages = {
       "Heirloom lấy 10% lợi suất mà một chiến lược kiếm được và không bao giờ thu phí định kỳ trên gốc. Tạo di sản và điểm danh đều miễn phí. Chỉ có hai khoản phí nhỏ, thu một lần khi tài sản rời di sản: 0,75% khi người thừa kế nhận và 0,5% nếu bạn rút khẩn cấp.",
   },
   recovery: {
+    docsLink: "Thiết lập khôi phục ví",
     eyebrow: "Khôi phục ví",
     title1: "Đặt tên ví",
     title2: "tiếp theo của bạn.",
@@ -152,6 +156,7 @@ const landing: LandingMessages = {
       "đặt tên người giám hộ và họ có thể đẩy hạn thêm một khoảng thời gian bạn đặt trong khi bạn sắp xếp. Họ không bao giờ chuyển quỹ, đổi người thừa kế, hoặc đụng di sản theo cách nào khác.",
   },
   vaultLifecycle: {
+    docsLink: "Thời hạn, trạng thái và nhận thừa kế chi tiết",
     eyebrow: "Vòng đời di sản",
     title: "Năm trạng thái. Một hướng.",
     lede: "Mỗi trạng thái được tính từ dấu thời gian on-chain, nên không có gì phải tin và không có gì giả mạo được. Khi di sản hoạt động, chỉ bạn mới có thể chuyển bất cứ thứ gì.",
@@ -173,6 +178,7 @@ const landing: LandingMessages = {
       "Kéo mọi thứ về ví của bạn, bất kỳ lúc nào trước khi phân phối.",
   },
   whySolana: {
+    docsLink: "Những gì chương trình đảm bảo",
     eyebrow: "Vì sao Solana",
     title: "Xây nơi tốc độ gặp an toàn.",
     lede: "Di sản là một chương trình Anchor trên Solana. Mọi quy tắc nó theo nằm trong mã, mọi hạn nó giữ được đọc từ chuỗi.",
@@ -219,6 +225,7 @@ const landing: LandingMessages = {
     b5: "Tự lưu ký, không tin cậy, hoàn toàn on-chain trên Solana — và là thứ duy nhất sinh lời khi chờ.",
   },
   faq: {
+    docsLink: "Thêm câu trả lời trong tài liệu",
     eyebrow: "FAQ",
     headline1: "Câu hỏi",
     headline2: "thường gặp.",
@@ -258,6 +265,7 @@ const landing: LandingMessages = {
     readDocs: "Đọc tài liệu",
   },
   footer: {
+    security: "Bảo mật",
     lede: "Di sản tự lưu ký trên Solana. Tài sản của bạn tiếp tục sinh lời khi nằm yên, và luôn biết đi đâu tiếp theo.",
     protocol: "Giao thức",
     documentation: "Tài liệu",

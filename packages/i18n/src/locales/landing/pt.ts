@@ -26,12 +26,12 @@ const landing: LandingMessages = {
   },
   seo: {
     notFoundTitle: "Página não encontrada | Heirloom",
-    homeTitle: "Heirloom — Protocolo de Herança Solana",
+    homeTitle: "Heirloom: herança de criptomoedas na Solana",
     homeDescription:
-      "Um protocolo de herança na Solana para continuidade de autocustódia. Trave ativos digitais em um patrimônio, faça check-in quando quiser, ou seu herdeiro herda on-chain.",
+      "Herança de criptomoedas na Solana sem abrir mão da custódia: trave SOL e tokens, renda com eles e, se você parar de fazer check-in, seu herdeiro resgata on-chain.",
     ogImageAlt:
-      "Heirloom — sua carteira deve sobreviver a você, mesmo que a frase-semente não sobreviva.",
-    twitterImageAlt: "Heirloom — patrimônios de autocustódia na Solana.",
+      "Heirloom, herança de criptomoedas na Solana: sua carteira deve sobreviver a você, mesmo que a frase-semente não sobreviva.",
+    twitterImageAlt: "Heirloom: herança de criptomoedas em autocustódia na Solana.",
     orgDescription:
       "Heirloom é um protocolo de herança nativo da Solana. Tranque ativos digitais em um patrimônio que você controla, rendam sobre saldos ociosos, recupere uma carteira perdida com um backup que você nomeia, e transfira on-chain se parar de fazer check-in — sem custodiante e sem compartilhar a frase-semente.",
     websiteDescription:
@@ -44,7 +44,7 @@ const landing: LandingMessages = {
       "Abrir um patrimônio e fazer check-in é grátis; aplicam-se as taxas de rede da Solana. Reivindicações têm taxa de protocolo de 0,75%, saques de emergência 0,5%, e estratégias de rendimento 10% apenas sobre o rendimento obtido.",
   },
   hero: {
-    kicker: "Patrimônios de autocustódia na Solana",
+    kicker: "Herança de criptomoedas em autocustódia na Solana",
     line1: "Proteja seus ativos.",
     line2: "Coloque-os para trabalhar.",
     line3: "Passe-os adiante.",
@@ -98,6 +98,7 @@ const landing: LandingMessages = {
     turnLink3: "funciona",
   },
   howItWorks: {
+    docsLink: "Guia rápido: seu primeiro patrimônio, passo a passo",
     eyebrow: "Como funciona",
     title1: "Quatro passos.",
     title2: "Depois esqueça.",
@@ -116,6 +117,8 @@ const landing: LandingMessages = {
       "Fique em silêncio além da janela e um período de carência se abre. Depois dele, as carteiras que você nomeou podem reivindicar — incluindo um backup seu.",
   },
   yieldSection: {
+    feeLink: "Todas as taxas, em detalhe",
+    docsLink: "Como o rendimento funciona dentro de um patrimônio",
     eyebrow: "Rendimento",
     availability: "Disponível na mainnet",
     title1: "Travado,",
@@ -136,6 +139,7 @@ const landing: LandingMessages = {
       "O Heirloom fica com 10% do rendimento que uma estratégia gera e nunca com uma porcentagem recorrente do seu principal. Criar um patrimônio e fazer check-in é grátis. Há apenas duas pequenas taxas únicas, quando os ativos saem do patrimônio: 0,75% quando seu herdeiro reivindica e 0,5% se você fizer um saque de emergência.",
   },
   recovery: {
+    docsLink: "Configure a recuperação de carteira",
     eyebrow: "Recuperação de carteira",
     title1: "Nomeie sua",
     title2: "próxima carteira.",
@@ -152,6 +156,7 @@ const landing: LandingMessages = {
       "nomeie um guardião e ele pode empurrar o prazo pelo tempo que você definir enquanto você resolve as coisas. Ele nunca pode mover seus fundos, mudar seus herdeiros ou tocar no patrimônio de qualquer outra forma.",
   },
   vaultLifecycle: {
+    docsLink: "Prazos, estados e resgates em detalhe",
     eyebrow: "Ciclo de vida do patrimônio",
     title: "Cinco estados. Uma direção.",
     lede: "Cada estado é calculado a partir de timestamps on-chain, então não há nada em que confiar e nada a falsificar. Enquanto o patrimônio está ativo, só você pode mover qualquer coisa.",
@@ -173,6 +178,7 @@ const landing: LandingMessages = {
       "Puxe tudo de volta à sua carteira, a qualquer momento antes da distribuição.",
   },
   whySolana: {
+    docsLink: "O que o programa garante",
     eyebrow: "Por que Solana",
     title: "Construído onde velocidade encontra segurança.",
     lede: "O patrimônio é um programa Anchor na Solana. Cada regra que ele segue está no código, e cada prazo que ele cumpre é lido da cadeia.",
@@ -219,6 +225,7 @@ const landing: LandingMessages = {
     b5: "Autocustódia, sem confiança, totalmente on-chain na Solana — e o único que rende enquanto espera.",
   },
   faq: {
+    docsLink: "Mais respostas na documentação",
     eyebrow: "FAQ",
     headline1: "Perguntas",
     headline2: "comuns.",
@@ -258,6 +265,7 @@ const landing: LandingMessages = {
     readDocs: "Ler a documentação",
   },
   footer: {
+    security: "Segurança",
     lede: "Patrimônios de autocustódia na Solana. Seus ativos continuam rendendo enquanto esperam, e sempre sabem para onde ir em seguida.",
     protocol: "Protocolo",
     documentation: "Documentação",

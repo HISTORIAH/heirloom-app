@@ -26,11 +26,11 @@ const landing: LandingMessages = {
   },
   seo: {
     notFoundTitle: "페이지를 찾을 수 없습니다 | Heirloom",
-    homeTitle: "Heirloom — 솔라나 상속 프로토콜",
+    homeTitle: "Heirloom | 가상자산·코인 상속과 지갑 복구 (솔라나)",
     homeDescription:
-      "자기 수탁 연속성을 위한 솔라나 상속 프로토콜. 디지털 자산을 에스테이트에 잠그고, 원하는 일정에 체크인하세요. 체크인이 멈추면 상속인이 온체인에서 상속받습니다.",
-    ogImageAlt: "Heirloom — 시드 구문이 사라져도 지갑은 당신보다 오래 남아야 합니다.",
-    twitterImageAlt: "Heirloom — 솔라나 자기 수탁 에스테이트.",
+      "자기 수탁을 유지하는 솔라나 가상자산 상속. SOL과 토큰을 에스테이트에 잠가 수익을 얻고, 체크인이 멈추면 상속인이 온체인에서 받습니다.",
+    ogImageAlt: "Heirloom | 솔라나 가상자산 상속. 시드 구문이 사라져도 지갑은 당신보다 오래 남아야 합니다.",
+    twitterImageAlt: "Heirloom | 솔라나 자기 수탁 가상자산 상속.",
     orgDescription:
       "Heirloom은 솔라나 네이티브 상속 프로토콜입니다. 당신이 통제하는 에스테이트에 디지털 자산을 잠그고, 유휴 잔액에서 수익을 얻고, 직접 지정한 백업으로 분실 지갑을 복구한 뒤, 체크인을 멈추면 온체인으로 이전합니다. 수탁자도, 시드 구문 공유도 없습니다.",
     websiteDescription:
@@ -43,7 +43,7 @@ const landing: LandingMessages = {
       "에스테이트 개설과 체크인은 무료이며, 솔라나 네트워크 수수료는 별도입니다. 청구 시 프로토콜 수수료 0.75%, 긴급 인출 0.5%, 수익 전략은 발생한 수익에만 10%가 붙습니다.",
   },
   hero: {
-    kicker: "솔라나 자기 수탁 에스테이트",
+    kicker: "솔라나 자기 수탁 가상자산 상속",
     line1: "자산을 지키세요.",
     line2: "일하게 하세요.",
     line3: "물려주세요.",
@@ -97,6 +97,7 @@ const landing: LandingMessages = {
     turnLink3: "작동 방식",
   },
   howItWorks: {
+    docsLink: "빠른 시작: 첫 에스테이트를 단계별로",
     eyebrow: "작동 방식",
     title1: "네 단계.",
     title2: "그다음엔 잊으세요.",
@@ -115,6 +116,8 @@ const landing: LandingMessages = {
       "기간을 넘겨 조용해지면 유예 기간이 열립니다. 그 후 지정한 지갑이 청구할 수 있습니다. 당신 자신의 백업도 포함해서.",
   },
   yieldSection: {
+    feeLink: "수수료 전체 보기",
+    docsLink: "에스테이트 안에서 수익이 나는 방식",
     eyebrow: "수익",
     availability: "메인넷에서 이용 가능",
     title1: "잠겨 있어도",
@@ -135,6 +138,7 @@ const landing: LandingMessages = {
       "Heirloom은 전략이 번 수익의 10%를 받으며, 원금에서 정기적으로 수수료를 떼지 않습니다. 에스테이트 생성과 체크인은 무료입니다. 자산이 에스테이트를 떠날 때만 작은 일회성 수수료 두 가지가 붙습니다. 상속인 청구 시 0.75%, 긴급 출금 시 0.5%입니다.",
   },
   recovery: {
+    docsLink: "지갑 복구 설정하기",
     eyebrow: "지갑 복구",
     title1: "다음",
     title2: "지갑을 지정하세요.",
@@ -151,6 +155,7 @@ const landing: LandingMessages = {
       "가디언을 지정하면 상황을 정리하는 동안 마감을 당신이 정한 기간만큼 미룰 수 있습니다. 자금을 옮기거나, 상속인을 바꾸거나, 다른 어떤 방식으로도 에스테이트를 만질 수 없습니다.",
   },
   vaultLifecycle: {
+    docsLink: "기한, 상태, 청구 자세히 보기",
     eyebrow: "에스테이트 수명 주기",
     title: "다섯 상태. 한 방향.",
     lede: "모든 상태는 온체인 타임스탬프로 계산됩니다. 믿을 것도, 위조할 것도 없습니다. 에스테이트가 활성인 동안 무언가를 움직일 수 있는 사람은 당신뿐입니다.",
@@ -172,6 +177,7 @@ const landing: LandingMessages = {
       "분배 전이라면 언제든 모든 것을 지갑으로 되돌리세요.",
   },
   whySolana: {
+    docsLink: "프로그램이 보장하는 것",
     eyebrow: "왜 솔라나인가",
     title: "속도와 안전이 만나는 곳에 구축.",
     lede: "에스테이트는 솔라나의 Anchor 프로그램입니다. 따르는 규칙은 모두 코드에 있고, 지키는 마감은 모두 체인에서 읽습니다.",
@@ -218,6 +224,7 @@ const landing: LandingMessages = {
     b5: "자기 수탁, 무신뢰, 솔라나에서 완전 온체인. 기다리는 동안에도 버는 유일한 선택입니다.",
   },
   faq: {
+    docsLink: "문서에서 더 많은 답변 보기",
     eyebrow: "FAQ",
     headline1: "자주 묻는",
     headline2: "질문.",
@@ -257,6 +264,7 @@ const landing: LandingMessages = {
     readDocs: "문서 읽기",
   },
   footer: {
+    security: "보안",
     lede: "솔라나 자기 수탁 에스테이트. 자산은 앉아 있는 동안에도 계속 벌고, 다음에 어디로 갈지 항상 알고 있습니다.",
     protocol: "프로토콜",
     documentation: "문서",

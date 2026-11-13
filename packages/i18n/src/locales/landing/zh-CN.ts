@@ -26,11 +26,11 @@ const landing: LandingMessages = {
   },
   seo: {
     notFoundTitle: "页面未找到 | Heirloom",
-    homeTitle: "Heirloom — Solana 继承协议",
+    homeTitle: "Heirloom｜加密货币继承与钱包恢复（Solana）",
     homeDescription:
-      "面向自托管延续的 Solana 继承协议。把数字资产锁进遗产，按你自己的节奏签到，否则继承人将在链上继承。",
-    ogImageAlt: "Heirloom — 即便助记词没了，你的钱包也应比你活得更久。",
-    twitterImageAlt: "Heirloom — Solana 上的自托管遗产。",
+      "在 Solana 上实现自托管的加密货币继承。把 SOL 和代币锁进遗产并赚取收益，一旦停止签到，继承人即可在链上领取。",
+    ogImageAlt: "Heirloom｜Solana 加密货币继承。即便助记词没了，你的钱包也应比你活得更久。",
+    twitterImageAlt: "Heirloom｜Solana 上的自托管加密货币继承。",
     orgDescription:
       "Heirloom 是原生部署在 Solana 上的继承协议。把数字资产锁进由你控制的遗产，闲置余额可赚取收益，通过你指定的备份找回丢失钱包；若停止签到，资产将在链上移交。没有托管方，也不需要分享助记词。",
     websiteDescription: "Solana 上的自托管遗产：赚取收益、找回丢失钱包，并在链上移交。",
@@ -42,7 +42,7 @@ const landing: LandingMessages = {
       "开设遗产和签到免费；需支付 Solana 网络手续费。领取收取 0.75% 协议费，紧急提取收取 0.5%，收益策略仅对已赚取收益收取 10%。",
   },
   hero: {
-    kicker: "Solana 上的自托管遗产",
+    kicker: "Solana 上的自托管加密货币继承",
     line1: "保护你的资产。",
     line2: "让它们去干活。",
     line3: "再传下去。",
@@ -96,6 +96,7 @@ const landing: LandingMessages = {
     turnLink3: "怎么运作",
   },
   howItWorks: {
+    docsLink: "快速上手：一步步创建第一个遗产",
     eyebrow: "工作原理",
     title1: "四步。",
     title2: "然后就不用管了。",
@@ -114,6 +115,8 @@ const landing: LandingMessages = {
       "沉默超过窗口后，宽限期开始。宽限期过后，你指定的钱包就可以领取，也包括你自己的备用钱包。",
   },
   yieldSection: {
+    feeLink: "完整的费用说明",
+    docsLink: "遗产内的收益如何运作",
     eyebrow: "收益",
     availability: "已在主网上线",
     title1: "锁住了，",
@@ -134,6 +137,7 @@ const landing: LandingMessages = {
       "Heirloom 抽取策略收益的 10%，从不按期从本金中抽成。创建遗产和签到都免费。只有资产离开遗产时，才收取两笔小额一次性费用：继承人领取时 0.75%，紧急提款时 0.5%。",
   },
   recovery: {
+    docsLink: "设置钱包恢复",
     eyebrow: "钱包找回",
     title1: "指定你的",
     title2: "下一个钱包。",
@@ -150,6 +154,7 @@ const landing: LandingMessages = {
       "指定一位守护人，他们可以在你收拾残局时把截止时间往后推一段你设定的时间。他们永远不能动你的资金、改你的继承人，或以任何其他方式碰遗产。",
   },
   vaultLifecycle: {
+    docsLink: "期限、状态与领取详解",
     eyebrow: "遗产生命周期",
     title: "五个状态。一个方向。",
     lede: "每个状态都由链上时间戳计算得出，没有什么需要信任，也没有什么可以伪造。遗产处于活跃状态时，只有你能动任何东西。",
@@ -171,6 +176,7 @@ const landing: LandingMessages = {
       "在分配之前的任何时刻，把所有东西抽回你的钱包。",
   },
   whySolana: {
+    docsLink: "程序保证了什么",
     eyebrow: "为什么选择 Solana",
     title: "构建于速度与安全交汇之处。",
     lede: "遗产是 Solana 上的 Anchor 程序。它遵循的每条规则都在代码里，它守住的每个截止时间都从链上读取。",
@@ -217,6 +223,7 @@ const landing: LandingMessages = {
     b5: "在 Solana 上自托管、去信任、完全上链，也是唯一一边等一边生息的。",
   },
   faq: {
+    docsLink: "在文档中查看更多解答",
     eyebrow: "常见问题",
     headline1: "常见",
     headline2: "问题。",
@@ -256,6 +263,7 @@ const landing: LandingMessages = {
     readDocs: "阅读文档",
   },
   footer: {
+    security: "安全",
     lede: "Solana 上的自托管遗产。资产闲着也会继续生息，并且始终知道下一步去哪儿。",
     protocol: "协议",
     documentation: "文档",
