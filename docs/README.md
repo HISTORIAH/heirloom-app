@@ -9,19 +9,21 @@ a `docs.` subdomain. That, and the fact that every page is a finished document
 rather than a shell a crawler has to execute, is the whole reason it is built
 this way.
 
-It replaced a Mintlify site at `docs.heirlm.xyz`. That hostname is gone rather
-than redirected: Workers static assets reject an absolute source in
-`_redirects`, and the old site was never crawled, so there was nothing to
-preserve. See the note at the bottom of `landing/public/_redirects`.
+It replaced a Mintlify site at `docs.heirlm.xyz`. Google did crawl that site, so
+the hostname is redirected to `heirlm.xyz/docs` by a Cloudflare Redirect Rule on
+the zone. It can't live in `_redirects`, because Workers static assets reject an
+absolute source there. See the note at the bottom of `landing/public/_redirects`,
+which also records how the rule should map paths.
 
 ## What it builds
 
 | Output | |
 |---|---|
 | `/docs/` | Overview |
-| `/docs/<section>/<page>/` | 26 more documents, one file each |
+| `/docs/<section>/<page>/` | 24 more documents, one file each |
 | `/docs/404.html` | |
-| `/docs/sitemap-index.xml` | Announced from the landing's `robots.txt` |
+| `/docs/llms-full.txt` | the whole handbook as one text file, for AI tools; linked from `/llms.txt` |
+| `/docs/sitemap-0.xml` | git-dated `<lastmod>`; listed in the apex `/sitemap.xml` index |
 
 English only. The app and the landing are localized into nine languages; the
 docs are not, because reference material that is wrong in eight languages is
@@ -42,8 +44,8 @@ Or `bun dev:docs` / `bun build:docs` from the repo root.
 The docs do not deploy on their own. From the repo root:
 
 ```bash
-bun run build:site    # builds landing + docs, copies docs/dist → landing/dist/docs
-bun run deploy:site   # the above, then wrangler deploy
+bun run build:web    # builds landing + docs + blog, copies docs/dist and blog/dist into landing/dist
+bun run deploy:web   # the above, then wrangler deploy
 ```
 
 The order matters: the landing's own `astro build` wipes `landing/dist`, so the
@@ -62,8 +64,20 @@ description: Shown under the H1, and used as the meta description.
 section: concepts          # one of the ids in src/lib/nav.ts
 order: 3                   # position within that section
 keywords: ["status", "lifecycle"]   # extra terms the sidebar filter matches
+seoTitle: "Estate States: Active, Grace, Claimable | Heirloom"   # optional <title>, 50–60 chars
+metaDescription: "…"   # optional search snippet, 120–160 chars; defaults to description
+heading: "…"           # optional H1, when it should differ from the sidebar title
 ---
 ```
+
+`title` is the sidebar label, so it stays short. `seoTitle` and `metaDescription`
+are what a search result shows: lead with the words people search for ("crypto
+inheritance", "wallet recovery") and say what the page answers. Every page has
+them; keep it that way for new ones.
+
+Each page's "Last updated" date, its TechArticle dates and its sitemap
+`<lastmod>` come from git (`plugins/remark-git-dates.mjs`). A shallow clone gives
+every page the same date, so CI must build with full history.
 
 There is no navigation manifest. `section` and `order` are the whole of it, so
 moving a page is a `git mv` plus one frontmatter edit, and a new section means

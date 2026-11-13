@@ -19,6 +19,10 @@ import {
   TWITTER_URL,
   withBase,
 } from "@/lib/site";
+// Self-hosted, as on the landing: first paint never waits on a third-party
+// origin, and no visitor IP goes to Google Fonts.
+import "@fontsource-variable/space-grotesk/wght.css";
+import "@fontsource-variable/jetbrains-mono/wght.css";
 import "@/styles/docs.css";
 
 import TopNav from "@/components/TopNav.astro";
@@ -30,6 +34,15 @@ import Icon from "@/components/Icon.astro";
 interface Props {
   title: string;
   description: string;
+  /** Whole <title> override; see content.config.ts. */
+  seoTitle?: string;
+  /** Meta description override; `description` stays the visible lede. */
+  metaDescription?: string;
+  /** H1 override; `title` stays the sidebar label and breadcrumb. */
+  heading?: string;
+  /** ISO dates from git (plugins/remark-git-dates.mjs). */
+  lastModified?: string;
+  firstPublished?: string;
   section: string;
   entryId: string;
   headings: MarkdownHeading[];
@@ -50,6 +63,11 @@ interface Props {
 const {
   title,
   description,
+  seoTitle,
+  metaDescription: metaDescriptionOverride,
+  heading,
+  lastModified,
+  firstPublished,
   section,
   entryId,
   headings,
@@ -63,23 +81,49 @@ const {
 
 const canonical = new URL(Astro.url.pathname, SITE_URL).href;
 const docsHome = new URL(withBase("/"), SITE_URL).href;
-const pageTitle = entryId === "index" ? `${title} — Heirloom Docs` : `${title} — Heirloom Docs`;
+// A sidebar label like "Fees" says nothing to a searcher, so a page can carry
+// a fuller title and snippet in frontmatter.
+const pageTitle = seoTitle ?? `${title} | Heirloom Docs`;
+const metaDescription = metaDescriptionOverride ?? description;
+const ogImageAlt = "Heirloom: self-custody crypto inheritance on Solana";
 const editUrl = `${GITHUB_EDIT_BASE}/${entryId}.mdx`;
+const updatedLabel = lastModified
+  ? new Date(lastModified).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
+  : undefined;
 
 /* Structured data. TechArticle rather than Article: these are reference pages
    for a protocol, and the breadcrumb is what tells a crawler that /docs is a
-   section of heirlm.xyz and not a site of its own. */
+   section of heirlm.xyz and not a site of its own. The dates come from git, so
+   they change only when the page does. */
+const organization = { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "Heirloom" };
 const jsonLd = JSON.stringify([
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "@id": `${canonical}#article`,
-    headline: title,
-    description,
+    headline: heading ?? title,
+    description: metaDescription,
     inLanguage: "en",
     url: canonical,
+    mainEntityOfPage: canonical,
+    image: OG_IMAGE,
+    ...(firstPublished && { datePublished: firstPublished }),
+    ...(lastModified && { dateModified: lastModified }),
+    author: organization,
+    publisher: organization,
     isPartOf: { "@type": "WebSite", "@id": `${SITE_URL}/#website` },
-    publisher: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "Heirloom" },
+    about: [
+      { "@type": "Thing", name: "Crypto inheritance" },
+      {
+        "@type": "Thing",
+        name: "Solana",
+        sameAs: "https://en.wikipedia.org/wiki/Solana_(blockchain_platform)",
+      },
+    ],
   },
   {
     "@context": "https://schema.org",
@@ -108,7 +152,7 @@ const jsonLd = JSON.stringify([
     <meta name="theme-color" content="#ffffff" />
 
     <title>{pageTitle}</title>
-    <meta name="description" content={description} />
+    <meta name="description" content={metaDescription} />
     {!noindex && <link rel="canonical" href={canonical} />}
     <meta
       name="robots"
@@ -120,29 +164,26 @@ const jsonLd = JSON.stringify([
     />
     <meta name="author" content="Heirloom" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-    />
 
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="Heirloom" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={metaDescription} />
     <meta property="og:image" content={OG_IMAGE} />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="2373" />
     <meta property="og:image:height" content="1326" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    {lastModified && <meta property="article:modified_time" content={lastModified} />}
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@heirloom_app" />
     <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:description" content={metaDescription} />
     <meta name="twitter:image" content={OG_IMAGE} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
 
     {!noindex && <script type="application/ld+json" set:html={jsonLd} is:inline={false} />}
   </head>
@@ -168,11 +209,18 @@ const jsonLd = JSON.stringify([
               <h1
                 class="mt-3 font-display text-[clamp(2rem,4.5vw,2.9rem)] font-bold leading-[1.05] tracking-[-0.03em]"
               >
-                {title}
+                {heading ?? title}
               </h1>
               <p class="mt-4 text-[16px] leading-relaxed text-muted-foreground">
                 {description}
               </p>
+              {
+                !noindex && updatedLabel && (
+                  <p class="mt-3 text-[12.5px] font-medium text-muted-foreground">
+                    Last updated <time datetime={lastModified}>{updatedLabel}</time>
+                  </p>
+                )
+              }
             </header>
 
             <div class="prose pt-8">
@@ -202,7 +250,7 @@ const jsonLd = JSON.stringify([
               <a
                 href={GITHUB_URL}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="me noopener noreferrer"
                 class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
               >
                 {/* lucide 1.x dropped brand icons, so the GitHub mark is inlined. */}
@@ -224,7 +272,7 @@ const jsonLd = JSON.stringify([
               <a
                 href={TWITTER_URL}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="me noopener noreferrer"
                 class="flex items-center gap-1.5 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5" aria-hidden="true">
