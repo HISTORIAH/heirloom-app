@@ -5,6 +5,26 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
 
+# The app routes are per-wallet, so they carry noindex as a header. Every route
+# is served the same index.html, so the shell itself can't say which pages are
+# indexable; the request path can. Only the root landing is meant to be found.
+# Seo.tsx sets the same robots meta at runtime, but that only exists once JS
+# runs; this header reaches every crawler. Keep this list in step with the
+# <Route>s in src/App.tsx. Unknown paths render NotFound, which Seo.tsx marks
+# noindex too.
+/portfolio
+  X-Robots-Tag: noindex, nofollow
+/browse
+  X-Robots-Tag: noindex, nofollow
+/protect
+  X-Robots-Tag: noindex, nofollow
+/dashboard
+  X-Robots-Tag: noindex, nofollow
+/recover
+  X-Robots-Tag: noindex, nofollow
+/inherit
+  X-Robots-Tag: noindex, nofollow
+
 # Vite fingerprints these.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
